@@ -73,6 +73,8 @@ struct SettingsView: View {
                                     .foregroundColor(.secondary)
                             }
                             .buttonStyle(.plain)
+                            .help("Remove Secondary Shortcut")
+                            .accessibilityLabel("Remove Secondary Shortcut")
                         }
                     }
                 }
@@ -130,6 +132,7 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.plain)
                         .help("Reset to default")
+                        .accessibilityLabel("Reset to default")
                     }
                 } label: {
                     HStack(spacing: 2) {
@@ -248,17 +251,6 @@ struct SettingsView: View {
                     )
                 )
                 .disabled(launchAtLoginManager.isUpdating)
-
-                Toggle(
-                    "Automatically Check for Updates",
-                    isOn: Binding(
-                        get: { updaterViewModel.checksForUpdatesWhenDashboardAppears },
-                        set: { updaterViewModel.setChecksForUpdatesWhenDashboardAppears($0) }
-                    ))
-
-                Button("Reset Onboarding") {
-                    showResetOnboardingAlert = true
-                }
             }
 
             Section {
@@ -372,6 +364,10 @@ struct SettingsView: View {
 
             Section("Diagnostics") {
                 DiagnosticsSettingsView()
+
+                Button("Reset Onboarding") {
+                    showResetOnboardingAlert = true
+                }
             }
 
             Section("About") {
@@ -379,6 +375,13 @@ struct SettingsView: View {
                     Text(verbatim: appVersion)
                         .textSelection(.enabled)
                 }
+
+                Toggle(
+                    "Automatically Check for Updates",
+                    isOn: Binding(
+                        get: { updaterViewModel.checksForUpdatesWhenDashboardAppears },
+                        set: { updaterViewModel.setChecksForUpdatesWhenDashboardAppears($0) }
+                    ))
 
                 HStack {
                     Button("Check for Updates") {

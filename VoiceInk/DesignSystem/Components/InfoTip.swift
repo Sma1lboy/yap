@@ -16,39 +16,44 @@ struct InfoTip: View {
     @State private var isShowingTip: Bool = false
 
     var body: some View {
-        Image(systemName: iconName)
-            .imageScale(iconSize)
-            .foregroundColor(iconColor)
-            .fontWeight(.semibold)
-            .padding(5)
-            .contentShape(Rectangle())
-            .popover(isPresented: $isShowingTip) {
-                VStack(alignment: .leading, spacing: 0) {
-                    if learnMoreLink != nil {
-                        (Text(message)
-                            .foregroundColor(.secondary)
-                            + Text(" ")
-                            + Text("Learn more")
-                            .foregroundColor(AppTheme.Accent.primary))
-                            .font(.callout)
-                    } else {
-                        Text(message)
-                            .font(.callout)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(width: width, alignment: .leading)
-                .padding(14)
-                .onTapGesture {
-                    if let url = learnMoreLink {
-                        NSWorkspace.shared.open(url)
-                    }
+        // A Button (not a tap gesture) so keyboard focus and VoiceOver can open the tip.
+        Button {
+            isShowingTip.toggle()
+        } label: {
+            Image(systemName: iconName)
+                .imageScale(iconSize)
+                .foregroundColor(iconColor)
+                .fontWeight(.semibold)
+                .padding(5)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("More Info")
+        .accessibilityHint(message)
+        .popover(isPresented: $isShowingTip) {
+            VStack(alignment: .leading, spacing: 0) {
+                if learnMoreLink != nil {
+                    (Text(message)
+                        .foregroundColor(.secondary)
+                        + Text(" ")
+                        + Text("Learn more")
+                        .foregroundColor(AppTheme.Accent.primary))
+                        .font(.callout)
+                } else {
+                    Text(message)
+                        .font(.callout)
+                        .foregroundColor(.secondary)
                 }
             }
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(width: width, alignment: .leading)
+            .padding(14)
             .onTapGesture {
-                isShowingTip.toggle()
+                if let url = learnMoreLink {
+                    NSWorkspace.shared.open(url)
+                }
             }
+        }
     }
 }
 

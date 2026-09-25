@@ -19,6 +19,8 @@ struct FillerWordChip: View {
                     .font(.system(size: 10))
             }
             .buttonStyle(.borderless)
+            .help("Remove")
+            .accessibilityLabel("Remove")
             .onHover { hover in
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isHovered = hover

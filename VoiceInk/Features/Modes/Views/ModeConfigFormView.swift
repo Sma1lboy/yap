@@ -16,6 +16,7 @@ struct ModeConfigFormView: View {
     @FocusState private var isNameFieldFocused: Bool
 
     @State private var isShowingIconPicker = false
+    @State private var isBrowsingYapCloudTranscriptionModels = false
     @State private var isShowingDeleteConfirmation = false
     @State private var isShowingDefaultModeDeleteAlert = false
     @State private var isContextAwarenessExpanded = false
@@ -210,9 +211,15 @@ struct ModeConfigFormView: View {
 
                         if !yapCloudModels.isEmpty {
                             Menu("Yap Cloud") {
-                                ForEach(yapCloudModels, id: \.selectionKey) { model in
-                                    transcriptionModelMenuItem(model)
+                                Section("Recommended") {
+                                    ForEach(
+                                        YapCloudPicks.transcription.compactMap { id in yapCloudModels.first { $0.name == id } },
+                                        id: \.selectionKey
+                                    ) { model in
+                                        transcriptionModelMenuItem(model)
+                                    }
                                 }
+                                Button("All Yap Cloud Models…") { isBrowsingYapCloudTranscriptionModels = true }
                             }
                         }
 
@@ -231,6 +238,13 @@ struct ModeConfigFormView: View {
                             .lineLimit(1)
                     }
                     .menuStyle(.borderlessButton)
+                }
+                .sheet(isPresented: $isBrowsingYapCloudTranscriptionModels) {
+                    YapCloudModelBrowser(
+                        title: "All Yap Cloud Models",
+                        models: yapCloudModels.map { ($0.selectionKey, $0.displayName, $0.name) },
+                        selectedID: draft.selectedTranscriptionModelName,
+                        onSelect: { draft.selectedTranscriptionModelName = $0 })
                 }
                 .onChange(of: draft.selectedTranscriptionModelName) { _, newModelName in
                     if let modelName = newModelName,
@@ -472,7 +486,9 @@ struct ModeConfigFormView: View {
                     }
                 )
 
-                if provider.supportsCustomModelID {
+                if provider == .yapCloud {
+                    YapCloudEnhancementModelPicker(models: models, selection: modelBinding)
+                } else if provider.supportsCustomModelID {
                     EnhancementModelPicker(
                         title: "AI Model",
                         provider: provider,

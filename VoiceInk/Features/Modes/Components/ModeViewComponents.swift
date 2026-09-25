@@ -9,7 +9,7 @@ struct VoiceInkButton: View {
         Button(action: action) {
             Text(title)
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(AppTheme.Text.onAccent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .background(
@@ -327,6 +327,7 @@ struct ConfigurationRow: View {
                     )
                     .toggleStyle(SwitchToggleStyle(tint: AppTheme.Accent.primary))
                     .labelsHidden()
+                    .accessibilityLabel(String(format: String(localized: "Enable %@"), config.name))
                 }
             }
             .padding(.vertical, 12)

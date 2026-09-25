@@ -74,6 +74,8 @@ struct TriggerGroupEditorView: View {
                             .font(.system(size: 12))
                     }
                     .buttonStyle(.plain)
+                    .help("Clear Search")
+                    .accessibilityLabel("Clear Search")
                 }
             }
             .padding(.horizontal, 12)

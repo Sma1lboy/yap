@@ -60,6 +60,8 @@ struct NativeAppleLanguageAssetControl: View {
                     .font(.system(size: 14, weight: .semibold))
             }
             .buttonStyle(.plain)
+            .help("Download")
+            .accessibilityLabel("Download")
             .controlSize(.small)
             .frame(width: 28, height: 24)
         case .downloading:
@@ -82,6 +84,8 @@ struct NativeAppleLanguageAssetControl: View {
                     .font(.system(size: 14, weight: .semibold))
             }
             .buttonStyle(.plain)
+            .help("Refresh")
+            .accessibilityLabel("Refresh")
             .controlSize(.small)
             .frame(width: 28, height: 24)
         case .failed:
@@ -90,6 +94,8 @@ struct NativeAppleLanguageAssetControl: View {
                     .font(.system(size: 14, weight: .semibold))
             }
             .buttonStyle(.plain)
+            .help("Retry Download")
+            .accessibilityLabel("Retry Download")
             .controlSize(.small)
             .frame(width: 28, height: 24)
         }

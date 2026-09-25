@@ -98,6 +98,9 @@ final class OnboardingFlowController {
         guard let model = coordinator.selectedOnboardingTranscriptionModel else {
             return String(localized: "Yap Cloud has no transcription models available right now.")
         }
+        guard (YapCloud.shared.balanceMicros ?? 0) > 0 else {
+            return String(localized: "Add funds to start dictating. Your balance updates when you come back to Yap.")
+        }
         await finishPreset(
             .yapCloud(transcriptionModel: model.name), kind: .yapCloud, providerKey: YapCloud.providerName,
             enhancementService: enhancementService)
