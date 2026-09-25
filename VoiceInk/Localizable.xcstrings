@@ -24382,28 +24382,6 @@
         }
       }
     },
-    "The provided API key is invalid." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der angegebene API-Schlüssel ist ungültig."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La clé API fournie n'est pas valide."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "提供的 API 密钥无效。"
-          }
-        }
-      }
-    },
     "The selected language is not supported by SpeechAnalyzer." : {
       "localizations" : {
         "de" : {
@@ -28015,6 +27993,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下次启动 App 时，你会再次看到介绍页面。"
+          }
+        }
+      }
+    },
+    "Your API key was rejected. Update it in Models." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein API-Schlüssel wurde abgelehnt. Aktualisiere ihn unter Modelle."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre clé API a été refusée. Mettez-la à jour dans Modèles."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API 密钥被拒绝，请在「模型」页更新。"
           }
         }
       }
