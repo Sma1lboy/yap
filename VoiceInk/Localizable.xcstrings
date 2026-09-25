@@ -1451,6 +1451,28 @@
         }
       }
     },
+    "%lld modes, %lld prompts, %lld dictionary entries and %lld shortcuts. Entries with the same id replace Yap's; the rest of Yap's stay." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Modi, %lld Prompts, %lld Wörterbucheinträge und %lld Kurzbefehle. Einträge mit derselben ID ersetzen die von Yap; die übrigen bleiben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld modes, %lld prompts, %lld entrées de dictionnaire et %lld raccourcis. Les entrées de même identifiant remplacent celles de Yap ; les autres restent."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 个模式、%lld 个提示词、%lld 条词典条目和 %lld 个快捷键。id 相同的条目会替换 Yap 里的，其余的 Yap 设置保留。"
+          }
+        }
+      }
+    },
     "%lld previous vocabulary entries" : {
       "localizations" : {
         "de" : {
@@ -7049,6 +7071,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "费用从 Yap Cloud 余额扣除"
+          }
+        }
+      }
+    },
+    "Bring over modes, prompts, dictionary, shortcuts and general settings. API keys and license aren't copied." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übernimmt Modi, Prompts, Wörterbuch, Kurzbefehle und allgemeine Einstellungen. API-Schlüssel und Lizenz werden nicht kopiert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reprend les modes, prompts, le dictionnaire, les raccourcis et les réglages généraux. Les clés d’API et la licence ne sont pas copiées."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入模式、提示词、词典、快捷键和通用设置。API key 和许可证不会复制。"
           }
         }
       }
@@ -14451,6 +14495,50 @@
         }
       }
     },
+    "Import from VoiceInk?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus VoiceInk importieren?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer depuis VoiceInk ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从 VoiceInk 导入？"
+          }
+        }
+      }
+    },
+    "Import from VoiceInk…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus VoiceInk importieren …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importer depuis VoiceInk…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从 VoiceInk 导入…"
+          }
+        }
+      }
+    },
     "Imported" : {
       "localizations" : {
         "de" : {
@@ -14631,6 +14719,50 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Imported from VoiceInk: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus VoiceInk importiert: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importé depuis VoiceInk : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已从 VoiceInk 导入：%@"
+          }
+        }
+      }
+    },
+    "Imported from VoiceInk: %@. Skipped: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus VoiceInk importiert: %@. Übersprungen: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importé depuis VoiceInk : %@. Ignoré : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已从 VoiceInk 导入：%@。跳过：%@"
           }
         }
       }
@@ -17492,6 +17624,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不用"
+          }
+        }
+      }
+    },
+    "No VoiceInk settings found on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf diesem Mac wurden keine VoiceInk-Einstellungen gefunden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun réglage VoiceInk trouvé sur ce Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有找到 VoiceInk 的设置。"
           }
         }
       }
@@ -30190,6 +30344,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "语音活动检测（VAD）"
+          }
+        }
+      }
+    },
+    "VoiceInk" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VoiceInk"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VoiceInk"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VoiceInk"
+          }
+        }
+      }
+    },
+    "VoiceInk has no settings to import." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VoiceInk hat keine Einstellungen zum Importieren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VoiceInk n’a aucun réglage à importer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "VoiceInk 里没有可导入的设置。"
           }
         }
       }

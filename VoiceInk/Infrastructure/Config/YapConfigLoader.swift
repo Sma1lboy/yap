@@ -128,6 +128,7 @@ final class YapConfigLoader: ObservableObject {
             YapConfig.selfCheck()
             RecommendedSetup.selfCheck()
             Shortcut.configStringSelfCheck()
+            VoiceInkImport.selfCheck()
             Self.selfCheck()
             Task { await CloudConfigSync.selfCheck() }
         #endif
@@ -249,6 +250,12 @@ final class YapConfigLoader: ObservableObject {
         let sections = await applySections(config)
         apply(config, source: .file, live: true, patchModes: true, sections: sections)
         await resolveRemoteSelections(config)
+    }
+
+    /// Applies v2 sections from somewhere other than config.json (the VoiceInk import) the same way: merged by id,
+    /// through the backup importer. Returns the section names applied and skipped.
+    func importSections(_ config: YapConfig) async -> (applied: [String], skipped: [String]) {
+        await applySections(config)
     }
 
     /// Writes config.json, keeping the previous file as config.json.bak. Returns false if the bytes are unchanged.

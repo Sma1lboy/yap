@@ -112,6 +112,10 @@ If your config's `enhancement.prompt` points to a file such as `prompt.md`, the 
 
 If the account hasn't synced any settings yet, the sheet says so and just leaves you signed in.
 
+### Moving from VoiceInk
+
+If VoiceInk has run on this Mac, **Import from VoiceInk…** in Config & Sync reads its modes, prompts, dictionary, shortcuts and general settings, shows how many of each it found, and imports them after you confirm. Entries with the same id replace Yap's; the rest of Yap's settings stay. API keys, the license, history and downloaded models are not copied. It only runs when you click it; on a Mac without VoiceInk the button is disabled.
+
 ### Deleted items
 
 When you delete a mode, prompt, dictionary entry, custom model or custom provider, Yap records the deletion (in the `deleted` map) so the other Macs delete it too instead of bringing it back. If another Mac edited the same item after you deleted it, the edit wins and the item stays. Deletion records are kept for 90 days, then removed.
