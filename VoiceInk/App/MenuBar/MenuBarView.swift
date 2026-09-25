@@ -29,7 +29,7 @@ struct MenuBarView: View {
 
     private var onboardingMenu: some View {
         Group {
-            Button("Complete Onboarding") {
+            Button("Finish Setting Up Yap…") {
                 showMainWindow()
             }
 
@@ -43,7 +43,11 @@ struct MenuBarView: View {
 
     private var completedOnboardingMenu: some View {
         Group {
-            Button("Toggle Recorder") {
+            Button("Open Yap") {
+                showMainWindow()
+            }
+
+            Button("Start/Stop Dictation") {
                 recorderUIManager.handleToggleRecorderPanelNotification()
             }
 
@@ -152,12 +156,12 @@ struct MenuBarView: View {
 
             Divider()
 
-            Button("Settings") {
+            Button("Settings…") {
                 showMainWindowAndNavigate(to: "Settings")
             }
             .keyboardShortcut(",", modifiers: .command)
 
-            Button("Check for Updates") {
+            Button("Check for Updates…") {
                 updaterViewModel.checkForUpdates()
             }
             .disabled(!updaterViewModel.canCheckForUpdates)
