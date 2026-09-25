@@ -236,7 +236,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
             requestRecordPermission { [self] granted in
                 if granted {
                     Task { @MainActor [self] in
-                        guard await self.passesRecordingPreflight() else {
+                        guard await self.passesRecordingPreflight(modeId: modeId) else {
                             return
                         }
 
@@ -478,49 +478,75 @@ class VoiceInkEngine: NSObject, ObservableObject {
         }
     }
 
-    /// Checks requirements that do not depend on asynchronous app and URL mode resolution.
+    /// Runs before the start sound and recorder panel. Shows a toast and returns false when recording
+    /// cannot work: no mode, microphone denied, or no usable transcription model for the mode that will run.
     @MainActor
-    private func passesRecordingPreflight() async -> Bool {
-        if !ModeManager.shared.hasEnabledConfiguration {
-            await failRecordingPreflight(
-                title: String(localized: "No mode configured"),
-                actionLabel: String(localized: "Manage Modes"),
-                action: ModeSetupNavigator.openModesSettings
+    func canStartRecording(modeId: UUID?) -> Bool {
+        guard let failure = recordingStartFailure(modeId: modeId) else { return true }
+        logger.error("❌ Recording preflight failed: \(failure.title, privacy: .public)")
+        NotificationManager.shared.showNotification(
+            title: failure.title,
+            type: .error,
+            duration: 7.0,
+            actionButton: (failure.actionLabel, failure.action)
+        )
+        return false
+    }
+
+    @MainActor
+    private func recordingStartFailure(modeId: UUID?) -> (title: String, actionLabel: String, action: () -> Void)? {
+        let modeManager = ModeManager.shared
+        if !modeManager.hasEnabledConfiguration {
+            return (
+                String(localized: "No mode configured"),
+                String(localized: "Manage Modes"),
+                ModeSetupNavigator.openModesSettings
             )
-            return false
         }
 
         // .notDetermined is left to the system prompt that recording triggers.
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .denied, .restricted:
-            await failRecordingPreflight(
-                title: String(localized: "Yap can't access the microphone. Allow it in System Settings."),
-                actionLabel: String(localized: "Open Settings"),
-                action: PrivacySettingsPane.microphone.open
+            return (
+                String(localized: "Yap can't access the microphone. Allow it in System Settings."),
+                String(localized: "Open Settings"),
+                PrivacySettingsPane.microphone.open
             )
-            return false
         default:
             break
         }
 
-        return true
+        // Same choice ActiveWindowService makes when recording starts. Browser URL rules resolve
+        // asynchronously, so those recordings rely on the check after recording starts.
+        let mode: ModeConfig?
+        if let modeId, let explicitMode = modeManager.getConfiguration(with: modeId) {
+            mode = explicitMode
+        } else {
+            let frontmostBundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+            let isBrowser = BrowserType.allCases.contains { $0.bundleIdentifier == frontmostBundleID }
+            let hasURLRules = modeManager.enabledConfigurations.contains { !($0.urlConfigs ?? []).isEmpty }
+            if isBrowser && hasURLRules { return nil }
+            mode =
+                frontmostBundleID.flatMap(modeManager.getConfigurationForApp)
+                ?? modeManager.getDefaultConfiguration()
+        }
+
+        let resolution = ModeRuntimeResolver.transcriptionModelResolution(
+            mode: mode,
+            transcriptionModelManager: transcriptionModelManager
+        )
+        if case .available = resolution { return nil }
+        return recordingModelFailure(for: resolution)
     }
 
     @MainActor
-    private func failRecordingPreflight(
-        title: String,
-        actionLabel: String,
-        action: @escaping () -> Void
-    ) async {
-        logger.error("❌ Recording preflight failed: \(title, privacy: .public)")
-        recordingState = .idle
-        NotificationManager.shared.showNotification(
-            title: title,
-            type: .error,
-            duration: 7.0,
-            actionButton: (actionLabel, action)
-        )
-        await recorderUIManager?.dismissRecorderPanel()
+    private func passesRecordingPreflight(modeId: UUID?) async -> Bool {
+        guard canStartRecording(modeId: modeId) else {
+            recordingState = .idle
+            await recorderUIManager?.dismissRecorderPanel()
+            return false
+        }
+        return true
     }
 
     // MARK: - Recording Context
