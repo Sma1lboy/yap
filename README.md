@@ -38,7 +38,7 @@ Yap Cloud is an optional account that pays for transcription and cleanup from a 
 
 **Adding funds.** In **Account → Add Funds**, pick $5, $10 or $20, or Custom (a whole-dollar amount from $5 to $500), and click **Add Funds…**. Checkout opens in your browser; the balance updates when you come back to Yap. Below $1 Yap shows a low-balance warning; when the balance runs out, Yap Cloud requests stop and a notification takes you to Account.
 
-**Monthly cap.** When your account supports it, **Account → Monthly Cap** limits spending per calendar month: pick $5, $10, $20, a custom amount up to $10,000, or No Cap. Once this month's spending reaches the cap, Yap Cloud stops charging until next month or until you raise the cap. A cap of $0 blocks all Yap Cloud calls.
+**Monthly cap.** **Account → Monthly Cap** limits spending per calendar month: pick $5, $10, $20, a custom amount up to $10,000, or No Cap. Once this month's spending reaches the cap, Yap Cloud stops charging until next month or until you raise the cap. A cap of $0 blocks all Yap Cloud calls.
 
 **Devices.** Every Mac you sign in on gets its own token (kept in that Mac's keychain, never synced). **Account → Signed-in Devices** lists them with when each was last used; **Remove** signs that Mac out so it stops charging your balance. It can sign in again with your email. **Sign Out** on the Account page signs out this Mac; modes that use Yap Cloud stop working until you sign in again or switch them to another provider.
 
