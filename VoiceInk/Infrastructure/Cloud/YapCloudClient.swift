@@ -167,9 +167,17 @@ final class YapCloud: ObservableObject {
         ["monthlyCapMicros": capMicros.map { NSNumber(value: $0) } ?? NSNull()]
     }
 
-    /// Cap presets in whole dollars; a custom cap is 1–10 000.
+    /// Cap presets in whole dollars. A custom cap is any decimal dollar amount from $0 (blocks all calls) to
+    /// $10 000, parsed exactly into micros.
     static let monthlyCapPresets = [5, 10, 20]
-    static func isValidMonthlyCap(_ dollars: Int) -> Bool { (1...10_000).contains(dollars) }
+    static let maximumMonthlyCapMicros: Int64 = 10_000_000_000
+    static func monthlyCapMicros(fromDollars text: String) -> Int64? {
+        let trimmed = text.trimmingCharacters(in: CharacterSet(charactersIn: "$ ").union(.whitespaces))
+        guard !trimmed.isEmpty, let micros = micros(fromDecimal: trimmed),
+            (0...maximumMonthlyCapMicros).contains(micros)
+        else { return nil }
+        return micros
+    }
 
     /// Usage spend in `[since, now)`, summed by the server. `since` is the local start of the month for "This Month".
     func fetchUsage(since: Date) async throws -> YapCloudMonthlySpend {
@@ -334,6 +342,17 @@ final class YapCloud: ObservableObject {
         let sign = micros < 0 && units > 0 ? "-" : ""
         let fraction = decimals == 0 ? "" : "." + String(String(units % scale + scale).dropFirst())
         return sign + "$" + String(units / scale) + fraction
+    }
+
+    /// A user-set amount (the cap) shown without losing precision: 2 decimals, more only when needed (`$0.0001`).
+    static func formatExactUSD(micros: Int64) -> String {
+        var decimals = 2
+        var divisor: Int64 = 10_000
+        while decimals < 6, micros % divisor != 0 {
+            decimals += 1
+            divisor /= 10
+        }
+        return formatUSD(micros: micros, decimals: decimals)
     }
 
     /// Ledger amounts: usage rows are usually under a cent, so they get 4 decimals (below $0.0001: "-<$0.0001",
@@ -827,7 +846,12 @@ struct YapCloudConfigDocument: Equatable {
                     == .monthlyCapReached)
             assert(String(data: try! JSONSerialization.data(withJSONObject: limitsBody(capMicros: nil)), encoding: .utf8) == #"{"monthlyCapMicros":null}"#)
             assert(String(data: try! JSONSerialization.data(withJSONObject: limitsBody(capMicros: 20_000_000)), encoding: .utf8) == #"{"monthlyCapMicros":20000000}"#)
-            assert(isValidMonthlyCap(1) && isValidMonthlyCap(10_000) && !isValidMonthlyCap(0) && !isValidMonthlyCap(10_001))
+            assert(monthlyCapMicros(fromDollars: "$0.0001") == 100 && monthlyCapMicros(fromDollars: "0") == 0)
+            assert(monthlyCapMicros(fromDollars: "50") == 50_000_000 && monthlyCapMicros(fromDollars: "10000") == 10_000_000_000)
+            assert(monthlyCapMicros(fromDollars: "10000.01") == nil && monthlyCapMicros(fromDollars: "-1") == nil)
+            assert(monthlyCapMicros(fromDollars: "") == nil && monthlyCapMicros(fromDollars: "abc") == nil)
+            assert(formatExactUSD(micros: 100) == "$0.0001" && formatExactUSD(micros: 5_000_000) == "$5.00")
+            assert(formatExactUSD(micros: 1_234_567) == "$1.234567" && formatExactUSD(micros: 0) == "$0.00")
 
             // Top-up amounts
             assert(isValidTopUp(5) && isValidTopUp(20) && isValidTopUp(500))

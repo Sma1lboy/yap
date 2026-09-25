@@ -169,7 +169,7 @@ private struct SignedInSections: View {
                         Text(
                             String(
                                 format: String(localized: "%@ used of %@ cap"),
-                                YapCloud.formatUSD(micros: spent), YapCloud.formatUSD(micros: cap))
+                                YapCloud.formatLedgerAmount(micros: spent, kind: "usage"), YapCloud.formatExactUSD(micros: cap))
                         )
                         .monospacedDigit()
                         .foregroundStyle(spent >= cap ? AppTheme.Status.error : AppTheme.Text.primary)
@@ -512,10 +512,7 @@ private struct MonthlyCapSection: View {
         case .none: return .value(nil)
         case .preset(let dollars): return .value(Int64(dollars) * 1_000_000)
         case .custom:
-            guard let dollars = Int(customDollars.trimmingCharacters(in: CharacterSet(charactersIn: "$ "))),
-                YapCloud.isValidMonthlyCap(dollars)
-            else { return .invalid }
-            return .value(Int64(dollars) * 1_000_000)
+            return YapCloud.monthlyCapMicros(fromDollars: customDollars).map { .value($0) } ?? .invalid
         }
     }
 
@@ -529,13 +526,13 @@ private struct MonthlyCapSection: View {
             choice = .preset(dollars)
         } else {
             choice = .custom
-            customDollars = String(dollars)
+            customDollars = String(YapCloud.formatExactUSD(micros: cap).dropFirst())
         }
     }
 
     private func save() {
         guard case .value(let micros) = pendingCapMicros else {
-            errorMessage = String(localized: "Enter a whole-dollar cap between $1 and $10,000.")
+            errorMessage = String(localized: "Enter a cap between $0 and $10,000. $0 blocks all Yap Cloud calls.")
             return
         }
         isSaving = true
