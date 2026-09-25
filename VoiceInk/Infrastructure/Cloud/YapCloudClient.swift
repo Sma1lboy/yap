@@ -781,7 +781,8 @@ enum YapCloudError: LocalizedError, Equatable {
         case .monthlyCapReached:
             return String(localized: "You've reached your monthly Yap Cloud spending cap. Raise it under Account to keep going.")
         case .unreachable:
-            return String(localized: "Yap Cloud is temporarily unreachable.")
+            // One sentence for "can't reach it" and "server-side failure"; the per-code fallback adds "(CODE)".
+            return String(localized: "Yap Cloud is temporarily unavailable. Try again shortly.")
         case .invalidAmount:
             return String(
                 format: String(localized: "Enter a whole-dollar amount between $%lld and $%lld."),

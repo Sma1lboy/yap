@@ -30511,7 +30511,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap Cloud 服务暂时不可用，请稍后再试。"
+            "value" : "Yap Cloud 暂时无法使用，请稍后再试。"
           }
         }
       }
@@ -30533,29 +30533,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap Cloud 服务暂时不可用，请稍后再试。（%@）"
-          }
-        }
-      }
-    },
-    "Yap Cloud is temporarily unreachable." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap Cloud ist gerade nicht erreichbar."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap Cloud est temporairement injoignable."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap Cloud 暂时无法连接。"
+            "value" : "Yap Cloud 暂时无法使用，请稍后再试。（%@）"
           }
         }
       }
