@@ -64,6 +64,8 @@ struct AudioFileRow: View {
                     .foregroundColor(.secondary)
             }
             .buttonStyle(.plain)
+            .help("Remove")
+            .accessibilityLabel("Remove")
         }
     }
 
@@ -210,6 +212,8 @@ struct AudioFileRow: View {
                 Image(systemName: "arrow.counterclockwise")
             }
             .buttonStyle(.bordered)
+            .help("Retry")
+            .accessibilityLabel("Retry")
             .controlSize(.small)
         }
     }

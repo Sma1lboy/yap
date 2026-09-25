@@ -148,6 +148,8 @@ struct WhisperModelCardView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
+                .help("More Actions")
+                .accessibilityLabel("More Actions")
                 .frame(width: 20, height: 20)
             }
         }
@@ -204,6 +206,8 @@ struct ImportedWhisperModelCardView: View {
                     }
                     .menuStyle(.borderlessButton)
                     .menuIndicator(.hidden)
+                    .help("More Actions")
+                    .accessibilityLabel("More Actions")
                     .frame(width: 20, height: 20)
                 }
             }

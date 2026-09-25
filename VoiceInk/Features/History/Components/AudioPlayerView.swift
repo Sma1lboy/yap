@@ -431,6 +431,8 @@ struct AudioPlayerView: View {
                         icon: playerManager.isPlaying ? "pause.fill" : "play.fill",
                         action: { playerManager.isPlaying ? playerManager.pause() : playerManager.play() }
                     )
+                    .help(playerManager.isPlaying ? LocalizedStringKey("Pause") : "Play")
+                    .accessibilityLabel(playerManager.isPlaying ? LocalizedStringKey("Pause") : "Play")
                     .scaleEffect(isHovering ? 1.05 : 1.0)
                     .onHover { hovering in
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {

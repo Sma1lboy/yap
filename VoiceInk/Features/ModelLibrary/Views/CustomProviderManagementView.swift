@@ -163,6 +163,8 @@ private struct CustomEnhancementModelRow: View {
             }
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
+            .help("More Actions")
+            .accessibilityLabel("More Actions")
             .frame(width: 22, height: 22)
         }
         .padding(14)

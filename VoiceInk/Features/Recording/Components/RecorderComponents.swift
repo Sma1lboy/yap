@@ -177,6 +177,7 @@ struct RecorderCloseButton: View {
         }
         .buttonStyle(.plain)
         .help("Close")
+        .accessibilityLabel("Close")
     }
 }
 

@@ -73,6 +73,8 @@ struct SettingsView: View {
                                     .foregroundColor(.secondary)
                             }
                             .buttonStyle(.plain)
+                            .help("Remove Secondary Shortcut")
+                            .accessibilityLabel("Remove Secondary Shortcut")
                         }
                     }
                 }
@@ -130,6 +132,7 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.plain)
                         .help("Reset to default")
+                        .accessibilityLabel("Reset to default")
                     }
                 } label: {
                     HStack(spacing: 2) {

@@ -146,6 +146,8 @@ struct FluidAudioModelCardView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
+                .help("More Actions")
+                .accessibilityLabel("More Actions")
                 .frame(width: 20, height: 20)
             }
         }
