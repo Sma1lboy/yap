@@ -314,6 +314,12 @@ struct SettingsView: View {
                 Text("Export all settings, or choose specific categories when importing a backup.")
             }
 
+            Section("History") {
+                LabeledContent("Auto-delete transcripts and audio") {
+                    Button("History Settings…") { isShowingHistorySettings = true }
+                }
+            }
+
             Section("Diagnostics") {
                 DiagnosticsSettingsView()
 
