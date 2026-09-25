@@ -96,8 +96,13 @@ struct ModeConfigDraft {
             } ?? connectedProviders.first
 
         selectedAIProvider = provider?.rawValue
-        guard let provider else {
+        guard let provider, provider != .localCLI else {
             selectedAIModel = nil
+            return
+        }
+
+        if provider == .voiceInkRefine {
+            selectedAIModel = provider.defaultModel
             return
         }
 
@@ -123,6 +128,10 @@ struct ModeConfigDraft {
     }
 
     mutating func ensurePromptSelection(firstPromptId: UUID?) {
+        guard selectedAIProvider != AIProvider.voiceInkRefine.rawValue else {
+            return
+        }
+
         if isAIEnhancementEnabled && selectedPromptId == nil {
             selectedPromptId = firstPromptId
         }

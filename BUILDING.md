@@ -15,7 +15,7 @@ make local
 open ~/Downloads/VoiceInk.app
 ```
 
-`make local` builds Release in `.local-build` and copies the app to `~/Downloads`. There is no native dependency to prepare first: the app is cloud-only (transcription and enhancement go through API providers), so a clean build takes about a minute.
+`make local` prepares `whisper.xcframework` in `~/VoiceInk-Dependencies`, builds Release in `.local-build`, and copies `VoiceInk.app` to `~/Downloads`.
 
 It uses `LocalBuild.xcconfig`, `VoiceInk.local.entitlements`, and the `LOCAL_BUILD` Swift flag. Without an override, it uses the only available Apple Development identity or falls back to ad-hoc signing when none or multiple are found.
 
@@ -36,17 +36,19 @@ Local builds do not include iCloud dictionary sync or automatic updates. Ad-hoc 
 ## Other Commands
 
 - `make check` — verify required tools
+- `make whisper` — prepare `whisper.xcframework`
 - `make build` — build the standard Debug configuration
 - `make dev` — build and launch `VoiceInk Dev.app`
 - `make run` — launch `~/Downloads/VoiceInk.app`, or the first app found in DerivedData
 - `make release` — create the signed release package
 - `make release-setup` — configure release notarization credentials
-- `make clean` — remove `.local-build`
+- `make clean` — remove `~/VoiceInk-Dependencies`
 - `make help` — list all commands
 
 ## Build with Xcode
 
 ```bash
+make setup
 open VoiceInk.xcodeproj
 ```
 
@@ -55,5 +57,6 @@ Select the `VoiceInk` scheme. Run builds `VoiceInk Dev.app`; Archive uses Releas
 ## Troubleshooting
 
 - Run `make check` to verify the required tools.
+- Run `make whisper` if the framework is missing.
 - If several Apple Development identities exist, set `LOCAL_CODESIGN_IDENTITY` explicitly.
 - For additional help, open a [GitHub issue](https://github.com/Beingpax/VoiceInk/issues).

@@ -1,10 +1,14 @@
+# Define a directory for dependencies in the user's home folder
+DEPS_DIR := $(HOME)/VoiceInk-Dependencies
+WHISPER_CPP_DIR := $(DEPS_DIR)/whisper.cpp
+FRAMEWORK_PATH := $(WHISPER_CPP_DIR)/build-apple/whisper.xcframework
 LOCAL_DERIVED_DATA := $(CURDIR)/.local-build
 LOCAL_CODESIGN_IDENTITY ?=
 # Extra xcodebuild settings for `local`, e.g. MARKETING_VERSION=1.0.0 CURRENT_PROJECT_VERSION=1042
 EXTRA_BUILD_SETTINGS ?=
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean build local check healthcheck help dev run
+.PHONY: all clean whisper setup build local check healthcheck help dev run
 
 # Default target
 all: check build
@@ -24,14 +28,32 @@ check:
 healthcheck: check
 
 # Build process
-build:
+whisper:
+	@mkdir -p $(DEPS_DIR)
+	@if [ ! -d "$(FRAMEWORK_PATH)" ]; then \
+		echo "Building whisper.xcframework in $(DEPS_DIR)..."; \
+		if [ ! -d "$(WHISPER_CPP_DIR)" ]; then \
+			git clone https://github.com/ggerganov/whisper.cpp.git $(WHISPER_CPP_DIR); \
+		else \
+			(cd $(WHISPER_CPP_DIR) && git pull); \
+		fi; \
+		cd $(WHISPER_CPP_DIR) && ./build-xcframework.sh; \
+	else \
+		echo "whisper.xcframework already built in $(DEPS_DIR), skipping build"; \
+	fi
+
+setup: whisper
+	@echo "Whisper framework is ready at $(FRAMEWORK_PATH)"
+	@echo "Please ensure your Xcode project references the framework from this new location."
+
+build: setup
 	xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug CODE_SIGN_IDENTITY="" \
 		-skipPackagePluginValidation \
 		-skipMacroValidation \
 		build
 
 # Build locally with stable Apple Development signing when available.
-local: check
+local: check setup
 	@echo "Building VoiceInk for local use (no Apple Developer certificate required)..."
 	@rm -rf "$(LOCAL_DERIVED_DATA)"
 	@SIGNING_IDENTITY="$(LOCAL_CODESIGN_IDENTITY)"; \
@@ -103,18 +125,20 @@ run:
 # Cleanup
 clean:
 	@echo "Cleaning build artifacts..."
-	@rm -rf "$(LOCAL_DERIVED_DATA)"
+	@rm -rf $(DEPS_DIR)
 	@echo "Clean complete"
 
 # Help
 help:
 	@echo "Available targets:"
 	@echo "  check/healthcheck  Check if required CLI tools are installed"
+	@echo "  whisper            Clone and build whisper.cpp XCFramework"
+	@echo "  setup              Copy whisper XCFramework to VoiceInk project"
 	@echo "  build              Build the VoiceInk Xcode project"
 	@echo "  local              Build locally with stable signing when available"
 	@echo "    LOCAL_CODESIGN_IDENTITY=<SHA or name> overrides automatic Apple Development detection"
 	@echo "  run                Launch the built VoiceInk app"
 	@echo "  dev                Build and run the app (for development)"
 	@echo "  all                Run full build process (default)"
-	@echo "  clean              Remove the local build directory (.local-build)"
+	@echo "  clean              Remove build artifacts"
 	@echo "  help               Show this help message"

@@ -535,7 +535,19 @@ struct AudioPlayerView: View {
 
             ScrollView {
                 let prompts = enhancementService.allPrompts
+                let customPromptsUnavailable =
+                    currentEnhancementConfiguration?.provider == .voiceInkRefine
                 VStack(alignment: .leading, spacing: 4) {
+                    if customPromptsUnavailable {
+                        Text(
+                            "Custom prompts aren't available with VoiceInk Refine. Select a Mode that uses another AI provider."
+                        )
+                        .foregroundColor(AppTheme.Text.secondary)
+                        .font(.system(size: 12))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 8)
+                        .padding(.bottom, 6)
+                    }
 
                     if prompts.isEmpty {
                         Text("No Prompts Available")
@@ -548,11 +560,12 @@ struct AudioPlayerView: View {
                             EnhancementPromptRow(
                                 prompt: prompt,
                                 isSelected: currentEnhancementConfiguration?.prompt?.id == prompt.id,
-                                isDisabled: false,
+                                isDisabled: customPromptsUnavailable,
                                 action: {
                                     selectPromptForReEnhancement(prompt)
                                 }
                             )
+                            .disabled(customPromptsUnavailable)
                         }
                     }
                 }

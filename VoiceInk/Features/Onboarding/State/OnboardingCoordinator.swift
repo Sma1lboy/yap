@@ -35,6 +35,12 @@ final class OnboardingCoordinator: ObservableObject {
         }
     }
 
+    @Published var storedTranscriptionSetupKind: String {
+        didSet {
+            defaults.set(storedTranscriptionSetupKind, forKey: OnboardingStorageKeys.transcriptionSetupKind)
+        }
+    }
+
     @Published var storedOnboardingTranscriptionProvider: String {
         didSet {
             defaults.set(storedOnboardingTranscriptionProvider, forKey: OnboardingStorageKeys.transcriptionProvider)
@@ -79,6 +85,10 @@ final class OnboardingCoordinator: ObservableObject {
         self.experienceStepIndex = defaults.integer(forKey: OnboardingStorageKeys.experienceIndex)
         self.storedOnboardingAIProvider =
             defaults.string(forKey: OnboardingStorageKeys.aiProvider) ?? AIProvider.groq.rawValue
+        self.storedTranscriptionSetupKind =
+            defaults.string(
+                forKey: OnboardingStorageKeys.transcriptionSetupKind
+            ) ?? OnboardingTranscriptionSetupKind.local.rawValue
         self.storedOnboardingTranscriptionProvider =
             defaults.string(
                 forKey: OnboardingStorageKeys.transcriptionProvider
@@ -242,7 +252,7 @@ final class OnboardingCoordinator: ObservableObject {
         ]
 
         let supportedProviders = AIProvider.allCases.filter { provider in
-            provider.supportsEnhancement && provider != .custom
+            provider.supportsEnhancement && provider.requiresAPIKey && provider != .custom
         }
 
         return supportedProviders.sorted { first, second in
@@ -255,6 +265,10 @@ final class OnboardingCoordinator: ObservableObject {
 
             return first.rawValue < second.rawValue
         }
+    }
+
+    var transcriptionSetupKind: OnboardingTranscriptionSetupKind {
+        OnboardingTranscriptionSetupKind(rawValue: storedTranscriptionSetupKind) ?? .local
     }
 
     var onboardingTranscriptionProviderOptions: [any CloudProvider] {
@@ -282,8 +296,13 @@ final class OnboardingCoordinator: ObservableObject {
     }
 
     var selectedOnboardingTranscriptionModel: (any TranscriptionModel)? {
-        guard let provider = selectedOnboardingTranscriptionProvider else { return nil }
-        return selectedTranscriptionModel(for: provider)
+        switch transcriptionSetupKind {
+        case .local:
+            return requiredTranscriptionModel
+        case .cloud:
+            guard let provider = selectedOnboardingTranscriptionProvider else { return nil }
+            return selectedTranscriptionModel(for: provider)
+        }
     }
 
     var selectedOnboardingTranscriptionModelName: String? {
@@ -355,6 +374,12 @@ final class OnboardingCoordinator: ObservableObject {
         return onboardingProviderOptions.first ?? .groq
     }
 
+    var requiredTranscriptionModel: FluidAudioModel? {
+        TranscriptionModelRegistry.models
+            .compactMap { $0 as? FluidAudioModel }
+            .first { $0.name == "parakeet-tdt-0.6b-v3" }
+    }
+
     func selectedOnboardingTranscriptionProviderKeyBinding() -> Binding<String> {
         Binding(
             get: { [weak self] in
@@ -381,8 +406,19 @@ final class OnboardingCoordinator: ObservableObject {
         )
     }
 
-    var isTranscriptionSetupReady: Bool {
-        selectedOnboardingTranscriptionModel != nil && isSelectedTranscriptionProviderVerified
+    func isTranscriptionModelDownloaded(using modelManager: FluidAudioModelManager) -> Bool {
+        guard let requiredTranscriptionModel else { return false }
+        return modelManager.isFluidAudioModelDownloaded(requiredTranscriptionModel)
+    }
+
+    func isTranscriptionSetupReady(isTranscriptionModelDownloaded: Bool) -> Bool {
+        switch transcriptionSetupKind {
+        case .local:
+            return isTranscriptionModelDownloaded
+        case .cloud:
+            guard selectedOnboardingTranscriptionModel != nil else { return false }
+            return isSelectedTranscriptionProviderVerified
+        }
     }
 
     /// Also true once transcription setup was skipped, so the trust/license steps stay reachable;
@@ -423,4 +459,20 @@ enum OnboardingStorageKeys {
         experienceIndex,
         "onboardingStarterModeIndex",
     ]
+}
+
+enum OnboardingTranscriptionSetupKind: String, CaseIterable, Identifiable {
+    case local
+    case cloud
+
+    var id: String { rawValue }
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .local:
+            return "Local"
+        case .cloud:
+            return "Cloud"
+        }
+    }
 }

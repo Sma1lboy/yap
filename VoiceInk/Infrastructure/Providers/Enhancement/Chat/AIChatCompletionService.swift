@@ -12,6 +12,7 @@ extension AIService {
         modelName: String?,
         messages: [ChatMessage],
         systemPrompt: String? = nil,
+        localUserPrompt: String? = nil,
         timeout: TimeInterval = 30
     ) async throws -> AIChatCompletionResult {
         let resolvedModel = modelName?.isEmpty == false ? modelName! : selectedModel(for: provider)
@@ -76,6 +77,22 @@ extension AIService {
                 temperature: 0.3,
                 timeout: timeout
             )
+        case .voiceInkRefine:
+            throw EnhancementError.customError(
+                String(localized: "VoiceInk Refine only supports transcript cleanup.")
+            )
+        case .ollama:
+            result = try await enhanceWithOllama(
+                text: localUserPrompt ?? chatPrompt(from: messages),
+                systemPrompt: systemPrompt ?? "",
+                model: resolvedModel,
+                timeout: timeout
+            )
+        case .localCLI:
+            result = try await enhanceWithLocalCLI(
+                systemPrompt: systemPrompt ?? "",
+                userPrompt: localUserPrompt ?? chatPrompt(from: messages)
+            )
         default:
             guard let baseURL = URL(string: provider.baseURL) else {
                 throw EnhancementError.notConfigured
@@ -139,5 +156,33 @@ extension AIService {
             throw EnhancementError.notConfigured
         }
         return key
+    }
+
+    private func chatPrompt(from messages: [ChatMessage]) -> String {
+        let formattedMessages = messages.map { message in
+            let label: String
+            switch message.role {
+            case "assistant":
+                label = "assistant"
+            case "user":
+                label = "user"
+            case "system":
+                label = "system"
+            default:
+                label = "other"
+            }
+            return """
+                <message role="\(label)">
+                \(message.content)
+                </message>
+                """
+        }
+        .joined(separator: "\n\n")
+
+        return """
+            <conversation>
+            \(formattedMessages)
+            </conversation>
+            """
     }
 }

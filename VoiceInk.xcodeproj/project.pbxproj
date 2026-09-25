@@ -12,9 +12,22 @@
 		E161D4A12F41ECB90086F83D /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E161D4A02F41ECB90086F83D /* CloudKit.framework */; };
 		E1701E75305E77220098872B /* LLMkit in Frameworks */ = {isa = PBXBuildFile; productRef = E1701E74305E77220098872B /* LLMkit */; };
 		E1ADD45F2CC544F100303ECB /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = E1ADD45E2CC544F100303ECB /* Sparkle */; };
+		E1AF669B3031B7AA006D50FA /* FluidAudio in Frameworks */ = {isa = PBXBuildFile; productRef = E1AF669A3031B7AA006D50FA /* FluidAudio */; };
+		E1C0A0022FA8000000000001 /* TranscribeCpp in Frameworks */ = {isa = PBXBuildFile; productRef = E1C0A0012FA8000000000001 /* TranscribeCpp */; };
 		E1D7EF992E35E16C00640029 /* MediaRemoteAdapter in Frameworks */ = {isa = PBXBuildFile; productRef = E1D7EF982E35E16C00640029 /* MediaRemoteAdapter */; };
 		E1D7EF9A2E35E19B00640029 /* MediaRemoteAdapter in Embed Frameworks */ = {isa = PBXBuildFile; productRef = E1D7EF982E35E16C00640029 /* MediaRemoteAdapter */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		E1DD1EE12FA1D7D30020AF3B /* Zip in Frameworks */ = {isa = PBXBuildFile; productRef = E1DD1EE02FA1D7D30020AF3B /* Zip */; };
+		E1F350112F1D10D600790A2C /* whisper.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1A0BD052EB1E7B800266859 /* whisper.xcframework */; };
+		E1F350122F1D10D600790A2C /* whisper.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E1A0BD052EB1E7B800266859 /* whisper.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E1F511012FA3B47000F00001 /* SelectedTextKit in Frameworks */ = {isa = PBXBuildFile; productRef = E1F511032FA3B47000F00001 /* SelectedTextKit */; };
+		E1FA00062FA7000000000001 /* VoiceInkRefineXPCProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1FA00052FA7000000000001 /* VoiceInkRefineXPCProtocol.swift */; };
+		E1FA00072FA7000000000001 /* VoiceInkRefineXPCProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1FA00052FA7000000000001 /* VoiceInkRefineXPCProtocol.swift */; };
+		E1FA00082FA7000000000001 /* VoiceInkRefineXPC.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = E1FA00012FA7000000000001 /* VoiceInkRefineXPC.xpc */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		E1FA00132FA7000000000001 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = E1F900102FA6000000000001 /* MLXLLM */; };
+		E1FA00142FA7000000000001 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = E1F900112FA6000000000001 /* MLXLMCommon */; };
+		E1FA00152FA7000000000001 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = E1F900122FA6000000000001 /* MLXHuggingFace */; };
+		E1FA00162FA7000000000001 /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = E1F900132FA6000000000001 /* HuggingFace */; };
+		E1FA00172FA7000000000001 /* Tokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = E1F900142FA6000000000001 /* Tokenizers */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +45,13 @@
 			remoteGlobalIDString = E11473AF2CBE0F0A00318EE4;
 			remoteInfo = VoiceInk;
 		};
+		E1FA00122FA7000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E11473A82CBE0F0A00318EE4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E1FA000D2FA7000000000001;
+			remoteInfo = VoiceInkRefineXPC;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -41,9 +61,21 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				E1F350122F1D10D600790A2C /* whisper.xcframework in Embed Frameworks */,
 				E1D7EF9A2E35E19B00640029 /* MediaRemoteAdapter in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1FA000C2FA7000000000001 /* Embed XPC Services */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
+			dstSubfolderSpec = 16;
+			files = (
+				E1FA00082FA7000000000001 /* VoiceInkRefineXPC.xpc in Embed XPC Services */,
+			);
+			name = "Embed XPC Services";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -53,6 +85,11 @@
 		E11473C32CBE0F0B00318EE4 /* VoiceInkTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoiceInkTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E11473CD2CBE0F0B00318EE4 /* VoiceInkUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VoiceInkUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E161D4A02F41ECB90086F83D /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
+		E1A0BD052EB1E7B800266859 /* whisper.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = whisper.xcframework; path = "$(HOME)/VoiceInk-Dependencies/whisper.cpp/build-apple/whisper.xcframework"; sourceTree = "<group>"; };
+		E1B2DCAA2E3DE70A008DFD68 /* whisper.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = whisper.xcframework; path = "../whisper.cpp/build-apple/whisper.xcframework"; sourceTree = "<group>"; };
+		E1CE28772E4336150082B758 /* whisper.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = whisper.xcframework; path = "../build-apple/whisper.xcframework"; sourceTree = "<group>"; };
+		E1FA00012FA7000000000001 /* VoiceInkRefineXPC.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = VoiceInkRefineXPC.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1FA00052FA7000000000001 /* VoiceInkRefineXPCProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInkRefineXPCProtocol.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -62,6 +99,13 @@
 				Info.plist,
 			);
 			target = E11473AF2CBE0F0A00318EE4 /* VoiceInk */;
+		};
+		E1FA00032FA7000000000001 /* Exceptions for "VoiceInkRefineXPC" folder in "VoiceInkRefineXPC" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E1FA000D2FA7000000000001 /* VoiceInkRefineXPC */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -84,6 +128,14 @@
 			path = VoiceInkUITests;
 			sourceTree = "<group>";
 		};
+		E1FA00022FA7000000000001 /* VoiceInkRefineXPC */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E1FA00032FA7000000000001 /* Exceptions for "VoiceInkRefineXPC" folder in "VoiceInkRefineXPC" target */,
+			);
+			path = VoiceInkRefineXPC;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -92,9 +144,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				E1342C1F2EB4844800CED8A2 /* Atomics in Frameworks */,
+				E1F350112F1D10D600790A2C /* whisper.xcframework in Frameworks */,
 				E1D7EF992E35E16C00640029 /* MediaRemoteAdapter in Frameworks */,
 				E161D4A12F41ECB90086F83D /* CloudKit.framework in Frameworks */,
 				E1ADD45F2CC544F100303ECB /* Sparkle in Frameworks */,
+				E1C0A0022FA8000000000001 /* TranscribeCpp in Frameworks */,
+				E1AF669B3031B7AA006D50FA /* FluidAudio in Frameworks */,
+				E1DD1EE12FA1D7D30020AF3B /* Zip in Frameworks */,
 				E1701E75305E77220098872B /* LLMkit in Frameworks */,
 				E13461ED2FD1CCCD005B6A81 /* MarkdownUI in Frameworks */,
 				E1F511012FA3B47000F00001 /* SelectedTextKit in Frameworks */,
@@ -115,6 +171,18 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E1FA000A2FA7000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1FA00132FA7000000000001 /* MLXLLM in Frameworks */,
+				E1FA00142FA7000000000001 /* MLXLMCommon in Frameworks */,
+				E1FA00152FA7000000000001 /* MLXHuggingFace in Frameworks */,
+				E1FA00162FA7000000000001 /* HuggingFace in Frameworks */,
+				E1FA00172FA7000000000001 /* Tokenizers in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -131,6 +199,8 @@
 			isa = PBXGroup;
 			children = (
 				E11473B22CBE0F0A00318EE4 /* VoiceInk */,
+				E1FA00022FA7000000000001 /* VoiceInkRefineXPC */,
+				E1FA00042FA7000000000001 /* Shared */,
 				A63D21E830A49E0000000001 /* Tests */,
 				E114741C2CBE1DE200318EE4 /* Frameworks */,
 				E11473B12CBE0F0A00318EE4 /* Products */,
@@ -143,6 +213,7 @@
 				E11473B02CBE0F0A00318EE4 /* VoiceInk Dev.app */,
 				E11473C32CBE0F0B00318EE4 /* VoiceInkTests.xctest */,
 				E11473CD2CBE0F0B00318EE4 /* VoiceInkUITests.xctest */,
+				E1FA00012FA7000000000001 /* VoiceInkRefineXPC.xpc */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -151,8 +222,19 @@
 			isa = PBXGroup;
 			children = (
 				E161D4A02F41ECB90086F83D /* CloudKit.framework */,
+				E1A0BD052EB1E7B800266859 /* whisper.xcframework */,
+				E1CE28772E4336150082B758 /* whisper.xcframework */,
+				E1B2DCAA2E3DE70A008DFD68 /* whisper.xcframework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E1FA00042FA7000000000001 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				E1FA00052FA7000000000001 /* VoiceInkRefineXPCProtocol.swift */,
+			);
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -166,10 +248,12 @@
 				E11473AD2CBE0F0A00318EE4 /* Frameworks */,
 				E11473AE2CBE0F0A00318EE4 /* Resources */,
 				E1A8C8CD2E1257B7003E58EC /* Embed Frameworks */,
+				E1FA000C2FA7000000000001 /* Embed XPC Services */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				E1FA00112FA7000000000001 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				E11473B22CBE0F0A00318EE4 /* VoiceInk */,
@@ -179,8 +263,11 @@
 				E1ADD45E2CC544F100303ECB /* Sparkle */,
 				E1D7EF982E35E16C00640029 /* MediaRemoteAdapter */,
 				E1342C1E2EB4844800CED8A2 /* Atomics */,
+				E1DD1EE02FA1D7D30020AF3B /* Zip */,
+				E1C0A0012FA8000000000001 /* TranscribeCpp */,
 				E1F511032FA3B47000F00001 /* SelectedTextKit */,
 				E13461EC2FD1CCCD005B6A81 /* MarkdownUI */,
+				E1AF669A3031B7AA006D50FA /* FluidAudio */,
 				E1701E74305E77220098872B /* LLMkit */,
 			);
 			productName = VoiceInk;
@@ -233,6 +320,33 @@
 			productReference = E11473CD2CBE0F0B00318EE4 /* VoiceInkUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		E1FA000D2FA7000000000001 /* VoiceInkRefineXPC */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E1FA00102FA7000000000001 /* Build configuration list for PBXNativeTarget "VoiceInkRefineXPC" */;
+			buildPhases = (
+				E1FA00092FA7000000000001 /* Sources */,
+				E1FA000A2FA7000000000001 /* Frameworks */,
+				E1FA000B2FA7000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E1FA00022FA7000000000001 /* VoiceInkRefineXPC */,
+			);
+			name = VoiceInkRefineXPC;
+			packageProductDependencies = (
+				E1F900102FA6000000000001 /* MLXLLM */,
+				E1F900112FA6000000000001 /* MLXLMCommon */,
+				E1F900122FA6000000000001 /* MLXHuggingFace */,
+				E1F900132FA6000000000001 /* HuggingFace */,
+				E1F900142FA6000000000001 /* Tokenizers */,
+			);
+			productName = VoiceInkRefineXPC;
+			productReference = E1FA00012FA7000000000001 /* VoiceInkRefineXPC.xpc */;
+			productType = "com.apple.product-type.xpc-service";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -254,6 +368,9 @@
 						CreatedOnToolsVersion = 16.0;
 						TestTargetID = E11473AF2CBE0F0A00318EE4;
 					};
+					E1FA000D2FA7000000000001 = {
+						CreatedOnToolsVersion = 26.0;
+					};
 				};
 			};
 			buildConfigurationList = E11473AB2CBE0F0A00318EE4 /* Build configuration list for PBXProject "VoiceInk" */;
@@ -271,9 +388,15 @@
 			packageReferences = (
 				E1ADD45D2CC544F100303ECB /* XCRemoteSwiftPackageReference "Sparkle" */,
 				E1D7EF972E35E16C00640029 /* XCRemoteSwiftPackageReference "mediaremote-adapter" */,
+				E1ECEC142E44590200DFFBA8 /* XCRemoteSwiftPackageReference "Zip" */,
 				E1342C1D2EB4844800CED8A2 /* XCRemoteSwiftPackageReference "swift-atomics" */,
 				E1F511022FA3B47000F00001 /* XCRemoteSwiftPackageReference "SelectedTextKit" */,
 				E13461EB2FD1CCCD005B6A81 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
+				E1F900012FA6000000000001 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
+				E1F900022FA6000000000001 /* XCRemoteSwiftPackageReference "swift-huggingface" */,
+				E1F900032FA6000000000001 /* XCRemoteSwiftPackageReference "swift-transformers" */,
+				E1C0A0002FA8000000000001 /* XCRemoteSwiftPackageReference "Transcribe-cpp-swift" */,
+				E1AF66993031B7AA006D50FA /* XCRemoteSwiftPackageReference "FluidAudio" */,
 				E1701E73305E77220098872B /* XCRemoteSwiftPackageReference "LLMkit" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -284,6 +407,7 @@
 				E11473AF2CBE0F0A00318EE4 /* VoiceInk */,
 				E11473C22CBE0F0B00318EE4 /* VoiceInkTests */,
 				E11473CC2CBE0F0B00318EE4 /* VoiceInkUITests */,
+				E1FA000D2FA7000000000001 /* VoiceInkRefineXPC */,
 			);
 		};
 /* End PBXProject section */
@@ -310,6 +434,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E1FA000B2FA7000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -317,6 +448,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E1FA00062FA7000000000001 /* VoiceInkRefineXPCProtocol.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -334,6 +466,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E1FA00092FA7000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1FA00072FA7000000000001 /* VoiceInkRefineXPCProtocol.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -346,6 +486,11 @@
 			isa = PBXTargetDependency;
 			target = E11473AF2CBE0F0A00318EE4 /* VoiceInk */;
 			targetProxy = E11473CE2CBE0F0B00318EE4 /* PBXContainerItemProxy */;
+		};
+		E1FA00112FA7000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E1FA000D2FA7000000000001 /* VoiceInkRefineXPC */;
+			targetProxy = E1FA00122FA7000000000001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -412,7 +557,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG ENABLE_NATIVE_SPEECH_ANALYZER $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -472,7 +617,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ENABLE_NATIVE_SPEECH_ANALYZER $(inherited)";
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -507,7 +652,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.prakashjoshipax.VoiceInk.dev;
 				PRODUCT_MODULE_NAME = VoiceInk;
 				PRODUCT_NAME = "VoiceInk Dev";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG ENABLE_NATIVE_SPEECH_ANALYZER $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -543,7 +688,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = me.sma1lboy.yap;
 				PRODUCT_MODULE_NAME = VoiceInk;
 				PRODUCT_NAME = Yap;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ENABLE_NATIVE_SPEECH_ANALYZER $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -617,6 +762,61 @@
 			};
 			name = Release;
 		};
+		E1FA000E2FA7000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 213;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VoiceInkRefineXPC/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = VoiceInkRefineXPC;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 2.13;
+				PRODUCT_BUNDLE_IDENTIFIER = com.prakashjoshipax.VoiceInk.RefineXPC;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E1FA000F2FA7000000000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 213;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VoiceInkRefineXPC/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = VoiceInkRefineXPC;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 2.13;
+				PRODUCT_BUNDLE_IDENTIFIER = com.prakashjoshipax.VoiceInk.RefineXPC;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -656,6 +856,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		E1FA00102FA7000000000001 /* Build configuration list for PBXNativeTarget "VoiceInkRefineXPC" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E1FA000E2FA7000000000001 /* Debug */,
+				E1FA000F2FA7000000000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -691,6 +900,22 @@
 				minimumVersion = 2.6.4;
 			};
 		};
+		E1AF66993031B7AA006D50FA /* XCRemoteSwiftPackageReference "FluidAudio" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/FluidInference/FluidAudio";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		E1C0A0002FA8000000000001 /* XCRemoteSwiftPackageReference "Transcribe-cpp-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Beingpax/Transcribe-cpp-swift.git";
+			requirement = {
+				kind = exactVersion;
+				version = "0.2.0-dev.856d7c1";
+			};
+		};
 		E1D7EF972E35E16C00640029 /* XCRemoteSwiftPackageReference "mediaremote-adapter" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Beingpax/mediaremote-adapter";
@@ -699,12 +924,46 @@
 				kind = branch;
 			};
 		};
+		E1ECEC142E44590200DFFBA8 /* XCRemoteSwiftPackageReference "Zip" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/marmelroy/Zip";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.2;
+			};
+		};
 		E1F511022FA3B47000F00001 /* XCRemoteSwiftPackageReference "SelectedTextKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Beingpax/SelectedTextKit.git";
 			requirement = {
 				branch = "performance/off-main-menu-action";
 				kind = branch;
+			};
+		};
+		E1F900012FA6000000000001 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift-lm.git";
+			requirement = {
+				kind = revision;
+				revision = cd1ab3dd98ceb02d095490aa25e61298ea3e2f5b;
+			};
+			traits = (
+			);
+		};
+		E1F900022FA6000000000001 /* XCRemoteSwiftPackageReference "swift-huggingface" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-huggingface.git";
+			requirement = {
+				kind = exactVersion;
+				version = 0.9.0;
+			};
+		};
+		E1F900032FA6000000000001 /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-transformers.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.3.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -730,15 +989,55 @@
 			package = E1ADD45D2CC544F100303ECB /* XCRemoteSwiftPackageReference "Sparkle" */;
 			productName = Sparkle;
 		};
+		E1AF669A3031B7AA006D50FA /* FluidAudio */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1AF66993031B7AA006D50FA /* XCRemoteSwiftPackageReference "FluidAudio" */;
+			productName = FluidAudio;
+		};
+		E1C0A0012FA8000000000001 /* TranscribeCpp */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1C0A0002FA8000000000001 /* XCRemoteSwiftPackageReference "Transcribe-cpp-swift" */;
+			productName = TranscribeCpp;
+		};
 		E1D7EF982E35E16C00640029 /* MediaRemoteAdapter */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E1D7EF972E35E16C00640029 /* XCRemoteSwiftPackageReference "mediaremote-adapter" */;
 			productName = MediaRemoteAdapter;
 		};
+		E1DD1EE02FA1D7D30020AF3B /* Zip */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1ECEC142E44590200DFFBA8 /* XCRemoteSwiftPackageReference "Zip" */;
+			productName = Zip;
+		};
 		E1F511032FA3B47000F00001 /* SelectedTextKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E1F511022FA3B47000F00001 /* XCRemoteSwiftPackageReference "SelectedTextKit" */;
 			productName = SelectedTextKit;
+		};
+		E1F900102FA6000000000001 /* MLXLLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1F900012FA6000000000001 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLLM;
+		};
+		E1F900112FA6000000000001 /* MLXLMCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1F900012FA6000000000001 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLMCommon;
+		};
+		E1F900122FA6000000000001 /* MLXHuggingFace */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1F900012FA6000000000001 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXHuggingFace;
+		};
+		E1F900132FA6000000000001 /* HuggingFace */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1F900022FA6000000000001 /* XCRemoteSwiftPackageReference "swift-huggingface" */;
+			productName = HuggingFace;
+		};
+		E1F900142FA6000000000001 /* Tokenizers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1F900032FA6000000000001 /* XCRemoteSwiftPackageReference "swift-transformers" */;
+			productName = Tokenizers;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

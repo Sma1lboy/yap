@@ -40,6 +40,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
    - macOS 15.0 or later
    - Latest version of Xcode
    - Latest version of Swift
+   - whisper.cpp properly set up
 
 2. Follow our coding standards:
    - Use Swift style guidelines

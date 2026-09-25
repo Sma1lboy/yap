@@ -29,7 +29,9 @@ class AudioTranscriptionService: ObservableObject {
     init(modelContext: ModelContext, engine: VoiceInkEngine) {
         self.modelContext = modelContext
         self.enhancementService = engine.enhancementService
-        self.serviceRegistry = TranscriptionServiceRegistry(modelContext: modelContext)
+        self.serviceRegistry = TranscriptionServiceRegistry(
+            modelProvider: engine.whisperModelManager, modelsDirectory: engine.whisperModelManager.modelsDirectory,
+            modelContext: modelContext)
     }
 
     init(
@@ -59,7 +61,10 @@ class AudioTranscriptionService: ObservableObject {
                 for: model,
                 realtimeEnabled: mode?.isRealtimeTranscriptionEnabled
             )
-            let requestContext = TranscriptionRequestContext(language: language)
+            let requestContext = TranscriptionRequestContext(
+                language: language,
+                prompt: model.provider == .whisper ? WhisperPrompt.resolvedPrompt(for: language) : nil
+            )
             let modeName = (mode?.isEnabled == true) ? mode?.name : nil
             let modeEmoji = (mode?.isEnabled == true) ? mode?.icon.value : nil
 

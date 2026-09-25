@@ -70,6 +70,7 @@ struct ModeConfigFormView: View {
             footer
         }
         .onAppear {
+            applyVoiceInkRefineRulesIfNeeded()
             applyOutputRules()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isNameFieldFocused = true
@@ -296,6 +297,16 @@ struct ModeConfigFormView: View {
 
                 Spacer(minLength: 12)
 
+                if modelInfo.provider == .nativeApple {
+                    NativeAppleLanguageAssetControl(
+                        localeIdentifier: effectiveLanguage(for: modelInfo),
+                        isVisible: true,
+                        startsDownloadAutomatically: true
+                    )
+                    .layoutPriority(1)
+                    .frame(width: 28, height: 24)
+                }
+
                 Picker("", selection: languageBinding) {
                     ForEach(
                         availableLanguages(for: modelInfo).sorted(by: {
@@ -332,12 +343,18 @@ struct ModeConfigFormView: View {
                             draft.selectedAIModel = nil
                         }
                         if draft.selectedAIModel == nil,
-                            let provider = configuredSelectedAIProvider
+                            let provider = configuredSelectedAIProvider,
+                            provider != .localCLI
                         {
                             draft.selectedAIModel = warmupSnapshot.selectedModel(for: provider)
                         }
-                        if draft.selectedPromptId == nil {
+                        if configuredSelectedAIProvider != .voiceInkRefine,
+                            draft.selectedPromptId == nil
+                        {
                             draft.selectedPromptId = warmupSnapshot.firstPromptId
+                        }
+                        if configuredSelectedAIProvider == .ollama {
+                            aiService.refreshOllamaAvailabilityInBackground()
                         }
                     }
                 }
@@ -369,9 +386,23 @@ struct ModeConfigFormView: View {
                     }
                     .onChange(of: draft.selectedAIProvider) { _, newValue in
                         if let provider = newValue.flatMap({ AIProvider(rawValue: $0) }) {
-                            draft.selectedAIModel = warmupSnapshot.selectedModel(for: provider)
+                            switch provider {
+                            case .localCLI:
+                                draft.selectedAIModel = nil
+                            case .voiceInkRefine:
+                                applyVoiceInkRefineRules()
+                            case .ollama:
+                                if draft.selectedAIModel == nil || draft.selectedAIModel?.isEmpty == true {
+                                    draft.selectedAIModel = warmupSnapshot.selectedModel(for: provider)
+                                }
+                                aiService.refreshOllamaAvailabilityInBackground()
+                            default:
+                                draft.selectedAIModel = warmupSnapshot.selectedModel(for: provider)
+                            }
 
-                            if draft.selectedPromptId == nil {
+                            if provider != .voiceInkRefine,
+                                draft.selectedPromptId == nil
+                            {
                                 draft.selectedPromptId = warmupSnapshot.firstPromptId
                             }
                         }
@@ -380,8 +411,10 @@ struct ModeConfigFormView: View {
 
                 if let provider = configuredSelectedAIProvider {
                     aiModelPicker(for: provider)
-                    promptPicker
-                    contextAwarenessRow
+                    if provider != .voiceInkRefine {
+                        promptPicker
+                        contextAwarenessRow
+                    }
                 }
             }
         }
@@ -389,48 +422,66 @@ struct ModeConfigFormView: View {
 
     @ViewBuilder
     private func aiModelPicker(for provider: AIProvider) -> some View {
-        let models = aiModelOptions(for: provider)
-        if models.isEmpty {
+        if provider == .localCLI {
             LabeledContent("AI Model") {
-                Text(
-                    provider == .openRouter
-                        ? LocalizedStringKey("No models loaded") : LocalizedStringKey("No models available")
-                )
-                .foregroundColor(.secondary)
-                .italic()
+                Text("Default")
+                    .foregroundColor(.secondary)
+            }
+            .onAppear {
+                draft.selectedAIModel = nil
+            }
+        } else if provider == .voiceInkRefine {
+            LabeledContent("AI Model") {
+                Text(VoiceInkRefineService.modelName)
+                    .foregroundColor(.secondary)
+            }
+            .onAppear {
+                applyVoiceInkRefineRules()
             }
         } else {
-            let modelBinding = Binding<String>(
-                get: {
-                    if let model = draft.selectedAIModel, !model.isEmpty { return model }
-                    return warmupSnapshot.selectedModel(for: provider)
-                },
-                set: { newModelValue in
-                    draft.selectedAIModel = newModelValue
+            let models = aiModelOptions(for: provider)
+            if models.isEmpty {
+                LabeledContent("AI Model") {
+                    Text(
+                        provider == .openRouter
+                            ? LocalizedStringKey("No models loaded") : LocalizedStringKey("No models available")
+                    )
+                    .foregroundColor(.secondary)
+                    .italic()
                 }
-            )
-
-            if provider.supportsCustomModelID {
-                EnhancementModelPicker(
-                    title: "AI Model",
-                    provider: provider,
-                    models: models,
-                    savedCustomModelID: aiService.customModelID(for: provider),
-                    draftModel: modelBinding
-                )
             } else {
-                Picker("AI Model", selection: modelBinding) {
-                    ForEach(models, id: \.self) { model in
-                        Text(model).tag(model)
+                let modelBinding = Binding<String>(
+                    get: {
+                        if let model = draft.selectedAIModel, !model.isEmpty { return model }
+                        return warmupSnapshot.selectedModel(for: provider)
+                    },
+                    set: { newModelValue in
+                        draft.selectedAIModel = newModelValue
+                    }
+                )
+
+                if provider.supportsCustomModelID {
+                    EnhancementModelPicker(
+                        title: "AI Model",
+                        provider: provider,
+                        models: models,
+                        savedCustomModelID: aiService.customModelID(for: provider),
+                        draftModel: modelBinding
+                    )
+                } else {
+                    Picker("AI Model", selection: modelBinding) {
+                        ForEach(models, id: \.self) { model in
+                            Text(model).tag(model)
+                        }
                     }
                 }
-            }
 
-            if provider == .openRouter {
-                Button("Refresh Models") {
-                    Task { await aiService.fetchOpenRouterModels() }
+                if provider == .openRouter {
+                    Button("Refresh Models") {
+                        Task { await aiService.fetchOpenRouterModels() }
+                    }
+                    .help("Refresh models")
                 }
-                .help("Refresh models")
             }
         }
     }
@@ -535,10 +586,21 @@ struct ModeConfigFormView: View {
         draft.isAIEnhancementEnabled
             && selectedPrompt != nil
             && configuredSelectedAIProvider != nil
+            && configuredSelectedAIProvider != .voiceInkRefine
     }
 
     private func applyOutputRules() {
         draft.applyOutputRules(canRespond: canRespond)
+    }
+
+    private func applyVoiceInkRefineRulesIfNeeded() {
+        guard configuredSelectedAIProvider == .voiceInkRefine else { return }
+        applyVoiceInkRefineRules()
+    }
+
+    private func applyVoiceInkRefineRules() {
+        draft.selectedAIModel = VoiceInkRefineService.modelName
+        applyOutputRules()
     }
 
     private var advancedSection: some View {

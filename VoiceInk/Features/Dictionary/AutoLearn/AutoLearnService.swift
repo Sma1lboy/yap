@@ -43,7 +43,7 @@ actor AutoLearnService {
     }
 
     /// Retries deferred reviews when `.AppSettingsDidChange` signals that a
-    /// provider may be available.
+    /// provider or Ollama connection may be available.
     private func observeProviderAvailability() {
         guard providerAvailabilityObserver == nil else { return }
         providerAvailabilityObserver = NotificationCenter.default.addObserver(

@@ -334,6 +334,21 @@ final class OnboardingFlowController {
         }
     }
 
+    func downloadTranscriptionModel(
+        _ model: FluidAudioModel,
+        modelManager: FluidAudioModelManager
+    ) {
+        guard coordinator.requiredPermissionsGranted,
+            coordinator.hasSelectedOnboardingMicrophone,
+            !modelManager.isFluidAudioModelDownloaded(model),
+            !modelManager.isFluidAudioModelDownloading(model)
+        else {
+            return
+        }
+
+        modelManager.startDownload(model)
+    }
+
     func moveToExperienceStep(
         _ index: Int,
         enhancementService: AIEnhancementService
@@ -413,6 +428,12 @@ final class OnboardingFlowController {
         coordinator.isSelectedTranscriptionProviderVerified = APIKeyManager.shared.hasAPIKey(
             forProvider: provider.providerKey
         )
+    }
+
+    func selectOnboardingTranscriptionSetup(_ kind: OnboardingTranscriptionSetupKind) {
+        coordinator.storedTranscriptionSetupKind = kind.rawValue
+        ensureDefaultOnboardingTranscriptionProvider()
+        refreshTranscriptionSetupVerification()
     }
 
     func ensureDefaultOnboardingTranscriptionProvider() {

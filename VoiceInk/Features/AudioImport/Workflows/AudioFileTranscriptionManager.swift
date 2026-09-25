@@ -122,7 +122,11 @@ class AudioTranscriptionManager: ObservableObject {
     private func processItem(
         _ item: AudioFileQueueItem, modelContext: ModelContext, engine: VoiceInkEngine, mode: ModeConfig
     ) async {
-        let serviceRegistry = TranscriptionServiceRegistry(modelContext: modelContext)
+        let serviceRegistry = TranscriptionServiceRegistry(
+            modelProvider: engine.whisperModelManager,
+            modelsDirectory: engine.whisperModelManager.modelsDirectory,
+            modelContext: modelContext
+        )
 
         do {
             guard
@@ -275,6 +279,8 @@ class AudioTranscriptionManager: ObservableObject {
                 item.status = .failed(message: error.localizedDescription)
             }
         }
+
+        await serviceRegistry.cleanup()
     }
 }
 

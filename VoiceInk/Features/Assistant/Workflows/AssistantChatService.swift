@@ -99,6 +99,12 @@ final class AssistantChatService {
         if let enhancementError = error as? EnhancementError, case .timeout = enhancementError {
             return true
         }
+        if let localError = error as? LocalAIError, case .timeout = localError {
+            return true
+        }
+        if let localCLIError = error as? LocalCLIError, case .timeout = localCLIError {
+            return true
+        }
 
         let nsError = error as NSError
         return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorTimedOut

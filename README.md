@@ -12,7 +12,6 @@ What this fork changes:
 - A calmer UI: monochrome sidebar, a Home screen that shows the default mode and recent transcripts, SF Symbols instead of emoji.
 - Onboarding lets you skip the transcription and AI provider steps ("Set It Up Later") and configure everything from a JSON file instead.
 - Its own update channel: CI signs every release with a stable self-signed certificate, publishes it, and updates both the Sparkle appcast (in-app updates) and the Homebrew cask.
-- Cloud-only: the on-device engines (Whisper, Parakeet, Apple Speech, transcribe.cpp) and local enhancement (VoiceInk Refine, Ollama, Local CLI) are removed. Transcription and cleanup go through API providers such as OpenRouter, Groq, Deepgram or a custom OpenAI-compatible endpoint. Selections that pointed at a removed local model or provider move to OpenRouter (`microsoft/mai-transcribe-2`, `deepseek/deepseek-v4.1-flash`) on first launch. Model files downloaded by earlier builds are not deleted automatically. To get the disk space back, remove `WhisperModels/`, `VoiceInkRefine/` and `TranscribeCpp/` under `~/Library/Application Support/me.sma1lboy.yap/`, and `~/Library/Application Support/FluidAudio/` (Parakeet).
 - A duck icon (`design/logo.svg`).
 - `setup/`: a tuned setup for Chinese–English code-switched dictation through OpenRouter, plus the benchmark scripts used to pick the models.
 
@@ -51,7 +50,7 @@ Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription 
 
 ## Releasing
 
-Push a tag `vX.Y.Z`. CI (`.github/workflows/release.yml`) builds on macOS 26, signs with the "Yap Self-Signed" certificate, publishes `Yap.zip` to GitHub Releases, then commits the new `appcast.xml` item (Sparkle EdDSA-signed) and the `Casks/yap.rb` version in one commit to `main`. Build numbers are `1000 + run number`.
+Push a tag `vX.Y.Z`. CI (`.github/workflows/release.yml`) builds on macOS 26, signs with the "Yap Self-Signed" certificate, publishes `Yap.zip` to GitHub Releases, then commits the new `appcast.xml` item (Sparkle EdDSA-signed) and the `Casks/yap.rb` version in one commit to `main`. Build numbers are `1000 + run number`. A release takes about 13 minutes when the whisper.cpp cache (saved from a `main` run, kept warm weekly by `keep-cache.yml`) is hit, about 21 minutes when it isn't.
 
 Because every release is signed with the same certificate, macOS keeps the Microphone and Accessibility permissions across updates. The app is not notarized; Homebrew and the install script remove the quarantine flag.
 

@@ -144,6 +144,7 @@ enum AppDefaults {
 
             // Recording & Transcription
             "IsTextFormattingEnabled": true,
+            "IsVADEnabled": true,
             "SelectedLanguage": "en",
             "AppendTrailingSpace": true,
             "RecorderType": "mini",
@@ -169,6 +170,7 @@ enum AppDefaults {
             EnhancementRequestSettings.retryOnTimeoutKey: EnhancementRequestSettings.defaultRetryOnTimeout,
 
             // Model
+            "PrewarmModelOnWake": true,
 
         ])
 

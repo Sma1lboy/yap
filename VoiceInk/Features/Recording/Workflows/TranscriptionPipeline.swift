@@ -227,6 +227,18 @@ class TranscriptionPipeline {
         } catch {
             let errorDescription = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
 
+            if let nativeAppleError = error as? NativeAppleTranscriptionService.ServiceError,
+                nativeAppleError.shouldShowNotification
+            {
+                await MainActor.run {
+                    NotificationManager.shared.showNotification(
+                        title: errorDescription,
+                        type: .error,
+                        duration: 5.0
+                    )
+                }
+            }
+
             transcription.text = String(format: String(localized: "Transcription Failed: %@"), errorDescription)
             transcription.transcriptionStatus = TranscriptionStatus.failed.rawValue
         }

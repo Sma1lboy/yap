@@ -79,7 +79,15 @@ class AIEnhancementService: ObservableObject {
     func isConfigured(for configuration: EnhancementRuntimeConfiguration) -> Bool {
         guard let provider = configuration.provider else { return false }
 
+        if provider == .voiceInkRefine {
+            return aiService.voiceInkRefineService.isAvailableInModes
+        }
+
         guard configuration.prompt != nil else { return false }
+
+        if provider == .localCLI || provider == .ollama {
+            return true
+        }
 
         if provider == .custom {
             guard let modelName = configuration.modelName else { return false }
@@ -192,6 +200,27 @@ class AIEnhancementService: ObservableObject {
             return ("", nil, nil)
         }
 
+        if provider == .voiceInkRefine {
+            do {
+                let result = try await aiService.enhanceWithVoiceInkRefine(transcript: text)
+                let filteredResult = AIEnhancementOutputFilter.filter(
+                    result.trimmingCharacters(in: .whitespacesAndNewlines)
+                )
+                guard !filteredResult.isEmpty else {
+                    throw EnhancementError.enhancementFailed
+                }
+                return (
+                    filteredResult,
+                    nil,
+                    text
+                )
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                throw EnhancementError.customError(error.localizedDescription)
+            }
+        }
+
         guard let prompt = configuration.prompt else {
             throw EnhancementError.notConfigured
         }
@@ -204,7 +233,7 @@ class AIEnhancementService: ObservableObject {
             contextSnapshot: contextSnapshot
         )
 
-        if provider != .openRouter {
+        if provider != .openRouter, provider != .ollama, provider != .localCLI {
             try await waitForRateLimit()
         }
 
@@ -214,6 +243,7 @@ class AIEnhancementService: ObservableObject {
                 modelName: modelName,
                 messages: [.user(formattedText)],
                 systemPrompt: systemMessage,
+                localUserPrompt: formattedText,
                 timeout: requestTimeout
             )
             if let openRouterCompletion = completion.openRouterCompletion {
@@ -227,7 +257,7 @@ class AIEnhancementService: ObservableObject {
             let filteredResult = AIEnhancementOutputFilter.filter(
                 completion.text.trimmingCharacters(in: .whitespacesAndNewlines)
             )
-            guard !filteredResult.isEmpty else {
+            guard provider == .ollama || provider == .localCLI || !filteredResult.isEmpty else {
                 throw EnhancementError.enhancementFailed
             }
             return (
@@ -237,6 +267,20 @@ class AIEnhancementService: ObservableObject {
             )
         } catch let error as LLMKitError {
             throw mapLLMKitError(error)
+        } catch let error as LocalAIError {
+            if case .timeout = error {
+                throw EnhancementError.timeout
+            }
+            throw EnhancementError.customError(
+                error.errorDescription ?? "An unknown Ollama error occurred."
+            )
+        } catch let error as LocalCLIError {
+            if case .timeout = error {
+                throw EnhancementError.timeout
+            }
+            throw EnhancementError.customError(
+                error.errorDescription ?? "An unknown Local CLI error occurred."
+            )
         } catch let error as EnhancementError {
             throw error
         } catch {
@@ -433,6 +477,13 @@ class AIEnhancementService: ObservableObject {
         var didUpdateModes = false
 
         for index in updatedConfigurations.indices {
+            if updatedConfigurations[index].selectedAIProvider == AIProvider.voiceInkRefine.rawValue {
+                if updatedConfigurations[index].selectedAIModel != VoiceInkRefineService.modelName {
+                    updatedConfigurations[index].selectedAIModel = VoiceInkRefineService.modelName
+                    didUpdateModes = true
+                }
+            }
+
             let selectedPrompt = updatedConfigurations[index].selectedPrompt
             let hasInvalidPrompt = selectedPrompt.map { !availablePromptIds.contains($0) } ?? false
             let hasMissingPrompt = selectedPrompt == nil

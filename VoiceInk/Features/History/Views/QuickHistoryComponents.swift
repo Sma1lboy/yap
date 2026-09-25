@@ -215,8 +215,18 @@ struct QuickHistoryDetailActionBar: View {
 
             ScrollView {
                 let prompts = enhancementService.allPrompts
+                let promptsUnavailable = enhancementConfiguration?.provider == .voiceInkRefine
 
                 VStack(alignment: .leading, spacing: 4) {
+                    if promptsUnavailable {
+                        Text("Custom prompts aren't available with VoiceInk Refine. Select another mode first.")
+                            .font(.system(size: 12))
+                            .foregroundStyle(AppTheme.Text.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 8)
+                            .padding(.bottom, 6)
+                    }
+
                     if prompts.isEmpty {
                         Text("No Prompts Available")
                             .font(.system(size: 13))
@@ -227,13 +237,14 @@ struct QuickHistoryDetailActionBar: View {
                             EnhancementPromptRow(
                                 prompt: prompt,
                                 isSelected: enhancementConfiguration?.prompt?.id == prompt.id,
-                                isDisabled: false,
+                                isDisabled: promptsUnavailable,
                                 action: {
                                     isShowingPrompts = false
                                     selectedPromptOverride = prompt
                                     enhance(using: prompt)
                                 }
                             )
+                            .disabled(promptsUnavailable)
                         }
                     }
                 }
