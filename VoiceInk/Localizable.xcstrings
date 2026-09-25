@@ -30516,6 +30516,28 @@
         }
       }
     },
+    "Yap Cloud is temporarily unreachable." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud ist gerade nicht erreichbar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud est temporairement injoignable."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 暂时无法连接。"
+          }
+        }
+      }
+    },
     "Yap Cloud speech-to-text model, billed to your balance" : {
       "localizations" : {
         "de" : {
