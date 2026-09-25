@@ -7,8 +7,7 @@ protocol CloudConfigDocument {
     var config: Data { get }
 }
 
-/// Where the synced config lives. The Yap Cloud client conforms at merge time:
-/// `extension YapCloud: ConfigCloudStore {}` and `extension YapCloudConfigDocument: CloudConfigDocument {}`.
+/// Where the synced config lives: Yap Cloud (see YapCloud+ConfigSync.swift), or a fake in the selfCheck.
 protocol ConfigCloudStore: AnyObject {
     associatedtype Document: CloudConfigDocument
     var isSignedIn: Bool { get }
@@ -43,7 +42,8 @@ final class CloudConfigSync: ObservableObject {
         localConfig: { await YapConfigLoader.shared.makeConfigData() },
         applyRemote: { data in
             try await YapConfigLoader.shared.applyConfigData(data)
-            try YapConfigLoader.shared.writeConfigFile(data)
+            // The server re-serializes the JSON; write it back in config.json's stable form.
+            try YapConfigLoader.shared.writeConfigFile(YapConfig.decode(data).encoded())
         })
 
     /// Set once the Yap Cloud client is available; nil means cloud sync is unavailable.

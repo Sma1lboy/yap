@@ -162,6 +162,7 @@ struct VoiceInkApp: App {
         _menuBarManager = StateObject(wrappedValue: menuBarManager)
         menuBarManager.configure(engine: engine)
 
+        CloudConfigSync.shared.store = YapCloud.shared
         YapConfigLoader.shared.attach(
             aiService: aiService,
             enhancementService: enhancementService,
