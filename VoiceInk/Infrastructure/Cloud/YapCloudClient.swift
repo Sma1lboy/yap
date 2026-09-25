@@ -42,6 +42,13 @@ final class YapCloud: ObservableObject {
     @Published private(set) var accountRefreshError: String?
     /// This month's spend from `/v1/usage`; nil until loaded.
     @Published private(set) var monthlySpend: YapCloudMonthlySpend?
+    /// Set when Checkout opens; cleared once the balance goes up (or the user stops waiting).
+    @Published private(set) var pendingTopUp: PendingTopUp?
+
+    struct PendingTopUp: Equatable {
+        let balanceBeforeMicros: Int64
+        let startedAt: Date
+    }
 
     private init() {
         #if DEBUG
@@ -56,7 +63,7 @@ final class YapCloud: ObservableObject {
         NotificationCenter.default.addObserver(
             forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            Task { await self?.refreshAccount() }
+            Task { @MainActor in await self?.refreshAfterReturning() }
         }
     }
 
@@ -167,9 +174,17 @@ final class YapCloud: ObservableObject {
         ["monthlyCapMicros": capMicros.map { NSNumber(value: $0) } ?? NSNull()]
     }
 
-    /// Cap presets in whole dollars; a custom cap is 1–10 000.
+    /// Cap presets in whole dollars. A custom cap is any decimal dollar amount from $0 (blocks all calls) to
+    /// $10 000, parsed exactly into micros.
     static let monthlyCapPresets = [5, 10, 20]
-    static func isValidMonthlyCap(_ dollars: Int) -> Bool { (1...10_000).contains(dollars) }
+    static let maximumMonthlyCapMicros: Int64 = 10_000_000_000
+    static func monthlyCapMicros(fromDollars text: String) -> Int64? {
+        let trimmed = text.trimmingCharacters(in: CharacterSet(charactersIn: "$ ").union(.whitespaces))
+        guard !trimmed.isEmpty, let micros = micros(fromDecimal: trimmed),
+            (0...maximumMonthlyCapMicros).contains(micros)
+        else { return nil }
+        return micros
+    }
 
     /// Usage spend in `[since, now)`, summed by the server. `since` is the local start of the month for "This Month".
     func fetchUsage(since: Date) async throws -> YapCloudMonthlySpend {
@@ -219,6 +234,7 @@ final class YapCloud: ObservableObject {
         defer { isRefreshingAccount = false }
         do {
             me = try await fetchMe()
+            settlePendingTopUp()
             ledger = try await fetchLedger()
             isLedgerLoaded = true
             let monthStart = Calendar.current.dateInterval(of: .month, for: Date())?.start ?? Date()
@@ -290,6 +306,60 @@ final class YapCloud: ObservableObject {
             name: .navigateToDestination, object: nil, userInfo: ["destination": "Account"])
     }
 
+    // MARK: - Top-up flow
+
+    /// Opens Stripe Checkout in the browser and starts waiting for the balance to go up.
+    @MainActor
+    func openCheckout(amountUSD: Int) async throws {
+        let url = try await checkoutURL(amountUSD: amountUSD)
+        // The balance to compare against once the payment lands.
+        if let fresh = try? await fetchMe() { me = fresh }
+        pendingTopUp = PendingTopUp(balanceBeforeMicros: balanceMicros ?? 0, startedAt: Date())
+        NSWorkspace.shared.open(url)
+    }
+
+    @MainActor
+    func stopWaitingForTopUp() { pendingTopUp = nil }
+
+    /// Coming back from the browser: refresh, and while a payment is pending re-check a couple of times,
+    /// since Stripe's webhook can land a few seconds after the success page.
+    @MainActor
+    func refreshAfterReturning() async {
+        await refreshAccount()
+        for delay in [3, 8] where pendingTopUp != nil {
+            try? await Task.sleep(for: .seconds(delay))
+            await refreshAccount()
+        }
+    }
+
+    /// After a /v1/me fetch: a higher balance while waiting means the top-up arrived; say so once.
+    @MainActor
+    private func settlePendingTopUp() {
+        guard let pending = pendingTopUp else { return }
+        if Date().timeIntervalSince(pending.startedAt) > 2 * 3600 {
+            pendingTopUp = nil
+            return
+        }
+        guard let balance = balanceMicros,
+            let credited = Self.creditedMicros(before: pending.balanceBeforeMicros, after: balance)
+        else { return }
+        pendingTopUp = nil
+        NotificationManager.shared.showNotification(
+            title: String(format: String(localized: "Added %@ to your Yap Cloud balance."), Self.formatUSD(micros: credited)),
+            type: .success,
+            duration: 5)
+    }
+
+    static func creditedMicros(before: Int64, after: Int64) -> Int64? {
+        after > before ? after - before : nil
+    }
+
+    /// `yap://account/refresh` (also `yap://account`), the link paygate's checkout success page returns to.
+    static func isAccountRefreshURL(_ url: URL) -> Bool {
+        guard url.scheme?.lowercased() == "yap", url.host?.lowercased() == "account" else { return false }
+        return ["", "/", "/refresh"].contains(url.path.lowercased())
+    }
+
     /// Shows the account notification when `error` is a Yap Cloud 402 (Add Funds) or 401 (sign in again).
     /// Returns whether it did, so callers can skip their generic failure message.
     @MainActor
@@ -334,6 +404,17 @@ final class YapCloud: ObservableObject {
         let sign = micros < 0 && units > 0 ? "-" : ""
         let fraction = decimals == 0 ? "" : "." + String(String(units % scale + scale).dropFirst())
         return sign + "$" + String(units / scale) + fraction
+    }
+
+    /// A user-set amount (the cap) shown without losing precision: 2 decimals, more only when needed (`$0.0001`).
+    static func formatExactUSD(micros: Int64) -> String {
+        var decimals = 2
+        var divisor: Int64 = 10_000
+        while decimals < 6, micros % divisor != 0 {
+            decimals += 1
+            divisor /= 10
+        }
+        return formatUSD(micros: micros, decimals: decimals)
     }
 
     /// Ledger amounts: usage rows are usually under a cent, so they get 4 decimals (below $0.0001: "-<$0.0001",
@@ -827,7 +908,23 @@ struct YapCloudConfigDocument: Equatable {
                     == .monthlyCapReached)
             assert(String(data: try! JSONSerialization.data(withJSONObject: limitsBody(capMicros: nil)), encoding: .utf8) == #"{"monthlyCapMicros":null}"#)
             assert(String(data: try! JSONSerialization.data(withJSONObject: limitsBody(capMicros: 20_000_000)), encoding: .utf8) == #"{"monthlyCapMicros":20000000}"#)
-            assert(isValidMonthlyCap(1) && isValidMonthlyCap(10_000) && !isValidMonthlyCap(0) && !isValidMonthlyCap(10_001))
+            assert(monthlyCapMicros(fromDollars: "$0.0001") == 100 && monthlyCapMicros(fromDollars: "0") == 0)
+            assert(monthlyCapMicros(fromDollars: "50") == 50_000_000 && monthlyCapMicros(fromDollars: "10000") == 10_000_000_000)
+            assert(monthlyCapMicros(fromDollars: "10000.01") == nil && monthlyCapMicros(fromDollars: "-1") == nil)
+            assert(monthlyCapMicros(fromDollars: "") == nil && monthlyCapMicros(fromDollars: "abc") == nil)
+            assert(formatExactUSD(micros: 100) == "$0.0001" && formatExactUSD(micros: 5_000_000) == "$5.00")
+            assert(formatExactUSD(micros: 1_234_567) == "$1.234567" && formatExactUSD(micros: 0) == "$0.00")
+
+            // Top-up arrival
+            assert(creditedMicros(before: 5, after: 10_000_005) == 10_000_000)
+            assert(creditedMicros(before: 5, after: 5) == nil && creditedMicros(before: 5, after: 3) == nil)
+            assert(creditedMicros(before: -200, after: 4_999_800) == 5_000_000)
+
+            // yap:// links
+            assert(isAccountRefreshURL(URL(string: "yap://account/refresh")!) && isAccountRefreshURL(URL(string: "YAP://Account")!))
+            assert(isAccountRefreshURL(URL(string: "yap://account/refresh?session=cs_1")!))
+            assert(!isAccountRefreshURL(URL(string: "yap://account/delete")!) && !isAccountRefreshURL(URL(string: "yap://settings")!))
+            assert(!isAccountRefreshURL(URL(string: "https://account/refresh")!))
 
             // Top-up amounts
             assert(isValidTopUp(5) && isValidTopUp(20) && isValidTopUp(500))

@@ -33,6 +33,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var pendingOpenFileURL: URL?
 
     func application(_ application: NSApplication, open urls: [URL]) {
+        if urls.contains(where: YapCloud.isAccountRefreshURL) {
+            showAccountAndRefresh()
+            return
+        }
         guard let url = urls.first(where: { SupportedMedia.isSupported(url: $0) }) else {
             return
         }
@@ -58,5 +62,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 NotificationCenter.default.post(name: .openFileForTranscription, object: nil, userInfo: ["url": url])
             }
         }
+    }
+
+    /// `yap://account/refresh` (paygate's checkout success page): bring Yap forward on Account and reload the balance.
+    private func showAccountAndRefresh() {
+        if let menuBarManager {
+            menuBarManager.activateForPresentedWindow()
+        } else {
+            AppPresentationPolicy.activateForUserFacingWindow()
+        }
+        // Set before the window exists so a cold start opens straight on Account.
+        MainWindowNavigation.shared.navigate(to: .account)
+        if WindowManager.shared.currentMainWindow() == nil {
+            WindowManager.shared.prepareForUserRequestedMainWindow()
+            NotificationCenter.default.post(name: .showMainWindowRequested, object: nil)
+        } else {
+            WindowManager.shared.showMainWindow()
+        }
+        Task { @MainActor in await YapCloud.shared.refreshAccount() }
     }
 }

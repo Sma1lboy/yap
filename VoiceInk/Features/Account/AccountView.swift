@@ -155,6 +155,9 @@ private struct SignedInSections: View {
                 Button("Add Funds…", action: openCheckout)
                     .disabled(isOpeningCheckout)
             }
+            if cloud.pendingTopUp != nil {
+                YapCloudTopUpWaitingRow()
+            }
         } header: {
             Text("Add Funds")
         } footer: {
@@ -169,7 +172,7 @@ private struct SignedInSections: View {
                         Text(
                             String(
                                 format: String(localized: "%@ used of %@ cap"),
-                                YapCloud.formatUSD(micros: spent), YapCloud.formatUSD(micros: cap))
+                                YapCloud.formatLedgerAmount(micros: spent, kind: "usage"), YapCloud.formatExactUSD(micros: cap))
                         )
                         .monospacedDigit()
                         .foregroundStyle(spent >= cap ? AppTheme.Status.error : AppTheme.Text.primary)
@@ -251,7 +254,7 @@ private struct SignedInSections: View {
         Task {
             defer { isOpeningCheckout = false }
             do {
-                NSWorkspace.shared.open(try await cloud.checkoutURL(amountUSD: value))
+                try await cloud.openCheckout(amountUSD: value)
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -418,6 +421,7 @@ struct YapCloudSignInForm: View {
 
 /// Preset top-up buttons that open Stripe Checkout directly (onboarding can't navigate to Account).
 struct YapCloudQuickTopUp: View {
+    @ObservedObject private var cloud = YapCloud.shared
     @State private var isOpening = false
     @State private var errorMessage: String?
 
@@ -435,6 +439,9 @@ struct YapCloudQuickTopUp: View {
                     .font(.caption)
                     .foregroundStyle(AppTheme.Status.error)
             }
+            if cloud.pendingTopUp != nil {
+                YapCloudTopUpWaitingRow()
+            }
         }
     }
 
@@ -444,7 +451,7 @@ struct YapCloudQuickTopUp: View {
         Task { @MainActor in
             defer { isOpening = false }
             do {
-                NSWorkspace.shared.open(try await YapCloud.shared.checkoutURL(amountUSD: amount))
+                try await cloud.openCheckout(amountUSD: amount)
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -512,10 +519,7 @@ private struct MonthlyCapSection: View {
         case .none: return .value(nil)
         case .preset(let dollars): return .value(Int64(dollars) * 1_000_000)
         case .custom:
-            guard let dollars = Int(customDollars.trimmingCharacters(in: CharacterSet(charactersIn: "$ "))),
-                YapCloud.isValidMonthlyCap(dollars)
-            else { return .invalid }
-            return .value(Int64(dollars) * 1_000_000)
+            return YapCloud.monthlyCapMicros(fromDollars: customDollars).map { .value($0) } ?? .invalid
         }
     }
 
@@ -529,13 +533,13 @@ private struct MonthlyCapSection: View {
             choice = .preset(dollars)
         } else {
             choice = .custom
-            customDollars = String(dollars)
+            customDollars = String(YapCloud.formatExactUSD(micros: cap).dropFirst())
         }
     }
 
     private func save() {
         guard case .value(let micros) = pendingCapMicros else {
-            errorMessage = String(localized: "Enter a whole-dollar cap between $1 and $10,000.")
+            errorMessage = String(localized: "Enter a cap between $0 and $10,000. $0 blocks all Yap Cloud calls.")
             return
         }
         isSaving = true
@@ -548,5 +552,22 @@ private struct MonthlyCapSection: View {
                 errorMessage = error.localizedDescription
             }
         }
+    }
+}
+
+/// "Waiting for payment to complete…" while a Checkout is open; the balance check runs when Yap is active again.
+struct YapCloudTopUpWaitingRow: View {
+    @ObservedObject private var cloud = YapCloud.shared
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ProgressView().controlSize(.small)
+            Text("Waiting for payment to complete…")
+                .foregroundStyle(.secondary)
+            Spacer()
+            Button("Stop Waiting") { cloud.stopWaitingForTopUp() }
+                .buttonStyle(.link)
+        }
+        .font(.callout)
     }
 }
