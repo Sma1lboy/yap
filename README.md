@@ -56,10 +56,11 @@ Schema v2 (`"version": 2`) adds whole-settings sections. They use the same JSON 
 | `prompts` | Array of `{ id, title, promptText, useSystemInstructions }`. Merged by `id` like `modes`. |
 | `dictionary` | `{ "vocabulary": ["Yap"], "replacements": { "yep": "Yap" } }`. Merged into the existing dictionary. |
 | `general` | Same object as the export's `generalSettings`: global shortcuts, launch at login, recorder style, retention, paste and auto-learn settings. |
+| `customModels` | Custom transcription model definitions, same objects as the export's `customCloudModels`, merged by `id`. `apiKey` is never written; a model synced from another Mac shows "API key needed" in Models until you add its key. |
 | `modified` | `{ "modes": { "<id>": "<ISO 8601 time>" }, "prompts": {…}, "vocabulary": { "<word>": … }, "replacements": { "<source>": … } }`: when each entry last changed. Written by Yap; you don't need to edit it. |
 | `deleted` | Same shape: tombstones for deleted entries. An entry is removed (from the file and from the app) when its tombstone is newer than its `modified` time, or it has none. Tombstones older than 90 days are dropped. |
 
-v2 sections apply first, then the v1 fields on top, so `enhancement.prompt` and `defaultMode` win over the same settings inside `modes`. Empty arrays and objects count as unset. API keys are only ever read from `keys` (`env:NAME` or literal); custom model definitions are not part of the config because they can carry keys.
+v2 sections apply first, then the v1 fields on top, so `enhancement.prompt` and `defaultMode` win over the same settings inside `modes`. Empty arrays and objects count as unset. API keys are only ever read from `keys` (`env:NAME` or literal) and are never written to the config; custom model definitions sync without theirs.
 
 Settings → Config & Sync → Write Current Settings to Config goes the other way: it writes the app's current settings as a v2 file. Keys keep only the `env:NAME` references already in the file; a literal key is never written, so it disappears from the file (the keychain still has it). `defaultMode` and `enhancement.enabled` are dropped because `modes` carries them, and `transcription` / `enhancement` stay only while they match the modes. Reading the written file back changes nothing. The previous file is kept as `config.json.bak`. "Keep Config File in Sync" (off by default) does the same about 2 s after any settings change.
 
