@@ -363,7 +363,7 @@ struct VoiceInkApp: App {
                         .environmentObject(transcriptionModelManager)
                         .environmentObject(aiService)
                         .environmentObject(enhancementService)
-                        .frame(width: AppWindowLayout.width)
+                        .frame(width: AppWindowLayout.defaultWidth)
                         .frame(minHeight: AppWindowLayout.minimumHeight)
                         .background(
                             WindowAccessor { window in
@@ -373,7 +373,7 @@ struct VoiceInkApp: App {
             }
         }
         .windowStyle(.hiddenTitleBar)
-        .defaultSize(width: AppWindowLayout.width, height: AppWindowLayout.minimumHeight)
+        .defaultSize(width: AppWindowLayout.defaultWidth, height: AppWindowLayout.minimumHeight)
         .windowResizability(.contentSize)
         .commands {
             CommandGroup(replacing: .newItem) {}
