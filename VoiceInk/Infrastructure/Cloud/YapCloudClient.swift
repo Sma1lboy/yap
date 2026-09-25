@@ -424,8 +424,13 @@ final class YapCloud: ObservableObject {
         defer { scheduleBalanceRefresh() }
         let payload = try JSONSerialization.data(withJSONObject: body)
         do {
-            let data = try await Self.retryingOnce { try await self.proxyOnce(path, payload: payload, timeout: timeout) }
+            let (data, http) = try await Self.retryingOnce {
+                try await self.proxyOnce(path, payload: payload, timeout: timeout)
+            }
             noteReachability(nil)
+            if let id = Self.generationID(header: http.value(forHTTPHeaderField: "x-generation-id"), body: data) {
+                Self.generationCollector?.add(id)
+            }
             return data
         } catch {
             let classified = Self.classify(error)
@@ -434,7 +439,7 @@ final class YapCloud: ObservableObject {
         }
     }
 
-    private func proxyOnce(_ path: String, payload: Data, timeout: TimeInterval) async throws -> Data {
+    private func proxyOnce(_ path: String, payload: Data, timeout: TimeInterval) async throws -> (Data, HTTPURLResponse) {
         guard let token else { throw YapCloudError.notSignedIn }
         var request = URLRequest(url: URL(string: path, relativeTo: baseURL)!, timeoutInterval: timeout)
         request.httpMethod = "POST"
@@ -449,7 +454,45 @@ final class YapCloud: ObservableObject {
         guard (200..<300).contains(http.statusCode) else {
             throw YapCloudError(status: http.statusCode, body: data, authenticated: true)
         }
-        return data
+        return (data, http)
+    }
+
+    // MARK: - Per-dictation cost
+
+    /// Collects the generation ids of the billed calls made inside `YapCloud.$generationCollector.withValue`,
+    /// so the pipeline can store them on the transcription without threading them through every provider API.
+    final class GenerationCollector: @unchecked Sendable {
+        private let lock = NSLock()
+        private var ids: [String] = []
+        func add(_ id: String) { lock.withLock { ids.append(id) } }
+        var last: String? { lock.withLock { ids.last } }
+    }
+
+    @TaskLocal static var generationCollector: GenerationCollector?
+
+    /// The OpenRouter generation id paygate charged under: the `x-generation-id` header it forwards (the only
+    /// place transcription responses carry it), else the chat body's `id`.
+    static func generationID(header: String?, body: Data) -> String? {
+        if let header, !header.isEmpty { return header }
+        struct Body: Decodable { let id: String? }
+        return (try? JSONDecoder().decode(Body.self, from: body))?.id.flatMap { $0.isEmpty ? nil : $0 }
+    }
+
+    /// What each generation was charged, in positive micros, via `GET /v1/ledger?generationIds=` (≤ 50 per
+    /// request). Ids without a usage row yet (charge still settling) are absent from the result.
+    func fetchCharges(generationIDs: [String]) async throws -> [String: Int64] {
+        var result: [String: Int64] = [:]
+        let ids = Array(Set(generationIDs)).sorted()
+        for start in stride(from: 0, to: ids.count, by: 50) {
+            let chunk = ids[start..<min(start + 50, ids.count)].joined(separator: ",")
+            let query = chunk.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? chunk
+            let entries = try Self.decode(
+                YapCloudLedger.self, from: try await send("GET", "/v1/ledger?generationIds=\(query)")).entries
+            for entry in entries where entry.kind == "usage" {
+                if let id = entry.generationId { result[id, default: 0] -= entry.amountMicros }
+            }
+        }
+        return result
     }
 
     /// Safe = paygate cannot have forwarded (so billed) the request. paygate bills any call OpenRouter answered,
@@ -1056,8 +1099,13 @@ struct YapCloudLedgerEntry: Decodable, Identifiable {
     let createdAt: String
     /// Stripe receipt for topup rows, once paygate sends it.
     let receiptURL: URL?
+    /// The OpenRouter generation a usage row charged (top-level `generationId`, else `meta.generationId`).
+    let generationId: String?
 
-    enum CodingKeys: String, CodingKey { case id, kind, amountUsd, amountMicros, model, createdAt, receiptUrl }
+    enum CodingKeys: String, CodingKey {
+        case id, kind, amountUsd, amountMicros, model, createdAt, receiptUrl, generationId, meta
+    }
+    private struct Meta: Decodable { let generationId: String? }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -1068,6 +1116,8 @@ struct YapCloudLedgerEntry: Decodable, Identifiable {
         createdAt = try c.decode(String.self, forKey: .createdAt)
         receiptURL = try c.decodeIfPresent(String.self, forKey: .receiptUrl)
             .flatMap(URL.init(string:)).flatMap { $0.scheme == "https" ? $0 : nil }
+        generationId = try c.decodeIfPresent(String.self, forKey: .generationId)
+            ?? (try? c.decodeIfPresent(Meta.self, forKey: .meta))?.generationId
     }
 
     var createdDate: Date? { YapCloud.parseDate(createdAt) }
@@ -1441,6 +1491,22 @@ struct YapCloudConfigDocument: Equatable {
             assert(classify(YapCloudError.server(status: 503, code: nil, message: "")) as? YapCloudError == .unreachable)
             assert(classify(YapCloudError.insufficientBalance) as? YapCloudError == .insufficientBalance)
             assert(classify(YapCloudError.server(status: 500, code: nil, message: "")) as? YapCloudError != .unreachable)
+
+            // Per-dictation cost: generation ids and the charges lookup's decoding
+            assert(generationID(header: "gen-stt-1", body: json(#"{"text":"hi"}"#)) == "gen-stt-1")
+            assert(generationID(header: nil, body: json(#"{"id":"gen-2","choices":[]}"#)) == "gen-2")
+            assert(generationID(header: "", body: json(#"{"text":"hi"}"#)) == nil)
+            let charged = try! JSONDecoder().decode(
+                YapCloudLedger.self,
+                from: json(#"""
+                    {"entries":[
+                     {"id":"9","kind":"usage","amountMicros":-92,"createdAt":"2026-09-25T10:00:00Z","meta":{"generationId":"gen-stt-1","cost":"0.0000833"}},
+                     {"id":"8","kind":"usage","amountMicros":-3,"createdAt":"2026-09-25T10:00:00Z","generationId":"gen-2","meta":{}}]}
+                    """#)).entries
+            assert(charged.map(\.generationId) == ["gen-stt-1", "gen-2"])
+            let collector = GenerationCollector()
+            $generationCollector.withValue(collector) { generationCollector?.add("gen-a") }
+            assert(collector.last == "gen-a" && generationCollector == nil)
 
             // Proxy retry policy: only provably-unbilled failures, once
             assert(isSafeToRetry(URLError(.cannotConnectToHost)) && isSafeToRetry(URLError(.notConnectedToInternet)))

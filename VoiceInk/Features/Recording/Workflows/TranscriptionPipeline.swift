@@ -109,11 +109,15 @@ class TranscriptionPipeline {
             if let session {
                 text = try await session.transcribe(audioURL: audioURL)
             } else {
-                text = try await serviceRegistry.transcribe(
-                    audioURL: audioURL,
-                    model: model,
-                    context: transcriptionConfiguration.requestContext
-                )
+                let billed = YapCloud.GenerationCollector()
+                text = try await YapCloud.$generationCollector.withValue(billed) {
+                    try await serviceRegistry.transcribe(
+                        audioURL: audioURL,
+                        model: model,
+                        context: transcriptionConfiguration.requestContext
+                    )
+                }
+                transcription.yapCloudTranscriptionGenerationID = billed.last
             }
             text = TranscriptionOutputFilter.filter(text)
             let transcriptionDuration = Date().timeIntervalSince(transcriptionStart)
@@ -197,11 +201,15 @@ class TranscriptionPipeline {
                             resolvedEnhancementConfiguration.modelName
                             ?? resolvedEnhancementConfiguration.provider?.defaultModel
                         transcription.promptName = resolvedEnhancementConfiguration.prompt?.title
-                        let enhancementResult = try await enhancementService.enhance(
-                            textForAI,
-                            configuration: resolvedEnhancementConfiguration,
-                            contextSnapshot: contextSnapshot
-                        )
+                        let billed = YapCloud.GenerationCollector()
+                        let enhancementResult = try await YapCloud.$generationCollector.withValue(billed) {
+                            try await enhancementService.enhance(
+                                textForAI,
+                                configuration: resolvedEnhancementConfiguration,
+                                contextSnapshot: contextSnapshot
+                            )
+                        }
+                        transcription.yapCloudEnhancementGenerationID = billed.last
                         transcription.enhancedText = enhancementResult.text
                         if resolvedEnhancementConfiguration.provider == .yapCloud { transcription.usedYapCloud = true }
                         transcription.promptName =

@@ -8772,6 +8772,50 @@
         }
       }
     },
+    "Cost %@ (%@)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kosten %1$@ (%2$@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coût %1$@ (%2$@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "费用 %1$@(%2$@)"
+          }
+        }
+      }
+    },
+    "Cost not available yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kosten noch nicht verfügbar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coût pas encore disponible"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "费用暂未结算"
+          }
+        }
+      }
+    },
     "Could not communicate with Yap Refine." : {
       "localizations" : {
         "de" : {
@@ -32515,6 +32559,28 @@
         }
       }
     },
+    "enhancement" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbesserung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "amélioration"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "润色"
+          }
+        }
+      }
+    },
     "esc" : {
       "localizations" : {
         "de" : {
@@ -32762,6 +32828,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已选中"
+          }
+        }
+      }
+    },
+    "transcription" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkription"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "transcription"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写"
+          }
+        }
+      }
+    },
+    "transcription + enhancement" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkription + Verbesserung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "transcription + amélioration"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写 + 润色"
           }
         }
       }

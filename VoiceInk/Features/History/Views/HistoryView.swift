@@ -886,6 +886,8 @@ private struct HistoryCardRow: View {
             .frame(maxHeight: 350)
             .hoverCopyButton(textToCopy: displayText)
 
+            YapCloudCostRow(transcription: transcription)
+
             if hasAudioFile, let urlString = transcription.audioFileURL,
                 let url = URL(string: urlString)
             {
