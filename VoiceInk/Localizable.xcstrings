@@ -7752,6 +7752,28 @@
         }
       }
     },
+    "Copied to clipboard. Allow Accessibility so Yap can paste automatically." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In die Zwischenablage kopiert. Erlaube Bedienungshilfen, damit Yap automatisch einfügen kann."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié dans le presse-papiers. Autorisez l’accessibilité pour que Yap puisse coller automatiquement."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已复制到剪贴板。授权辅助功能后，Yap 可以自动粘贴。"
+          }
+        }
+      }
+    },
     "Copied!" : {
       "localizations" : {
         "de" : {

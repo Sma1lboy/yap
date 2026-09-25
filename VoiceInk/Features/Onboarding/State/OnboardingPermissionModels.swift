@@ -197,4 +197,9 @@ enum PrivacySettingsPane {
             return "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
         }
     }
+
+    func open() {
+        guard let url = URL(string: urlString) else { return }
+        NSWorkspace.shared.open(url)
+    }
 }
