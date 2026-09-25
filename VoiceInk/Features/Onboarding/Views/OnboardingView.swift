@@ -166,7 +166,15 @@ struct OnboardingView: View {
                         onShortcutChanged: {
                             coordinator.flow.refreshExperienceModeState(enhancementService: enhancementService)
                         },
-                        onAppear: coordinator.flow.activateExperienceModeForDemo
+                        onAppear: coordinator.flow.activateExperienceModeForDemo,
+                        onSkip: coordinator.normalizedExperienceStepIndex == 0
+                            ? nil
+                            : {
+                                coordinator.flow.skipCurrentExperienceStep(
+                                    isTranscriptionSetupReady: isTranscriptionSetupReady,
+                                    enhancementService: enhancementService
+                                )
+                            }
                     )
                     .transition(.opacity)
                 case .contextAwareness:

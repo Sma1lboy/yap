@@ -8862,6 +8862,28 @@
         }
       }
     },
+    "Couldn't load devices: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geräte konnten nicht geladen werden: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de charger les appareils : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法加载设备列表：%@"
+          }
+        }
+      }
+    },
     "Couldn't load recent activity." : {
       "localizations" : {
         "de" : {
@@ -15665,46 +15687,47 @@
         }
       }
     },
-    "Local models keep everything on this Mac. Cloud providers get only what you send them, with your own key." : {
+    "Local models keep everything on this Mac. Cloud providers and Yap Cloud get only what you send them." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lokale Modelle behalten alles auf diesem Mac. Cloud-Anbieter erhalten nur, was du ihnen schickst, mit deinem eigenen Schlüssel."
+            "value" : "Lokale Modelle behalten alles auf diesem Mac. Cloud-Anbieter und Yap Cloud erhalten nur, was du sendest."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les modèles locaux gardent tout sur ce Mac. Les fournisseurs cloud ne reçoivent que ce que vous leur envoyez, avec votre propre clé."
+            "value" : "Les modèles locaux gardent tout sur ce Mac. Les fournisseurs cloud et Yap Cloud ne reçoivent que ce que vous envoyez."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "本地模型的所有数据都留在这台 Mac 上。云端服务商只收到你发给它的内容，用的是你自己的密钥。"
+            "value" : "本地模型的所有数据都留在这台 Mac 上。云端提供商和 Yap Cloud 只会收到你发送的内容。"
           }
         }
-      }
+      },
+      "extractionState" : "manual"
     },
-    "Local models keep everything on this Mac. With a cloud provider, audio and text go only to the provider you choose, using your own API key. Transcripts are stored on this Mac." : {
+    "Local models keep everything on this Mac. With your own API key, audio and text go only to the provider you choose. With Yap Cloud, they pass through Yap's server on the way to the model provider; the server records the model and cost for billing. Transcripts are stored on this Mac." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lokale Modelle behalten alles auf diesem Mac. Mit einem Cloud-Anbieter gehen Audio und Text nur an den Anbieter, den du wählst, mit deinem eigenen API-Schlüssel. Transkripte werden auf diesem Mac gespeichert."
+            "value" : "Lokale Modelle behalten alles auf diesem Mac. Mit deinem eigenen API-Schlüssel gehen Audio und Text nur an den Anbieter, den du wählst. Mit Yap Cloud laufen sie über den Yap-Server zum Modellanbieter; der Server speichert Modell und Kosten für die Abrechnung. Transkripte werden auf diesem Mac gespeichert."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les modèles locaux gardent tout sur ce Mac. Avec un fournisseur cloud, l’audio et le texte ne vont qu’au fournisseur que vous choisissez, avec votre propre clé API. Les transcriptions sont stockées sur ce Mac."
+            "value" : "Les modèles locaux gardent tout sur ce Mac. Avec votre propre clé API, l’audio et le texte vont uniquement au fournisseur choisi. Avec Yap Cloud, ils passent par le serveur de Yap avant d’atteindre le fournisseur du modèle ; le serveur enregistre le modèle et le coût pour la facturation. Les transcriptions sont stockées sur ce Mac."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "本地模型的所有数据都留在这台 Mac 上。使用云端服务时，音频和文字只发给你选的服务商，用的是你自己的 API 密钥。转写记录保存在这台 Mac 上。"
+            "value" : "本地模型的所有数据都留在这台 Mac 上。使用你自己的 API 密钥时，音频和文字只会发送给你选择的提供商。使用 Yap Cloud 时，它们会经过 Yap 的服务器转发给模型提供商，服务器会记录所用模型和费用用于计费。转写记录保存在这台 Mac 上。"
           }
         }
       }
@@ -21502,28 +21525,6 @@
         }
       }
     },
-    "Remove %@?" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "„%@“ entfernen?"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Retirer « %@ » ?"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "移除「%@」？"
-          }
-        }
-      }
-    },
     "Remove API Key?" : {
       "localizations" : {
         "de" : {
@@ -24550,6 +24551,50 @@
         }
       }
     },
+    "Sign out %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ abmelden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déconnecter %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让 %@ 退出登录"
+          }
+        }
+      }
+    },
+    "Sign out %@?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ abmelden?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déconnecter %@ ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让 %@ 退出登录？"
+          }
+        }
+      }
+    },
     "Sign out of Yap Cloud?" : {
       "localizations" : {
         "de" : {
@@ -24656,6 +24701,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已登录的设备"
+          }
+        }
+      }
+    },
+    "Skip" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überspringen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passer"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳过"
           }
         }
       }
@@ -30692,6 +30759,28 @@
         }
       }
     },
+    "Yap collects no analytics." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap erfasst keine Analysedaten."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap ne collecte aucune donnée d’analyse."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 不收集任何分析数据。"
+          }
+        }
+      }
+    },
     "Yap could not switch to another microphone." : {
       "localizations" : {
         "de" : {
@@ -30732,28 +30821,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 无法访问其存储位置。你的转写记录将无法跨会话存储。"
-          }
-        }
-      }
-    },
-    "Yap has no server and collects no analytics." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap hat keinen Server und sammelt keine Analysedaten."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap n’a aucun serveur et ne collecte aucune statistique d’usage."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap 没有服务器，也不收集任何统计数据。"
           }
         }
       }

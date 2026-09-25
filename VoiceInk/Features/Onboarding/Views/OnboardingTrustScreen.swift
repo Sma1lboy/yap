@@ -76,12 +76,12 @@ private struct TrustBody: View {
                 .padding(.bottom, 28)
 
             VStack(spacing: 10) {
-                Text("Yap has no server and collects no analytics.")
+                Text("Yap collects no analytics.")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(AppTheme.Text.primary)
                     .multilineTextAlignment(.center)
 
-                Text("Local models keep everything on this Mac. With a cloud provider, audio and text go only to the provider you choose, using your own API key. Transcripts are stored on this Mac.")
+                Text("Local models keep everything on this Mac. With your own API key, audio and text go only to the provider you choose. With Yap Cloud, they pass through Yap's server on the way to the model provider; the server records the model and cost for billing. Transcripts are stored on this Mac.")
                     .font(.system(size: 13))
                     .foregroundColor(AppTheme.Text.secondary)
                     .multilineTextAlignment(.center)

@@ -15,6 +15,8 @@ struct OnboardingExperienceScreen: View {
     let onAdvance: () -> Void
     let onShortcutChanged: () -> Void
     let onAppear: () -> Void
+    /// nil on the first practice step: one real dictation is the proof that setup works.
+    var onSkip: (() -> Void)? = nil
 
     var body: some View {
         Group {
@@ -77,7 +79,9 @@ struct OnboardingExperienceScreen: View {
                 primaryTitle: isLastStep ? "Continue" : "Next",
                 isPrimaryEnabled: isReady && isComplete,
                 onLeading: onBackFromPractice,
-                onPrimary: onAdvance
+                onPrimary: onAdvance,
+                secondaryTitle: onSkip != nil && !isComplete ? "Skip" : nil,
+                onSecondary: onSkip
             )
         }
     }

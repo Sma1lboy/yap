@@ -173,14 +173,14 @@ final class OnboardingCoordinator: ObservableObject {
         }
 
         if stage == .trust {
-            return OnboardingStage.baseStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 1
+            return setupStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 1
         }
 
         return stage.stepNumber
     }
 
     var totalStepCount: Int {
-        OnboardingStage.baseStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 1
+        setupStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 1
     }
 
     var experienceStep: OnboardingExperienceStep {
@@ -378,17 +378,23 @@ final class OnboardingCoordinator: ObservableObject {
         contextAwarenessInsertionIndices.count
     }
 
+    /// Steps before the practice screens. The Recommended and Yap Cloud presets skip the API key step, so the
+    /// counter shouldn't jump from 3 to 5 for them.
+    private var setupStepCount: Int {
+        OnboardingStage.baseStepCount - (usedRecommendedSetup ? 1 : 0)
+    }
+
     private var contextAwarenessStepNumber: Int {
         guard let insertionIndex = contextAwarenessInsertionIndices.first else {
-            return OnboardingStage.baseStepCount + activeExperienceSteps.count + 1
+            return setupStepCount + activeExperienceSteps.count + 1
         }
 
-        return OnboardingStage.baseStepCount + insertionIndex + 1
+        return setupStepCount + insertionIndex + 1
     }
 
     private func experienceStepNumber(for index: Int) -> Int {
         let priorContextScreens = contextAwarenessInsertionIndices.filter { $0 <= index }.count
-        return OnboardingStage.baseStepCount + index + priorContextScreens + 1
+        return setupStepCount + index + priorContextScreens + 1
     }
 
     var selectedOnboardingProvider: AIProvider {
