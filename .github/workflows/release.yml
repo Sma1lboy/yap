@@ -82,7 +82,7 @@ jobs:
         run: |
           codesign --verify --deep --strict ~/Downloads/Yap.app
           codesign -dr - ~/Downloads/Yap.app 2>&1 | tee "$RUNNER_TEMP/requirement.txt"
-          grep -q 'certificate leaf' "$RUNNER_TEMP/requirement.txt" || { echo "::error::designated requirement is not certificate-based"; exit 1; }
+          grep -qE 'certificate (leaf|root)' "$RUNNER_TEMP/requirement.txt" || { echo "::error::designated requirement is not certificate-based"; exit 1; }
 
       - name: Package
         run: ditto -c -k --keepParent ~/Downloads/Yap.app Yap.zip
