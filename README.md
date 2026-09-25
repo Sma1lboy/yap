@@ -99,7 +99,7 @@ Turn on **Keep Config File in Sync** (off by default) to do this automatically a
 1. Sign in to Yap Cloud on each Mac (see above).
 2. Turn on **Sync via Yap Cloud**. Yap also offers this once, right after you first sign in.
 
-From then on Yap pulls the synced settings at launch and pushes local changes a couple of seconds after you make them. If two Macs changed settings at the same time, Yap merges them by entry: each Mac keeps the modes, prompts, shortcuts and dictionary entries it changed. If they still can't be merged, the section shows the conflict with **Use Cloud Version** and **Keep This Mac's Settings**; nothing is overwritten until you choose. A network or server error shows its reason and **Retry** instead.
+From then on Yap pulls the synced settings at launch, when you switch back to Yap, when the Mac wakes from sleep and every 15 minutes, and pushes local changes a couple of seconds after you make them. A pull that finds nothing new changes nothing. If two Macs changed settings at the same time, Yap merges them by entry: each Mac keeps the modes, prompts, shortcuts and dictionary entries it changed. If they still can't be merged, the section shows the conflict with **Use Cloud Version** and **Keep This Mac's Settings**; nothing is overwritten until you choose. A network or server error shows its reason and **Retry** instead.
 
 If your config's `enhancement.prompt` points to a file such as `prompt.md`, the cloud gets the file's text, because other Macs don't have that file. A Mac whose own config also points to a prompt file writes the text into that file (keeping the old one as `prompt.md.bak`); otherwise the text goes into its config.json.
 
