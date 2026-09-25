@@ -416,6 +416,19 @@ final class YapCloud: ObservableObject {
         after > before ? after - before : nil
     }
 
+    /// "~$0.0012 / call" from this month's usage, or nil (not loaded, or fewer than 3 calls).
+    func averageCallLabel(model: String) -> String? {
+        monthlySpend?.averageCallMicros(model: model).map {
+            String(format: String(localized: "%@ / call"), Self.formatAverage(micros: $0))
+        }
+    }
+
+    /// An average: "~$0.0012", or "<$0.0001" (no "~" on a bound).
+    static func formatAverage(micros: Int64) -> String {
+        let amount = formatLedgerAmount(micros: micros, kind: "usage")
+        return amount.hasPrefix("<") ? amount : "~" + amount
+    }
+
     /// `yap://account/refresh` (also `yap://account`), the link paygate's checkout success page returns to.
     /// Dev builds register `yap-dev://` instead (YAP_URL_SCHEME) so they don't take links from the release app.
     static func isAccountRefreshURL(_ url: URL) -> Bool {
@@ -819,6 +832,18 @@ struct YapCloudMonthlySpend: Decodable, Equatable {
 
     var topModels: [ModelSpend] { Array(byModel.prefix(5)) }
 
+    /// This user's average cost per call for `model` this month, from their own usage; nil under 3 calls.
+    func averageCallMicros(model: String) -> Int64? {
+        byModel.first { $0.model == model }.flatMap { YapCloudMonthlySpend.averageMicros($0.micros, calls: $0.calls) }
+    }
+
+    /// Rounded half-up integer mean; provider price units differ, so a real per-call average is what's shown.
+    static func averageMicros(_ micros: Int64, calls: Int) -> Int64? {
+        guard calls >= 3 else { return nil }
+        let n = Int64(calls)
+        return (micros + n / 2) / n
+    }
+
     enum CodingKeys: String, CodingKey { case totalMicros, totalUsd, byModel }
 
     init(from decoder: Decoder) throws {
@@ -957,6 +982,12 @@ struct YapCloudConfigDocument: Equatable {
             assert(formatLedgerAmount(micros: -999_904, kind: "adjust") == "-$1.00")
             assert(formatLedgerAmount(micros: 10_000_000, kind: "topup") == "$10.00")
             assert(999_999 < lowBalanceMicros && !(1_000_000 < lowBalanceMicros))
+
+            // Average per call
+            assert(YapCloudMonthlySpend.averageMicros(184, calls: 2) == nil)
+            assert(YapCloudMonthlySpend.averageMicros(184, calls: 3) == 61 && YapCloudMonthlySpend.averageMicros(185, calls: 2) == nil)
+            assert(YapCloudMonthlySpend.averageMicros(9, calls: 4) == 2 && YapCloudMonthlySpend.averageMicros(10, calls: 4) == 3)
+            assert(formatAverage(micros: 1_200) == "~$0.0012" && formatAverage(micros: 2) == "<$0.0001")
 
             // /v1/usage
             let usage = try! JSONDecoder().decode(

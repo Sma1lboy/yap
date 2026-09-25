@@ -127,6 +127,28 @@
         }
       }
     },
+    "%@ / call" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ pro Aufruf"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ par appel"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每次 %@"
+          }
+        }
+      }
+    },
     "%@ API Key" : {
       "localizations" : {
         "de" : {
@@ -907,6 +929,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld calls · %@ / call" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld Aufrufe · %2$@ pro Aufruf"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld appels · %2$@ par appel"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld 次 · 平均每次 %2$@"
           }
         }
       }

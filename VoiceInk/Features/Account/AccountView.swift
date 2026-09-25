@@ -187,6 +187,12 @@ private struct SignedInSections: View {
                         Text(item.model ?? String(localized: "Other"))
                             .lineLimit(1)
                             .truncationMode(.middle)
+                        if let average = YapCloudMonthlySpend.averageMicros(item.micros, calls: item.calls) {
+                            Text(
+                                String(
+                                    format: String(localized: "%lld calls · %@ / call"), Int64(item.calls),
+                                    YapCloud.formatAverage(micros: average)))
+                        }
                     }
                 }
             } header: {

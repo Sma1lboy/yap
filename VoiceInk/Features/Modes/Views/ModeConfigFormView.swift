@@ -276,13 +276,17 @@ struct ModeConfigFormView: View {
 
     @ViewBuilder
     private func transcriptionModelMenuItem(_ model: any TranscriptionModel) -> some View {
+        // Yap Cloud: append this user's average cost per call, when there's enough usage to say.
+        let title = model.provider == .yapCloud
+            ? YapCloud.shared.averageCallLabel(model: model.name).map { "\(model.displayName)  \($0)" } ?? model.displayName
+            : model.displayName
         Button {
             draft.selectedTranscriptionModelName = model.selectionKey
         } label: {
             if draft.selectedTranscriptionModelName == model.selectionKey {
-                Label(model.displayName, systemImage: "checkmark")
+                Label(title, systemImage: "checkmark")
             } else {
-                Text(model.displayName)
+                Text(title)
             }
         }
     }
