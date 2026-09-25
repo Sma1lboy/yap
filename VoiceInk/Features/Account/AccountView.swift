@@ -30,7 +30,7 @@ struct AccountView: View {
                 } header: {
                     Text("Yap Cloud")
                 } footer: {
-                    Text("Pay as you go: one balance covers transcription and enhancement, no API keys to manage.")
+                    Text("Pay as you go: one balance covers transcription and enhancement, no API keys to manage. New accounts get $1 of free credit.")
                 }
             }
             modelsSection
@@ -286,6 +286,7 @@ private struct LedgerRow: View {
     private var title: String {
         switch entry.kind {
         case "topup": return String(localized: "Top-up")
+        case "credit": return String(localized: "Sign-up bonus")
         case "usage":
             guard let model = entry.model else { return String(localized: "Usage") }
             return YapCloud.shared.models.first { $0.id == model }?.displayName ?? model
