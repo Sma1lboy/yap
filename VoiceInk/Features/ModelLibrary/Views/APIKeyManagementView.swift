@@ -239,7 +239,7 @@ struct APIKeyManagementView: View {
                     }
 
                     Text(
-                        "Environment variables available: VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT. Custom commands can also read VOICEINK_FULL_PROMPT from stdin."
+                        "Environment variables available: YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT. Custom commands can also read YAP_FULL_PROMPT from stdin."
                     )
                     .font(.caption)
                     .foregroundColor(.secondary)

@@ -20,15 +20,20 @@ enum LocalCLITemplate: String, CaseIterable, Identifiable {
     var commandTemplate: String {
         switch self {
         case .pi:
-            return "pi -ne -ns -p --no-tools --system-prompt \"$VOICEINK_SYSTEM_PROMPT\" \"$VOICEINK_USER_PROMPT\""
+            return "pi -ne -ns -p --no-tools --system-prompt \"$YAP_SYSTEM_PROMPT\" \"$YAP_USER_PROMPT\""
         case .claude:
-            return "claude -p --model claude-sonnet-5 --effort low \"$VOICEINK_FULL_PROMPT\""
+            return "claude -p --model claude-sonnet-5 --effort low \"$YAP_FULL_PROMPT\""
         case .codex:
             return
-                "codex exec -m gpt-5.6-luna -c model_reasoning_effort=low --skip-git-repo-check --ephemeral \"$VOICEINK_FULL_PROMPT\""
+                "codex exec -m gpt-5.6-luna -c model_reasoning_effort=low --skip-git-repo-check --ephemeral \"$YAP_FULL_PROMPT\""
         case .copilot:
-            return "copilot -p \"$VOICEINK_FULL_PROMPT\" -s --no-ask-user --available-tools=__none__ 2>/dev/null"
+            return "copilot -p \"$YAP_FULL_PROMPT\" -s --no-ask-user --available-tools=__none__ 2>/dev/null"
         }
+    }
+
+    /// Also matches the preset as saved before the YAP_* rename.
+    func matches(_ command: String) -> Bool {
+        command == commandTemplate || command == commandTemplate.replacingOccurrences(of: "$YAP_", with: "$VOICEINK_")
     }
 }
 
@@ -124,14 +129,17 @@ final class LocalCLIService {
 
                 var environment = ProcessInfo.processInfo.environment
                 environment["PATH"] = ShellCommandEnvironment.preferredPATH(fallback: environment["PATH"])
-                environment["VOICEINK_SYSTEM_PROMPT"] = systemPrompt
-                environment["VOICEINK_USER_PROMPT"] = userPrompt
-                environment["VOICEINK_FULL_PROMPT"] = fullPrompt
+                // VOICEINK_* are the legacy upstream names; saved commands may still use them.
+                for prefix in ["YAP", "VOICEINK"] {
+                    environment["\(prefix)_SYSTEM_PROMPT"] = systemPrompt
+                    environment["\(prefix)_USER_PROMPT"] = userPrompt
+                    environment["\(prefix)_FULL_PROMPT"] = fullPrompt
+                }
                 process.environment = environment
 
-                let usesArgumentPrompt =
-                    commandTemplate == LocalCLITemplate.codex.commandTemplate
-                    || commandTemplate == LocalCLITemplate.claude.commandTemplate
+                let usesArgumentPrompt = [LocalCLITemplate.codex, .claude].contains {
+                    $0.matches(commandTemplate)
+                }
                 let inputPipe = usesArgumentPrompt ? nil : Pipe()
                 let outputPipe = Pipe()
                 let errorPipe = Pipe()

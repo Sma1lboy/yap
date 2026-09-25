@@ -11,7 +11,9 @@ struct CustomCommandDeliveryContext {
 
     var environment: [String: String] {
         [
-            "VOICEINK_TRANSCRIPT": transcript
+            "YAP_TRANSCRIPT": transcript,
+            // Legacy name from upstream VoiceInk; existing user commands still read it.
+            "VOICEINK_TRANSCRIPT": transcript,
         ]
     }
 }

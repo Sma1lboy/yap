@@ -13,7 +13,7 @@ final class SystemInfoService {
             for: ModeManager.shared.currentEffectiveConfiguration
         )
         let info = """
-            === VOICEINK SYSTEM INFORMATION ===
+            === YAP SYSTEM INFORMATION ===
             Generated: \(Self.englishTimestamp())
 
             APP INFORMATION:

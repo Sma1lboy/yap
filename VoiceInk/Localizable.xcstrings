@@ -11120,24 +11120,24 @@
         }
       }
     },
-    "Environment variables available: VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT. Custom commands can also read VOICEINK_FULL_PROMPT from stdin." : {
+    "Environment variables available: YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT. Custom commands can also read YAP_FULL_PROMPT from stdin." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verfügbare Umgebungsvariablen: VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT. Benutzerdefinierte Befehle können VOICEINK_FULL_PROMPT auch aus stdin lesen."
+            "value" : "Verfügbare Umgebungsvariablen: YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT. Benutzerdefinierte Befehle können YAP_FULL_PROMPT auch aus stdin lesen."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Variables d’environnement disponibles : VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT. Les commandes personnalisées peuvent aussi lire VOICEINK_FULL_PROMPT depuis stdin."
+            "value" : "Variables d’environnement disponibles : YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT. Les commandes personnalisées peuvent aussi lire YAP_FULL_PROMPT depuis stdin."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "可用的环境变量：VOICEINK_SYSTEM_PROMPT、VOICEINK_USER_PROMPT、VOICEINK_FULL_PROMPT。自定义命令也可以从 stdin 读取 VOICEINK_FULL_PROMPT。"
+            "value" : "可用的环境变量：YAP_SYSTEM_PROMPT、YAP_USER_PROMPT、YAP_FULL_PROMPT。自定义命令也可以从 stdin 读取 YAP_FULL_PROMPT。"
           }
         }
       }
@@ -20930,24 +20930,24 @@
         }
       }
     },
-    "Runs locally with your user permissions. The final transcript is sent on stdin and exposed as VOICEINK_TRANSCRIPT." : {
+    "Runs locally with your user permissions. The final transcript is sent on stdin and exposed as YAP_TRANSCRIPT." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wird lokal mit deinen Benutzerberechtigungen ausgeführt. Das finale Transkript wird über stdin gesendet und als VOICEINK_TRANSCRIPT bereitgestellt."
+            "value" : "Wird lokal mit deinen Benutzerberechtigungen ausgeführt. Das finale Transkript wird über stdin gesendet und als YAP_TRANSCRIPT bereitgestellt."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "S'exécute localement avec vos autorisations utilisateur. La transcription finale est envoyée sur stdin et exposée sous le nom VOICEINK_TRANSCRIPT."
+            "value" : "S'exécute localement avec vos autorisations utilisateur. La transcription finale est envoyée sur stdin et exposée sous le nom YAP_TRANSCRIPT."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "以你的用户权限在本地运行。最终转写文本通过 stdin 传入，并以 VOICEINK_TRANSCRIPT 形式提供。"
+            "value" : "以你的用户权限在本地运行。最终转写文本通过 stdin 传入，并以 YAP_TRANSCRIPT 形式提供。"
           }
         }
       }
@@ -26316,24 +26316,24 @@
         }
       }
     },
-    "Variables: VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT" : {
+    "Variables: YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Variablen: VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT"
+            "value" : "Variablen: YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Variables : VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT"
+            "value" : "Variables : YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "变量：VOICEINK_SYSTEM_PROMPT、VOICEINK_USER_PROMPT、VOICEINK_FULL_PROMPT"
+            "value" : "变量：YAP_SYSTEM_PROMPT、YAP_USER_PROMPT、YAP_FULL_PROMPT"
           }
         }
       }
