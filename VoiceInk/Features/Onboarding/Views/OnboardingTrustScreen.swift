@@ -88,6 +88,13 @@ private struct TrustBody: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: 610)
 
+                Text("Yap picks a mode for the app you're in. Press Option 1-9 while recording to switch, and edit modes anytime.")
+                    .font(.system(size: 13))
+                    .foregroundColor(AppTheme.Text.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 610)
+
                 Text("Yap is also open source, so you can inspect every single line of code.")
                     .font(.system(size: 13))
                     .foregroundColor(AppTheme.Text.secondary)

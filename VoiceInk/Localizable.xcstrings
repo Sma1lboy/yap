@@ -31027,6 +31027,28 @@
         }
       }
     },
+    "Yap picks a mode for the app you're in. Press Option 1-9 while recording to switch, and edit modes anytime." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap wählt einen Modus passend zur App, in der du gerade bist. Drücke während der Aufnahme Option 1-9 zum Wechseln und bearbeite Modi jederzeit."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap choisit un mode selon l’app que vous utilisez. Appuyez sur Option 1-9 pendant l’enregistrement pour changer, et modifiez les modes à tout moment."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 会根据你正在使用的 app 自动选择模式。录音时按 Option 1-9 可以切换，模式也可以随时编辑。"
+          }
+        }
+      }
+    },
     "Yap reads visible screen content to improve the accuracy of transcripts." : {
       "localizations" : {
         "de" : {
