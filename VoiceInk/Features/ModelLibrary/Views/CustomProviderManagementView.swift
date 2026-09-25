@@ -330,7 +330,7 @@ struct CustomTranscriptionModelEditorPanel: View {
                 id: editingModel.id,
                 name: generatedName,
                 displayName: trimmedDisplayName,
-                description: "Custom transcription model",
+                description: String(localized: "Custom transcription model"),
                 apiEndpoint: trimmedEndpoint,
                 modelName: trimmedModelName,
                 isMultilingual: isMultilingual
@@ -345,7 +345,7 @@ struct CustomTranscriptionModelEditorPanel: View {
             let customModel = CustomCloudModel(
                 name: generatedName,
                 displayName: trimmedDisplayName,
-                description: "Custom transcription model",
+                description: String(localized: "Custom transcription model"),
                 apiEndpoint: trimmedEndpoint,
                 modelName: trimmedModelName,
                 isMultilingual: isMultilingual
