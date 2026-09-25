@@ -91,8 +91,10 @@ jobs:
           restore-keys: |
             xcbuild-${{ runner.os }}-xcode26.6-${{ hashFiles('VoiceInk.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
 
+      # SWIFT_COMPILATION_MODE=incremental：Release 默认整模块优化，改一个文件也要重编整个 App 模块；
+      # 改成按文件增量编译（仍是 -O），配合缓存的 DerivedData 只重编改动的文件
       - name: Build (LOCAL_BUILD)
-        run: make local LOCAL_CLEAN=0 LOCAL_CODESIGN_IDENTITY=- EXTRA_BUILD_SETTINGS="MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD"
+        run: make local LOCAL_CLEAN=0 LOCAL_CODESIGN_IDENTITY=- EXTRA_BUILD_SETTINGS="MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD SWIFT_COMPILATION_MODE=incremental"
 
       - name: Re-sign with Yap Self-Signed
         run: codesign --force --deep --preserve-metadata=entitlements,runtime --sign "Yap Self-Signed" ~/Downloads/Yap.app
