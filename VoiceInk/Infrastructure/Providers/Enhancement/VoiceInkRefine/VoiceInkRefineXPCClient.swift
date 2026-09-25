@@ -105,7 +105,7 @@ actor VoiceInkRefineXPCClient {
                             .failure(
                                 makeVoiceInkRefineXPCError(
                                     .connectionFailed,
-                                    description: "Could not create the VoiceInk Refine XPC proxy."
+                                    description: "Could not create the Yap Refine XPC proxy."
                                 )
                             )
                         )
@@ -169,7 +169,7 @@ actor VoiceInkRefineXPCClient {
                             .failure(
                                 makeVoiceInkRefineXPCError(
                                     .connectionFailed,
-                                    description: "Could not create the VoiceInk Refine XPC proxy."
+                                    description: "Could not create the Yap Refine XPC proxy."
                                 )
                             )
                         )
@@ -187,7 +187,7 @@ actor VoiceInkRefineXPCClient {
                                     makeVoiceInkRefineXPCError(
                                         .invalidResponse,
                                         description:
-                                            "VoiceInk Refine returned an empty response."
+                                            "Yap Refine returned an empty response."
                                     )
                                 )
                             )
@@ -206,7 +206,7 @@ actor VoiceInkRefineXPCClient {
             guard response.requestID == request.requestID else {
                 throw makeVoiceInkRefineXPCError(
                     .invalidResponse,
-                    description: "VoiceInk Refine returned a mismatched response."
+                    description: "Yap Refine returned a mismatched response."
                 )
             }
 
@@ -431,20 +431,20 @@ actor VoiceInkRefineXPCClient {
         let description: String
         switch code {
         case .invalidRequest:
-            description = String(localized: "VoiceInk Refine received an invalid request.")
+            description = String(localized: "Yap Refine received an invalid request.")
         case .inferenceFailed:
             switch operation {
             case .prepare:
-                description = String(localized: "VoiceInk Refine could not prepare the model.")
+                description = String(localized: "Yap Refine could not prepare the model.")
             case .enhance:
                 description = String(
-                    localized: "VoiceInk Refine could not complete the enhancement."
+                    localized: "Yap Refine could not complete the enhancement."
                 )
             }
         case .invalidResponse:
-            description = String(localized: "VoiceInk Refine returned an invalid response.")
+            description = String(localized: "Yap Refine returned an invalid response.")
         case .connectionFailed:
-            description = String(localized: "Could not communicate with VoiceInk Refine.")
+            description = String(localized: "Could not communicate with Yap Refine.")
         }
 
         return makeVoiceInkRefineXPCError(code, description: description)
@@ -463,7 +463,7 @@ actor VoiceInkRefineXPCClient {
             operationName = "enhance"
         }
         logger.error(
-            "VoiceInk Refine XPC \(operationName, privacy: .public) failed domain=\(nsError.domain, privacy: .public) code=\(nsError.code, privacy: .public) description=\(nsError.localizedDescription, privacy: .public)"
+            "Yap Refine XPC \(operationName, privacy: .public) failed domain=\(nsError.domain, privacy: .public) code=\(nsError.code, privacy: .public) description=\(nsError.localizedDescription, privacy: .public)"
         )
     }
 
@@ -478,7 +478,7 @@ actor VoiceInkRefineXPCClient {
         connectionID = nil
         cancelIdleShutdown()
         logger.error(
-            "VoiceInk Refine XPC connection interrupted id=\(identifier.uuidString, privacy: .public)"
+            "Yap Refine XPC connection interrupted id=\(identifier.uuidString, privacy: .public)"
         )
     }
 

@@ -1,3 +1,4 @@
+import Carbon
 import SwiftUI
 
 @MainActor
@@ -49,7 +50,7 @@ final class OnboardingFlowController {
             let result = await OpenRouterProvider().verifyAPIKey(newKey)
             guard result.isValid else {
                 return result.errorMessage
-                    ?? String(localized: "Could not verify this API key. Check the key and try again.")
+                    ?? String(localized: "Could not verify this API key. Check the key and your internet connection, then try again.")
             }
             guard APIKeyManager.shared.saveAPIKey(newKey, forProvider: providerKey) else {
                 return String(localized: "The key worked, but Yap could not save it securely.")
@@ -59,11 +60,36 @@ final class OnboardingFlowController {
             return String(localized: "Paste your OpenRouter API key to continue.")
         }
 
-        await YapConfigLoader.shared.apply(
-            config: .recommended(openRouterKey: key), source: .recommended, patchModes: false)
+        await finishPreset(
+            .recommended(openRouterKey: key), kind: .recommended, providerKey: providerKey,
+            enhancementService: enhancementService)
+        return nil
+    }
+
+    /// "Use Yap Cloud": same models and prompt as Recommended, billed to the signed-in Yap Cloud account.
+    func applyYapCloudSetup(enhancementService: AIEnhancementService) async -> String? {
+        guard coordinator.requiredPermissionsGranted, coordinator.hasSelectedOnboardingMicrophone else { return nil }
+        guard YapCloud.shared.token != nil else {
+            return String(localized: "Sign in to Yap Cloud to continue.")
+        }
+        guard let model = coordinator.selectedOnboardingTranscriptionModel else {
+            return String(localized: "Yap Cloud has no transcription models available right now.")
+        }
+        await finishPreset(
+            .yapCloud(transcriptionModel: model.name), kind: .yapCloud, providerKey: YapCloud.providerName,
+            enhancementService: enhancementService)
+        return nil
+    }
+
+    /// Applies a one-account preset and skips the AI key step, since the same account covers cleanup.
+    private func finishPreset(
+        _ config: YapConfig, kind: OnboardingTranscriptionSetupKind, providerKey: String,
+        enhancementService: AIEnhancementService
+    ) async {
+        await YapConfigLoader.shared.apply(config: config, source: .recommended, patchModes: false)
         NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
 
-        coordinator.storedTranscriptionSetupKind = OnboardingTranscriptionSetupKind.recommended.rawValue
+        coordinator.storedTranscriptionSetupKind = kind.rawValue
         coordinator.usedRecommendedSetup = true
         coordinator.hasSkippedTranscriptionSetup = false
         coordinator.hasSkippedAPISetup = false
@@ -75,7 +101,6 @@ final class OnboardingFlowController {
             isTranscriptionSetupReady: coordinator.isTranscriptionSetupReady(isTranscriptionModelDownloaded: false),
             enhancementService: enhancementService
         )
-        return nil
     }
 
     /// The step before the practice steps: the AI key step, or the model step when the preset covered it.
@@ -99,11 +124,6 @@ final class OnboardingFlowController {
         guard coordinator.isReadyForExperience(isTranscriptionSetupReady: isTranscriptionSetupReady) else { return }
         coordinator.storedStage = OnboardingStage.experience.rawValue
         moveToExperienceStep(0, enhancementService: enhancementService)
-    }
-
-    func goToLicenseStep(isTranscriptionSetupReady: Bool) {
-        guard coordinator.isReadyForExperience(isTranscriptionSetupReady: isTranscriptionSetupReady) else { return }
-        coordinator.storedStage = OnboardingStage.license.rawValue
     }
 
     func goToContextAwarenessStep(isTranscriptionSetupReady: Bool) {
@@ -243,15 +263,6 @@ final class OnboardingFlowController {
         refreshExperienceModeState(enhancementService: enhancementService)
     }
 
-    func goToPreviousLicenseStep(isTranscriptionSetupReady: Bool) {
-        guard coordinator.isReadyForExperience(isTranscriptionSetupReady: isTranscriptionSetupReady) else {
-            coordinator.storedStage = stageBeforeExperience.rawValue
-            return
-        }
-
-        coordinator.storedStage = OnboardingStage.trust.rawValue
-    }
-
     func advanceExperienceStep(
         isTranscriptionSetupReady: Bool,
         enhancementService: AIEnhancementService
@@ -296,26 +307,6 @@ final class OnboardingFlowController {
         }
     }
 
-    func startLicenseTrial(
-        isTranscriptionSetupReady: Bool,
-        onComplete: () -> Void
-    ) {
-        guard coordinator.licenseViewModel.startTrial() else { return }
-        completeOnboarding(
-            isTranscriptionSetupReady: isTranscriptionSetupReady,
-            onComplete: onComplete
-        )
-    }
-
-    func activateLicense(_ licenseKey: String) {
-        Task { @MainActor in
-            await coordinator.licenseViewModel.validateLicense(licenseKey)
-            if coordinator.licenseViewModel.hasVerifiedLicense {
-                coordinator.licenseKeyDraft = ""
-            }
-        }
-    }
-
     func reconcileStage(
         isTranscriptionSetupReady: Bool,
         enhancementService: AIEnhancementService
@@ -337,8 +328,7 @@ final class OnboardingFlowController {
             goToFirstIncompleteSetupStep(isTranscriptionSetupReady: isTranscriptionSetupReady)
         }
 
-        if (coordinator.stage == .experience || coordinator.stage == .contextAwareness || coordinator.stage == .trust
-            || coordinator.stage == .license)
+        if (coordinator.stage == .experience || coordinator.stage == .contextAwareness || coordinator.stage == .trust)
             && !coordinator.isReadyForExperience(isTranscriptionSetupReady: isTranscriptionSetupReady)
         {
             goToFirstIncompleteSetupStep(isTranscriptionSetupReady: isTranscriptionSetupReady)
@@ -418,11 +408,7 @@ final class OnboardingFlowController {
         isTranscriptionSetupReady: Bool,
         onComplete: () -> Void
     ) {
-        #if LOCAL_BUILD
-            let isFinalStage = coordinator.stage == .license || coordinator.stage == .trust
-        #else
-            let isFinalStage = coordinator.stage == .license
-        #endif
+        let isFinalStage = coordinator.stage == .trust
 
         guard
             isFinalStage || coordinator.isCurrentExperienceReady(isTranscriptionSetupReady: isTranscriptionSetupReady)
@@ -430,35 +416,55 @@ final class OnboardingFlowController {
             return
         }
 
-        let usedRecommendedSetup = coordinator.usedRecommendedSetup
+        let preset = coordinator.usedRecommendedSetup ? chosenPreset() : nil
         OnboardingStorageKeys.onboardingKeys.forEach {
             coordinator.defaults.removeObject(forKey: $0)
         }
+        installFallbackSetupIfNeeded()
         activateCleanTranscriptionMode()
-        reapplyConfigFile(includingRecommendedSetup: usedRecommendedSetup)
+        reapplyConfigFile(preset: preset)
         onComplete()
     }
 
-    func skipOnboarding(onComplete: () -> Void) {
-        OnboardingStorageKeys.onboardingKeys.forEach {
-            coordinator.defaults.removeObject(forKey: $0)
+    /// "Set It Up Later" skips the practice steps, which are what install the starter modes and record the
+    /// shortcut. Without this the hotkey does nothing; with it, recording starts and the preflight / model
+    /// checks tell the user which provider or model to set up.
+    private func installFallbackSetupIfNeeded() {
+        if ModeManager.shared.configurations.isEmpty {
+            StarterModeFactory.install(
+                kinds: [.clean],
+                provider: coordinator.selectedOnboardingProvider,
+                modelName: nil
+            )
         }
-        reapplyConfigFile(includingRecommendedSetup: false)
-        onComplete()
+
+        if ShortcutStore.rawShortcut(for: .primaryRecording) == nil,
+            !ShortcutStore.isShortcutCleared(for: .primaryRecording)
+        {
+            ShortcutStore.setShortcut(
+                .modifierOnly(keyCode: UInt16(kVK_RightOption), modifierFlags: [.option]),
+                for: .primaryRecording
+            )
+        }
     }
 
     /// Onboarding rewrites the starter modes, so the recommended preset (if chosen) and then config.json are
     /// applied again on top of them; config.json goes last so its fields win.
-    private func reapplyConfigFile(includingRecommendedSetup: Bool) {
+    private func reapplyConfigFile(preset: YapConfig?) {
         Task { @MainActor in
-            if includingRecommendedSetup,
-                let key = APIKeyManager.shared.getAPIKey(forProvider: AIProvider.openRouter.rawValue)
-            {
-                await YapConfigLoader.shared.apply(
-                    config: .recommended(openRouterKey: key), source: .recommended, patchModes: true)
+            if let preset {
+                await YapConfigLoader.shared.apply(config: preset, source: .recommended, patchModes: true)
             }
             await YapConfigLoader.shared.reload()
         }
+    }
+
+    private func chosenPreset() -> YapConfig? {
+        if coordinator.transcriptionSetupKind == .yapCloud {
+            return coordinator.selectedOnboardingTranscriptionModel.map { .yapCloud(transcriptionModel: $0.name) }
+        }
+        return APIKeyManager.shared.getAPIKey(forProvider: AIProvider.openRouter.rawValue)
+            .map { .recommended(openRouterKey: $0) }
     }
 
     func refreshAPIVerification() {

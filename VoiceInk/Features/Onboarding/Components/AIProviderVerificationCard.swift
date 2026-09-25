@@ -66,7 +66,7 @@ struct AIProviderVerificationCard: View {
             )
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(selectedProvider.rawValue)
+                Text(selectedProvider.displayName)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(AppTheme.Text.primary)
             }
@@ -104,7 +104,7 @@ struct AIProviderVerificationCard: View {
     private var apiKeyField: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .center) {
-                Text(String(format: String(localized: "%@ API Key"), selectedProvider.rawValue))
+                Text(String(format: String(localized: "%@ API Key"), selectedProvider.displayName))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(AppTheme.Text.primary)
 
@@ -300,7 +300,7 @@ struct AIProviderVerificationCard: View {
                     NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
                 } else {
                     verificationMessage = String(
-                        localized: "Could not verify this API key. Check the key and try again.")
+                        localized: "Could not verify this API key. Check the key and your internet connection, then try again.")
                     verificationDetailMessage = result.errorMessage
                 }
 
@@ -357,7 +357,7 @@ private struct ProviderChoiceButton: View {
                 )
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(provider.rawValue)
+                    Text(provider.displayName)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(AppTheme.Text.primary)
                         .lineLimit(1)

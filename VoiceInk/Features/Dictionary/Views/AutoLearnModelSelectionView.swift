@@ -5,8 +5,7 @@ struct AutoLearnSectionHeader: View {
         HStack(spacing: 4) {
             Text("Auto Learn")
             InfoTip(
-                "Automatically learns corrections you make after dictation.",
-                learnMoreURL: "https://github.com/Sma1lboy/yap#readme"
+                "Automatically learns corrections you make after dictation."
             )
             .accessibilityLabel("Learn about Dictionary Auto Learn")
         }
@@ -57,7 +56,7 @@ struct AutoLearnModelSelectionView: View {
             } else {
                 Picker("Provider", selection: providerBinding) {
                     ForEach(providerOptions, id: \.self) { provider in
-                        Text(provider.rawValue).tag(provider)
+                        Text(provider.displayName).tag(provider)
                     }
                 }
 

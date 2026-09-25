@@ -14,6 +14,9 @@ struct SettingsView: View {
     @ObservedObject private var mediaController = MediaController.shared
     @ObservedObject private var playbackController = PlaybackController.shared
     @ObservedObject private var configLoader = YapConfigLoader.shared
+    @ObservedObject private var cloudConfigSync = CloudConfigSync.shared
+    @AppStorage(YapConfigLoader.keepInSyncKey) private var keepConfigFileInSync = false
+    @AppStorage(CloudConfigSync.enabledKey) private var syncConfigViaCloud = false
     @AppStorage(OnboardingSettings.completedV2Key) private var hasCompletedOnboardingV2 = true
     @AppStorage("restoreClipboardAfterPaste") private var restoreClipboardAfterPaste = true
     @AppStorage("clipboardRestoreDelay") private var clipboardRestoreDelay = 2.0
@@ -30,6 +33,13 @@ struct SettingsView: View {
     @State private var isImportingSettings = false
 
     @State private var isRestoreClipboardExpanded = false
+
+    private var appVersion: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(version) (\(build))"
+    }
 
     var body: some View {
         Form {
@@ -246,15 +256,8 @@ struct SettingsView: View {
                         set: { updaterViewModel.setChecksForUpdatesWhenDashboardAppears($0) }
                     ))
 
-                HStack {
-                    Button("Check for Updates") {
-                        updaterViewModel.checkForUpdates()
-                    }
-                    .disabled(!updaterViewModel.canCheckForUpdates)
-
-                    Button("Reset Onboarding") {
-                        showResetOnboardingAlert = true
-                    }
+                Button("Reset Onboarding") {
+                    showResetOnboardingAlert = true
                 }
             }
 
@@ -311,6 +314,12 @@ struct SettingsView: View {
 
                 configFileStatus
 
+                if configLoader.fileIsNewerVersion {
+                    Text("This file comes from a newer version of Yap. Fields it doesn't recognize were ignored.")
+                        .foregroundColor(AppTheme.Status.warningStrong)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 HStack {
                     Button("Open") {
                         configLoader.openConfigFile()
@@ -322,6 +331,36 @@ struct SettingsView: View {
                         Task { await configLoader.reload() }
                     }
                 }
+
+                Button("Write Current Settings to Config") {
+                    Task { await configLoader.writeCurrentSettings() }
+                }
+                if let error = configLoader.writeError {
+                    Text(String(format: String(localized: "Could not write config file: %@"), error))
+                        .foregroundColor(AppTheme.Status.error)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if let date = configLoader.lastWritten {
+                    Text(
+                        String(
+                            format: String(localized: "Written at %@"), date.formatted(date: .omitted, time: .standard))
+                    )
+                    .settingsDescription()
+                }
+
+                Toggle(isOn: $keepConfigFileInSync) {
+                    Text("Keep Config File in Sync")
+                    Text("Writes settings changes back to the file. The previous file is kept as config.json.bak.")
+                }
+
+                Toggle(isOn: $syncConfigViaCloud) {
+                    Text("Sync via Yap Cloud")
+                    Text(
+                        cloudConfigSync.isAvailable
+                            ? String(localized: "Keeps this config the same on every Mac signed in to your account.")
+                            : String(localized: "Sign in to Yap Cloud to sync this config between Macs."))
+                }
+                .disabled(!cloudConfigSync.isAvailable)
+                cloudSyncStatus
             } header: {
                 Text("Config File")
             } footer: {
@@ -330,6 +369,22 @@ struct SettingsView: View {
 
             Section("Diagnostics") {
                 DiagnosticsSettingsView()
+            }
+
+            Section("About") {
+                LabeledContent("Version") {
+                    Text(verbatim: appVersion)
+                        .textSelection(.enabled)
+                }
+
+                HStack {
+                    Button("Check for Updates") {
+                        updaterViewModel.checkForUpdates()
+                    }
+                    .disabled(!updaterViewModel.canCheckForUpdates)
+
+                    Link("Report an Issue", destination: AppIdentity.issuesURL)
+                }
             }
         }
         .formStyle(.grouped)
@@ -377,6 +432,35 @@ struct SettingsView: View {
             }
         case .error(let message):
             Text(String(format: String(localized: "Could not read config file: %@"), message))
+                .foregroundColor(AppTheme.Status.error)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    @ViewBuilder
+    private var cloudSyncStatus: some View {
+        switch cloudConfigSync.status {
+        case .idle:
+            EmptyView()
+        case .synced(let date):
+            Text(String(format: String(localized: "Synced at %@"), date.formatted(date: .omitted, time: .standard)))
+                .settingsDescription()
+        case .conflict:
+            VStack(alignment: .leading, spacing: 6) {
+                Text("This Mac and Yap Cloud both changed the config and couldn't be merged automatically.")
+                    .foregroundColor(AppTheme.Status.warningStrong)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack {
+                    Button("Use Cloud Version") {
+                        Task { await cloudConfigSync.resolveConflict(keepLocal: false) }
+                    }
+                    Button("Keep This Mac's Settings") {
+                        Task { await cloudConfigSync.resolveConflict(keepLocal: true) }
+                    }
+                }
+            }
+        case .error(let message):
+            Text(String(format: String(localized: "Cloud sync failed: %@"), message))
                 .foregroundColor(AppTheme.Status.error)
                 .fixedSize(horizontal: false, vertical: true)
         }

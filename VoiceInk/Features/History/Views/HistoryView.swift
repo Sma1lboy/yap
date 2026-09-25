@@ -304,7 +304,7 @@ struct HistoryView<Header: View>: View {
         guard let shortcut = ShortcutStore.shortcut(for: .primaryRecording)?.displayString, !shortcut.isEmpty else {
             return String(localized: "No transcriptions yet")
         }
-        return String(format: String(localized: "Hold %@ and start talking"), shortcut)
+        return String(format: String(localized: "Press %@ and start talking"), shortcut)
     }
 
     // MARK: - Card List
@@ -698,6 +698,17 @@ private struct HistoryCardRow: View {
                     .padding(.horizontal, 7)
                     .padding(.vertical, 2)
                     .background(Capsule().fill(AppTheme.Surface.subtle))
+            }
+
+            if transcription.usedYapCloud == true {
+                Text("Yap Cloud")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(AppTheme.Text.secondary)
+                    .lineLimit(1)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(AppTheme.Surface.subtle))
+                    .help("Billed to your Yap Cloud balance")
             }
 
             statusBadge

@@ -9,6 +9,7 @@ struct VocabularyView: View {
     @State private var alertMessage = ""
     @State private var sortMode: VocabularySortMode = .wordAsc
     @State private var showInfoPopover = false
+    @FocusState private var isInputFocused: Bool
 
     init() {
         _sortMode = State(initialValue: DictionarySortService.shared.savedVocabularyMode())
@@ -45,6 +46,7 @@ struct VocabularyView: View {
                     .font(.system(size: 13))
                     .onSubmit { addWords() }
                     .labelsHidden()
+                    .focused($isInputFocused)
 
                 if shouldShowAddButton {
                     AddIconButton(
@@ -93,8 +95,14 @@ struct VocabularyView: View {
                     .padding(.vertical, 4)
                 }
                 .padding(.top, 4)
+            } else {
+                DictionaryEmptyState(
+                    systemImage: "character.book.closed",
+                    message: "Add names, product terms, and jargon so Yap spells them correctly.",
+                    buttonTitle: "Add First Word",
+                    action: { isInputFocused = true }
+                )
             }
-
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .alert("Vocabulary", isPresented: $showAlert) {
@@ -122,6 +130,31 @@ struct VocabularyView: View {
             alertMessage = error
             showAlert = true
         }
+    }
+}
+
+struct DictionaryEmptyState: View {
+    let systemImage: String
+    let message: LocalizedStringKey
+    let buttonTitle: LocalizedStringKey
+    let action: () -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.system(size: 28))
+                .foregroundColor(.secondary.opacity(0.6))
+
+            Text(message)
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
+            Button(buttonTitle, action: action)
+                .controlSize(.small)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
     }
 }
 

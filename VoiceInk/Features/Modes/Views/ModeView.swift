@@ -98,8 +98,7 @@ struct ModeView: View {
         VStack(spacing: 0) {
             AppScreenHeader(
                 title: "Modes",
-                infoMessage: "Modes help you set up Yap for different writing tasks, workflows, and scenarios.",
-                infoURL: "https://github.com/Sma1lboy/yap#readme"
+                infoMessage: "Modes help you set up Yap for different writing tasks, workflows, and scenarios."
             ) {
                 headerControls
             }

@@ -70,7 +70,7 @@ final class TranscriptionDelivery {
         SoundManager.shared.playStopSound()
 
         if let responseError = item.responseError {
-            await actions.failResponse("Enhancement failed: \(responseError)")
+            await actions.failResponse(EnhancementFailureFormatter.message(description: responseError))
         } else if let text = item.text,
             item.responseConfig != nil
         {
@@ -97,7 +97,7 @@ final class TranscriptionDelivery {
             return
         }
 
-        let commandText = deliverableText(from: text)
+        let commandText = text
         SoundManager.shared.playStopSound()
         await actions.dismiss()
 
@@ -149,6 +149,12 @@ final class TranscriptionDelivery {
         } else {
             logger.error("Custom command failed: \(message, privacy: .public)")
         }
+        NotificationManager.shared.showNotification(
+            title: message,
+            type: .error,
+            duration: 7,
+            actionButton: (String(localized: "Manage Modes"), ModeSetupNavigator.openModesSettings)
+        )
     }
 
     private static func formattedDuration(_ duration: TimeInterval) -> String {
@@ -156,7 +162,7 @@ final class TranscriptionDelivery {
     }
 
     private func paste(_ text: String, sendAfterPaste: Bool, actions: Actions) async {
-        let textToPaste = deliverableText(from: text)
+        let textToPaste = text
         let appendSpace = UserDefaults.standard.bool(forKey: "AppendTrailingSpace")
         let pastedText = textToPaste + (appendSpace ? " " : "")
         SoundManager.shared.playStopSound()
@@ -177,17 +183,5 @@ final class TranscriptionDelivery {
                 CursorPaster.performSendKey(finishAndSendKey)
             }
         }
-    }
-
-    private func deliverableText(from text: String) -> String {
-        var textToDeliver = text
-        if let restrictionMessage = LicenseViewModel.shared.usageRestrictionMessage {
-            textToDeliver = """
-                \(restrictionMessage)
-                \n\(textToDeliver)
-                """
-        }
-
-        return textToDeliver
     }
 }

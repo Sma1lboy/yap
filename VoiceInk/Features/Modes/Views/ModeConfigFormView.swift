@@ -197,11 +197,23 @@ struct ModeConfigFormView: View {
             } else {
                 let availableModels = warmupSnapshot.usableTranscriptionModels
                 let openRouterModels = availableModels.filter { $0.provider == .openRouter }
+                let yapCloudModels = availableModels.filter { $0.provider == .yapCloud }
 
                 LabeledContent("Model") {
                     Menu {
-                        ForEach(availableModels.filter { $0.provider != .openRouter }, id: \.selectionKey) { model in
+                        ForEach(
+                            availableModels.filter { $0.provider != .openRouter && $0.provider != .yapCloud },
+                            id: \.selectionKey
+                        ) { model in
                             transcriptionModelMenuItem(model)
+                        }
+
+                        if !yapCloudModels.isEmpty {
+                            Menu("Yap Cloud") {
+                                ForEach(yapCloudModels, id: \.selectionKey) { model in
+                                    transcriptionModelMenuItem(model)
+                                }
+                            }
                         }
 
                         if !openRouterModels.isEmpty {
@@ -381,7 +393,7 @@ struct ModeConfigFormView: View {
                 } else {
                     Picker("AI Provider", selection: providerBinding) {
                         ForEach(providerOptions, id: \.self) { provider in
-                            Text(provider.rawValue).tag(provider)
+                            Text(provider.displayName).tag(provider)
                         }
                     }
                     .onChange(of: draft.selectedAIProvider) { _, newValue in
@@ -432,7 +444,7 @@ struct ModeConfigFormView: View {
             }
         } else if provider == .voiceInkRefine {
             LabeledContent("AI Model") {
-                Text(VoiceInkRefineService.modelName)
+                Text(verbatim: VoiceInkRefineService.displayModelName)
                     .foregroundColor(.secondary)
             }
             .onAppear {
@@ -636,7 +648,7 @@ struct ModeConfigFormView: View {
                 Text("Command")
                 InfoTip(
                     LocalizedStringKey(
-                        "Runs locally with your user permissions. The final transcript is sent on stdin and exposed as VOICEINK_TRANSCRIPT."
+                        "Runs locally with your user permissions. The final transcript is sent on stdin and exposed as YAP_TRANSCRIPT."
                     ))
                 Spacer()
                 Menu {

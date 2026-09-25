@@ -21,8 +21,8 @@ enum CloudTranscriptionError: Error, LocalizedError {
             return String(format: String(localized: "The selected model is not supported: %@"), model)
         case .missingAPIKey:
             return String(localized: "API key for this service is missing. Please configure it in the settings.")
-        case .invalidAPIKey:
-            return String(localized: "The provided API key is invalid.")
+        case .invalidAPIKey, .apiRequestFailed(statusCode: 401, _), .apiRequestFailed(statusCode: 403, _):
+            return String(localized: "Your API key was rejected. Update it in Models.")
         case .audioFileNotFound:
             return String(localized: "The audio file to transcribe could not be found.")
         case .apiRequestFailed(let statusCode, let message):
@@ -78,6 +78,8 @@ class CloudTranscriptionService: TranscriptionService {
                 timeout: timeout
             )
         } catch let error as CloudTranscriptionError {
+            throw error
+        } catch let error as YapCloudError {
             throw error
         } catch let error as LLMKitError {
             throw mapLLMKitError(error)

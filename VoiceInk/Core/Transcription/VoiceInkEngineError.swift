@@ -32,7 +32,7 @@ extension VoiceInkEngineError: LocalizedError {
             return String(localized: "Try selecting a different model or redownloading the current model.")
         case .transcriptionFailed:
             return String(
-                localized: "Check the default model try again. If the problem persists, try a different model.")
+                localized: "Check the default model and try again. If the problem persists, try a different model.")
         case .whisperCoreFailed:
             return String(
                 localized:

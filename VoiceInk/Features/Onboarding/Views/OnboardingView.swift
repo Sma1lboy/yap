@@ -63,6 +63,9 @@ struct OnboardingView: View {
                         localDownloadStatus: coordinator.requiredTranscriptionModel.flatMap {
                             fluidAudioModelManager.downloadStatus(for: $0)
                         },
+                        localDownloadError: coordinator.requiredTranscriptionModel.flatMap {
+                            fluidAudioModelManager.downloadError(for: $0)
+                        },
                         isSetupReady: isTranscriptionSetupReady,
                         isShowingSkipWarning: $coordinator.isShowingSkipTranscriptionSetupWarning,
                         onSelectSetupKind: coordinator.flow.selectOnboardingTranscriptionSetup,
@@ -88,6 +91,9 @@ struct OnboardingView: View {
                                 newKey: $0,
                                 enhancementService: enhancementService
                             )
+                        },
+                        onContinueYapCloud: {
+                            await coordinator.flow.applyYapCloudSetup(enhancementService: enhancementService)
                         },
                         onRequestSkip: coordinator.flow.requestSkipTranscriptionSetup,
                         onConfirmSkip: coordinator.flow.skipTranscriptionSetupAndContinue
@@ -177,41 +183,6 @@ struct OnboardingView: View {
                             )
                         },
                         onContinue: {
-                            #if LOCAL_BUILD
-                                coordinator.flow.completeOnboarding(
-                                    isTranscriptionSetupReady: isTranscriptionSetupReady
-                                ) {
-                                    hasCompletedOnboardingV2 = true
-                                }
-                            #else
-                                coordinator.flow.goToLicenseStep(
-                                    isTranscriptionSetupReady: isTranscriptionSetupReady
-                                )
-                            #endif
-                        }
-                    )
-                    .transition(.opacity)
-                case .license:
-                    OnboardingLicenseScreen(
-                        licenseViewModel: coordinator.licenseViewModel,
-                        licenseKeyDraft: $coordinator.licenseKeyDraft,
-                        onBack: {
-                            coordinator.flow.goToPreviousLicenseStep(
-                                isTranscriptionSetupReady: isTranscriptionSetupReady
-                            )
-                        },
-                        onPurchase: {
-                            coordinator.licenseViewModel.openPurchaseLink()
-                        },
-                        onStartTrial: {
-                            coordinator.flow.startLicenseTrial(
-                                isTranscriptionSetupReady: isTranscriptionSetupReady
-                            ) {
-                                hasCompletedOnboardingV2 = true
-                            }
-                        },
-                        onActivate: coordinator.flow.activateLicense,
-                        onFinish: {
                             coordinator.flow.completeOnboarding(
                                 isTranscriptionSetupReady: isTranscriptionSetupReady
                             ) {

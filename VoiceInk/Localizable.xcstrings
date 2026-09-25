@@ -193,6 +193,28 @@
         }
       }
     },
+    "%@ in / %@ out per 1M tokens" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ Eingabe / %2$@ Ausgabe pro 1 Mio. Token"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ en entrée / %2$@ en sortie par million de jetons"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每百万 token:输入 %1$@ / 输出 %2$@"
+          }
+        }
+      }
+    },
     "%@ of %@" : {
       "localizations" : {
         "de" : {
@@ -1000,76 +1022,6 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "当前的 %lld 个词语替换"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "%lld days left in trial" : {
-      "localizations" : {
-        "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Noch %lld Tag in der Testphase"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Noch %lld Tage in der Testphase"
-                }
-              }
-            }
-          }
-        },
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld day left in trial"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld days left in trial"
-                }
-              }
-            }
-          }
-        },
-        "fr" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld jour restant dans la période d’essai"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld jours restants dans la période d’essai"
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans" : {
-          "variations" : {
-            "plural" : {
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "试用期剩余 %lld 天"
                 }
               }
             }
@@ -3193,7 +3145,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ein genauerer Blick auf deine VoiceInk-Nutzung."
+            "value" : "Ein genauerer Blick auf deine Yap-Nutzung."
           }
         },
         "fr" : {
@@ -3814,6 +3766,28 @@
         }
       }
     },
+    "About" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À propos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关于"
+          }
+        }
+      }
+    },
     "Accessibility" : {
       "localizations" : {
         "de" : {
@@ -3858,6 +3832,28 @@
         }
       }
     },
+    "Account" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compte"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "账户"
+          }
+        }
+      }
+    },
     "Accuracy" : {
       "localizations" : {
         "de" : {
@@ -3876,94 +3872,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "准确度"
-          }
-        }
-      }
-    },
-    "Activate" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktivieren"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Activer"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "激活"
-          }
-        }
-      }
-    },
-    "Activate License" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz aktivieren"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Activer la licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "激活许可证"
-          }
-        }
-      }
-    },
-    "Activate an existing key, purchase a license, or start a 7-day free trial." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktiviere einen vorhandenen Schlüssel, kaufe eine Lizenz oder starte eine 7-tägige kostenlose Testversion."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Activez une clé existante, achetez une licence ou démarrez un essai gratuit de 7 jours."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "激活现有密钥、购买许可证，或开始 7 天免费试用。"
-          }
-        }
-      }
-    },
-    "Activating" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wird aktiviert"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Activation"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在激活"
           }
         }
       }
@@ -4142,6 +4050,94 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加填充词"
+          }
+        }
+      }
+    },
+    "Add First Replacement" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erste Ersetzung hinzufügen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un premier remplacement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加第一条替换"
+          }
+        }
+      }
+    },
+    "Add First Word" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erstes Wort hinzufügen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un premier mot"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加第一个词"
+          }
+        }
+      }
+    },
+    "Add Funds" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben aufladen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter des fonds"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值"
+          }
+        }
+      }
+    },
+    "Add Funds…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben aufladen …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter des fonds…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值…"
           }
         }
       }
@@ -4524,6 +4520,28 @@
         }
       }
     },
+    "Add names, product terms, and jargon so Yap spells them correctly." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füge Namen, Produktbegriffe und Fachwörter hinzu, damit Yap sie richtig schreibt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez des noms, des termes produit et du jargon pour que Yap les écrive correctement."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加人名、产品名和行业术语，让 Yap 把它们写对。"
+          }
+        }
+      }
+    },
     "Add new prompt" : {
       "localizations" : {
         "de" : {
@@ -4791,6 +4809,28 @@
         }
       }
     },
+    "Adjustment" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korrektur"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调整"
+          }
+        }
+      }
+    },
     "Advanced" : {
       "localizations" : {
         "de" : {
@@ -4826,30 +4866,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Affiliation"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "联盟计划"
-          }
-        }
-      }
-    },
-    "Affiliate Program" : {
-      "comment" : "Title of a resource link that opens the Yap affiliate program.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Partnerprogramm"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Programme d'affiliation"
           }
         },
         "zh-Hans" : {
@@ -5041,24 +5057,46 @@
         }
       }
     },
-    "An unexpected error occurred. Please try again or contact support at %@" : {
+    "Amount" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut oder kontaktiere den Support unter %@"
+            "value" : "Betrag"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Une erreur inattendue s'est produite. Veuillez réessayer ou contacter l'assistance à %@."
+            "value" : "Montant"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "发生意外错误。请重试，或通过 %@ 联系支持人员"
+            "value" : "金额"
+          }
+        }
+      }
+    },
+    "Amount (USD)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Betrag (USD)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montant (USD)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "金额(美元)"
           }
         }
       }
@@ -6395,6 +6433,28 @@
         }
       }
     },
+    "Balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "余额"
+          }
+        }
+      }
+    },
     "Base URL" : {
       "localizations" : {
         "de" : {
@@ -6509,6 +6569,28 @@
         }
       }
     },
+    "Billed to your Yap Cloud balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird vom Yap-Cloud-Guthaben abgebucht"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facturé sur votre solde Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "费用从 Yap Cloud 余额扣除"
+          }
+        }
+      }
+    },
     "Built in" : {
       "localizations" : {
         "de" : {
@@ -6527,50 +6609,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "内置"
-          }
-        }
-      }
-    },
-    "Buy License" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz kaufen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Acheter une licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "购买许可证"
-          }
-        }
-      }
-    },
-    "Buy Yap License" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk-Lizenz kaufen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Acheter une licence Yap"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "购买 Yap 许可证"
           }
         }
       }
@@ -6753,28 +6791,6 @@
         }
       }
     },
-    "Changelog" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Änderungsprotokoll"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Journal des modifications"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "更新日志"
-          }
-        }
-      }
-    },
     "Check for Updates" : {
       "localizations" : {
         "de" : {
@@ -6819,7 +6835,7 @@
         }
       }
     },
-    "Check the default model try again. If the problem persists, try a different model." : {
+    "Check the default model and try again. If the problem persists, try a different model." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -6830,13 +6846,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vérifiez le modèle par défaut, réessayez. Si le problème persiste, essayez un autre modèle."
+            "value" : "Vérifiez le modèle par défaut et réessayez. Si le problème persiste, essayez un autre modèle."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "请检查默认模型并重试。如果问题仍然存在，请尝试其他模型。"
+            "value" : "请检查默认模型后重试。如果问题仍然存在，请尝试其他模型。"
           }
         }
       }
@@ -6925,6 +6941,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在检查此 Apple Speech 语言是否已下载。"
+          }
+        }
+      }
+    },
+    "Checkout opens in your browser. Refresh after paying to see the new balance." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Bezahlvorgang öffnet sich im Browser. Aktualisiere nach dem Bezahlen, um das neue Guthaben zu sehen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le paiement s'ouvre dans votre navigateur. Actualisez après avoir payé pour voir le nouveau solde."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支付页面会在浏览器中打开。付款后点「刷新」查看新余额。"
           }
         }
       }
@@ -7022,7 +7060,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wähle eine VoiceInk-Wörterbuchdatei im JSON-Format."
+            "value" : "Wähle eine Yap-Wörterbuchdatei im JSON-Format."
           }
         },
         "fr" : {
@@ -7197,6 +7235,28 @@
         }
       }
     },
+    "Cleanup" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereinigung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nettoyage"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整理"
+          }
+        }
+      }
+    },
     "Cleanup Complete" : {
       "localizations" : {
         "de" : {
@@ -7353,30 +7413,6 @@
         }
       }
     },
-    "Close What's New" : {
-      "comment" : "Label for a button that dismisses the What's New view.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "„Neu in Yap“ schließen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fermer Quoi de neuf"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "关闭“新功能”"
-          }
-        }
-      }
-    },
     "Cloud" : {
       "localizations" : {
         "de" : {
@@ -7441,6 +7477,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "云服务提供商会根据其各自的隐私政策处理音频和文本。"
+          }
+        }
+      }
+    },
+    "Cloud sync failed: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cloud-Synchronisierung fehlgeschlagen: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de la synchronisation cloud : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "云同步失败：%@"
+          }
+        }
+      }
+    },
+    "Code" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证码"
           }
         }
       }
@@ -7551,28 +7631,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在编译 %@"
-          }
-        }
-      }
-    },
-    "Complete Onboarding" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Einführung abschließen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Intégration complète"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "完成新手引导"
           }
         }
       }
@@ -7958,28 +8016,6 @@
         }
       }
     },
-    "Copied" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kopiert"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copié"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已拷贝"
-          }
-        }
-      }
-    },
     "Copied to clipboard" : {
       "localizations" : {
         "de" : {
@@ -7998,6 +8034,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已拷贝到剪贴板"
+          }
+        }
+      }
+    },
+    "Copied to clipboard. Allow Accessibility so Yap can paste automatically." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In die Zwischenablage kopiert. Erlaube Bedienungshilfen, damit Yap automatisch einfügen kann."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié dans le presse-papiers. Autorisez l’accessibilité pour que Yap puisse coller automatiquement."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已复制到剪贴板。授权辅助功能后，Yap 可以自动粘贴。"
           }
         }
       }
@@ -8066,28 +8124,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拷贝上次转写"
-          }
-        }
-      }
-    },
-    "Copy License Key" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenzschlüssel kopieren"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copier la clé de licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "拷贝许可证密钥"
           }
         }
       }
@@ -8186,24 +8222,24 @@
         }
       }
     },
-    "Could not communicate with VoiceInk Refine." : {
+    "Could not communicate with Yap Refine." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Kommunikation mit VoiceInk Refine ist fehlgeschlagen."
+            "value" : "Die Kommunikation mit Yap Refine ist fehlgeschlagen."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de communiquer avec VoiceInk Refine."
+            "value" : "Impossible de communiquer avec Yap Refine."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无法与 VoiceInk Refine 通信。"
+            "value" : "无法与 Yap Refine 通信。"
           }
         }
       }
@@ -8270,28 +8306,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法从打开面板获取文件 URL。"
-          }
-        }
-      }
-    },
-    "Could not reach the server. Please check your internet connection and try again." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Server konnte nicht erreicht werden. Bitte überprüfe deine Internetverbindung und versuche es erneut."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Impossible d'atteindre le serveur. Veuillez vérifier votre connexion Internet et réessayer."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法连接到服务器。请检查互联网连接后重试。"
           }
         }
       }
@@ -8386,46 +8400,68 @@
         }
       }
     },
-    "Could not verify this API key. Check the key and try again." : {
+    "Could not verify this API key. Check the key and your internet connection, then try again." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dieser API-Schlüssel konnte nicht verifiziert werden. Überprüfe den Schlüssel und versuche es erneut."
+            "value" : "Dieser API-Schlüssel konnte nicht verifiziert werden. Überprüfe den Schlüssel und deine Internetverbindung und versuche es erneut."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de vérifier cette clé API. Vérifiez la clé et réessayez."
+            "value" : "Impossible de vérifier cette clé API. Vérifiez la clé et votre connexion Internet, puis réessayez."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无法验证此 API 密钥。请检查密钥后重试。"
+            "value" : "无法验证此 API 密钥。请检查密钥和网络连接后重试。"
           }
         }
       }
     },
-    "Couldn't deactivate the license. Please try again." : {
+    "Could not write config file: %@" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die Lizenz konnte nicht deaktiviert werden. Bitte versuche es erneut."
+            "value" : "Konfigurationsdatei konnte nicht geschrieben werden: %@"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de désactiver la licence. Veuillez réessayer."
+            "value" : "Impossible d’écrire le fichier de configuration : %@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无法停用许可证。请重试。"
+            "value" : "无法写入配置文件：%@"
+          }
+        }
+      }
+    },
+    "Couldn't save the sign-in token to the keychain." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Anmelde-Token konnte nicht im Schlüsselbund gespeichert werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d'enregistrer le jeton de connexion dans le trousseau."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法把登录凭证存进钥匙串。"
           }
         }
       }
@@ -8830,48 +8866,70 @@
         }
       }
     },
-    "Custom prompts aren't available with VoiceInk Refine. Select a Mode that uses another AI provider." : {
+    "Custom prompts aren't available with Yap Refine. Select a Mode that uses another AI provider." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Eigene Prompts sind mit VoiceInk Refine nicht verfügbar. Wähle einen Modus mit einem anderen KI-Anbieter."
+            "value" : "Eigene Prompts sind mit Yap Refine nicht verfügbar. Wähle einen Modus mit einem anderen KI-Anbieter."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les invites personnalisées ne sont pas disponibles avec VoiceInk Refine. Sélectionnez un mode qui utilise un autre fournisseur d'IA."
+            "value" : "Les invites personnalisées ne sont pas disponibles avec Yap Refine. Sélectionnez un mode qui utilise un autre fournisseur d'IA."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk Refine 不支持自定义提示词。请选择使用其他 AI 提供商的模式。"
+            "value" : "Yap Refine 不支持自定义提示词。请选择使用其他 AI 提供商的模式。"
           }
         }
       }
     },
-    "Custom prompts aren't available with VoiceInk Refine. Select another mode first." : {
-      "comment" : "A message displayed when a user tries to select a custom prompt with VoiceInk Refine.",
+    "Custom prompts aren't available with Yap Refine. Select another mode first." : {
+      "comment" : "A message displayed when a user tries to select a custom prompt with Yap Refine.",
       "isCommentAutoGenerated" : true,
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Benutzerdefinierte Prompts sind mit VoiceInk Refine nicht verfügbar. Wähle zuerst einen anderen Modus."
+            "value" : "Benutzerdefinierte Prompts sind mit Yap Refine nicht verfügbar. Wähle zuerst einen anderen Modus."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les invites personnalisées ne sont pas disponibles avec VoiceInk Refine. Sélectionnez d'abord un autre mode."
+            "value" : "Les invites personnalisées ne sont pas disponibles avec Yap Refine. Sélectionnez d'abord un autre mode."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk Refine 不支持自定义提示词。请先选择其他模式。"
+            "value" : "Yap Refine 不支持自定义提示词。请先选择其他模式。"
+          }
+        }
+      }
+    },
+    "Custom transcription model" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigenes Transkriptionsmodell"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèle de transcription personnalisé"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义转写模型"
           }
         }
       }
@@ -9009,72 +9067,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "连续使用天数"
-          }
-        }
-      }
-    },
-    "Deactivate" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deaktivieren"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Désactiver"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "停用"
-          }
-        }
-      }
-    },
-    "Deactivate License" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz deaktivieren"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Désactiver la licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "停用许可证"
-          }
-        }
-      }
-    },
-    "Deactivate License?" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz deaktivieren?"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Désactiver la licence ?"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "要停用许可证吗？"
           }
         }
       }
@@ -10101,7 +10093,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahme schließen"
+            "value" : "Yap-Aufnahme schließen"
           }
         },
         "fr" : {
@@ -10145,7 +10137,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahme schließen und aktive Aufnahme abbrechen."
+            "value" : "Yap-Aufnahme schließen und aktive Aufnahme abbrechen."
           }
         },
         "fr" : {
@@ -10202,28 +10194,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示名称不能为空"
-          }
-        }
-      }
-    },
-    "Documentation" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dokumentation"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Documentation"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "文档"
           }
         }
       }
@@ -10334,6 +10304,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下载模型"
+          }
+        }
+      }
+    },
+    "Download failed: %@ Check your connection and try again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download fehlgeschlagen: %@ Prüfe deine Verbindung und versuche es erneut."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec du téléchargement : %@ Vérifiez votre connexion et réessayez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载失败：%@ 请检查网络连接后重试。"
           }
         }
       }
@@ -10714,30 +10706,6 @@
         }
       }
     },
-    "Earn 30% from referrals" : {
-      "comment" : "Text displayed in a resource link row in the License Management view for the affiliate program.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "30 % durch Empfehlungen verdienen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gagnez 30% from de références"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通过推荐赚取 30%"
-          }
-        }
-      }
-    },
     "Edit" : {
       "localizations" : {
         "de" : {
@@ -10981,24 +10949,24 @@
         }
       }
     },
-    "Email Support" : {
+    "Email address" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "E-Mail-Support"
+            "value" : "E-Mail-Adresse"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Assistance par e-mail"
+            "value" : "Adresse e-mail"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "邮件支持"
+            "value" : "邮箱"
           }
         }
       }
@@ -11457,50 +11425,6 @@
         }
       }
     },
-    "Enter License" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz eingeben"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entrez la licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "输入许可证"
-          }
-        }
-      }
-    },
-    "Enter License Key" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenzschlüssel eingeben"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entrez la clé de licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "输入许可证密钥"
-          }
-        }
-      }
-    },
     "Enter a model ID for AI enhancement." : {
       "comment" : "A description of the error that occurs when an AI enhancement model is not selected.",
       "isCommentAutoGenerated" : true,
@@ -11521,6 +11445,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请输入用于 AI 润色的模型 ID。"
+          }
+        }
+      }
+    },
+    "Enter a whole-dollar amount between $%lld and $%lld." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib einen ganzen Dollarbetrag zwischen $%lld und $%lld ein."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez un montant entier en dollars entre %lld $ et %lld $."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入 $%lld 到 $%lld 之间的整数美元金额。"
+          }
+        }
+      }
+    },
+    "Enter the 6-digit code sent to %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib den 6-stelligen Code ein, der an %@ gesendet wurde."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez le code à 6 chiffres envoyé à %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入发送到 %@ 的 6 位验证码。"
           }
         }
       }
@@ -11570,24 +11538,24 @@
         }
       }
     },
-    "Environment variables available: VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT. Custom commands can also read VOICEINK_FULL_PROMPT from stdin." : {
+    "Environment variables available: YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT. Custom commands can also read YAP_FULL_PROMPT from stdin." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verfügbare Umgebungsvariablen: VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT. Benutzerdefinierte Befehle können VOICEINK_FULL_PROMPT auch aus stdin lesen."
+            "value" : "Verfügbare Umgebungsvariablen: YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT. Benutzerdefinierte Befehle können YAP_FULL_PROMPT auch aus stdin lesen."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Variables d’environnement disponibles : VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT. Les commandes personnalisées peuvent aussi lire VOICEINK_FULL_PROMPT depuis stdin."
+            "value" : "Variables d’environnement disponibles : YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT. Les commandes personnalisées peuvent aussi lire YAP_FULL_PROMPT depuis stdin."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "可用的环境变量：VOICEINK_SYSTEM_PROMPT、VOICEINK_USER_PROMPT、VOICEINK_FULL_PROMPT。自定义命令也可以从 stdin 读取 VOICEINK_FULL_PROMPT。"
+            "value" : "可用的环境变量：YAP_SYSTEM_PROMPT、YAP_USER_PROMPT、YAP_FULL_PROMPT。自定义命令也可以从 stdin 读取 YAP_FULL_PROMPT。"
           }
         }
       }
@@ -11955,7 +11923,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Einstellungen exportieren"
+            "value" : "Yap-Einstellungen exportieren"
           }
         },
         "fr" : {
@@ -12790,28 +12758,6 @@
         }
       }
     },
-    "Fast transcription with no AI enhancement." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schnelle Transkription ohne KI-Verbesserung."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Transcription rapide sans amélioration de l'IA."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "快速转写，不使用 AI 增强。"
-          }
-        }
-      }
-    },
     "Fields set in this file are applied at launch and override the same settings changed in the app." : {
       "localizations" : {
         "de" : {
@@ -12900,71 +12846,24 @@
         }
       }
     },
-    "Find the best transcription setup" : {
-      "comment" : "Title of a resource link that opens a page with information about recommended recording devices.",
-      "isCommentAutoGenerated" : true,
+    "Finish Setting Up Yap…" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die beste Transkriptionseinrichtung finden"
+            "value" : "Einrichtung von Yap abschließen…"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trouvez la meilleure configuration de transcription"
+            "value" : "Terminer la configuration de Yap…"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "查找最佳转写设置"
-          }
-        }
-      }
-    },
-    "Finish Onboarding" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Einführung abschließen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Terminer l'intégration"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "完成新手引导"
-          }
-        }
-      }
-    },
-    "Free updates" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kostenlose Updates"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mises à jour gratuites"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "免费更新"
+            "value" : "完成 Yap 设置…"
           }
         }
       }
@@ -13177,50 +13076,6 @@
         }
       }
     },
-    "Have a license key?" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hast du einen Lizenzschlüssel?"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vous avez une clé de licence ?"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已有许可证密钥？"
-          }
-        }
-      }
-    },
-    "Have feedback, a bug report, or something that feels off? Send a note with system information by email, or join Discord for community discussion. Every report helps make Yap more reliable and easier to use." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hast du Feedback, einen Fehlerbericht oder stimmt etwas nicht? Sende eine E-Mail mit Systeminformationen oder tritt dem Discord bei. Jeder Bericht hilft, Yap zuverlässiger und einfacher nutzbar zu machen."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vous avez des commentaires, un rapport de bug ou quelque chose qui ne va pas ? Envoyez une note contenant des informations système par e-mail ou rejoignez Discord pour une discussion communautaire. Chaque rapport contribue à rendre Yap plus fiable et plus facile à utiliser."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "有反馈、错误报告，或觉得哪里不对劲？可以通过电子邮件发送附带系统信息的留言，或加入 Discord 参与社区讨论。每一条报告都会让 Yap 更可靠、更易用。"
-          }
-        }
-      }
-    },
     "Hide Dock Icon" : {
       "localizations" : {
         "de" : {
@@ -13334,28 +13189,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "历史记录设置"
-          }
-        }
-      }
-    },
-    "Hold %@ and start talking" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ gedrückt halten und lossprechen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Maintenez %@ et commencez à parler"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按住 %@ 开始说话"
           }
         }
       }
@@ -13765,7 +13598,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Einstellungen importieren"
+            "value" : "Yap-Einstellungen importieren"
           }
         },
         "fr" : {
@@ -14279,28 +14112,6 @@
         }
       }
     },
-    "Join Discord" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Discord beitreten"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Rejoignez Discorde"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "加入 Discord"
-          }
-        }
-      }
-    },
     "Keep Audio For" : {
       "localizations" : {
         "de" : {
@@ -14341,6 +14152,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保留剪贴板内容"
+          }
+        }
+      }
+    },
+    "Keep Config File in Sync" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfigurationsdatei synchron halten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garder le fichier de configuration synchronisé"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保持配置文件同步"
+          }
+        }
+      }
+    },
+    "Keep This Mac's Settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen dieses Macs behalten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conserver les réglages de ce Mac"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留这台 Mac 的设置"
+          }
+        }
+      }
+    },
+    "Keeps this config the same on every Mac signed in to your account." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hält diese Konfiguration auf jedem Mac mit deinem Konto gleich."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garde cette configuration identique sur chaque Mac connecté à votre compte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让登录同一账户的每台 Mac 使用同一份配置。"
           }
         }
       }
@@ -14523,30 +14400,6 @@
         }
       }
     },
-    "Latest fixes and releases" : {
-      "comment" : "Title of a link that opens the changelog on GitHub.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Neueste Korrekturen und Versionen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Derniers correctifs et versions"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最新修复和版本"
-          }
-        }
-      }
-    },
     "Launch at Login" : {
       "localizations" : {
         "de" : {
@@ -14681,294 +14534,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更少"
-          }
-        }
-      }
-    },
-    "License Key" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenzschlüssel"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clé de licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "许可证密钥"
-          }
-        }
-      }
-    },
-    "License Management" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenzverwaltung"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gestion des licences"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "许可证管理"
-          }
-        }
-      }
-    },
-    "License Required" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz erforderlich"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Licence requise"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "需要许可证"
-          }
-        }
-      }
-    },
-    "License activated successfully!" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz erfolgreich aktiviert!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Licence activée avec succès !"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "许可证激活成功！"
-          }
-        }
-      }
-    },
-    "License active on this Mac." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz auf diesem Mac aktiv."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Licence active sur ce Mac."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "许可证已在这台 Mac 上激活。"
-          }
-        }
-      }
-    },
-    "License key" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenzschlüssel"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clé de licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "许可证密钥"
-          }
-        }
-      }
-    },
-    "License key not found. Please double-check your key and try again." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenzschlüssel nicht gefunden. Bitte überprüfe deinen Schlüssel und versuche es erneut."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clé de licence introuvable. Veuillez vérifier votre clé et réessayer."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未找到许可证密钥。请仔细核对你的密钥后重试。"
-          }
-        }
-      }
-    },
-    "License required" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz erforderlich"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Licence requise"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "需要许可证"
-          }
-        }
-      }
-    },
-    "License validated successfully!" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz erfolgreich validiert!"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Licence validée avec succès !"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "许可证验证成功！"
-          }
-        }
-      }
-    },
-    "Licensed" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenziert"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisé"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已激活"
-          }
-        }
-      }
-    },
-    "Licensed (Pro)" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenziert (Pro)"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Licence (Pro)"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已激活（Pro）"
-          }
-        }
-      }
-    },
-    "Lifetime access" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lebenslanger Zugang"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Accès à vie"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "终身使用权"
-          }
-        }
-      }
-    },
-    "Lifetime access." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lebenslanger Zugang."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Accès à vie."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "终身使用权。"
           }
         }
       }
@@ -15125,28 +14690,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 已加载"
-          }
-        }
-      }
-    },
-    "Loading" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wird geladen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chargement"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在载入"
           }
         }
       }
@@ -15550,24 +15093,46 @@
         }
       }
     },
-    "Lost Key?" : {
+    "Low Yap Cloud balance" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Schlüssel verloren?"
+            "value" : "Yap-Cloud-Guthaben niedrig"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Clé perdue ?"
+            "value" : "Solde Yap Cloud faible"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "找不到密钥？"
+            "value" : "Yap Cloud 余额不足"
+          }
+        }
+      }
+    },
+    "Low balance (%@) — Add Funds" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben niedrig (%@) – aufladen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde faible (%@) — Ajouter des fonds"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "余额不足(%@)— 去充值"
           }
         }
       }
@@ -15612,28 +15177,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "管理 AI 模型"
-          }
-        }
-      }
-    },
-    "Manage License" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz verwalten"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gérer la licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "管理许可证"
           }
         }
       }
@@ -16215,6 +15758,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "模型"
+          }
+        }
+      }
+    },
+    "Models & Pricing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modelle & Preise"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèles et tarifs"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型与价格"
           }
         }
       }
@@ -17098,6 +16663,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无自动触发条件"
+          }
+        }
+      }
+    },
+    "No charges or top-ups yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Abbuchungen oder Aufladungen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun débit ni rechargement pour l'instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有扣费或充值记录。"
           }
         }
       }
@@ -18268,29 +17855,6 @@
         }
       }
     },
-    "Not Licensed" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nicht lizenziert"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pas de licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未激活"
-          }
-        }
-      }
-    },
     "Not Set" : {
       "localizations" : {
         "de" : {
@@ -18399,6 +17963,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未选中"
+          }
+        }
+      }
+    },
+    "Not signed in to Yap Cloud. Sign in under Account." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht bei Yap Cloud angemeldet. Melde dich unter „Konto“ an."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non connecté à Yap Cloud. Connectez-vous dans Compte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未登录 Yap Cloud,请在「账户」里登录。"
           }
         }
       }
@@ -18848,6 +18434,28 @@
         }
       }
     },
+    "Open Yap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap öffnen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir Yap"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开 Yap"
+          }
+        }
+      }
+    },
     "Open detailed AI model usage" : {
       "comment" : "A button that opens a detailed view of the user's AI model usage.",
       "isCommentAutoGenerated" : true,
@@ -18903,7 +18511,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Öffne aktuelle Transkriptionen, ohne das VoiceInk-Hauptfenster zu öffnen. Suche, wähle eine aus und drücke die Eingabetaste, um sie in deine aktuelle App einzufügen."
+            "value" : "Öffne aktuelle Transkriptionen, ohne das Yap-Hauptfenster zu öffnen. Suche, wähle eine aus und drücke die Eingabetaste, um sie in deine aktuelle App einzufügen."
           }
         },
         "fr" : {
@@ -19229,28 +18837,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "输出"
-          }
-        }
-      }
-    },
-    "PRO" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PRO"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PRO"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PRO"
           }
         }
       }
@@ -19635,6 +19221,50 @@
         }
       }
     },
+    "Pay as you go" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach Verbrauch"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facturé à l'usage"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按量计费"
+          }
+        }
+      }
+    },
+    "Pay as you go: one balance covers transcription and cleanup, no API keys to manage." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzungsbasiert: Ein Guthaben deckt Transkription und Bereinigung ab, keine API-Schlüssel nötig."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paiement à l'usage : un seul solde couvre la transcription et le nettoyage, sans clé API à gérer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按量付费:一份余额同时支付转写和整理,不用管理 API key。"
+          }
+        }
+      }
+    },
     "Peak Dictation Hours" : {
       "comment" : "A title for a card that shows the peak hours of dictation.",
       "isCommentAutoGenerated" : true,
@@ -19773,28 +19403,6 @@
         }
       }
     },
-    "Please enter a license key" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bitte gib einen Lizenzschlüssel ein"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Veuillez saisir une clé de licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请输入许可证密钥"
-          }
-        }
-      }
-    },
     "Please fix the validation errors before saving." : {
       "localizations" : {
         "de" : {
@@ -19839,24 +19447,68 @@
         }
       }
     },
-    "Premium Features Activated" : {
+    "Preparing download…" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Premium-Funktionen aktiviert"
+            "value" : "Download wird vorbereitet…"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fonctionnalités Premium activées"
+            "value" : "Préparation du téléchargement…"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "高级功能已激活"
+            "value" : "正在准备下载…"
+          }
+        }
+      }
+    },
+    "Preset" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorgabe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prédéfini"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "常用金额"
+          }
+        }
+      }
+    },
+    "Press %@ and start talking" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drücke %@ und leg los"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez sur %@ et commencez à parler"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按下 %@ 开始说话"
           }
         }
       }
@@ -20063,28 +19715,6 @@
         }
       }
     },
-    "Priority support" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bevorzugter Support"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Assistance prioritaire"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "优先支持"
-          }
-        }
-      }
-    },
     "Privacy Starts Here" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -20219,29 +19849,6 @@
         }
       }
     },
-    "Purchase License" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz kaufen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Acheter une licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "购买许可证"
-          }
-        }
-      }
-    },
     "Push to Talk" : {
       "localizations" : {
         "de" : {
@@ -20354,28 +19961,6 @@
         }
       }
     },
-    "REACH OUT" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "KONTAKT"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "TENDRE LA MAIN"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "联系我们"
-          }
-        }
-      }
-    },
     "Rate limit exceeded. Please try again later." : {
       "localizations" : {
         "de" : {
@@ -20464,28 +20049,6 @@
         }
       }
     },
-    "Read more about custom local models" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mehr über eigene lokale Modelle erfahren"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En savoir plus sur les modèles locaux personnalisés"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "进一步了解自定本地模型"
-          }
-        }
-      }
-    },
     "Real-time" : {
       "localizations" : {
         "de" : {
@@ -20504,6 +20067,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "实时"
+          }
+        }
+      }
+    },
+    "Recent Activity" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Aktivität"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activité récente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近记录"
           }
         }
       }
@@ -20747,30 +20332,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法开始录音"
-          }
-        }
-      }
-    },
-    "Recover or manage your license" : {
-      "comment" : "Title of a resource link that opens the license portal.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lizenz wiederherstellen oder verwalten"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Récupérer ou gérer votre licence"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "找回或管理你的许可证"
           }
         }
       }
@@ -21311,6 +20872,28 @@
         }
       }
     },
+    "Replace words Yap often gets wrong, or expand shortcuts like “my email”." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersetze Wörter, die Yap oft falsch schreibt, oder erweitere Kürzel wie „my email“."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacez les mots que Yap écrit souvent mal, ou développez des raccourcis comme « my email »."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替换 Yap 常写错的词，或把“my email”这类简写展开成完整内容。"
+          }
+        }
+      }
+    },
     "Replacement" : {
       "localizations" : {
         "de" : {
@@ -21399,24 +20982,24 @@
         }
       }
     },
-    "Report or Feedback" : {
+    "Report an Issue" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bericht oder Feedback"
+            "value" : "Problem melden"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rapport ou commentaires"
+            "value" : "Signaler un problème"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "报告或反馈"
+            "value" : "报告问题"
           }
         }
       }
@@ -21465,24 +21048,24 @@
         }
       }
     },
-    "Required for Yap shortcuts and app-wide controls to work properly." : {
+    "Required for Yap to paste transcripts into other apps and for its shortcuts to work." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erforderlich für VoiceInk-Tastaturkürzel und app-weite Steuerung."
+            "value" : "Erforderlich, damit Yap Transkripte in andere Apps einfügen kann und die Tastaturkürzel funktionieren."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Requis pour que les raccourcis Yap et les commandes à l’échelle de l’application fonctionnent correctement."
+            "value" : "Nécessaire pour que Yap puisse coller les transcriptions dans d’autres apps et que ses raccourcis fonctionnent."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap 的快捷键和全局控制需要此权限才能正常工作。"
+            "value" : "Yap 需要此权限才能把转写结果粘贴到其他 App，快捷键也依赖它。"
           }
         }
       }
@@ -21571,30 +21154,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "还原为默认"
-          }
-        }
-      }
-    },
-    "Resources" : {
-      "comment" : "A heading for a list of resources.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ressourcen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ressources"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "资源"
           }
         }
       }
@@ -22027,25 +21586,25 @@
         }
       }
     },
-    "Review how Yap handles your data before choosing a license." : {
+    "Review how Yap handles your data before you start." : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Überprüfe, wie Yap deine Daten handhabt, bevor du eine Lizenz auswählst."
+            "value" : "Sieh dir an, wie Yap mit deinen Daten umgeht, bevor du loslegst."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vérifiez comment Yap gère vos données avant de choisir une licence."
+            "value" : "Découvrez comment Yap traite vos données avant de commencer."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "选择许可证前，请先查看 Yap 如何处理你的数据。"
+            "value" : "开始使用前，先了解 Yap 如何处理你的数据。"
           }
         }
       }
@@ -22119,24 +21678,46 @@
         }
       }
     },
-    "Runs locally with your user permissions. The final transcript is sent on stdin and exposed as VOICEINK_TRANSCRIPT." : {
+    "Runs locally with your user permissions. The final transcript is sent on stdin and exposed as YAP_TRANSCRIPT." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wird lokal mit deinen Benutzerberechtigungen ausgeführt. Das finale Transkript wird über stdin gesendet und als VOICEINK_TRANSCRIPT bereitgestellt."
+            "value" : "Wird lokal mit deinen Benutzerberechtigungen ausgeführt. Das finale Transkript wird über stdin gesendet und als YAP_TRANSCRIPT bereitgestellt."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "S'exécute localement avec vos autorisations utilisateur. La transcription finale est envoyée sur stdin et exposée sous le nom VOICEINK_TRANSCRIPT."
+            "value" : "S'exécute localement avec vos autorisations utilisateur. La transcription finale est envoyée sur stdin et exposée sous le nom YAP_TRANSCRIPT."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "以你的用户权限在本地运行。最终转写文本通过 stdin 传入，并以 VOICEINK_TRANSCRIPT 形式提供。"
+            "value" : "以你的用户权限在本地运行。最终转写文本通过 stdin 传入，并以 YAP_TRANSCRIPT 形式提供。"
+          }
+        }
+      }
+    },
+    "Same models as Recommended, no API key: sign in with your email and top up a balance. Each dictation is charged at cost plus a small markup." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieselben Modelle wie bei „Empfohlen“, ohne API-Schlüssel: Melde dich mit deiner E-Mail an und lade Guthaben auf. Jedes Diktat wird zum Selbstkostenpreis plus kleinem Aufschlag berechnet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les mêmes modèles que Recommandé, sans clé API : connectez-vous avec votre e-mail et rechargez un solde. Chaque dictée est facturée au coût réel plus une petite marge."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型和「推荐」一样,但不需要 API key:用邮箱登录、充值余额即可。每次听写按实际成本加少量加价扣费。"
           }
         }
       }
@@ -22971,26 +22552,24 @@
         }
       }
     },
-    "Send a note or join Discord" : {
-      "comment" : "Title of a resource link that opens a report or feedback form.",
-      "isCommentAutoGenerated" : true,
+    "Send Code" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nachricht senden oder Discord beitreten"
+            "value" : "Code senden"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Envoyez une note ou rejoignez Discord"
+            "value" : "Envoyer le code"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "发送反馈或加入 Discord"
+            "value" : "发送验证码"
           }
         }
       }
@@ -23057,28 +22636,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "服务器"
-          }
-        }
-      }
-    },
-    "Server error (%d). Please try again later or contact support." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Serverfehler (%d). Bitte versuche es später erneut oder kontaktiere den Support."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erreur de serveur (%d). Veuillez réessayer plus tard ou contacter l'assistance."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "服务器错误（%d）。请稍后重试或联系支持人员。"
           }
         }
       }
@@ -23381,26 +22938,24 @@
         }
       }
     },
-    "Setup, features, and settings" : {
-      "comment" : "Title of a resource link that opens the Yap documentation.",
-      "isCommentAutoGenerated" : true,
+    "Settings…" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Einrichtung, Funktionen und Einstellungen"
+            "value" : "Einstellungen…"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Configuration, fonctionnalités et paramètres"
+            "value" : "Paramètres…"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "设置、功能和偏好"
+            "value" : "设置…"
           }
         }
       }
@@ -23693,6 +23248,116 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用实时模型录音时显示实时文本。"
+          }
+        }
+      }
+    },
+    "Sign In" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anmelden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se connecter"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录"
+          }
+        }
+      }
+    },
+    "Sign Out" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abmelden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出登录"
+          }
+        }
+      }
+    },
+    "Sign in to Yap Cloud to continue." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melde dich bei Yap Cloud an, um fortzufahren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connectez-vous à Yap Cloud pour continuer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先登录 Yap Cloud 再继续。"
+          }
+        }
+      }
+    },
+    "Sign in to Yap Cloud to sync this config between Macs." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melde dich bei Yap Cloud an, um diese Konfiguration zwischen Macs zu synchronisieren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connectez-vous à Yap Cloud pour synchroniser cette configuration entre vos Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录 Yap Cloud 后可在多台 Mac 之间同步这份配置。"
+          }
+        }
+      }
+    },
+    "Signed in as %@. Add funds anytime under Account." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Angemeldet als %@. Guthaben kannst du jederzeit unter „Konto“ aufladen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecté en tant que %@. Ajoutez des fonds à tout moment dans Compte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已登录:%@。随时可以在「账户」里充值。"
           }
         }
       }
@@ -24056,29 +23721,6 @@
         }
       }
     },
-    "Start 7-day Trial" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "7-tägige Testversion starten"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Commencer l'essai de 7 jours"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "开始 7 天试用"
-          }
-        }
-      }
-    },
     "Start Sound" : {
       "localizations" : {
         "de" : {
@@ -24097,6 +23739,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开始提示音"
+          }
+        }
+      }
+    },
+    "Start Using Yap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap verwenden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencer à utiliser Yap"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始使用 Yap"
           }
         }
       }
@@ -24130,7 +23794,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahme für Sprachtranskription starten oder stoppen."
+            "value" : "Yap-Aufnahme für Sprachtranskription starten oder stoppen."
           }
         },
         "fr" : {
@@ -24231,6 +23895,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从模板开始"
+          }
+        }
+      }
+    },
+    "Start/Stop Dictation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diktat starten/stoppen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démarrer/arrêter la dictée"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始/停止听写"
           }
         }
       }
@@ -24658,6 +24344,50 @@
         }
       }
     },
+    "Sync via Yap Cloud" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über Yap Cloud synchronisieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchroniser via Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过 Yap Cloud 同步"
+          }
+        }
+      }
+    },
+    "Synced at %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisiert um %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisé à %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已于 %@ 同步"
+          }
+        }
+      }
+    },
     "System" : {
       "comment" : "Display name for the system appearance preference.",
       "isCommentAutoGenerated" : true,
@@ -24924,28 +24654,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在测试…"
-          }
-        }
-      }
-    },
-    "Thank you for using Yap" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Danke, dass du Yap verwendest"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Merci d'utiliser Yap"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "感谢你使用 Yap"
           }
         }
       }
@@ -25288,6 +24996,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不支持该音频格式"
+          }
+        }
+      }
+    },
+    "The cloud config changed on another device." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Cloud-Konfiguration wurde auf einem anderen Gerät geändert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La configuration cloud a été modifiée sur un autre appareil."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "云端配置已在另一台设备上被修改。"
           }
         }
       }
@@ -25686,28 +25416,6 @@
         }
       }
     },
-    "The provided API key is invalid." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der angegebene API-Schlüssel ist ungültig."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La clé API fournie n'est pas valide."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "提供的 API 密钥无效。"
-          }
-        }
-      }
-    },
     "The selected language is not supported by SpeechAnalyzer." : {
       "localizations" : {
         "de" : {
@@ -25943,6 +25651,28 @@
         }
       }
     },
+    "This Mac and Yap Cloud both changed the config and couldn't be merged automatically." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Mac und Yap Cloud haben die Konfiguration beide geändert; sie konnte nicht automatisch zusammengeführt werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce Mac et Yap Cloud ont tous deux modifié la configuration, qui n’a pas pu être fusionnée automatiquement."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这台 Mac 和 Yap Cloud 都改了配置，无法自动合并。"
+          }
+        }
+      }
+    },
     "This Year" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -26080,37 +25810,6 @@
         }
       }
     },
-    "This deactivates Yap on this Mac and frees a device on your license." : {
-      "comment" : "A message displayed in a confirmation dialog when the user deactivates their license.",
-      "extractionState" : "manual",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dadurch wird Yap auf diesem Mac deaktiviert und ein Geräteplatz in deiner Lizenz freigegeben."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This deactivates Yap on this Mac and frees a device on your license."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cela désactive Yap sur ce Mac et libère un appareil sur votre licence."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "这将在此 Mac 上停用 Yap，并释放许可证中的一个设备名额。"
-          }
-        }
-      }
-    },
     "This dictionary uses unsupported schema version %d." : {
       "localizations" : {
         "de" : {
@@ -26133,12 +25832,34 @@
         }
       }
     },
+    "This file comes from a newer version of Yap. Fields it doesn't recognize were ignored." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei stammt aus einer neueren Yap-Version. Unbekannte Felder wurden ignoriert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce fichier provient d’une version plus récente de Yap. Les champs non reconnus ont été ignorés."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件来自更新版本的 Yap，未识别字段已忽略。"
+          }
+        }
+      }
+    },
     "This file does not contain a valid Yap dictionary." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Diese Datei enthält kein gültiges VoiceInk-Wörterbuch."
+            "value" : "Diese Datei enthält kein gültiges Yap-Wörterbuch."
           }
         },
         "fr" : {
@@ -26196,50 +25917,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这是针对英语优化的模型，仅支持英语转写。"
-          }
-        }
-      }
-    },
-    "This license has been revoked or disabled. Please contact support." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Diese Lizenz wurde widerrufen oder deaktiviert. Bitte kontaktiere den Support."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cette licence a été révoquée ou désactivée. Veuillez contacter l'assistance."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "此许可证已被吊销或停用。请联系支持人员。"
-          }
-        }
-      }
-    },
-    "This license has reached its device limit. Visit the License Management Portal to deactivate other devices." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Diese Lizenz hat ihr Gerätelimit erreicht. Besuche das Lizenzverwaltungsportal, um andere Geräte zu deaktivieren."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cette licence a atteint sa limite d'appareils. Visitez le portail de gestion des licences pour désactiver d'autres appareils."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "此许可证已达到设备数量上限。请前往许可证管理门户取消其他设备的激活。"
           }
         }
       }
@@ -26597,7 +26274,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahme umschalten"
+            "value" : "Yap-Aufnahme umschalten"
           }
         },
         "fr" : {
@@ -26634,6 +26311,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "令牌数量根据请求文本估算。"
+          }
+        }
+      }
+    },
+    "Top-up" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufladung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechargement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值"
           }
         }
       }
@@ -27041,6 +26740,28 @@
         }
       }
     },
+    "Transcription failed: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkription fehlgeschlagen: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de la transcription : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写失败：%@"
+          }
+        }
+      }
+    },
     "Transcription saved, but enhancement failed: %@" : {
       "localizations" : {
         "de" : {
@@ -27104,94 +26825,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "翻译"
-          }
-        }
-      }
-    },
-    "Trial Active" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Testversion aktiv"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Essai actif"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "试用中"
-          }
-        }
-      }
-    },
-    "Trial Ending Soon" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Testversion endet bald"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L'essai se termine bientôt"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "试用即将到期"
-          }
-        }
-      }
-    },
-    "Trial Expired" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Testversion abgelaufen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Essai expiré"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "试用已结束"
-          }
-        }
-      }
-    },
-    "Trial ended" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Testphase beendet"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Essai terminé"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "试用已结束"
           }
         }
       }
@@ -27558,6 +27191,28 @@
         }
       }
     },
+    "Usage" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisation"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用量"
+          }
+        }
+      }
+    },
     "Use Cloud" : {
       "localizations" : {
         "de" : {
@@ -27576,6 +27231,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用云端"
+          }
+        }
+      }
+    },
+    "Use Cloud Version" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cloud-Version verwenden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser la version du cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用云端版本"
           }
         }
       }
@@ -27602,25 +27279,46 @@
         }
       }
     },
-    "Use Yap now." : {
-      "extractionState" : "manual",
+    "Use Yap Cloud (pay as you go)" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap jetzt nutzen."
+            "value" : "Yap Cloud verwenden (nutzungsbasiert)"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Utilisez Yap maintenant."
+            "value" : "Utiliser Yap Cloud (paiement à l'usage)"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "立即使用 Yap。"
+            "value" : "使用 Yap Cloud(按量付费)"
+          }
+        }
+      }
+    },
+    "Use a different email" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere E-Mail-Adresse verwenden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser une autre adresse e-mail"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换一个邮箱"
           }
         }
       }
@@ -27716,28 +27414,6 @@
         }
       }
     },
-    "Use this when you want the quickest possible voice-to-text result. It records with your configured transcription model and pastes the transcript as-is." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verwende dies, wenn du möglichst schnell Sprache in Text umwandeln möchtest. Es nimmt mit deinem konfigurierten Transkriptionsmodell auf und fügt das Transkript unverändert ein."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Utilisez-le lorsque vous souhaitez obtenir le résultat voix-texte le plus rapide possible. Il enregistre avec votre modèle de transcription configuré et colle la transcription telle quelle."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "当你想尽快将语音转换为文本时使用此模式。它会使用你配置的转写模型录音，并按原样粘贴转写内容。"
-          }
-        }
-      }
-    },
     "Used by \"%@\"" : {
       "comment" : "A label indicating that a given app is already used by another app. The argument is the name of the app that is already used.",
       "isCommentAutoGenerated" : true,
@@ -27828,47 +27504,24 @@
         }
       }
     },
-    "Variables: VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT" : {
+    "Variables: YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Variablen: VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT"
+            "value" : "Variablen: YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Variables : VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT"
+            "value" : "Variables : YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "变量：VOICEINK_SYSTEM_PROMPT、VOICEINK_USER_PROMPT、VOICEINK_FULL_PROMPT"
-          }
-        }
-      }
-    },
-    "Verification Successful" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Überprüfung erfolgreich"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vérification réussie"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "验证成功"
+            "value" : "变量：YAP_SYSTEM_PROMPT、YAP_USER_PROMPT、YAP_FULL_PROMPT"
           }
         }
       }
@@ -27983,24 +27636,24 @@
         }
       }
     },
-    "Version %@ (%@)" : {
+    "Version" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Version %@ (%@)"
+            "value" : "Version"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Version %@ (%@)"
+            "value" : "Version"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "版本 %@（%@）"
+            "value" : "版本"
           }
         }
       }
@@ -28023,30 +27676,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "版本不匹配"
-          }
-        }
-      }
-    },
-    "Videos & Guides" : {
-      "comment" : "Link to a YouTube channel dedicated to tutorials and product updates.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Videos und Anleitungen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vidéos et guides"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "视频与指南"
           }
         }
       }
@@ -28298,160 +27927,6 @@
         }
       }
     },
-    "VoiceInk Refine could not complete the enhancement." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine konnte die Verbesserung nicht abschließen."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine n'a pas pu terminer l'amélioration."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine 无法完成润色。"
-          }
-        }
-      }
-    },
-    "VoiceInk Refine could not prepare the model." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine konnte das Modell nicht vorbereiten."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine n'a pas pu préparer le modèle."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine 无法准备模型。"
-          }
-        }
-      }
-    },
-    "VoiceInk Refine is not downloaded." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine wurde nicht heruntergeladen."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine n’est pas téléchargé."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "尚未下载 VoiceInk Refine。"
-          }
-        }
-      }
-    },
-    "VoiceInk Refine only supports transcript cleanup." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine unterstützt nur die Transkriptbereinigung."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine prend uniquement en charge le nettoyage des transcriptions."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine 仅支持转录文本清理。"
-          }
-        }
-      }
-    },
-    "VoiceInk Refine received an invalid request." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine hat eine ungültige Anfrage erhalten."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine a reçu une demande non valide."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine 收到了无效请求。"
-          }
-        }
-      }
-    },
-    "VoiceInk Refine requires an Apple silicon Mac with at least 16 GB of memory." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine erfordert einen Mac mit Apple-Chip und mindestens 16 GB Arbeitsspeicher."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine nécessite un Mac Apple Silicon avec au moins 16 Go de mémoire."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine 需要配备 Apple 芯片且内存至少为 16 GB 的 Mac。"
-          }
-        }
-      }
-    },
-    "VoiceInk Refine returned an invalid response." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine hat eine ungültige Antwort zurückgegeben."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine a renvoyé une réponse non valide."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "VoiceInk Refine 返回了无效响应。"
-          }
-        }
-      }
-    },
     "Voicing, Voice ink" : {
       "localizations" : {
         "de" : {
@@ -28518,54 +27993,6 @@
         }
       }
     },
-    "Walkthroughs and product updates" : {
-      "comment" : "Link to a YouTube channel dedicated to tutorials and updates related to Yap.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anleitungen und Produktupdates"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Procédures pas à pas et mises à jour du produit"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "演示教程和产品更新"
-          }
-        }
-      }
-    },
-    "Watch video" : {
-      "comment" : "Label for a button that opens the update video on YouTube.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Video ansehen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Regarder la vidéo"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "观看视频"
-          }
-        }
-      }
-    },
     "Weekly Productivity" : {
       "comment" : "A title for a productivity chart.",
       "isCommentAutoGenerated" : true,
@@ -28610,30 +28037,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "发生了什么"
-          }
-        }
-      }
-    },
-    "What's New" : {
-      "comment" : "Title of the view that presents a feature added in the current app update.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Neu in Yap"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quoi de neuf"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "新功能"
           }
         }
       }
@@ -28865,6 +28268,28 @@
         }
       }
     },
+    "Write Current Settings to Config" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuelle Einstellungen in die Konfiguration schreiben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrire les réglages actuels dans la configuration"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把当前设置写入配置文件"
+          }
+        }
+      }
+    },
     "Write an Email" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -28906,6 +28331,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "编写提示词指令"
+          }
+        }
+      }
+    },
+    "Writes settings changes back to the file. The previous file is kept as config.json.bak." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schreibt Änderungen an den Einstellungen zurück in die Datei. Die vorherige Datei bleibt als config.json.bak erhalten."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réécrit les changements de réglages dans le fichier. L’ancien fichier est conservé sous config.json.bak."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置改动会写回文件，旧文件保留为 config.json.bak。"
+          }
+        }
+      }
+    },
+    "Written at %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschrieben um %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrit à %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已于 %@ 写入"
           }
         }
       }
@@ -28956,12 +28425,122 @@
         }
       }
     },
+    "Yap Cloud" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud"
+          }
+        }
+      }
+    },
+    "Yap Cloud balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap-Cloud-Guthaben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 余额"
+          }
+        }
+      }
+    },
+    "Yap Cloud balance: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap-Cloud-Guthaben: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde Yap Cloud : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 余额:%@"
+          }
+        }
+      }
+    },
+    "Yap Cloud has no transcription models available right now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud hat gerade keine Transkriptionsmodelle verfügbar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud n'a aucun modèle de transcription disponible pour le moment."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 暂时没有可用的转写模型。"
+          }
+        }
+      }
+    },
+    "Yap Cloud speech-to-text model, billed to your balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap-Cloud-Sprache-zu-Text-Modell, wird vom Guthaben abgebucht"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèle de transcription Yap Cloud, facturé sur votre solde"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 语音转文字模型,费用从余额扣除"
+          }
+        }
+      }
+    },
     "Yap Insights" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Einblicke"
+            "value" : "Yap-Einblicke"
           }
         },
         "fr" : {
@@ -28983,7 +28562,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Modi"
+            "value" : "Yap-Modi"
           }
         },
         "fr" : {
@@ -29000,24 +28579,156 @@
         }
       }
     },
-    "Yap Pro" : {
+    "Yap Refine could not complete the enhancement." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap Pro"
+            "value" : "Yap Refine konnte die Verbesserung nicht abschließen."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap Pro"
+            "value" : "Yap Refine n'a pas pu terminer l'amélioration."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap Pro"
+            "value" : "Yap Refine 无法完成润色。"
+          }
+        }
+      }
+    },
+    "Yap Refine could not prepare the model." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine konnte das Modell nicht vorbereiten."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine n'a pas pu préparer le modèle."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine 无法准备模型。"
+          }
+        }
+      }
+    },
+    "Yap Refine is not downloaded." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine wurde nicht heruntergeladen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine n’est pas téléchargé."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未下载 Yap Refine。"
+          }
+        }
+      }
+    },
+    "Yap Refine only supports transcript cleanup." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine unterstützt nur die Transkriptbereinigung."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine prend uniquement en charge le nettoyage des transcriptions."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine 仅支持转录文本清理。"
+          }
+        }
+      }
+    },
+    "Yap Refine received an invalid request." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine hat eine ungültige Anfrage erhalten."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine a reçu une demande non valide."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine 收到了无效请求。"
+          }
+        }
+      }
+    },
+    "Yap Refine requires an Apple silicon Mac with at least 16 GB of memory." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine erfordert einen Mac mit Apple-Chip und mindestens 16 GB Arbeitsspeicher."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine nécessite un Mac Apple Silicon avec au moins 16 Go de mémoire."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine 需要配备 Apple 芯片且内存至少为 16 GB 的 Mac。"
+          }
+        }
+      }
+    },
+    "Yap Refine returned an invalid response." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine hat eine ungültige Antwort zurückgegeben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine a renvoyé une réponse non valide."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Refine 返回了无效响应。"
           }
         }
       }
@@ -29027,7 +28738,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-App ist nicht verfügbar"
+            "value" : "Yap-App ist nicht verfügbar"
           }
         },
         "fr" : {
@@ -29040,30 +28751,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap App 不可用"
-          }
-        }
-      }
-    },
-    "Yap automatically learns from the corrections you make to improve transcription accuracy over time. Dictionary Auto Learn uses your currently configured AI provider and AI model. You can change them anytime in Dictionary Settings." : {
-      "comment" : "Description of Dictionary Auto Learn in the What's New panel.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap lernt automatisch aus deinen Korrekturen, um die Transkriptionsgenauigkeit mit der Zeit zu verbessern. Die automatische Wörterbucherweiterung verwendet deinen derzeit konfigurierten KI-Anbieter und dein KI-Modell. Du kannst beides jederzeit in den Wörterbucheinstellungen ändern."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap apprend automatiquement des corrections que vous apportez pour améliorer la précision de la transcription au fil du temps. Dictionary Auto Learn utilise votre fournisseur d'IA et votre modèle d'IA actuellement configurés. Vous pouvez les modifier à tout moment dans les paramètres du dictionnaire."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap 会自动学习你所做的更正，从而逐步提高转录准确度。词典自动学习会使用你当前配置的 AI 提供商和 AI 模型。你可以随时在“词典”设置中更改它们。"
           }
         }
       }
@@ -29135,6 +28822,28 @@
         }
       }
     },
+    "Yap can't access the microphone. Allow it in System Settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap hat keinen Zugriff auf das Mikrofon. Erlaube ihn in den Systemeinstellungen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap n’a pas accès au micro. Autorisez-le dans Réglages Système."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 无法使用麦克风，请在系统设置中允许。"
+          }
+        }
+      }
+    },
     "Yap could not switch to another microphone." : {
       "localizations" : {
         "de" : {
@@ -29179,98 +28888,6 @@
         }
       }
     },
-    "Yap couldn't access the macOS Keychain. Quit and reopen Yap. If the problem continues, restart your Mac." : {
-      "comment" : "Error message displayed when the macOS Keychain is unavailable.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap konnte nicht auf den macOS-Schlüsselbund zugreifen. Beende Yap und öffne die App erneut. Falls das Problem weiterhin besteht, starte deinen Mac neu."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap n'a pas pu accéder au trousseau macOS. Quittez et rouvrez Yap. Si le problème persiste, redémarrez votre Mac."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap 无法访问 macOS 钥匙串。请退出并重新打开 Yap。如果问题仍然存在，请重新启动 Mac。"
-          }
-        }
-      }
-    },
-    "Yap couldn't remove the saved license. Please try again." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap konnte die gespeicherte Lizenz nicht entfernen. Bitte versuche es erneut."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap n'a pas pu supprimer la licence enregistrée. Veuillez réessayer."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap 无法移除已保存的许可证。请重试。"
-          }
-        }
-      }
-    },
-    "Yap couldn't save the license. Please try again." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap konnte die Lizenz nicht speichern. Bitte versuche es erneut."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap n'a pas pu enregistrer la licence. Veuillez réessayer."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap 无法保存许可证。请重试。"
-          }
-        }
-      }
-    },
-    "Yap couldn't start the trial because the macOS Keychain is unavailable. Quit and reopen Yap. If the problem continues, restart your Mac." : {
-      "comment" : "Error message displayed when the macOS Keychain is unavailable while starting a trial.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap konnte den Testzeitraum nicht starten, da der macOS-Schlüsselbund nicht verfügbar ist. Beende Yap und öffne die App erneut. Falls das Problem weiterhin besteht, starte deinen Mac neu."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap n'a pas pu démarrer la version d'essai car le trousseau macOS n'est pas disponible. Quittez et rouvrez Yap. Si le problème persiste, redémarrez votre Mac."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap 无法开始试用，因为 macOS 钥匙串不可用。请退出并重新打开 Yap。如果问题仍然存在，请重新启动 Mac。"
-          }
-        }
-      }
-    },
     "Yap has no server and collects no analytics." : {
       "localizations" : {
         "de" : {
@@ -29300,7 +28917,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Wirkungsübersicht"
+            "value" : "Yap-Wirkungsübersicht"
           }
         },
         "fr" : {
@@ -29335,28 +28952,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 支持上下文感知"
-          }
-        }
-      }
-    },
-    "Yap is Open Source" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap ist Open Source"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap est Open Source"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap 是开源软件"
           }
         }
       }
@@ -29410,7 +29005,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Modi umfassen Diktat, Verbesserung, E-Mail, Assistent, Umschreiben, Fragen, Zusammenfassen und Übersetzen."
+            "value" : "Yap-Modi umfassen Diktat, Verbesserung, E-Mail, Assistent, Umschreiben, Fragen, Zusammenfassen und Übersetzen."
           }
         },
         "fr" : {
@@ -29478,7 +29073,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahme geschlossen"
+            "value" : "Yap-Aufnahme geschlossen"
           }
         },
         "fr" : {
@@ -29500,7 +29095,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahme umgeschaltet"
+            "value" : "Yap-Aufnahme umgeschaltet"
           }
         },
         "fr" : {
@@ -29522,7 +29117,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahmedienst ist nicht verfügbar"
+            "value" : "Yap-Aufnahmedienst ist nicht verfügbar"
           }
         },
         "fr" : {
@@ -29788,6 +29383,50 @@
         }
       }
     },
+    "Your API key was rejected. Update it in Models." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein API-Schlüssel wurde abgelehnt. Aktualisiere ihn unter Modelle."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre clé API a été refusée. Mettez-la à jour dans Modèles."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API 密钥被拒绝，请在「模型」页更新。"
+          }
+        }
+      }
+    },
+    "Your Yap Cloud balance has run out. Add funds under Account to keep going." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Yap-Cloud-Guthaben ist aufgebraucht. Lade unter „Konto“ Guthaben auf, um weiterzumachen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre solde Yap Cloud est épuisé. Ajoutez des fonds dans Compte pour continuer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 余额已用完,请在「账户」里充值后继续。"
+          }
+        }
+      }
+    },
     "Your dictated text will appear here." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -29879,29 +29518,6 @@
         }
       }
     },
-    "Your license key is verified. Yap is ready to use on this Mac." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dein Lizenzschlüssel wurde verifiziert. Yap ist auf diesem Mac einsatzbereit."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Votre clé de licence est vérifiée. Yap est prêt à être utilisé sur ce Mac."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你的许可证密钥已通过验证。Yap 已可在这台 Mac 上使用。"
-          }
-        }
-      }
-    },
     "Your recent transcriptions will appear here." : {
       "comment" : "A description of the content of the \"Your recent transcriptions\" section.",
       "isCommentAutoGenerated" : true,
@@ -29944,28 +29560,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的设置已成功导出到 %@。"
-          }
-        }
-      }
-    },
-    "Your trial has ended. Upgrade to Yap Pro at %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deine Testversion ist beendet. Upgrade auf Yap Pro unter %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Votre essai est terminé. Mise à niveau vers Yap Pro sur %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你的试用已结束。请前往 %@ 升级到 Yap Pro"
           }
         }
       }
@@ -30016,6 +29610,50 @@
         }
       }
     },
+    "e.g. Yap, OpenRouter" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "z. B. Yap, OpenRouter"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "p. ex. Yap, OpenRouter"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "例如：Yap、OpenRouter"
+          }
+        }
+      }
+    },
+    "e.g. hello@example.com" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "z. B. hello@example.com"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "p. ex. hello@example.com"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "例如：hello@example.com"
+          }
+        }
+      }
+    },
     "e.g. my email, my mail" : {
       "localizations" : {
         "de" : {
@@ -30034,28 +29672,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "例如：my email, my mail"
-          }
-        }
-      }
-    },
-    "e.g. support@tryvoiceink.com" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "z. B. support@tryvoiceink.com"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "par ex. support@tryvoiceink.com"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "例如：support@tryvoiceink.com"
           }
         }
       }

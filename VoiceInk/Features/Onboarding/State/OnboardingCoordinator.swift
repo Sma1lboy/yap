@@ -2,9 +2,6 @@ import SwiftUI
 
 @MainActor
 final class OnboardingCoordinator: ObservableObject {
-    let licenseViewModel = LicenseViewModel.shared
-    @Published var licenseKeyDraft = ""
-
     @Published var storedStage: String {
         didSet {
             defaults.set(storedStage, forKey: OnboardingStorageKeys.stage)
@@ -110,11 +107,10 @@ final class OnboardingCoordinator: ObservableObject {
     }
 
     var stage: OnboardingStage {
-        #if LOCAL_BUILD
-            if storedStage == OnboardingStage.license.rawValue {
-                return .trust
-            }
-        #endif
+        // The license step was removed; users who stopped there resume at the last remaining step.
+        if storedStage == "license" {
+            return .trust
+        }
 
         if let stage = OnboardingStage(rawValue: storedStage) {
             return stage
@@ -152,19 +148,11 @@ final class OnboardingCoordinator: ObservableObject {
             return OnboardingStage.baseStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 1
         }
 
-        if stage == .license {
-            return OnboardingStage.baseStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 2
-        }
-
         return stage.stepNumber
     }
 
     var totalStepCount: Int {
-        #if LOCAL_BUILD
-            OnboardingStage.baseStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 1
-        #else
-            OnboardingStage.baseStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 2
-        #endif
+        OnboardingStage.baseStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 1
     }
 
     var experienceStep: OnboardingExperienceStep {
@@ -260,7 +248,7 @@ final class OnboardingCoordinator: ObservableObject {
         ]
 
         let supportedProviders = AIProvider.allCases.filter { provider in
-            provider.supportsEnhancement && provider.requiresAPIKey && provider != .custom
+            provider.supportsEnhancement && provider.requiresAPIKey && provider != .custom && provider != .yapCloud
         }
 
         return supportedProviders.sorted { first, second in
@@ -285,7 +273,7 @@ final class OnboardingCoordinator: ObservableObject {
             "Speechmatics", "xAI", "Mistral", "Groq", "Gemini",
         ]
 
-        return CloudProviderRegistry.allProviders.sorted { first, second in
+        return CloudProviderRegistry.allProviders.filter { $0.modelProvider != .yapCloud }.sorted { first, second in
             let firstIndex = preferredOrder.firstIndex(of: first.providerKey) ?? Int.max
             let secondIndex = preferredOrder.firstIndex(of: second.providerKey) ?? Int.max
             if firstIndex != secondIndex { return firstIndex < secondIndex }
@@ -308,6 +296,9 @@ final class OnboardingCoordinator: ObservableObject {
         case .recommended:
             return CloudProviderRegistry.provider(for: .openRouter)?.models
                 .first { $0.name == RecommendedSetup.transcriptionModel }
+        case .yapCloud:
+            let models = YapCloudProvider().models
+            return models.first { $0.name == RecommendedSetup.transcriptionModel } ?? models.first
         case .local:
             return requiredTranscriptionModel
         case .cloud:
@@ -373,8 +364,9 @@ final class OnboardingCoordinator: ObservableObject {
     }
 
     var selectedOnboardingProvider: AIProvider {
+        // Yap Cloud is only reachable through its own setup kind, not the API key step's list.
         if let storedProvider = AIProvider(rawValue: storedOnboardingAIProvider),
-            onboardingProviderOptions.contains(storedProvider)
+            storedProvider == .yapCloud || onboardingProviderOptions.contains(storedProvider)
         {
             return storedProvider
         }
@@ -427,6 +419,8 @@ final class OnboardingCoordinator: ObservableObject {
         switch transcriptionSetupKind {
         case .recommended:
             return APIKeyManager.shared.hasAPIKey(forProvider: AIProvider.openRouter.rawValue)
+        case .yapCloud:
+            return YapCloud.shared.token != nil && selectedOnboardingTranscriptionModel != nil
         case .local:
             return isTranscriptionModelDownloaded
         case .cloud:
@@ -435,7 +429,7 @@ final class OnboardingCoordinator: ObservableObject {
         }
     }
 
-    /// Also true once transcription setup was skipped, so the trust/license steps stay reachable;
+    /// Also true once transcription setup was skipped, so the trust step stays reachable;
     /// the flow never routes a skipped setup into the experience steps.
     func isReadyForExperience(isTranscriptionSetupReady: Bool) -> Bool {
         guard requiredPermissionsGranted && hasSelectedOnboardingMicrophone else { return false }
@@ -480,6 +474,7 @@ enum OnboardingStorageKeys {
 
 enum OnboardingTranscriptionSetupKind: String, CaseIterable, Identifiable {
     case recommended
+    case yapCloud
     case cloud
     case local
 
@@ -489,6 +484,8 @@ enum OnboardingTranscriptionSetupKind: String, CaseIterable, Identifiable {
         switch self {
         case .recommended:
             return "Recommended"
+        case .yapCloud:
+            return "Yap Cloud"
         case .local:
             return "Local"
         case .cloud:

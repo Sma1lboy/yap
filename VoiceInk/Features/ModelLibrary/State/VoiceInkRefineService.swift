@@ -15,9 +15,9 @@ enum VoiceInkRefineError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unavailable:
-            return String(localized: "VoiceInk Refine requires an Apple silicon Mac with at least 16 GB of memory.")
+            return String(localized: "Yap Refine requires an Apple silicon Mac with at least 16 GB of memory.")
         case .modelNotDownloaded:
-            return String(localized: "VoiceInk Refine is not downloaded.")
+            return String(localized: "Yap Refine is not downloaded.")
         }
     }
 }
@@ -25,8 +25,10 @@ enum VoiceInkRefineError: LocalizedError {
 final class VoiceInkRefineService: ObservableObject {
     static let shared = VoiceInkRefineService()
 
-    static let providerName = "VoiceInk Refine"
+    static let providerName = "Yap Refine"
+    /// Persisted in mode configs as the selected model; keep the upstream value.
     static let modelName = "VoiceInk Refine V1"
+    static let displayModelName = "Yap Refine V1"
     static let systemPrompt = """
         Transform raw ASR input into polished text. Preserve the original meaning and tone. Handle punctuation, capitalization, and spoken formatting cues properly. Remove fillers, repetitions, false starts, and discarded self-corrections. Output only the final text.
         """
@@ -133,7 +135,7 @@ final class VoiceInkRefineService: ObservableObject {
             NotificationCenter.default.post(name: .AppSettingsDidChange, object: nil)
         } catch {
             downloadError = error.localizedDescription
-            logger.error("Failed to delete VoiceInk Refine: \(error.localizedDescription, privacy: .public)")
+            logger.error("Failed to delete Yap Refine: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -234,7 +236,7 @@ final class VoiceInkRefineService: ObservableObject {
                     cleanupCancelledDownload()
                 } else {
                     downloadError = error.localizedDescription
-                    logger.error("Failed to download VoiceInk Refine: \(error.localizedDescription, privacy: .public)")
+                    logger.error("Failed to download Yap Refine: \(error.localizedDescription, privacy: .public)")
                 }
             }
         #else

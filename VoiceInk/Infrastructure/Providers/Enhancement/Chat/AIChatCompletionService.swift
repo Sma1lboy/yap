@@ -61,6 +61,21 @@ extension AIService {
             }
             result = completion.text
             openRouterCompletion = completion
+        case .yapCloud:
+            defer { YapCloud.shared.scheduleBalanceRefresh() }
+            do {
+                result = try await OpenAILLMClient.chatCompletion(
+                    baseURL: URL(string: provider.baseURL)!,
+                    apiKey: try chatAPIKey(for: provider, modelName: resolvedModel),
+                    model: resolvedModel,
+                    messages: messages,
+                    systemPrompt: systemPrompt,
+                    temperature: 0.3,
+                    timeout: timeout
+                )
+            } catch LLMKitError.httpError(let statusCode, let message) where statusCode == 401 || statusCode == 402 {
+                throw YapCloudError(status: statusCode, body: Data(message.utf8), authenticated: true)
+            }
         case .custom:
             guard
                 let customConfiguration = CustomAIProviderManager.shared.requestConfiguration(forModel: resolvedModel),
@@ -79,7 +94,7 @@ extension AIService {
             )
         case .voiceInkRefine:
             throw EnhancementError.customError(
-                String(localized: "VoiceInk Refine only supports transcript cleanup.")
+                String(localized: "Yap Refine only supports transcript cleanup.")
             )
         case .ollama:
             result = try await enhanceWithOllama(

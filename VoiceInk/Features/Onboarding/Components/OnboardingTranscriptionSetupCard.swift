@@ -9,6 +9,7 @@ struct OnboardingTranscriptionSetupCard: View {
     let isLocalDownloaded: Bool
     let isLocalDownloading: Bool
     let localDownloadStatus: FluidAudioDownloadStatus?
+    let localDownloadError: String?
     let onSelectSetupKind: (OnboardingTranscriptionSetupKind) -> Void
     let onDownloadLocalModel: (FluidAudioModel) -> Void
     let onCancelLocalModelDownload: (FluidAudioModel) -> Void
@@ -19,6 +20,7 @@ struct OnboardingTranscriptionSetupCard: View {
     let isApplyingRecommended: Bool
 
     @EnvironmentObject private var transcriptionModelManager: TranscriptionModelManager
+    @ObservedObject private var yapCloud = YapCloud.shared
     @State private var apiKey = ""
     @State private var isVerifying = false
     @State private var verificationMessage: String?
@@ -53,6 +55,8 @@ struct OnboardingTranscriptionSetupCard: View {
             switch setupKind {
             case .recommended:
                 recommendedSetup
+            case .yapCloud:
+                yapCloudSetup
             case .local:
                 localSetup
             case .cloud:
@@ -85,6 +89,7 @@ struct OnboardingTranscriptionSetupCard: View {
     private var setupSwitcher: some View {
         HStack(spacing: 8) {
             setupChoice(.recommended, systemImage: "sparkles")
+            setupChoice(.yapCloud, systemImage: "creditcard")
             setupChoice(.cloud, systemImage: "cloud.fill")
             setupChoice(.local, systemImage: "macbook")
         }
@@ -172,6 +177,50 @@ struct OnboardingTranscriptionSetupCard: View {
         .background(AppMaterialCardBackground(cornerRadius: 12))
     }
 
+    private var yapCloudSetup: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Use Yap Cloud (pay as you go)")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(AppTheme.Text.primary)
+                Text("Same models as Recommended, no API key: sign in with your email and top up a balance. Each dictation is charged at cost plus a small markup.")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(AppTheme.Text.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if yapCloud.isSignedIn {
+                HStack(alignment: .center, spacing: 9) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(AppTheme.Status.positive)
+                    Text(String(format: String(localized: "Signed in as %@. Add funds anytime under Account."), yapCloud.email ?? ""))
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(AppTheme.Text.primary)
+                }
+                if YapCloudProvider().models.isEmpty {
+                    HStack(spacing: 8) {
+                        Text("Yap Cloud has no transcription models available right now.")
+                        Button("Retry") { Task { await yapCloud.refreshModels() } }
+                    }
+                    .font(.system(size: 12))
+                    .foregroundColor(AppTheme.Text.secondary)
+                }
+            } else {
+                YapCloudSignInForm()
+            }
+
+            if let recommendedError {
+                Text(recommendedError)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(AppTheme.Status.error)
+            }
+        }
+        .padding(16)
+        .background(AppMaterialCardBackground(cornerRadius: 12))
+        .task { await yapCloud.refreshModels() }
+    }
+
     @ViewBuilder
     private var recommendedStatusLine: some View {
         if isApplyingRecommended {
@@ -223,6 +272,7 @@ struct OnboardingTranscriptionSetupCard: View {
                 isDownloaded: isLocalDownloaded,
                 isDownloading: isLocalDownloading,
                 status: localDownloadStatus,
+                errorMessage: localDownloadError,
                 onDownload: {
                     onDownloadLocalModel(localModel)
                 },
@@ -517,7 +567,7 @@ struct OnboardingTranscriptionSetupCard: View {
                     Task { await loadOpenRouterModelsIfNeeded() }
                 } else {
                     verificationMessage = String(
-                        localized: "Could not verify this API key. Check the key and try again.")
+                        localized: "Could not verify this API key. Check the key and your internet connection, then try again.")
                     verificationDetailMessage = result.errorMessage
                 }
 
@@ -644,7 +694,7 @@ private struct TranscriptionProviderChoiceButton: View {
             OnboardingTranscriptionSetupCard(
                 localModel: nil, setupKind: setupKind, providerOptions: CloudProviderRegistry.allProviders,
                 selectedProviderKey: $providerKey, isLocalDownloaded: false, isLocalDownloading: false,
-                localDownloadStatus: nil, onSelectSetupKind: { _ in }, onDownloadLocalModel: { _ in },
+                localDownloadStatus: nil, localDownloadError: nil, onSelectSetupKind: { _ in }, onDownloadLocalModel: { _ in },
                 onCancelLocalModelDownload: { _ in }, onVerificationChanged: {},
                 recommendedAPIKey: $recommendedKey, recommendedError: nil, isApplyingRecommended: false
             )

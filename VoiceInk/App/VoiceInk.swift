@@ -22,7 +22,6 @@ struct VoiceInkApp: App {
     @StateObject private var mainWindowNavigation = MainWindowNavigation.shared
     @StateObject private var aiService = AIService()
     @StateObject private var enhancementService: AIEnhancementService
-    @StateObject private var licenseViewModel = LicenseViewModel.shared
     @StateObject private var activeWindowService = ActiveWindowService.shared
     @AppStorage(OnboardingSettings.completedV2Key) private var hasCompletedOnboardingV2 = false
     @State private var showMenuBarIcon = true
@@ -149,15 +148,6 @@ struct VoiceInkApp: App {
         whisperModelManager.loadAvailableModels()
         transcriptionModelManager.refreshAllAvailableModels()
         transcriptionModelManager.loadCurrentTranscriptionModel()
-        YapConfigLoader.shared.attach(
-            aiService: aiService,
-            enhancementService: enhancementService,
-            transcriptionModelManager: transcriptionModelManager
-        )
-        Task { @MainActor in
-            await YapConfigLoader.shared.resolveRemoteSelections()
-        }
-
         _whisperModelManager = State(initialValue: whisperModelManager)
         _fluidAudioModelManager = State(initialValue: fluidAudioModelManager)
         _transcriptionModelManager = StateObject(wrappedValue: transcriptionModelManager)
@@ -171,6 +161,20 @@ struct VoiceInkApp: App {
         let menuBarManager = MenuBarManager()
         _menuBarManager = StateObject(wrappedValue: menuBarManager)
         menuBarManager.configure(engine: engine)
+
+        CloudConfigSync.shared.store = YapCloud.shared
+        YapConfigLoader.shared.attach(
+            aiService: aiService,
+            enhancementService: enhancementService,
+            transcriptionModelManager: transcriptionModelManager,
+            recordingShortcutManager: recordingShortcutManager,
+            menuBarManager: menuBarManager,
+            recorderUIManager: recorderUIManager,
+            modelContext: resolvedContainer.mainContext
+        )
+        Task { @MainActor in
+            await YapConfigLoader.shared.finishLaunch()
+        }
 
         let activeWindowService = ActiveWindowService.shared
         _activeWindowService = StateObject(wrappedValue: activeWindowService)
@@ -316,15 +320,8 @@ struct VoiceInkApp: App {
                         .environmentObject(aiService)
                         .environmentObject(enhancementService)
                         .modelContainer(container)
-                        .lazyChangeLogPresenter { isPresenting in
-                            if !isPresenting {
-                                showLaunchRemindersIfNeeded()
-                            }
-                        }
                         .onAppear {
-                            if !ChangeLogManager.needsPresentation() {
-                                showLaunchRemindersIfNeeded()
-                            }
+                            showLaunchRemindersIfNeeded()
 
                             // Run due audio-only cleanup and schedule future checks when transcript cleanup is not managing retention.
                             if !UserDefaults.standard.bool(forKey: CleanupSettingsKeys.isTranscriptionCleanupEnabled)
@@ -374,14 +371,6 @@ struct VoiceInkApp: App {
                             })
                 }
             }
-            .confettiCelebrationPresenter()
-            .onReceive(
-                LifecycleObserver.shared.publisher(
-                    for: [.applicationDidBecomeActive, .systemDidWake]
-                )
-            ) { _ in
-                licenseViewModel.refreshLicenseState()
-            }
         }
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: AppWindowLayout.width, height: AppWindowLayout.minimumHeight)
@@ -408,10 +397,10 @@ struct VoiceInkApp: App {
                 .environmentObject(aiService)
                 .environmentObject(enhancementService)
         } label: {
+            // Template duck glyph (design/logo.svg simplified) at the 18pt size of system menu bar icons.
             let image: NSImage = {
-                let ratio = $0.size.height / $0.size.width
-                $0.size.height = 22
-                $0.size.width = 22 / ratio
+                $0.size = NSSize(width: 18, height: 18)
+                $0.isTemplate = true
                 return $0
             }(NSImage(named: "menuBarIcon")!)
 

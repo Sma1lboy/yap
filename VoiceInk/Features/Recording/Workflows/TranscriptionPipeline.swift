@@ -25,17 +25,20 @@ class TranscriptionPipeline {
     private let modelContext: ModelContext
     private let serviceRegistry: TranscriptionServiceRegistry
     private let enhancementService: AIEnhancementService?
+    private let transcriptionModelManager: TranscriptionModelManager
     private let delivery = TranscriptionDelivery()
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "TranscriptionPipeline")
 
     init(
         modelContext: ModelContext,
         serviceRegistry: TranscriptionServiceRegistry,
-        enhancementService: AIEnhancementService?
+        enhancementService: AIEnhancementService?,
+        transcriptionModelManager: TranscriptionModelManager
     ) {
         self.modelContext = modelContext
         self.serviceRegistry = serviceRegistry
         self.enhancementService = enhancementService
+        self.transcriptionModelManager = transcriptionModelManager
     }
 
     /// Run the full pipeline for a given transcription record.
@@ -70,6 +73,7 @@ class TranscriptionPipeline {
         var responseError: String?
         var outputForDelivery: OutputRuntimeConfiguration?
         var responseConfig: EnhancementRuntimeConfiguration?
+        var transcriptionFailure: String?
 
         func finishCanceledTranscription() async {
             await onCancel()
@@ -147,6 +151,7 @@ class TranscriptionPipeline {
             transcription.text = cleanedText
             transcription.duration = actualDuration
             transcription.transcriptionModelName = model.displayName
+            if model.provider == .yapCloud { transcription.usedYapCloud = true }
             transcription.transcriptionDuration = transcriptionDuration
             transcription.modeName = modeMetadata.name
             transcription.modeEmoji = modeMetadata.emoji
@@ -198,6 +203,7 @@ class TranscriptionPipeline {
                             contextSnapshot: contextSnapshot
                         )
                         transcription.enhancedText = enhancementResult.text
+                        if resolvedEnhancementConfiguration.provider == .yapCloud { transcription.usedYapCloud = true }
                         transcription.promptName =
                             enhancementResult.promptName ?? resolvedEnhancementConfiguration.prompt?.title
                         transcription.enhancementDuration = enhancementResult.duration
@@ -210,10 +216,12 @@ class TranscriptionPipeline {
                         transcription.enhancedText = failureMessage
                         responseError = errorDescription
                         await MainActor.run {
-                            NotificationManager.shared.showNotification(
-                                title: failureMessage,
-                                type: .warning
-                            )
+                            if !YapCloud.notifyIfInsufficientBalance(error) {
+                                NotificationManager.shared.showNotification(
+                                    title: failureMessage,
+                                    type: .warning
+                                )
+                            }
                         }
                         if shouldCancel() {
                             await finishCanceledTranscription()
@@ -226,17 +234,12 @@ class TranscriptionPipeline {
             transcription.transcriptionStatus = TranscriptionStatus.completed.rawValue
         } catch {
             let errorDescription = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            await MainActor.run { _ = YapCloud.notifyIfInsufficientBalance(error) }
 
-            if let nativeAppleError = error as? NativeAppleTranscriptionService.ServiceError,
-                nativeAppleError.shouldShowNotification
-            {
-                await MainActor.run {
-                    NotificationManager.shared.showNotification(
-                        title: errorDescription,
-                        type: .error,
-                        duration: 5.0
-                    )
-                }
+            let isHiddenNativeAppleError =
+                (error as? NativeAppleTranscriptionService.ServiceError).map { !$0.shouldShowNotification } ?? false
+            if !(error is CancellationError) && !isHiddenNativeAppleError {
+                transcriptionFailure = errorDescription
             }
 
             transcription.text = String(format: String(localized: "Transcription Failed: %@"), errorDescription)
@@ -294,6 +297,30 @@ class TranscriptionPipeline {
         )
 
         saveTranscriptionAndPostCompletion()
+
+        if let transcriptionFailure {
+            showTranscriptionFailure(transcriptionFailure)
+        }
+    }
+
+    /// The recording stays on disk with the failed History entry, so Retry re-runs it.
+    private func showTranscriptionFailure(_ description: String) {
+        NotificationManager.shared.showNotification(
+            title: String(format: String(localized: "Transcription failed: %@"), description),
+            type: .error,
+            duration: 10,
+            actionButton: (
+                String(localized: "Retry"),
+                { [self] in
+                    LastTranscriptionService.retryLastTranscription(
+                        from: modelContext,
+                        transcriptionModelManager: transcriptionModelManager,
+                        serviceRegistry: serviceRegistry,
+                        enhancementService: enhancementService
+                    )
+                }
+            )
+        )
     }
 
     private func metadata(for mode: ModeConfig?) -> (name: String?, emoji: String?) {

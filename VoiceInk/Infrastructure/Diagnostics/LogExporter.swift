@@ -135,7 +135,7 @@ final class LogExporter {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
         let timestamp = dateFormatter.string(from: Date())
-        let fileName = "VoiceInk_Logs_\(timestamp).log"
+        let fileName = "Yap_Logs_\(timestamp).log"
 
         guard let downloadsURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first else {
             throw NSError(

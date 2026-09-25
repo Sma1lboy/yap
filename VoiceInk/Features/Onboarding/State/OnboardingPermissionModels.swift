@@ -8,7 +8,6 @@ enum OnboardingStage: String, CaseIterable {
     case experience
     case contextAwareness
     case trust
-    case license
 
     var stepNumber: Int {
         switch self {
@@ -26,8 +25,6 @@ enum OnboardingStage: String, CaseIterable {
             return 6
         case .trust:
             return 7
-        case .license:
-            return 8
         }
     }
 
@@ -47,8 +44,6 @@ enum OnboardingStage: String, CaseIterable {
             return "slider.horizontal.3"
         case .trust:
             return "lock.shield"
-        case .license:
-            return "checkmark.seal.fill"
         }
     }
 
@@ -67,9 +62,7 @@ enum OnboardingStage: String, CaseIterable {
         case .contextAwareness:
             return String(localized: "Yap is Context-Aware")
         case .trust:
-            return String(localized: "Yap is Open Source")
-        case .license:
-            return String(localized: "Buy Yap License")
+            return String(localized: "Privacy Starts Here")
         }
     }
 
@@ -93,8 +86,6 @@ enum OnboardingStage: String, CaseIterable {
                 localized: "Yap can select the right mode from the app you are using and the rules you configure.")
         case .trust:
             return String(localized: "Local models keep everything on this Mac. Cloud providers get only what you send them, with your own key.")
-        case .license:
-            return String(localized: "Activate an existing key, purchase a license, or start a 7-day free trial.")
         }
     }
 
@@ -122,7 +113,7 @@ enum OnboardingPermissionKind: String, CaseIterable, Identifiable {
         switch self {
         case .microphone:
             return OnboardingPermissionDescriptor(
-                title: "Microphone",
+                title: String(localized: "Microphone"),
                 subtitle: String(localized: "Yap uses your microphone to capture your voice.")
             )
 
@@ -205,5 +196,10 @@ enum PrivacySettingsPane {
         case .screenRecording:
             return "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
         }
+    }
+
+    func open() {
+        guard let url = URL(string: urlString) else { return }
+        NSWorkspace.shared.open(url)
     }
 }

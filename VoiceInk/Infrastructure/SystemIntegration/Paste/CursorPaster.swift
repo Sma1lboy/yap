@@ -46,6 +46,21 @@ class CursorPaster {
     @MainActor
     private static func performPasteSession(_ text: String) async -> PasteOutcome {
         let pasteboard = NSPasteboard.general
+
+        // Both paste methods send keystrokes, which macOS drops without Accessibility.
+        // Leave the text on the clipboard (no restore) so nothing is lost.
+        guard AXIsProcessTrusted() else {
+            logger.error("Accessibility permission missing; leaving text on the clipboard")
+            _ = ClipboardManager.setClipboard(text, transient: false, sessionID: nil)
+            NotificationManager.shared.showNotification(
+                title: String(localized: "Copied to clipboard. Allow Accessibility so Yap can paste automatically."),
+                type: .warning,
+                duration: 8,
+                actionButton: (String(localized: "Open Settings"), PrivacySettingsPane.accessibility.open)
+            )
+            return PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil)
+        }
+
         let shouldRestoreClipboard = UserDefaults.standard.bool(forKey: "restoreClipboardAfterPaste")
         let savedContents = shouldRestoreClipboard ? snapshotClipboard(from: pasteboard) : []
         let sessionID = UUID().uuidString
@@ -77,7 +92,8 @@ class CursorPaster {
             pasteResult = await postPasteCommand()
             autoLearnGeneration = nil
         }
-        if shouldRestoreClipboard {
+        // A paste that never reached the app must not take the text back off the clipboard.
+        if shouldRestoreClipboard && pasteResult.didPostPasteCommand {
             scheduleClipboardRestore(
                 savedContents,
                 expectedText: text,

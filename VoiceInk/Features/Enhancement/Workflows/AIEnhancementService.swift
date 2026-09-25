@@ -283,6 +283,8 @@ class AIEnhancementService: ObservableObject {
             )
         } catch let error as EnhancementError {
             throw error
+        } catch let error as YapCloudError {
+            throw error
         } catch {
             throw EnhancementError.customError(error.localizedDescription)
         }

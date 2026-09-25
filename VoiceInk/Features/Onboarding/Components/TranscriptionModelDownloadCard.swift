@@ -5,6 +5,7 @@ struct TranscriptionModelDownloadCard: View {
     let isDownloaded: Bool
     let isDownloading: Bool
     let status: FluidAudioDownloadStatus?
+    let errorMessage: String?
     let onDownload: () -> Void
     let onCancel: () -> Void
 
@@ -15,6 +16,11 @@ struct TranscriptionModelDownloadCard: View {
 
             if let status {
                 progressPanel(status)
+            } else if let errorMessage, !isDownloaded {
+                Text(String(format: String(localized: "Download failed: %@ Check your connection and try again."), errorMessage))
+                    .font(.system(size: 11))
+                    .foregroundColor(AppTheme.Status.error)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(18)
@@ -156,6 +162,10 @@ struct TranscriptionModelDownloadCard: View {
 
         if status != nil {
             return "Resume Download"
+        }
+
+        if errorMessage != nil {
+            return "Retry"
         }
 
         return "Download Model"

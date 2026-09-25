@@ -46,6 +46,25 @@ Yap reads `~/.config/yap/config.json` (or `$XDG_CONFIG_HOME/yap/config.json`) at
 | `enhancement` | Cleanup provider/model for modes that have enhancement on. `prompt` is a file next to the config (or an absolute path) or the prompt text itself; `"recommended"` uses the prompt bundled with the app. It becomes the default mode's prompt. |
 | `defaultMode` | Which extra context the default mode sends to the model. All off keeps dictation fast and private. |
 
+Schema v2 (`"version": 2`) adds whole-settings sections. They use the same JSON shapes as Settings → Backup → Export, so an exported file's sections can be pasted in. A file without `version` is v1 and reads exactly as before.
+
+| Field (v2) | Meaning |
+|---|---|
+| `version` | `2`. Omitted means v1. A higher number (file from a newer Yap) still loads; Settings → Config File notes that unknown fields were ignored. |
+| `modes` | Array of modes, same objects as `modeConfigs` in an export. Merged by `id`: a mode in the file replaces the app's mode with the same id; modes only in the app stay. |
+| `modeShortcuts` | `{ "<mode id>": <shortcut> }`, same as the export's `modeShortcuts`. Ids not in `modes` are ignored. |
+| `prompts` | Array of `{ id, title, promptText, useSystemInstructions }`. Merged by `id` like `modes`. |
+| `dictionary` | `{ "vocabulary": ["Yap"], "replacements": { "yep": "Yap" } }`. Merged into the existing dictionary. |
+| `general` | Same object as the export's `generalSettings`: global shortcuts, launch at login, recorder style, retention, paste and auto-learn settings. |
+| `modified` | `{ "modes": { "<id>": "<ISO 8601 time>" }, "prompts": {…}, "vocabulary": { "<word>": … }, "replacements": { "<source>": … } }`: when each entry last changed. Written by Yap; you don't need to edit it. |
+| `deleted` | Same shape: tombstones for deleted entries. An entry is removed (from the file and from the app) when its tombstone is newer than its `modified` time, or it has none. Tombstones older than 90 days are dropped. |
+
+v2 sections apply first, then the v1 fields on top, so `enhancement.prompt` and `defaultMode` win over the same settings inside `modes`. Empty arrays and objects count as unset. API keys are only ever read from `keys` (`env:NAME` or literal); custom model definitions are not part of the config because they can carry keys.
+
+Settings → Config File → Write Current Settings to Config goes the other way: it writes the app's current settings as a v2 file. Keys keep only the `env:NAME` references already in the file; a literal key is never written, so it disappears from the file (the keychain still has it). `defaultMode` and `enhancement.enabled` are dropped because `modes` carries them, and `transcription` / `enhancement` stay only while they match the modes. Reading the written file back changes nothing. The previous file is kept as `config.json.bak`. "Keep Config File in Sync" (off by default) does the same about 2 s after any settings change.
+
+"Sync via Yap Cloud" (needs a Yap Cloud sign-in) stores the same v2 file in your account. At launch Yap pulls it: if the cloud has a newer version and this Mac changed nothing since the last sync, the cloud copy is applied and written to config.json. Local changes are pushed with the last synced version as `If-Match`. If another Mac pushed first, the two copies are merged by id (modes, prompts, shortcuts, dictionary entries; each Mac's edits since the last sync win for what it changed) and pushed once more. If that fails too, Settings → Config File shows the conflict with "Use Cloud Version" / "Keep This Mac's Settings"; nothing is overwritten on its own. The last synced version is stored in UserDefaults (`configCloudSyncedVersion`). Deleting an entry writes a tombstone, so it stays deleted on the other Macs unless one of them edited it after the delete.
+
 Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription `microsoft/mai-transcribe-2` (80/82, $0.10/h), cleanup `deepseek/deepseek-v4.1-flash` (9/9 cases, ~0.5 s). Onboarding's "Recommended" option applies exactly this setup with one OpenRouter key. Re-run `setup/bench.py` after editing `VoiceInk/Resources/RecommendedPrompt.md`.
 
 ## Releasing
