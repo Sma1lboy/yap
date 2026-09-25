@@ -216,6 +216,9 @@ struct OnboardingTranscriptionSetupCard: View {
                     .foregroundColor(AppTheme.Text.secondary)
                 }
             } else {
+                Text("New accounts get $1 of free credit.")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(AppTheme.Status.positive)
                 YapCloudSignInForm()
             }
 

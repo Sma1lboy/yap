@@ -4830,6 +4830,28 @@
         }
       }
     },
+    "Added %@ of trial credit to your Yap Cloud balance." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Startguthaben wurde deinem Yap-Cloud-Guthaben gutgeschrieben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ de crédit d'essai ajoutés à votre solde Yap Cloud."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已到账 %@ 体验额度。"
+          }
+        }
+      }
+    },
     "Added %@ to your Yap Cloud balance." : {
       "localizations" : {
         "de" : {
@@ -16851,6 +16873,28 @@
         }
       }
     },
+    "New accounts get $1 of free credit." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neue Konten erhalten $1 Startguthaben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les nouveaux comptes reçoivent 1 $ de crédit offert."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新用户注册送 $1 额度。"
+          }
+        }
+      }
+    },
     "New manual-review suggestions will appear here." : {
       "comment" : "Description for the empty AutoLearn review state.",
       "extractionState" : "stale",
@@ -19947,24 +19991,24 @@
         }
       }
     },
-    "Pay as you go: one balance covers transcription and enhancement, no API keys to manage." : {
+    "Pay as you go: one balance covers transcription and enhancement, no API keys to manage. New accounts get $1 of free credit." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nutzungsbasiert: Ein Guthaben deckt Transkription und Verbesserung ab, keine API-Schlüssel nötig."
+            "value" : "Nutzungsbasiert: Ein Guthaben deckt Transkription und Verbesserung ab, keine API-Schlüssel nötig. Neue Konten erhalten $1 Startguthaben."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Paiement à l'usage : un seul solde couvre la transcription et l'amélioration, sans clé API à gérer."
+            "value" : "Paiement à l'usage : un seul solde couvre la transcription et l'amélioration, sans clé API à gérer. Les nouveaux comptes reçoivent 1 $ de crédit offert."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按量付费：一份余额同时支付转写和润色，不用管理 API Key。"
+            "value" : "按量付费：一份余额同时支付转写和润色，不用管理 API Key。新用户注册送 $1 额度。"
           }
         }
       }
@@ -24370,6 +24414,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "退出 Yap Cloud？"
+          }
+        }
+      }
+    },
+    "Sign-up bonus" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Startguthaben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bonus d'inscription"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "注册赠送"
           }
         }
       }

@@ -120,7 +120,33 @@ final class YapCloud: ObservableObject {
         isSignedIn = true
         NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
         await refreshAccount()
+        announceSignupCreditIfNew(userID: response.user.id.string)
         await refreshModels()
+    }
+
+    /// New accounts get a `credit` ledger row (the sign-up bonus). Right after the first sign-in, say so once.
+    @MainActor
+    private func announceSignupCreditIfNew(userID: String) {
+        let key = "yapCloudSignupCreditShown." + userID
+        guard !defaults.bool(forKey: key), (balanceMicros ?? 0) > 0,
+            let credit = Self.signupCreditMicros(in: ledger, now: Date())
+        else { return }
+        defaults.set(true, forKey: key)
+        Self.showCredited(
+            String(format: String(localized: "Added %@ of trial credit to your Yap Cloud balance."), Self.formatUSD(micros: credit)))
+    }
+
+    /// The sign-up bonus if it was granted within the last hour (a brand-new account, not a later sign-in).
+    static func signupCreditMicros(in ledger: [YapCloudLedgerEntry], now: Date) -> Int64? {
+        ledger.first { entry in
+            entry.kind == "credit" && entry.amountMicros > 0
+                && entry.createdDate.map { now.timeIntervalSince($0) < 3600 } == true
+        }?.amountMicros
+    }
+
+    @MainActor
+    static func showCredited(_ title: String) {
+        NotificationManager.shared.showNotification(title: title, type: .success, duration: 5)
     }
 
     /// Signs out locally right away; revoking the token server-side is best effort, so being offline
@@ -378,10 +404,8 @@ final class YapCloud: ObservableObject {
             let credited = Self.creditedMicros(before: pending.balanceBeforeMicros, after: balance)
         else { return }
         pendingTopUp = nil
-        NotificationManager.shared.showNotification(
-            title: String(format: String(localized: "Added %@ to your Yap Cloud balance."), Self.formatUSD(micros: credited)),
-            type: .success,
-            duration: 5)
+        Self.showCredited(
+            String(format: String(localized: "Added %@ to your Yap Cloud balance."), Self.formatUSD(micros: credited)))
     }
 
     static func creditedMicros(before: Int64, after: Int64) -> Int64? {
@@ -982,6 +1006,19 @@ struct YapCloudConfigDocument: Equatable {
             assert(devices[0].lastUsedDate == parseDate("2026-09-25T09:00:00Z"))
             assert(devices[1].lastUsedDate == parseDate("2026-08-01T10:00:00Z"))
             assert(try! YapCloudDevice.decodeList(json(#"{"devices":\#(devicesJSON)}"#)) == devices)
+
+            // Sign-up credit: a recent positive credit row only
+            let credits = try! JSONDecoder().decode(
+                YapCloudLedger.self,
+                from: json(#"""
+                    {"entries":[
+                     {"id":"3","kind":"usage","amountMicros":-92,"createdAt":"2026-09-25T10:30:00Z"},
+                     {"id":"1","kind":"credit","amountMicros":1000000,"createdAt":"2026-09-25T10:00:00Z"}]}
+                    """#)).entries
+            let t0 = parseDate("2026-09-25T10:00:00Z")!
+            assert(signupCreditMicros(in: credits, now: t0.addingTimeInterval(600)) == 1_000_000)
+            assert(signupCreditMicros(in: credits, now: t0.addingTimeInterval(7200)) == nil)
+            assert(signupCreditMicros(in: Array(credits.prefix(1)), now: t0) == nil)
 
             // yap:// links
             assert(isAccountRefreshURL(URL(string: "yap://account/refresh")!) && isAccountRefreshURL(URL(string: "YAP://Account")!))
