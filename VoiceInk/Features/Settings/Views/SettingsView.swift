@@ -360,7 +360,10 @@ struct SettingsView: View {
                             : String(localized: "Sign in to Yap Cloud to sync this config between Macs."))
                 }
                 .disabled(!cloudConfigSync.isAvailable)
-                cloudSyncStatus
+                // A stale "Synced at" or conflict banner is misleading (and its buttons no-op) once sync is off.
+                if syncConfigViaCloud && cloudConfigSync.isAvailable {
+                    cloudSyncStatus
+                }
             } header: {
                 Text("Config File")
             } footer: {
