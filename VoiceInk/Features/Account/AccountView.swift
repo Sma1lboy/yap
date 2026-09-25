@@ -63,6 +63,7 @@ private struct SignedInSections: View {
     @State private var customAmount = ""
     @State private var isOpeningCheckout = false
     @State private var errorMessage: String?
+    @State private var isConfirmingSignOut = false
 
     var body: some View {
         Section("Account") {
@@ -97,7 +98,14 @@ private struct SignedInSections: View {
                     .disabled(cloud.isRefreshingAccount)
                 if cloud.isRefreshingAccount { ProgressView().controlSize(.small) }
                 Spacer()
-                Button("Sign Out") { Task { await cloud.signOut() } }
+                Button("Sign Out") { isConfirmingSignOut = true }
+                    .confirmationDialog(
+                        "Sign out of Yap Cloud?", isPresented: $isConfirmingSignOut
+                    ) {
+                        Button("Sign Out", role: .destructive, action: signOut)
+                    } message: {
+                        Text("Modes that use Yap Cloud stop working until you sign in again or switch them to another provider.")
+                    }
             }
         }
 
@@ -159,6 +167,23 @@ private struct SignedInSections: View {
                 }
             }
         }
+    }
+
+    private func signOut() {
+        cloud.signOut()
+        let modesUsingCloud = ModeManager.shared.configurations.filter { mode in
+            mode.selectedTranscriptionModelName?.hasPrefix("YapCloud:") == true
+                || (mode.isAIEnhancementEnabled && mode.selectedAIProvider == AIProvider.yapCloud.rawValue)
+        }
+        guard !modesUsingCloud.isEmpty else { return }
+        NotificationManager.shared.showNotification(
+            title: String(
+                format: String(localized: "Still using Yap Cloud: %@. Switch them to another provider in Modes."),
+                modesUsingCloud.map(\.name).joined(separator: ", ")),
+            type: .warning,
+            duration: 10,
+            actionButton: (String(localized: "Manage Modes"), ModeSetupNavigator.openModesSettings)
+        )
     }
 
     private func openCheckout() {

@@ -112,16 +112,23 @@ final class YapCloud: ObservableObject {
         await refreshModels()
     }
 
+    /// Signs out locally right away; revoking the token server-side is best effort, so being offline
+    /// never leaves the user waiting on the 20s request timeout.
     @MainActor
-    func signOut() async {
-        if token != nil {
+    func signOut() {
+        guard let token else {
+            clearSession()
+            return
+        }
+        clearSession()
+        Task {
             do {
-                _ = try await send("POST", "/v1/auth/logout")
+                _ = try await sendWithResponse(
+                    "POST", "/v1/auth/logout", headers: ["Authorization": "Bearer \(token)"], authenticated: false)
             } catch {
                 logger.error("Logout request failed: \(error.localizedDescription, privacy: .public)")
             }
         }
-        clearSession()
     }
 
     @MainActor
