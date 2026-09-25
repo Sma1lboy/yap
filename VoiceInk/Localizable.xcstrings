@@ -27704,6 +27704,28 @@
         }
       }
     },
+    "This is too large for Yap Cloud." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das ist zu groß für Yap Cloud."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C'est trop volumineux pour Yap Cloud."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内容太大，超出了 Yap Cloud 的上限。"
+          }
+        }
+      }
+    },
     "This model isn't available on Yap Cloud. Choose another model." : {
       "localizations" : {
         "de" : {
@@ -27722,6 +27744,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap Cloud 不提供这个模型，请换一个模型。"
+          }
+        }
+      }
+    },
+    "This recording is too long for Yap Cloud. Try a shorter one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Aufnahme ist zu lang für Yap Cloud. Versuche es mit einer kürzeren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet enregistrement est trop long pour Yap Cloud. Essayez-en un plus court."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录音太长，超出了 Yap Cloud 的上限，请录短一些。"
           }
         }
       }
@@ -30516,6 +30560,28 @@
         }
       }
     },
+    "Yap Cloud is still working on your other dictations. Try again in a moment." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud bearbeitet noch deine anderen Diktate. Versuche es gleich noch einmal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud traite encore vos autres dictées. Réessayez dans un instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 还在处理你的其他听写，请稍等片刻再试。"
+          }
+        }
+      }
+    },
     "Yap Cloud is temporarily unavailable. Try again shortly." : {
       "localizations" : {
         "de" : {
@@ -31558,6 +31624,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap Cloud 余额已用完,请在「账户」里充值后继续。"
+          }
+        }
+      }
+    },
+    "Your Yap Cloud sign-in has expired. Sign in again under Account." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Yap-Cloud-Anmeldung ist abgelaufen. Melde dich unter „Konto“ erneut an."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre connexion Yap Cloud a expiré. Reconnectez-vous dans Compte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录已过期，请在「账户」里重新登录。"
           }
         }
       }

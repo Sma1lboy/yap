@@ -309,7 +309,7 @@ final class YapCloud: ObservableObject {
                 guard !Task.isCancelled else { return }
                 do {
                     me = try await fetchMe()
-                } catch YapCloudError.notSignedIn {
+                } catch let error as YapCloudError where error.isAuthFailure {
                     clearSession()
                 } catch {
                     logger.error("Balance refresh failed: \(error.localizedDescription, privacy: .public)")
@@ -332,7 +332,7 @@ final class YapCloud: ObservableObject {
             monthlySpend = try await fetchUsage()
             accountRefreshError = nil
             await evaluateTrialNudge()
-        } catch YapCloudError.notSignedIn {
+        } catch let error as YapCloudError where error.isAuthFailure {
             clearSession()
         } catch YapCloudError.unreachable {
             // The Account banner says it; no second, duplicate error line.
@@ -445,17 +445,24 @@ final class YapCloud: ObservableObject {
         if let error = error as? URLError {
             return [.cannotFindHost, .cannotConnectToHost, .dnsLookupFailed, .notConnectedToInternet].contains(error.code)
         }
-        if case YapCloudError.server(let status, _, _, _, _) = error { return [502, 503, 504].contains(status) }
+        if case YapCloudError.server(let status, let code, _, _, _) = error {
+            // TOO_MANY_CONCURRENT_CALLS is refused before the call starts, so nothing was billed.
+            return [502, 503, 504].contains(status) || (status == 429 && code == "TOO_MANY_CONCURRENT_CALLS")
+        }
         return false
     }
 
-    static func retryingOnce<T>(
-        delay: Duration = .milliseconds(500), _ operation: () async throws -> T
-    ) async throws -> T {
+    /// Wait before the retry: a concurrency slot frees when another call finishes (usually ~1 s); others 0.5 s.
+    static func retryDelay(after error: Error) -> Duration {
+        if case YapCloudError.server(429, "TOO_MANY_CONCURRENT_CALLS", _, _, _) = error { return .milliseconds(1500) }
+        return .milliseconds(500)
+    }
+
+    static func retryingOnce<T>(_ operation: () async throws -> T) async throws -> T {
         do {
             return try await operation()
         } catch where isSafeToRetry(error) {
-            try await Task.sleep(for: delay)
+            try await Task.sleep(for: retryDelay(after: error))
             return try await operation()
         }
     }
@@ -463,6 +470,12 @@ final class YapCloud: ObservableObject {
     /// Enhancement requests through Yap Cloud: model latency plus paygate's hop, independent of the user's
     /// per-provider enhancement timeout (7 s default), which a cold route can exceed.
     static let enhancementTimeout: TimeInterval = 30
+
+    /// paygate's transcription body cap (40 MiB) against the base64 audio plus ~1 KB of JSON around it.
+    static let transcriptionBodyLimitBytes = 40 * 1024 * 1024
+    static func transcriptionBodyFits(audioBytes: Int) -> Bool {
+        (audioBytes + 2) / 3 * 4 + 1024 <= transcriptionBodyLimitBytes
+    }
 
     /// Transcription time grows with the recording: 10 s + 1.5 × its length, at most 120 s.
     static func transcriptionTimeout(audioSeconds: Double) -> TimeInterval {
@@ -527,7 +540,7 @@ final class YapCloud: ObservableObject {
         do {
             devices = try await fetchDevices()
             devicesError = nil
-        } catch YapCloudError.notSignedIn {
+        } catch let error as YapCloudError where error.isAuthFailure {
             clearSession()
         } catch YapCloudError.server(let status, _, _, _, _) where status == 404 {
             devices = nil
@@ -645,11 +658,11 @@ final class YapCloud: ObservableObject {
         case YapCloudError.unreachable:
             NotificationManager.shared.showNotification(
                 title: YapCloudError.unreachable.errorDescription ?? "", type: .error, duration: 5)
-        case YapCloudError.notSignedIn:
+        case let error as YapCloudError where error.isAuthFailure:
             // The token was rejected (revoked or expired); drop it so Account shows the sign-in form.
             shared.clearSession()
             NotificationManager.shared.showNotification(
-                title: YapCloudError.notSignedIn.errorDescription ?? "",
+                title: error.errorDescription ?? "",
                 type: .error,
                 duration: 8,
                 onTap: { showAddFunds() },
@@ -795,6 +808,10 @@ final class YapCloud: ObservableObject {
 
 enum YapCloudError: LocalizedError, Equatable {
     case notSignedIn
+    /// 401 TOKEN_EXPIRED: the token went unused for 90 days. Handled like `notSignedIn`, with its own message.
+    case sessionExpired
+    /// 413 PAYLOAD_TOO_LARGE on transcription (40 MB body ≈ 30 MB of audio).
+    case recordingTooLong
     case insufficientBalance
     /// 402 MONTHLY_CAP_REACHED: the user's own monthly spending cap, not an empty balance.
     case monthlyCapReached
@@ -817,6 +834,8 @@ enum YapCloudError: LocalizedError, Equatable {
             self = .monthlyCapReached
         case 402:
             self = .insufficientBalance
+        case 401 where authenticated && code == "TOKEN_EXPIRED":
+            self = .sessionExpired
         case 401 where authenticated:
             self = .notSignedIn
         case 409 where code == "VERSION_CONFLICT":
@@ -830,10 +849,17 @@ enum YapCloudError: LocalizedError, Equatable {
         }
     }
 
+    /// The token no longer works (revoked, never valid, or expired): sign out locally.
+    var isAuthFailure: Bool { self == .notSignedIn || self == .sessionExpired }
+
     var errorDescription: String? {
         switch self {
         case .notSignedIn:
             return String(localized: "Not signed in to Yap Cloud. Sign in under Account.")
+        case .sessionExpired:
+            return String(localized: "Your Yap Cloud sign-in has expired. Sign in again under Account.")
+        case .recordingTooLong:
+            return String(localized: "This recording is too long for Yap Cloud. Try a shorter one.")
         case .insufficientBalance:
             return String(localized: "Your Yap Cloud balance has run out. Add funds under Account to keep going.")
         case .monthlyCapReached:
@@ -882,6 +908,10 @@ enum YapCloudError: LocalizedError, Equatable {
                     format: String(localized: "Too many requests. Try again in %lld min."), minutes)
             }
             return String(localized: "Too many requests. Wait a moment and try again.")
+        case "TOO_MANY_CONCURRENT_CALLS":
+            return String(localized: "Yap Cloud is still working on your other dictations. Try again in a moment.")
+        case "PAYLOAD_TOO_LARGE":
+            return String(localized: "This is too large for Yap Cloud.")
         case "UPSTREAM_UNAVAILABLE":
             return String(localized: "The AI service is unreachable right now. Nothing was charged. Try again shortly.")
         case "STRIPE_ERROR":
@@ -903,10 +933,21 @@ enum YapCloudError: LocalizedError, Equatable {
 
     private struct Envelope: Decodable {
         struct Body: Decodable {
+            /// paygate codes are strings; OpenRouter errors passed through carry a numeric code.
             let code: String?
             let message: String?
             let retryAfterSeconds: Int?
             let attemptsRemaining: Int?
+
+            enum CodingKeys: String, CodingKey { case code, message, retryAfterSeconds, attemptsRemaining }
+
+            init(from decoder: Decoder) throws {
+                let c = try decoder.container(keyedBy: CodingKeys.self)
+                code = try c.decodeIfPresent(YapCloudScalar.self, forKey: .code)?.string
+                message = try c.decodeIfPresent(String.self, forKey: .message)
+                retryAfterSeconds = try c.decodeIfPresent(Int.self, forKey: .retryAfterSeconds)
+                attemptsRemaining = try c.decodeIfPresent(Int.self, forKey: .attemptsRemaining)
+            }
         }
         let error: Body?
     }
@@ -1354,6 +1395,9 @@ struct YapCloudConfigDocument: Equatable {
             assert(!isAccountRefreshURL(URL(string: "https://account/refresh")!))
             assert(isAccountRefreshURL(URL(string: "yap-dev://account/refresh")!) && !isAccountRefreshURL(URL(string: "yapx://account")!))
 
+            // 413: 40 MiB body ≈ 31 MB of audio (≈ 16 min of 16 kHz mono WAV)
+            assert(transcriptionBodyFits(audioBytes: 30_000_000) && !transcriptionBodyFits(audioBytes: 32_000_000))
+
             // Timeouts
             assert(transcriptionTimeout(audioSeconds: 0) == 10 && transcriptionTimeout(audioSeconds: 20) == 40)
             assert(transcriptionTimeout(audioSeconds: 600) == 120)
@@ -1378,6 +1422,16 @@ struct YapCloudConfigDocument: Equatable {
             assert(!isSafeToRetry(URLError(.timedOut)) && !isSafeToRetry(URLError(.networkConnectionLost)))
             assert(isSafeToRetry(YapCloudError.server(status: 502, code: "UPSTREAM_UNAVAILABLE", message: "")))
             assert(!isSafeToRetry(YapCloudError.insufficientBalance) && !isSafeToRetry(YapCloudError.notSignedIn))
+            let busy = YapCloudError(status: 429, body: json(#"{"error":{"code":"TOO_MANY_CONCURRENT_CALLS","message":"x"}}"#), authenticated: true)
+            assert(isSafeToRetry(busy) && retryDelay(after: busy) == .milliseconds(1500))
+            assert(!isSafeToRetry(YapCloudError(status: 429, body: json(#"{"error":{"code":"RATE_LIMITED","message":"x"}}"#), authenticated: false)))
+            assert(!(busy.errorDescription ?? "").localizedCaseInsensitiveContains("too many"))
+            let expired = YapCloudError(status: 401, body: json(#"{"error":{"code":"TOKEN_EXPIRED","message":"x"}}"#), authenticated: true)
+            assert(expired == .sessionExpired && expired.isAuthFailure && YapCloudError.notSignedIn.isAuthFailure)
+            assert(!YapCloudError.insufficientBalance.isAuthFailure)
+            // OpenRouter's own errors pass through with a numeric code
+            let passthrough = YapCloudError(status: 400, body: json(#"{"error":{"code":400,"message":"bad model"}}"#), authenticated: true)
+            assert(passthrough == .server(status: 400, code: "400", message: "bad model"))
             assert(!isSafeToRetry(YapCloudError.server(status: 400, code: "MODEL_NOT_ALLOWED", message: "")))
 
             // Trial nudge: < $0.20, credit spent, nothing paid; N from the pace since sign-up
