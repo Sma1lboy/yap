@@ -7239,6 +7239,28 @@
         }
       }
     },
+    "Cloud sync failed: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cloud-Synchronisierung fehlgeschlagen: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de la synchronisation cloud : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "云同步失败：%@"
+          }
+        }
+      }
+    },
     "Collapse" : {
       "localizations" : {
         "de" : {
@@ -8132,6 +8154,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法验证此 API 密钥。请检查密钥后重试。"
+          }
+        }
+      }
+    },
+    "Could not write config file: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfigurationsdatei konnte nicht geschrieben werden: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’écrire le fichier de configuration : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法写入配置文件：%@"
           }
         }
       }
@@ -13778,6 +13822,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保留剪贴板内容"
+          }
+        }
+      }
+    },
+    "Keep Config File in Sync" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfigurationsdatei synchron halten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garder le fichier de configuration synchronisé"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保持配置文件同步"
+          }
+        }
+      }
+    },
+    "Keep This Mac's Settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen dieses Macs behalten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conserver les réglages de ce Mac"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留这台 Mac 的设置"
+          }
+        }
+      }
+    },
+    "Keeps this config the same on every Mac signed in to your account." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hält diese Konfiguration auf jedem Mac mit deinem Konto gleich."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garde cette configuration identique sur chaque Mac connecté à votre compte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让登录同一账户的每台 Mac 使用同一份配置。"
           }
         }
       }
@@ -20927,6 +21037,7 @@
       }
     },
     "Review how Yap handles your data before you start." : {
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -20946,8 +21057,7 @@
             "value" : "开始使用前，先了解 Yap 如何处理你的数据。"
           }
         }
-      },
-      "extractionState" : "manual"
+      }
     },
     "Reviewing pending corrections…" : {
       "comment" : "A placeholder text that appears when the review panel is loading.",
@@ -22548,6 +22658,28 @@
         }
       }
     },
+    "Sign in to Yap Cloud to sync this config between Macs." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melde dich bei Yap Cloud an, um diese Konfiguration zwischen Macs zu synchronisieren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connectez-vous à Yap Cloud pour synchroniser cette configuration entre vos Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录 Yap Cloud 后可在多台 Mac 之间同步这份配置。"
+          }
+        }
+      }
+    },
     "Skip API Setup" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -23504,6 +23636,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已切换到：%@"
+          }
+        }
+      }
+    },
+    "Sync via Yap Cloud" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über Yap Cloud synchronisieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchroniser via Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过 Yap Cloud 同步"
+          }
+        }
+      }
+    },
+    "Synced at %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisiert um %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisé à %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已于 %@ 同步"
           }
         }
       }
@@ -24749,6 +24925,28 @@
         }
       }
     },
+    "This Mac and Yap Cloud both changed the config and couldn't be merged automatically." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Mac und Yap Cloud haben die Konfiguration beide geändert; sie konnte nicht automatisch zusammengeführt werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce Mac et Yap Cloud ont tous deux modifié la configuration, qui n’a pas pu être fusionnée automatiquement."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这台 Mac 和 Yap Cloud 都改了配置，无法自动合并。"
+          }
+        }
+      }
+    },
     "This Year" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -24904,6 +25102,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "此词典使用了不受支持的架构版本 %d。"
+          }
+        }
+      }
+    },
+    "This file comes from a newer version of Yap. Fields it doesn't recognize were ignored." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei stammt aus einer neueren Yap-Version. Unbekannte Felder wurden ignoriert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce fichier provient d’une version plus récente de Yap. Les champs non reconnus ont été ignorés."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件来自更新版本的 Yap，未识别字段已忽略。"
           }
         }
       }
@@ -26245,6 +26465,28 @@
         }
       }
     },
+    "Use Cloud Version" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cloud-Version verwenden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser la version du cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用云端版本"
+          }
+        }
+      }
+    },
     "Use System Template" : {
       "localizations" : {
         "de" : {
@@ -27212,6 +27454,28 @@
         }
       }
     },
+    "Write Current Settings to Config" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuelle Einstellungen in die Konfiguration schreiben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrire les réglages actuels dans la configuration"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把当前设置写入配置文件"
+          }
+        }
+      }
+    },
     "Write an Email" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -27253,6 +27517,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "编写提示词指令"
+          }
+        }
+      }
+    },
+    "Writes settings changes back to the file. The previous file is kept as config.json.bak." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schreibt Änderungen an den Einstellungen zurück in die Datei. Die vorherige Datei bleibt als config.json.bak erhalten."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réécrit les changements de réglages dans le fichier. L’ancien fichier est conservé sous config.json.bak."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置改动会写回文件，旧文件保留为 config.json.bak。"
+          }
+        }
+      }
+    },
+    "Written at %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschrieben um %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrit à %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已于 %@ 写入"
           }
         }
       }

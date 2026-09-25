@@ -1,6 +1,7 @@
 import Foundation
 
-/// Schema v1 of `~/.config/yap/config.json`. Every field is optional; empty strings count as unset.
+/// `~/.config/yap/config.json`. Every field is optional; empty strings, arrays and objects count as unset.
+/// v2 adds whole-settings sections that reuse the backup export types, so both files share one JSON shape.
 struct YapConfig: Codable, Equatable {
     struct Transcription: Codable, Equatable {
         var provider: String?
@@ -21,10 +22,106 @@ struct YapConfig: Codable, Equatable {
         var selectedTextContext: Bool?
     }
 
+    struct DictionarySection: Codable, Equatable {
+        var vocabulary: [String]?
+        var replacements: [String: String]?
+    }
+
     var keys: [String: String]?
     var transcription: Transcription?
     var enhancement: Enhancement?
     var defaultMode: DefaultMode?
+
+    // v2
+    var version: Int?
+    var modes: [ModeConfig]?
+    var modeShortcuts: [String: ShortcutBackup]?
+    var prompts: [CustomPrompt]?
+    var dictionary: DictionarySection?
+    var general: GeneralBackup?
+
+    /// Per-entry times, keyed by mode/prompt id, vocabulary word or replacement source. `modified` is when this
+    /// entry's content last changed on some Mac; `deleted` holds tombstones. Both are written by export and sync.
+    struct Stamps: Codable, Equatable {
+        var modes: [String: Date]?
+        var prompts: [String: Date]?
+        var vocabulary: [String: Date]?
+        var replacements: [String: Date]?
+
+        /// Nil when empty, and empty maps dropped, so a config without deletions has no `deleted` key.
+        func normalized() -> Stamps? {
+            func clean(_ times: [String: Date]?) -> [String: Date]? { times?.isEmpty == true ? nil : times }
+            let result = Stamps(
+                modes: clean(modes), prompts: clean(prompts), vocabulary: clean(vocabulary),
+                replacements: clean(replacements))
+            return result == Stamps() ? nil : result
+        }
+
+        /// Per key, the later of the two times.
+        static func newest(_ lhs: Stamps?, _ rhs: Stamps?) -> Stamps? {
+            func merge(_ a: [String: Date]?, _ b: [String: Date]?) -> [String: Date]? {
+                guard a != nil || b != nil else { return nil }
+                return (a ?? [:]).merging(b ?? [:]) { max($0, $1) }
+            }
+            return Stamps(
+                modes: merge(lhs?.modes, rhs?.modes), prompts: merge(lhs?.prompts, rhs?.prompts),
+                vocabulary: merge(lhs?.vocabulary, rhs?.vocabulary),
+                replacements: merge(lhs?.replacements, rhs?.replacements)
+            ).normalized()
+        }
+    }
+
+    var modified: Stamps?
+    var deleted: Stamps?
+
+    var hasSections: Bool {
+        modes != nil || prompts != nil || dictionary != nil || general != nil || deleted != nil
+    }
+
+    static let currentVersion = 2
+
+    /// True when the file was written by a newer Yap; its unknown fields were ignored.
+    var isNewerVersion: Bool { (version ?? 1) > Self.currentVersion }
+
+    /// Items in `overrides` replace the item with the same id in `base` in place; new ids are appended.
+    static func mergedByID<T: Identifiable>(_ base: [T], _ overrides: [T]) -> [T] {
+        var result = base
+        for item in overrides {
+            if let index = result.firstIndex(where: { $0.id == item.id }) {
+                result[index] = item
+            } else {
+                result.append(item)
+            }
+        }
+        return result
+    }
+
+    /// The v2 sections as a backup file plus the categories present, for `BackupImporter`. The importer replaces
+    /// modes, prompts and mode shortcuts wholesale, so they are merged by id into the current ones here:
+    /// entries in the file win, entries only in the app stay.
+    func backupSections(
+        currentModes: [ModeConfig], currentPrompts: [CustomPrompt], currentModeShortcuts: [String: ShortcutBackup]
+    ) -> (file: BackupFile, categories: [BackupCategory])? {
+        guard hasSections else { return nil }
+        let categories: [BackupCategory] = [
+            prompts != nil || deleted?.prompts != nil ? .prompts : nil,
+            modes != nil || deleted?.modes != nil ? .modes : nil,
+            dictionary.map { _ in .dictionary }, general.map { _ in .general },
+        ].compactMap { $0 }
+        // Tombstoned entries the file doesn't carry (it would only carry them if edited after the delete).
+        let deadModes = Set(deleted?.modes?.keys ?? [:].keys).subtracting((modes ?? []).map(\.id.uuidString))
+        let deadPrompts = Set(deleted?.prompts?.keys ?? [:].keys).subtracting((prompts ?? []).map(\.id.uuidString))
+        let file = BackupFile(
+            version: "config-v\(version ?? 1)",
+            customPrompts: Self.mergedByID(
+                currentPrompts.filter { !deadPrompts.contains($0.id.uuidString) }, prompts ?? []),
+            modeConfigs: Self.mergedByID(currentModes.filter { !deadModes.contains($0.id.uuidString) }, modes ?? []),
+            modeShortcuts: currentModeShortcuts.merging(modeShortcuts ?? [:]) { $1 },
+            vocabularyWords: dictionary?.vocabulary?.map(WordBackup.init(word:)),
+            wordReplacements: dictionary?.replacements, generalSettings: general, customEmojis: nil,
+            customCloudModels: nil)
+        return (file, categories)
+    }
 
     static let promptID = UUID(uuidString: "A1B2C3D4-0000-4000-8000-00000000C0DE")!
 
@@ -51,7 +148,13 @@ struct YapConfig: Codable, Equatable {
 
     /// Decodes and drops empty strings/sections so callers only see fields that were actually set.
     static func decode(_ data: Data) throws -> YapConfig {
-        var config = try JSONDecoder().decode(YapConfig.self, from: data)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode(YapConfig.self, from: data).normalized()
+    }
+
+    func normalized() -> YapConfig {
+        var config = self
         config.keys = config.keys?.filter { $0.value.nonEmpty != nil }
         if config.keys?.isEmpty == true { config.keys = nil }
         if var transcription = config.transcription {
@@ -66,7 +169,207 @@ struct YapConfig: Codable, Equatable {
             config.enhancement = enhancement == Enhancement() ? nil : enhancement
         }
         if config.defaultMode == DefaultMode() { config.defaultMode = nil }
+        if config.modes?.isEmpty == true { config.modes = nil }
+        if config.modeShortcuts?.isEmpty == true { config.modeShortcuts = nil }
+        if config.prompts?.isEmpty == true { config.prompts = nil }
+        if var dictionary = config.dictionary {
+            dictionary.vocabulary = dictionary.vocabulary?.compactMap(\.nonEmpty)
+            if dictionary.vocabulary?.isEmpty == true { dictionary.vocabulary = nil }
+            if dictionary.replacements?.isEmpty == true { dictionary.replacements = nil }
+            config.dictionary = dictionary == DictionarySection() ? nil : dictionary
+        }
+        config.modified = config.modified?.normalized()
+        config.deleted = config.deleted?.normalized()
         return config
+    }
+
+    /// Stable bytes for config.json: sorted keys, so writing the same settings twice gives the same file.
+    func encoded() throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        encoder.dateEncodingStrategy = .iso8601
+        return try encoder.encode(self) + Data("\n".utf8)
+    }
+
+    // MARK: - Export
+
+    /// A v2 config describing `backup` (the current settings). From `existing` it keeps only the `env:` key
+    /// references (never a literal key) and the v1 `transcription`, `enhancement` provider/model and
+    /// `enhancement.prompt` groups that `isNoOp` says would change nothing when applied again, so reading the
+    /// written file back leaves the settings as they are. `defaultMode` and `enhancement.enabled` are dropped:
+    /// `modes` carries them.
+    static func exported(from backup: BackupFile, existing: YapConfig?, isNoOp: (YapConfig) -> Bool) -> YapConfig {
+        var config = YapConfig()
+        config.version = currentVersion
+        config.keys = existing?.keys?.filter { $0.value.trimmingCharacters(in: .whitespaces).hasPrefix("env:") }
+        if let transcription = existing?.transcription, isNoOp(YapConfig(transcription: transcription)) {
+            config.transcription = transcription
+        }
+        if let old = existing?.enhancement {
+            var enhancement = Enhancement()
+            let providerModel = Enhancement(provider: old.provider, model: old.model)
+            if providerModel != Enhancement(), isNoOp(YapConfig(enhancement: providerModel)) {
+                (enhancement.provider, enhancement.model) = (old.provider, old.model)
+            }
+            if let prompt = old.prompt, isNoOp(YapConfig(enhancement: Enhancement(prompt: prompt))) {
+                enhancement.prompt = prompt
+            }
+            config.enhancement = enhancement
+        }
+        config.modes = backup.modeConfigs
+        config.modeShortcuts = backup.modeShortcuts
+        config.prompts = backup.customPrompts
+        config.dictionary = DictionarySection(
+            vocabulary: backup.vocabularyWords?.map(\.word).sorted(), replacements: backup.wordReplacements)
+        config.general = backup.generalSettings
+        return config.normalized()
+    }
+
+    // MARK: - Merge
+
+    /// Content equality. `ModeConfig ==` compares only ids, so "did this change" checks compare JSON instead.
+    static func sameContent<T: Encodable>(_ lhs: T, _ rhs: T) -> Bool {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        return (try? encoder.encode(lhs)) == (try? encoder.encode(rhs))
+    }
+
+    /// Three-way merge for cloud sync: starts from `remote` and re-applies what changed in `local` since `base`
+    /// (the last synced state). Modes, prompts, shortcuts and dictionary entries merge by id/key, so two Macs
+    /// editing different modes both keep their edit; other fields take local only when it changed. Without a
+    /// base (first sync on this Mac) remote wins and only local entries remote doesn't have are added.
+    static func threeWayMerged(
+        base: YapConfig?, local: YapConfig, remote: YapConfig, now: Date = Date()
+    ) -> YapConfig {
+        func edits<T: Identifiable & Encodable>(_ path: KeyPath<YapConfig, [T]?>) -> [T] {
+            let items = local[keyPath: path] ?? []
+            guard let base else {
+                let remoteIDs = Set((remote[keyPath: path] ?? []).map(\.id))
+                return items.filter { !remoteIDs.contains($0.id) }
+            }
+            let baseItems = base[keyPath: path] ?? []
+            return items.filter { item in
+                baseItems.first { $0.id == item.id }.map { !sameContent($0, item) } ?? true
+            }
+        }
+        func merged<V: Equatable>(_ path: KeyPath<YapConfig, [String: V]?>) -> [String: V]? {
+            let edits = (local[keyPath: path] ?? [:]).filter { key, value in
+                base.map { $0[keyPath: path]?[key] != value } ?? (remote[keyPath: path]?[key] == nil)
+            }
+            return (remote[keyPath: path] ?? [:]).merging(edits) { $1 }
+        }
+        func pick<T: Equatable>(_ path: KeyPath<YapConfig, T?>) -> T? {
+            if let base, local[keyPath: path] != base[keyPath: path] { return local[keyPath: path] }
+            return remote[keyPath: path] ?? (base == nil ? local[keyPath: path] : nil)
+        }
+
+        var result = remote
+        result.version = currentVersion
+        result.keys = pick(\.keys)
+        result.transcription = pick(\.transcription)
+        result.enhancement = pick(\.enhancement)
+        result.defaultMode = pick(\.defaultMode)
+        result.general = pick(\.general)
+        result.modes = mergedByID(remote.modes ?? [], edits(\.modes))
+        result.prompts = mergedByID(remote.prompts ?? [], edits(\.prompts))
+        result.modeShortcuts = merged(\.modeShortcuts)
+        let remoteWords = remote.dictionary?.vocabulary ?? []
+        let baseWords = Set(base.map { $0.dictionary?.vocabulary ?? [] } ?? remoteWords)
+        let newWords = (local.dictionary?.vocabulary ?? []).filter { !baseWords.contains($0) }
+        result.modified = Stamps.newest(local.modified, remote.modified)
+        result.deleted = Stamps.newest(local.deleted, remote.deleted)
+        result.dictionary = DictionarySection(
+            vocabulary: remoteWords + newWords.filter { !remoteWords.contains($0) },
+            replacements: merged(\.dictionary?.replacements))
+        // An entry deleted on one Mac stays deleted unless the other edited it after the delete.
+        return result.resolvingTombstones(now: now)
+    }
+
+    // MARK: - Tombstones
+
+    static let tombstoneLifetime: TimeInterval = 90 * 24 * 3600
+
+    /// Fills `modified` and `deleted` for an exported snapshot by comparing it with `baseline`, the last config
+    /// this Mac wrote or applied: entries whose content is unchanged keep the baseline's time, changed or new ones
+    /// get `now`, and entries in the baseline that are gone get a tombstone at `now`. Without a baseline nothing
+    /// is stamped, so this Mac's entries lose to any tombstone.
+    func stamped(baseline: YapConfig?, now: Date) -> YapConfig {
+        guard let baseline else { return resolvingTombstones(now: now) }
+        let now = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970))  // ISO 8601 keeps whole seconds
+        func stamp<T>(_ current: [String: T], _ old: [String: T], _ times: [String: Date]?, same: (T, T) -> Bool)
+            -> [String: Date]
+        {
+            current.reduce(into: [:]) { result, entry in
+                if let before = old[entry.key], same(before, entry.value) {
+                    if let time = times?[entry.key] { result[entry.key] = time }
+                } else {
+                    result[entry.key] = now
+                }
+            }
+        }
+        func tombstones<T>(_ current: [String: T], _ old: [String: T], _ times: [String: Date]?) -> [String: Date] {
+            var result = times ?? [:]
+            for key in old.keys where current[key] == nil { result[key] = now }
+            for key in current.keys { result[key] = nil }
+            return result
+        }
+        let modes = byID(self.modes), oldModes = byID(baseline.modes)
+        let prompts = byID(self.prompts), oldPrompts = byID(baseline.prompts)
+        let words = Dictionary(uniqueKeysWithValues: (dictionary?.vocabulary ?? []).map { ($0, true) })
+        let oldWords = Dictionary(uniqueKeysWithValues: (baseline.dictionary?.vocabulary ?? []).map { ($0, true) })
+        let rules = dictionary?.replacements ?? [:], oldRules = baseline.dictionary?.replacements ?? [:]
+
+        var config = self
+        config.modified = Stamps(
+            modes: stamp(modes, oldModes, baseline.modified?.modes, same: Self.sameContent),
+            prompts: stamp(prompts, oldPrompts, baseline.modified?.prompts, same: Self.sameContent),
+            vocabulary: stamp(words, oldWords, baseline.modified?.vocabulary, same: ==),
+            replacements: stamp(rules, oldRules, baseline.modified?.replacements, same: ==))
+        config.deleted = Stamps(
+            modes: tombstones(modes, oldModes, baseline.deleted?.modes),
+            prompts: tombstones(prompts, oldPrompts, baseline.deleted?.prompts),
+            vocabulary: tombstones(words, oldWords, baseline.deleted?.vocabulary),
+            replacements: tombstones(rules, oldRules, baseline.deleted?.replacements))
+        return config.resolvingTombstones(now: now)
+    }
+
+    /// Drops every entry whose tombstone is newer than its last modification (or that has no modification time),
+    /// then forgets tombstones older than 90 days and times of entries that no longer exist.
+    func resolvingTombstones(now: Date) -> YapConfig {
+        var config = self
+        func alive(_ key: String, _ tombstones: [String: Date]?, _ modified: [String: Date]?) -> Bool {
+            guard let tombstone = tombstones?[key] else { return true }
+            return modified?[key].map { $0 > tombstone } ?? false
+        }
+        config.modes = modes?.filter { alive($0.id.uuidString, deleted?.modes, modified?.modes) }
+        config.prompts = prompts?.filter { alive($0.id.uuidString, deleted?.prompts, modified?.prompts) }
+        config.modeShortcuts = modeShortcuts?.filter { alive($0.key, deleted?.modes, modified?.modes) }
+        config.dictionary?.vocabulary = dictionary?.vocabulary?.filter {
+            alive($0, deleted?.vocabulary, modified?.vocabulary)
+        }
+        config.dictionary?.replacements = dictionary?.replacements?.filter {
+            alive($0.key, deleted?.replacements, modified?.replacements)
+        }
+
+        let cutoff = now.addingTimeInterval(-Self.tombstoneLifetime)
+        func fresh(_ times: [String: Date]?) -> [String: Date]? { times?.filter { $0.value > cutoff } }
+        func present(_ times: [String: Date]?, _ keys: [String]?) -> [String: Date]? {
+            let keys = Set(keys ?? [])
+            return times?.filter { keys.contains($0.key) }
+        }
+        config.deleted = Stamps(
+            modes: fresh(deleted?.modes), prompts: fresh(deleted?.prompts),
+            vocabulary: fresh(deleted?.vocabulary), replacements: fresh(deleted?.replacements))
+        config.modified = Stamps(
+            modes: present(modified?.modes, config.modes?.map(\.id.uuidString)),
+            prompts: present(modified?.prompts, config.prompts?.map(\.id.uuidString)),
+            vocabulary: present(modified?.vocabulary, config.dictionary?.vocabulary),
+            replacements: present(modified?.replacements, (config.dictionary?.replacements).map { Array($0.keys) }))
+        return config.normalized()
+    }
+
+    private func byID<T: Identifiable>(_ items: [T]?) -> [String: T] where T.ID == UUID {
+        Dictionary((items ?? []).map { ($0.id.uuidString, $0) }, uniquingKeysWith: { $1 })
     }
 
     /// Human-readable decoding error that names the JSON path, e.g. `enhancement.enabled: Expected Bool`.
@@ -134,6 +437,12 @@ extension String {
 
 #if DEBUG
     extension YapConfig {
+        private struct Tag: Identifiable, Equatable {
+            let id: Int
+            var value = ""
+            init(_ id: Int, _ value: String = "") { (self.id, self.value) = (id, value) }
+        }
+
         static func selfCheck() {
             let env = parseDotEnv("# c\nexport A=\"x y\"\nB='z'\nC=plain=eq\n\nD=")
             assert(env == ["A": "x y", "B": "z", "C": "plain=eq", "D": ""])
@@ -158,6 +467,105 @@ extension String {
             } catch {
                 assert(describe(error).hasPrefix("enhancement.enabled:"))
             }
+
+            // v1 files read the same and carry no sections.
+            let v1 = try? decode(Data(#"{"keys":{"openrouter":"env:K"},"defaultMode":{"screenContext":true}}"#.utf8))
+            assert(v1?.keys == ["openrouter": "env:K"] && v1?.defaultMode?.screenContext == true)
+            assert(v1?.version == nil && v1?.hasSections == false && v1?.isNewerVersion == false)
+            assert(v1?.backupSections(currentModes: [], currentPrompts: [], currentModeShortcuts: [:]) == nil)
+
+            let modeID = "11111111-1111-4111-8111-111111111111"
+            let v2Text = """
+                {
+                  "version": 2,
+                  "enhancement": { "prompt": "Fix grammar." },
+                  "modes": [{ "id": "\(modeID)", "name": "Email", "isAIEnhancementEnabled": true, "isDefault": true }],
+                  "modeShortcuts": { "\(modeID)": { "kind": "key", "keyCode": 0, "modifierFlagsRawValue": 1048576 } },
+                  "prompts": [{ "id": "22222222-2222-4222-8222-222222222222", "title": "T", "promptText": "P" }],
+                  "dictionary": { "vocabulary": ["Yap", " "], "replacements": {} },
+                  "general": { "isMenuBarOnly": true, "recorderType": "notch" }
+                }
+                """
+            guard let v2 = try? decode(Data(v2Text.utf8)) else { return assertionFailure("v2 should decode") }
+            assert(v2.version == 2 && v2.enhancement?.prompt == "Fix grammar.")
+            assert(v2.modes?.first?.name == "Email" && v2.modes?.first?.isDefault == true)
+            assert(v2.modeShortcuts?[modeID]?.shortcut.keyCode == 0)
+            assert(v2.prompts?.first?.useSystemInstructions == true)
+            assert(v2.dictionary == DictionarySection(vocabulary: ["Yap"], replacements: nil))
+            assert(v2.general?.isMenuBarOnly == true && v2.general?.recorderType == "notch")
+            // Merge by id: the file's "Email" replaces the app's mode with that id, "Local" and its shortcut stay.
+            let appEmail = ModeConfig(id: UUID(uuidString: modeID)!, name: "Old", isAIEnhancementEnabled: false)
+            let local = ModeConfig(name: "Local", isAIEnhancementEnabled: false)
+            let localShortcut = ShortcutBackup(Shortcut.key(keyCode: 1, modifierFlags: []))
+            let sections = v2.backupSections(
+                currentModes: [appEmail, local], currentPrompts: [],
+                currentModeShortcuts: [local.id.uuidString: localShortcut])
+            assert(sections?.categories == [.prompts, .modes, .dictionary, .general])
+            assert(sections?.file.modeConfigs.map(\.name) == ["Email", "Local"])
+            assert(sections?.file.modeShortcuts?[local.id.uuidString] == localShortcut)
+            assert(sections?.file.modeShortcuts?[modeID]?.shortcut.keyCode == 0)
+            assert(sections?.file.vocabularyWords?.map(\.word) == ["Yap"] && sections?.file.customPrompts.count == 1)
+            assert(mergedByID([Tag(1), Tag(2)], [Tag(2, "b"), Tag(3)]) == [Tag(1), Tag(2, "b"), Tag(3)])
+            assert((try? decode(Data(#"{"version":3,"future":{}}"#.utf8)))?.isNewerVersion == true)
+
+            let empty = try? decode(Data(#"{"version":2,"modes":[],"prompts":[],"dictionary":{"vocabulary":[]}}"#.utf8))
+            assert(empty?.hasSections == false)
+
+            // Tombstones. Base state as both Macs last synced it, every entry modified at t0.
+            let t0 = Date(timeIntervalSince1970: 1_800_000_000)
+            let (t1, t2) = (t0.addingTimeInterval(60), t0.addingTimeInterval(120))
+            let dictation = ModeConfig(
+                id: UUID(uuidString: "33333333-3333-4333-8333-333333333333")!, name: "Dictation",
+                isAIEnhancementEnabled: false, selectedLanguage: "en", isDefault: true)
+            let email = ModeConfig(
+                id: UUID(uuidString: "44444444-4444-4444-8444-444444444444")!, name: "Email",
+                isAIEnhancementEnabled: false, selectedLanguage: "en")
+            var synced = YapConfig()
+            synced.modes = [dictation, email]
+            synced.dictionary = .init(vocabulary: ["Rove", "Yap"])
+            let base = synced.stamped(baseline: YapConfig(), now: t0)
+            assert(base.modified?.modes?[email.id.uuidString] == t0 && base.deleted == nil)
+
+            // 1. A deletes Email and "Rove"; B changed nothing: both end up without them.
+            var aState = base
+            aState.modes = [dictation]
+            aState.dictionary = .init(vocabulary: ["Yap"])
+            let a = aState.stamped(baseline: base, now: t1)
+            assert(a.deleted?.modes?[email.id.uuidString] == t1 && a.deleted?.vocabulary?["Rove"] == t1)
+            assert((try? decode(a.encoded())) == a)
+            for merged in [
+                threeWayMerged(base: base, local: a, remote: base, now: t1),
+                threeWayMerged(base: base, local: base, remote: a, now: t1),
+            ] {
+                assert(merged.modes?.map(\.name) == ["Dictation"] && merged.dictionary?.vocabulary == ["Yap"])
+                let onB = merged.backupSections(
+                    currentModes: [dictation, email], currentPrompts: [], currentModeShortcuts: [:])
+                assert(onB?.file.modeConfigs.map(\.name) == ["Dictation"])
+            }
+
+            // 2. A deletes Email at t1, B renames it at t2: the later edit wins on both sides.
+            var renamed = email
+            renamed.name = "Email 2"
+            var bState = base
+            bState.modes = [dictation, renamed]
+            let b = bState.stamped(baseline: base, now: t2)
+            assert(b.modified?.modes?[email.id.uuidString] == t2 && b.modified?.modes?[dictation.id.uuidString] == t0)
+            for merged in [
+                threeWayMerged(base: base, local: a, remote: b, now: t2),
+                threeWayMerged(base: base, local: b, remote: a, now: t2),
+            ] {
+                assert(merged.modes?.map(\.name).sorted() == ["Dictation", "Email 2"])
+            }
+
+            // An entry without a modification time loses to any tombstone.
+            var unstamped = a
+            unstamped.modes = [dictation, email]
+            unstamped.modified = nil
+            assert(unstamped.resolvingTombstones(now: t1).modes?.map(\.name) == ["Dictation"])
+
+            // 3. Tombstones are forgotten after 90 days.
+            assert(a.resolvingTombstones(now: t1.addingTimeInterval(89 * 24 * 3600)).deleted != nil)
+            assert(a.resolvingTombstones(now: t1.addingTimeInterval(91 * 24 * 3600)).deleted == nil)
         }
     }
 #endif

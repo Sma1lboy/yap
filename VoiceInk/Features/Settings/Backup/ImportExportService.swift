@@ -122,6 +122,62 @@ class ImportExportService {
         menuBarManager: MenuBarManager, mediaController: MediaController, playbackController: PlaybackController,
         recorderUIManager: RecorderUIManager, modelContext: ModelContext
     ) async {
+        let exportedSettings = await makeBackup(
+            enhancementService: enhancementService, recordingShortcutManager: recordingShortcutManager,
+            menuBarManager: menuBarManager, mediaController: mediaController, playbackController: playbackController,
+            recorderUIManager: recorderUIManager, modelContext: modelContext)
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+
+        do {
+            let jsonData = try encoder.encode(exportedSettings)
+
+            let savePanel = NSSavePanel()
+            savePanel.allowedContentTypes = [UTType.json]
+            savePanel.nameFieldStringValue = "VoiceInk_Settings_Backup.json"
+            savePanel.title = String(localized: "Export Yap Settings")
+            savePanel.message = String(localized: "Choose a location to save your settings.")
+
+            DispatchQueue.main.async {
+                if savePanel.runModal() == .OK {
+                    if let url = savePanel.url {
+                        do {
+                            try jsonData.write(to: url)
+                            self.showAlert(
+                                title: String(localized: "Export Successful"),
+                                message: String(
+                                    format: String(localized: "Your settings have been successfully exported to %@."),
+                                    url.lastPathComponent))
+                        } catch {
+                            self.showAlert(
+                                title: String(localized: "Export Error"),
+                                message: String(
+                                    format: String(localized: "Could not save settings to file: %@"),
+                                    error.localizedDescription))
+                        }
+                    }
+                } else {
+                    self.showAlert(
+                        title: String(localized: "Export Canceled"),
+                        message: String(localized: "The settings export operation was canceled."))
+                }
+            }
+        } catch {
+            self.showAlert(
+                title: String(localized: "Export Error"),
+                message: String(
+                    format: String(localized: "Could not encode settings to JSON: %@"), error.localizedDescription))
+        }
+    }
+
+    /// Snapshot of the current settings; also the source for writing config.json.
+    @MainActor
+    func makeBackup(
+        enhancementService: AIEnhancementService, recordingShortcutManager: RecordingShortcutManager,
+        menuBarManager: MenuBarManager, mediaController: MediaController, playbackController: PlaybackController,
+        recorderUIManager: RecorderUIManager, modelContext: ModelContext
+    ) async -> BackupFile {
         let modeManager = ModeManager.shared
         let emojiManager = EmojiManager.shared
         let launchAtLoginEnabled = await LaunchAtLoginManager.shared.currentEnabledStatus()
@@ -192,7 +248,7 @@ class ImportExportService {
             autoLearnModel: AutoLearnSettings.selectedModel
         )
 
-        let exportedSettings = BackupFile(
+        return BackupFile(
             version: currentSettingsVersion,
             customPrompts: enhancementService.customPrompts,
             modeConfigs: modeConfigs,
@@ -203,49 +259,6 @@ class ImportExportService {
             customEmojis: emojiManager.customEmojis,
             customCloudModels: customModels
         )
-
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .prettyPrinted
-
-        do {
-            let jsonData = try encoder.encode(exportedSettings)
-
-            let savePanel = NSSavePanel()
-            savePanel.allowedContentTypes = [UTType.json]
-            savePanel.nameFieldStringValue = "VoiceInk_Settings_Backup.json"
-            savePanel.title = String(localized: "Export Yap Settings")
-            savePanel.message = String(localized: "Choose a location to save your settings.")
-
-            DispatchQueue.main.async {
-                if savePanel.runModal() == .OK {
-                    if let url = savePanel.url {
-                        do {
-                            try jsonData.write(to: url)
-                            self.showAlert(
-                                title: String(localized: "Export Successful"),
-                                message: String(
-                                    format: String(localized: "Your settings have been successfully exported to %@."),
-                                    url.lastPathComponent))
-                        } catch {
-                            self.showAlert(
-                                title: String(localized: "Export Error"),
-                                message: String(
-                                    format: String(localized: "Could not save settings to file: %@"),
-                                    error.localizedDescription))
-                        }
-                    }
-                } else {
-                    self.showAlert(
-                        title: String(localized: "Export Canceled"),
-                        message: String(localized: "The settings export operation was canceled."))
-                }
-            }
-        } catch {
-            self.showAlert(
-                title: String(localized: "Export Error"),
-                message: String(
-                    format: String(localized: "Could not encode settings to JSON: %@"), error.localizedDescription))
-        }
     }
 
     @MainActor

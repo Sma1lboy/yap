@@ -7,7 +7,7 @@ struct LegacyKeyboardShortcut: Codable {
     let carbonModifiers: Int
 }
 
-struct ShortcutBackup: Codable {
+struct ShortcutBackup: Codable, Equatable {
     let shortcut: Shortcut
 
     init(_ shortcut: Shortcut) {
