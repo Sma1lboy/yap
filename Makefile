@@ -6,6 +6,8 @@ LOCAL_DERIVED_DATA := $(CURDIR)/.local-build
 LOCAL_CODESIGN_IDENTITY ?=
 # Extra xcodebuild settings for `local`, e.g. MARKETING_VERSION=1.0.0 CURRENT_PROJECT_VERSION=1042
 EXTRA_BUILD_SETTINGS ?=
+# CI sets LOCAL_CLEAN=0 to reuse a cached .local-build (compiled Swift packages) instead of starting from scratch
+LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
 .PHONY: all clean whisper setup build local check healthcheck help dev run
@@ -55,7 +57,7 @@ build: setup
 # Build locally with stable Apple Development signing when available.
 local: check setup
 	@echo "Building VoiceInk for local use (no Apple Developer certificate required)..."
-	@rm -rf "$(LOCAL_DERIVED_DATA)"
+	@if [ "$(LOCAL_CLEAN)" = "1" ]; then rm -rf "$(LOCAL_DERIVED_DATA)"; fi
 	@SIGNING_IDENTITY="$(LOCAL_CODESIGN_IDENTITY)"; \
 	if [ -z "$$SIGNING_IDENTITY" ]; then \
 		SIGNING_IDENTITIES=$$(security find-identity -v -p codesigning 2>/dev/null | awk '/"Apple Development: / { print $$2 }'); \

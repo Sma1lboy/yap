@@ -50,7 +50,7 @@ Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription 
 
 ## Releasing
 
-Push a tag `vX.Y.Z`. CI (`.github/workflows/release.yml`) builds on macOS 26, signs with the "Yap Self-Signed" certificate, publishes `Yap.zip` to GitHub Releases, then commits the new `appcast.xml` item (Sparkle EdDSA-signed) and the `Casks/yap.rb` version in one commit to `main`. Build numbers are `1000 + run number`. A release takes about 13 minutes when the whisper.cpp cache (saved from a `main` run, kept warm weekly by `keep-cache.yml`) is hit, about 21 minutes when it isn't.
+Push a tag `vX.Y.Z`. CI (`.github/workflows/release.yml`) builds on macOS 26, signs with the "Yap Self-Signed" certificate, publishes `Yap.zip` to GitHub Releases, then commits the new `appcast.xml` item (Sparkle EdDSA-signed) and the `Casks/yap.rb` version in one commit to `main`. Build numbers are `1000 + run number`. CI also builds every push to `main` and once a week, so the compiled Swift packages (mlx, FluidAudio, TranscribeCpp — the stable local-model modules) and the whisper.cpp framework stay cached in `main`'s scope; tag builds reuse them and only recompile the app's own code. The cache key follows `Package.resolved`, so bumping a dependency triggers one full rebuild.
 
 Because every release is signed with the same certificate, macOS keeps the Microphone and Accessibility permissions across updates. The app is not notarized; Homebrew and the install script remove the quarantine flag.
 

@@ -1,10 +1,19 @@
 name: Build Yap
 
-# 推 vX.Y.Z tag 发 Release + 更新 appcast/cask；手动触发只产出 artifact
+# 推 vX.Y.Z tag：发 Release + 更新 appcast/cask。
+# 推到 main / 每周定时 / 手动：只编译，顺便把编译缓存存在 main 作用域（tag 构建只能读 main 的缓存）。
 on:
   push:
     tags: ["v*"]
+    branches: [main]
+    paths-ignore: ["**.md", "design/**", "appcast.xml", "Casks/**", "setup/**"]
+  schedule:
+    - cron: "17 3 * * 1"
   workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
 
 permissions:
   contents: write
@@ -72,8 +81,18 @@ jobs:
 
       # Xcode 遇到非 Apple 签发的证书会退回 "Sign to Run Locally"（ad-hoc），
       # 所以先 ad-hoc 编译，再用自签证书整体重签；保留每个组件自己的 entitlements 和 hardened runtime
+      # 本地模型相关的 Swift 包（mlx、FluidAudio、TranscribeCpp…）已经稳定，不必每次重编：
+      # 缓存整个 DerivedData，依赖锁文件不变就只重编 App 自己的代码
+      - name: Cache Xcode build
+        uses: actions/cache@v4
+        with:
+          path: .local-build
+          key: xcbuild-${{ runner.os }}-xcode26.6-${{ hashFiles('VoiceInk.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.run_id }}
+          restore-keys: |
+            xcbuild-${{ runner.os }}-xcode26.6-${{ hashFiles('VoiceInk.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
+
       - name: Build (LOCAL_BUILD)
-        run: make local LOCAL_CODESIGN_IDENTITY=- EXTRA_BUILD_SETTINGS="MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD"
+        run: make local LOCAL_CLEAN=0 LOCAL_CODESIGN_IDENTITY=- EXTRA_BUILD_SETTINGS="MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD"
 
       - name: Re-sign with Yap Self-Signed
         run: codesign --force --deep --preserve-metadata=entitlements,runtime --sign "Yap Self-Signed" ~/Downloads/Yap.app
