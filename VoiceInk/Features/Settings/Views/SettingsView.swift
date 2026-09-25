@@ -13,6 +13,7 @@ struct SettingsView: View {
     @ObservedObject private var launchAtLoginManager = LaunchAtLoginManager.shared
     @ObservedObject private var mediaController = MediaController.shared
     @ObservedObject private var playbackController = PlaybackController.shared
+    @ObservedObject private var configLoader = YapConfigLoader.shared
     @AppStorage(OnboardingSettings.completedV2Key) private var hasCompletedOnboardingV2 = true
     @AppStorage("restoreClipboardAfterPaste") private var restoreClipboardAfterPaste = true
     @AppStorage("clipboardRestoreDelay") private var clipboardRestoreDelay = 2.0
@@ -300,6 +301,33 @@ struct SettingsView: View {
                 Text("Export all settings, or choose specific categories when importing a backup.")
             }
 
+            Section {
+                LabeledContent("Path") {
+                    Text(configLoader.fileURL.path)
+                        .textSelection(.enabled)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+
+                configFileStatus
+
+                HStack {
+                    Button("Open") {
+                        configLoader.openConfigFile()
+                    }
+                    Button("Show in Finder") {
+                        configLoader.revealConfigFile()
+                    }
+                    Button("Reload") {
+                        Task { await configLoader.reload() }
+                    }
+                }
+            } header: {
+                Text("Config File")
+            } footer: {
+                Text("Fields set in this file are applied at launch and override the same settings changed in the app.")
+            }
+
             Section("Diagnostics") {
                 DiagnosticsSettingsView()
             }
@@ -320,6 +348,37 @@ struct SettingsView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("Your language change will take full effect after you quit and reopen Yap.")
+        }
+    }
+
+    @ViewBuilder
+    private var configFileStatus: some View {
+        switch configLoader.status {
+        case .notFound:
+            Text("No config file").settingsDescription()
+        case .loaded(let date, let applied, let skipped):
+            VStack(alignment: .leading, spacing: 4) {
+                Text(
+                    String(
+                        format: String(localized: "Loaded at %@"),
+                        date.formatted(date: .omitted, time: .standard)
+                    )
+                )
+                Text(
+                    applied.isEmpty
+                        ? String(localized: "No fields applied")
+                        : String(format: String(localized: "Applied: %@"), applied.joined(separator: ", "))
+                )
+                .settingsDescription()
+                if !skipped.isEmpty {
+                    Text(String(format: String(localized: "Skipped: %@"), skipped.joined(separator: ", ")))
+                        .settingsDescription()
+                }
+            }
+        case .error(let message):
+            Text(String(format: String(localized: "Could not read config file: %@"), message))
+                .foregroundColor(AppTheme.Status.error)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

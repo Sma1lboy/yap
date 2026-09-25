@@ -1,0 +1,20 @@
+{
+  "keys": {
+    "openrouter": "env:OPENROUTER_API_KEY"
+  },
+  "transcription": {
+    "provider": "openrouter",
+    "model": "microsoft/mai-transcribe-2"
+  },
+  "enhancement": {
+    "enabled": true,
+    "provider": "openrouter",
+    "model": "deepseek/deepseek-v4.1-flash",
+    "prompt": "prompt.md"
+  },
+  "defaultMode": {
+    "screenContext": false,
+    "clipboardContext": false,
+    "selectedTextContext": false
+  }
+}
