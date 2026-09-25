@@ -263,17 +263,31 @@ final class YapCloud: ObservableObject {
             name: .navigateToDestination, object: nil, userInfo: ["destination": "Account"])
     }
 
-    /// Shows the "add funds" notification when `error` is a Yap Cloud 402. Returns whether it did.
+    /// Shows the account notification when `error` is a Yap Cloud 402 (Add Funds) or 401 (sign in again).
+    /// Returns whether it did, so callers can skip their generic failure message.
     @MainActor
     @discardableResult
-    static func notifyIfInsufficientBalance(_ error: Error) -> Bool {
-        guard case YapCloudError.insufficientBalance = error else { return false }
-        NotificationManager.shared.showNotification(
-            title: YapCloudError.insufficientBalance.errorDescription ?? "",
-            type: .error,
-            duration: 8,
-            onTap: { showAddFunds() },
-            actionButton: (label: String(localized: "Add Funds"), action: { showAddFunds() }))
+    static func notifyIfAccountProblem(_ error: Error) -> Bool {
+        switch error {
+        case YapCloudError.insufficientBalance:
+            NotificationManager.shared.showNotification(
+                title: YapCloudError.insufficientBalance.errorDescription ?? "",
+                type: .error,
+                duration: 8,
+                onTap: { showAddFunds() },
+                actionButton: (label: String(localized: "Add Funds"), action: { showAddFunds() }))
+        case YapCloudError.notSignedIn:
+            // The token was rejected (revoked or expired); drop it so Account shows the sign-in form.
+            shared.clearSession()
+            NotificationManager.shared.showNotification(
+                title: YapCloudError.notSignedIn.errorDescription ?? "",
+                type: .error,
+                duration: 8,
+                onTap: { showAddFunds() },
+                actionButton: (label: String(localized: "Open Account"), action: { showAddFunds() }))
+        default:
+            return false
+        }
         return true
     }
 

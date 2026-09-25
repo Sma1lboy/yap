@@ -535,8 +535,40 @@ class VoiceInkEngine: NSObject, ObservableObject {
             mode: mode,
             transcriptionModelManager: transcriptionModelManager
         )
-        if case .available = resolution { return nil }
+        if case .available(let resolvedMode, let model) = resolution {
+            return yapCloudFailure(mode: resolvedMode, transcriptionModel: model)
+        }
         return recordingModelFailure(for: resolution)
+    }
+
+    /// A mode billed through Yap Cloud can't work signed out or with a known empty balance; catching that here
+    /// saves recording a whole dictation only to get a 401/402 afterwards.
+    @MainActor
+    private func yapCloudFailure(
+        mode: ModeConfig,
+        transcriptionModel: any TranscriptionModel
+    ) -> (title: String, actionLabel: String, action: () -> Void)? {
+        let usesYapCloud =
+            transcriptionModel.provider == .yapCloud
+            || (mode.isAIEnhancementEnabled && mode.selectedAIProvider == AIProvider.yapCloud.rawValue)
+        guard usesYapCloud else { return nil }
+
+        let cloud = YapCloud.shared
+        if !cloud.isSignedIn {
+            return (
+                YapCloudError.notSignedIn.errorDescription ?? "",
+                String(localized: "Open Account"),
+                YapCloud.showAddFunds
+            )
+        }
+        if let balance = cloud.balanceMicros, balance <= 0 {
+            return (
+                YapCloudError.insufficientBalance.errorDescription ?? "",
+                String(localized: "Add Funds"),
+                YapCloud.showAddFunds
+            )
+        }
+        return nil
     }
 
     @MainActor

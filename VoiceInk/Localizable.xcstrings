@@ -18407,6 +18407,28 @@
         }
       }
     },
+    "Open Account" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto öffnen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le compte"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开账户"
+          }
+        }
+      }
+    },
     "Open Config Folder" : {
       "localizations" : {
         "de" : {
