@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import os
 
@@ -136,6 +137,40 @@ final class CloudConfigSync: ObservableObject {
 
     func sync() async {
         await run { store, local in try await self.sync(store: store, local: local) }
+    }
+
+    // MARK: - When to pull
+
+    static let periodicPullInterval: TimeInterval = 15 * 60
+    /// App switches are frequent; foreground pulls closer together than this are skipped.
+    static let minimumForegroundPullInterval: TimeInterval = 60
+    private var pullTriggers: Set<AnyCancellable> = []
+    private var lastAutomaticPull: Date?
+
+    /// Pulls (a normal `sync`, which also pushes pending local changes) when the app comes to the foreground,
+    /// after the Mac wakes, and every 15 minutes. Launch and local changes are handled by YapConfigLoader.
+    /// Each pull compares the cloud's version with the last synced one and applies nothing when it's unchanged;
+    /// all of it is a no-op unless signed in with "Sync via Yap Cloud" on.
+    func startAutomaticPulls() {
+        guard pullTriggers.isEmpty else { return }
+        LifecycleObserver.shared.publisher(for: .applicationDidBecomeActive)
+            .sink { [weak self] _ in self?.automaticPull(minimumInterval: Self.minimumForegroundPullInterval) }
+            .store(in: &pullTriggers)
+        LifecycleObserver.shared.publisher(for: .systemDidWake)
+            // The network usually isn't back the instant the Mac wakes.
+            .delay(for: .seconds(5), scheduler: DispatchQueue.main)
+            .sink { [weak self] _ in self?.automaticPull(minimumInterval: 0) }
+            .store(in: &pullTriggers)
+        Timer.publish(every: Self.periodicPullInterval, on: .main, in: .common).autoconnect()
+            .sink { [weak self] _ in self?.automaticPull(minimumInterval: 0) }
+            .store(in: &pullTriggers)
+    }
+
+    private func automaticPull(minimumInterval: TimeInterval) {
+        guard isEnabled else { return }
+        if let lastAutomaticPull, Date().timeIntervalSince(lastAutomaticPull) < minimumInterval { return }
+        lastAutomaticPull = Date()
+        Task { await sync() }
     }
 
     /// New-Mac restore, step 1: what the account has stored (nil: never synced). Works before sync is turned on.
@@ -307,8 +342,13 @@ final class CloudConfigSync: ObservableObject {
             defaults.set(true, forKey: enabledKey)
             var local = config(["Dictation"])
             let store = FakeStore()
+            var applyCount = 0
             let sync = CloudConfigSync(
-                defaults: defaults, localConfig: { local }, applyRemote: { local = $0 })
+                defaults: defaults, localConfig: { local },
+                applyRemote: {
+                    local = $0
+                    applyCount += 1
+                })
             sync.store = store
 
             // 1. First write: nothing stored yet.
@@ -320,6 +360,11 @@ final class CloudConfigSync: ObservableObject {
             store.document = .init(version: "2", config: config(["Dictation", "Email"]))
             await sync.sync()
             assert(names(local) == ["Dictation", "Email"] && defaults.string(forKey: versionKey) == "2")
+
+            // 2b. Pulling again with the cloud unchanged (same version) applies nothing and writes nothing.
+            let (appliedBefore, putsBefore) = (applyCount, store.putCount)
+            await sync.sync()
+            assert(applyCount == appliedBefore && store.putCount == putsBefore && store.document?.version == "2")
 
             // 3. Conflict: this Mac adds "Notes" while another Mac adds "Code" just before our put;
             //    the put fails, both sides merge by id and the retry succeeds with both modes.

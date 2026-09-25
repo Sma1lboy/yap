@@ -116,6 +116,7 @@ final class YapConfigLoader: ObservableObject {
         }
         await resolveRemoteSelections()
         await CloudConfigSync.shared.sync()
+        CloudConfigSync.shared.startAutomaticPulls()
         observeSettingsChanges()
     }
 
