@@ -7899,24 +7899,24 @@
         }
       }
     },
-    "Config File" : {
+    "Config & Sync" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Konfigurationsdatei"
+            "value" : "Konfiguration & Sync"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fichier de configuration"
+            "value" : "Configuration et synchronisation"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "配置文件"
+            "value" : "配置与同步"
           }
         }
       }
