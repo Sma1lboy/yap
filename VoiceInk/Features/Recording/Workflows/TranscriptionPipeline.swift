@@ -234,11 +234,12 @@ class TranscriptionPipeline {
             transcription.transcriptionStatus = TranscriptionStatus.completed.rawValue
         } catch {
             let errorDescription = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            await MainActor.run { _ = YapCloud.notifyIfInsufficientBalance(error) }
+            // A 402 gets its own Add Funds toast; a generic failure toast would replace it with a Retry that fails again.
+            let didNotifyBalance = YapCloud.notifyIfInsufficientBalance(error)
 
             let isHiddenNativeAppleError =
                 (error as? NativeAppleTranscriptionService.ServiceError).map { !$0.shouldShowNotification } ?? false
-            if !(error is CancellationError) && !isHiddenNativeAppleError {
+            if !didNotifyBalance && !(error is CancellationError) && !isHiddenNativeAppleError {
                 transcriptionFailure = errorDescription
             }
 
