@@ -149,6 +149,12 @@ final class TranscriptionDelivery {
         } else {
             logger.error("Custom command failed: \(message, privacy: .public)")
         }
+        NotificationManager.shared.showNotification(
+            title: message,
+            type: .error,
+            duration: 7,
+            actionButton: (String(localized: "Manage Modes"), ModeSetupNavigator.openModesSettings)
+        )
     }
 
     private static func formattedDuration(_ duration: TimeInterval) -> String {
