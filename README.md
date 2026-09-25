@@ -1,3 +1,5 @@
+**English** | [简体中文](README.zh-CN.md)
+
 <p align="center"><img src="design/logo-1024.png" width="160" alt="Yap duck icon"></p>
 
 <h1 align="center">Yap</h1>
@@ -26,9 +28,29 @@ The script installs the app with Homebrew (or downloads the latest release), cop
 
 Just the app: `brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew install --cask sma1lboy/yap/yap`. After that, Yap updates itself (Check for Updates… in the app menu) or with `brew upgrade --cask yap`.
 
-## Config file
+## Yap Cloud
 
-Yap reads `~/.config/yap/config.json` (or `$XDG_CONFIG_HOME/yap/config.json`) at every launch. Fields that are present override the in-app settings; missing or empty fields are left alone. Settings → Config & Sync shows what was applied and has Open / Show in Finder / Reload.
+Yap Cloud is an optional account that pays for transcription and cleanup from a prepaid balance, so you don't need API keys from OpenRouter or other providers. It uses the same models as the Recommended setup.
+
+**Sign up / sign in.** Open **Account** in the sidebar, enter your email, then the 6-digit code sent to it. There is no password. A new account gets $1 of credit, listed under **Recent Activity** as "Sign-up bonus". During onboarding you can pick **Use Yap Cloud (pay as you go)** on the model step instead.
+
+**What it costs.** Each transcription or cleanup request is charged the model provider's price plus 10%. **Account → Models & Pricing** lists the models; **This Month** shows what you spent this month and on which models, and **Recent Activity** lists every charge and top-up.
+
+**Adding funds.** In **Account → Add Funds**, pick $5, $10 or $20, or Custom (a whole-dollar amount from $5 to $500), and click **Add Funds…**. Checkout opens in your browser; the balance updates when you come back to Yap. Below $1 Yap shows a low-balance warning; when the balance runs out, Yap Cloud requests stop and a notification takes you to Account.
+
+**Monthly cap.** When your account supports it, **Account → Monthly Cap** limits spending per calendar month: pick $5, $10, $20, a custom amount up to $10,000, or No Cap. Once this month's spending reaches the cap, Yap Cloud stops charging until next month or until you raise the cap. A cap of $0 blocks all Yap Cloud calls.
+
+**Devices.** Every Mac you sign in on gets its own token (kept in that Mac's keychain, never synced). **Account → Signed-in Devices** lists them with when each was last used; **Remove** signs that Mac out so it stops charging your balance. It can sign in again with your email. **Sign Out** on the Account page signs out this Mac; modes that use Yap Cloud stop working until you sign in again or switch them to another provider.
+
+## Config & Sync
+
+All of Yap's settings can live in one file, `~/.config/yap/config.json` (or `$XDG_CONFIG_HOME/yap/config.json`), and can sync between your Macs through Yap Cloud. Everything below is under **Settings → Config & Sync**.
+
+### The config file
+
+Yap reads the file at every launch. Fields that are present override the in-app settings; missing or empty fields are left alone. **Open** creates the file from a template if it doesn't exist, **Show in Finder** reveals it, and **Reload** applies it again without restarting. The status line says which fields were applied and which were skipped (for example a key whose `env:` variable isn't set).
+
+A minimal file (schema v1):
 
 ```json
 {
@@ -46,7 +68,7 @@ Yap reads `~/.config/yap/config.json` (or `$XDG_CONFIG_HOME/yap/config.json`) at
 | `enhancement` | Cleanup provider/model for modes that have enhancement on. `prompt` is a file next to the config (or an absolute path) or the prompt text itself; `"recommended"` uses the prompt bundled with the app. It becomes the default mode's prompt. |
 | `defaultMode` | Which extra context the default mode sends to the model. All off keeps dictation fast and private. |
 
-Schema v2 (`"version": 2`) adds whole-settings sections. They use the same JSON shapes as Settings → Backup → Export, so an exported file's sections can be pasted in. A file without `version` is v1 and reads exactly as before.
+Schema v2 (`"version": 2`) describes all settings. It uses the same JSON shapes as **Settings → Backup → Export**, so sections of an exported file can be pasted in. A file without `version` is v1 and reads as before.
 
 | Field (v2) | Meaning |
 |---|---|
@@ -60,13 +82,44 @@ Schema v2 (`"version": 2`) adds whole-settings sections. They use the same JSON 
 | `modified` | `{ "modes": { "<id>": "<ISO 8601 time>" }, "prompts": {…}, "vocabulary": { "<word>": … }, "replacements": { "<source>": … } }`: when each entry last changed. Written by Yap; you don't need to edit it. |
 | `deleted` | Same shape: tombstones for deleted entries. An entry is removed (from the file and from the app) when its tombstone is newer than its `modified` time, or it has none. Tombstones older than 90 days are dropped. |
 
-v2 sections apply first, then the v1 fields on top, so `enhancement.prompt` and `defaultMode` win over the same settings inside `modes`. Empty arrays and objects count as unset. API keys are only ever read from `keys` (`env:NAME` or literal) and are never written to the config; custom model definitions sync without theirs.
+v2 sections apply first, then the v1 fields on top, so `enhancement.prompt` and `defaultMode` win over the same settings inside `modes`. Empty arrays and objects count as unset.
 
-Settings → Config & Sync → Write Current Settings to Config goes the other way: it writes the app's current settings as a v2 file. Keys keep only the `env:NAME` references already in the file; a literal key is never written, so it disappears from the file (the keychain still has it). `defaultMode` and `enhancement.enabled` are dropped because `modes` carries them, and `transcription` / `enhancement` stay only while they match the modes. Reading the written file back changes nothing. The previous file is kept as `config.json.bak`. "Keep Config File in Sync" (off by default) does the same about 2 s after any settings change.
+### Writing your settings to the file
 
-"Sync via Yap Cloud" (needs a Yap Cloud sign-in) stores the same v2 file in your account. At launch Yap pulls it: if the cloud has a newer version and this Mac changed nothing since the last sync, the cloud copy is applied and written to config.json. Local changes are pushed with the last synced version as `If-Match`. If another Mac pushed first, the two copies are merged by id (modes, prompts, shortcuts, dictionary entries; each Mac's edits since the last sync win for what it changed) and pushed once more. If that fails too, Settings → Config & Sync shows the conflict with "Use Cloud Version" / "Keep This Mac's Settings"; nothing is overwritten on its own. The last synced version is stored in UserDefaults (`configCloudSyncedVersion`). An `enhancement.prompt` that names a file (`"prompt.md"`) is sent to the cloud as the file's text, since other Macs don't have the file; a Mac that pulls it writes the text into its own prompt file if its config.json references one (the old file is kept as `<name>.bak`, the reference stays), and inline otherwise. Deleting an entry writes a tombstone, so it stays deleted on the other Macs unless one of them edited it after the delete.
+**Write Current Settings to Config** saves the app's current settings as a v2 file. The previous file is kept as `config.json.bak`. Reading the written file back changes nothing.
 
-On a new Mac, onboarding's first screen has "Sign In and Restore Settings". After signing in it shows what the account has stored (modes, prompts, dictionary entries, shortcuts). Restore applies it, writes config.json and turns on sync. If the account has nothing stored yet, the sheet says so and just leaves you signed in. If the restored modes include a default mode with a transcription model, onboarding then skips the model and practice steps; the permission and microphone steps still run. API keys aren't synced, so the AI key step still appears, with the config's provider already selected, for each provider the config uses whose key isn't in this Mac's keychain (Yap Cloud needs none once signed in).
+- `keys` keeps only `env:NAME` references that were already in the file. A literal key is never written, so it disappears from the file; the keychain still has it.
+- `defaultMode` and `enhancement.enabled` are dropped because `modes` carries them. `transcription` and `enhancement` stay only while they match the modes.
+
+Turn on **Keep Config File in Sync** (off by default) to do this automatically about 2 seconds after any settings change.
+
+### Syncing between Macs
+
+1. Sign in to Yap Cloud on each Mac (see above).
+2. Turn on **Sync via Yap Cloud**. Yap also offers this once, right after you first sign in.
+
+From then on Yap pulls the synced settings at launch and pushes local changes a couple of seconds after you make them. If two Macs changed settings at the same time, Yap merges them by entry: each Mac keeps the modes, prompts, shortcuts and dictionary entries it changed. If they still can't be merged, the section shows the conflict with **Use Cloud Version** and **Keep This Mac's Settings**; nothing is overwritten until you choose. A network or server error shows its reason and **Retry** instead.
+
+If your config's `enhancement.prompt` points to a file such as `prompt.md`, the cloud gets the file's text, because other Macs don't have that file. A Mac whose own config also points to a prompt file writes the text into that file (keeping the old one as `prompt.md.bak`); otherwise the text goes into its config.json.
+
+### Setting up a new Mac
+
+1. On the first onboarding screen, click **Sign In and Restore Settings** and sign in with the same email.
+2. Check the summary (number of modes, prompts, dictionary entries and shortcuts) and click **Restore**. Yap applies the settings, writes config.json and turns on **Sync via Yap Cloud**.
+3. Grant the permissions and pick a microphone as usual. If the restored settings already choose a transcription model, onboarding skips the model and practice steps.
+4. If a provider in your settings needs an API key that this Mac doesn't have yet, the key step appears with that provider already selected. Paste the key to continue. Yap Cloud needs no key once you're signed in.
+
+If the account hasn't synced any settings yet, the sheet says so and just leaves you signed in.
+
+### Deleted items
+
+When you delete a mode, prompt, dictionary entry or custom model, Yap records the deletion (in the `deleted` map) so the other Macs delete it too instead of bringing it back. If another Mac edited the same item after you deleted it, the edit wins and the item stays. Deletion records are kept for 90 days, then removed.
+
+### API keys stay on each Mac
+
+API keys are never written to config.json or sent to Yap Cloud. Yap only reads them from `keys` (as `env:NAME` or a literal you typed yourself). Custom model definitions sync without their keys and show **API key needed** in Models until you add the key on that Mac. The Yap Cloud sign-in token also stays on the Mac it belongs to.
+
+### Recommended models
 
 Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription `microsoft/mai-transcribe-2` (80/82, $0.10/h), cleanup `deepseek/deepseek-v4.1-flash` (9/9 cases, ~0.5 s). Onboarding's "Recommended" option applies exactly this setup with one OpenRouter key. Re-run `setup/bench.py` after editing `VoiceInk/Resources/RecommendedPrompt.md`.
 
