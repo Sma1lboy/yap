@@ -52,7 +52,7 @@ Schema v2 (`"version": 2`) adds whole-settings sections. They use the same JSON 
 |---|---|
 | `version` | `2`. Omitted means v1. A higher number (file from a newer Yap) still loads; Settings → Config File notes that unknown fields were ignored. |
 | `modes` | Array of modes, same objects as `modeConfigs` in an export. Merged by `id`: a mode in the file replaces the app's mode with the same id; modes only in the app stay. |
-| `modeShortcuts` | `{ "<mode id>": <shortcut> }`, same as the export's `modeShortcuts`. Ids not in `modes` are ignored. |
+| `modeShortcuts` | `{ "<mode id>": <shortcut> }`, same as the export's `modeShortcuts`. Ids not in `modes` are ignored. A shortcut (here and in `general`) can be written as `{ "shortcut": "cmd+shift+space" }`: modifiers `cmd` `shift` `opt` `ctrl` `fn`, keys by US-layout name (`a`, `5`, `/`, `space`, `return`, `f13`, `left`…), or one modifier key alone like `right-opt` or `fn`. Yap writes both this and the raw `kind`/`keyCode`/`modifierFlagsRawValue` fields; the raw fields win when both are present. Mouse buttons and keys without a name are written as raw fields only. |
 | `prompts` | Array of `{ id, title, promptText, useSystemInstructions }`. Merged by `id` like `modes`. |
 | `dictionary` | `{ "vocabulary": ["Yap"], "replacements": { "yep": "Yap" } }`. Merged into the existing dictionary. |
 | `general` | Same object as the export's `generalSettings`: global shortcuts, launch at login, recorder style, retention, paste and auto-learn settings. |
