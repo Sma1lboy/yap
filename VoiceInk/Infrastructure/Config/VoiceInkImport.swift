@@ -2,8 +2,9 @@ import Foundation
 import SwiftData
 
 /// One-time move from VoiceInk (the app Yap forks) on the same Mac: its modes, prompts, dictionary, shortcuts and
-/// general settings, turned into a v2 config and applied like config.json (merged by id). API keys, license
-/// state, history and models are left behind. Only runs when the user asks, from Settings → Config & Sync.
+/// general settings and custom model/provider definitions, turned into a v2 config and applied like config.json
+/// (merged by id). API keys, license state, history and downloaded models are left behind; imported custom
+/// models and providers show "API key needed" until their keys are added here. Only runs when the user asks, from Settings → Config & Sync.
 enum VoiceInkImport {
     /// Upstream's bundle id (VoiceInk.xcodeproj). Not sandboxed, so its defaults live in
     /// ~/Library/Preferences/<id>.plist and its data in ~/Library/Application Support/<id>/.
@@ -47,6 +48,10 @@ enum VoiceInkImport {
             result[mode.id.uuidString] = shortcut(.mode(mode.id))
         }
         config.dictionary = dictionary
+        // Decoded as the backup type, not CustomCloudModel: that one's decoder saves a legacy `apiKey` into the
+        // keychain as a side effect. The key is dropped here; only the definition comes over.
+        config.customModels = decode([CustomModelBackup].self, "customCloudModels")?.map(\.withoutAPIKey)
+        config.customProviders = decode([CustomAIProviderConfig].self, "customAIProviders")
         let general = GeneralBackup(
             primaryRecordingShortcut: shortcut(.primaryRecording),
             secondaryRecordingShortcut: shortcut(.secondaryRecording),
@@ -147,6 +152,14 @@ enum VoiceInkImport {
             defaults.set("notch", forKey: "RecorderType")
             // Things that must never come over.
             defaults.set("sk-secret", forKey: "OpenRouterAPIKey")
+            let modelID = "99999999-9999-4999-8999-999999999999"
+            defaults.set(
+                Data(#"""
+                    [{"id":"\#(modelID)","name":"w","displayName":"Whisper","description":"","apiEndpoint":"https://x/v1",
+                    "modelName":"whisper-1","isMultilingualModel":true,"supportedLanguages":{},"apiKey":"sk-model-key"}]
+                    """#.utf8), forKey: "customCloudModels")
+            let provider = CustomAIProviderConfig(name: "Local", baseURL: "http://x/v1", models: ["m"], selectedModel: "m")
+            defaults.set(try? JSONEncoder().encode([provider]), forKey: "customAIProviders")
             defaults.set("LICENSE-KEY", forKey: "VoiceInkLicense")
 
             let imported = config(
@@ -157,9 +170,18 @@ enum VoiceInkImport {
             assert(imported.general?.cancelRecorderShortcut == nil)
             assert(imported.general?.isMenuBarOnly == true && imported.general?.recorderType == "notch")
             assert(imported.general?.restoreClipboardAfterPaste == nil)  // not set in VoiceInk → Yap's stays
-            assert(imported.restoreSummary == .init(modes: 1, prompts: 1, dictionaryEntries: 2, shortcuts: 2))
+            assert(imported.restoreSummary == .init(
+                modes: 1, prompts: 1, dictionaryEntries: 2, shortcuts: 2, customDefinitions: 2))
+            // Custom definitions come over without keys, so their rows show "API key needed".
+            assert(imported.customModels?.map(\.id.uuidString) == [modelID] && imported.customModels?[0].apiKey == nil)
+            assert(imported.customProviders == [provider])
+            assert(imported.restoreSummary.customDefinitions == 2)
             let written = (try? imported.encoded()).flatMap { String(data: $0, encoding: .utf8) } ?? ""
             assert(!written.contains("sk-secret") && !written.contains("LICENSE") && imported.keys == nil)
+            assert(!written.contains("sk-model-key") && written.contains("whisper-1") && written.contains("http://x/v1"))
+            let sections = imported.backupSections(
+                currentModes: [], currentPrompts: [], currentModeShortcuts: [:], currentCustomModels: [])
+            assert(sections?.file.customCloudModels?.allSatisfy { $0.apiKey == nil } == true)
         }
     }
 #endif

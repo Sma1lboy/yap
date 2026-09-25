@@ -1,7 +1,15 @@
 import Foundation
 
 // Yap Cloud is the store behind "Sync via Yap Cloud" (CloudConfigSync).
-extension YapCloud: ConfigCloudStore {}
+extension YapCloud: ConfigCloudStore {
+    func fetchConfigIfChanged(since version: String?) async throws -> CloudConfigFetch<YapCloudConfigDocument> {
+        switch try await fetchConfig(ifNoneMatch: version) {
+        case .notFound: return .notFound
+        case .notModified: return .notModified
+        case .document(let document): return .current(document)
+        }
+    }
+}
 extension YapCloudConfigDocument: CloudConfigDocument {}
 
 extension YapCloud: ConfigVersionHistoryStore {

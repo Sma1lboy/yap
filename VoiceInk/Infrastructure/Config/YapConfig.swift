@@ -261,6 +261,8 @@ struct YapConfig: Codable, Equatable {
         var prompts = 0
         var dictionaryEntries = 0
         var shortcuts = 0
+        /// Custom transcription models plus custom enhancement providers.
+        var customDefinitions = 0
     }
 
     var restoreSummary: RestoreSummary {
@@ -273,7 +275,8 @@ struct YapConfig: Codable, Equatable {
         return RestoreSummary(
             modes: modes?.count ?? 0, prompts: prompts?.count ?? 0,
             dictionaryEntries: (dictionary?.vocabulary?.count ?? 0) + (dictionary?.replacements?.count ?? 0),
-            shortcuts: generalShortcuts.compactMap { $0 }.count + (modeShortcuts?.count ?? 0))
+            shortcuts: generalShortcuts.compactMap { $0 }.count + (modeShortcuts?.count ?? 0),
+            customDefinitions: (customModels?.count ?? 0) + (customProviders?.count ?? 0))
     }
 
     /// True when the config already sets up what onboarding's model, AI key and practice steps would:

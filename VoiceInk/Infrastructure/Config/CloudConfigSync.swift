@@ -8,6 +8,14 @@ protocol CloudConfigDocument {
     var config: Data { get }
 }
 
+/// A conditional fetch's answer.
+enum CloudConfigFetch<Document> {
+    case notFound
+    /// The stored version is still the one asked about; nothing was downloaded.
+    case notModified
+    case current(Document)
+}
+
 /// Where the synced config lives: Yap Cloud (see YapCloud+ConfigSync.swift), or a fake in the selfCheck.
 protocol ConfigCloudStore: AnyObject {
     associatedtype Document: CloudConfigDocument
@@ -17,6 +25,15 @@ protocol ConfigCloudStore: AnyObject {
     /// Stores `data` if the stored version still equals `ifMatch` (nil: only if nothing is stored yet);
     /// returns the new version. Throws on a version conflict.
     func putConfig(_ data: Data, ifMatch: String?) async throws -> String
+    /// `fetchConfig`, but `.notModified` (and no download) while the stored version is still `version`.
+    func fetchConfigIfChanged(since version: String?) async throws -> CloudConfigFetch<Document>
+}
+
+extension ConfigCloudStore {
+    /// For stores without conditional requests: always downloads.
+    func fetchConfigIfChanged(since version: String?) async throws -> CloudConfigFetch<Document> {
+        try await fetchConfig().map { .current($0) } ?? .notFound
+    }
 }
 
 /// One stored version of the synced config, as listed by the server.
@@ -216,12 +233,20 @@ final class CloudConfigSync: ObservableObject {
         }
     }
 
-    private func sync(store: any ConfigCloudStore, local: Data) async throws {
+    private func sync(store: some ConfigCloudStore, local: Data) async throws {
         let syncedVersion = defaults.string(forKey: Self.versionKey)
         let syncedData = defaults.data(forKey: Self.dataKey)
-        guard let remote = try await store.fetchConfig() else {
+        let remote: any CloudConfigDocument
+        // Ask with the synced version: unchanged cloud → 304, no download, only a push if this Mac changed.
+        switch try await store.fetchConfigIfChanged(since: syncedData == nil ? nil : syncedVersion) {
+        case .notFound:
             try await put(local, ifMatch: nil, store: store)
             return
+        case .notModified:
+            if local != syncedData, let syncedVersion { try await put(local, ifMatch: syncedVersion, store: store) }
+            return
+        case .current(let document):
+            remote = document
         }
         if remote.version == syncedVersion {
             if local != syncedData { try await put(local, ifMatch: remote.version, store: store) }
@@ -288,6 +313,18 @@ final class CloudConfigSync: ObservableObject {
             var isSignedIn: Bool { true }
             /// Each put first lets "another Mac" write the next of these.
             var interleavedWrites: [Data] = []
+            /// Answer conditional fetches with 304 like paygate will; off = a server that ignores the header.
+            var supportsNotModified = false
+            /// Full documents sent by fetchConfigIfChanged.
+            var downloads = 0
+
+            func fetchConfigIfChanged(since version: String?) async throws -> CloudConfigFetch<Document> {
+                guard let document else { return .notFound }
+                if supportsNotModified, version == document.version { return .notModified }
+                downloads += 1
+                return .current(document)
+            }
+
             /// Puts (1-based, counted from the last reset) that fail as if offline.
             var offlinePuts: Set<Int> = []
             var putCount = 0
@@ -361,10 +398,21 @@ final class CloudConfigSync: ObservableObject {
             await sync.sync()
             assert(names(local) == ["Dictation", "Email"] && defaults.string(forKey: versionKey) == "2")
 
-            // 2b. Pulling again with the cloud unchanged (same version) applies nothing and writes nothing.
+            // 2b. Pulling again with the cloud unchanged (same version) applies nothing and writes nothing,
+            //     whether the server ignores If-None-Match (downloads, compares) or answers 304 (no download).
             let (appliedBefore, putsBefore) = (applyCount, store.putCount)
             await sync.sync()
             assert(applyCount == appliedBefore && store.putCount == putsBefore && store.document?.version == "2")
+            store.supportsNotModified = true
+            let downloadsBefore = store.downloads
+            await sync.sync()
+            assert(store.downloads == downloadsBefore && applyCount == appliedBefore && store.putCount == putsBefore)
+            // 304 with a local change still pushes it, against the synced version.
+            local = config(["Dictation", "Email"], words: ["Yap"])
+            await sync.sync()
+            assert(store.downloads == downloadsBefore && store.putCount == putsBefore + 1 && store.document?.version == "3")
+            assert(defaults.string(forKey: versionKey) == "3" && applyCount == appliedBefore)
+            store.supportsNotModified = false
 
             // 3. Conflict: this Mac adds "Notes" while another Mac adds "Code" just before our put;
             //    the put fails, both sides merge by id and the retry succeeds with both modes.
