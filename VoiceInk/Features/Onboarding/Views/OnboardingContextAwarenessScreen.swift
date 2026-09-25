@@ -22,7 +22,8 @@ struct OnboardingContextAwarenessScreen: View {
                 isPrimaryEnabled: true,
                 onLeading: onBack,
                 onPrimary: onContinue,
-                isPrimaryDefaultAction: true
+                isPrimaryDefaultAction: true,
+                isLeadingCancelAction: true
             )
         }
     }
