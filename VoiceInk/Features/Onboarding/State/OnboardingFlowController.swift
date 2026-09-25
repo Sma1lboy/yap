@@ -22,7 +22,14 @@ final class OnboardingFlowController {
         guard coordinator.requiredPermissionsGranted,
             coordinator.hasSelectedOnboardingMicrophone
         else { return }
-        coordinator.storedStage = OnboardingStage.model.rawValue
+        // A restored config already chose provider and modes; only the permission steps were left.
+        coordinator.storedStage =
+            (coordinator.restoredFromCloud ? OnboardingStage.trust : OnboardingStage.model).rawValue
+    }
+
+    /// The first screen's "Sign in and restore settings" finished; `coversSetup` skips the setup steps.
+    func didRestoreFromCloud(coversSetup: Bool) {
+        coordinator.restoredFromCloud = coversSetup
     }
 
     func goToAPIStep(
@@ -241,6 +248,11 @@ final class OnboardingFlowController {
             return
         }
 
+        if coordinator.restoredFromCloud {
+            coordinator.storedStage = OnboardingStage.microphone.rawValue
+            return
+        }
+
         guard coordinator.isReadyForExperience(isTranscriptionSetupReady: isTranscriptionSetupReady) else {
             coordinator.storedStage = stageBeforeExperience.rawValue
             return
@@ -323,7 +335,7 @@ final class OnboardingFlowController {
 
         if coordinator.stage == .api
             && (!coordinator.requiredPermissionsGranted || !coordinator.hasSelectedOnboardingMicrophone
-                || !isTranscriptionSetupReady || coordinator.usedRecommendedSetup)
+                || !isTranscriptionSetupReady || coordinator.usedRecommendedSetup || coordinator.restoredFromCloud)
         {
             goToFirstIncompleteSetupStep(isTranscriptionSetupReady: isTranscriptionSetupReady)
         }
@@ -334,10 +346,11 @@ final class OnboardingFlowController {
             goToFirstIncompleteSetupStep(isTranscriptionSetupReady: isTranscriptionSetupReady)
         }
 
-        // Skipped transcription means no working dictation: the API and practice steps are not reachable.
-        if coordinator.hasSkippedTranscriptionSetup
-            && (coordinator.stage == .api || coordinator.stage == .experience
-                || coordinator.stage == .contextAwareness)
+        // Skipped transcription means no working dictation, and a restore already set things up: either way the
+        // model, API and practice steps are not reachable.
+        if (coordinator.hasSkippedTranscriptionSetup || coordinator.restoredFromCloud)
+            && ((coordinator.restoredFromCloud && coordinator.stage == .model) || coordinator.stage == .api
+                || coordinator.stage == .experience || coordinator.stage == .contextAwareness)
         {
             goToFirstIncompleteSetupStep(isTranscriptionSetupReady: isTranscriptionSetupReady)
         }
@@ -361,7 +374,7 @@ final class OnboardingFlowController {
             coordinator.storedStage = OnboardingStage.permissions.rawValue
         } else if !coordinator.hasSelectedOnboardingMicrophone {
             coordinator.storedStage = OnboardingStage.microphone.rawValue
-        } else if coordinator.hasSkippedTranscriptionSetup {
+        } else if coordinator.hasSkippedTranscriptionSetup || coordinator.restoredFromCloud {
             coordinator.storedStage = OnboardingStage.trust.rawValue
         } else if !isTranscriptionSetupReady {
             coordinator.storedStage = OnboardingStage.model.rawValue
@@ -417,11 +430,13 @@ final class OnboardingFlowController {
         }
 
         let preset = coordinator.usedRecommendedSetup ? chosenPreset() : nil
+        let restored = coordinator.restoredFromCloud
         OnboardingStorageKeys.onboardingKeys.forEach {
             coordinator.defaults.removeObject(forKey: $0)
         }
         installFallbackSetupIfNeeded()
-        activateCleanTranscriptionMode()
+        // A restored default mode stays the default; the Clean starter mode may exist but isn't forced.
+        if !restored { activateCleanTranscriptionMode() }
         reapplyConfigFile(preset: preset)
         onComplete()
     }

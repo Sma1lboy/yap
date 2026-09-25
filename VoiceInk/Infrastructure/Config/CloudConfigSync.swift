@@ -72,6 +72,22 @@ final class CloudConfigSync: ObservableObject {
         await run { store, local in try await self.sync(store: store, local: local) }
     }
 
+    /// New-Mac restore, step 1: what the account has stored (nil: never synced). Works before sync is turned on.
+    func fetchStored() async throws -> (any CloudConfigDocument)? {
+        guard let store, store.isSignedIn else { return nil }
+        return try await store.fetchConfig()
+    }
+
+    /// New-Mac restore, step 2: applies `document`, turns sync on and records it as the last synced state, so the
+    /// next sync pushes only what changes from here.
+    func restore(_ document: any CloudConfigDocument) async throws {
+        isSyncing = true
+        defer { isSyncing = false }
+        defaults.set(true, forKey: Self.enabledKey)
+        try await pull(document)
+        status = .synced(Date())
+    }
+
     /// Conflict resolution from Settings: take the cloud copy, or put this Mac's settings over it.
     func resolveConflict(keepLocal: Bool) async {
         await run { store, local in

@@ -225,6 +225,37 @@ struct YapConfig: Codable, Equatable {
         return config.normalized()
     }
 
+    // MARK: - Restore on a new Mac
+
+    /// What restoring this config brings over, for the onboarding summary.
+    struct RestoreSummary: Equatable {
+        var modes = 0
+        var prompts = 0
+        var dictionaryEntries = 0
+        var shortcuts = 0
+    }
+
+    var restoreSummary: RestoreSummary {
+        let generalShortcuts: [ShortcutBackup?] = [
+            general?.primaryRecordingShortcut, general?.secondaryRecordingShortcut,
+            general?.pasteLastTranscriptionShortcut, general?.pasteLastEnhancementShortcut,
+            general?.retryLastTranscriptionShortcut, general?.cancelRecorderShortcut,
+            general?.openHistoryWindowShortcut, general?.quickAddToDictionaryShortcut,
+        ]
+        return RestoreSummary(
+            modes: modes?.count ?? 0, prompts: prompts?.count ?? 0,
+            dictionaryEntries: (dictionary?.vocabulary?.count ?? 0) + (dictionary?.replacements?.count ?? 0),
+            shortcuts: generalShortcuts.compactMap { $0 }.count + (modeShortcuts?.count ?? 0))
+    }
+
+    /// True when the config already sets up what onboarding's model, AI key and practice steps would:
+    /// modes, with a transcription model on the default one (or a `transcription` field).
+    var coversOnboardingSetup: Bool {
+        guard let modes, !modes.isEmpty else { return false }
+        return transcription?.model != nil
+            || modes.contains { $0.isDefault && $0.selectedTranscriptionModelName != nil }
+    }
+
     /// The copy for another Mac: a prompt that names a local file (`"prompt.md"`) becomes the file's text, which
     /// `resolvePrompt` reads back as inline text. `"recommended"` stays, since every Yap bundles that prompt.
     func inliningPromptFile(_ resolve: (String) -> String?) -> YapConfig {
@@ -532,6 +563,13 @@ extension String {
             let keyword = YapConfig(enhancement: .init(prompt: "Recommended"))
             assert(keyword.inliningPromptFile(resolve) == keyword)
             assert(YapConfig().inliningPromptFile(resolve) == YapConfig())
+
+            // Restore summary and onboarding coverage.
+            assert(v2.restoreSummary == RestoreSummary(modes: 1, prompts: 1, dictionaryEntries: 1, shortcuts: 1))
+            assert(!v2.coversOnboardingSetup && !YapConfig().coversOnboardingSetup)
+            var covered = v2
+            covered.transcription = .init(provider: "yapcloud", model: "m")
+            assert(covered.coversOnboardingSetup)
 
             // Tombstones. Base state as both Macs last synced it, every entry modified at t0.
             let t0 = Date(timeIntervalSince1970: 1_800_000_000)

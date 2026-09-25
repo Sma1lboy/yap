@@ -8,6 +8,8 @@ struct OnboardingView: View {
     @EnvironmentObject var aiService: AIService
     @EnvironmentObject var enhancementService: AIEnhancementService
     @StateObject private var coordinator = OnboardingCoordinator()
+    @State private var isShowingCloudRestore = false
+    @State private var didRestoreFromCloud = false
     let contentMaxWidth: CGFloat = 560
 
     var body: some View {
@@ -39,8 +41,16 @@ struct OnboardingView: View {
                             NSApplication.shared.terminate(nil)
                         },
                         onRecheck: coordinator.permissions.refreshPermissionStatuses,
-                        onContinue: coordinator.flow.goToMicrophoneStep
+                        onContinue: coordinator.flow.goToMicrophoneStep,
+                        isRestoredFromCloud: didRestoreFromCloud || coordinator.restoredFromCloud,
+                        onRestoreFromCloud: { isShowingCloudRestore = true }
                     )
+                    .sheet(isPresented: $isShowingCloudRestore) {
+                        OnboardingCloudRestoreSheet { coversSetup in
+                            didRestoreFromCloud = true
+                            coordinator.flow.didRestoreFromCloud(coversSetup: coversSetup)
+                        }
+                    }
                     .transition(.opacity)
                 case .microphone:
                     OnboardingMicrophoneScreen(

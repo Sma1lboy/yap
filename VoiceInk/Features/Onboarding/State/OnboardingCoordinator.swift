@@ -63,6 +63,14 @@ final class OnboardingCoordinator: ObservableObject {
         }
     }
 
+    /// Settings were restored from Yap Cloud on the first screen and cover provider and modes, so the model,
+    /// AI key and practice steps are skipped. Permission steps still run.
+    @Published var restoredFromCloud: Bool {
+        didSet {
+            defaults.set(restoredFromCloud, forKey: OnboardingStorageKeys.restoredFromCloud)
+        }
+    }
+
     @Published var permissionStatuses: [OnboardingPermissionKind: OnboardingPermissionStatus] = [:]
     @Published var isSelectedTranscriptionProviderVerified = false
     @Published var isSelectedAPIProviderVerified = false
@@ -100,6 +108,7 @@ final class OnboardingCoordinator: ObservableObject {
         self.hasSkippedAPISetup = defaults.bool(forKey: OnboardingStorageKeys.skippedAPISetup)
         self.hasSkippedTranscriptionSetup = defaults.bool(forKey: OnboardingStorageKeys.skippedTranscriptionSetup)
         self.usedRecommendedSetup = defaults.bool(forKey: OnboardingStorageKeys.usedRecommendedSetup)
+        self.restoredFromCloud = defaults.bool(forKey: OnboardingStorageKeys.restoredFromCloud)
     }
 
     deinit {
@@ -433,7 +442,7 @@ final class OnboardingCoordinator: ObservableObject {
     /// the flow never routes a skipped setup into the experience steps.
     func isReadyForExperience(isTranscriptionSetupReady: Bool) -> Bool {
         guard requiredPermissionsGranted && hasSelectedOnboardingMicrophone else { return false }
-        if hasSkippedTranscriptionSetup { return true }
+        if hasSkippedTranscriptionSetup || restoredFromCloud { return true }
         return isTranscriptionSetupReady
             && (usedRecommendedSetup || isSelectedAPIProviderVerified || hasSkippedAPISetup)
     }
@@ -456,6 +465,7 @@ enum OnboardingStorageKeys {
     static let skippedAPISetup = "onboardingSkippedAPISetup"
     static let skippedTranscriptionSetup = "onboardingSkippedTranscriptionSetup"
     static let usedRecommendedSetup = "onboardingUsedRecommendedSetup"
+    static let restoredFromCloud = "onboardingRestoredFromCloud"
 
     static let onboardingKeys = [
         stage,
@@ -467,6 +477,7 @@ enum OnboardingStorageKeys {
         skippedAPISetup,
         skippedTranscriptionSetup,
         usedRecommendedSetup,
+        restoredFromCloud,
         experienceIndex,
         "onboardingStarterModeIndex",
     ]
