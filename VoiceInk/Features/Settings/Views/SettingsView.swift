@@ -334,6 +334,12 @@ struct SettingsView: View {
                         .textSelection(.enabled)
                 }
 
+                if ReleaseNotes.current != nil {
+                    Button(String(format: String(localized: "What's New in %@"), ReleaseNotes.currentVersion)) {
+                        ReleaseNotesPresenter.shared.showCurrent()
+                    }
+                }
+
                 Toggle(
                     "Automatically Check for Updates",
                     isOn: Binding(
