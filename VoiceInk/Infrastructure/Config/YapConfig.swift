@@ -225,6 +225,18 @@ struct YapConfig: Codable, Equatable {
         return config.normalized()
     }
 
+    /// The copy for another Mac: a prompt that names a local file (`"prompt.md"`) becomes the file's text, which
+    /// `resolvePrompt` reads back as inline text. `"recommended"` stays, since every Yap bundles that prompt.
+    func inliningPromptFile(_ resolve: (String) -> String?) -> YapConfig {
+        guard let raw = enhancement?.prompt,
+            raw.caseInsensitiveCompare(RecommendedSetup.promptKeyword) != .orderedSame,
+            let text = resolve(raw)
+        else { return self }
+        var config = self
+        config.enhancement?.prompt = text
+        return config
+    }
+
     // MARK: - Merge
 
     /// Content equality. `ModeConfig ==` compares only ids, so "did this change" checks compare JSON instead.
@@ -510,6 +522,16 @@ extension String {
 
             let empty = try? decode(Data(#"{"version":2,"modes":[],"prompts":[],"dictionary":{"vocabulary":[]}}"#.utf8))
             assert(empty?.hasSections == false)
+
+            // A prompt file is inlined for the cloud copy; inline text and "recommended" pass through.
+            let resolve: (String) -> String? = { resolvePrompt($0, configDirectory: dir, readFile: read) }
+            let withFile = YapConfig(enhancement: .init(prompt: "prompt.md"))
+            assert(withFile.inliningPromptFile(resolve).enhancement?.prompt == "FILE")
+            let inline = YapConfig(enhancement: .init(prompt: "Fix grammar."))
+            assert(inline.inliningPromptFile(resolve) == inline)
+            let keyword = YapConfig(enhancement: .init(prompt: "Recommended"))
+            assert(keyword.inliningPromptFile(resolve) == keyword)
+            assert(YapConfig().inliningPromptFile(resolve) == YapConfig())
 
             // Tombstones. Base state as both Macs last synced it, every entry modified at t0.
             let t0 = Date(timeIntervalSince1970: 1_800_000_000)

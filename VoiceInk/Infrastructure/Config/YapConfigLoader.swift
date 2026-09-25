@@ -190,6 +190,13 @@ final class YapConfigLoader: ObservableObject {
         return data
     }
 
+    /// `makeConfigData` for Yap Cloud: a prompt kept in a file next to config.json is sent as its text,
+    /// because the other Macs don't have that file.
+    func makeCloudConfigData() async -> Data? {
+        guard let data = await makeConfigData(), let config = try? YapConfig.decode(data) else { return nil }
+        return try? config.inliningPromptFile(promptText).encoded()
+    }
+
     /// The last config this Mac exported or applied; export compares against it to stamp changes and deletions.
     static let baselineKey = "configBaseline"
     private var baseline: YapConfig? {

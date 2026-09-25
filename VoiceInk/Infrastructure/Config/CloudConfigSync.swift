@@ -39,7 +39,7 @@ final class CloudConfigSync: ObservableObject {
 
     static let shared = CloudConfigSync(
         defaults: .standard,
-        localConfig: { await YapConfigLoader.shared.makeConfigData() },
+        localConfig: { await YapConfigLoader.shared.makeCloudConfigData() },
         applyRemote: { data in
             try await YapConfigLoader.shared.applyConfigData(data)
             // The server re-serializes the JSON; write it back in config.json's stable form.
