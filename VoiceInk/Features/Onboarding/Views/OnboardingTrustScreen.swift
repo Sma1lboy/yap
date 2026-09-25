@@ -1,3 +1,4 @@
+import SwiftData
 import AppKit
 import SwiftUI
 
@@ -69,11 +70,16 @@ private struct TrustHeader: View {
 }
 
 private struct TrustBody: View {
+    @Query(TrySayingCard.anyTranscription) private var existingTranscriptions: [Transcription]
+
+    /// Only for someone who hasn't dictated yet (e.g. after "Set It Up Later"); the map shrinks to make room.
+    private var showsTrySaying: Bool { existingTranscriptions.isEmpty }
+
     var body: some View {
         VStack(spacing: 0) {
             TrustMapView()
-                .frame(height: 270)
-                .padding(.bottom, 28)
+                .frame(height: showsTrySaying ? 190 : 270)
+                .padding(.bottom, showsTrySaying ? 20 : 28)
 
             VStack(spacing: 10) {
                 Text("Yap collects no analytics.")
@@ -101,6 +107,11 @@ private struct TrustBody: View {
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: 610)
+            }
+
+            if showsTrySaying {
+                TrySayingCard()
+                    .padding(.top, 20)
             }
         }
     }

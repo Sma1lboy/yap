@@ -25658,6 +25658,28 @@
         }
       }
     },
+    "Standup 改到 Friday morning. Send Chris the onboarding review." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standup 改到 Friday morning. Send Chris the onboarding review."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standup 改到 Friday morning. Send Chris the onboarding review."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "standup 改到 Friday morning，onboarding 的 review 发给 Chris。"
+          }
+        }
+      }
+    },
     "Start" : {
       "localizations" : {
         "de" : {
@@ -29408,6 +29430,28 @@
         }
       }
     },
+    "Try saying" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probier mal zu sagen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essayez de dire"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "试着说一句"
+          }
+        }
+      }
+    },
     "Try selecting a different model or redownloading the current model." : {
       "localizations" : {
         "de" : {
@@ -31819,6 +31863,28 @@
         }
       }
     },
+    "Yap pastes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap fügt ein"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap colle"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 粘贴"
+          }
+        }
+      }
+    },
     "Yap picks a mode for the app you're in. Press Option 1-9 while recording to switch, and edit modes anytime." : {
       "localizations" : {
         "de" : {
@@ -33194,6 +33260,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "字/分钟"
+          }
+        }
+      }
+    },
+    "“um so the standup, 改到 Friday morning, and uh send Chris the onboarding review”" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“um so the standup, 改到 Friday morning, and uh send Chris the onboarding review”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“um so the standup, 改到 Friday morning, and uh send Chris the onboarding review”"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“嗯那个 standup 我们改到 Friday morning 吧，然后呃 onboarding 的 review 发给 Chris”"
           }
         }
       }
