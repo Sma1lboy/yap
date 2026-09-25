@@ -59,8 +59,10 @@ struct AppSidebar: View {
 private extension ViewType {
     var title: LocalizedStringKey {
         switch self {
-        case .transcribeAudio:
-            return "Transcribe"
+        case .dashboard:
+            return "Home"
+        case .models:
+            return "Models"
         default:
             return LocalizedStringKey(rawValue)
         }
@@ -69,7 +71,6 @@ private extension ViewType {
     static let primaryItems: [ViewType] = [
         .dashboard,
         .modes,
-        .transcribeAudio,
         .history,
         .dictionary,
         .models,
@@ -78,57 +79,32 @@ private extension ViewType {
 
     static let secondaryItems: [ViewType] = [
         .settings,
-        .license,
+    ]
+
+    /// Reachable only from other screens (History toolbar, Finder "Open With"), not the sidebar.
+    static let hiddenItems: [ViewType] = [
+        .transcribeAudio,
     ]
 
     static func assertSidebarItemsCoverAllCases() {
         #if DEBUG
-            let sidebarItems = primaryItems + secondaryItems
+            let sidebarItems = primaryItems + secondaryItems + hiddenItems
             assert(Set(sidebarItems) == Set(allCases) && sidebarItems.count == allCases.count)
         #endif
     }
 
     var icon: String {
         switch self {
-        case .dashboard: return "gauge.medium"
-        case .transcribeAudio: return "waveform.path"
-        case .history: return "doc.text.fill"
+        case .dashboard: return "house"
+        case .transcribeAudio: return "waveform"
+        case .history: return "clock"
         case .models: return "cpu"
-        case .modes: return "sparkles.square.fill.on.square"
-        case .audio: return "mic.fill"
-        case .dictionary: return "text.book.closed.fill"
-        case .settings: return "gearshape.fill"
-        case .license: return "checkmark.seal.fill"
+        case .modes: return "square.stack"
+        case .audio: return "mic"
+        case .dictionary: return "character.book.closed"
+        case .settings: return "gearshape"
         }
     }
-
-    var sidebarIconStyle: SidebarIconStyle {
-        switch self {
-        case .dashboard:
-            return .init(background: AppTheme.Sidebar.dashboard)
-        case .modes:
-            return .init(background: AppTheme.Sidebar.modes)
-        case .models:
-            return .init(background: AppTheme.Sidebar.models)
-        case .audio:
-            return .init(background: AppTheme.Sidebar.fallback)
-        case .dictionary:
-            return .init(background: AppTheme.Sidebar.dictionary)
-        case .history:
-            return .init(background: AppTheme.Sidebar.audio)
-        case .transcribeAudio:
-            return .init(background: AppTheme.Sidebar.transcribeAudio)
-        case .settings:
-            return .init(background: AppTheme.Sidebar.fallback)
-        case .license:
-            return .init(background: AppTheme.Sidebar.license)
-        }
-    }
-}
-
-private struct SidebarIconStyle {
-    let background: Color
-    var foreground: Color = .white
 }
 
 private struct SidebarItemButton: View {
@@ -139,84 +115,31 @@ private struct SidebarItemButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 9) {
-                SidebarIconTile(
-                    systemName: viewType.icon,
-                    style: viewType.sidebarIconStyle
-                )
+                Image(systemName: viewType.icon)
+                    .font(.system(size: 14, weight: .regular))
+                    .symbolRenderingMode(.monochrome)
+                    .foregroundStyle(AppTheme.Text.secondary)
+                    .frame(width: 20)
 
                 Text(viewType.title)
-                    .font(.system(size: 13.5, weight: isSelected ? .semibold : .medium))
+                    .font(.system(size: 13.5, weight: isSelected ? .semibold : .regular))
+                    .foregroundStyle(AppTheme.Text.primary)
                     .lineLimit(1)
 
                 Spacer(minLength: 0)
             }
-            .foregroundStyle(isSelected ? selectedForegroundColor : Color.primary)
-            .padding(.leading, 8)
-            .padding(.trailing, 10)
-            .frame(height: 38)
+            .padding(.horizontal, 10)
+            .frame(height: 32)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(rowBackground)
-            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(isSelected ? AppTheme.Selection.fill : Color.clear)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .buttonStyle(.plain)
         .help(viewType.title)
         .accessibilityLabel(viewType.title)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .animation(.easeInOut(duration: 0.12), value: isSelected)
-    }
-
-    private var rowBackground: some View {
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
-            .fill(rowBackgroundColor)
-            .overlay {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(rowBorderColor, lineWidth: 1)
-            }
-    }
-
-    private var rowBackgroundColor: Color {
-        if isSelected {
-            return Color(nsColor: .selectedContentBackgroundColor)
-        }
-
-        return .clear
-    }
-
-    private var rowBorderColor: Color {
-        isSelected ? selectedForegroundColor.opacity(0.18) : .clear
-    }
-
-    private var selectedForegroundColor: Color {
-        Color(nsColor: .alternateSelectedControlTextColor)
-    }
-}
-
-private struct SidebarIconTile: View {
-    let systemName: String
-    let style: SidebarIconStyle
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(style.background)
-                .overlay(alignment: .top) {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(Color.white.opacity(0.18))
-                        .frame(height: 11)
-                        .blendMode(.screen)
-                }
-                .overlay {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.24), lineWidth: 0.5)
-                }
-                .shadow(color: Color.black.opacity(0.18), radius: 1.2, y: 1)
-
-            Image(systemName: systemName)
-                .font(.system(size: 14.5, weight: .semibold))
-                .symbolRenderingMode(.monochrome)
-                .foregroundStyle(style.foreground)
-                .shadow(color: Color.black.opacity(0.16), radius: 0.5, y: 0.5)
-        }
-        .frame(width: 24, height: 24)
     }
 }

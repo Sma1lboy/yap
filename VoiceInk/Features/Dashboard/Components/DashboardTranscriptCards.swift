@@ -65,11 +65,7 @@ private struct DashboardTranscriptCardRow: View {
             return .symbol("doc.text")
         }
 
-        if Self.isLikelySymbolName(iconValue) {
-            return .symbol(iconValue)
-        }
-
-        return .emoji(iconValue)
+        return .symbol(Self.isLikelySymbolName(iconValue) ? iconValue : "doc.text")
     }
 
     var body: some View {
@@ -106,7 +102,7 @@ private struct DashboardTranscriptCardRow: View {
         HStack(alignment: .top, spacing: Self.rowSpacing) {
             ModeIconView(
                 icon: modeIcon,
-                size: modeIcon.kind == .emoji ? 16 : 14,
+                size: 14,
                 color: AppTheme.Text.secondary.opacity(0.82)
             )
             .frame(width: Self.iconFrameSize, height: Self.iconFrameSize)

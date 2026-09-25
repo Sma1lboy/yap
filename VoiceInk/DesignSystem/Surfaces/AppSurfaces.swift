@@ -50,30 +50,10 @@ struct MetricTintBackground: View {
 
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(
-                LinearGradient(
-                    gradient: Gradient(stops: [
-                        .init(color: color.opacity(0.15), location: 0),
-                        .init(color: AppTheme.Surface.window.opacity(0.1), location: 0.6),
-                    ]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
+            .fill(color.opacity(0.08))
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                AppTheme.Border.subtle,
-                                AppTheme.Border.subtle.opacity(0.4),
-                            ]),
-                            startPoint: .top,
-                            endPoint: .bottom
-                        ),
-                        lineWidth: 1
-                    )
+                    .stroke(AppTheme.Border.subtle, lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.05), radius: 5, y: 3)
     }
 }

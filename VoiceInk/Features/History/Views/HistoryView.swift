@@ -183,6 +183,11 @@ struct HistoryView: View {
             )
             .frame(maxWidth: .infinity)
 
+            Button("Transcribe File…") {
+                MainWindowNavigation.shared.navigate(to: .transcribeAudio)
+            }
+            .help("Transcribe an audio or video file")
+
             AppIconButton(
                 systemName: "gearshape",
                 help: "History settings",
