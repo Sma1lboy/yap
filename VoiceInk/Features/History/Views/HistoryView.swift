@@ -311,13 +311,20 @@ struct HistoryView<Header: View>: View {
     // MARK: - Empty State
 
     private var emptyStateView: some View {
-        HStack(spacing: 8) {
-            Image(systemName: searchText.isEmpty ? "mic" : "magnifyingglass")
-                .font(.system(size: 13, weight: .medium))
-            Text(verbatim: emptyStateMessage)
-                .font(.system(size: 13))
+        VStack(spacing: 16) {
+            HStack(spacing: 8) {
+                Image(systemName: searchText.isEmpty ? "mic" : "magnifyingglass")
+                    .font(.system(size: 13, weight: .medium))
+                Text(verbatim: emptyStateMessage)
+                    .font(.system(size: 13))
+            }
+            .foregroundStyle(AppTheme.Text.secondary)
+
+            // Empty without a search means nothing was ever dictated (or everything was deleted).
+            if searchText.isEmpty {
+                TrySayingCard()
+            }
         }
-        .foregroundStyle(AppTheme.Text.secondary)
         .frame(maxWidth: .infinity)
         .padding(.vertical, 56)
     }

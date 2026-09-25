@@ -181,13 +181,21 @@ struct OnboardingTranscriptionSetupCard: View {
         .background(AppMaterialCardBackground(cornerRadius: 12))
     }
 
+    /// The price sentence only appears once the catalog says what paygate's markup is.
+    private var yapCloudDescription: String {
+        let base = String(
+            localized: "Same models as Your OpenRouter Key, no API key: sign in with your email and pay from a balance.")
+        guard let markup = yapCloud.markupPercentText else { return base }
+        return base + " " + String(format: String(localized: "Each dictation costs the model's price plus %@."), markup)
+    }
+
     private var yapCloudSetup: some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Use Yap Cloud (pay as you go)")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(AppTheme.Text.primary)
-                Text("Same models as Your OpenRouter Key, no API key: sign in with your email and pay from a balance. Each dictation costs the model's price plus 10%.")
+                Text(yapCloudDescription)
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(AppTheme.Text.secondary)
                     .fixedSize(horizontal: false, vertical: true)

@@ -34,6 +34,7 @@ Yap Cloud is an optional account that pays for transcription and cleanup from a 
 
 **Sign up / sign in.** Open **Account** in the sidebar, enter your email, then the 6-digit code sent to it. There is no password. A new account gets $1 of credit, listed under **Recent Activity** as "Sign-up bonus". During onboarding you can pick **Use Yap Cloud (pay as you go)** on the model step instead.
 
+<!-- 10% = paygate MARKUP; update here, README.zh-CN.md and site/index.html when it changes. -->
 **What it costs.** Each transcription or cleanup request is charged the model provider's price plus 10%. **Account → Models & Pricing** lists the models; **This Month** shows what you spent this month and on which models, and **Recent Activity** lists every charge and top-up.
 
 **Adding funds.** In **Account → Add Funds**, pick $5, $10 or $20, or Custom (a whole-dollar amount from $5 to $500), and click **Add Funds…**. Checkout opens in your browser; the balance updates when you come back to Yap. Below $1 Yap shows a low-balance warning; when the balance runs out, Yap Cloud requests stop and a notification takes you to Account.

@@ -11476,6 +11476,28 @@
         }
       }
     },
+    "Each dictation costs the model's price plus %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jedes Diktat kostet den Modellpreis plus %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque dictée coûte le prix du modèle plus %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每次听写按模型价格加 %@ 计费。"
+          }
+        }
+      }
+    },
     "Each trigger word can only belong to one mode" : {
       "localizations" : {
         "de" : {
@@ -23307,24 +23329,24 @@
         }
       }
     },
-    "Same models as Your OpenRouter Key, no API key: sign in with your email and pay from a balance. Each dictation costs the model's price plus 10%." : {
+    "Same models as Your OpenRouter Key, no API key: sign in with your email and pay from a balance." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dieselben Modelle wie bei „Eigener OpenRouter-Schlüssel“, ohne API-Schlüssel: Melde dich mit deiner E-Mail an und bezahle aus einem Guthaben. Jedes Diktat kostet den Modellpreis plus 10 %."
+            "value" : "Dieselben Modelle wie bei „Eigener OpenRouter-Schlüssel“, ohne API-Schlüssel: Melde dich mit deiner E-Mail an und bezahle aus einem Guthaben."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les mêmes modèles que « Votre clé OpenRouter », sans clé API : connectez-vous avec votre e-mail et payez depuis un solde. Chaque dictée coûte le prix du modèle plus 10 %."
+            "value" : "Les mêmes modèles que « Votre clé OpenRouter », sans clé API : connectez-vous avec votre e-mail et payez depuis un solde."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "模型和「自带 OpenRouter Key」一样，但不需要 API key：用邮箱登录，从余额里扣费。每次听写按模型价格加 10% 计费。"
+            "value" : "模型和「自带 OpenRouter Key」一样，但不需要 API key：用邮箱登录，从余额里扣费。"
           }
         }
       }
@@ -25632,6 +25654,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "速度"
+          }
+        }
+      }
+    },
+    "Standup 改到 Friday morning. Send Chris the onboarding review." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standup 改到 Friday morning. Send Chris the onboarding review."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standup 改到 Friday morning. Send Chris the onboarding review."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "standup 改到 Friday morning，onboarding 的 review 发给 Chris。"
           }
         }
       }
@@ -29386,6 +29430,28 @@
         }
       }
     },
+    "Try saying" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probier mal zu sagen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Essayez de dire"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "试着说一句"
+          }
+        }
+      }
+    },
     "Try selecting a different model or redownloading the current model." : {
       "localizations" : {
         "de" : {
@@ -31797,6 +31863,28 @@
         }
       }
     },
+    "Yap pastes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap fügt ein"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap colle"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 粘贴"
+          }
+        }
+      }
+    },
     "Yap picks a mode for the app you're in. Press Option 1-9 while recording to switch, and edit modes anytime." : {
       "localizations" : {
         "de" : {
@@ -33172,6 +33260,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "字/分钟"
+          }
+        }
+      }
+    },
+    "“um so the standup, 改到 Friday morning, and uh send Chris the onboarding review”" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“um so the standup, 改到 Friday morning, and uh send Chris the onboarding review”"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“um so the standup, 改到 Friday morning, and uh send Chris the onboarding review”"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“嗯那个 standup 我们改到 Friday morning 吧，然后呃 onboarding 的 review 发给 Chris”"
           }
         }
       }
