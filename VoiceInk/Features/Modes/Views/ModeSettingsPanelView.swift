@@ -29,6 +29,7 @@ struct ModeSettingsPanelView: View {
                 .buttonStyle(.plain)
                 .keyboardShortcut(.escape, modifiers: [])
                 .help("Close")
+                .accessibilityLabel("Close")
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)

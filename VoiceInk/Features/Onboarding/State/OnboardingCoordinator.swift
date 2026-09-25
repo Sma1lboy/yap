@@ -526,7 +526,7 @@ enum OnboardingTranscriptionSetupKind: String, CaseIterable, Identifiable {
     var title: LocalizedStringKey {
         switch self {
         case .recommended:
-            return "Recommended"
+            return "Your OpenRouter Key"
         case .yapCloud:
             return "Yap Cloud"
         case .local:

@@ -47,6 +47,13 @@ struct ExpandableSettingsRow<Content: View>: View {
         isEnabled?.wrappedValue ?? true
     }
 
+    private func toggleExpanded() {
+        guard !isHandlingToggleChange, rowIsEnabled else { return }
+        withAnimation(.easeInOut(duration: 0.2)) {
+            isExpanded.toggle()
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
@@ -60,19 +67,20 @@ struct ExpandableSettingsRow<Content: View>: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .rotationEffect(.degrees(rowIsEnabled && isExpanded ? 90 : 0))
-                    .opacity(rowIsEnabled ? 1 : 0.4)
+                // A Button so the options are reachable with the keyboard and VoiceOver; clicking the row works too.
+                Button(action: toggleExpanded) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.secondary)
+                        .rotationEffect(.degrees(rowIsEnabled && isExpanded ? 90 : 0))
+                        .opacity(rowIsEnabled ? 1 : 0.4)
+                }
+                .buttonStyle(.plain)
+                .disabled(!rowIsEnabled)
+                .accessibilityLabel(isExpanded ? LocalizedStringKey("Hide Options") : "Show Options")
             }
             .contentShape(Rectangle())
-            .onTapGesture {
-                guard !isHandlingToggleChange, rowIsEnabled else { return }
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isExpanded.toggle()
-                }
-            }
+            .onTapGesture(perform: toggleExpanded)
 
             if rowIsEnabled && isExpanded {
                 VStack(alignment: .leading, spacing: 8) {

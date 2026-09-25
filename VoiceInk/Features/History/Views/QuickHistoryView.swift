@@ -181,6 +181,7 @@ struct QuickHistoryView: View {
             }
             .buttonStyle(.plain)
             .help("Back to history")
+            .accessibilityLabel("Back to history")
 
             Text("Transcription Details")
                 .font(.system(size: 14, weight: .semibold))

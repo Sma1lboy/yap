@@ -307,6 +307,7 @@ struct TriggerRemoveButton: View {
         }
         .buttonStyle(.plain)
         .help("Remove trigger")
+        .accessibilityLabel("Remove trigger")
     }
 }
 
@@ -322,5 +323,6 @@ struct TriggerEditButton: View {
         }
         .buttonStyle(.plain)
         .help("Edit trigger group")
+        .accessibilityLabel("Edit trigger group")
     }
 }

@@ -147,6 +147,7 @@ struct ProviderDetailPanel: View {
             .controlSize(.small)
             .buttonStyle(.borderless)
             .help("Remove API key")
+            .accessibilityLabel("Remove API key")
         }
         .padding(12)
         .background(ProviderSurface(cornerRadius: 8))

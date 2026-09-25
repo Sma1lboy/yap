@@ -30,7 +30,7 @@ Just the app: `brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew ins
 
 ## Yap Cloud
 
-Yap Cloud is an optional account that pays for transcription and cleanup from a prepaid balance, so you don't need API keys from OpenRouter or other providers. It uses the same models as the Recommended setup.
+Yap Cloud is an optional account that pays for transcription and cleanup from a prepaid balance, so you don't need API keys from OpenRouter or other providers. It uses the same models as the "Your OpenRouter Key" setup.
 
 **Sign up / sign in.** Open **Account** in the sidebar, enter your email, then the 6-digit code sent to it. There is no password. A new account gets $1 of credit, listed under **Recent Activity** as "Sign-up bonus". During onboarding you can pick **Use Yap Cloud (pay as you go)** on the model step instead.
 
@@ -122,7 +122,7 @@ API keys are never written to config.json or sent to Yap Cloud. Yap only reads t
 
 ### Recommended models
 
-Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription `microsoft/mai-transcribe-2` (80/82, $0.10/h), cleanup `deepseek/deepseek-v4.1-flash` (9/9 cases, ~0.5 s). Onboarding's "Recommended" option applies exactly this setup with one OpenRouter key. Re-run `setup/bench.py` after editing `VoiceInk/Resources/RecommendedPrompt.md`.
+Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription `microsoft/mai-transcribe-2` (80/82, $0.10/h), cleanup `deepseek/deepseek-v4.1-flash` (9/9 cases, ~0.5 s). Onboarding's "Your OpenRouter Key" option applies exactly this setup with your own OpenRouter key; usage is billed by OpenRouter. Re-run `setup/bench.py` after editing `VoiceInk/Resources/RecommendedPrompt.md`.
 
 ## Releasing
 

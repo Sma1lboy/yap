@@ -484,6 +484,9 @@ private struct AutoLearnReviewProposalRow: View {
                 .contentShape(Rectangle())
                 .onTapGesture { beginEditing(field, value: text.wrappedValue) }
                 .help("Click to edit")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint("Click to edit")
+                .accessibilityAction { beginEditing(field, value: text.wrappedValue) }
                 .onHover { isHovering in
                     hoveredField = isHovering ? field : nil
                 }

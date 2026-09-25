@@ -24,6 +24,7 @@ struct SaveIconButton: View {
         }
         .buttonStyle(.plain)
         .help("Save to file")
+        .accessibilityLabel("Save to file")
     }
 
     private func saveFile(as contentType: UTType, extension fileExtension: String) {

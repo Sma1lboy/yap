@@ -194,6 +194,7 @@ struct AudioSetupView: View {
                 }
                 .disabled(prioritizedDevice.id == prioritizedDevicesInDisplayOrder.last?.id)
                 .help("Move down")
+                .accessibilityLabel("Move down")
 
                 Button {
                     audioDeviceManager.removePrioritizedDevice(id: prioritizedDevice.id)
@@ -201,6 +202,7 @@ struct AudioSetupView: View {
                     Image(systemName: "minus.circle")
                 }
                 .help("Remove")
+                .accessibilityLabel("Remove")
             }
             .buttonStyle(.borderless)
             .controlSize(.small)

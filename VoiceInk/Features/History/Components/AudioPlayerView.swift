@@ -405,6 +405,7 @@ struct AudioPlayerView: View {
                 HStack(spacing: 8) {
                     CircleIconButton(icon: "folder", action: showInFinder)
                         .help("Show in Finder")
+                        .accessibilityLabel("Show in Finder")
 
                     Button(action: { playerManager.cyclePlaybackRate() }) {
                         Circle()
@@ -448,6 +449,7 @@ struct AudioPlayerView: View {
                     )
                     .disabled(isOperationInProgress)
                     .help("Retranscribe this audio")
+                    .accessibilityLabel("Retranscribe this audio")
 
                     if transcription != nil {
                         AsyncCircleButton(
@@ -458,6 +460,7 @@ struct AudioPlayerView: View {
                         )
                         .disabled(isOperationInProgress)
                         .help("Re-enhance with selected prompt")
+                        .accessibilityLabel("Re-enhance with selected prompt")
                         .popover(isPresented: $showPromptPopover, arrowEdge: .bottom) {
                             promptSelectionPopover
                         }
@@ -466,6 +469,7 @@ struct AudioPlayerView: View {
                     if let onInfoTap {
                         CircleIconButton(icon: "info.circle", action: onInfoTap)
                             .help("View details")
+                            .accessibilityLabel("View details")
                     }
                 }
 

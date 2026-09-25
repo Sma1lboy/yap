@@ -125,6 +125,7 @@ struct PromptEditorView: View {
             .buttonStyle(.plain)
             .keyboardShortcut(.escape, modifiers: [])
             .help("Back")
+            .accessibilityLabel("Back")
 
             TextField("Prompt name", text: $title)
                 .textFieldStyle(.plain)

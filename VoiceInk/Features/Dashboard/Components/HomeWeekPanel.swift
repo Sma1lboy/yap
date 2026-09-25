@@ -127,6 +127,7 @@ struct HomeWeekPanelContent: View {
                     .font(.system(size: 13))
                     .foregroundStyle(AppTheme.Text.secondary)
             }
+            .accessibilityElement(children: .combine)
 
             comparison
                 .font(.system(size: 12))
@@ -233,6 +234,7 @@ struct HomeStatTile: View {
                 .lineLimit(1)
         }
         .padding(12)
+        .accessibilityElement(children: .combine)
         .frame(minWidth: 128, maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: AppTheme.Radius.card, style: .continuous)
@@ -282,6 +284,17 @@ struct HomeWeekBars: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Words per day this week"))
+        .accessibilityValue(accessibilityDays(calendar: calendar))
+    }
+
+    /// "Mon 120, Tue 0, …" up to today; later days haven't happened.
+    private func accessibilityDays(calendar: Calendar) -> String {
+        (0...min(todayIndex, 6)).map { index in
+            let day = calendar.date(byAdding: .day, value: index, to: weekStart) ?? weekStart
+            let words = dailyWords.indices.contains(index) ? dailyWords[index] : 0
+            return "\(day.formatted(.dateTime.weekday(.abbreviated))) \(words)"
+        }
+        .joined(separator: ", ")
     }
 
     @ViewBuilder

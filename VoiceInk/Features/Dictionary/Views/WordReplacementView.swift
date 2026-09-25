@@ -107,6 +107,7 @@ struct WordReplacementView: View {
                 }
                 .buttonStyle(.borderless)
                 .help("Word replacement examples")
+                .accessibilityLabel("Word replacement examples")
                 .popover(isPresented: $showInfoPopover) {
                     WordReplacementInfoPopover()
                 }
@@ -362,6 +363,7 @@ struct ReplacementRow: View {
                     }
                     .buttonStyle(.borderless)
                     .help("Edit replacement")
+                    .accessibilityLabel("Edit replacement")
                     .onHover { hover in
                         withAnimation(.easeInOut(duration: 0.2)) {
                             isEditHovered = hover
@@ -376,6 +378,7 @@ struct ReplacementRow: View {
                     }
                     .buttonStyle(.borderless)
                     .help("Remove replacement")
+                    .accessibilityLabel("Remove replacement")
                     .onHover { hover in
                         withAnimation(.easeInOut(duration: 0.2)) {
                             isDeleteHovered = hover
