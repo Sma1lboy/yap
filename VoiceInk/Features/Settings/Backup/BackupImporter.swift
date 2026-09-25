@@ -177,12 +177,6 @@ enum BackupImporter {
         if let audioDelay = general.audioResumptionDelay {
             mediaController.audioResumptionDelay = audioDelay
         }
-        if let experimentalEnabled = general.isExperimentalFeaturesEnabled {
-            UserDefaults.standard.set(experimentalEnabled, forKey: "isExperimentalFeaturesEnabled")
-            if experimentalEnabled == false {
-                playbackController.isPauseMediaEnabled = false
-            }
-        }
         if let textFormattingEnabled = general.isTextFormattingEnabled {
             UserDefaults.standard.set(textFormattingEnabled, forKey: keyIsTextFormattingEnabled)
         }

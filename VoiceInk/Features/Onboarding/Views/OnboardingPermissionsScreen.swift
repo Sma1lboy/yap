@@ -14,13 +14,18 @@ struct OnboardingPermissionsScreen: View {
     let onQuit: () -> Void
     let onRecheck: () -> Void
     let onContinue: () -> Void
+    let isRestoredFromCloud: Bool
+    let onRestoreFromCloud: () -> Void
 
     var body: some View {
         OnboardingStepScreen(
             stage: .permissions,
             contentMaxWidth: contentMaxWidth
         ) {
-            permissionList
+            VStack(spacing: 16) {
+                permissionList
+                OnboardingCloudRestoreHint(isRestored: isRestoredFromCloud, onRestore: onRestoreFromCloud)
+            }
         } bottomBar: {
             OnboardingBottomBar(
                 leadingTitle: "Recheck",

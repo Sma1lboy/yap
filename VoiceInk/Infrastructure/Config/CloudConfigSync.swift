@@ -39,11 +39,11 @@ final class CloudConfigSync: ObservableObject {
 
     static let shared = CloudConfigSync(
         defaults: .standard,
-        localConfig: { await YapConfigLoader.shared.makeConfigData() },
+        localConfig: { await YapConfigLoader.shared.makeCloudConfigData() },
         applyRemote: { data in
             try await YapConfigLoader.shared.applyConfigData(data)
-            // The server re-serializes the JSON; write it back in config.json's stable form.
-            try YapConfigLoader.shared.writeConfigFile(YapConfig.decode(data).encoded())
+            // The server re-serializes the JSON; this writes config.json's stable form (and a prompt file, if used).
+            try YapConfigLoader.shared.writePulledConfig(data)
         })
 
     /// Set once the Yap Cloud client is available; nil means cloud sync is unavailable.
@@ -70,6 +70,22 @@ final class CloudConfigSync: ObservableObject {
 
     func sync() async {
         await run { store, local in try await self.sync(store: store, local: local) }
+    }
+
+    /// New-Mac restore, step 1: what the account has stored (nil: never synced). Works before sync is turned on.
+    func fetchStored() async throws -> (any CloudConfigDocument)? {
+        guard let store, store.isSignedIn else { return nil }
+        return try await store.fetchConfig()
+    }
+
+    /// New-Mac restore, step 2: applies `document`, turns sync on and records it as the last synced state, so the
+    /// next sync pushes only what changes from here.
+    func restore(_ document: any CloudConfigDocument) async throws {
+        isSyncing = true
+        defer { isSyncing = false }
+        defaults.set(true, forKey: Self.enabledKey)
+        try await pull(document)
+        status = .synced(Date())
     }
 
     /// Conflict resolution from Settings: take the cloud copy, or put this Mac's settings over it.
