@@ -4146,6 +4146,28 @@
         }
       }
     },
+    "Add Funds" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben aufladen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter des fonds"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值"
+          }
+        }
+      }
+    },
     "Add Model" : {
       "localizations" : {
         "de" : {
@@ -8430,6 +8452,28 @@
         }
       }
     },
+    "Couldn't save the sign-in token to the keychain." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Anmelde-Token konnte nicht im Schlüsselbund gespeichert werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d'enregistrer le jeton de connexion dans le trousseau."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法把登录凭证存进钥匙串。"
+          }
+        }
+      }
+    },
     "Create & Select" : {
       "localizations" : {
         "de" : {
@@ -11521,6 +11565,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请输入用于 AI 润色的模型 ID。"
+          }
+        }
+      }
+    },
+    "Enter a whole-dollar amount between $%lld and $%lld." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib einen ganzen Dollarbetrag zwischen $%lld und $%lld ein."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez un montant entier en dollars entre %lld $ et %lld $."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入 $%lld 到 $%lld 之间的整数美元金额。"
           }
         }
       }
@@ -18399,6 +18465,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未选中"
+          }
+        }
+      }
+    },
+    "Not signed in to Yap Cloud. Sign in under Account." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht bei Yap Cloud angemeldet. Melde dich unter „Konto“ an."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non connecté à Yap Cloud. Connectez-vous dans Compte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未登录 Yap Cloud,请在「账户」里登录。"
           }
         }
       }
@@ -25292,6 +25380,28 @@
         }
       }
     },
+    "The cloud config changed on another device." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Cloud-Konfiguration wurde auf einem anderen Gerät geändert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La configuration cloud a été modifiée sur un autre appareil."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "云端配置已在另一台设备上被修改。"
+          }
+        }
+      }
+    },
     "The configured AI enhancement provider cannot review Auto Learn candidates." : {
       "comment" : "Error shown when the configured AI provider cannot perform Dictionary Auto Learn review.",
       "localizations" : {
@@ -29784,6 +29894,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下次启动 App 时，你会再次看到介绍页面。"
+          }
+        }
+      }
+    },
+    "Your Yap Cloud balance has run out. Add funds under Account to keep going." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Yap-Cloud-Guthaben ist aufgebraucht. Lade unter „Konto“ Guthaben auf, um weiterzumachen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre solde Yap Cloud est épuisé. Ajoutez des fonds dans Compte pour continuer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 余额已用完,请在「账户」里充值后继续。"
           }
         }
       }
