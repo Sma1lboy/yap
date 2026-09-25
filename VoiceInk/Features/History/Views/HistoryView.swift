@@ -33,6 +33,9 @@ struct HistoryView<Header: View>: View {
     @State private var paginationCursor: PaginationCursor?
     @State private var isViewCurrentlyVisible = false
     @State private var wordCounts: [UUID: Int] = [:]
+    /// Keyboard cursor: ↑/↓ move it, Return expands, Space checks, ⌘C copies.
+    @State private var keyboardRowId: UUID?
+    @FocusState private var isListFocused: Bool
 
     private let exportService = VoiceInkCSVExportService()
     private let pageSize = 20
@@ -113,22 +116,44 @@ struct HistoryView<Header: View>: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    header
-                        .padding(.bottom, 24)
+            ScrollViewReader { scrollProxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        header
+                            .padding(.bottom, 24)
 
-                    topBar
+                        topBar
 
-                    if displayedTranscriptions.isEmpty && !isLoading {
-                        emptyStateView
-                    } else {
-                        cardListView
+                        if displayedTranscriptions.isEmpty && !isLoading {
+                            emptyStateView
+                        } else {
+                            cardListView
+                        }
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 28)
+                    .padding(.bottom, 24)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 28)
-                .padding(.bottom, 24)
+                .focusable()
+                .focused($isListFocused)
+                .focusEffectDisabled()
+                .onKeyPress(.downArrow) { moveKeyboardRow(by: 1, proxy: scrollProxy) }
+                .onKeyPress(.upArrow) { moveKeyboardRow(by: -1, proxy: scrollProxy) }
+                .onKeyPress(.return) {
+                    guard let id = keyboardRowId else { return .ignored }
+                    withAnimation(.easeInOut(duration: 0.2)) { expandedId = expandedId == id ? nil : id }
+                    return .handled
+                }
+                .onKeyPress(.space) {
+                    guard let row = keyboardRow else { return .ignored }
+                    toggleSelection(row)
+                    return .handled
+                }
+                .onCopyCommand {
+                    guard let row = keyboardRow else { return [] }
+                    let text = row.enhancedText.flatMap { $0.isEmpty ? nil : $0 } ?? row.text
+                    return [NSItemProvider(object: text as NSString)]
+                }
             }
 
             if !selectedTranscriptions.isEmpty {
@@ -342,7 +367,10 @@ struct HistoryView<Header: View>: View {
                     isExpanded: expandedId == transcription.id,
                     isChecked: selectedTranscriptions.contains(transcription),
                     isSelecting: isSelecting,
+                    isKeyboardFocused: isListFocused && keyboardRowId == transcription.id,
                     onToggleExpand: {
+                        keyboardRowId = transcription.id
+                        isListFocused = true
                         withAnimation(.easeInOut(duration: 0.2)) {
                             expandedId = expandedId == transcription.id ? nil : transcription.id
                         }
@@ -352,6 +380,7 @@ struct HistoryView<Header: View>: View {
                         openPanel(mode: .info, transcriptionID: transcription.id)
                     }
                 )
+                .id(transcription.id)
             }
         }
 
@@ -495,6 +524,21 @@ struct HistoryView<Header: View>: View {
 
     // MARK: - Selection & Deletion
 
+    private var keyboardRow: Transcription? {
+        displayedTranscriptions.first { $0.id == keyboardRowId }
+    }
+
+    private func moveKeyboardRow(by offset: Int, proxy: ScrollViewProxy) -> KeyPress.Result {
+        guard !displayedTranscriptions.isEmpty else { return .ignored }
+        let current = displayedTranscriptions.firstIndex { $0.id == keyboardRowId }
+        let next = current.map { min(max($0 + offset, 0), displayedTranscriptions.count - 1) }
+            ?? (offset > 0 ? 0 : displayedTranscriptions.count - 1)
+        let id = displayedTranscriptions[next].id
+        keyboardRowId = id
+        withAnimation(.easeOut(duration: 0.12)) { proxy.scrollTo(id) }
+        return .handled
+    }
+
     private func toggleSelection(_ transcription: Transcription) {
         if selectedTranscriptions.contains(transcription) {
             selectedTranscriptions.remove(transcription)
@@ -589,6 +633,7 @@ private struct HistoryCardRow: View {
     let isExpanded: Bool
     let isChecked: Bool
     let isSelecting: Bool
+    var isKeyboardFocused = false
     let onToggleExpand: () -> Void
     let onToggleCheck: () -> Void
     let onShowInfo: () -> Void
@@ -632,13 +677,26 @@ private struct HistoryCardRow: View {
         return parts.joined(separator: " \u{00B7} ")
     }
 
-    private var showsActions: Bool { isHovering || isExpanded }
+    private var showsActions: Bool { isHovering || isExpanded || isKeyboardFocused }
+
+    /// VoiceOver reads the row as one line: time, mode, status, then the text.
+    private var accessibilitySummary: String {
+        var parts = [transcription.timestamp.formatted(date: .abbreviated, time: .shortened)]
+        if let modeName = transcription.modeName, !modeName.isEmpty { parts.append(modeName) }
+        switch transcription.transcriptionStatus {
+        case TranscriptionStatus.failed.rawValue: parts.append(String(localized: "Failed"))
+        case TranscriptionStatus.canceled.rawValue: parts.append(String(localized: "Canceled"))
+        default: break
+        }
+        parts.append(String(preferredCopyText.prefix(300)))
+        return parts.joined(separator: ", ")
+    }
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             // Keeps its slot so text doesn't shift when the checkbox appears on hover.
             Toggle(
-                "",
+                "Select transcription",
                 isOn: Binding(
                     get: { isChecked },
                     set: { _ in onToggleCheck() }
@@ -647,7 +705,7 @@ private struct HistoryCardRow: View {
             .toggleStyle(CircularCheckboxStyle())
             .labelsHidden()
             .padding(.top, -1)
-            .opacity(isSelecting || isHovering || isChecked ? 1 : 0)
+            .opacity(isSelecting || isHovering || isChecked || isKeyboardFocused ? 1 : 0)
             .allowsHitTesting(isSelecting || isHovering || isChecked)
 
             VStack(alignment: .leading, spacing: 6) {
@@ -665,6 +723,11 @@ private struct HistoryCardRow: View {
                 }
                 .contentShape(Rectangle())
                 .onTapGesture { onToggleExpand() }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(accessibilitySummary)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint(isExpanded ? LocalizedStringKey("Collapse") : "Expand")
+                .accessibilityAction { onToggleExpand() }
 
                 if isExpanded {
                     expandedContent
@@ -677,6 +740,11 @@ private struct HistoryCardRow: View {
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(isHovering && !isExpanded ? AppTheme.Surface.subtle : Color.clear)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(AppTheme.Accent.primary, lineWidth: 2)
+                .opacity(isKeyboardFocused ? 1 : 0)
         )
         .onHover { hovering in
             withAnimation(.easeOut(duration: 0.12)) { isHovering = hovering }
@@ -851,6 +919,10 @@ struct CircularCheckboxStyle: ToggleStyle {
                 .font(.system(size: 16))
         }
         .buttonStyle(.plain)
+        // The custom look drops the label and on/off state; VoiceOver gets a standard checkbox instead.
+        .accessibilityRepresentation {
+            Toggle(isOn: configuration.$isOn) { configuration.label }
+        }
     }
 }
 
