@@ -1,3 +1,4 @@
+import Carbon
 import SwiftUI
 
 @MainActor
@@ -395,9 +396,32 @@ final class OnboardingFlowController {
         OnboardingStorageKeys.onboardingKeys.forEach {
             coordinator.defaults.removeObject(forKey: $0)
         }
+        installFallbackSetupIfNeeded()
         activateCleanTranscriptionMode()
         reapplyConfigFile(includingRecommendedSetup: usedRecommendedSetup)
         onComplete()
+    }
+
+    /// "Set It Up Later" skips the practice steps, which are what install the starter modes and record the
+    /// shortcut. Without this the hotkey does nothing; with it, recording starts and the preflight / model
+    /// checks tell the user which provider or model to set up.
+    private func installFallbackSetupIfNeeded() {
+        if ModeManager.shared.configurations.isEmpty {
+            StarterModeFactory.install(
+                kinds: [.clean],
+                provider: coordinator.selectedOnboardingProvider,
+                modelName: nil
+            )
+        }
+
+        if ShortcutStore.rawShortcut(for: .primaryRecording) == nil,
+            !ShortcutStore.isShortcutCleared(for: .primaryRecording)
+        {
+            ShortcutStore.setShortcut(
+                .modifierOnly(keyCode: UInt16(kVK_RightOption), modifierFlags: [.option]),
+                for: .primaryRecording
+            )
+        }
     }
 
     func skipOnboarding(onComplete: () -> Void) {
