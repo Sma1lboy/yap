@@ -43,8 +43,9 @@ final class APIKeyManager {
         return success
     }
 
-    /// Retrieves an API key for a provider.
+    /// Retrieves an API key for a provider. Yap Cloud's "key" is the signed-in device token.
     func getAPIKey(forProvider provider: String) -> String? {
+        if isYapCloud(provider) { return YapCloud.shared.token }
         let keyIdentifier = keychainIdentifier(forProvider: provider)
         return keychain.getString(forKey: keyIdentifier)
     }
@@ -62,6 +63,7 @@ final class APIKeyManager {
 
     /// Checks if an API key exists for a provider.
     func hasAPIKey(forProvider provider: String) -> Bool {
+        if isYapCloud(provider) { return YapCloud.shared.token != nil }
         let keyIdentifier = keychainIdentifier(forProvider: provider)
         return keychain.exists(forKey: keyIdentifier)
     }
@@ -124,6 +126,11 @@ final class APIKeyManager {
     }
 
     // MARK: - Key Identifier Helpers
+
+    /// Yap Cloud is signed into from Account, never given a pasted key.
+    private func isYapCloud(_ provider: String) -> Bool {
+        provider.replacingOccurrences(of: " ", with: "").lowercased() == "yapcloud"
+    }
 
     /// Returns Keychain identifier for a provider (case-insensitive).
     private func keychainIdentifier(forProvider provider: String) -> String {

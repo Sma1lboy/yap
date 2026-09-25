@@ -77,6 +77,7 @@ private extension ViewType {
     ]
 
     static let secondaryItems: [ViewType] = [
+        .account,
         .settings,
     ]
 
@@ -103,6 +104,7 @@ private extension ViewType {
         case .modes: return "square.stack"
         case .audio: return "mic"
         case .dictionary: return "character.book.closed"
+        case .account: return "person.crop.circle"
         case .settings: return "gearshape"
         }
     }

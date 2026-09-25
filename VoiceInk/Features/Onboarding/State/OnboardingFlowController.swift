@@ -60,11 +60,36 @@ final class OnboardingFlowController {
             return String(localized: "Paste your OpenRouter API key to continue.")
         }
 
-        await YapConfigLoader.shared.apply(
-            config: .recommended(openRouterKey: key), source: .recommended, patchModes: false)
+        await finishPreset(
+            .recommended(openRouterKey: key), kind: .recommended, providerKey: providerKey,
+            enhancementService: enhancementService)
+        return nil
+    }
+
+    /// "Use Yap Cloud": same models and prompt as Recommended, billed to the signed-in Yap Cloud account.
+    func applyYapCloudSetup(enhancementService: AIEnhancementService) async -> String? {
+        guard coordinator.requiredPermissionsGranted, coordinator.hasSelectedOnboardingMicrophone else { return nil }
+        guard YapCloud.shared.token != nil else {
+            return String(localized: "Sign in to Yap Cloud to continue.")
+        }
+        guard let model = coordinator.selectedOnboardingTranscriptionModel else {
+            return String(localized: "Yap Cloud has no transcription models available right now.")
+        }
+        await finishPreset(
+            .yapCloud(transcriptionModel: model.name), kind: .yapCloud, providerKey: YapCloud.providerName,
+            enhancementService: enhancementService)
+        return nil
+    }
+
+    /// Applies a one-account preset and skips the AI key step, since the same account covers cleanup.
+    private func finishPreset(
+        _ config: YapConfig, kind: OnboardingTranscriptionSetupKind, providerKey: String,
+        enhancementService: AIEnhancementService
+    ) async {
+        await YapConfigLoader.shared.apply(config: config, source: .recommended, patchModes: false)
         NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
 
-        coordinator.storedTranscriptionSetupKind = OnboardingTranscriptionSetupKind.recommended.rawValue
+        coordinator.storedTranscriptionSetupKind = kind.rawValue
         coordinator.usedRecommendedSetup = true
         coordinator.hasSkippedTranscriptionSetup = false
         coordinator.hasSkippedAPISetup = false
@@ -76,7 +101,6 @@ final class OnboardingFlowController {
             isTranscriptionSetupReady: coordinator.isTranscriptionSetupReady(isTranscriptionModelDownloaded: false),
             enhancementService: enhancementService
         )
-        return nil
     }
 
     /// The step before the practice steps: the AI key step, or the model step when the preset covered it.
@@ -392,13 +416,13 @@ final class OnboardingFlowController {
             return
         }
 
-        let usedRecommendedSetup = coordinator.usedRecommendedSetup
+        let preset = coordinator.usedRecommendedSetup ? chosenPreset() : nil
         OnboardingStorageKeys.onboardingKeys.forEach {
             coordinator.defaults.removeObject(forKey: $0)
         }
         installFallbackSetupIfNeeded()
         activateCleanTranscriptionMode()
-        reapplyConfigFile(includingRecommendedSetup: usedRecommendedSetup)
+        reapplyConfigFile(preset: preset)
         onComplete()
     }
 
@@ -428,22 +452,27 @@ final class OnboardingFlowController {
         OnboardingStorageKeys.onboardingKeys.forEach {
             coordinator.defaults.removeObject(forKey: $0)
         }
-        reapplyConfigFile(includingRecommendedSetup: false)
+        reapplyConfigFile(preset: nil)
         onComplete()
     }
 
     /// Onboarding rewrites the starter modes, so the recommended preset (if chosen) and then config.json are
     /// applied again on top of them; config.json goes last so its fields win.
-    private func reapplyConfigFile(includingRecommendedSetup: Bool) {
+    private func reapplyConfigFile(preset: YapConfig?) {
         Task { @MainActor in
-            if includingRecommendedSetup,
-                let key = APIKeyManager.shared.getAPIKey(forProvider: AIProvider.openRouter.rawValue)
-            {
-                await YapConfigLoader.shared.apply(
-                    config: .recommended(openRouterKey: key), source: .recommended, patchModes: true)
+            if let preset {
+                await YapConfigLoader.shared.apply(config: preset, source: .recommended, patchModes: true)
             }
             await YapConfigLoader.shared.reload()
         }
+    }
+
+    private func chosenPreset() -> YapConfig? {
+        if coordinator.transcriptionSetupKind == .yapCloud {
+            return coordinator.selectedOnboardingTranscriptionModel.map { .yapCloud(transcriptionModel: $0.name) }
+        }
+        return APIKeyManager.shared.getAPIKey(forProvider: AIProvider.openRouter.rawValue)
+            .map { .recommended(openRouterKey: $0) }
     }
 
     func refreshAPIVerification() {

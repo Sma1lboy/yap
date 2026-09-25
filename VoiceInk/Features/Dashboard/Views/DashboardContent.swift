@@ -194,6 +194,8 @@ struct DashboardContent: View {
                 DashboardNoModesReminder(onOpenModes: ModeSetupNavigator.openModesSettings)
             }
 
+            YapCloudBalanceCard()
+
             HomeWeekPanel(modeSummary: defaultModeSummary)
 
             footerLinks

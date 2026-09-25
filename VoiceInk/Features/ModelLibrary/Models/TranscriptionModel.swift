@@ -16,6 +16,7 @@ enum ModelProvider: String, Codable, Hashable, CaseIterable {
     case xai = "xAI"
     case cartesia = "Cartesia"
     case openRouter = "OpenRouter"
+    case yapCloud = "Yap Cloud"
     case custom = "Custom"
     case nativeApple = "Native Apple"
 
@@ -67,6 +68,7 @@ extension TranscriptionModel {
     /// Keep routed and custom models distinct from models stored by name.
     var selectionKey: String {
         if provider == .openRouter { return "OpenRouter:\(id.uuidString)" }
+        if provider == .yapCloud { return "YapCloud:\(id.uuidString)" }
         if provider == .custom { return "Custom:\(id.uuidString)" }
         return name
     }

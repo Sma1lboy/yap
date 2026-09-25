@@ -15,6 +15,7 @@ struct MenuBarView: View {
     @ObservedObject private var launchAtLoginManager = LaunchAtLoginManager.shared
     @ObservedObject private var modeManager = ModeManager.shared
     @ObservedObject var audioDeviceManager = AudioDeviceManager.shared
+    @ObservedObject private var yapCloud = YapCloud.shared
     @AppStorage(OnboardingSettings.completedV2Key) private var hasCompletedOnboardingV2 = false
 
     var body: some View {
@@ -52,6 +53,24 @@ struct MenuBarView: View {
             }
 
             Divider()
+
+            if yapCloud.isSignedIn, let balance = yapCloud.balanceMicros {
+                if yapCloud.isLowBalance {
+                    Button {
+                        showMainWindowAndNavigate(to: "Account")
+                    } label: {
+                        Label(
+                            String(format: String(localized: "Low balance (%@) — Add Funds"), YapCloud.formatUSD(micros: balance)),
+                            systemImage: "exclamationmark.triangle.fill")
+                    }
+                } else {
+                    Button(String(format: String(localized: "Yap Cloud balance: %@"), YapCloud.formatUSD(micros: balance))) {
+                        showMainWindowAndNavigate(to: "Account")
+                    }
+                }
+
+                Divider()
+            }
 
             Menu {
                 ForEach(modeManager.enabledConfigurations) { config in

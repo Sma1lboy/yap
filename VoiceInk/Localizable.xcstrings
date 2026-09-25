@@ -193,6 +193,28 @@
         }
       }
     },
+    "%@ in / %@ out per 1M tokens" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ Eingabe / %2$@ Ausgabe pro 1 Mio. Token"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ en entrée / %2$@ en sortie par million de jetons"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每百万 token:输入 %1$@ / 输出 %2$@"
+          }
+        }
+      }
+    },
     "%@ of %@" : {
       "localizations" : {
         "de" : {
@@ -3810,6 +3832,28 @@
         }
       }
     },
+    "Account" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compte"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "账户"
+          }
+        }
+      }
+    },
     "Accuracy" : {
       "localizations" : {
         "de" : {
@@ -4050,6 +4094,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加第一个词"
+          }
+        }
+      }
+    },
+    "Add Funds" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben aufladen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter des fonds"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值"
+          }
+        }
+      }
+    },
+    "Add Funds…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben aufladen …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter des fonds…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值…"
           }
         }
       }
@@ -4721,6 +4809,28 @@
         }
       }
     },
+    "Adjustment" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korrektur"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调整"
+          }
+        }
+      }
+    },
     "Advanced" : {
       "localizations" : {
         "de" : {
@@ -4943,6 +5053,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已被“%@”使用"
+          }
+        }
+      }
+    },
+    "Amount" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Betrag"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montant"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "金额"
+          }
+        }
+      }
+    },
+    "Amount (USD)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Betrag (USD)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montant (USD)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "金额(美元)"
           }
         }
       }
@@ -6279,6 +6433,28 @@
         }
       }
     },
+    "Balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "余额"
+          }
+        }
+      }
+    },
     "Base URL" : {
       "localizations" : {
         "de" : {
@@ -6389,6 +6565,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最佳时段"
+          }
+        }
+      }
+    },
+    "Billed to your Yap Cloud balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird vom Yap-Cloud-Guthaben abgebucht"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facturé sur votre solde Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "费用从 Yap Cloud 余额扣除"
           }
         }
       }
@@ -6747,6 +6945,28 @@
         }
       }
     },
+    "Checkout opens in your browser. Refresh after paying to see the new balance." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Bezahlvorgang öffnet sich im Browser. Aktualisiere nach dem Bezahlen, um das neue Guthaben zu sehen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le paiement s'ouvre dans votre navigateur. Actualisez après avoir payé pour voir le nouveau solde."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支付页面会在浏览器中打开。付款后点「刷新」查看新余额。"
+          }
+        }
+      }
+    },
     "Choose" : {
       "localizations" : {
         "de" : {
@@ -7015,6 +7235,28 @@
         }
       }
     },
+    "Cleanup" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereinigung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nettoyage"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整理"
+          }
+        }
+      }
+    },
     "Cleanup Complete" : {
       "localizations" : {
         "de" : {
@@ -7257,6 +7499,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "云同步失败：%@"
+          }
+        }
+      }
+    },
+    "Code" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证码"
           }
         }
       }
@@ -8176,6 +8440,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法写入配置文件：%@"
+          }
+        }
+      }
+    },
+    "Couldn't save the sign-in token to the keychain." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Anmelde-Token konnte nicht im Schlüsselbund gespeichert werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d'enregistrer le jeton de connexion dans le trousseau."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法把登录凭证存进钥匙串。"
           }
         }
       }
@@ -10663,6 +10949,28 @@
         }
       }
     },
+    "Email address" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E-Mail-Adresse"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse e-mail"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "邮箱"
+          }
+        }
+      }
+    },
     "Enable Accessibility Access" : {
       "localizations" : {
         "de" : {
@@ -11137,6 +11445,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请输入用于 AI 润色的模型 ID。"
+          }
+        }
+      }
+    },
+    "Enter a whole-dollar amount between $%lld and $%lld." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib einen ganzen Dollarbetrag zwischen $%lld und $%lld ein."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez un montant entier en dollars entre %lld $ et %lld $."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入 $%lld 到 $%lld 之间的整数美元金额。"
+          }
+        }
+      }
+    },
+    "Enter the 6-digit code sent to %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib den 6-stelligen Code ein, der an %@ gesendet wurde."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez le code à 6 chiffres envoyé à %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入发送到 %@ 的 6 位验证码。"
           }
         }
       }
@@ -14763,6 +15115,50 @@
         }
       }
     },
+    "Low Yap Cloud balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap-Cloud-Guthaben niedrig"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde Yap Cloud faible"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 余额不足"
+          }
+        }
+      }
+    },
+    "Low balance (%@) — Add Funds" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben niedrig (%@) – aufladen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde faible (%@) — Ajouter des fonds"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "余额不足(%@)— 去充值"
+          }
+        }
+      }
+    },
     "Lowercase and Paste" : {
       "localizations" : {
         "de" : {
@@ -15384,6 +15780,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "模型"
+          }
+        }
+      }
+    },
+    "Models & Pricing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modelle & Preise"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèles et tarifs"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型与价格"
           }
         }
       }
@@ -16267,6 +16685,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无自动触发条件"
+          }
+        }
+      }
+    },
+    "No charges or top-ups yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Abbuchungen oder Aufladungen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun débit ni rechargement pour l'instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有扣费或充值记录。"
           }
         }
       }
@@ -17549,6 +17989,28 @@
         }
       }
     },
+    "Not signed in to Yap Cloud. Sign in under Account." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht bei Yap Cloud angemeldet. Melde dich unter „Konto“ an."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non connecté à Yap Cloud. Connectez-vous dans Compte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未登录 Yap Cloud,请在「账户」里登录。"
+          }
+        }
+      }
+    },
     "Notch" : {
       "localizations" : {
         "de" : {
@@ -18781,6 +19243,50 @@
         }
       }
     },
+    "Pay as you go" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach Verbrauch"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facturé à l'usage"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按量计费"
+          }
+        }
+      }
+    },
+    "Pay as you go: one balance covers transcription and cleanup, no API keys to manage." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzungsbasiert: Ein Guthaben deckt Transkription und Bereinigung ab, keine API-Schlüssel nötig."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paiement à l'usage : un seul solde couvre la transcription et le nettoyage, sans clé API à gérer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按量付费:一份余额同时支付转写和整理,不用管理 API key。"
+          }
+        }
+      }
+    },
     "Peak Dictation Hours" : {
       "comment" : "A title for a card that shows the peak hours of dictation.",
       "isCommentAutoGenerated" : true,
@@ -18981,6 +19487,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在准备下载…"
+          }
+        }
+      }
+    },
+    "Preset" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorgabe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prédéfini"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "常用金额"
           }
         }
       }
@@ -19539,6 +20067,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "实时"
+          }
+        }
+      }
+    },
+    "Recent Activity" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Aktivität"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activité récente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近记录"
           }
         }
       }
@@ -21150,6 +21700,28 @@
         }
       }
     },
+    "Same models as Recommended, no API key: sign in with your email and top up a balance. Each dictation is charged at cost plus a small markup." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieselben Modelle wie bei „Empfohlen“, ohne API-Schlüssel: Melde dich mit deiner E-Mail an und lade Guthaben auf. Jedes Diktat wird zum Selbstkostenpreis plus kleinem Aufschlag berechnet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les mêmes modèles que Recommandé, sans clé API : connectez-vous avec votre e-mail et rechargez un solde. Chaque dictée est facturée au coût réel plus une petite marge."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型和「推荐」一样,但不需要 API key:用邮箱登录、充值余额即可。每次听写按实际成本加少量加价扣费。"
+          }
+        }
+      }
+    },
     "Sample text" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -21980,6 +22552,28 @@
         }
       }
     },
+    "Send Code" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code senden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer le code"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送验证码"
+          }
+        }
+      }
+    },
     "Send follow up" : {
       "localizations" : {
         "de" : {
@@ -22658,6 +23252,72 @@
         }
       }
     },
+    "Sign In" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anmelden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se connecter"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录"
+          }
+        }
+      }
+    },
+    "Sign Out" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abmelden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出登录"
+          }
+        }
+      }
+    },
+    "Sign in to Yap Cloud to continue." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melde dich bei Yap Cloud an, um fortzufahren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connectez-vous à Yap Cloud pour continuer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先登录 Yap Cloud 再继续。"
+          }
+        }
+      }
+    },
     "Sign in to Yap Cloud to sync this config between Macs." : {
       "localizations" : {
         "de" : {
@@ -22676,6 +23336,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "登录 Yap Cloud 后可在多台 Mac 之间同步这份配置。"
+          }
+        }
+      }
+    },
+    "Signed in as %@. Add funds anytime under Account." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Angemeldet als %@. Guthaben kannst du jederzeit unter „Konto“ aufladen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecté en tant que %@. Ajoutez des fonds à tout moment dans Compte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已登录:%@。随时可以在「账户」里充值。"
           }
         }
       }
@@ -24296,6 +24978,28 @@
         }
       }
     },
+    "The cloud config changed on another device." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Cloud-Konfiguration wurde auf einem anderen Gerät geändert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La configuration cloud a été modifiée sur un autre appareil."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "云端配置已在另一台设备上被修改。"
+          }
+        }
+      }
+    },
     "The configured AI enhancement provider cannot review Auto Learn candidates." : {
       "comment" : "Error shown when the configured AI provider cannot perform Dictionary Auto Learn review.",
       "localizations" : {
@@ -25589,6 +26293,28 @@
         }
       }
     },
+    "Top-up" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufladung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechargement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值"
+          }
+        }
+      }
+    },
     "Transcribe File…" : {
       "localizations" : {
         "de" : {
@@ -26443,6 +27169,28 @@
         }
       }
     },
+    "Usage" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisation"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用量"
+          }
+        }
+      }
+    },
     "Use Cloud" : {
       "localizations" : {
         "de" : {
@@ -26505,6 +27253,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用系统模板"
+          }
+        }
+      }
+    },
+    "Use Yap Cloud (pay as you go)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud verwenden (nutzungsbasiert)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser Yap Cloud (paiement à l'usage)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 Yap Cloud(按量付费)"
+          }
+        }
+      }
+    },
+    "Use a different email" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere E-Mail-Adresse verwenden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser une autre adresse e-mail"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换一个邮箱"
           }
         }
       }
@@ -27611,6 +28403,116 @@
         }
       }
     },
+    "Yap Cloud" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud"
+          }
+        }
+      }
+    },
+    "Yap Cloud balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap-Cloud-Guthaben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 余额"
+          }
+        }
+      }
+    },
+    "Yap Cloud balance: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap-Cloud-Guthaben: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde Yap Cloud : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 余额:%@"
+          }
+        }
+      }
+    },
+    "Yap Cloud has no transcription models available right now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud hat gerade keine Transkriptionsmodelle verfügbar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud n'a aucun modèle de transcription disponible pour le moment."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 暂时没有可用的转写模型。"
+          }
+        }
+      }
+    },
+    "Yap Cloud speech-to-text model, billed to your balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap-Cloud-Sprache-zu-Text-Modell, wird vom Guthaben abgebucht"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèle de transcription Yap Cloud, facturé sur votre solde"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 语音转文字模型,费用从余额扣除"
+          }
+        }
+      }
+    },
     "Yap Insights" : {
       "localizations" : {
         "de" : {
@@ -28499,6 +29401,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "API 密钥被拒绝，请在「模型」页更新。"
+          }
+        }
+      }
+    },
+    "Your Yap Cloud balance has run out. Add funds under Account to keep going." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Yap-Cloud-Guthaben ist aufgebraucht. Lade unter „Konto“ Guthaben auf, um weiterzumachen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre solde Yap Cloud est épuisé. Ajoutez des fonds dans Compte pour continuer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 余额已用完,请在「账户」里充值后继续。"
           }
         }
       }

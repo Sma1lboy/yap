@@ -151,6 +151,7 @@ class TranscriptionPipeline {
             transcription.text = cleanedText
             transcription.duration = actualDuration
             transcription.transcriptionModelName = model.displayName
+            if model.provider == .yapCloud { transcription.usedYapCloud = true }
             transcription.transcriptionDuration = transcriptionDuration
             transcription.modeName = modeMetadata.name
             transcription.modeEmoji = modeMetadata.emoji
@@ -202,6 +203,7 @@ class TranscriptionPipeline {
                             contextSnapshot: contextSnapshot
                         )
                         transcription.enhancedText = enhancementResult.text
+                        if resolvedEnhancementConfiguration.provider == .yapCloud { transcription.usedYapCloud = true }
                         transcription.promptName =
                             enhancementResult.promptName ?? resolvedEnhancementConfiguration.prompt?.title
                         transcription.enhancementDuration = enhancementResult.duration
@@ -214,10 +216,12 @@ class TranscriptionPipeline {
                         transcription.enhancedText = failureMessage
                         responseError = errorDescription
                         await MainActor.run {
-                            NotificationManager.shared.showNotification(
-                                title: failureMessage,
-                                type: .warning
-                            )
+                            if !YapCloud.notifyIfInsufficientBalance(error) {
+                                NotificationManager.shared.showNotification(
+                                    title: failureMessage,
+                                    type: .warning
+                                )
+                            }
                         }
                         if shouldCancel() {
                             await finishCanceledTranscription()
@@ -230,6 +234,7 @@ class TranscriptionPipeline {
             transcription.transcriptionStatus = TranscriptionStatus.completed.rawValue
         } catch {
             let errorDescription = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            await MainActor.run { _ = YapCloud.notifyIfInsufficientBalance(error) }
 
             let isHiddenNativeAppleError =
                 (error as? NativeAppleTranscriptionService.ServiceError).map { !$0.shouldShowNotification } ?? false

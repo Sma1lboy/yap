@@ -79,6 +79,8 @@ class CloudTranscriptionService: TranscriptionService {
             )
         } catch let error as CloudTranscriptionError {
             throw error
+        } catch let error as YapCloudError {
+            throw error
         } catch let error as LLMKitError {
             throw mapLLMKitError(error)
         } catch {

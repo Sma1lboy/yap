@@ -9,6 +9,7 @@ enum AIProvider: String, CaseIterable {
     case anthropic = "Anthropic"
     case openAI = "OpenAI"
     case openRouter = "OpenRouter"
+    case yapCloud = "Yap Cloud"
     case mistral = "Mistral"
     case elevenLabs = "ElevenLabs"
     case deepgram = "Deepgram"
@@ -48,6 +49,8 @@ enum AIProvider: String, CaseIterable {
             return "https://api.openai.com/v1/chat/completions"
         case .openRouter:
             return "https://openrouter.ai/api/v1/chat/completions"
+        case .yapCloud:
+            return YapCloud.shared.baseURL.appendingPathComponent("v1/chat/completions").absoluteString
         case .mistral:
             return "https://api.mistral.ai/v1/chat/completions"
         case .elevenLabs:
@@ -105,6 +108,8 @@ enum AIProvider: String, CaseIterable {
             return CustomAIProviderManager.shared.defaultModelName
         case .openRouter:
             return "openai/gpt-oss-120b"
+        case .yapCloud:
+            return RecommendedSetup.enhancementModel
         }
     }
 
@@ -174,7 +179,7 @@ enum AIProvider: String, CaseIterable {
             return []
         case .custom:
             return CustomAIProviderManager.shared.availableModelNames
-        case .openRouter:
+        case .openRouter, .yapCloud:
             return []
         }
     }
@@ -347,6 +352,8 @@ class AIService: ObservableObject {
             return ollamaService.availableModels.map { $0.name }
         } else if provider == .openRouter {
             return openRouterModels
+        } else if provider == .yapCloud {
+            return YapCloud.shared.chatModels.map(\.id)
         } else if provider == .custom {
             return CustomAIProviderManager.shared.availableModelNames
         }

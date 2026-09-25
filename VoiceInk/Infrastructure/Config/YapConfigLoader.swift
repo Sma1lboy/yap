@@ -500,6 +500,9 @@ final class YapConfigLoader: ObservableObject {
         if isOpenRouter(config.transcription?.provider) {
             return "OpenRouter:\(OpenRouterProvider.stableID(for: model).uuidString)"
         }
+        if config.transcription?.provider?.replacingOccurrences(of: " ", with: "").lowercased() == "yapcloud" {
+            return "YapCloud:\(YapCloudProvider.stableID(for: model).uuidString)"
+        }
         return model
     }
 
