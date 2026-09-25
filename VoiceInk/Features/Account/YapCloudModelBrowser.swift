@@ -52,6 +52,9 @@ struct YapCloudModelBrowser: View {
                             }
                         }
                         Spacer()
+                        if let average = YapCloud.shared.averageCallLabel(model: model.detail) {
+                            Text(average).font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                        }
                         if model.id == selectedID {
                             Image(systemName: "checkmark").accessibilityHidden(true)
                         }
@@ -83,7 +86,9 @@ struct YapCloudEnhancementModelPicker: View {
         LabeledContent("AI Model") {
             HStack(spacing: 8) {
                 Picker("", selection: $selection) {
-                    ForEach(recommended, id: \.self) { Text($0).tag($0) }
+                    ForEach(recommended, id: \.self) { id in
+                        Text(YapCloud.shared.averageCallLabel(model: id).map { "\(id)  \($0)" } ?? id).tag(id)
+                    }
                 }
                 .labelsHidden()
                 Button("All Models…") { isBrowsing = true }

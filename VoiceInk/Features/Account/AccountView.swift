@@ -103,6 +103,20 @@ private struct SignedInSections: View {
                             updatedAt.formatted(date: .abbreviated, time: .shortened)))
                 }
             }
+            if let runway = balanceRunway {
+                let pace = YapCloud.formatAverage(micros: runway.monthlyMicros)
+                Text(
+                    runway.days > 365
+                        ? String(format: String(localized: "At this month's pace (%@ a month), your balance lasts more than a year."), pace)
+                        : runway.days == 0
+                            ? String(format: String(localized: "At this month's pace (%@ a month), your balance lasts less than a day."), pace)
+                            : String(
+                                format: String(localized: "At this month's pace (%@ a month), your balance lasts about %lld days."),
+                                pace, runway.days))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if let error = cloud.accountRefreshError {
                 Text(String(format: String(localized: "Couldn't refresh your account: %@"), error))
                     .font(.caption)
@@ -187,6 +201,12 @@ private struct SignedInSections: View {
                         Text(item.model ?? String(localized: "Other"))
                             .lineLimit(1)
                             .truncationMode(.middle)
+                        if let average = YapCloudMonthlySpend.averageMicros(item.micros, calls: item.calls) {
+                            Text(
+                                String(
+                                    format: String(localized: "%lld calls · %@ / call"), Int64(item.calls),
+                                    YapCloud.formatAverage(micros: average)))
+                        }
                     }
                 }
             } header: {
@@ -223,6 +243,14 @@ private struct SignedInSections: View {
         if let devices = cloud.devices {
             DevicesSection(devices: devices)
         }
+    }
+
+    /// nil until this month has 3+ days of usage (see YapCloudMonthlySpend.runway).
+    private var balanceRunway: YapCloudMonthlySpend.Runway? {
+        guard let balance = cloud.balanceMicros, let spend = cloud.monthlySpend, let since = spend.since else { return nil }
+        return YapCloudMonthlySpend.runway(
+            balanceMicros: balance, spentMicros: spend.totalMicros,
+            elapsedSeconds: Int64(Date().timeIntervalSince(since)))
     }
 
     private func signOut() {
