@@ -32,9 +32,9 @@ struct CloudConfigVersionInfo: Equatable, Identifiable {
 /// Earlier versions of the synced config (paygate `GET /v1/config/versions[/{v}]`). Optional: a store without it
 /// just has no Version History. Restoring is a normal `putConfig` with If-Match, so it needs nothing more.
 protocol ConfigVersionHistoryStore: AnyObject {
-    /// Newest first.
+    /// Versions replaced by later writes, newest first. The current version isn't in the list.
     func listConfigVersions() async throws -> [CloudConfigVersionInfo]
-    /// The config bytes stored as `version`.
+    /// The config bytes stored as `version` (one from the list).
     func fetchConfigVersion(_ version: String) async throws -> Data
 }
 
@@ -93,12 +93,14 @@ final class CloudConfigSync: ObservableObject {
 
     // MARK: - Version history
 
-    /// The stored versions, newest first, plus the current one's config for comparing against.
-    func loadHistory() async throws -> (versions: [CloudConfigVersionInfo], current: YapConfig?) {
-        guard let historyStore, let store else { return ([], nil) }
+    /// The earlier versions (newest first) plus the current one, which the list doesn't include.
+    func loadHistory() async throws -> (
+        versions: [CloudConfigVersionInfo], current: YapConfig?, currentVersion: String?
+    ) {
+        guard let historyStore, let store else { return ([], nil, nil) }
         let versions = try await historyStore.listConfigVersions()
-        let current = try await store.fetchConfig().map { try YapConfig.decode($0.config) }
-        return (versions, current)
+        let current = try await store.fetchConfig()
+        return (versions, try current.map { try YapConfig.decode($0.config) }, current?.version)
     }
 
     /// Makes `version`'s contents the current synced config: PUT as a new version with If-Match on the current
@@ -244,9 +246,9 @@ final class CloudConfigSync: ObservableObject {
                 let config: Data
             }
             var document: Document? {
-                didSet { if let document { history.insert(document, at: 0) } }
+                didSet { if let oldValue { history.insert(oldValue, at: 0) } }
             }
-            /// Every stored version, newest first.
+            /// Replaced versions, newest first (the current one isn't in it, like paygate).
             var history: [Document] = []
             var isSignedIn: Bool { true }
             /// Each put first lets "another Mac" write the next of these.
@@ -356,8 +358,9 @@ final class CloudConfigSync: ObservableObject {
             assert(store.document!.version != beforeRestore && restored?.modes?.map(\.name) == ["Dictation"])
             assert(!addedSince.isEmpty && Set(restored?.deleted?.modes?.keys ?? [:].keys) == Set(addedSince))
             assert(names(local) == ["Dictation"] && defaults.string(forKey: versionKey) == store.document?.version)
-            let versions = (try? await sync.loadHistory())?.versions.map(\.version)
-            assert(versions?.first == store.document?.version && versions?.last == firstVersion)
+            let history = try? await sync.loadHistory()
+            assert(history?.currentVersion == store.document?.version)
+            assert(history?.versions.first?.version == beforeRestore && history?.versions.last?.version == firstVersion)
 
             // 7. Another Mac wrote between reading the current version and the restore's put: a conflict, no merge.
             store.interleavedWrites = [config(["Dictation", "Email"])]
