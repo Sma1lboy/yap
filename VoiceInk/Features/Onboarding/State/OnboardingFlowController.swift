@@ -159,6 +159,9 @@ final class OnboardingFlowController {
             return
         }
         coordinator.storedStage = OnboardingStage.experience.rawValue
+        // Start with a working shortcut so the first practice step is a dictation, not a recorder screen;
+        // the practice card still shows the recorder for changing it.
+        presetPrimaryShortcutIfNeeded()
         moveToExperienceStep(0, enhancementService: enhancementService)
     }
 
@@ -488,14 +491,18 @@ final class OnboardingFlowController {
             )
         }
 
-        if ShortcutStore.rawShortcut(for: .primaryRecording) == nil,
+        presetPrimaryShortcutIfNeeded()
+    }
+
+    /// Right Option, unless a shortcut is already set or the user deliberately cleared it.
+    private func presetPrimaryShortcutIfNeeded() {
+        guard ShortcutStore.rawShortcut(for: .primaryRecording) == nil,
             !ShortcutStore.isShortcutCleared(for: .primaryRecording)
-        {
-            ShortcutStore.setShortcut(
-                .modifierOnly(keyCode: UInt16(kVK_RightOption), modifierFlags: [.option]),
-                for: .primaryRecording
-            )
-        }
+        else { return }
+        ShortcutStore.setShortcut(
+            .modifierOnly(keyCode: UInt16(kVK_RightOption), modifierFlags: [.option]),
+            for: .primaryRecording
+        )
     }
 
     /// Onboarding rewrites the starter modes, so the recommended preset (if chosen) and then config.json are

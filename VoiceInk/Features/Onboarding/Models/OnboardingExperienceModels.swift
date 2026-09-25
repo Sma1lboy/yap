@@ -146,9 +146,10 @@ enum OnboardingExperienceCatalog {
             kind: .dictation,
             starterModeKind: .clean,
             defaultModeKind: .clean,
+            // Onboarding presets Right Option (or keeps the user's shortcut), so this goes straight to practice.
             shortcutBehavior: .primaryRecording(
-                skipsIntroWhenConfigured: false,
-                clearsOnIntro: true
+                skipsIntroWhenConfigured: true,
+                clearsOnIntro: false
             ),
             requiresVerifiedAPIProvider: false,
             systemImage: "text.cursor",
