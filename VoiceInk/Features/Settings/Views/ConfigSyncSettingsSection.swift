@@ -7,6 +7,9 @@ struct ConfigSyncSettingsSection: View {
     @AppStorage(YapConfigLoader.keepInSyncKey) private var keepConfigFileInSync = false
     @AppStorage(CloudConfigSync.enabledKey) private var syncConfigViaCloud = false
     @State private var isShowingVersionHistory = false
+    @State private var voiceInkImport: YapConfig?
+    @State private var voiceInkImportResult: String?
+    private let hasVoiceInk = VoiceInkImport.installedDefaults() != nil
 
     var body: some View {
         Section {
@@ -73,10 +76,61 @@ struct ConfigSyncSettingsSection: View {
                         .sheet(isPresented: $isShowingVersionHistory) { ConfigVersionHistorySheet() }
                 }
             }
+
+            voiceInkImportRow
         } header: {
             Text("Config & Sync")
         } footer: {
             Text("Fields set in this file are applied at launch and override the same settings changed in the app.")
+        }
+    }
+
+    /// Manual only: reads VoiceInk's settings, shows what they contain, imports after confirmation.
+    @ViewBuilder
+    private var voiceInkImportRow: some View {
+        LabeledContent {
+            Button("Import from VoiceInk…") {
+                Task {
+                    let dictionary = VoiceInkImport.readDictionary()
+                    guard let defaults = VoiceInkImport.installedDefaults() else { return }
+                    voiceInkImport = VoiceInkImport.config(from: defaults, dictionary: dictionary)
+                }
+            }
+            .disabled(!hasVoiceInk)
+        } label: {
+            Text("VoiceInk")
+            Text(
+                hasVoiceInk
+                    ? String(localized: "Bring over modes, prompts, dictionary, shortcuts and general settings. API keys and license aren't copied.")
+                    : String(localized: "No VoiceInk settings found on this Mac."))
+        }
+        .confirmationDialog(
+            "Import from VoiceInk?",
+            isPresented: Binding(get: { voiceInkImport != nil }, set: { if !$0 { voiceInkImport = nil } })
+        ) {
+            if let config = voiceInkImport, config.hasSections {
+                Button("Import") {
+                    Task {
+                        let result = await YapConfigLoader.shared.importSections(config)
+                        voiceInkImportResult = result.skipped.isEmpty
+                            ? String(format: String(localized: "Imported from VoiceInk: %@"), result.applied.joined(separator: ", "))
+                            : String(format: String(localized: "Imported from VoiceInk: %@. Skipped: %@"),
+                                     result.applied.joined(separator: ", "), result.skipped.joined(separator: ", "))
+                    }
+                }
+            }
+        } message: {
+            if let summary = voiceInkImport.map(\.restoreSummary), voiceInkImport?.hasSections == true {
+                Text(
+                    String(
+                        format: String(localized: "%lld modes, %lld prompts, %lld dictionary entries and %lld shortcuts. Entries with the same id replace Yap's; the rest of Yap's stay."),
+                        summary.modes, summary.prompts, summary.dictionaryEntries, summary.shortcuts))
+            } else {
+                Text("VoiceInk has no settings to import.")
+            }
+        }
+        if let voiceInkImportResult {
+            Text(voiceInkImportResult).settingsDescription()
         }
     }
 
