@@ -42,8 +42,8 @@ final class CloudConfigSync: ObservableObject {
         localConfig: { await YapConfigLoader.shared.makeCloudConfigData() },
         applyRemote: { data in
             try await YapConfigLoader.shared.applyConfigData(data)
-            // The server re-serializes the JSON; write it back in config.json's stable form.
-            try YapConfigLoader.shared.writeConfigFile(YapConfig.decode(data).encoded())
+            // The server re-serializes the JSON; this writes config.json's stable form (and a prompt file, if used).
+            try YapConfigLoader.shared.writePulledConfig(data)
         })
 
     /// Set once the Yap Cloud client is available; nil means cloud sync is unavailable.

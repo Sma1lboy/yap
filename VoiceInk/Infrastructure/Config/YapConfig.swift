@@ -462,12 +462,33 @@ struct YapConfig: Codable, Equatable {
     /// Reads the prompt from a file when `value` names an existing file, otherwise returns it as inline text.
     static func resolvePrompt(_ value: String, configDirectory: URL, readFile: (URL) -> String?) -> String? {
         guard let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty else { return nil }
-        let expanded = (trimmed as NSString).expandingTildeInPath
-        let url =
-            expanded.hasPrefix("/")
-            ? URL(fileURLWithPath: expanded) : configDirectory.appendingPathComponent(trimmed)
-        if !trimmed.contains("\n"), let text = readFile(url) { return text }
+        if let url = promptFileURL(trimmed, configDirectory: configDirectory), let text = readFile(url) { return text }
         return trimmed
+    }
+
+    /// Where `value` would point as a prompt file: relative to the config dir, absolute, or `~/...`.
+    /// Nil for multi-line text, which is always inline. Whether the file exists is up to the caller.
+    static func promptFileURL(_ value: String, configDirectory: URL) -> URL? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !trimmed.contains("\n") else { return nil }
+        let expanded = (trimmed as NSString).expandingTildeInPath
+        return expanded.hasPrefix("/")
+            ? URL(fileURLWithPath: expanded) : configDirectory.appendingPathComponent(trimmed)
+    }
+
+    /// A config pulled from the cloud carries its prompt as text. When this Mac's config.json keeps the prompt in
+    /// a file (`localPrompt` names an existing file, per `existingFile`), the text goes into that file and the
+    /// reference stays; otherwise the text stays inline. `"recommended"` never goes into a file.
+    func keepingPromptFile(localPrompt: String?, existingFile: (String) -> URL?) -> (
+        config: YapConfig, promptFile: (url: URL, text: String)?
+    ) {
+        guard let text = enhancement?.prompt,
+            text.caseInsensitiveCompare(RecommendedSetup.promptKeyword) != .orderedSame,
+            let reference = localPrompt, reference != text, let url = existingFile(reference)
+        else { return (self, nil) }
+        var config = self
+        config.enhancement?.prompt = reference
+        return (config, (url, text))
     }
 }
 
@@ -570,6 +591,21 @@ extension String {
             var covered = v2
             covered.transcription = .init(provider: "yapcloud", model: "m")
             assert(covered.coversOnboardingSetup)
+
+            // Pulled prompt text goes into this Mac's prompt file when config.json references one.
+            let promptFile: (String) -> URL? = { $0 == "prompt.md" ? URL(fileURLWithPath: "/cfg/prompt.md") : nil }
+            let pulled = YapConfig(enhancement: .init(provider: "openrouter", prompt: "Pulled text."))
+            let intoFile = pulled.keepingPromptFile(localPrompt: "prompt.md", existingFile: promptFile)
+            assert(intoFile.config.enhancement == .init(provider: "openrouter", prompt: "prompt.md"))
+            assert(intoFile.promptFile?.url.path == "/cfg/prompt.md" && intoFile.promptFile?.text == "Pulled text.")
+            for local in [nil, "Old inline text.", "missing.md"] {
+                let inline = pulled.keepingPromptFile(localPrompt: local, existingFile: promptFile)
+                assert(inline.config == pulled && inline.promptFile == nil)
+            }
+            let pulledKeyword = YapConfig(enhancement: .init(prompt: "recommended"))
+            assert(pulledKeyword.keepingPromptFile(localPrompt: "prompt.md", existingFile: promptFile).promptFile == nil)
+            assert(promptFileURL("prompt.md", configDirectory: dir)?.path == "/cfg/prompt.md")
+            assert(promptFileURL("line one\nline two", configDirectory: dir) == nil)
 
             // Tombstones. Base state as both Macs last synced it, every entry modified at t0.
             let t0 = Date(timeIntervalSince1970: 1_800_000_000)
