@@ -12,8 +12,7 @@ final class YapCloud: ObservableObject {
 
     static let providerName = "Yap Cloud"
     static let baseURLDefaultsKey = "yapCloudBaseURL"
-    // ponytail: no production host yet; Release also falls back to localhost until the Railway URL exists.
-    static let defaultBaseURL = "http://localhost:8787"
+    static let defaultBaseURL = "https://paygate-production-2502.up.railway.app"
     static let checkoutPresets = [5, 10, 20]
     static let maximumTopUpUSD = 500
 
@@ -43,10 +42,16 @@ final class YapCloud: ObservableObject {
 
     // MARK: - Shared state other features read
 
-    /// Server root, e.g. `http://localhost:8787`. Override with `defaults write me.sma1lboy.yap yapCloudBaseURL <url>`.
+    /// Server root. DEBUG builds honor `defaults write <bundle id> yapCloudBaseURL http://localhost:8787`.
     var baseURL: URL {
-        let raw = defaults.string(forKey: Self.baseURLDefaultsKey)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return URL(string: raw?.isEmpty == false ? raw! : Self.defaultBaseURL) ?? URL(string: Self.defaultBaseURL)!
+        #if DEBUG
+            if let raw = defaults.string(forKey: Self.baseURLDefaultsKey)?.trimmingCharacters(in: .whitespaces),
+                let url = URL(string: raw), !raw.isEmpty
+            {
+                return url
+            }
+        #endif
+        return URL(string: Self.defaultBaseURL)!
     }
 
     /// Bearer token of the signed-in device, or nil when signed out.
