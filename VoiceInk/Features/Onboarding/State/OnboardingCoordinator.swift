@@ -491,7 +491,7 @@ enum OnboardingTranscriptionSetupKind: String, CaseIterable, Identifiable {
         case .local:
             return "Local"
         case .cloud:
-            return "Cloud"
+            return "Your API Key"
         }
     }
 }

@@ -128,7 +128,7 @@ struct OnboardingTranscriptionSetupCard: View {
 
     private var recommendedSetup: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinese–English cleanup · about $0.13 per hour of speech")
+            Text("OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinese–English enhancement · about $0.13 per hour of speech")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(AppTheme.Text.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -264,7 +264,7 @@ struct OnboardingTranscriptionSetupCard: View {
             }
             .foregroundColor(AppTheme.Status.error)
         } else {
-            Text("Continue checks the key, then sets up transcription and cleanup with it.")
+            Text("Continue checks the key, then sets up transcription and enhancement with it.")
                 .font(.system(size: 12))
                 .foregroundColor(AppTheme.Text.secondary)
         }
