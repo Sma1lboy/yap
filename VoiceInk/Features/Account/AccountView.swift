@@ -23,6 +23,7 @@ struct AccountView: View {
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
+        .modifier(CloudSyncOffer())
         .task(id: cloud.isSignedIn) {
             await cloud.refreshAccount()
             await cloud.refreshModels()
