@@ -155,7 +155,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
         self.pipeline = TranscriptionPipeline(
             modelContext: modelContext,
             serviceRegistry: serviceRegistry,
-            enhancementService: enhancementService
+            enhancementService: enhancementService,
+            transcriptionModelManager: transcriptionModelManager
         )
 
         super.init()

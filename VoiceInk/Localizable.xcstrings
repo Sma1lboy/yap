@@ -25706,6 +25706,28 @@
         }
       }
     },
+    "Transcription failed: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkription fehlgeschlagen: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de la transcription : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写失败：%@"
+          }
+        }
+      }
+    },
     "Transcription saved, but enhancement failed: %@" : {
       "localizations" : {
         "de" : {
