@@ -47,7 +47,10 @@ struct AccountView: View {
             } header: {
                 Text("Models & Pricing")
             } footer: {
-                Text(String(format: String(localized: "Server: %@"), cloud.baseURL.absoluteString))
+                // The paygate host is only useful when pointing a dev build at another server.
+                #if DEBUG
+                    Text(String(format: String(localized: "Server: %@"), cloud.baseURL.absoluteString))
+                #endif
             }
         }
     }
