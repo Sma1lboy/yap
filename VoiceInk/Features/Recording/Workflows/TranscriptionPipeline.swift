@@ -216,7 +216,7 @@ class TranscriptionPipeline {
                         transcription.enhancedText = failureMessage
                         responseError = errorDescription
                         await MainActor.run {
-                            if !YapCloud.notifyIfInsufficientBalance(error) {
+                            if !YapCloud.notifyIfAccountProblem(error) {
                                 NotificationManager.shared.showNotification(
                                     title: failureMessage,
                                     type: .warning
@@ -234,12 +234,12 @@ class TranscriptionPipeline {
             transcription.transcriptionStatus = TranscriptionStatus.completed.rawValue
         } catch {
             let errorDescription = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            // A 402 gets its own Add Funds toast; a generic failure toast would replace it with a Retry that fails again.
-            let didNotifyBalance = YapCloud.notifyIfInsufficientBalance(error)
+            // A Yap Cloud 402/401 gets its own toast (Add Funds / Open Account); a generic one would replace it.
+            let didNotifyAccount = YapCloud.notifyIfAccountProblem(error)
 
             let isHiddenNativeAppleError =
                 (error as? NativeAppleTranscriptionService.ServiceError).map { !$0.shouldShowNotification } ?? false
-            if !didNotifyBalance && !(error is CancellationError) && !isHiddenNativeAppleError {
+            if !didNotifyAccount && !(error is CancellationError) && !isHiddenNativeAppleError {
                 transcriptionFailure = errorDescription
             }
 

@@ -30,8 +30,16 @@ final class YapCloud: ObservableObject {
     private var balanceRefresh: Task<Void, Never>?
 
     @Published private(set) var isSignedIn = false
-    @Published private(set) var me: YapCloudMe?
+    @Published private(set) var me: YapCloudMe? {
+        didSet { balanceUpdatedAt = me == nil ? nil : Date() }
+    }
+    @Published private(set) var balanceUpdatedAt: Date?
     @Published private(set) var ledger: [YapCloudLedgerEntry] = []
+    /// False until a ledger fetch succeeds, so a failed load is never shown as "no activity".
+    @Published private(set) var isLedgerLoaded = false
+    @Published private(set) var isRefreshingAccount = false
+    /// Why the last Account refresh failed; nil after a successful one.
+    @Published private(set) var accountRefreshError: String?
 
     private init() {
         #if DEBUG
@@ -95,7 +103,7 @@ final class YapCloud: ObservableObject {
             authenticated: false)
         let response = try Self.decode(YapCloudVerifyResponse.self, from: data)
         guard keychain.save(response.token, forKey: Self.tokenKey, syncable: false) else {
-            throw YapCloudError.server(status: 0, code: nil, message: String(localized: "Couldn't save the sign-in token to the keychain."))
+            throw YapCloudError.keychainUnavailable
         }
         defaults.set(response.user.email, forKey: Self.emailKey)
         isSignedIn = true
@@ -104,16 +112,23 @@ final class YapCloud: ObservableObject {
         await refreshModels()
     }
 
+    /// Signs out locally right away; revoking the token server-side is best effort, so being offline
+    /// never leaves the user waiting on the 20s request timeout.
     @MainActor
-    func signOut() async {
-        if token != nil {
+    func signOut() {
+        guard let token else {
+            clearSession()
+            return
+        }
+        clearSession()
+        Task {
             do {
-                _ = try await send("POST", "/v1/auth/logout")
+                _ = try await sendWithResponse(
+                    "POST", "/v1/auth/logout", headers: ["Authorization": "Bearer \(token)"], authenticated: false)
             } catch {
                 logger.error("Logout request failed: \(error.localizedDescription, privacy: .public)")
             }
         }
-        clearSession()
     }
 
     @MainActor
@@ -123,6 +138,8 @@ final class YapCloud: ObservableObject {
         isSignedIn = false
         me = nil
         ledger = []
+        isLedgerLoaded = false
+        accountRefreshError = nil
         NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
     }
 
@@ -172,14 +189,19 @@ final class YapCloud: ObservableObject {
     /// Reloads balance and the last 20 ledger rows for the Account page. Signs out on a revoked token.
     @MainActor
     func refreshAccount() async {
-        guard token != nil else { return }
+        guard token != nil, !isRefreshingAccount else { return }
+        isRefreshingAccount = true
+        defer { isRefreshingAccount = false }
         do {
             me = try await fetchMe()
             ledger = try await fetchLedger()
+            isLedgerLoaded = true
+            accountRefreshError = nil
         } catch YapCloudError.notSignedIn {
             clearSession()
         } catch {
             logger.error("Account refresh failed: \(error.localizedDescription, privacy: .public)")
+            accountRefreshError = error.localizedDescription
         }
     }
 
@@ -241,17 +263,31 @@ final class YapCloud: ObservableObject {
             name: .navigateToDestination, object: nil, userInfo: ["destination": "Account"])
     }
 
-    /// Shows the "add funds" notification when `error` is a Yap Cloud 402. Returns whether it did.
+    /// Shows the account notification when `error` is a Yap Cloud 402 (Add Funds) or 401 (sign in again).
+    /// Returns whether it did, so callers can skip their generic failure message.
     @MainActor
     @discardableResult
-    static func notifyIfInsufficientBalance(_ error: Error) -> Bool {
-        guard case YapCloudError.insufficientBalance = error else { return false }
-        NotificationManager.shared.showNotification(
-            title: YapCloudError.insufficientBalance.errorDescription ?? "",
-            type: .error,
-            duration: 8,
-            onTap: { showAddFunds() },
-            actionButton: (label: String(localized: "Add Funds"), action: { showAddFunds() }))
+    static func notifyIfAccountProblem(_ error: Error) -> Bool {
+        switch error {
+        case YapCloudError.insufficientBalance:
+            NotificationManager.shared.showNotification(
+                title: YapCloudError.insufficientBalance.errorDescription ?? "",
+                type: .error,
+                duration: 8,
+                onTap: { showAddFunds() },
+                actionButton: (label: String(localized: "Add Funds"), action: { showAddFunds() }))
+        case YapCloudError.notSignedIn:
+            // The token was rejected (revoked or expired); drop it so Account shows the sign-in form.
+            shared.clearSession()
+            NotificationManager.shared.showNotification(
+                title: YapCloudError.notSignedIn.errorDescription ?? "",
+                type: .error,
+                duration: 8,
+                onTap: { showAddFunds() },
+                actionButton: (label: String(localized: "Open Account"), action: { showAddFunds() }))
+        default:
+            return false
+        }
         return true
     }
 
@@ -336,7 +372,9 @@ enum YapCloudError: LocalizedError, Equatable {
     case notSignedIn
     case insufficientBalance
     case invalidAmount
+    case keychainUnavailable
     case versionConflict(current: YapCloudConfigDocument?)
+    /// `message` is paygate's English text, kept for logs; users see a description mapped from `code`.
     case server(status: Int, code: String?, message: String)
 
     /// Maps a non-2xx paygate response (`{"error":{"code","message"}}`).
@@ -366,10 +404,37 @@ enum YapCloudError: LocalizedError, Equatable {
             return String(
                 format: String(localized: "Enter a whole-dollar amount between $%lld and $%lld."),
                 Int64(YapCloud.checkoutPresets.min()!), Int64(YapCloud.maximumTopUpUSD))
+        case .keychainUnavailable:
+            return String(localized: "Couldn't save the sign-in token to the keychain.")
         case .versionConflict:
             return String(localized: "The cloud config changed on another device.")
-        case .server(_, _, let message):
-            return message
+        case .server(_, let code, _):
+            return Self.description(forCode: code)
+        }
+    }
+
+    /// Codes from paygate docs/api.md and its fail() calls. Unknown codes and non-paygate failures
+    /// (no code) read as a temporary outage; the raw HTTP status is never shown.
+    private static func description(forCode code: String?) -> String {
+        switch code {
+        case "INVALID_CODE":
+            return String(localized: "That code is wrong or has expired. Check the email or send a new code.")
+        case "INVALID_EMAIL":
+            return String(localized: "Enter a valid email address.")
+        case "RATE_LIMITED":
+            return String(localized: "Too many requests. Wait a moment and try again.")
+        case "INVALID_AMOUNT":
+            return YapCloudError.invalidAmount.errorDescription ?? ""
+        case "MODEL_NOT_ALLOWED":
+            return String(localized: "This model isn't available on Yap Cloud. Choose another model.")
+        case "STRIPE_NOT_CONFIGURED":
+            return String(localized: "Adding funds isn't available yet.")
+        case "CONFIG_TOO_LARGE":
+            return String(localized: "The config is too large to sync (limit 256 KB).")
+        case let code?:
+            return String(format: String(localized: "Yap Cloud is temporarily unavailable. Try again shortly. (%@)"), code)
+        case nil:
+            return String(localized: "Yap Cloud is temporarily unavailable. Try again shortly.")
         }
     }
 
@@ -550,6 +615,11 @@ struct YapCloudConfigDocument: Equatable {
                 YapCloudError(status: 401, body: json(#"{"error":{"code":"INVALID_CODE","message":"Wrong code"}}"#), authenticated: false)
                     == .server(status: 401, code: "INVALID_CODE", message: "Wrong code"))
             assert(YapCloudError(status: 500, body: Data(), authenticated: true) == .server(status: 500, code: nil, message: "HTTP 500"))
+            assert(YapCloudError(status: 500, body: Data(), authenticated: true).errorDescription?.contains("500") == false)
+            assert(YapCloudError.server(status: 503, code: "SOMETHING_NEW", message: "x").errorDescription?
+                .contains("SOMETHING_NEW") == true)
+            assert(YapCloudError.server(status: 429, code: "RATE_LIMITED", message: "x").errorDescription?
+                .contains("RATE_LIMITED") == false)
             let conflict = YapCloudError(
                 status: 409, body: json(#"{"error":{"code":"VERSION_CONFLICT"},"current":{"version":7,"config":{"a":1}}}"#),
                 authenticated: true)

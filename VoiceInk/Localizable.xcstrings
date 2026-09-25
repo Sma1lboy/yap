@@ -4787,6 +4787,28 @@
         }
       }
     },
+    "Adding funds isn't available yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben aufladen ist noch nicht verfügbar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’ajout de fonds n’est pas encore disponible."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时还不能充值。"
+          }
+        }
+      }
+    },
     "Additional Shortcuts" : {
       "localizations" : {
         "de" : {
@@ -8444,6 +8466,50 @@
         }
       }
     },
+    "Couldn't load recent activity." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Aktivitäten konnten nicht geladen werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de charger l’activité récente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法加载最近记录。"
+          }
+        }
+      }
+    },
+    "Couldn't refresh your account: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto konnte nicht aktualisiert werden: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’actualiser votre compte : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法刷新账户：%@"
+          }
+        }
+      }
+    },
     "Couldn't save the sign-in token to the keychain." : {
       "localizations" : {
         "de" : {
@@ -11449,6 +11515,28 @@
         }
       }
     },
+    "Enter a valid email address." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib eine gültige E-Mail-Adresse ein."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez une adresse e-mail valide."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入有效的邮箱地址。"
+          }
+        }
+      }
+    },
     "Enter a whole-dollar amount between $%lld and $%lld." : {
       "localizations" : {
         "de" : {
@@ -14400,6 +14488,28 @@
         }
       }
     },
+    "Last updated %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt aktualisiert: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière mise à jour : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次更新于 %@"
+          }
+        }
+      }
+    },
     "Launch at Login" : {
       "localizations" : {
         "de" : {
@@ -15846,6 +15956,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "模式可帮助你针对不同的写作任务、工作流程和使用场景来设置 Yap。"
+          }
+        }
+      }
+    },
+    "Modes that use Yap Cloud stop working until you sign in again or switch them to another provider." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modi, die Yap Cloud verwenden, funktionieren erst wieder, wenn du dich erneut anmeldest oder sie auf einen anderen Anbieter umstellst."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les modes qui utilisent Yap Cloud ne fonctionneront plus tant que vous ne vous reconnectez pas ou ne les basculez pas vers un autre fournisseur."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 Yap Cloud 的模式将无法工作，直到你重新登录或把它们切换到其他提供商。"
           }
         }
       }
@@ -18315,6 +18447,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开辅助功能设置"
+          }
+        }
+      }
+    },
+    "Open Account" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto öffnen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le compte"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开账户"
           }
         }
       }
@@ -23362,6 +23516,28 @@
         }
       }
     },
+    "Sign out of Yap Cloud?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von Yap Cloud abmelden?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter de Yap Cloud ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出 Yap Cloud？"
+          }
+        }
+      }
+    },
     "Signed in as %@. Add funds anytime under Account." : {
       "localizations" : {
         "de" : {
@@ -24032,6 +24208,28 @@
         }
       }
     },
+    "Still using Yap Cloud: %@. Switch them to another provider in Modes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Modi verwenden noch Yap Cloud: %@. Stelle sie unter Modi auf einen anderen Anbieter um."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ces modes utilisent encore Yap Cloud : %@. Basculez-les vers un autre fournisseur dans Modes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些模式仍在使用 Yap Cloud：%@。请在「模式」中把它们切换到其他提供商。"
+          }
+        }
+      }
+    },
     "Stop Sound" : {
       "localizations" : {
         "de" : {
@@ -24680,6 +24878,28 @@
         }
       }
     },
+    "That code is wrong or has expired. Check the email or send a new code." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Code ist falsch oder abgelaufen. Prüfe die E-Mail oder fordere einen neuen Code an."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce code est incorrect ou a expiré. Vérifiez l’e-mail ou demandez un nouveau code."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证码错误或已过期。请核对邮件，或重新发送验证码。"
+          }
+        }
+      }
+    },
     "That replacement would create a loop between existing rules" : {
       "comment" : "Error shown when saving a word replacement would make two rules replace each other in a loop.",
       "localizations" : {
@@ -25040,6 +25260,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "云端配置已在另一台设备上被修改。"
+          }
+        }
+      }
+    },
+    "The config is too large to sync (limit 256 KB)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Konfiguration ist zu groß zum Synchronisieren (max. 256 KB)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La configuration est trop volumineuse pour être synchronisée (256 Ko max.)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配置文件太大，无法同步（上限 256 KB）。"
           }
         }
       }
@@ -25943,6 +26185,28 @@
         }
       }
     },
+    "This model isn't available on Yap Cloud. Choose another model." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Modell ist in Yap Cloud nicht verfügbar. Wähle ein anderes Modell."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce modèle n’est pas disponible sur Yap Cloud. Choisissez-en un autre."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 不提供这个模型，请换一个模型。"
+          }
+        }
+      }
+    },
     "This removes %@ and %@. This action cannot be undone." : {
       "localizations" : {
         "de" : {
@@ -26333,6 +26597,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "令牌数量根据请求文本估算。"
+          }
+        }
+      }
+    },
+    "Too many requests. Wait a moment and try again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu viele Anfragen. Warte kurz und versuche es erneut."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trop de requêtes. Patientez un instant et réessayez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请求太频繁，请稍后再试。"
           }
         }
       }
@@ -28531,6 +28817,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap Cloud 暂时没有可用的转写模型。"
+          }
+        }
+      }
+    },
+    "Yap Cloud is temporarily unavailable. Try again shortly." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud ist vorübergehend nicht verfügbar. Versuche es gleich noch einmal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud est temporairement indisponible. Réessayez dans un instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 服务暂时不可用，请稍后再试。"
+          }
+        }
+      }
+    },
+    "Yap Cloud is temporarily unavailable. Try again shortly. (%@)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud ist vorübergehend nicht verfügbar. Versuche es gleich noch einmal. (%@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud est temporairement indisponible. Réessayez dans un instant. (%@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 服务暂时不可用，请稍后再试。（%@）"
           }
         }
       }
