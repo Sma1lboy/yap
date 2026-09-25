@@ -177,7 +177,9 @@ private struct LedgerRow: View {
     private var title: String {
         switch entry.kind {
         case "topup": return String(localized: "Top-up")
-        case "usage": return entry.model ?? String(localized: "Usage")
+        case "usage":
+            guard let model = entry.model else { return String(localized: "Usage") }
+            return YapCloud.shared.models.first { $0.id == model }?.displayName ?? model
         default: return String(localized: "Adjustment")
         }
     }
