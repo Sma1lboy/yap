@@ -45,6 +45,8 @@ struct VoiceInkApp: App {
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
         OnboardingV2Migration.prepareIfNeeded()
+        // After the migration (it wipes modes on fresh installs) and before services read settings at init.
+        YapConfigLoader.shared.applyAtLaunch()
 
         let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "Initialization")
         // Keep existing model order stable; append new models after synced entities.
@@ -147,6 +149,14 @@ struct VoiceInkApp: App {
         whisperModelManager.loadAvailableModels()
         transcriptionModelManager.refreshAllAvailableModels()
         transcriptionModelManager.loadCurrentTranscriptionModel()
+        YapConfigLoader.shared.attach(
+            aiService: aiService,
+            enhancementService: enhancementService,
+            transcriptionModelManager: transcriptionModelManager
+        )
+        Task { @MainActor in
+            await YapConfigLoader.shared.resolveRemoteSelections()
+        }
 
         _whisperModelManager = State(initialValue: whisperModelManager)
         _fluidAudioModelManager = State(initialValue: fluidAudioModelManager)

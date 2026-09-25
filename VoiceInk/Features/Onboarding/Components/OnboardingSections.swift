@@ -82,6 +82,8 @@ struct OnboardingBottomBar: View {
     var placement: OnboardingBottomBarPlacement = .split
     let onLeading: (() -> Void)?
     let onPrimary: () -> Void
+    var secondaryTitle: String? = nil
+    var onSecondary: (() -> Void)? = nil
 
     private enum Metrics {
         static let controlButtonWidth: CGFloat = 132
@@ -96,6 +98,19 @@ struct OnboardingBottomBar: View {
             HStack(spacing: 0) {
                 leadingSlot
                     .frame(maxWidth: .infinity, alignment: .leading)
+                if let secondaryTitle, let onSecondary {
+                    Button(action: onSecondary) {
+                        Text(LocalizedStringKey(secondaryTitle))
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(AppTheme.Text.secondary)
+                            .padding(.horizontal, 4)
+                            .frame(minHeight: Metrics.buttonHeight)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
                 primaryButton
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }

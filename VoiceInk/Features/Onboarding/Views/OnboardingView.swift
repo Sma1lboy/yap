@@ -64,6 +64,7 @@ struct OnboardingView: View {
                             fluidAudioModelManager.downloadStatus(for: $0)
                         },
                         isSetupReady: isTranscriptionSetupReady,
+                        isShowingSkipWarning: $coordinator.isShowingSkipTranscriptionSetupWarning,
                         onSelectSetupKind: coordinator.flow.selectOnboardingTranscriptionSetup,
                         onDownload: {
                             coordinator.flow.downloadTranscriptionModel(
@@ -81,7 +82,9 @@ struct OnboardingView: View {
                                 isTranscriptionSetupReady: isTranscriptionSetupReady,
                                 aiService: aiService
                             )
-                        }
+                        },
+                        onRequestSkip: coordinator.flow.requestSkipTranscriptionSetup,
+                        onConfirmSkip: coordinator.flow.skipTranscriptionSetupAndContinue
                     )
                     .transition(.opacity)
                 case .api:

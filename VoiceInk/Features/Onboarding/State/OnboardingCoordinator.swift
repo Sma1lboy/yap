@@ -53,10 +53,17 @@ final class OnboardingCoordinator: ObservableObject {
         }
     }
 
+    @Published var hasSkippedTranscriptionSetup: Bool {
+        didSet {
+            defaults.set(hasSkippedTranscriptionSetup, forKey: OnboardingStorageKeys.skippedTranscriptionSetup)
+        }
+    }
+
     @Published var permissionStatuses: [OnboardingPermissionKind: OnboardingPermissionStatus] = [:]
     @Published var isSelectedTranscriptionProviderVerified = false
     @Published var isSelectedAPIProviderVerified = false
     @Published var isShowingSkipAPISetupWarning = false
+    @Published var isShowingSkipTranscriptionSetupWarning = false
     @Published var hasExperienceModeShortcut = false
     @Published var isExperienceModeInstalled = false
     @Published var experienceTextByKind: [OnboardingExperienceKind: String] = [:]
@@ -87,6 +94,7 @@ final class OnboardingCoordinator: ObservableObject {
                 forKey: OnboardingStorageKeys.transcriptionProvider
             ) ?? ""
         self.hasSkippedAPISetup = defaults.bool(forKey: OnboardingStorageKeys.skippedAPISetup)
+        self.hasSkippedTranscriptionSetup = defaults.bool(forKey: OnboardingStorageKeys.skippedTranscriptionSetup)
     }
 
     deinit {
@@ -413,9 +421,12 @@ final class OnboardingCoordinator: ObservableObject {
         }
     }
 
+    /// Also true once transcription setup was skipped, so the trust/license steps stay reachable;
+    /// the flow never routes a skipped setup into the experience steps.
     func isReadyForExperience(isTranscriptionSetupReady: Bool) -> Bool {
-        requiredPermissionsGranted && hasSelectedOnboardingMicrophone && isTranscriptionSetupReady
-            && (isSelectedAPIProviderVerified || hasSkippedAPISetup)
+        guard requiredPermissionsGranted && hasSelectedOnboardingMicrophone else { return false }
+        if hasSkippedTranscriptionSetup { return true }
+        return isTranscriptionSetupReady && (isSelectedAPIProviderVerified || hasSkippedAPISetup)
     }
 
     func isCurrentExperienceReady(isTranscriptionSetupReady: Bool) -> Bool {
@@ -434,6 +445,7 @@ enum OnboardingStorageKeys {
     static let transcriptionSetupKind = "onboardingTranscriptionSetupKind"
     static let transcriptionProvider = "onboardingTranscriptionProvider"
     static let skippedAPISetup = "onboardingSkippedAPISetup"
+    static let skippedTranscriptionSetup = "onboardingSkippedTranscriptionSetup"
 
     static let onboardingKeys = [
         stage,
@@ -443,6 +455,7 @@ enum OnboardingStorageKeys {
         transcriptionSetupKind,
         transcriptionProvider,
         skippedAPISetup,
+        skippedTranscriptionSetup,
         experienceIndex,
         "onboardingStarterModeIndex",
     ]

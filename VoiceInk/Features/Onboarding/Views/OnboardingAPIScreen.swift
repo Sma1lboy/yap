@@ -20,12 +20,15 @@ struct OnboardingAPIScreen: View {
             stage: .api,
             contentMaxWidth: contentMaxWidth
         ) {
-            AIProviderVerificationCard(
-                aiService: aiService,
-                providerOptions: providerOptions,
-                selectedProvider: $selectedProvider,
-                onVerificationChanged: onVerificationChanged
-            )
+            VStack(spacing: 14) {
+                AIProviderVerificationCard(
+                    aiService: aiService,
+                    providerOptions: providerOptions,
+                    selectedProvider: $selectedProvider,
+                    onVerificationChanged: onVerificationChanged
+                )
+                OnboardingConfigFileHint()
+            }
         } bottomBar: {
             HStack(spacing: 0) {
                 Button(action: onBack) {

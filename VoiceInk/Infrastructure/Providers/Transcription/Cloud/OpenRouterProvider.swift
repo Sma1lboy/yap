@@ -70,7 +70,7 @@ struct OpenRouterProvider: CloudProvider {
     var models: [CloudModel] {
         OpenRouterTranscriptionCatalog.models.map { model in
             CloudModel(
-                id: stableID(for: model.id),
+                id: Self.stableID(for: model.id),
                 name: model.id,
                 displayName: model.name ?? model.id,
                 description: String(localized: "OpenRouter speech-to-text model"),
@@ -100,7 +100,7 @@ struct OpenRouterProvider: CloudProvider {
         await OpenRouterClient.verifyAPIKey(key)
     }
 
-    private func stableID(for slug: String) -> UUID {
+    static func stableID(for slug: String) -> UUID {
         let digest = Array(SHA256.hash(data: Data("OpenRouter:\(slug)".utf8)))
         return UUID(uuid: (
             digest[0], digest[1], digest[2], digest[3],
