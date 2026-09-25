@@ -463,9 +463,14 @@ struct SettingsView: View {
                 }
             }
         case .error(let message):
-            Text(String(format: String(localized: "Cloud sync failed: %@"), message))
-                .foregroundColor(AppTheme.Status.error)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(String(format: String(localized: "Cloud sync failed: %@"), message))
+                    .foregroundColor(AppTheme.Status.error)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Retry") {
+                    Task { await cloudConfigSync.sync() }
+                }
+            }
         }
     }
 
