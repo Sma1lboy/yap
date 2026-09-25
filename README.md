@@ -1,4 +1,8 @@
-# Yap
+<p align="center"><img src="design/logo-1024.png" width="160" alt="Yap duck icon"></p>
+
+<h1 align="center">Yap</h1>
+
+<p align="center">按住快捷键说话，中英混着说也行，松开就是整理好的文字。</p>
 
 Yap is a fork of [VoiceInk](https://github.com/Beingpax/VoiceInk) by Prakash Joshi Pax, distributed under the same GPL-3.0 license. All credit for the app goes to the original author — if you want the official, notarized, auto-updating build, [buy VoiceInk](https://tryvoiceink.com/).
 
@@ -6,6 +10,7 @@ What this fork changes:
 
 - App name and bundle ID (`me.sma1lboy.yap`) so it installs next to VoiceInk.
 - A GitHub Actions workflow that builds an ad-hoc-signed `LOCAL_BUILD` on every `v*` tag, so no local Xcode is needed.
+- A duck icon (`design/logo.svg`).
 - `setup/`: a tuned setup for Chinese–English code-switched dictation through OpenRouter (transcription `microsoft/mai-transcribe-2`, cleanup `deepseek/deepseek-v4.1-flash`), the cleanup prompt, and the benchmark scripts used to pick them.
 
 Install on a new Mac:
