@@ -52,11 +52,14 @@ struct YapCloudModelBrowser: View {
                             }
                         }
                         Spacer()
-                        if model.id == selectedID { Image(systemName: "checkmark") }
+                        if model.id == selectedID {
+                            Image(systemName: "checkmark").accessibilityHidden(true)
+                        }
                     }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(model.id == selectedID ? .isSelected : [])
             }
             .listStyle(.inset)
         }

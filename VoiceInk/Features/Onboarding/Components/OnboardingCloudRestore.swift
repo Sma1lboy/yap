@@ -83,6 +83,7 @@ struct OnboardingCloudRestoreSheet: View {
                     Button("Retry") { Task { await load() } }
                 }
                 if case .ready(let config, let document) = phase {
+                    if isRestoring { ProgressView().controlSize(.small) }
                     Button("Restore") { Task { await restore(config, document) } }
                         .keyboardShortcut(.defaultAction)
                         .disabled(isRestoring)
