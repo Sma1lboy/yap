@@ -44,6 +44,10 @@ final class YapCloud: ObservableObject {
     @Published private(set) var monthlySpend: YapCloudMonthlySpend?
     /// Set when Checkout opens; cleared once the balance goes up (or the user stops waiting).
     @Published private(set) var pendingTopUp: PendingTopUp?
+    /// The last paygate request failed to connect (or got 502/503/504). Account shows a banner; cleared by the next
+    /// successful request, and /healthz is polled every 15 s while it's set.
+    @Published private(set) var isUnreachable = false
+    private var healthPoll: Task<Void, Never>?
     /// Signed-in devices for Account; nil until loaded or while paygate doesn't have the endpoint (404).
     @Published private(set) var devices: [YapCloudDevice]?
     /// Why the device list failed to load (not set for the 404 of an undeployed endpoint).
@@ -272,6 +276,9 @@ final class YapCloud: ObservableObject {
             accountRefreshError = nil
         } catch YapCloudError.notSignedIn {
             clearSession()
+        } catch YapCloudError.unreachable {
+            // The Account banner says it; no second, duplicate error line.
+            accountRefreshError = nil
         } catch {
             logger.error("Account refresh failed: \(error.localizedDescription, privacy: .public)")
             accountRefreshError = error.localizedDescription
@@ -345,11 +352,13 @@ final class YapCloud: ObservableObject {
         defer { scheduleBalanceRefresh() }
         let payload = try JSONSerialization.data(withJSONObject: body)
         do {
-            return try await Self.retryingOnce { try await self.proxyOnce(path, payload: payload, timeout: timeout) }
-        } catch is URLError {
-            throw YapCloudError.unreachable
-        } catch YapCloudError.server(let status, _, _, _, _) where [502, 503, 504].contains(status) {
-            throw YapCloudError.unreachable
+            let data = try await Self.retryingOnce { try await self.proxyOnce(path, payload: payload, timeout: timeout) }
+            noteReachability(nil)
+            return data
+        } catch {
+            let classified = Self.classify(error)
+            noteReachability(classified)
+            throw classified
         }
     }
 
@@ -575,6 +584,9 @@ final class YapCloud: ObservableObject {
                 duration: 8,
                 onTap: { showAddFunds() },
                 actionButton: (label: String(localized: "Adjust Cap"), action: { showAddFunds() }))
+        case YapCloudError.unreachable:
+            NotificationManager.shared.showNotification(
+                title: YapCloudError.unreachable.errorDescription ?? "", type: .error, duration: 5)
         case YapCloudError.notSignedIn:
             // The token was rejected (revoked or expired); drop it so Account shows the sign-in form.
             shared.clearSession()
@@ -659,12 +671,57 @@ final class YapCloud: ObservableObject {
         }
         for (name, value) in headers { request.setValue(value, forHTTPHeaderField: name) }
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
-        guard (200..<300).contains(http.statusCode) else {
-            throw YapCloudError(status: http.statusCode, body: data, authenticated: authenticated)
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+            guard (200..<300).contains(http.statusCode) else {
+                throw YapCloudError(status: http.statusCode, body: data, authenticated: authenticated)
+            }
+            noteReachability(nil)
+            return (data, http)
+        } catch {
+            let classified = Self.classify(error)
+            noteReachability(classified)
+            throw classified
         }
-        return (data, http)
+    }
+
+    /// Network failures and 502/503/504 all mean "Yap Cloud can't be reached right now" to the user.
+    static func classify(_ error: Error) -> Error {
+        if error is URLError { return YapCloudError.unreachable }
+        if case YapCloudError.server(let status, _, _, _, _) = error, [502, 503, 504].contains(status) {
+            return YapCloudError.unreachable
+        }
+        return error
+    }
+
+    /// Any answer from paygate clears the unreachable state; `.unreachable` sets it and starts polling /healthz.
+    private func noteReachability(_ error: Error?) {
+        let unreachable = (error as? YapCloudError) == .unreachable
+        Task { @MainActor in
+            guard unreachable != isUnreachable else { return }
+            isUnreachable = unreachable
+            healthPoll?.cancel()
+            guard unreachable else { return }
+            healthPoll = Task { @MainActor [weak self] in
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(15))
+                    guard let self, !Task.isCancelled else { return }
+                    if await self.isHealthy() {
+                        if self.isSignedIn { await self.refreshAccount() } else { self.isUnreachable = false }
+                        return
+                    }
+                }
+            }
+        }
+    }
+
+    /// `GET /healthz` (unauthenticated, `{ok: true}`).
+    func isHealthy() async -> Bool {
+        var request = URLRequest(url: URL(string: "/healthz", relativeTo: baseURL)!, timeoutInterval: 10)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        guard let (_, response) = try? await URLSession.shared.data(for: request) else { return false }
+        return (response as? HTTPURLResponse)?.statusCode == 200
     }
 
     private static func decode<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
@@ -1250,6 +1307,12 @@ struct YapCloudConfigDocument: Equatable {
             padded += Data("fmt ".utf8) + Data([16, 0, 0, 0, 1, 0, 1, 0, 0x80, 0x3E, 0, 0, 0, 0x7D, 0, 0, 2, 0, 16, 0])
             padded += Data("data".utf8) + Data([0x00, 0x7D, 0, 0]) + Data(count: 32_000)
             assert(wavDuration(padded) == 1)
+
+            // Unreachable classification
+            assert(classify(URLError(.timedOut)) as? YapCloudError == .unreachable)
+            assert(classify(YapCloudError.server(status: 503, code: nil, message: "")) as? YapCloudError == .unreachable)
+            assert(classify(YapCloudError.insufficientBalance) as? YapCloudError == .insufficientBalance)
+            assert(classify(YapCloudError.server(status: 500, code: nil, message: "")) as? YapCloudError != .unreachable)
 
             // Proxy retry policy: only provably-unbilled failures, once
             assert(isSafeToRetry(URLError(.cannotConnectToHost)) && isSafeToRetry(URLError(.notConnectedToInternet)))

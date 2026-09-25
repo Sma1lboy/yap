@@ -22,6 +22,12 @@ struct AccountView: View {
 
     var body: some View {
         Form {
+            if cloud.isUnreachable {
+                Section {
+                    Label("Yap Cloud is temporarily unreachable.", systemImage: "wifi.exclamationmark")
+                        .foregroundStyle(AppTheme.Status.warningStrong)
+                }
+            }
             if cloud.isSignedIn {
                 SignedInSections()
             } else {
