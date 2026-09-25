@@ -655,6 +655,7 @@
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG ENABLE_NATIVE_SPEECH_ANALYZER $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+				YAP_URL_SCHEME = "yap-dev";
 			};
 			name = Debug;
 		};
@@ -691,6 +692,7 @@
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "ENABLE_NATIVE_SPEECH_ANALYZER $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+				YAP_URL_SCHEME = yap;
 			};
 			name = Release;
 		};

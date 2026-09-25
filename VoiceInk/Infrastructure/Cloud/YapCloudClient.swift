@@ -353,8 +353,10 @@ final class YapCloud: ObservableObject {
     }
 
     /// `yap://account/refresh` (also `yap://account`), the link paygate's checkout success page returns to.
+    /// Dev builds register `yap-dev://` instead (YAP_URL_SCHEME) so they don't take links from the release app.
     static func isAccountRefreshURL(_ url: URL) -> Bool {
-        guard url.scheme?.lowercased() == "yap", url.host?.lowercased() == "account" else { return false }
+        guard ["yap", "yap-dev"].contains(url.scheme?.lowercased() ?? ""), url.host?.lowercased() == "account"
+        else { return false }
         return ["", "/", "/refresh"].contains(url.path.lowercased())
     }
 
@@ -923,6 +925,7 @@ struct YapCloudConfigDocument: Equatable {
             assert(isAccountRefreshURL(URL(string: "yap://account/refresh?session=cs_1")!))
             assert(!isAccountRefreshURL(URL(string: "yap://account/delete")!) && !isAccountRefreshURL(URL(string: "yap://settings")!))
             assert(!isAccountRefreshURL(URL(string: "https://account/refresh")!))
+            assert(isAccountRefreshURL(URL(string: "yap-dev://account/refresh")!) && !isAccountRefreshURL(URL(string: "yapx://account")!))
 
             // Top-up amounts
             assert(isValidTopUp(5) && isValidTopUp(20) && isValidTopUp(500))
