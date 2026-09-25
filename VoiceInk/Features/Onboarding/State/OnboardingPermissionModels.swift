@@ -80,7 +80,7 @@ enum OnboardingStage: String, CaseIterable {
         case .microphone:
             return String(localized: "Pick the microphone Yap should use for recordings.")
         case .model:
-            return String(localized: "Use NVIDIA's Parakeet model locally, or connect a cloud transcription provider.")
+            return String(localized: "Use the recommended OpenRouter setup, another cloud provider, or NVIDIA's Parakeet model on this Mac.")
         case .api:
             return String(
                 localized:
@@ -92,7 +92,7 @@ enum OnboardingStage: String, CaseIterable {
             return String(
                 localized: "Yap can select the right mode from the app you are using and the rules you configure.")
         case .trust:
-            return String(localized: "Yap is private by default. No data leaves your device unless you opt in.")
+            return String(localized: "Local models keep everything on this Mac. Cloud providers get only what you send them, with your own key.")
         case .license:
             return String(localized: "Activate an existing key, purchase a license, or start a 7-day free trial.")
         }

@@ -24,7 +24,7 @@ fi
 echo "==> 配置 $CONFIG_DIR（已有文件不覆盖）"
 mkdir -p "$CONFIG_DIR"
 [ -e "$CONFIG_DIR/config.json" ] || cp "$HERE/config.example.json" "$CONFIG_DIR/config.json"
-[ -e "$CONFIG_DIR/prompt.md" ] || cp "$HERE/prompt.md" "$CONFIG_DIR/prompt.md"
+[ -e "$CONFIG_DIR/prompt.md" ] || cp "$HERE/../VoiceInk/Resources/RecommendedPrompt.md" "$CONFIG_DIR/prompt.md"
 
 open -a /Applications/Yap.app
 echo "==> 完成。改模型或 prompt：编辑 $CONFIG_DIR 下的文件，再到 设置 → Config File 点 Reload（或重启 Yap）"

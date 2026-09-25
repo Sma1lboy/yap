@@ -56,7 +56,7 @@ private struct TrustHeader: View {
                         .fill(AppTheme.Surface.controlActive)
                 )
 
-            Text("Yap is private by default")
+            Text("You choose where your voice goes")
                 .font(.system(size: 32, weight: .bold))
                 .foregroundColor(AppTheme.Text.primary)
                 .multilineTextAlignment(.center)
@@ -74,10 +74,17 @@ private struct TrustBody: View {
                 .padding(.bottom, 28)
 
             VStack(spacing: 10) {
-                Text("Your data never has to leave your device.")
+                Text("Yap has no server and collects no analytics.")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(AppTheme.Text.primary)
                     .multilineTextAlignment(.center)
+
+                Text("Local models keep everything on this Mac. With a cloud provider, audio and text go only to the provider you choose, using your own API key. Transcripts are stored on this Mac.")
+                    .font(.system(size: 13))
+                    .foregroundColor(AppTheme.Text.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 610)
 
                 Text("Yap is also open source, so you can inspect every single line of code.")
                     .font(.system(size: 13))

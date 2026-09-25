@@ -4,7 +4,7 @@ import json, os, sys, time, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 KEY = next(l.split("=", 1)[1].strip().strip('"') for l in open(os.path.expanduser("~/.env")) if l.startswith("OPENROUTER_API_KEY="))
-PROMPT = open(os.path.join(os.path.dirname(__file__), "prompt.md")).read()
+PROMPT = open(os.path.join(os.path.dirname(__file__), "..", "VoiceInk", "Resources", "RecommendedPrompt.md")).read()
 CASES = json.load(open(os.path.join(os.path.dirname(__file__), "cases.json")))
 MODELS = sys.argv[1:] or ["openai/gpt-6-luna", "openai/gpt-5.6-luna", "google/gemini-3.1-flash-lite",
                           "google/gemini-2.5-flash-lite", "deepseek/deepseek-v4-flash", "qwen/qwen3.7-flash"]

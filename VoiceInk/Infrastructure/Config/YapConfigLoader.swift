@@ -86,16 +86,33 @@ final class YapConfigLoader: ObservableObject {
     func applyAtLaunch() {
         #if DEBUG
             YapConfig.selfCheck()
+            RecommendedSetup.selfCheck()
             Self.selfCheck()
         #endif
         guard let config = load() else { return }
-        apply(config, live: false, patchModes: defaults.bool(forKey: OnboardingSettings.completedV2Key))
+        apply(config, source: .file, live: false, patchModes: defaults.bool(forKey: OnboardingSettings.completedV2Key))
+    }
+
+    enum Source {
+        case file
+        /// The onboarding preset; doesn't touch `status`, which only describes config.json.
+        case recommended
+    }
+
+    /// Applies an in-memory config through the same path as config.json, live when services are attached.
+    func apply(config: YapConfig, source: Source, patchModes: Bool) async {
+        apply(config, source: source, live: aiService != nil, patchModes: patchModes)
+        await resolveRemoteSelections(config)
     }
 
     /// Fetches the OpenRouter catalogs the configured selections depend on (not loaded at launch otherwise),
     /// then selects the configured models so catalog reconciliation doesn't replace them.
     func resolveRemoteSelections() async {
         guard let config else { return }
+        await resolveRemoteSelections(config)
+    }
+
+    private func resolveRemoteSelections(_ config: YapConfig) async {
 
         if let key = transcriptionSelectionKey(config), let manager = transcriptionModelManager {
             if isOpenRouter(config.transcription?.provider) {
@@ -119,7 +136,7 @@ final class YapConfigLoader: ObservableObject {
     /// Live path for the Settings button and onboarding completion: also updates in-memory service state.
     func reload() async {
         guard let config = load() else { return }
-        apply(config, live: true, patchModes: true)
+        apply(config, source: .file, live: true, patchModes: true)
         await resolveRemoteSelections()
     }
 
@@ -170,7 +187,7 @@ final class YapConfigLoader: ObservableObject {
 
     // MARK: - Applying
 
-    private func apply(_ config: YapConfig, live: Bool, patchModes: Bool) {
+    private func apply(_ config: YapConfig, source: Source, live: Bool, patchModes: Bool) {
         var applied: [String] = []
         var skipped: [String] = []
 
@@ -199,11 +216,14 @@ final class YapConfigLoader: ObservableObject {
         // Prompt
         var promptId: String?
         if let raw = config.enhancement?.prompt,
-            let text = YapConfig.resolvePrompt(
-                raw, configDirectory: directoryURL, readFile: { try? String(contentsOf: $0, encoding: .utf8) })
+            let text = raw.caseInsensitiveCompare(RecommendedSetup.promptKeyword) == .orderedSame
+                ? RecommendedSetup.prompt
+                : YapConfig.resolvePrompt(
+                    raw, configDirectory: directoryURL, readFile: { try? String(contentsOf: $0, encoding: .utf8) })
         {
             let prompt = CustomPrompt(
-                id: YapConfig.promptID, title: "config.json", promptText: text, useSystemInstructions: false)
+                id: YapConfig.promptID, title: source == .file ? "config.json" : "Recommended", promptText: text,
+                useSystemInstructions: false)
             if live, let enhancementService {
                 enhancementService.customPrompts = Self.upserting(prompt, into: enhancementService.customPrompts)
             } else {
@@ -273,8 +293,8 @@ final class YapConfigLoader: ObservableObject {
         if keysChanged && live {
             NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
         }
-        status = .loaded(date: Date(), applied: applied, skipped: skipped)
-        logger.info("config.json applied: \(applied.joined(separator: ", "), privacy: .public)")
+        if source == .file { status = .loaded(date: Date(), applied: applied, skipped: skipped) }
+        logger.info("\(source == .file ? "config.json" : "recommended setup", privacy: .public) applied: \(applied.joined(separator: ", "), privacy: .public)")
     }
 
     // MARK: - Mapping

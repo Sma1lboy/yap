@@ -22,7 +22,7 @@ git clone https://github.com/Sma1lboy/yap && cd yap
 ./setup/install.sh
 ```
 
-The script installs the app with Homebrew (or downloads the latest release), copies `setup/config.example.json` and `setup/prompt.md` to `~/.config/yap/` if they are not there yet, and opens Yap. Grant Microphone and Accessibility, pick a hotkey, and skip the provider steps if the config file already has your key.
+The script installs the app with Homebrew (or downloads the latest release), copies `setup/config.example.json` to `~/.config/yap/config.json` and the recommended prompt (`VoiceInk/Resources/RecommendedPrompt.md`, also bundled in the app) to `~/.config/yap/prompt.md` if they are not there yet, and opens Yap. Grant Microphone and Accessibility, pick a hotkey, and skip the provider steps if the config file already has your key.
 
 Just the app: `brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew install --cask sma1lboy/yap/yap`. After that, Yap updates itself (Check for Updates… in the app menu) or with `brew upgrade --cask yap`.
 
@@ -43,10 +43,10 @@ Yap reads `~/.config/yap/config.json` (or `$XDG_CONFIG_HOME/yap/config.json`) at
 |---|---|
 | `keys.<provider>` | API key, stored in the keychain. `env:NAME` reads the variable from the environment, then from `~/.env` (apps opened from the Dock don't see your shell environment). |
 | `transcription` | Speech-to-text provider and model, applied to every mode. |
-| `enhancement` | Cleanup provider/model for modes that have enhancement on. `prompt` is a file next to the config (or an absolute path) or the prompt text itself; it becomes the default mode's prompt. |
+| `enhancement` | Cleanup provider/model for modes that have enhancement on. `prompt` is a file next to the config (or an absolute path) or the prompt text itself; `"recommended"` uses the prompt bundled with the app. It becomes the default mode's prompt. |
 | `defaultMode` | Which extra context the default mode sends to the model. All off keeps dictation fast and private. |
 
-Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription `microsoft/mai-transcribe-2` (80/82, $0.10/h), cleanup `deepseek/deepseek-v4.1-flash` (9/9 cases, ~0.5 s). Re-run `setup/bench.py` after editing the prompt.
+Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription `microsoft/mai-transcribe-2` (80/82, $0.10/h), cleanup `deepseek/deepseek-v4.1-flash` (9/9 cases, ~0.5 s). Onboarding's "Recommended" option applies exactly this setup with one OpenRouter key. Re-run `setup/bench.py` after editing `VoiceInk/Resources/RecommendedPrompt.md`.
 
 ## Releasing
 

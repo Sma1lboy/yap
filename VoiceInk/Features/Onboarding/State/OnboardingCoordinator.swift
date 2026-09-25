@@ -59,6 +59,13 @@ final class OnboardingCoordinator: ObservableObject {
         }
     }
 
+    /// The one-key OpenRouter preset was applied on the model step; it covers the AI key step too.
+    @Published var usedRecommendedSetup: Bool {
+        didSet {
+            defaults.set(usedRecommendedSetup, forKey: OnboardingStorageKeys.usedRecommendedSetup)
+        }
+    }
+
     @Published var permissionStatuses: [OnboardingPermissionKind: OnboardingPermissionStatus] = [:]
     @Published var isSelectedTranscriptionProviderVerified = false
     @Published var isSelectedAPIProviderVerified = false
@@ -88,13 +95,14 @@ final class OnboardingCoordinator: ObservableObject {
         self.storedTranscriptionSetupKind =
             defaults.string(
                 forKey: OnboardingStorageKeys.transcriptionSetupKind
-            ) ?? OnboardingTranscriptionSetupKind.local.rawValue
+            ) ?? OnboardingTranscriptionSetupKind.recommended.rawValue
         self.storedOnboardingTranscriptionProvider =
             defaults.string(
                 forKey: OnboardingStorageKeys.transcriptionProvider
             ) ?? ""
         self.hasSkippedAPISetup = defaults.bool(forKey: OnboardingStorageKeys.skippedAPISetup)
         self.hasSkippedTranscriptionSetup = defaults.bool(forKey: OnboardingStorageKeys.skippedTranscriptionSetup)
+        self.usedRecommendedSetup = defaults.bool(forKey: OnboardingStorageKeys.usedRecommendedSetup)
     }
 
     deinit {
@@ -268,7 +276,7 @@ final class OnboardingCoordinator: ObservableObject {
     }
 
     var transcriptionSetupKind: OnboardingTranscriptionSetupKind {
-        OnboardingTranscriptionSetupKind(rawValue: storedTranscriptionSetupKind) ?? .local
+        OnboardingTranscriptionSetupKind(rawValue: storedTranscriptionSetupKind) ?? .recommended
     }
 
     var onboardingTranscriptionProviderOptions: [any CloudProvider] {
@@ -297,6 +305,9 @@ final class OnboardingCoordinator: ObservableObject {
 
     var selectedOnboardingTranscriptionModel: (any TranscriptionModel)? {
         switch transcriptionSetupKind {
+        case .recommended:
+            return CloudProviderRegistry.provider(for: .openRouter)?.models
+                .first { $0.name == RecommendedSetup.transcriptionModel }
         case .local:
             return requiredTranscriptionModel
         case .cloud:
@@ -306,7 +317,8 @@ final class OnboardingCoordinator: ObservableObject {
     }
 
     var selectedOnboardingTranscriptionModelName: String? {
-        selectedOnboardingTranscriptionModel?.selectionKey
+        if transcriptionSetupKind == .recommended { return RecommendedSetup.transcriptionSelectionKey }
+        return selectedOnboardingTranscriptionModel?.selectionKey
     }
 
     var selectedOnboardingTranscriptionUsesRealtime: Bool {
@@ -413,6 +425,8 @@ final class OnboardingCoordinator: ObservableObject {
 
     func isTranscriptionSetupReady(isTranscriptionModelDownloaded: Bool) -> Bool {
         switch transcriptionSetupKind {
+        case .recommended:
+            return APIKeyManager.shared.hasAPIKey(forProvider: AIProvider.openRouter.rawValue)
         case .local:
             return isTranscriptionModelDownloaded
         case .cloud:
@@ -426,7 +440,8 @@ final class OnboardingCoordinator: ObservableObject {
     func isReadyForExperience(isTranscriptionSetupReady: Bool) -> Bool {
         guard requiredPermissionsGranted && hasSelectedOnboardingMicrophone else { return false }
         if hasSkippedTranscriptionSetup { return true }
-        return isTranscriptionSetupReady && (isSelectedAPIProviderVerified || hasSkippedAPISetup)
+        return isTranscriptionSetupReady
+            && (usedRecommendedSetup || isSelectedAPIProviderVerified || hasSkippedAPISetup)
     }
 
     func isCurrentExperienceReady(isTranscriptionSetupReady: Bool) -> Bool {
@@ -446,6 +461,7 @@ enum OnboardingStorageKeys {
     static let transcriptionProvider = "onboardingTranscriptionProvider"
     static let skippedAPISetup = "onboardingSkippedAPISetup"
     static let skippedTranscriptionSetup = "onboardingSkippedTranscriptionSetup"
+    static let usedRecommendedSetup = "onboardingUsedRecommendedSetup"
 
     static let onboardingKeys = [
         stage,
@@ -456,19 +472,23 @@ enum OnboardingStorageKeys {
         transcriptionProvider,
         skippedAPISetup,
         skippedTranscriptionSetup,
+        usedRecommendedSetup,
         experienceIndex,
         "onboardingStarterModeIndex",
     ]
 }
 
 enum OnboardingTranscriptionSetupKind: String, CaseIterable, Identifiable {
-    case local
+    case recommended
     case cloud
+    case local
 
     var id: String { rawValue }
 
     var title: LocalizedStringKey {
         switch self {
+        case .recommended:
+            return "Recommended"
         case .local:
             return "Local"
         case .cloud:
