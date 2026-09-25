@@ -10,7 +10,7 @@ enum DictionaryFilePanelService {
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.json]
         savePanel.canCreateDirectories = true
-        savePanel.nameFieldStringValue = "VoiceInk_Dictionary.json"
+        savePanel.nameFieldStringValue = "Yap_Dictionary.json"
         savePanel.title = String(localized: "Export Dictionary")
         savePanel.message = String(localized: "Export vocabulary and word replacements to a portable JSON file.")
 
