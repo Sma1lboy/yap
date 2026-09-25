@@ -13,9 +13,24 @@ final class OnboardingFlowController {
         coordinator.storedStage = OnboardingStage.permissions.rawValue
     }
 
+    /// Back from the model step: always shows the microphone screen.
+    func goBackToMicrophoneStep() {
+        guard coordinator.requiredPermissionsGranted else { return }
+        coordinator.storedStage = OnboardingStage.microphone.rawValue
+    }
+
     func goToMicrophoneStep() {
         guard coordinator.requiredPermissionsGranted else { return }
         coordinator.storedStage = OnboardingStage.microphone.rawValue
+
+        // Only one input (usually the built-in mic): nothing to choose, so select it and move on.
+        let devices = AudioDeviceManager.shared.availableDevices
+        guard devices.count == 1 else { return }
+        AudioDeviceManager.shared.selectDeviceAndSwitchToCustomMode(id: devices[0].id)
+        // The selection is applied on the next main-queue turn, as on the microphone screen.
+        DispatchQueue.main.async { [self] in
+            goToModelStep()
+        }
     }
 
     func goToModelStep() {

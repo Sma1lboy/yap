@@ -89,7 +89,7 @@ struct OnboardingView: View {
                             fluidAudioModelManager.cancelDownload($0)
                         },
                         onVerificationChanged: coordinator.flow.refreshTranscriptionSetupVerification,
-                        onBack: coordinator.flow.goToMicrophoneStep,
+                        onBack: coordinator.flow.goBackToMicrophoneStep,
                         onContinue: {
                             coordinator.flow.goToAPIStep(
                                 isTranscriptionSetupReady: isTranscriptionSetupReady,
