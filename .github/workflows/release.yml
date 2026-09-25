@@ -2,9 +2,13 @@ name: Build Yap
 
 # 推 vX.Y.Z tag：发 Release + 更新 appcast/cask。
 # 推到 main / 每周定时 / 手动：只编译，顺便把编译缓存存在 main 作用域（tag 构建只能读 main 的缓存）。
+# 开到 main 的 PR：只编译验证，读 main 的缓存、不保存（例如每天同步 upstream 的 PR）。
 on:
   push:
     tags: ["v*"]
+    branches: [main]
+    paths-ignore: ["**.md", "design/**", "appcast.xml", "Casks/**", "setup/**"]
+  pull_request:
     branches: [main]
     paths-ignore: ["**.md", "design/**", "appcast.xml", "Casks/**", "setup/**"]
   schedule:
@@ -107,9 +111,9 @@ jobs:
           codesign -dr - ~/Downloads/Yap.app 2>&1 | tee "$RUNNER_TEMP/requirement.txt"
           grep -qE 'certificate (leaf|root)' "$RUNNER_TEMP/requirement.txt" || { echo "::error::designated requirement is not certificate-based"; exit 1; }
 
-      # tag 作用域的缓存别的 tag 读不到，所以发版构建只恢复、不保存（省约 45 秒）
+      # tag / PR 作用域的缓存别处读不到，所以发版和 PR 构建只恢复、不保存（省约 45 秒）
       - name: Save Xcode build cache
-        if: github.ref_type != 'tag'
+        if: github.ref_type != 'tag' && github.event_name != 'pull_request'
         uses: actions/cache/save@v4
         with:
           path: .local-build
