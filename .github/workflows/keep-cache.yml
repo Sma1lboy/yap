@@ -15,4 +15,3 @@ jobs:
         with:
           path: ~/VoiceInk-Dependencies
           key: whisper-${{ runner.os }}-xcode26.6-v1
-          lookup-only: true
