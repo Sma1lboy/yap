@@ -57,7 +57,7 @@ struct AutoLearnModelSelectionView: View {
             } else {
                 Picker("Provider", selection: providerBinding) {
                     ForEach(providerOptions, id: \.self) { provider in
-                        Text(provider.rawValue).tag(provider)
+                        Text(provider.displayName).tag(provider)
                     }
                 }
 

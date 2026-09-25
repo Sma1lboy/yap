@@ -16,11 +16,11 @@ enum VoiceInkRefineInferenceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unavailable:
-            return "VoiceInk Refine requires Apple silicon."
+            return "Yap Refine requires Apple silicon."
         case .modelNotLoaded:
-            return "VoiceInk Refine could not load the selected model."
+            return "Yap Refine could not load the selected model."
         case .emptyOutput:
-            return "VoiceInk Refine returned an empty response."
+            return "Yap Refine returned an empty response."
         }
     }
 }

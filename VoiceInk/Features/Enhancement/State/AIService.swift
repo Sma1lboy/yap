@@ -20,6 +20,20 @@ enum AIProvider: String, CaseIterable {
     case localCLI = "Local CLI"
     case custom = "Custom"
 
+    /// User-facing name. `rawValue` is persisted in settings and keychain keys, so it never changes.
+    var displayName: String {
+        switch self {
+        case .voiceInkRefine:
+            return VoiceInkRefineService.providerName
+        case .localCLI:
+            return String(localized: "Local CLI")
+        case .custom:
+            return String(localized: "Custom")
+        default:
+            return rawValue
+        }
+    }
+
     var baseURL: String {
         switch self {
         case .cerebras:

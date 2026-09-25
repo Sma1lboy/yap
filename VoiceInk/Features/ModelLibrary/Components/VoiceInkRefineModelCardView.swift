@@ -23,7 +23,7 @@ struct VoiceInkRefineModelCardView: View {
 
     private var headerSection: some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(VoiceInkRefineService.modelName)
+            Text(verbatim: VoiceInkRefineService.displayModelName)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(Color(.labelColor))
 
