@@ -1,0 +1,11 @@
+[
+ {"id":"deploy","in":"那个我今天想把那个deployed的pipeline改一下,就是现在CI太慢了,然后build cache好像没生效,我怀疑是Docker Layer的顺序有问题。"},
+ {"id":"meeting","in":"我们明天的会要讨论三件事，第一是 Q 四的 roadmap，第二是那个 onboarding flow 要不要重做，第三就是 hiring，我们还缺一个 senior front end。"},
+ {"id":"reply","in":"帮我回一下Kevin,就说PR我看过了,整体LGTM,但是那个useEffect里面的dependency array漏了一个userID,改完就可以merge。"},
+ {"id":"spec","in":"这个feature的acceptance criteria大概是这样,用户可以上传PDF,然后系统自动extract表格,再然后导出成CSV,还有就是要支持batch,一次最多五十个文件。"},
+ {"id":"correct","in":"不对,不对,我刚刚说错了,应该是周四下午三点,不是周三,然后地点改成Zoom,link我等下发群里。"},
+ {"id":"question","in":"呃你觉得我们这个 feature 要不要先上 beta 然后再 full rollout 啊"},
+ {"id":"short","in":"好的没问题"},
+ {"id":"twotopics","in":"嗯先说一下那个 API 的事，就是 rate limit 我已经调到每分钟两百了，应该够用。然后另外一个事，下周三我请假，有事 Slack 找我就行，那个 on-call 我跟 David 换了。"},
+ {"id":"steps","in":"你本地跑的话先 clone 下来，然后 bun install，然后要把那个 env 文件从 example 复制一份，填上 OpenAI 的 key，最后 bun dev 就行了，端口是三千。"}
+]
