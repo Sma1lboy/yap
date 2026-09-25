@@ -12,7 +12,6 @@ struct MenuBarView: View {
     @EnvironmentObject var updaterViewModel: UpdaterViewModel
     @EnvironmentObject var enhancementService: AIEnhancementService
     @EnvironmentObject var aiService: AIService
-    @ObservedObject private var launchAtLoginManager = LaunchAtLoginManager.shared
     @ObservedObject private var modeManager = ModeManager.shared
     @ObservedObject var audioDeviceManager = AudioDeviceManager.shared
     @ObservedObject private var yapCloud = YapCloud.shared
@@ -163,15 +162,6 @@ struct MenuBarView: View {
                 }
             }
             .keyboardShortcut("d", modifiers: [.command, .shift])
-
-            Toggle(
-                "Launch at Login",
-                isOn: Binding(
-                    get: { launchAtLoginManager.isEnabled },
-                    set: { launchAtLoginManager.setEnabled($0) }
-                )
-            )
-            .disabled(launchAtLoginManager.isUpdating)
 
             Divider()
 
