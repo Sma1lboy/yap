@@ -9,7 +9,7 @@ struct VoiceInkButton: View {
         Button(action: action) {
             Text(title)
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundColor(AppTheme.Text.onAccent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .background(

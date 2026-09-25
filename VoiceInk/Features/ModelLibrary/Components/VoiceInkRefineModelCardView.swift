@@ -123,7 +123,7 @@ struct VoiceInkRefineModelCardView: View {
                             Image(systemName: "xmark.circle")
                         }
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppTheme.Text.onAccent)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Capsule().fill(AppTheme.Action.destructiveFill))
@@ -167,7 +167,7 @@ struct VoiceInkRefineModelCardView: View {
                             Image(systemName: "arrow.down.circle")
                         }
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppTheme.Text.onAccent)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(

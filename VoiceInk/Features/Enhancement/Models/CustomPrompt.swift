@@ -60,7 +60,7 @@ extension CustomPrompt {
                 .truncationMode(.tail)
         }
         .font(.system(size: 12, weight: .medium))
-        .foregroundStyle(isSelected ? Color.white : Color.primary)
+        .foregroundStyle(isSelected ? AppTheme.Text.onAccent : Color.primary)
         .frame(maxWidth: .infinity, minHeight: 30)
         .padding(.horizontal, 10)
         .background(
