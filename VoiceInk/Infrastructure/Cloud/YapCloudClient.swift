@@ -186,11 +186,10 @@ final class YapCloud: ObservableObject {
         return micros
     }
 
-    /// Usage spend in `[since, now)`, summed by the server. `since` is the local start of the month for "This Month".
-    func fetchUsage(since: Date) async throws -> YapCloudMonthlySpend {
-        let formatter = ISO8601DateFormatter()
-        let query = formatter.string(from: since).addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? ""
-        return try Self.decode(YapCloudMonthlySpend.self, from: try await send("GET", "/v1/usage?since=\(query)"))
+    /// This month's usage spend, per model. No `since`: paygate's default window is the current UTC month, the
+    /// same one `monthSpentMicros` and the monthly cap use, so the card and "used of cap" always agree.
+    func fetchUsage() async throws -> YapCloudMonthlySpend {
+        try Self.decode(YapCloudMonthlySpend.self, from: try await send("GET", "/v1/usage"))
     }
 
     /// Returns the Stripe Checkout URL for a top-up of `amountUSD` dollars.
@@ -237,8 +236,7 @@ final class YapCloud: ObservableObject {
             settlePendingTopUp()
             ledger = try await fetchLedger()
             isLedgerLoaded = true
-            let monthStart = Calendar.current.dateInterval(of: .month, for: Date())?.start ?? Date()
-            monthlySpend = try await fetchUsage(since: monthStart)
+            monthlySpend = try await fetchUsage()
             accountRefreshError = nil
         } catch YapCloudError.notSignedIn {
             clearSession()
