@@ -222,6 +222,16 @@ private struct SignedInSections: View {
 
         if let devices = cloud.devices {
             DevicesSection(devices: devices)
+        } else if let error = cloud.devicesError {
+            Section("Signed-in Devices") {
+                HStack {
+                    Text(String(format: String(localized: "Couldn't load devices: %@"), error))
+                        .foregroundStyle(AppTheme.Status.error)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                    Button("Retry") { Task { await cloud.refreshDevices() } }
+                }
+            }
         }
     }
 

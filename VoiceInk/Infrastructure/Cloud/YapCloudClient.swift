@@ -46,6 +46,8 @@ final class YapCloud: ObservableObject {
     @Published private(set) var pendingTopUp: PendingTopUp?
     /// Signed-in devices for Account; nil until loaded or while paygate doesn't have the endpoint (404).
     @Published private(set) var devices: [YapCloudDevice]?
+    /// Why the device list failed to load (not set for the 404 of an undeployed endpoint).
+    @Published private(set) var devicesError: String?
 
     struct PendingTopUp: Equatable {
         let balanceBeforeMicros: Int64
@@ -153,6 +155,7 @@ final class YapCloud: ObservableObject {
         accountRefreshError = nil
         monthlySpend = nil
         devices = nil
+        devicesError = nil
         NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
     }
 
@@ -319,10 +322,14 @@ final class YapCloud: ObservableObject {
         guard token != nil else { return }
         do {
             devices = try await fetchDevices()
+            devicesError = nil
         } catch YapCloudError.notSignedIn {
             clearSession()
+        } catch YapCloudError.server(let status, _, _, _, _) where status == 404 {
+            devices = nil
         } catch {
             logger.error("Device list failed: \(error.localizedDescription, privacy: .public)")
+            devicesError = error.localizedDescription
         }
     }
 

@@ -8730,6 +8730,28 @@
         }
       }
     },
+    "Couldn't load devices: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geräte konnten nicht geladen werden: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de charger les appareils : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法加载设备列表：%@"
+          }
+        }
+      }
+    },
     "Couldn't load recent activity." : {
       "localizations" : {
         "de" : {
