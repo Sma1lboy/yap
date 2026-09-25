@@ -22,7 +22,6 @@ struct VoiceInkApp: App {
     @StateObject private var mainWindowNavigation = MainWindowNavigation.shared
     @StateObject private var aiService = AIService()
     @StateObject private var enhancementService: AIEnhancementService
-    @StateObject private var licenseViewModel = LicenseViewModel.shared
     @StateObject private var activeWindowService = ActiveWindowService.shared
     @AppStorage(OnboardingSettings.completedV2Key) private var hasCompletedOnboardingV2 = false
     @State private var showMenuBarIcon = true
@@ -373,14 +372,6 @@ struct VoiceInkApp: App {
                                 WindowManager.shared.configureWindow(window)
                             })
                 }
-            }
-            .confettiCelebrationPresenter()
-            .onReceive(
-                LifecycleObserver.shared.publisher(
-                    for: [.applicationDidBecomeActive, .systemDidWake]
-                )
-            ) { _ in
-                licenseViewModel.refreshLicenseState()
             }
         }
         .windowStyle(.hiddenTitleBar)

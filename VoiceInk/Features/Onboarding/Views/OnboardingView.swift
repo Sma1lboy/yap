@@ -177,41 +177,6 @@ struct OnboardingView: View {
                             )
                         },
                         onContinue: {
-                            #if LOCAL_BUILD
-                                coordinator.flow.completeOnboarding(
-                                    isTranscriptionSetupReady: isTranscriptionSetupReady
-                                ) {
-                                    hasCompletedOnboardingV2 = true
-                                }
-                            #else
-                                coordinator.flow.goToLicenseStep(
-                                    isTranscriptionSetupReady: isTranscriptionSetupReady
-                                )
-                            #endif
-                        }
-                    )
-                    .transition(.opacity)
-                case .license:
-                    OnboardingLicenseScreen(
-                        licenseViewModel: coordinator.licenseViewModel,
-                        licenseKeyDraft: $coordinator.licenseKeyDraft,
-                        onBack: {
-                            coordinator.flow.goToPreviousLicenseStep(
-                                isTranscriptionSetupReady: isTranscriptionSetupReady
-                            )
-                        },
-                        onPurchase: {
-                            coordinator.licenseViewModel.openPurchaseLink()
-                        },
-                        onStartTrial: {
-                            coordinator.flow.startLicenseTrial(
-                                isTranscriptionSetupReady: isTranscriptionSetupReady
-                            ) {
-                                hasCompletedOnboardingV2 = true
-                            }
-                        },
-                        onActivate: coordinator.flow.activateLicense,
-                        onFinish: {
                             coordinator.flow.completeOnboarding(
                                 isTranscriptionSetupReady: isTranscriptionSetupReady
                             ) {

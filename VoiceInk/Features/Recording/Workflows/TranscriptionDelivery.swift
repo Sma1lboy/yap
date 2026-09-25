@@ -97,7 +97,7 @@ final class TranscriptionDelivery {
             return
         }
 
-        let commandText = deliverableText(from: text)
+        let commandText = text
         SoundManager.shared.playStopSound()
         await actions.dismiss()
 
@@ -156,7 +156,7 @@ final class TranscriptionDelivery {
     }
 
     private func paste(_ text: String, sendAfterPaste: Bool, actions: Actions) async {
-        let textToPaste = deliverableText(from: text)
+        let textToPaste = text
         let appendSpace = UserDefaults.standard.bool(forKey: "AppendTrailingSpace")
         let pastedText = textToPaste + (appendSpace ? " " : "")
         SoundManager.shared.playStopSound()
@@ -177,17 +177,5 @@ final class TranscriptionDelivery {
                 CursorPaster.performSendKey(finishAndSendKey)
             }
         }
-    }
-
-    private func deliverableText(from text: String) -> String {
-        var textToDeliver = text
-        if let restrictionMessage = LicenseViewModel.shared.usageRestrictionMessage {
-            textToDeliver = """
-                \(restrictionMessage)
-                \n\(textToDeliver)
-                """
-        }
-
-        return textToDeliver
     }
 }

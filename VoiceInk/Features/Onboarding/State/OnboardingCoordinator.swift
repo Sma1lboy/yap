@@ -2,9 +2,6 @@ import SwiftUI
 
 @MainActor
 final class OnboardingCoordinator: ObservableObject {
-    let licenseViewModel = LicenseViewModel.shared
-    @Published var licenseKeyDraft = ""
-
     @Published var storedStage: String {
         didSet {
             defaults.set(storedStage, forKey: OnboardingStorageKeys.stage)
@@ -110,11 +107,10 @@ final class OnboardingCoordinator: ObservableObject {
     }
 
     var stage: OnboardingStage {
-        #if LOCAL_BUILD
-            if storedStage == OnboardingStage.license.rawValue {
-                return .trust
-            }
-        #endif
+        // The license step was removed; users who stopped there resume at the last remaining step.
+        if storedStage == "license" {
+            return .trust
+        }
 
         if let stage = OnboardingStage(rawValue: storedStage) {
             return stage
@@ -152,19 +148,11 @@ final class OnboardingCoordinator: ObservableObject {
             return OnboardingStage.baseStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 1
         }
 
-        if stage == .license {
-            return OnboardingStage.baseStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 2
-        }
-
         return stage.stepNumber
     }
 
     var totalStepCount: Int {
-        #if LOCAL_BUILD
-            OnboardingStage.baseStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 1
-        #else
-            OnboardingStage.baseStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 2
-        #endif
+        OnboardingStage.baseStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 1
     }
 
     var experienceStep: OnboardingExperienceStep {
@@ -435,7 +423,7 @@ final class OnboardingCoordinator: ObservableObject {
         }
     }
 
-    /// Also true once transcription setup was skipped, so the trust/license steps stay reachable;
+    /// Also true once transcription setup was skipped, so the trust step stays reachable;
     /// the flow never routes a skipped setup into the experience steps.
     func isReadyForExperience(isTranscriptionSetupReady: Bool) -> Bool {
         guard requiredPermissionsGranted && hasSelectedOnboardingMicrophone else { return false }
