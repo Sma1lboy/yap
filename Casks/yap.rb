@@ -1,6 +1,6 @@
 cask "yap" do
-  version "2.20-yap.1"
-  sha256 :no_check # CI 发版后自动改成真实 sha256
+  version "2.20-yap.2"
+  sha256 "a34885582de7dab53295669df04fd95a5c68e3b2465aff328445159b3fe9d63b"
 
   url "https://github.com/Sma1lboy/yap/releases/download/v#{version}/Yap.zip"
   name "Yap"
