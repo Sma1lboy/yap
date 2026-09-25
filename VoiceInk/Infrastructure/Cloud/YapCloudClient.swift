@@ -763,6 +763,9 @@ final class YapCloud: ObservableObject {
         guard let url = URL(string: path, relativeTo: baseURL) else { throw URLError(.badURL) }
         var request = URLRequest(url: url, timeoutInterval: 20)
         request.httpMethod = method
+        // Account data is never served from a local cache. Also needed for If-None-Match: with a cached copy,
+        // URLSession turns the server's 304 back into a 200 with the cached body, hiding "not modified".
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         if authenticated {
             guard let token else { throw YapCloudError.notSignedIn }
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
