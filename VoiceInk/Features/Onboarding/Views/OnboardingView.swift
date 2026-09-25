@@ -243,6 +243,13 @@ struct OnboardingView: View {
         .onDisappear {
             coordinator.permissions.cancelRefreshTask()
         }
+        // The permission poller and the app-activation check both refresh the statuses; once the last
+        // required permission is granted, continue without a click. Only on the change, so returning to
+        // this screen later doesn't bounce the user forward.
+        .onChange(of: coordinator.requiredPermissionsGranted) { wasGranted, isGranted in
+            guard !wasGranted, isGranted, coordinator.stage == .permissions else { return }
+            coordinator.flow.goToMicrophoneStep()
+        }
         .onReceive(LifecycleObserver.shared.publisher(for: .applicationDidBecomeActive)) { _ in
             coordinator.permissions.refreshPermissionStatuses()
             coordinator.flow.refreshTranscriptionSetupVerification()
