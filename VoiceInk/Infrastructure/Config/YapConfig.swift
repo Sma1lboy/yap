@@ -108,7 +108,11 @@ struct YapConfig: Codable, Equatable {
 
     /// Decodes and drops empty strings/sections so callers only see fields that were actually set.
     static func decode(_ data: Data) throws -> YapConfig {
-        var config = try JSONDecoder().decode(YapConfig.self, from: data)
+        try JSONDecoder().decode(YapConfig.self, from: data).normalized()
+    }
+
+    func normalized() -> YapConfig {
+        var config = self
         config.keys = config.keys?.filter { $0.value.nonEmpty != nil }
         if config.keys?.isEmpty == true { config.keys = nil }
         if var transcription = config.transcription {
@@ -133,6 +137,56 @@ struct YapConfig: Codable, Equatable {
             config.dictionary = dictionary == DictionarySection() ? nil : dictionary
         }
         return config
+    }
+
+    /// Stable bytes for config.json: sorted keys, so writing the same settings twice gives the same file.
+    func encoded() throws -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        return try encoder.encode(self) + Data("\n".utf8)
+    }
+
+    // MARK: - Export
+
+    /// A v2 config describing `backup` (the current settings). From `existing` it keeps only the `env:` key
+    /// references (never a literal key) and the v1 `transcription`, `enhancement` provider/model and
+    /// `enhancement.prompt` groups that `isNoOp` says would change nothing when applied again, so reading the
+    /// written file back leaves the settings as they are. `defaultMode` and `enhancement.enabled` are dropped:
+    /// `modes` carries them.
+    static func exported(from backup: BackupFile, existing: YapConfig?, isNoOp: (YapConfig) -> Bool) -> YapConfig {
+        var config = YapConfig()
+        config.version = currentVersion
+        config.keys = existing?.keys?.filter { $0.value.trimmingCharacters(in: .whitespaces).hasPrefix("env:") }
+        if let transcription = existing?.transcription, isNoOp(YapConfig(transcription: transcription)) {
+            config.transcription = transcription
+        }
+        if let old = existing?.enhancement {
+            var enhancement = Enhancement()
+            let providerModel = Enhancement(provider: old.provider, model: old.model)
+            if providerModel != Enhancement(), isNoOp(YapConfig(enhancement: providerModel)) {
+                (enhancement.provider, enhancement.model) = (old.provider, old.model)
+            }
+            if let prompt = old.prompt, isNoOp(YapConfig(enhancement: Enhancement(prompt: prompt))) {
+                enhancement.prompt = prompt
+            }
+            config.enhancement = enhancement
+        }
+        config.modes = backup.modeConfigs
+        config.modeShortcuts = backup.modeShortcuts
+        config.prompts = backup.customPrompts
+        config.dictionary = DictionarySection(
+            vocabulary: backup.vocabularyWords?.map(\.word).sorted(), replacements: backup.wordReplacements)
+        config.general = backup.generalSettings
+        return config.normalized()
+    }
+
+    // MARK: - Merge
+
+    /// Content equality. `ModeConfig ==` compares only ids, so "did this change" checks compare JSON instead.
+    static func sameContent<T: Encodable>(_ lhs: T, _ rhs: T) -> Bool {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        return (try? encoder.encode(lhs)) == (try? encoder.encode(rhs))
     }
 
     /// Human-readable decoding error that names the JSON path, e.g. `enhancement.enabled: Expected Bool`.

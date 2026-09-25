@@ -8408,6 +8408,28 @@
         }
       }
     },
+    "Could not write config file: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfigurationsdatei konnte nicht geschrieben werden: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’écrire le fichier de configuration : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法写入配置文件：%@"
+          }
+        }
+      }
+    },
     "Couldn't deactivate the license. Please try again." : {
       "localizations" : {
         "de" : {
@@ -14341,6 +14363,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保留剪贴板内容"
+          }
+        }
+      }
+    },
+    "Keep Config File in Sync" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfigurationsdatei synchron halten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garder le fichier de configuration synchronisé"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保持配置文件同步"
           }
         }
       }
@@ -28887,6 +28931,28 @@
         }
       }
     },
+    "Write Current Settings to Config" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuelle Einstellungen in die Konfiguration schreiben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrire les réglages actuels dans la configuration"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把当前设置写入配置文件"
+          }
+        }
+      }
+    },
     "Write an Email" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -28928,6 +28994,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "编写提示词指令"
+          }
+        }
+      }
+    },
+    "Writes settings changes back to the file. The previous file is kept as config.json.bak." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schreibt Änderungen an den Einstellungen zurück in die Datei. Die vorherige Datei bleibt als config.json.bak erhalten."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réécrit les changements de réglages dans le fichier. L’ancien fichier est conservé sous config.json.bak."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置改动会写回文件，旧文件保留为 config.json.bak。"
+          }
+        }
+      }
+    },
+    "Written at %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschrieben um %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrit à %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已于 %@ 写入"
           }
         }
       }

@@ -61,6 +61,8 @@ final class YapConfigLoader: ObservableObject {
     @Published private(set) var status: Status = .notFound
     /// The loaded file has a `version` newer than this build understands.
     @Published private(set) var fileIsNewerVersion = false
+    @Published private(set) var lastWritten: Date?
+    @Published private(set) var writeError: String?
 
     private weak var aiService: AIService?
     private weak var enhancementService: AIEnhancementService?
@@ -100,6 +102,7 @@ final class YapConfigLoader: ObservableObject {
             apply(config, source: .file, live: true, patchModes: true, sections: sections)
         }
         await resolveRemoteSelections()
+        observeSettingsChanges()
     }
 
     /// Launch path: writes keys and UserDefaults before services read them at init.
@@ -136,8 +139,8 @@ final class YapConfigLoader: ObservableObject {
 
     private func resolveRemoteSelections(_ config: YapConfig) async {
 
-        if let key = transcriptionSelectionKey(config), let manager = transcriptionModelManager {
-            if isOpenRouter(config.transcription?.provider) {
+        if let key = Self.transcriptionSelectionKey(config), let manager = transcriptionModelManager {
+            if Self.isOpenRouter(config.transcription?.provider) {
                 await manager.refreshOpenRouterCatalog()
             } else {
                 manager.refreshAllAvailableModels()
@@ -147,7 +150,7 @@ final class YapConfigLoader: ObservableObject {
             }
         }
 
-        if let provider = enhancementProvider(config), provider == .openRouter, let aiService {
+        if let provider = Self.enhancementProvider(config), provider == .openRouter, let aiService {
             await aiService.fetchOpenRouterModels()
             if let model = config.enhancement?.model {
                 aiService.selectModel(model, for: .openRouter)
@@ -161,6 +164,91 @@ final class YapConfigLoader: ObservableObject {
         let sections = await applySections(config)
         apply(config, source: .file, live: true, patchModes: true, sections: sections)
         await resolveRemoteSelections()
+    }
+
+    // MARK: - Entry points
+
+    /// The current settings as config.json bytes (schema v2). Nil until services are attached.
+    func makeConfigData() async -> Data? {
+        guard let enhancementService, let recordingShortcutManager, let menuBarManager, let recorderUIManager,
+            let modelContext
+        else { return nil }
+        let backup = await ImportExportService.shared.makeBackup(
+            enhancementService: enhancementService, recordingShortcutManager: recordingShortcutManager,
+            menuBarManager: menuBarManager, mediaController: .shared, playbackController: .shared,
+            recorderUIManager: recorderUIManager, modelContext: modelContext)
+        let existing = (try? Data(contentsOf: fileURL)).flatMap { try? YapConfig.decode($0) }
+        let config = YapConfig.exported(from: backup, existing: existing) {
+            Self.isNoOp(
+                $0, modes: backup.modeConfigs, prompts: backup.customPrompts, promptText: self.promptText)
+        }
+        return try? config.encoded()
+    }
+
+    /// Applies config.json bytes to the running app: v2 sections first, then the v1 fields on top.
+    /// Doesn't touch the file; see `writeConfigFile`.
+    func applyConfigData(_ data: Data) async throws {
+        let config = try YapConfig.decode(data)
+        self.config = config
+        fileIsNewerVersion = config.isNewerVersion
+        let sections = await applySections(config)
+        apply(config, source: .file, live: true, patchModes: true, sections: sections)
+        await resolveRemoteSelections(config)
+    }
+
+    /// Writes config.json, keeping the previous file as config.json.bak. Returns false if the bytes are unchanged.
+    @discardableResult
+    func writeConfigFile(_ data: Data) throws -> Bool {
+        let fileManager = FileManager.default
+        try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        if let old = try? Data(contentsOf: fileURL) {
+            if old == data { return false }
+            let backupURL = directoryURL.appendingPathComponent("config.json.bak")
+            try? fileManager.removeItem(at: backupURL)
+            try old.write(to: backupURL)
+        }
+        try data.write(to: fileURL, options: .atomic)
+        return true
+    }
+
+    /// The "Write current settings to config" button, and auto-sync.
+    func writeCurrentSettings() async {
+        guard let data = await makeConfigData() else { return }
+        do {
+            try writeConfigFile(data)
+            lastWritten = Date()
+            writeError = nil
+        } catch {
+            writeError = error.localizedDescription
+        }
+    }
+
+    // MARK: - Keeping the file in sync
+
+    static let keepInSyncKey = "configFileKeepInSync"
+    private var changeObservers: [NSObjectProtocol] = []
+    private var pendingSync: Task<Void, Never>?
+
+    /// Settings live in UserDefaults (modes, prompts, general) and SwiftData (dictionary); any change there
+    /// schedules a write. The write is a no-op when the bytes match, so the app's own writes don't loop.
+    private func observeSettingsChanges() {
+        guard changeObservers.isEmpty else { return }
+        for name in [UserDefaults.didChangeNotification, ModelContext.didSave] {
+            changeObservers.append(
+                NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.settingsDidChange() }
+                })
+        }
+    }
+
+    private func settingsDidChange() {
+        guard defaults.bool(forKey: Self.keepInSyncKey) else { return }
+        pendingSync?.cancel()
+        pendingSync = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled, let self else { return }
+            await self.writeCurrentSettings()
+        }
     }
 
     func openConfigFile() {
@@ -277,12 +365,7 @@ final class YapConfigLoader: ObservableObject {
 
         // Prompt
         var promptId: String?
-        if let raw = config.enhancement?.prompt,
-            let text = raw.caseInsensitiveCompare(RecommendedSetup.promptKeyword) == .orderedSame
-                ? RecommendedSetup.prompt
-                : YapConfig.resolvePrompt(
-                    raw, configDirectory: directoryURL, readFile: { try? String(contentsOf: $0, encoding: .utf8) })
-        {
+        if let raw = config.enhancement?.prompt, let text = promptText(raw) {
             let prompt = CustomPrompt(
                 id: YapConfig.promptID, title: source == .file ? "config.json" : "Recommended", promptText: text,
                 useSystemInstructions: false)
@@ -300,7 +383,7 @@ final class YapConfigLoader: ObservableObject {
         }
 
         // Enhancement provider/model
-        let provider = enhancementProvider(config)
+        let provider = Self.enhancementProvider(config)
         let model = config.enhancement?.model
         if config.enhancement?.provider != nil && provider == nil {
             skipped.append("enhancement.provider")
@@ -319,7 +402,7 @@ final class YapConfigLoader: ObservableObject {
         if config.enhancement?.enabled != nil { applied.append("enhancement.enabled") }
 
         // Transcription
-        let transcriptionKey = transcriptionSelectionKey(config)
+        let transcriptionKey = Self.transcriptionSelectionKey(config)
         if let transcriptionKey {
             defaults.set(transcriptionKey, forKey: "CurrentTranscriptionModel")
             applied.append("transcription")
@@ -361,11 +444,11 @@ final class YapConfigLoader: ObservableObject {
 
     // MARK: - Mapping
 
-    private func isOpenRouter(_ name: String?) -> Bool {
+    private static func isOpenRouter(_ name: String?) -> Bool {
         name?.caseInsensitiveCompare("openrouter") == .orderedSame
     }
 
-    private func enhancementProvider(_ config: YapConfig) -> AIProvider? {
+    private static func enhancementProvider(_ config: YapConfig) -> AIProvider? {
         guard let name = config.enhancement?.provider else { return nil }
         let normalized = name.replacingOccurrences(of: " ", with: "").lowercased()
         return AIProvider.allCases.first {
@@ -374,12 +457,38 @@ final class YapConfigLoader: ObservableObject {
     }
 
     /// OpenRouter models use the same `OpenRouter:<UUID>` key the app writes; other providers use the model name.
-    private func transcriptionSelectionKey(_ config: YapConfig) -> String? {
+    private static func transcriptionSelectionKey(_ config: YapConfig) -> String? {
         guard let model = config.transcription?.model else { return nil }
         if isOpenRouter(config.transcription?.provider) {
             return "OpenRouter:\(OpenRouterProvider.stableID(for: model).uuidString)"
         }
         return model
+    }
+
+    private func promptText(_ raw: String) -> String? {
+        raw.caseInsensitiveCompare(RecommendedSetup.promptKeyword) == .orderedSame
+            ? RecommendedSetup.prompt
+            : YapConfig.resolvePrompt(
+                raw, configDirectory: directoryURL, readFile: { try? String(contentsOf: $0, encoding: .utf8) })
+    }
+
+    /// Whether applying the v1 fields of `partial` would leave `modes` and `prompts` as they are.
+    private static func isNoOp(
+        _ partial: YapConfig, modes: [ModeConfig], prompts: [CustomPrompt], promptText: (String) -> String?
+    ) -> Bool {
+        let provider = enhancementProvider(partial)
+        let patch = YapModePatch(
+            transcriptionModel: transcriptionSelectionKey(partial),
+            aiProvider: provider?.rawValue,
+            aiModel: provider == nil ? nil : partial.enhancement?.model,
+            enhancementEnabled: partial.enhancement?.enabled,
+            promptId: partial.enhancement?.prompt == nil ? nil : YapConfig.promptID.uuidString,
+            defaultMode: partial.defaultMode)
+        if !YapConfig.sameContent(patch.apply(to: modes), modes) { return false }
+        if let raw = partial.enhancement?.prompt {
+            return prompts.first { $0.id == YapConfig.promptID }?.promptText == promptText(raw)
+        }
+        return true
     }
 
     private static func upserting(_ prompt: CustomPrompt, into prompts: [CustomPrompt]) -> [CustomPrompt] {
@@ -414,6 +523,39 @@ final class YapConfigLoader: ObservableObject {
             assert(created.count == 2 && created[1].isDefault && created[1].name == "Dictation")
             assert(created[1].isAIEnhancementEnabled && created[1].selectedPrompt == "P")
             assert(YapModePatch().apply(to: []).isEmpty)
+
+            // Export is idempotent: the written file, read back, changes nothing.
+            let promptID = YapConfig.promptID
+            let current = ModeConfig(
+                name: "Dictation", isAIEnhancementEnabled: true, selectedPrompt: promptID.uuidString,
+                selectedTranscriptionModelName: "whisper-x", selectedAIProvider: "OpenRouter", selectedAIModel: "m",
+                isDefault: true)
+            let prompts = [CustomPrompt(id: promptID, title: "config.json", promptText: "Fix.")]
+            let backup = BackupFile(
+                version: "1", customPrompts: prompts, modeConfigs: [current], modeShortcuts: nil,
+                vocabularyWords: [WordBackup(word: "Yap")], wordReplacements: ["yep": "Yap"], generalSettings: nil,
+                customEmojis: nil, customCloudModels: nil)
+            var existing = YapConfig(
+                keys: ["openrouter": "env:OPENROUTER_API_KEY", "groq": "gsk-literal"],
+                transcription: .init(provider: "local", model: "whisper-x"),
+                enhancement: .init(enabled: true, provider: "openrouter", model: "other", prompt: "Fix."),
+                defaultMode: .init(screenContext: true))
+            let noOp: (YapConfig) -> Bool = {
+                Self.isNoOp($0, modes: [current], prompts: prompts, promptText: { $0 })
+            }
+            let exported = YapConfig.exported(from: backup, existing: existing, isNoOp: noOp)
+            assert(exported.version == 2 && exported.keys == ["openrouter": "env:OPENROUTER_API_KEY"])
+            assert(exported.transcription?.model == "whisper-x")
+            // The file's model "other" no longer matches the mode's "m", so provider/model are dropped.
+            assert(exported.enhancement == .init(prompt: "Fix.") && exported.defaultMode == nil)
+            guard let data = try? exported.encoded(), let reread = try? YapConfig.decode(data) else {
+                return assertionFailure("exported config should round-trip")
+            }
+            assert(reread == exported && (try? reread.encoded()) == data)
+            assert(noOp(reread) && YapConfig.sameContent(YapConfig.mergedByID([current], reread.modes ?? []), [current]))
+            assert(YapConfig.mergedByID(prompts, reread.prompts ?? []) == prompts)
+            existing.enhancement?.prompt = "Changed in the file."
+            assert(YapConfig.exported(from: backup, existing: existing, isNoOp: noOp).enhancement == nil)
             assert(
                 OpenRouterProvider.stableID(for: "microsoft/mai-transcribe-2").uuidString
                     == "ECA8DB85-56DA-3FC6-6B4D-86D9215F15D1")

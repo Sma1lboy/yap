@@ -14,6 +14,7 @@ struct SettingsView: View {
     @ObservedObject private var mediaController = MediaController.shared
     @ObservedObject private var playbackController = PlaybackController.shared
     @ObservedObject private var configLoader = YapConfigLoader.shared
+    @AppStorage(YapConfigLoader.keepInSyncKey) private var keepConfigFileInSync = false
     @AppStorage(OnboardingSettings.completedV2Key) private var hasCompletedOnboardingV2 = true
     @AppStorage("restoreClipboardAfterPaste") private var restoreClipboardAfterPaste = true
     @AppStorage("clipboardRestoreDelay") private var clipboardRestoreDelay = 2.0
@@ -327,6 +328,26 @@ struct SettingsView: View {
                     Button("Reload") {
                         Task { await configLoader.reload() }
                     }
+                }
+
+                Button("Write Current Settings to Config") {
+                    Task { await configLoader.writeCurrentSettings() }
+                }
+                if let error = configLoader.writeError {
+                    Text(String(format: String(localized: "Could not write config file: %@"), error))
+                        .foregroundColor(AppTheme.Status.error)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if let date = configLoader.lastWritten {
+                    Text(
+                        String(
+                            format: String(localized: "Written at %@"), date.formatted(date: .omitted, time: .standard))
+                    )
+                    .settingsDescription()
+                }
+
+                Toggle(isOn: $keepConfigFileInSync) {
+                    Text("Keep Config File in Sync")
+                    Text("Writes settings changes back to the file. The previous file is kept as config.json.bak.")
                 }
             } header: {
                 Text("Config File")

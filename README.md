@@ -59,6 +59,8 @@ Schema v2 (`"version": 2`) adds whole-settings sections. They use the same JSON 
 
 v2 sections apply first, then the v1 fields on top, so `enhancement.prompt` and `defaultMode` win over the same settings inside `modes`. Empty arrays and objects count as unset. API keys are only ever read from `keys` (`env:NAME` or literal); custom model definitions are not part of the config because they can carry keys.
 
+Settings → Config File → Write Current Settings to Config goes the other way: it writes the app's current settings as a v2 file. Keys keep only the `env:NAME` references already in the file; a literal key is never written, so it disappears from the file (the keychain still has it). `defaultMode` and `enhancement.enabled` are dropped because `modes` carries them, and `transcription` / `enhancement` stay only while they match the modes. Reading the written file back changes nothing. The previous file is kept as `config.json.bak`. "Keep Config File in Sync" (off by default) does the same about 2 s after any settings change.
+
 Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription `microsoft/mai-transcribe-2` (80/82, $0.10/h), cleanup `deepseek/deepseek-v4.1-flash` (9/9 cases, ~0.5 s). Onboarding's "Recommended" option applies exactly this setup with one OpenRouter key. Re-run `setup/bench.py` after editing `VoiceInk/Resources/RecommendedPrompt.md`.
 
 ## Releasing
