@@ -37,6 +37,8 @@ struct OnboardingCloudRestoreSheet: View {
     private enum Phase {
         case signIn
         case loading
+        /// Signed in, but no Mac has synced settings to this account yet.
+        case empty
         case ready(YapConfig, any CloudConfigDocument)
         case failed(String)
     }
@@ -57,6 +59,9 @@ struct OnboardingCloudRestoreSheet: View {
             case .loading:
                 ProgressView()
                     .frame(maxWidth: .infinity)
+            case .empty:
+                Text("You're signed in. This account hasn't synced settings yet, so there's nothing to restore.")
+                    .fixedSize(horizontal: false, vertical: true)
             case .ready(let config, _):
                 summary(config.restoreSummary)
             case .failed(let message):
@@ -67,8 +72,13 @@ struct OnboardingCloudRestoreSheet: View {
 
             HStack {
                 Spacer()
-                Button("Cancel") { dismiss() }
-                    .keyboardShortcut(.cancelAction)
+                if case .empty = phase {
+                    Button("Done") { dismiss() }
+                        .keyboardShortcut(.defaultAction)
+                } else {
+                    Button("Cancel") { dismiss() }
+                        .keyboardShortcut(.cancelAction)
+                }
                 if case .failed = phase {
                     Button("Retry") { Task { await load() } }
                 }
@@ -109,8 +119,7 @@ struct OnboardingCloudRestoreSheet: View {
         phase = .loading
         do {
             guard let document = try await CloudConfigSync.shared.fetchStored() else {
-                // Nothing stored: signing in was all there was to do.
-                dismiss()
+                phase = .empty
                 return
             }
             phase = .ready(try YapConfig.decode(document.config), document)

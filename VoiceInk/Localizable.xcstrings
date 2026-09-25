@@ -30043,6 +30043,28 @@
         }
       }
     },
+    "You're signed in. This account hasn't synced settings yet, so there's nothing to restore." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du bist angemeldet. Dieses Konto hat noch keine Einstellungen synchronisiert, daher gibt es nichts wiederherzustellen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous êtes connecté. Ce compte n’a encore synchronisé aucun réglage, il n’y a donc rien à restaurer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已登录。这个账户还没有同步过设置，所以没有可恢复的内容。"
+          }
+        }
+      }
+    },
     "Your API key was rejected. Update it in Models." : {
       "localizations" : {
         "de" : {
