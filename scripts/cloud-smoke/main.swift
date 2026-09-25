@@ -108,7 +108,7 @@ Task { @MainActor in
     var me: YapCloudMe?
     await check("me") {
         me = try await cloud.fetchMe()
-        return "\(me!.email) balance \(YapCloud.formatUSD(micros: me!.balanceMicros)) cap field \(me!.supportsMonthlyCap)"
+        return "\(me!.email) balance \(YapCloud.formatUSD(micros: me!.balanceMicros)) cap \(me!.monthlyCapMicros.map { YapCloud.formatExactUSD(micros: $0) } ?? "none")"
     }
 
     await check("models") {
@@ -140,13 +140,12 @@ Task { @MainActor in
     await check("usage") {
         let usage = try await cloud.fetchUsage()
         try expect(usage.totalMicros == usage.byModel.reduce(0) { $0 + $1.micros }, "total != sum(byModel)")
-        try expect(usage.creditMicros != nil && usage.paidMicros != nil, "creditMicros/paidMicros missing")
-        try expect(usage.creditMicros! + usage.paidMicros! == usage.totalMicros,
-                   "credit \(usage.creditMicros!) + paid \(usage.paidMicros!) != total \(usage.totalMicros)")
+        try expect(usage.creditMicros + usage.paidMicros == usage.totalMicros,
+                   "credit \(usage.creditMicros) + paid \(usage.paidMicros) != total \(usage.totalMicros)")
         if let spent = me?.monthSpentMicros {
             try expect(usage.totalMicros == spent, "usage \(usage.totalMicros) != me.monthSpentMicros \(spent)")
         }
-        return "\(usage.totalMicros) micros (credit \(usage.creditMicros!) + paid \(usage.paidMicros!)) over \(usage.byModel.count) models, matches monthSpent"
+        return "\(usage.totalMicros) micros (credit \(usage.creditMicros) + paid \(usage.paidMicros)) over \(usage.byModel.count) models, matches monthSpent"
     }
 
     await check("devices") {
@@ -164,7 +163,6 @@ Task { @MainActor in
 
     await check("limits set/clear") {
         guard let original = me else { return "SKIP: /v1/me failed" }
-        guard original.supportsMonthlyCap else { return "SKIP: server has no monthly cap" }
         do {
             try await cloud.setMonthlyCap(micros: 100)
             try expect(cloud.me?.monthlyCapMicros == 100, "cap after set = \(String(describing: cloud.me?.monthlyCapMicros))")

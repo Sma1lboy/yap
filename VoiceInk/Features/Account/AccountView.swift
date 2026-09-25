@@ -205,9 +205,9 @@ private struct SignedInSections: View {
                             .monospacedDigit()
                     }
                 }
-                if let credit = spend.creditMicros, credit > 0 {
+                if spend.creditMicros > 0 {
                     LabeledContent("Covered by sign-up credit") {
-                        Text(YapCloud.formatLedgerAmount(micros: credit, kind: "usage"))
+                        Text(YapCloud.formatLedgerAmount(micros: spend.creditMicros, kind: "usage"))
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                     }
@@ -234,9 +234,7 @@ private struct SignedInSections: View {
             }
         }
 
-        if cloud.me?.supportsMonthlyCap == true {
-            MonthlyCapSection()
-        }
+        MonthlyCapSection()
 
         Section("Recent Activity") {
             if !cloud.isLedgerLoaded {
@@ -277,7 +275,7 @@ private struct SignedInSections: View {
 
     /// nil until this month has 3+ days of usage (see YapCloudMonthlySpend.runway).
     private var balanceRunway: YapCloudMonthlySpend.Runway? {
-        guard let balance = cloud.balanceMicros, let spend = cloud.monthlySpend, let since = spend.since else { return nil }
+        guard let balance = cloud.balanceMicros, let spend = cloud.monthlySpend, let since = spend.sinceDate else { return nil }
         return YapCloudMonthlySpend.runway(
             balanceMicros: balance, spentMicros: spend.totalMicros,
             elapsedSeconds: Int64(Date().timeIntervalSince(since)))
