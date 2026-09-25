@@ -19323,28 +19323,6 @@
         }
       }
     },
-    "Read more about custom local models" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mehr über eigene lokale Modelle erfahren"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En savoir plus sur les modèles locaux personnalisés"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "进一步了解自定本地模型"
-          }
-        }
-      }
-    },
     "Real-time" : {
       "localizations" : {
         "de" : {

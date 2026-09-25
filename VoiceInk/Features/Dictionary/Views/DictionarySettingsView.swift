@@ -91,8 +91,7 @@ struct DictionarySettingsView: View {
     private var headerSection: some View {
         AppScreenHeader(
             title: "Dictionary",
-            infoMessage: dictionaryInfoMessage,
-            infoURL: "https://github.com/Sma1lboy/yap#readme"
+            infoMessage: dictionaryInfoMessage
         ) {
             HStack(spacing: 8) {
                 if hasAutoLearnFailure {
