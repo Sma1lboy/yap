@@ -156,6 +156,21 @@ final class YapCloud: ObservableObject {
         try Self.decode(YapCloudLedger.self, from: try await send("GET", "/v1/ledger?limit=\(limit)")).entries
     }
 
+    /// `PUT /v1/me/limits`; nil removes the cap. Refreshes `me` so Account shows the new cap.
+    @MainActor
+    func setMonthlyCap(micros: Int64?) async throws {
+        _ = try await send("PUT", "/v1/me/limits", json: Self.limitsBody(capMicros: micros))
+        me = try await fetchMe()
+    }
+
+    static func limitsBody(capMicros: Int64?) -> [String: Any] {
+        ["monthlyCapMicros": capMicros.map { NSNumber(value: $0) } ?? NSNull()]
+    }
+
+    /// Cap presets in whole dollars; a custom cap is 1–10 000.
+    static let monthlyCapPresets = [5, 10, 20]
+    static func isValidMonthlyCap(_ dollars: Int) -> Bool { (1...10_000).contains(dollars) }
+
     /// Usage spend in `[since, now)`, summed by the server. `since` is the local start of the month for "This Month".
     func fetchUsage(since: Date) async throws -> YapCloudMonthlySpend {
         let formatter = ISO8601DateFormatter()
@@ -288,6 +303,13 @@ final class YapCloud: ObservableObject {
                 duration: 8,
                 onTap: { showAddFunds() },
                 actionButton: (label: String(localized: "Add Funds"), action: { showAddFunds() }))
+        case YapCloudError.monthlyCapReached:
+            NotificationManager.shared.showNotification(
+                title: YapCloudError.monthlyCapReached.errorDescription ?? "",
+                type: .error,
+                duration: 8,
+                onTap: { showAddFunds() },
+                actionButton: (label: String(localized: "Adjust Cap"), action: { showAddFunds() }))
         case YapCloudError.notSignedIn:
             // The token was rejected (revoked or expired); drop it so Account shows the sign-in form.
             shared.clearSession()
@@ -383,6 +405,8 @@ final class YapCloud: ObservableObject {
 enum YapCloudError: LocalizedError, Equatable {
     case notSignedIn
     case insufficientBalance
+    /// 402 MONTHLY_CAP_REACHED: the user's own monthly spending cap, not an empty balance.
+    case monthlyCapReached
     case invalidAmount
     case keychainUnavailable
     case versionConflict(current: YapCloudConfigDocument?)
@@ -396,6 +420,8 @@ enum YapCloudError: LocalizedError, Equatable {
         let envelope = try? JSONDecoder().decode(Envelope.self, from: body)
         let code = envelope?.error?.code
         switch status {
+        case 402 where code == "MONTHLY_CAP_REACHED":
+            self = .monthlyCapReached
         case 402:
             self = .insufficientBalance
         case 401 where authenticated:
@@ -417,6 +443,8 @@ enum YapCloudError: LocalizedError, Equatable {
             return String(localized: "Not signed in to Yap Cloud. Sign in under Account.")
         case .insufficientBalance:
             return String(localized: "Your Yap Cloud balance has run out. Add funds under Account to keep going.")
+        case .monthlyCapReached:
+            return String(localized: "You've reached your monthly Yap Cloud spending cap. Raise it under Account to keep going.")
         case .invalidAmount:
             return String(
                 format: String(localized: "Enter a whole-dollar amount between $%lld and $%lld."),
@@ -541,14 +569,31 @@ struct YapCloudMe: Decodable {
     let id: YapCloudScalar
     let email: String
     let balanceMicros: Int64
+    /// False until paygate ships spending caps (`monthlyCapMicros` absent from /v1/me); Account hides the cap UI.
+    let supportsMonthlyCap: Bool
+    /// nil = no cap.
+    let monthlyCapMicros: Int64?
+    /// This month's spend as the server counts it for the cap.
+    let monthSpentMicros: Int64?
 
-    enum CodingKeys: String, CodingKey { case id, email, balanceUsd, balanceMicros }
+    enum CodingKeys: String, CodingKey {
+        case id, email, balanceUsd, balanceMicros, monthlyCapMicros, monthSpentMicros
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(YapCloudScalar.self, forKey: .id)
         email = try c.decode(String.self, forKey: .email)
         balanceMicros = try c.decodeMicros(.balanceMicros, fallback: .balanceUsd)
+        supportsMonthlyCap = c.contains(.monthlyCapMicros)
+        monthlyCapMicros = try c.decodeIfPresent(Int64.self, forKey: .monthlyCapMicros)
+        monthSpentMicros = try c.decodeIfPresent(Int64.self, forKey: .monthSpentMicros)
+    }
+
+    /// Known to be at or over the cap, so a billed call would get 402 MONTHLY_CAP_REACHED.
+    var isAtMonthlyCap: Bool {
+        guard let cap = monthlyCapMicros, let spent = monthSpentMicros else { return false }
+        return spent >= cap
     }
 }
 
@@ -766,6 +811,23 @@ struct YapCloudConfigDocument: Equatable {
             assert(usage.byModel[0] == .init(model: "a", micros: 100, calls: 2) && usage.byModel[1].model == nil)
             assert(usage.byModel[5].micros == 5)
             assert(try! JSONDecoder().decode(YapCloudMonthlySpend.self, from: json(#"{"totalMicros":0,"byModel":[]}"#)).topModels.isEmpty)
+
+            // Monthly cap (fake /v1/me and 402 bodies until paygate ships it)
+            let noCapField = try! JSONDecoder().decode(YapCloudMe.self, from: json(#"{"id":"u","email":"a@b.c","balanceMicros":5}"#))
+            assert(!noCapField.supportsMonthlyCap && noCapField.monthlyCapMicros == nil && !noCapField.isAtMonthlyCap)
+            let uncapped = try! JSONDecoder().decode(
+                YapCloudMe.self, from: json(#"{"id":"u","email":"a@b.c","balanceMicros":5,"monthlyCapMicros":null,"monthSpentMicros":900}"#))
+            assert(uncapped.supportsMonthlyCap && uncapped.monthlyCapMicros == nil && !uncapped.isAtMonthlyCap)
+            let capped = try! JSONDecoder().decode(
+                YapCloudMe.self,
+                from: json(#"{"id":"u","email":"a@b.c","balanceMicros":5,"monthlyCapMicros":5000000,"monthSpentMicros":5000000}"#))
+            assert(capped.monthlyCapMicros == 5_000_000 && capped.isAtMonthlyCap)
+            assert(
+                YapCloudError(status: 402, body: json(#"{"error":{"code":"MONTHLY_CAP_REACHED","message":"x"}}"#), authenticated: true)
+                    == .monthlyCapReached)
+            assert(String(data: try! JSONSerialization.data(withJSONObject: limitsBody(capMicros: nil)), encoding: .utf8) == #"{"monthlyCapMicros":null}"#)
+            assert(String(data: try! JSONSerialization.data(withJSONObject: limitsBody(capMicros: 20_000_000)), encoding: .utf8) == #"{"monthlyCapMicros":20000000}"#)
+            assert(isValidMonthlyCap(1) && isValidMonthlyCap(10_000) && !isValidMonthlyCap(0) && !isValidMonthlyCap(10_001))
 
             // Top-up amounts
             assert(isValidTopUp(5) && isValidTopUp(20) && isValidTopUp(500))

@@ -5,6 +5,20 @@ import SwiftUI
 struct AccountView: View {
     @ObservedObject private var cloud = YapCloud.shared
     @EnvironmentObject private var transcriptionModelManager: TranscriptionModelManager
+    @State private var isShowingAllModels = false
+    @State private var modelQuery = ""
+
+    /// YapCloudPicks in order, transcription first; models missing from the catalog are skipped.
+    private var recommendedModels: [YapCloudModel] {
+        (YapCloudPicks.transcription + YapCloudPicks.enhancement).compactMap { id in cloud.models.first { $0.id == id } }
+    }
+
+    private var allModels: [YapCloudModel] {
+        let q = modelQuery.trimmingCharacters(in: .whitespaces)
+        let models = cloud.transcriptionModels + cloud.chatModels
+        guard !q.isEmpty else { return models }
+        return models.filter { $0.id.localizedCaseInsensitiveContains(q) || $0.displayName.localizedCaseInsensitiveContains(q) }
+    }
 
     var body: some View {
         Form {
@@ -35,13 +49,13 @@ struct AccountView: View {
     private var modelsSection: some View {
         if !cloud.models.isEmpty {
             Section {
-                DisclosureGroup("Transcription") {
-                    ForEach(cloud.transcriptionModels, id: \.id) { model in
-                        ModelPriceRow(model: model)
-                    }
+                ForEach(recommendedModels, id: \.id) { model in
+                    ModelPriceRow(model: model)
                 }
-                DisclosureGroup("Enhancement") {
-                    ForEach(cloud.chatModels, id: \.id) { model in
+                DisclosureGroup("All Models", isExpanded: $isShowingAllModels) {
+                    TextField("Search models", text: $modelQuery)
+                        .textFieldStyle(.roundedBorder)
+                    ForEach(allModels, id: \.id) { model in
                         ModelPriceRow(model: model)
                     }
                 }
@@ -150,8 +164,19 @@ private struct SignedInSections: View {
         if let spend = cloud.monthlySpend {
             Section {
                 LabeledContent("Total") {
-                    Text(YapCloud.formatLedgerAmount(micros: spend.totalMicros, kind: "usage"))
+                    if let cap = cloud.me?.monthlyCapMicros {
+                        let spent = cloud.me?.monthSpentMicros ?? spend.totalMicros
+                        Text(
+                            String(
+                                format: String(localized: "%@ used of %@ cap"),
+                                YapCloud.formatUSD(micros: spent), YapCloud.formatUSD(micros: cap))
+                        )
                         .monospacedDigit()
+                        .foregroundStyle(spent >= cap ? AppTheme.Status.error : AppTheme.Text.primary)
+                    } else {
+                        Text(YapCloud.formatLedgerAmount(micros: spend.totalMicros, kind: "usage"))
+                            .monospacedDigit()
+                    }
                 }
                 ForEach(spend.topModels, id: \.model) { item in
                     LabeledContent {
@@ -167,6 +192,10 @@ private struct SignedInSections: View {
             } header: {
                 Text("This Month")
             }
+        }
+
+        if cloud.me?.supportsMonthlyCap == true {
+            MonthlyCapSection()
         }
 
         Section("Recent Activity") {
@@ -416,6 +445,105 @@ struct YapCloudQuickTopUp: View {
             defer { isOpening = false }
             do {
                 NSWorkspace.shared.open(try await YapCloud.shared.checkoutURL(amountUSD: amount))
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+}
+
+/// Monthly spending cap: None / $5 / $10 / $20 / custom whole dollars. Shown once /v1/me reports caps.
+private struct MonthlyCapSection: View {
+    private enum Choice: Hashable {
+        case none, preset(Int), custom
+    }
+
+    @ObservedObject private var cloud = YapCloud.shared
+    @State private var choice: Choice = .none
+    @State private var customDollars = ""
+    @State private var isSaving = false
+    @State private var errorMessage: String?
+
+    private var savedCapMicros: Int64? { cloud.me?.monthlyCapMicros }
+
+    var body: some View {
+        Section {
+            Picker("Monthly Cap", selection: $choice) {
+                Text("No Cap").tag(Choice.none)
+                ForEach(YapCloud.monthlyCapPresets, id: \.self) { dollars in
+                    Text(verbatim: "$\(dollars)").tag(Choice.preset(dollars))
+                }
+                Text("Custom").tag(Choice.custom)
+            }
+            if choice == .custom {
+                LabeledContent("Cap (USD)") {
+                    TextField("", text: $customDollars, prompt: Text(verbatim: "50"))
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 100)
+                }
+            }
+            HStack {
+                if let errorMessage {
+                    Text(errorMessage)
+                        .font(.caption)
+                        .foregroundStyle(AppTheme.Status.error)
+                }
+                Spacer()
+                if isSaving { ProgressView().controlSize(.small) }
+                Button("Save", action: save)
+                    .disabled(isSaving || pendingCapMicros == .invalid || pendingCapMicros == .value(savedCapMicros))
+            }
+        } header: {
+            Text("Monthly Cap")
+        } footer: {
+            Text("When this month's spending reaches the cap, Yap Cloud stops charging until next month or until you raise it.")
+        }
+        .onAppear(perform: loadSaved)
+        .onChange(of: savedCapMicros) { _, _ in loadSaved() }
+    }
+
+    private enum Pending: Equatable {
+        case value(Int64?)
+        case invalid
+    }
+
+    private var pendingCapMicros: Pending {
+        switch choice {
+        case .none: return .value(nil)
+        case .preset(let dollars): return .value(Int64(dollars) * 1_000_000)
+        case .custom:
+            guard let dollars = Int(customDollars.trimmingCharacters(in: CharacterSet(charactersIn: "$ "))),
+                YapCloud.isValidMonthlyCap(dollars)
+            else { return .invalid }
+            return .value(Int64(dollars) * 1_000_000)
+        }
+    }
+
+    private func loadSaved() {
+        guard let cap = savedCapMicros else {
+            choice = .none
+            return
+        }
+        let dollars = Int(cap / 1_000_000)
+        if cap % 1_000_000 == 0, YapCloud.monthlyCapPresets.contains(dollars) {
+            choice = .preset(dollars)
+        } else {
+            choice = .custom
+            customDollars = String(dollars)
+        }
+    }
+
+    private func save() {
+        guard case .value(let micros) = pendingCapMicros else {
+            errorMessage = String(localized: "Enter a whole-dollar cap between $1 and $10,000.")
+            return
+        }
+        isSaving = true
+        errorMessage = nil
+        Task { @MainActor in
+            defer { isSaving = false }
+            do {
+                try await cloud.setMonthlyCap(micros: micros)
             } catch {
                 errorMessage = error.localizedDescription
             }

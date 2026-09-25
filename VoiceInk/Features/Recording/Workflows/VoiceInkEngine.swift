@@ -561,6 +561,13 @@ class VoiceInkEngine: NSObject, ObservableObject {
                 YapCloud.showAddFunds
             )
         }
+        if cloud.me?.isAtMonthlyCap == true {
+            return (
+                YapCloudError.monthlyCapReached.errorDescription ?? "",
+                String(localized: "Adjust Cap"),
+                YapCloud.showAddFunds
+            )
+        }
         if let balance = cloud.balanceMicros, balance <= 0 {
             return (
                 YapCloudError.insufficientBalance.errorDescription ?? "",

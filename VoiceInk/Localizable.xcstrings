@@ -311,6 +311,28 @@
         }
       }
     },
+    "%@ used of %@ cap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ von %2$@ Limit verbraucht"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ utilisés sur un plafond de %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已用 %1$@ / 上限 %2$@"
+          }
+        }
+      }
+    },
     "%@ vs last week" : {
       "localizations" : {
         "de" : {
@@ -4875,6 +4897,28 @@
         }
       }
     },
+    "Adjust Cap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limit anpassen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le plafond"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调整上限"
+          }
+        }
+      }
+    },
     "Adjustment" : {
       "localizations" : {
         "de" : {
@@ -4964,6 +5008,50 @@
         }
       }
     },
+    "All Models" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Modelle"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les modèles"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部模型"
+          }
+        }
+      }
+    },
+    "All Models…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Modelle …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les modèles…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部模型…"
+          }
+        }
+      }
+    },
     "All Time" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4983,6 +5071,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部时间"
+          }
+        }
+      }
+    },
+    "All Yap Cloud Models" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Yap-Cloud-Modelle"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les modèles Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 全部模型"
+          }
+        }
+      }
+    },
+    "All Yap Cloud Models…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Yap-Cloud-Modelle …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les modèles Yap Cloud…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 全部模型…"
           }
         }
       }
@@ -6851,6 +6983,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法重试：未找到音频文件"
+          }
+        }
+      }
+    },
+    "Cap (USD)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limit (USD)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plafond (USD)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上限(美元)"
           }
         }
       }
@@ -11669,6 +11823,28 @@
         }
       }
     },
+    "Enter a whole-dollar cap between $1 and $10,000." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib ein Limit in ganzen Dollar zwischen $1 und $10.000 ein."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez un plafond entier en dollars entre 1 $ et 10 000 $."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入 $1 到 $10,000 之间的整数美元上限。"
+          }
+        }
+      }
+    },
     "Enter the 6-digit code sent to %@." : {
       "localizations" : {
         "de" : {
@@ -16114,6 +16290,28 @@
         }
       }
     },
+    "Monthly Cap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monatslimit"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plafond mensuel"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每月上限"
+          }
+        }
+      }
+    },
     "Monthly Productivity" : {
       "comment" : "A title for a productivity chart.",
       "isCommentAutoGenerated" : true,
@@ -16631,6 +16829,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无 App"
+          }
+        }
+      }
+    },
+    "No Cap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Limit"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun plafond"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无"
           }
         }
       }
@@ -22535,6 +22755,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "搜索 App、网站或触发词…"
+          }
+        }
+      }
+    },
+    "Search models" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modelle suchen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher des modèles"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索模型"
           }
         }
       }
@@ -28921,6 +29163,28 @@
         }
       }
     },
+    "When this month's spending reaches the cap, Yap Cloud stops charging until next month or until you raise it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn die Ausgaben dieses Monats das Limit erreichen, bucht Yap Cloud nichts mehr ab, bis zum nächsten Monat oder bis du es erhöhst."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quand les dépenses du mois atteignent le plafond, Yap Cloud cesse de facturer jusqu'au mois suivant ou jusqu'à ce que vous le releviez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本月花费达到上限后，Yap Cloud 会停止扣费，直到下个月或你调高上限。"
+          }
+        }
+      }
+    },
     "Whisper Prompt" : {
       "comment" : "Whisper prompt section title.",
       "isCommentAutoGenerated" : true,
@@ -30303,6 +30567,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下次启动 App 时，你会再次看到介绍页面。"
+          }
+        }
+      }
+    },
+    "You've reached your monthly Yap Cloud spending cap. Raise it under Account to keep going." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast dein monatliches Yap-Cloud-Ausgabenlimit erreicht. Erhöhe es unter „Konto“, um weiterzumachen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez atteint votre plafond de dépenses mensuel Yap Cloud. Relevez-le dans Compte pour continuer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本月 Yap Cloud 花费已达到你设的上限。在「账户」里调高上限后即可继续。"
           }
         }
       }
