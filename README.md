@@ -51,6 +51,8 @@ All of Yap's settings can live in one file, `~/.config/yap/config.json` (or `$XD
 
 Yap reads the file at every launch. Fields that are present override the in-app settings; missing or empty fields are left alone. **Open** creates the file from a template if it doesn't exist, **Show in Finder** reveals it, and **Reload** applies it again without restarting. The status line says which fields were applied and which were skipped (for example a key whose `env:` variable isn't set).
 
+Editing by hand: Yap keeps `config.schema.json` next to config.json (written at launch) and puts `"$schema": "./config.schema.json"` at the top of the files it writes. Editors that read JSON Schema (VS Code does by default) then complete field names and allowed values and flag typos as you type; add that line yourself to an older file.
+
 A minimal file (schema v1):
 
 ```json
@@ -133,7 +135,7 @@ Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription 
 
 Before tagging, run `make cloud-smoke` (needs `YAP_CLOUD_SMOKE_TOKEN`; the command prints how to get one): it compiles the real Yap Cloud client against small stubs and checks it against live paygate — account, ledger paging, usage, models, config 409s, devices, the monthly cap (restored afterwards) and the 402s at a zero balance. It exits non-zero on any FAIL.
 
-Also run `make sync-e2e` after changing config sync (needs the Railway CLI logged in, for sign-in codes from paygate's log): it registers a throwaway account with two devices, runs the real sync code as two Macs against live paygate — first write and restore, concurrent edits with a real 409 and merge, delete, edit-after-delete, restoring a version without entries coming back — prints PASS/FAIL per scenario and deletes the account at the end.
+Also run `make sync-e2e` after changing config sync (needs the Railway CLI logged in: tokens come from paygate's `scripts/issue-token.ts` over `railway ssh`, falling back to sign-in codes from paygate's log): it registers a throwaway account with two devices, runs the real sync code as two Macs against live paygate — first write and restore, concurrent edits with a real 409 and merge, delete, edit-after-delete, restoring a version without entries coming back — prints PASS/FAIL per scenario and deletes the account at the end.
 
 Push a tag `vX.Y.Z`. CI (`.github/workflows/release.yml`) builds on macOS 26, signs with the "Yap Self-Signed" certificate, publishes `Yap.zip` to GitHub Releases, then commits the new `appcast.xml` item (Sparkle EdDSA-signed) and the `Casks/yap.rb` version in one commit to `main`. Build numbers are `1000 + run number`. CI also builds every push to `main` and once a week, so caches stay warm in `main`'s scope: the whisper.cpp framework, the compiled Swift packages (mlx, FluidAudio, TranscribeCpp — the stable local-model modules), and Xcode 26's content-hashed compilation cache for the app's own sources (a fresh checkout doesn't force a full recompile). A release takes about 3–4 minutes; changing `Package.resolved` triggers one full rebuild (~14 minutes).
 
