@@ -41,6 +41,11 @@ struct VoiceInkApp: App {
         URLCache.shared = URLCache(memoryCapacity: 0, diskCapacity: 0)
 
         AppDefaults.registerDefaults()
+        // Before onboarding can complete in this session, so a fresh install isn't mistaken for an update.
+        ReleaseNotesPresenter.shared.showsOnNextMainWindow = ReleaseNotes.recordLaunch()
+        #if DEBUG
+            ReleaseNotes.selfCheck()
+        #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
         OnboardingV2Migration.prepareIfNeeded()

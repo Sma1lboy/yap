@@ -39,12 +39,28 @@ struct ContentView: View {
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "ContentView")
     private static let detailBackgroundTintOpacity = 0.50
     @EnvironmentObject private var navigation: MainWindowNavigation
+    @ObservedObject private var releaseNotes = ReleaseNotesPresenter.shared
 
     var body: some View {
         HStack(spacing: 0) {
             AppSidebar(selectedView: $navigation.selectedView)
 
             detailContent
+        }
+        .sheet(
+            isPresented: Binding(
+                get: { releaseNotes.notes != nil },
+                set: { if !$0 { releaseNotes.notes = nil } })
+        ) {
+            if let notes = releaseNotes.notes {
+                ReleaseNotesSheet(notes: notes)
+            }
+        }
+        .onAppear {
+            // First launch after an update: show this version's notes once (nothing if none are bundled).
+            guard releaseNotes.showsOnNextMainWindow else { return }
+            releaseNotes.showsOnNextMainWindow = false
+            releaseNotes.showCurrent()
         }
         .frame(minWidth: AppWindowLayout.minimumWidth, maxWidth: .infinity)
         .frame(minHeight: AppWindowLayout.minimumHeight)
