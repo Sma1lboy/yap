@@ -829,12 +829,29 @@ struct YapCloudMonthlySpend: Decodable, Equatable {
 
     let totalMicros: Int64
     let byModel: [ModelSpend]
+    /// Start of the window (paygate default: 1st of the current UTC month).
+    let since: Date?
 
     var topModels: [ModelSpend] { Array(byModel.prefix(5)) }
 
     /// This user's average cost per call for `model` this month, from their own usage; nil under 3 calls.
     func averageCallMicros(model: String) -> Int64? {
         byModel.first { $0.model == model }.flatMap { YapCloudMonthlySpend.averageMicros($0.micros, calls: $0.calls) }
+    }
+
+    struct Runway: Equatable {
+        let monthlyMicros: Int64
+        /// Whole days the balance lasts at this month's daily average.
+        let days: Int64
+    }
+
+    /// Balance ÷ this month's daily average spend. nil with under 3 days of the month elapsed, no spend, no balance,
+    /// or a daily average below one micro. Integer micros throughout.
+    static func runway(balanceMicros: Int64, spentMicros: Int64, elapsedSeconds: Int64) -> Runway? {
+        guard elapsedSeconds >= 3 * 86_400, spentMicros > 0, balanceMicros > 0 else { return nil }
+        let dailyMicros = spentMicros * 86_400 / elapsedSeconds
+        guard dailyMicros > 0 else { return nil }
+        return Runway(monthlyMicros: dailyMicros * 30, days: balanceMicros / dailyMicros)
     }
 
     /// Rounded half-up integer mean; provider price units differ, so a real per-call average is what's shown.
@@ -844,12 +861,13 @@ struct YapCloudMonthlySpend: Decodable, Equatable {
         return (micros + n / 2) / n
     }
 
-    enum CodingKeys: String, CodingKey { case totalMicros, totalUsd, byModel }
+    enum CodingKeys: String, CodingKey { case totalMicros, totalUsd, byModel, since }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         totalMicros = try c.decodeMicros(.totalMicros, fallback: .totalUsd)
         byModel = try c.decode([ModelSpend].self, forKey: .byModel)
+        since = try c.decodeIfPresent(String.self, forKey: .since).flatMap(YapCloud.parseDate)
     }
 }
 
@@ -983,6 +1001,16 @@ struct YapCloudConfigDocument: Equatable {
             assert(formatLedgerAmount(micros: 10_000_000, kind: "topup") == "$10.00")
             assert(999_999 < lowBalanceMicros && !(1_000_000 < lowBalanceMicros))
 
+            // Runway: balance ÷ daily average; hidden early in the month or without spend
+            let day: Int64 = 86_400
+            assert(YapCloudMonthlySpend.runway(balanceMicros: 10_000_000, spentMicros: 3_000_000, elapsedSeconds: 3 * day)
+                == .init(monthlyMicros: 30_000_000, days: 10))
+            assert(YapCloudMonthlySpend.runway(balanceMicros: 10_000_000, spentMicros: 3_000_000, elapsedSeconds: 3 * day - 1) == nil)
+            assert(YapCloudMonthlySpend.runway(balanceMicros: 0, spentMicros: 3_000_000, elapsedSeconds: 10 * day) == nil)
+            assert(YapCloudMonthlySpend.runway(balanceMicros: 5, spentMicros: 0, elapsedSeconds: 10 * day) == nil)
+            assert(YapCloudMonthlySpend.runway(balanceMicros: 5, spentMicros: 2, elapsedSeconds: 10 * day) == nil)
+            assert(YapCloudMonthlySpend.runway(balanceMicros: 999_999, spentMicros: 10_000_000, elapsedSeconds: 10 * day)?.days == 0)
+
             // Average per call
             assert(YapCloudMonthlySpend.averageMicros(184, calls: 2) == nil)
             assert(YapCloudMonthlySpend.averageMicros(184, calls: 3) == 61 && YapCloudMonthlySpend.averageMicros(185, calls: 2) == nil)
@@ -998,6 +1026,7 @@ struct YapCloudConfigDocument: Equatable {
                      {"model":"c","micros":20,"calls":1},{"model":"d","micros":10,"calls":1},{"model":"e","micros":8,"calls":1},
                      {"model":"f","usd":"0.000005","calls":1}]}
                     """#))
+            assert(usage.since == parseDate("2026-09-01T00:00:00.000Z"))
             assert(usage.totalMicros == 193 && usage.byModel.count == 6 && usage.topModels.count == 5)
             assert(usage.byModel[0] == .init(model: "a", micros: 100, calls: 2) && usage.byModel[1].model == nil)
             assert(usage.byModel[5].micros == 5)

@@ -5992,6 +5992,72 @@
         }
       }
     },
+    "At this month's pace (%@ a month), your balance lasts about %lld days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Verbrauch dieses Monats (%1$@ pro Monat) reicht dein Guthaben etwa %2$lld Tage."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au rythme de ce mois (%1$@ par mois), votre solde dure environ %2$lld jours."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按本月用量(约每月 %1$@),余额大约还能用 %2$lld 天。"
+          }
+        }
+      }
+    },
+    "At this month's pace (%@ a month), your balance lasts less than a day." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Verbrauch dieses Monats (%@ pro Monat) reicht dein Guthaben weniger als einen Tag."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au rythme de ce mois (%@ par mois), votre solde dure moins d'un jour."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按本月用量(约每月 %@),余额不够用一天。"
+          }
+        }
+      }
+    },
+    "At this month's pace (%@ a month), your balance lasts more than a year." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Verbrauch dieses Monats (%@ pro Monat) reicht dein Guthaben über ein Jahr."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au rythme de ce mois (%@ par mois), votre solde dure plus d'un an."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按本月用量(约每月 %@),余额够用一年以上。"
+          }
+        }
+      }
+    },
     "Audio" : {
       "extractionState" : "manual",
       "localizations" : {
