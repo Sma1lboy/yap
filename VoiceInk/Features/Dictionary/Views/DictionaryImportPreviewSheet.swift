@@ -223,6 +223,7 @@ struct DictionaryImportPreviewSheet: View {
     private var footer: some View {
         HStack(spacing: 10) {
             AppActionButton("Cancel", action: onCancel)
+                .keyboardShortcut(.cancelAction)
 
             Spacer()
 

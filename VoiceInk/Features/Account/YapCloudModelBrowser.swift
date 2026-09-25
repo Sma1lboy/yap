@@ -35,6 +35,7 @@ struct YapCloudModelBrowser: View {
                 Text(title).font(.headline)
                 Spacer()
                 Button("Done") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
             }
             TextField("Search models", text: $query)
                 .textFieldStyle(.roundedBorder)
@@ -51,11 +52,14 @@ struct YapCloudModelBrowser: View {
                             }
                         }
                         Spacer()
-                        if model.id == selectedID { Image(systemName: "checkmark") }
+                        if model.id == selectedID {
+                            Image(systemName: "checkmark").accessibilityHidden(true)
+                        }
                     }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(model.id == selectedID ? .isSelected : [])
             }
             .listStyle(.inset)
         }

@@ -314,6 +314,12 @@ struct SettingsView: View {
                 Text("Export all settings, or choose specific categories when importing a backup.")
             }
 
+            Section("History") {
+                LabeledContent("Auto-delete transcripts and audio") {
+                    Button("History Settings…") { isShowingHistorySettings = true }
+                }
+            }
+
             Section("Diagnostics") {
                 DiagnosticsSettingsView()
 
@@ -351,6 +357,7 @@ struct SettingsView: View {
         .sheet(isPresented: $isShowingHistorySettings) {
             HistorySettingsPanel(onClose: { isShowingHistorySettings = false })
                 .frame(width: 480, height: 560)
+                .onExitCommand { isShowingHistorySettings = false }
         }
         .alert("Reset Onboarding", isPresented: $showResetOnboardingAlert) {
             Button("Cancel", role: .cancel) {}

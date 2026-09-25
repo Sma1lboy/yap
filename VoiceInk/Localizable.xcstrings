@@ -5299,28 +5299,6 @@
         }
       }
     },
-    "Amount" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Betrag"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Montant"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "金额"
-          }
-        }
-      }
-    },
     "Amount (USD)" : {
       "localizations" : {
         "de" : {
@@ -8949,6 +8927,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自定"
+          }
+        }
+      }
+    },
+    "Custom Amount (USD)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigener Betrag (USD)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montant personnalisé (USD)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义金额（美元）"
           }
         }
       }
@@ -20257,28 +20257,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在准备下载…"
-          }
-        }
-      }
-    },
-    "Preset" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vorgabe"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prédéfini"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "常用金额"
           }
         }
       }

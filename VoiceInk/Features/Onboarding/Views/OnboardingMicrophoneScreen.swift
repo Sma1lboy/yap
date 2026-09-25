@@ -25,7 +25,8 @@ struct OnboardingMicrophoneScreen: View {
                 isPrimaryEnabled: selectedDevice != nil,
                 onLeading: onBack,
                 onPrimary: saveSelectionAndContinue,
-                isPrimaryDefaultAction: true
+                isPrimaryDefaultAction: true,
+                isLeadingCancelAction: true
             )
         }
         .onAppear {

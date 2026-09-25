@@ -91,6 +91,9 @@ struct OnboardingBottomBar: View {
     /// Return triggers the primary button. Only for screens without text input: on the others Return
     /// belongs to the field (API key, sign-in code, practice editor) and must not skip ahead.
     var isPrimaryDefaultAction = false
+    /// Esc triggers the leading (Back) button. Same screens as `isPrimaryDefaultAction`: never on the
+    /// practice screens, where Esc belongs to the recorder.
+    var isLeadingCancelAction = false
 
     private enum Metrics {
         static let controlButtonWidth: CGFloat = 132
@@ -142,6 +145,7 @@ struct OnboardingBottomBar: View {
                     .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.control))
             }
             .buttonStyle(.plain)
+            .keyboardShortcut(isLeadingCancelAction ? .cancelAction : nil)
         } else {
             AppTheme.Surface.clear
                 .frame(width: Metrics.controlButtonWidth, height: Metrics.buttonHeight)

@@ -74,8 +74,8 @@ struct AccountView: View {
 
 private struct SignedInSections: View {
     @ObservedObject private var cloud = YapCloud.shared
-    @State private var amount = YapCloud.checkoutPresets[1]
-    @State private var isCustomAmount = false
+    /// A preset in dollars, or nil for Custom (same shape as the Monthly Cap picker).
+    @State private var amount: Int? = YapCloud.checkoutPresets[1]
     @State private var customAmount = ""
     @State private var isOpeningCheckout = false
     @State private var errorMessage: String?
@@ -126,24 +126,20 @@ private struct SignedInSections: View {
         }
 
         Section {
-            Picker("Amount", selection: $isCustomAmount) {
-                Text("Preset").tag(false)
-                Text("Custom").tag(true)
+            Picker("Amount (USD)", selection: $amount) {
+                ForEach(YapCloud.checkoutPresets, id: \.self) { preset in
+                    Text(verbatim: "$\(preset)").tag(Int?.some(preset))
+                }
+                Text("Custom").tag(Int?.none)
             }
             .pickerStyle(.segmented)
-            if isCustomAmount {
-                LabeledContent("Amount (USD)") {
+            .onChange(of: amount) { _, _ in errorMessage = nil }
+            if amount == nil {
+                LabeledContent("Custom Amount (USD)") {
                     TextField("", text: $customAmount, prompt: Text(verbatim: "50"))
                         .multilineTextAlignment(.trailing)
                         .frame(width: 100)
                 }
-            } else {
-                Picker("Amount (USD)", selection: $amount) {
-                    ForEach(YapCloud.checkoutPresets, id: \.self) { preset in
-                        Text(verbatim: "$\(preset)").tag(preset)
-                    }
-                }
-                .pickerStyle(.segmented)
             }
             HStack {
                 if let errorMessage {
@@ -247,9 +243,8 @@ private struct SignedInSections: View {
     }
 
     private func openCheckout() {
-        let value = isCustomAmount
-            ? Int(customAmount.trimmingCharacters(in: CharacterSet(charactersIn: "$ ").union(.whitespaces)))
-            : amount
+        let value = amount
+            ?? Int(customAmount.trimmingCharacters(in: CharacterSet(charactersIn: "$ ").union(.whitespaces)))
         guard let value, YapCloud.isValidTopUp(value) else {
             errorMessage = YapCloudError.invalidAmount.errorDescription
             return
