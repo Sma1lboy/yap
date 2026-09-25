@@ -7,15 +7,14 @@ let env = ProcessInfo.processInfo.environment
 
 guard let token = env["YAP_CLOUD_SMOKE_TOKEN"], !token.isEmpty else {
     print("""
-        YAP_CLOUD_SMOKE_TOKEN is not set. Get a token for the smoke account (smoke+yap@sma1lboy.me):
+        YAP_CLOUD_SMOKE_TOKEN is not set. Issue one for the smoke account from a Railway-linked paygate checkout
+        (prints only the token; creates the account without sign-up credit, so it starts at the $0 these checks need):
 
-          BASE=https://paygate-production-2502.up.railway.app
-          curl -s -X POST $BASE/v1/auth/start -H 'Content-Type: application/json' -d '{"email":"smoke+yap@sma1lboy.me"}'
-          # the 6-digit code is in paygate's server log (no email is sent while RESEND_API_KEY is unset):
-          (cd <paygate checkout> && railway logs -s paygate | grep 'code for smoke+yap')
-          curl -s -X POST $BASE/v1/auth/verify -H 'Content-Type: application/json' \\
-               -d '{"email":"smoke+yap@sma1lboy.me","code":"<code>","deviceName":"cloud-smoke"}'
-          export YAP_CLOUD_SMOKE_TOKEN=<token from the response>
+          export YAP_CLOUD_SMOKE_TOKEN=$(cd <paygate checkout> && \\
+              railway ssh -s paygate -- bun run scripts/issue-token.ts smoke+yap@sma1lboy.me --device-name cloud-smoke)
+
+        Fallback while sign-in codes are still only logged (RESEND_API_KEY unset): POST /v1/auth/start, read
+        "code for smoke+yap" from `railway logs -s paygate`, POST /v1/auth/verify, use the returned token.
 
         Optional: YAP_CLOUD_SMOKE_URL=http://localhost:8787 to point at another paygate.
         """)
@@ -117,6 +116,29 @@ Task { @MainActor in
         try expect(!stt.isEmpty && !chat.isEmpty, "transcription \(stt.count) / chat \(chat.count)")
         try expect(stt.allSatisfy { !$0.isChat }, "a model is both transcription and chat")
         return "\(stt.count) transcription, \(chat.count) chat"
+    }
+
+    var info: YapCloudInfo?
+    await check("info") {
+        // Fetched raw so a failing endpoint can't pass on the client's cached copy.
+        let (status, data) = try await raw("GET", "/v1/info")
+        try expect(status == 200, "HTTP \(status)")
+        let live = try JSONDecoder().decode(YapCloudInfo.self, from: data)
+        info = live
+        await cloud.refreshInfo()
+        try expect(cloud.info == live, "YapCloud.info != the live response")
+        try expect(live.minTopupMicros > 0 && live.maxTopupMicros >= live.minTopupMicros,
+                   "top-up range \(live.minTopupMicros)…\(live.maxTopupMicros)")
+        try expect(YapCloud.micros(fromDecimal: live.markup.string).map { $0 >= 0 } == true && cloud.markupPercentText != nil,
+                   "markup \(live.markup.string)")
+        try expect(live.signupCreditMicros >= 0 && live.maxConcurrentCalls > 0, "credit/concurrency")
+        try expect(live.privacyURL != nil && live.termsURL != nil, "legal URLs missing or not https")
+        let minDollars = Int(live.minTopupMicros / 1_000_000), maxDollars = Int(live.maxTopupMicros / 1_000_000)
+        try expect(cloud.isValidTopUp(minDollars) && cloud.isValidTopUp(maxDollars)
+                   && !cloud.isValidTopUp(minDollars - 1) && !cloud.isValidTopUp(maxDollars + 1), "client range check")
+        return "\(live.productName): markup \(cloud.markupPercentText!), top-up \(YapCloud.formatPlainUSD(micros: live.minTopupMicros))–"
+            + "\(YapCloud.formatPlainUSD(micros: live.maxTopupMicros)), credit \(YapCloud.formatPlainUSD(micros: live.signupCreditMicros)), "
+            + "\(live.maxConcurrentCalls) concurrent, support \(live.supportEmail ?? "none"), legal draft \(live.legal.draft)"
     }
 
     await check("ledger paging") {
@@ -256,13 +278,15 @@ Task { @MainActor in
 
     await check("429 concurrent calls") {
         guard let balance, balance <= 0 else { return "SKIP: needs a zero balance (calls would be billed)" }
-        // paygate takes the slot before reading the body, so parallel ~1 MB uploads overlap past the limit (4).
+        // paygate takes the slot before reading the body, so parallel ~1 MB uploads overlap past the limit
+        // (/v1/info maxConcurrentCalls); twice the limit makes an overlap near certain.
+        let uploads = 2 * (info?.maxConcurrentCalls ?? 4)
         let body: [String: Any] = [
             "model": "microsoft/mai-transcribe-2",
             "input_audio": ["data": Data(count: 750_000).base64EncodedString(), "format": "wav"],
         ]
         let statuses = await withTaskGroup(of: (Int, Data)?.self) { group in
-            for _ in 0..<8 { group.addTask { try? await raw("POST", "/v1/audio/transcriptions", json: body) } }
+            for _ in 0..<uploads { group.addTask { try? await raw("POST", "/v1/audio/transcriptions", json: body) } }
             var all: [(Int, Data)] = []
             for await result in group { if let result { all.append(result) } }
             return all
