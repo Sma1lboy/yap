@@ -232,7 +232,7 @@ final class YapCloud: ObservableObject {
         do {
             let (data, response) = try await sendWithResponse("GET", "/v1/config")
             return YapCloudConfigDocument(body: data, etag: response.value(forHTTPHeaderField: "ETag"))
-        } catch YapCloudError.server(let status, _, _) where status == 404 {
+        } catch YapCloudError.server(let status, _, _, _, _) where status == 404 {
             return nil
         }
     }
@@ -375,7 +375,9 @@ enum YapCloudError: LocalizedError, Equatable {
     case keychainUnavailable
     case versionConflict(current: YapCloudConfigDocument?)
     /// `message` is paygate's English text, kept for logs; users see a description mapped from `code`.
-    case server(status: Int, code: String?, message: String)
+    /// `retryAfterSeconds` comes with RATE_LIMITED, `attemptsRemaining` with INVALID_CODE.
+    case server(
+        status: Int, code: String?, message: String, retryAfterSeconds: Int? = nil, attemptsRemaining: Int? = nil)
 
     /// Maps a non-2xx paygate response (`{"error":{"code","message"}}`).
     init(status: Int, body: Data, authenticated: Bool) {
@@ -390,7 +392,10 @@ enum YapCloudError: LocalizedError, Equatable {
             self = .versionConflict(current: YapCloudConfigDocument(conflictBody: body))
         default:
             let message = envelope?.error?.message ?? String(data: body, encoding: .utf8) ?? ""
-            self = .server(status: status, code: code, message: message.isEmpty ? "HTTP \(status)" : message)
+            self = .server(
+                status: status, code: code, message: message.isEmpty ? "HTTP \(status)" : message,
+                retryAfterSeconds: envelope?.error?.retryAfterSeconds,
+                attemptsRemaining: envelope?.error?.attemptsRemaining)
         }
     }
 
@@ -408,21 +413,43 @@ enum YapCloudError: LocalizedError, Equatable {
             return String(localized: "Couldn't save the sign-in token to the keychain.")
         case .versionConflict:
             return String(localized: "The cloud config changed on another device.")
-        case .server(_, let code, _):
-            return Self.description(forCode: code)
+        case .server(_, let code, _, let retryAfterSeconds, let attemptsRemaining):
+            return Self.description(
+                forCode: code, retryAfterSeconds: retryAfterSeconds, attemptsRemaining: attemptsRemaining)
         }
     }
 
     /// Codes from paygate docs/api.md and its fail() calls. Unknown codes and non-paygate failures
     /// (no code) read as a temporary outage; the raw HTTP status is never shown.
-    private static func description(forCode code: String?) -> String {
+    private static func description(forCode code: String?, retryAfterSeconds: Int?, attemptsRemaining: Int?) -> String {
         switch code {
         case "INVALID_CODE":
-            return String(localized: "That code is wrong or has expired. Check the email or send a new code.")
+            if let attemptsRemaining {
+                return String(
+                    format: String(localized: "That code isn't right. Attempts left: %lld."), Int64(attemptsRemaining))
+            }
+            return String(localized: "That code isn't right. Check the email and try again.")
+        case "CODE_EXPIRED":
+            return String(localized: "That code has expired. Send a new code.")
+        case "CODE_NOT_FOUND":
+            return String(localized: "There's no active code for this email. Send a new code.")
+        case "TOO_MANY_ATTEMPTS":
+            return String(localized: "Too many wrong tries for this code. Send a new code.")
+        case "EMAIL_SEND_FAILED":
+            return String(localized: "Couldn't send the email. Try again in a moment.")
         case "INVALID_EMAIL":
             return String(localized: "Enter a valid email address.")
         case "RATE_LIMITED":
+            if let retryAfterSeconds, retryAfterSeconds > 0 {
+                let minutes = Int64((retryAfterSeconds + 59) / 60)
+                return String(
+                    format: String(localized: "Too many requests. Try again in %lld min."), minutes)
+            }
             return String(localized: "Too many requests. Wait a moment and try again.")
+        case "UPSTREAM_UNAVAILABLE":
+            return String(localized: "The AI service is unreachable right now. Nothing was charged. Try again shortly.")
+        case "STRIPE_ERROR":
+            return String(localized: "Payment service is unavailable right now. Try again shortly.")
         case "INVALID_AMOUNT":
             return YapCloudError.invalidAmount.errorDescription ?? ""
         case "MODEL_NOT_ALLOWED":
@@ -442,6 +469,8 @@ enum YapCloudError: LocalizedError, Equatable {
         struct Body: Decodable {
             let code: String?
             let message: String?
+            let retryAfterSeconds: Int?
+            let attemptsRemaining: Int?
         }
         let error: Body?
     }
@@ -620,6 +649,11 @@ struct YapCloudConfigDocument: Equatable {
                 .contains("SOMETHING_NEW") == true)
             assert(YapCloudError.server(status: 429, code: "RATE_LIMITED", message: "x").errorDescription?
                 .contains("RATE_LIMITED") == false)
+            assert(
+                YapCloudError(
+                    status: 429, body: Data(#"{"error":{"code":"RATE_LIMITED","message":"m","retryAfterSeconds":61}}"#.utf8),
+                    authenticated: false)
+                    == .server(status: 429, code: "RATE_LIMITED", message: "m", retryAfterSeconds: 61))
             let conflict = YapCloudError(
                 status: 409, body: json(#"{"error":{"code":"VERSION_CONFLICT"},"current":{"version":7,"config":{"a":1}}}"#),
                 authenticated: true)
