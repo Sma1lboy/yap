@@ -640,6 +640,11 @@ extension String {
             ]
             assert(restoredModes.providerNames.isEmpty)
 
+            // Older backups and configs still carry the removed isExperimentalFeaturesEnabled; it's ignored.
+            let legacyGeneral = try? decode(
+                Data(#"{"general":{"isExperimentalFeaturesEnabled":false,"isMenuBarOnly":true}}"#.utf8))
+            assert(legacyGeneral?.general?.isMenuBarOnly == true)
+
             // Tombstones. Base state as both Macs last synced it, every entry modified at t0.
             let t0 = Date(timeIntervalSince1970: 1_800_000_000)
             let (t1, t2) = (t0.addingTimeInterval(60), t0.addingTimeInterval(120))
