@@ -101,7 +101,7 @@ struct ConfigSyncSettingsSection: View {
             Text("VoiceInk")
             Text(
                 hasVoiceInk
-                    ? String(localized: "Bring over modes, prompts, dictionary, shortcuts and general settings. API keys and license aren't copied.")
+                    ? String(localized: "Bring over modes, prompts, dictionary, shortcuts, general settings and custom models. API keys and license aren't copied.")
                     : String(localized: "No VoiceInk settings found on this Mac."))
         }
         .confirmationDialog(
@@ -123,8 +123,9 @@ struct ConfigSyncSettingsSection: View {
             if let summary = voiceInkImport.map(\.restoreSummary), voiceInkImport?.hasSections == true {
                 Text(
                     String(
-                        format: String(localized: "%lld modes, %lld prompts, %lld dictionary entries and %lld shortcuts. Entries with the same id replace Yap's; the rest of Yap's stay."),
-                        summary.modes, summary.prompts, summary.dictionaryEntries, summary.shortcuts))
+                        format: String(localized: "%lld modes, %lld prompts, %lld dictionary entries, %lld shortcuts and %lld custom models or providers (without their API keys). Entries with the same id replace Yap's; the rest of Yap's stay."),
+                        summary.modes, summary.prompts, summary.dictionaryEntries, summary.shortcuts,
+                        summary.customDefinitions))
             } else {
                 Text("VoiceInk has no settings to import.")
             }

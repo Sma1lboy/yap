@@ -114,7 +114,7 @@ If the account hasn't synced any settings yet, the sheet says so and just leaves
 
 ### Moving from VoiceInk
 
-If VoiceInk has run on this Mac, **Import from VoiceInk…** in Config & Sync reads its modes, prompts, dictionary, shortcuts and general settings, shows how many of each it found, and imports them after you confirm. Entries with the same id replace Yap's; the rest of Yap's settings stay. API keys, the license, history and downloaded models are not copied. It only runs when you click it; on a Mac without VoiceInk the button is disabled.
+If VoiceInk has run on this Mac, **Import from VoiceInk…** in Config & Sync reads its modes, prompts, dictionary, shortcuts, general settings and custom model/provider definitions, shows how many of each it found, and imports them after you confirm. Entries with the same id replace Yap's; the rest of Yap's settings stay. API keys, the license, history and downloaded models are not copied; imported custom models and providers show **API key needed** until you add their keys. It only runs when you click it; on a Mac without VoiceInk the button is disabled.
 
 ### Deleted items
 

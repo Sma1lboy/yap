@@ -34,7 +34,14 @@ struct CustomModelBackup: Codable, Equatable, Identifiable {
     let modelName: String
     let isMultilingualModel: Bool
     let supportedLanguages: [String: String]
-    let apiKey: String?
+    private(set) var apiKey: String?
+
+    /// The definition alone, for imports that must not carry keys over (VoiceInk).
+    var withoutAPIKey: CustomModelBackup {
+        var copy = self
+        copy.apiKey = nil
+        return copy
+    }
 
     private enum CodingKeys: String, CodingKey {
         case id, name, displayName, description, apiEndpoint, modelName, isMultilingualModel, supportedLanguages,

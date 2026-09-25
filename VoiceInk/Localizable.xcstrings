@@ -1451,24 +1451,24 @@
         }
       }
     },
-    "%lld modes, %lld prompts, %lld dictionary entries and %lld shortcuts. Entries with the same id replace Yap's; the rest of Yap's stay." : {
+    "%lld modes, %lld prompts, %lld dictionary entries, %lld shortcuts and %lld custom models or providers (without their API keys). Entries with the same id replace Yap's; the rest of Yap's stay." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld Modi, %lld Prompts, %lld Wörterbucheinträge und %lld Kurzbefehle. Einträge mit derselben ID ersetzen die von Yap; die übrigen bleiben."
+            "value" : "%lld Modi, %lld Prompts, %lld Wörterbucheinträge, %lld Kurzbefehle und %lld eigene Modelle oder Anbieter (ohne API-Schlüssel). Einträge mit derselben ID ersetzen die von Yap; die übrigen bleiben."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld modes, %lld prompts, %lld entrées de dictionnaire et %lld raccourcis. Les entrées de même identifiant remplacent celles de Yap ; les autres restent."
+            "value" : "%lld modes, %lld prompts, %lld entrées de dictionnaire, %lld raccourcis et %lld modèles ou fournisseurs personnalisés (sans leurs clés d’API). Les entrées de même identifiant remplacent celles de Yap ; les autres restent."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld 个模式、%lld 个提示词、%lld 条词典条目和 %lld 个快捷键。id 相同的条目会替换 Yap 里的，其余的 Yap 设置保留。"
+            "value" : "%lld 个模式、%lld 个提示词、%lld 条词典条目、%lld 个快捷键，以及 %lld 个自定义模型或服务商（不含 API key）。id 相同的条目会替换 Yap 里的，其余的 Yap 设置保留。"
           }
         }
       }
@@ -7075,24 +7075,24 @@
         }
       }
     },
-    "Bring over modes, prompts, dictionary, shortcuts and general settings. API keys and license aren't copied." : {
+    "Bring over modes, prompts, dictionary, shortcuts, general settings and custom models. API keys and license aren't copied." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Übernimmt Modi, Prompts, Wörterbuch, Kurzbefehle und allgemeine Einstellungen. API-Schlüssel und Lizenz werden nicht kopiert."
+            "value" : "Übernimmt Modi, Prompts, Wörterbuch, Kurzbefehle, allgemeine Einstellungen und eigene Modelle. API-Schlüssel und Lizenz werden nicht kopiert."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reprend les modes, prompts, le dictionnaire, les raccourcis et les réglages généraux. Les clés d’API et la licence ne sont pas copiées."
+            "value" : "Reprend les modes, prompts, le dictionnaire, les raccourcis, les réglages généraux et les modèles personnalisés. Les clés d’API et la licence ne sont pas copiées."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "导入模式、提示词、词典、快捷键和通用设置。API key 和许可证不会复制。"
+            "value" : "导入模式、提示词、词典、快捷键、通用设置和自定义模型。API key 和许可证不会复制。"
           }
         }
       }
