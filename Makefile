@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke
 
 # Default target
 all: check build
@@ -106,6 +106,16 @@ local: check setup
 		exit 1; \
 	fi
 
+# Yap Cloud regression checks against a live paygate (needs YAP_CLOUD_SMOKE_TOKEN; prints how to get one).
+# Compiles the real client files with small stubs, no app launch; restores anything it changes.
+CLOUD_SMOKE_BIN := $(CURDIR)/.local-build/cloud-smoke
+cloud-smoke:
+	@mkdir -p "$(dir $(CLOUD_SMOKE_BIN))"
+	@xcrun swiftc -DDEBUG -Onone -o "$(CLOUD_SMOKE_BIN)" \
+		scripts/cloud-smoke/Stubs.swift scripts/cloud-smoke/main.swift \
+		VoiceInk/Infrastructure/Cloud/YapCloudClient.swift VoiceInk/Infrastructure/Cloud/YapCloudProvider.swift
+	@"$(CLOUD_SMOKE_BIN)"
+
 # Run application
 run:
 	@if [ -d "$$HOME/Downloads/$(RUN_APP_NAME).app" ]; then \
@@ -141,6 +151,7 @@ help:
 	@echo "    LOCAL_CODESIGN_IDENTITY=<SHA or name> overrides automatic Apple Development detection"
 	@echo "  run                Launch the built VoiceInk app"
 	@echo "  dev                Build and run the app (for development)"
+	@echo "  cloud-smoke        Check the Yap Cloud client against live paygate (YAP_CLOUD_SMOKE_TOKEN)"
 	@echo "  all                Run full build process (default)"
 	@echo "  clean              Remove build artifacts"
 	@echo "  help               Show this help message"

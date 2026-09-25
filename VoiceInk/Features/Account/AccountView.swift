@@ -192,6 +192,13 @@ private struct SignedInSections: View {
                             .monospacedDigit()
                     }
                 }
+                if let credit = spend.creditMicros, credit > 0 {
+                    LabeledContent("Covered by sign-up credit") {
+                        Text(YapCloud.formatLedgerAmount(micros: credit, kind: "usage"))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 ForEach(spend.topModels, id: \.model) { item in
                     LabeledContent {
                         Text(YapCloud.formatLedgerAmount(micros: item.micros, kind: "usage"))
@@ -315,6 +322,10 @@ private struct LedgerRow: View {
                 }
             }
             Spacer()
+            if entry.kind == "topup", let receipt = entry.receiptURL {
+                Link("Receipt", destination: receipt)
+                    .font(.caption)
+            }
             Text((entry.amountMicros > 0 ? "+" : "") + YapCloud.formatLedgerAmount(micros: entry.amountMicros, kind: entry.kind))
                 .monospacedDigit()
                 .foregroundStyle(entry.amountMicros > 0 ? AppTheme.Status.positive : AppTheme.Text.primary)
