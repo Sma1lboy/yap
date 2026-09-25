@@ -31,6 +31,13 @@ struct SettingsView: View {
 
     @State private var isRestoreClipboardExpanded = false
 
+    private var appVersion: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(version) (\(build))"
+    }
+
     var body: some View {
         Form {
             Section {
@@ -246,15 +253,8 @@ struct SettingsView: View {
                         set: { updaterViewModel.setChecksForUpdatesWhenDashboardAppears($0) }
                     ))
 
-                HStack {
-                    Button("Check for Updates") {
-                        updaterViewModel.checkForUpdates()
-                    }
-                    .disabled(!updaterViewModel.canCheckForUpdates)
-
-                    Button("Reset Onboarding") {
-                        showResetOnboardingAlert = true
-                    }
+                Button("Reset Onboarding") {
+                    showResetOnboardingAlert = true
                 }
             }
 
@@ -330,6 +330,22 @@ struct SettingsView: View {
 
             Section("Diagnostics") {
                 DiagnosticsSettingsView()
+            }
+
+            Section("About") {
+                LabeledContent("Version") {
+                    Text(verbatim: appVersion)
+                        .textSelection(.enabled)
+                }
+
+                HStack {
+                    Button("Check for Updates") {
+                        updaterViewModel.checkForUpdates()
+                    }
+                    .disabled(!updaterViewModel.canCheckForUpdates)
+
+                    Link("Report an Issue", destination: AppIdentity.issuesURL)
+                }
             }
         }
         .formStyle(.grouped)
