@@ -208,14 +208,15 @@ final class YapCloud: ObservableObject {
         }
     }
 
-    /// Writes `config` (JSON object bytes, no secrets). `ifMatch` is the version you last read; nil = first write.
+    /// Writes `config` (JSON object bytes, no secrets). `ifMatch` is the version you last read; nil = first write,
+    /// sent as `If-None-Match: *` so an existing doc answers 409 VERSION_CONFLICT instead of being overwritten.
     /// Returns the new version. A stale version throws `.versionConflict(current:)` with the server's copy.
     func putConfig(_ config: Data, ifMatch version: String?) async throws -> String {
         guard let object = try? JSONSerialization.jsonObject(with: config) else {
             throw YapCloudError.server(status: 0, code: nil, message: "config is not JSON")
         }
         let (data, _) = try await sendWithResponse(
-            "PUT", "/v1/config", json: ["config": object], headers: ["If-Match": version.map { "\"\($0)\"" } ?? "*"])
+            "PUT", "/v1/config", json: ["config": object], headers: version.map { ["If-Match": "\"\($0)\""] } ?? ["If-None-Match": "*"])
         let body = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         guard let newVersion = body?["version"].map({ "\($0)" }) else {
             throw YapCloudError.server(status: 200, code: nil, message: "Missing version")
