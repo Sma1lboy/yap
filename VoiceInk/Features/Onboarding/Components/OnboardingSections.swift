@@ -98,21 +98,22 @@ struct OnboardingBottomBar: View {
             HStack(spacing: 0) {
                 leadingSlot
                     .frame(maxWidth: .infinity, alignment: .leading)
-                if let secondaryTitle, let onSecondary {
-                    Button(action: onSecondary) {
-                        Text(LocalizedStringKey(secondaryTitle))
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(AppTheme.Text.secondary)
-                            .padding(.horizontal, 4)
-                            .frame(minHeight: Metrics.buttonHeight)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.75)
-                            .contentShape(Rectangle())
+                HStack(spacing: 12) {
+                    if let secondaryTitle, let onSecondary {
+                        Button(action: onSecondary) {
+                            Text(LocalizedStringKey(secondaryTitle))
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(AppTheme.Action.secondaryForeground)
+                                .lineLimit(1)
+                                .padding(.horizontal, Metrics.primaryButtonHorizontalPadding)
+                                .frame(minHeight: Metrics.buttonHeight)
+                                .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.control))
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
+                    primaryButton
                 }
-                primaryButton
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
         case .centered:
             HStack(spacing: 0) {
