@@ -194,10 +194,13 @@ final class YapConfigLoader: ObservableObject {
             menuBarManager: menuBarManager, mediaController: .shared, playbackController: .shared,
             recorderUIManager: recorderUIManager, modelContext: modelContext)
         let existing = (try? Data(contentsOf: fileURL)).flatMap { try? YapConfig.decode($0) }
-        let config = YapConfig.exported(from: backup, existing: existing) {
+        var config = YapConfig.exported(from: backup, existing: existing) {
             Self.isNoOp(
                 $0, modes: backup.modeConfigs, prompts: backup.customPrompts, promptText: self.promptText)
-        }.stamped(baseline: baseline, now: Date())
+        }
+        // Not part of the backup format, so added here.
+        config.customProviders = CustomAIProviderManager.shared.providers
+        config = config.normalized().stamped(baseline: baseline, now: Date())
         guard let data = try? config.encoded() else { return nil }
         defaults.set(data, forKey: Self.baselineKey)
         return data
@@ -379,6 +382,10 @@ final class YapConfigLoader: ObservableObject {
                 logger.error("config.json deleted: \(error.localizedDescription, privacy: .public)")
                 result.skipped.append("deleted")
             }
+        }
+        if let providers = config.mergedCustomProviders(current: CustomAIProviderManager.shared.providers) {
+            CustomAIProviderManager.shared.replaceProviders(providers)
+            result.applied.append("customProviders")
         }
         for category in categories {
             do {

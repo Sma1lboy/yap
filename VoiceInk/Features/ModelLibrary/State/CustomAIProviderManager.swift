@@ -127,6 +127,23 @@ final class CustomAIProviderManager: ObservableObject {
         return true
     }
 
+    /// Config sync: replaces the definitions (keys stay in the keychain, by provider id) and re-applies the
+    /// selected custom model, whose base URL may have changed.
+    func replaceProviders(_ newProviders: [CustomAIProviderConfig]) {
+        let normalized = newProviders.map(\.normalizedForStorage)
+        guard normalized != providers else { return }
+        providers = normalized
+        saveProviders()
+        if let selectedModel = defaults.string(forKey: "customProviderModel") {
+            applyConfiguration(forModel: selectedModel)
+        }
+    }
+
+    /// False for a provider synced from another Mac until its key is added here.
+    func hasAPIKeyForProvider(_ provider: CustomAIProviderConfig) -> Bool {
+        hasAPIKey(for: provider)
+    }
+
     func deleteProvider(_ provider: CustomAIProviderConfig) {
         providers.removeAll { $0.id == provider.id }
         APIKeyManager.shared.deleteCustomAIProviderAPIKey(forProviderId: provider.id)

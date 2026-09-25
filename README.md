@@ -38,7 +38,7 @@ Yap Cloud is an optional account that pays for transcription and cleanup from a 
 
 **Adding funds.** In **Account → Add Funds**, pick $5, $10 or $20, or Custom (a whole-dollar amount from $5 to $500), and click **Add Funds…**. Checkout opens in your browser; the balance updates when you come back to Yap. Below $1 Yap shows a low-balance warning; when the balance runs out, Yap Cloud requests stop and a notification takes you to Account.
 
-**Monthly cap.** When your account supports it, **Account → Monthly Cap** limits spending per calendar month: pick $5, $10, $20, a custom amount up to $10,000, or No Cap. Once this month's spending reaches the cap, Yap Cloud stops charging until next month or until you raise the cap. A cap of $0 blocks all Yap Cloud calls.
+**Monthly cap.** **Account → Monthly Cap** limits spending per calendar month: pick $5, $10, $20, a custom amount up to $10,000, or No Cap. Once this month's spending reaches the cap, Yap Cloud stops charging until next month or until you raise the cap. A cap of $0 blocks all Yap Cloud calls.
 
 **Devices.** Every Mac you sign in on gets its own token (kept in that Mac's keychain, never synced). **Account → Signed-in Devices** lists them with when each was last used; **Remove** signs that Mac out so it stops charging your balance. It can sign in again with your email. **Sign Out** on the Account page signs out this Mac; modes that use Yap Cloud stop working until you sign in again or switch them to another provider.
 
@@ -79,6 +79,7 @@ Schema v2 (`"version": 2`) describes all settings. It uses the same JSON shapes 
 | `dictionary` | `{ "vocabulary": ["Yap"], "replacements": { "yep": "Yap" } }`. Merged into the existing dictionary. |
 | `general` | Same object as the export's `generalSettings`: global shortcuts, launch at login, recorder style, retention, paste and auto-learn settings. |
 | `customModels` | Custom transcription model definitions, same objects as the export's `customCloudModels`, merged by `id`. `apiKey` is never written; a model synced from another Mac shows "API key needed" in Models until you add its key. |
+| `customProviders` | Custom enhancement providers: `{ id, name, baseURL, models, selectedModel }`, merged by `id`. No key is ever written; a provider synced from another Mac shows "API key needed" in Models until you add its key. |
 | `modified` | `{ "modes": { "<id>": "<ISO 8601 time>" }, "prompts": {…}, "vocabulary": { "<word>": … }, "replacements": { "<source>": … } }`: when each entry last changed. Written by Yap; you don't need to edit it. |
 | `deleted` | Same shape: tombstones for deleted entries. An entry is removed (from the file and from the app) when its tombstone is newer than its `modified` time, or it has none. Tombstones older than 90 days are dropped. |
 
@@ -113,11 +114,11 @@ If the account hasn't synced any settings yet, the sheet says so and just leaves
 
 ### Deleted items
 
-When you delete a mode, prompt, dictionary entry or custom model, Yap records the deletion (in the `deleted` map) so the other Macs delete it too instead of bringing it back. If another Mac edited the same item after you deleted it, the edit wins and the item stays. Deletion records are kept for 90 days, then removed.
+When you delete a mode, prompt, dictionary entry, custom model or custom provider, Yap records the deletion (in the `deleted` map) so the other Macs delete it too instead of bringing it back. If another Mac edited the same item after you deleted it, the edit wins and the item stays. Deletion records are kept for 90 days, then removed.
 
 ### API keys stay on each Mac
 
-API keys are never written to config.json or sent to Yap Cloud. Yap only reads them from `keys` (as `env:NAME` or a literal you typed yourself). Custom model definitions sync without their keys and show **API key needed** in Models until you add the key on that Mac. The Yap Cloud sign-in token also stays on the Mac it belongs to.
+API keys are never written to config.json or sent to Yap Cloud. Yap only reads them from `keys` (as `env:NAME` or a literal you typed yourself). Custom models and custom enhancement providers sync without their keys and show **API key needed** in Models until you add the key on that Mac. The Yap Cloud sign-in token also stays on the Mac it belongs to.
 
 ### Recommended models
 

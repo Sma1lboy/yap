@@ -136,8 +136,20 @@ private struct CustomEnhancementModelRow: View {
                 )
 
             VStack(alignment: .leading, spacing: 5) {
-                Text(provider.name)
-                    .font(.system(size: 13, weight: .semibold))
+                HStack(spacing: 8) {
+                    Text(provider.name)
+                        .font(.system(size: 13, weight: .semibold))
+                    // Definitions synced from another Mac arrive without their key (keys never leave a Mac).
+                    if !CustomAIProviderManager.shared.hasAPIKeyForProvider(provider) {
+                        Button(action: onEdit) {
+                            Label("API key needed", systemImage: "key")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(AppTheme.Status.warningStrong)
+                        }
+                        .buttonStyle(.plain)
+                        .help("Add this model's API key on this Mac")
+                    }
+                }
 
                 if provider.modelName.isEmpty {
                     Text("No model configured")
