@@ -63,6 +63,9 @@ struct OnboardingView: View {
                         localDownloadStatus: coordinator.requiredTranscriptionModel.flatMap {
                             fluidAudioModelManager.downloadStatus(for: $0)
                         },
+                        localDownloadError: coordinator.requiredTranscriptionModel.flatMap {
+                            fluidAudioModelManager.downloadError(for: $0)
+                        },
                         isSetupReady: isTranscriptionSetupReady,
                         isShowingSkipWarning: $coordinator.isShowingSkipTranscriptionSetupWarning,
                         onSelectSetupKind: coordinator.flow.selectOnboardingTranscriptionSetup,

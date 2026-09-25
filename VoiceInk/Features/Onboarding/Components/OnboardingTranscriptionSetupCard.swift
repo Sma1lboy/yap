@@ -9,6 +9,7 @@ struct OnboardingTranscriptionSetupCard: View {
     let isLocalDownloaded: Bool
     let isLocalDownloading: Bool
     let localDownloadStatus: FluidAudioDownloadStatus?
+    let localDownloadError: String?
     let onSelectSetupKind: (OnboardingTranscriptionSetupKind) -> Void
     let onDownloadLocalModel: (FluidAudioModel) -> Void
     let onCancelLocalModelDownload: (FluidAudioModel) -> Void
@@ -223,6 +224,7 @@ struct OnboardingTranscriptionSetupCard: View {
                 isDownloaded: isLocalDownloaded,
                 isDownloading: isLocalDownloading,
                 status: localDownloadStatus,
+                errorMessage: localDownloadError,
                 onDownload: {
                     onDownloadLocalModel(localModel)
                 },
@@ -643,7 +645,7 @@ private struct TranscriptionProviderChoiceButton: View {
             OnboardingTranscriptionSetupCard(
                 localModel: nil, setupKind: setupKind, providerOptions: CloudProviderRegistry.allProviders,
                 selectedProviderKey: $providerKey, isLocalDownloaded: false, isLocalDownloading: false,
-                localDownloadStatus: nil, onSelectSetupKind: { _ in }, onDownloadLocalModel: { _ in },
+                localDownloadStatus: nil, localDownloadError: nil, onSelectSetupKind: { _ in }, onDownloadLocalModel: { _ in },
                 onCancelLocalModelDownload: { _ in }, onVerificationChanged: {},
                 recommendedAPIKey: $recommendedKey, recommendedError: nil, isApplyingRecommended: false
             )

@@ -18,6 +18,8 @@ struct FluidAudioDownloadStatus: Equatable {
 @MainActor
 class FluidAudioModelManager: ObservableObject {
     @Published private var downloadStatuses: [String: FluidAudioDownloadStatus] = [:]
+    /// Reason the last download of a model failed; cleared when a new download starts.
+    @Published private var downloadErrors: [String: String] = [:]
     @Published private var modelStateRevision = 0
     private var activeDownloadIDs: [String: UUID] = [:]
     private var activeNetworkProgressIDs: [String: UUID] = [:]
@@ -177,6 +179,10 @@ class FluidAudioModelManager: ObservableObject {
         downloadStatuses[model.name]
     }
 
+    func downloadError(for model: FluidAudioModel) -> String? {
+        downloadErrors[model.name]
+    }
+
     // MARK: - Download
 
     func startDownload(_ model: FluidAudioModel) {
@@ -199,11 +205,12 @@ class FluidAudioModelManager: ObservableObject {
 
         let modelName = model.name
         let downloadID = UUID()
+        downloadErrors[modelName] = nil
         activeDownloadIDs[modelName] = downloadID
         activeNetworkProgressIDs[modelName] = downloadID
         downloadStatuses[modelName] = FluidAudioDownloadStatus(
             fractionCompleted: 0.0,
-            message: "Preparing FluidAudio download..."
+            message: String(localized: "Preparing download…")
         )
         defer {
             clearDownloadStatus(for: modelName, downloadID: downloadID)
@@ -297,6 +304,7 @@ class FluidAudioModelManager: ObservableObject {
                 modelStateRevision += 1
             } else {
                 logger.error("❌ FluidAudio download failed for \(modelName, privacy: .public): \(error, privacy: .public)")
+                downloadErrors[modelName] = error.localizedDescription
             }
         }
     }

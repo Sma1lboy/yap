@@ -9,6 +9,7 @@ struct OnboardingModelScreen: View {
     let isLocalDownloaded: Bool
     let isLocalDownloading: Bool
     let localDownloadStatus: FluidAudioDownloadStatus?
+    let localDownloadError: String?
     let isSetupReady: Bool
     @Binding var isShowingSkipWarning: Bool
     let onSelectSetupKind: (OnboardingTranscriptionSetupKind) -> Void
@@ -68,6 +69,7 @@ struct OnboardingModelScreen: View {
                     isLocalDownloaded: isLocalDownloaded,
                     isLocalDownloading: isLocalDownloading,
                     localDownloadStatus: localDownloadStatus,
+                    localDownloadError: localDownloadError,
                     onSelectSetupKind: onSelectSetupKind,
                     onDownloadLocalModel: onDownload,
                     onCancelLocalModelDownload: onCancelDownload,
