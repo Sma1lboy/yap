@@ -298,6 +298,12 @@ final class YapCloud: ObservableObject {
             name: .navigateToDestination, object: nil, userInfo: ["destination": "Account"])
     }
 
+    /// `yap://account/refresh` (also `yap://account`), the link paygate's checkout success page returns to.
+    static func isAccountRefreshURL(_ url: URL) -> Bool {
+        guard url.scheme?.lowercased() == "yap", url.host?.lowercased() == "account" else { return false }
+        return ["", "/", "/refresh"].contains(url.path.lowercased())
+    }
+
     /// Shows the account notification when `error` is a Yap Cloud 402 (Add Funds) or 401 (sign in again).
     /// Returns whether it did, so callers can skip their generic failure message.
     @MainActor
@@ -852,6 +858,12 @@ struct YapCloudConfigDocument: Equatable {
             assert(monthlyCapMicros(fromDollars: "") == nil && monthlyCapMicros(fromDollars: "abc") == nil)
             assert(formatExactUSD(micros: 100) == "$0.0001" && formatExactUSD(micros: 5_000_000) == "$5.00")
             assert(formatExactUSD(micros: 1_234_567) == "$1.234567" && formatExactUSD(micros: 0) == "$0.00")
+
+            // yap:// links
+            assert(isAccountRefreshURL(URL(string: "yap://account/refresh")!) && isAccountRefreshURL(URL(string: "YAP://Account")!))
+            assert(isAccountRefreshURL(URL(string: "yap://account/refresh?session=cs_1")!))
+            assert(!isAccountRefreshURL(URL(string: "yap://account/delete")!) && !isAccountRefreshURL(URL(string: "yap://settings")!))
+            assert(!isAccountRefreshURL(URL(string: "https://account/refresh")!))
 
             // Top-up amounts
             assert(isValidTopUp(5) && isValidTopUp(20) && isValidTopUp(500))
