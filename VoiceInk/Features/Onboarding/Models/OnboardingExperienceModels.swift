@@ -146,9 +146,10 @@ enum OnboardingExperienceCatalog {
             kind: .dictation,
             starterModeKind: .clean,
             defaultModeKind: .clean,
+            // Onboarding presets Right Option (or keeps the user's shortcut), so this goes straight to practice.
             shortcutBehavior: .primaryRecording(
-                skipsIntroWhenConfigured: false,
-                clearsOnIntro: true
+                skipsIntroWhenConfigured: true,
+                clearsOnIntro: false
             ),
             requiresVerifiedAPIProvider: false,
             systemImage: "text.cursor",
@@ -181,7 +182,9 @@ enum OnboardingExperienceCatalog {
                 skipsIntroWhenConfigured: true,
                 clearsOnIntro: false
             ),
-            showsContextAwarenessAfterCompletion: true,
+            // Context awareness is now one line on the final (privacy) screen instead of its own screen.
+            // ponytail: the .contextAwareness stage and OnboardingContextAwarenessScreen are unreachable for new
+            // runs (only a stored mid-onboarding stage still lands there); delete them once that no longer matters.
             systemImage: "envelope.fill",
             title: "Write an Email",
             subtitle: "Turn your spoken note into a clean email draft with Yap.",

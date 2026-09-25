@@ -82,7 +82,7 @@ private struct SignedInSections: View {
     @State private var isConfirmingSignOut = false
 
     var body: some View {
-        Section("Yap Cloud") {
+        Section {
             LabeledContent("Email address", value: cloud.me?.email ?? cloud.email ?? "")
             LabeledContent {
                 if let balance = cloud.balanceMicros {
@@ -137,6 +137,10 @@ private struct SignedInSections: View {
                         Text("Modes that use Yap Cloud stop working until you sign in again or switch them to another provider.")
                     }
             }
+        } header: {
+            Text("Yap Cloud")
+        } footer: {
+            Text("With Sync via Yap Cloud on (Settings > Config & Sync), your modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server. API keys stay on each Mac.")
         }
 
         Section {

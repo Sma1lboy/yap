@@ -24,7 +24,7 @@ struct CloudSyncOffer: ViewModifier {
                 }
             } message: {
                 Text(
-                    "Modes, prompts, dictionary and shortcuts stay the same on every Mac signed in to this account. API keys stay on each Mac."
+                    "Modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server and stay the same on every Mac signed in to this account. API keys stay on each Mac."
                 )
             }
     }

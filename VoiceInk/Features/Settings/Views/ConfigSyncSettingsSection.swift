@@ -60,7 +60,7 @@ struct ConfigSyncSettingsSection: View {
                 Text("Sync via Yap Cloud")
                 Text(
                     cloudConfigSync.isAvailable
-                        ? String(localized: "Keeps this config the same on every Mac signed in to your account.")
+                        ? String(localized: "Stores your modes, prompts, dictionary, shortcuts and custom models on Yap's server, never your API keys, so every Mac signed in to your account uses the same config.")
                         : String(localized: "Sign in to Yap Cloud to sync this config between Macs."))
             }
             .disabled(!cloudConfigSync.isAvailable)
