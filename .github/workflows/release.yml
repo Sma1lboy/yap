@@ -92,9 +92,11 @@ jobs:
             xcbuild-${{ runner.os }}-xcode26.6-${{ hashFiles('VoiceInk.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
 
       # SWIFT_COMPILATION_MODE=incremental：Release 默认整模块优化，改一个文件也要重编整个 App 模块；
-      # 改成按文件增量编译（仍是 -O），配合缓存的 DerivedData 只重编改动的文件
+      # 改成按文件增量编译（仍是 -O），配合缓存的 DerivedData 只重编改动的文件。
+      # 但 CI 每次 checkout 都会让所有源文件的 mtime/inode 变新，Xcode 会认为全改了；
+      # 所以再开 Xcode 26 的编译缓存（按内容哈希，类似 sccache），CAS 放在 .local-build 里随缓存保存
       - name: Build (LOCAL_BUILD)
-        run: make local LOCAL_CLEAN=0 LOCAL_CODESIGN_IDENTITY=- EXTRA_BUILD_SETTINGS="MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD SWIFT_COMPILATION_MODE=incremental"
+        run: make local LOCAL_CLEAN=0 LOCAL_CODESIGN_IDENTITY=- EXTRA_BUILD_SETTINGS="MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD SWIFT_COMPILATION_MODE=incremental COMPILATION_CACHE_ENABLE_CACHING=YES COMPILATION_CACHE_CAS_PATH=$GITHUB_WORKSPACE/.local-build/CompilationCache"
 
       - name: Re-sign with Yap Self-Signed
         run: codesign --force --deep --preserve-metadata=entitlements,runtime --sign "Yap Self-Signed" ~/Downloads/Yap.app
