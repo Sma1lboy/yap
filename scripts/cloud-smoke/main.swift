@@ -57,6 +57,37 @@ func raw(_ method: String, _ path: String, json: [String: Any]? = nil) async thr
     return ((response as! HTTPURLResponse).statusCode, data)
 }
 
+/// Ledger adjustment on the live deployment (paygate's scripts/adjust.ts over `railway ssh`, from a linked checkout).
+func adjust(email: String, micros: Int64, note: String, in directory: String) throws {
+    let sign = micros < 0 ? "-" : ""
+    let amount = sign + String(micros.magnitude / 1_000_000) + "." + String(String(micros.magnitude % 1_000_000 + 1_000_000).dropFirst())
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+    process.arguments = ["railway", "ssh", "-s", "paygate", "--", "bun", "run", "scripts/adjust.ts", email, amount, note]
+    process.currentDirectoryURL = URL(fileURLWithPath: directory)
+    let output = Pipe()
+    process.standardOutput = output
+    process.standardError = output
+    try process.run()
+    process.waitUntilExit()
+    let text = String(data: output.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+    print("     adjust \(amount) USD: \(text.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: "\n").last ?? "")")
+    if process.terminationStatus != 0 { throw Failed(description: "adjust.ts failed: \(text)") }
+}
+
+/// Brings the balance back to exactly 0 with one adjustment of the opposite sign.
+func zeroBalance(email: String, in directory: String) throws {
+    let semaphore = DispatchSemaphore(value: 0)
+    var balance: Int64?
+    Task.detached {
+        balance = try? await YapCloud.shared.fetchMe().balanceMicros
+        semaphore.signal()
+    }
+    semaphore.wait()
+    guard let balance else { throw Failed(description: "couldn't read the balance to zero it") }
+    if balance != 0 { try adjust(email: email, micros: -balance, note: "client id-capture check: back to 0", in: directory) }
+}
+
 /// One second of 16 kHz mono silence as WAV, for the transcription 402 check.
 func silentWAV() -> Data {
     let samples = 16_000, bytes = samples * 2
@@ -245,6 +276,73 @@ Task { @MainActor in
         try expect(YapCloud.isSafeToRetry(sample), "429 not retried")
         try expect(!(sample.errorDescription ?? "").localizedCaseInsensitiveContains("too many"), "wording")
         return "\(busy.count)/\(errors.count) got TOO_MANY_CONCURRENT_CALLS (retried once by the client), rest 402"
+    }
+
+    // Optional, costs ~1 cent of the operator's money: YAP_CLOUD_SMOKE_FUNDED=1 PAYGATE_DIR=<railway-linked paygate>
+    // funds the smoke account with $0.01 (scripts/adjust.ts over railway ssh), makes one real transcription and
+    // one real chat call through the client, checks the captured generation ids against the ledger, then adjusts
+    // the balance back to exactly 0 (the 402 checks above depend on it).
+    await check("funded: real calls + ids") {
+        guard env["YAP_CLOUD_SMOKE_FUNDED"] == "1" else { return "SKIP: set YAP_CLOUD_SMOKE_FUNDED=1 (and PAYGATE_DIR)" }
+        guard let paygateDir = env["PAYGATE_DIR"], !paygateDir.isEmpty else { throw Failed(description: "PAYGATE_DIR not set") }
+        guard let email = me?.email, balance == 0 else { throw Failed(description: "needs the smoke account at exactly $0") }
+        try adjust(email: email, micros: 10_000, note: "client id-capture check: fund", in: paygateDir)
+        var zeroed = false
+        defer { if !zeroed { try? zeroBalance(email: email, in: paygateDir) } }
+
+        let stt = YapCloud.GenerationCollector(), chat = YapCloud.GenerationCollector()
+        _ = try? await YapCloud.$generationCollector.withValue(stt) {  // silence may transcribe to "" (still billed)
+            try await YapCloudProvider().transcribe(
+                audioData: silentWAV(), fileName: "smoke.wav", apiKey: token, model: "microsoft/mai-transcribe-2",
+                language: nil, customVocabulary: [], timeout: 60)
+        }
+        _ = try await YapCloud.$generationCollector.withValue(chat) {
+            try await cloud.chatCompletion(
+                model: "deepseek/deepseek-v4.1-flash", messages: [["role": "user", "content": "Reply with: ok"]],
+                temperature: 0, timeout: 30)
+        }
+        guard let sttID = stt.last, let chatID = chat.last else {
+            throw Failed(description: "generation id not captured (transcription \(stt.last ?? "nil"), chat \(chat.last ?? "nil"))")
+        }
+
+        // Charges can settle a few seconds after the response (generation lookup when usage.cost is missing).
+        var charges: [String: Int64] = [:]
+        for _ in 0..<20 where charges.count < 2 {
+            charges = try await cloud.fetchCharges(generationIDs: [sttID, chatID]).filter { [sttID, chatID].contains($0.key) }
+            if charges.count < 2 { try await Task.sleep(for: .seconds(2)) }
+        }
+        try expect(charges.count == 2, "charges not found for \([sttID, chatID].filter { charges[$0] == nil })")
+
+        // Each charge must equal ceil(cost × (1 + markup) × 1e6) from the row's own meta.
+        let (status, data) = try await raw("GET", "/v1/ledger?limit=20")
+        try expect(status == 200, "ledger HTTP \(status)")
+        struct Rows: Decodable {
+            struct Row: Decodable {
+                // Older rows (before the integer ledger) stored cost/markup as JSON numbers.
+                struct Meta: Decodable { let generationId: String?; let cost: YapCloudScalar?; let markup: YapCloudScalar? }
+                let amountMicros: Int64
+                let meta: Meta?
+            }
+            let entries: [Row]
+        }
+        let rows = try JSONDecoder().decode(Rows.self, from: data).entries
+        for id in [sttID, chatID] {
+            guard let row = rows.first(where: { $0.meta?.generationId == id }),
+                let cost = row.meta?.cost.flatMap({ Decimal(string: $0.string, locale: Locale(identifier: "en_US_POSIX")) }),
+                let markup = row.meta?.markup.flatMap({ Decimal(string: $0.string, locale: Locale(identifier: "en_US_POSIX")) })
+            else { throw Failed(description: "no ledger row with cost/markup for \(id)") }
+            var exact = cost * (1 + markup) * 1_000_000, rounded = Decimal()
+            NSDecimalRound(&rounded, &exact, 0, .up)
+            let expected = NSDecimalNumber(decimal: rounded).int64Value
+            try expect(-row.amountMicros == expected && charges[id] == expected,
+                       "\(id): ledger \(-row.amountMicros), lookup \(String(describing: charges[id])), ceil(cost×(1+markup)) \(expected)")
+        }
+
+        try zeroBalance(email: email, in: paygateDir)
+        zeroed = true
+        let after = try await cloud.fetchMe().balanceMicros
+        try expect(after == 0, "balance after restore = \(after)")
+        return "transcription \(sttID) = \(charges[sttID]!) micros, chat \(chatID) = \(charges[chatID]!) micros; both match ceil(cost×(1+markup)); balance back to 0"
     }
 
     print(failures == 0 ? "cloud-smoke: all checks passed" : "cloud-smoke: \(failures) check(s) failed")
