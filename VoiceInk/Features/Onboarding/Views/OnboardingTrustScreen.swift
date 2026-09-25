@@ -81,7 +81,7 @@ private struct TrustBody: View {
                     .foregroundColor(AppTheme.Text.primary)
                     .multilineTextAlignment(.center)
 
-                Text("Local models keep everything on this Mac. With your own API key, audio and text go only to the provider you choose. With Yap Cloud, they pass through Yap's server on the way to the model provider; the server records the model and cost for billing. Transcripts are stored on this Mac.")
+                Text("Local models keep everything on this Mac. With your own API key, audio and text go only to the provider you choose. With Yap Cloud, they pass through Yap's server on the way to the model provider; the server records the model and cost for billing. If you turn on Sync via Yap Cloud, your modes, prompts, dictionary, shortcuts and custom models are stored there too, never your API keys. Transcripts are stored on this Mac.")
                     .font(.system(size: 13))
                     .foregroundColor(AppTheme.Text.secondary)
                     .multilineTextAlignment(.center)
