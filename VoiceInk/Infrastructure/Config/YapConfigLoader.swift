@@ -183,8 +183,16 @@ final class YapConfigLoader: ObservableObject {
         let config = YapConfig.exported(from: backup, existing: existing) {
             Self.isNoOp(
                 $0, modes: backup.modeConfigs, prompts: backup.customPrompts, promptText: self.promptText)
-        }
-        return try? config.encoded()
+        }.stamped(baseline: baseline, now: Date())
+        guard let data = try? config.encoded() else { return nil }
+        defaults.set(data, forKey: Self.baselineKey)
+        return data
+    }
+
+    /// The last config this Mac exported or applied; export compares against it to stamp changes and deletions.
+    static let baselineKey = "configBaseline"
+    private var baseline: YapConfig? {
+        defaults.data(forKey: Self.baselineKey).flatMap { try? YapConfig.decode($0) }
     }
 
     /// Applies config.json bytes to the running app: v2 sections first, then the v1 fields on top.
@@ -193,6 +201,7 @@ final class YapConfigLoader: ObservableObject {
         let config = try YapConfig.decode(data)
         self.config = config
         fileIsNewerVersion = config.isNewerVersion
+        defaults.set(data, forKey: Self.baselineKey)
         let sections = await applySections(config)
         apply(config, source: .file, live: true, patchModes: true, sections: sections)
         await resolveRemoteSelections(config)
@@ -321,6 +330,15 @@ final class YapConfigLoader: ObservableObject {
                 currentModeShortcuts: currentModeShortcuts)
         else { return ([], []) }
         var result: (applied: [String], skipped: [String]) = ([], [])
+        if config.deleted?.vocabulary != nil || config.deleted?.replacements != nil {
+            do {
+                try deleteDictionaryEntries(tombstonedIn: config, modelContext: modelContext)
+                result.applied.append("deleted")
+            } catch {
+                logger.error("config.json deleted: \(error.localizedDescription, privacy: .public)")
+                result.skipped.append("deleted")
+            }
+        }
         for category in categories {
             do {
                 try await BackupImporter.apply(
@@ -335,6 +353,23 @@ final class YapConfigLoader: ObservableObject {
             }
         }
         return result
+    }
+
+    /// The backup importer only adds dictionary entries, so tombstoned ones the file doesn't carry are deleted here.
+    private func deleteDictionaryEntries(tombstonedIn config: YapConfig, modelContext: ModelContext) throws {
+        let deadWords = Set(config.deleted?.vocabulary?.keys ?? [:].keys)
+            .subtracting(config.dictionary?.vocabulary ?? [])
+        let deadRules = Set(config.deleted?.replacements?.keys ?? [:].keys)
+            .subtracting(config.dictionary?.replacements?.keys ?? [:].keys)
+        guard !deadWords.isEmpty || !deadRules.isEmpty else { return }
+        for word in try modelContext.fetch(FetchDescriptor<VocabularyWord>()) where deadWords.contains(word.word) {
+            modelContext.delete(word)
+        }
+        for rule in try modelContext.fetch(FetchDescriptor<WordReplacement>())
+        where deadRules.contains(rule.originalText) {
+            modelContext.delete(rule)
+        }
+        try modelContext.save()
     }
 
     private func apply(
