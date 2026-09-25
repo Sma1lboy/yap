@@ -256,21 +256,12 @@ private struct EnhancementModelSettingsView: View {
 
 private struct AdvancedModelSettingsSection: View {
     @AppStorage("IsVADEnabled") private var isVADEnabled = true
-    @AppStorage("AppendTrailingSpace") private var appendTrailingSpace = true
     @AppStorage("PrewarmModelOnWake") private var prewarmModelOnWake = true
     @AppStorage(CloudTranscriptionSettings.timeoutKey) private var cloudTimeout =
         CloudTranscriptionSettings.defaultTimeout
 
     var body: some View {
         Section {
-            Toggle(isOn: $appendTrailingSpace) {
-                HStack(spacing: 4) {
-                    Text("Add Space After Paste")
-                    InfoTip("Add a trailing space after pasted transcription output.")
-                }
-            }
-            .toggleStyle(.switch)
-
             Toggle(isOn: $isVADEnabled) {
                 HStack(spacing: 4) {
                     Text("Voice Activity Detection (VAD)")

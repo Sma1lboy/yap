@@ -15,6 +15,7 @@ struct SettingsView: View {
     @ObservedObject private var playbackController = PlaybackController.shared
     @AppStorage(OnboardingSettings.completedV2Key) private var hasCompletedOnboardingV2 = true
     @AppStorage("restoreClipboardAfterPaste") private var restoreClipboardAfterPaste = true
+    @AppStorage("AppendTrailingSpace") private var appendTrailingSpace = true
     @AppStorage("clipboardRestoreDelay") private var clipboardRestoreDelay = 2.0
     @AppStorage(PasteMethod.userDefaultsKey) private var pasteMethodRawValue = PasteMethod.standard.rawValue
     @AppStorage(AppAppearancePreference.userDefaultsKey) private var appAppearancePreference = AppAppearancePreference
@@ -29,6 +30,7 @@ struct SettingsView: View {
     @State private var isImportingSettings = false
 
     @State private var isRestoreClipboardExpanded = false
+    @State private var isShowingHistorySettings = false
 
     private var appVersion: String {
         let info = Bundle.main.infoDictionary
@@ -112,6 +114,17 @@ struct SettingsView: View {
                     .controlSize(.small)
                 }
 
+                // Also set from the History and Dictionary panels; same stored shortcut.
+                LabeledContent("Open Quick History") {
+                    ShortcutRecorder(action: .openQuickHistory)
+                        .controlSize(.small)
+                }
+
+                LabeledContent("Quick Add to Dictionary") {
+                    ShortcutRecorder(action: .quickAddToDictionary)
+                        .controlSize(.small)
+                }
+
                 LabeledContent {
                     HStack(spacing: 8) {
                         ShortcutRecorder(
@@ -144,6 +157,13 @@ struct SettingsView: View {
             }
 
             Section("Pasting") {
+                Toggle(isOn: $appendTrailingSpace) {
+                    HStack(spacing: 4) {
+                        Text("Add Space After Paste")
+                        InfoTip("Add a trailing space after pasted transcription output.")
+                    }
+                }
+
                 Picker(selection: $finishAndSendKey) {
                     ForEach(FinishAndSendKey.allCases, id: \.self) { key in
                         Text(key.displayName).tag(key.rawValue)
@@ -328,6 +348,10 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
         .modifier(CloudSyncOffer())
+        .sheet(isPresented: $isShowingHistorySettings) {
+            HistorySettingsPanel(onClose: { isShowingHistorySettings = false })
+                .frame(width: 480, height: 560)
+        }
         .alert("Reset Onboarding", isPresented: $showResetOnboardingAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Reset", role: .destructive) {

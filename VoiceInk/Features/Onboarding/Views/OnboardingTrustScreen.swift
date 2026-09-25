@@ -22,7 +22,8 @@ struct OnboardingTrustScreen: View {
                 primaryTitle: "Start Using Yap",
                 isPrimaryEnabled: true,
                 onLeading: onBack,
-                onPrimary: onContinue
+                onPrimary: onContinue,
+                isPrimaryDefaultAction: true
             )
         }
     }

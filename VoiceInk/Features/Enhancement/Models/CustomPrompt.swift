@@ -54,31 +54,38 @@ extension CustomPrompt {
         isSelected: Bool, onTap: @escaping () -> Void, onEdit: ((CustomPrompt) -> Void)? = nil,
         onDelete: ((CustomPrompt) -> Void)? = nil
     ) -> some View {
-        HStack(spacing: 6) {
-            Text(title)
-                .lineLimit(1)
-                .truncationMode(.tail)
-        }
-        .font(.system(size: 12, weight: .medium))
-        .foregroundStyle(isSelected ? AppTheme.Text.onAccent : Color.primary)
-        .frame(maxWidth: .infinity, minHeight: 30)
-        .padding(.horizontal, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 7)
-                .fill(isSelected ? AppTheme.Accent.primary : AppTheme.Surface.control)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 7)
-                .stroke(AppTheme.Border.control, lineWidth: isSelected ? 0 : 0.5)
-        )
-        .contentShape(Rectangle())
-        .onTapGesture(count: 2) {
-            if let onEdit = onEdit {
-                onEdit(self)
+        // A Button so the chip is reachable with the keyboard and VoiceOver; double-click still edits.
+        Button(action: onTap) {
+            HStack(spacing: 6) {
+                Text(title)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(isSelected ? AppTheme.Text.onAccent : Color.primary)
+            .frame(maxWidth: .infinity, minHeight: 30)
+            .padding(.horizontal, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(isSelected ? AppTheme.Accent.primary : AppTheme.Surface.control)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 7)
+                    .stroke(AppTheme.Border.control, lineWidth: isSelected ? 0 : 0.5)
+            )
+            .contentShape(Rectangle())
         }
-        .onTapGesture(count: 1) {
-            onTap()
+        .buttonStyle(.plain)
+        .simultaneousGesture(
+            TapGesture(count: 2).onEnded {
+                onEdit?(self)
+            }
+        )
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityActions {
+            if let onEdit {
+                Button("Edit") { onEdit(self) }
+            }
         }
         .contextMenu {
             if onEdit != nil || onDelete != nil {
@@ -115,21 +122,23 @@ extension CustomPrompt {
     }
 
     static func addNewButton(action: @escaping () -> Void) -> some View {
-        Label("Add New", systemImage: "plus.circle.fill")
-            .font(.system(size: 12, weight: .medium))
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, minHeight: 30)
-            .padding(.horizontal, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 7)
-                    .fill(AppTheme.Surface.control)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 7)
-                    .stroke(AppTheme.Border.control, lineWidth: 0.5)
-            )
-            .contentShape(Rectangle())
-            .onTapGesture(perform: action)
+        Button(action: action) {
+            Label("Add New", systemImage: "plus.circle.fill")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, minHeight: 30)
+                .padding(.horizontal, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 7)
+                        .fill(AppTheme.Surface.control)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7)
+                        .stroke(AppTheme.Border.control, lineWidth: 0.5)
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
