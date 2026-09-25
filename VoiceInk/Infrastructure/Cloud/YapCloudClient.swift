@@ -375,6 +375,23 @@ final class YapCloud: ObservableObject {
         }
     }
 
+    /// Conditional `GET /v1/config`: with `ifNoneMatch` (the version this device last synced) the server answers
+    /// 304 while that is still current, so nothing is downloaded. A server that doesn't support it yet ignores the
+    /// header and sends the document as usual.
+    func fetchConfig(ifNoneMatch version: String?) async throws -> YapCloudConfigFetch {
+        do {
+            let (data, response) = try await sendWithResponse(
+                "GET", "/v1/config", headers: version.map { ["If-None-Match": "\"\($0)\""] } ?? [:])
+            guard let document = YapCloudConfigDocument(body: data, etag: response.value(forHTTPHeaderField: "ETag"))
+            else { throw YapCloudError.server(status: 200, code: nil, message: "Malformed config") }
+            return .document(document)
+        } catch YapCloudError.server(let status, _, _, _, _) where status == 304 {
+            return .notModified
+        } catch YapCloudError.server(let status, _, _, _, _) where status == 404 {
+            return .notFound
+        }
+    }
+
     /// Writes `config` (JSON object bytes, no secrets). `ifMatch` is the version you last read; nil = first write,
     /// sent as `If-None-Match: *` so an existing doc answers 409 VERSION_CONFLICT instead of being overwritten.
     /// Returns the new version. A stale version throws `.versionConflict(current:)` with the server's copy.
@@ -1074,6 +1091,15 @@ struct YapCloudLedgerEntry: Decodable, Identifiable {
 }
 
 /// One signed-in device (one token) from `GET /v1/me/devices`.
+/// Result of `fetchConfig(ifNoneMatch:)`.
+enum YapCloudConfigFetch {
+    /// Never written (404).
+    case notFound
+    /// Still the version passed as `ifNoneMatch` (304).
+    case notModified
+    case document(YapCloudConfigDocument)
+}
+
 /// `GET /v1/config/versions` entry.
 struct YapCloudConfigVersion: Decodable, Equatable {
     let version: YapCloudScalar
