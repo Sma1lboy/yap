@@ -28,8 +28,8 @@ struct OnboardingCloudRestoreHint: View {
 
 /// Sign in → fetch the account's config → show what it contains → Restore applies it and turns sync on.
 struct OnboardingCloudRestoreSheet: View {
-    /// Called after a successful restore with whether the config covers the setup steps.
-    let onRestored: (_ coversSetup: Bool) -> Void
+    /// Called with the restored config after a successful restore.
+    let onRestored: (YapConfig) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @ObservedObject private var cloud = YapCloud.shared
@@ -133,7 +133,7 @@ struct OnboardingCloudRestoreSheet: View {
         defer { isRestoring = false }
         do {
             try await CloudConfigSync.shared.restore(document)
-            onRestored(config.coversOnboardingSetup)
+            onRestored(config)
             dismiss()
         } catch {
             phase = .failed(error.localizedDescription)

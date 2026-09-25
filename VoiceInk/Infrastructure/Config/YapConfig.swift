@@ -256,6 +256,21 @@ struct YapConfig: Codable, Equatable {
             || modes.contains { $0.isDefault && $0.selectedTranscriptionModelName != nil }
     }
 
+    /// Providers the config relies on, as written in it: transcription first (the `transcription` field, else the
+    /// `Provider:` prefix of the default mode's model key), then enhancement (field, else the default mode's).
+    var providerNames: [String] {
+        let defaultMode = modes?.first(where: \.isDefault)
+        let modeKey = defaultMode?.selectedTranscriptionModelName?.split(separator: ":", maxSplits: 1)
+        let transcriptionProvider =
+            transcription?.provider ?? (modeKey?.count == 2 ? modeKey.map { String($0[0]) } : nil)
+        let enhancementProvider = enhancement?.provider ?? defaultMode?.selectedAIProvider
+        var names: [String] = []
+        for name in [transcriptionProvider, enhancementProvider].compactMap({ $0 }) where !names.contains(name) {
+            names.append(name)
+        }
+        return names
+    }
+
     /// The copy for another Mac: a prompt that names a local file (`"prompt.md"`) becomes the file's text, which
     /// `resolvePrompt` reads back as inline text. `"recommended"` stays, since every Yap bundles that prompt.
     func inliningPromptFile(_ resolve: (String) -> String?) -> YapConfig {
@@ -606,6 +621,24 @@ extension String {
             assert(pulledKeyword.keepingPromptFile(localPrompt: "prompt.md", existingFile: promptFile).promptFile == nil)
             assert(promptFileURL("prompt.md", configDirectory: dir)?.path == "/cfg/prompt.md")
             assert(promptFileURL("line one\nline two", configDirectory: dir) == nil)
+
+            // Providers a restored config relies on.
+            var restoredModes = YapConfig()
+            restoredModes.modes = [
+                ModeConfig(
+                    name: "D", isAIEnhancementEnabled: true, selectedTranscriptionModelName: "OpenRouter:ABC",
+                    selectedAIProvider: "Groq", isDefault: true)
+            ]
+            assert(restoredModes.providerNames == ["OpenRouter", "Groq"])
+            restoredModes.transcription = .init(provider: "yapcloud", model: "m")
+            restoredModes.enhancement = .init(provider: "yapcloud")
+            assert(restoredModes.providerNames == ["yapcloud"])
+            restoredModes = YapConfig()
+            restoredModes.modes = [
+                ModeConfig(
+                    name: "D", isAIEnhancementEnabled: false, selectedTranscriptionModelName: "whisper", isDefault: true)
+            ]
+            assert(restoredModes.providerNames.isEmpty)
 
             // Tombstones. Base state as both Macs last synced it, every entry modified at t0.
             let t0 = Date(timeIntervalSince1970: 1_800_000_000)

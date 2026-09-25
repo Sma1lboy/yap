@@ -46,9 +46,9 @@ struct OnboardingView: View {
                         onRestoreFromCloud: { isShowingCloudRestore = true }
                     )
                     .sheet(isPresented: $isShowingCloudRestore) {
-                        OnboardingCloudRestoreSheet { coversSetup in
+                        OnboardingCloudRestoreSheet { config in
                             didRestoreFromCloud = true
-                            coordinator.flow.didRestoreFromCloud(coversSetup: coversSetup)
+                            coordinator.flow.didRestoreFromCloud(config)
                         }
                     }
                     .transition(.opacity)
@@ -116,9 +116,10 @@ struct OnboardingView: View {
                         providerOptions: coordinator.onboardingProviderOptions,
                         selectedProvider: coordinator.selectedOnboardingProviderBinding(aiService: aiService),
                         isSelectedProviderVerified: coordinator.isSelectedAPIProviderVerified,
+                        // After a restore this step exists only to add a missing key.
                         canContinue: coordinator.isReadyForExperience(
                             isTranscriptionSetupReady: isTranscriptionSetupReady
-                        ),
+                        ) && coordinator.restoreProviderMissingKey == nil,
                         isShowingSkipWarning: $coordinator.isShowingSkipAPISetupWarning,
                         onVerificationChanged: coordinator.flow.refreshAPIVerification,
                         onBack: coordinator.flow.goBackToModelStep,

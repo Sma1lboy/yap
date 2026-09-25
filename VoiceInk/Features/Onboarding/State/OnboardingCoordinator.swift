@@ -71,6 +71,24 @@ final class OnboardingCoordinator: ObservableObject {
         }
     }
 
+    /// The providers the restored config relies on (`YapConfig.providerNames`), to check their keys.
+    @Published var restoreProviderNames: [String] {
+        didSet {
+            defaults.set(restoreProviderNames, forKey: OnboardingStorageKeys.restoreProviderNames)
+        }
+    }
+
+    /// After a restore: the first provider the config relies on whose key this Mac doesn't have yet, and that the
+    /// AI key step can take. Yap Cloud needs no key once signed in; providers without keys never count.
+    var restoreProviderMissingKey: AIProvider? {
+        guard restoredFromCloud else { return nil }
+        return restoreProviderNames.lazy.compactMap(AIProvider.init(configName:)).first { provider in
+            provider != .yapCloud && provider.requiresAPIKey
+                && !APIKeyManager.shared.hasAPIKey(forProvider: provider.rawValue)
+                && onboardingProviderOptions.contains(provider)
+        }
+    }
+
     @Published var permissionStatuses: [OnboardingPermissionKind: OnboardingPermissionStatus] = [:]
     @Published var isSelectedTranscriptionProviderVerified = false
     @Published var isSelectedAPIProviderVerified = false
@@ -109,6 +127,7 @@ final class OnboardingCoordinator: ObservableObject {
         self.hasSkippedTranscriptionSetup = defaults.bool(forKey: OnboardingStorageKeys.skippedTranscriptionSetup)
         self.usedRecommendedSetup = defaults.bool(forKey: OnboardingStorageKeys.usedRecommendedSetup)
         self.restoredFromCloud = defaults.bool(forKey: OnboardingStorageKeys.restoredFromCloud)
+        self.restoreProviderNames = defaults.stringArray(forKey: OnboardingStorageKeys.restoreProviderNames) ?? []
     }
 
     deinit {
@@ -466,6 +485,7 @@ enum OnboardingStorageKeys {
     static let skippedTranscriptionSetup = "onboardingSkippedTranscriptionSetup"
     static let usedRecommendedSetup = "onboardingUsedRecommendedSetup"
     static let restoredFromCloud = "onboardingRestoredFromCloud"
+    static let restoreProviderNames = "onboardingRestoreProviderNames"
 
     static let onboardingKeys = [
         stage,
@@ -478,6 +498,7 @@ enum OnboardingStorageKeys {
         skippedTranscriptionSetup,
         usedRecommendedSetup,
         restoredFromCloud,
+        restoreProviderNames,
         experienceIndex,
         "onboardingStarterModeIndex",
     ]
