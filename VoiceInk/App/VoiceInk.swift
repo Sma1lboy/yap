@@ -315,15 +315,8 @@ struct VoiceInkApp: App {
                         .environmentObject(aiService)
                         .environmentObject(enhancementService)
                         .modelContainer(container)
-                        .lazyChangeLogPresenter { isPresenting in
-                            if !isPresenting {
-                                showLaunchRemindersIfNeeded()
-                            }
-                        }
                         .onAppear {
-                            if !ChangeLogManager.needsPresentation() {
-                                showLaunchRemindersIfNeeded()
-                            }
+                            showLaunchRemindersIfNeeded()
 
                             // Run due audio-only cleanup and schedule future checks when transcript cleanup is not managing retention.
                             if !UserDefaults.standard.bool(forKey: CleanupSettingsKeys.isTranscriptionCleanupEnabled)
