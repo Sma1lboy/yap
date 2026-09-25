@@ -113,6 +113,7 @@ final class YapConfigLoader: ObservableObject {
         #if DEBUG
             YapConfig.selfCheck()
             RecommendedSetup.selfCheck()
+            Shortcut.configStringSelfCheck()
             Self.selfCheck()
             Task { await CloudConfigSync.selfCheck() }
         #endif
