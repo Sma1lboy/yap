@@ -71,6 +71,8 @@ Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription 
 
 ## Releasing
 
+Before tagging, run `make cloud-smoke` (needs `YAP_CLOUD_SMOKE_TOKEN`; the command prints how to get one): it compiles the real Yap Cloud client against small stubs and checks it against live paygate — account, ledger paging, usage, models, config 409s, devices, the monthly cap (restored afterwards) and the 402s at a zero balance. It exits non-zero on any FAIL.
+
 Push a tag `vX.Y.Z`. CI (`.github/workflows/release.yml`) builds on macOS 26, signs with the "Yap Self-Signed" certificate, publishes `Yap.zip` to GitHub Releases, then commits the new `appcast.xml` item (Sparkle EdDSA-signed) and the `Casks/yap.rb` version in one commit to `main`. Build numbers are `1000 + run number`. CI also builds every push to `main` and once a week, so caches stay warm in `main`'s scope: the whisper.cpp framework, the compiled Swift packages (mlx, FluidAudio, TranscribeCpp — the stable local-model modules), and Xcode 26's content-hashed compilation cache for the app's own sources (a fresh checkout doesn't force a full recompile). A release takes about 3–4 minutes; changing `Package.resolved` triggers one full rebuild (~14 minutes).
 
 Because every release is signed with the same certificate, macOS keeps the Microphone and Accessibility permissions across updates. The app is not notarized; Homebrew and the install script remove the quarantine flag.
