@@ -270,6 +270,7 @@ struct OnboardingTranscriptionSetupCard: View {
                             Button("Refresh") {
                                 Task { await loadOpenRouterModelsIfNeeded() }
                             }
+                            .buttonStyle(.link)
                         }
                     }
                     .font(.system(size: 12))

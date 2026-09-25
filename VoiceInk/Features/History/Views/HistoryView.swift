@@ -205,7 +205,7 @@ struct HistoryView<Header: View>: View {
             )
             .frame(maxWidth: .infinity)
 
-            Button("Transcribe File…") {
+            AppActionButton("Transcribe File…", isPill: true) {
                 MainWindowNavigation.shared.navigate(to: .transcribeAudio)
             }
             .help("Transcribe an audio or video file")

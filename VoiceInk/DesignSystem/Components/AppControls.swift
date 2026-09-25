@@ -55,17 +55,21 @@ struct AppActionButton: View {
     let title: LocalizedStringKey
     var kind: AppActionButtonKind = .secondary
     var minWidth: CGFloat?
+    /// Capsule at 30pt with card fill, to match a row of capsule controls (search field, AppIconButton).
+    var isPill = false
     let action: () -> Void
 
     init(
         _ title: LocalizedStringKey,
         kind: AppActionButtonKind = .secondary,
         minWidth: CGFloat? = nil,
+        isPill: Bool = false,
         action: @escaping () -> Void
     ) {
         self.title = title
         self.kind = kind
         self.minWidth = minWidth
+        self.isPill = isPill
         self.action = action
     }
 
@@ -74,12 +78,13 @@ struct AppActionButton: View {
             Text(title)
                 .frame(minWidth: minWidth)
         }
-        .buttonStyle(AppActionButtonStyle(kind: kind))
+        .buttonStyle(AppActionButtonStyle(kind: kind, isPill: isPill))
     }
 }
 
 private struct AppActionButtonStyle: ButtonStyle {
     let kind: AppActionButtonKind
+    let isPill: Bool
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
@@ -87,15 +92,17 @@ private struct AppActionButtonStyle: ButtonStyle {
             .font(.system(size: 12, weight: .semibold))
             .foregroundStyle(foregroundColor)
             .padding(.horizontal, 14)
-            .frame(height: 32)
+            .frame(height: isPill ? 30 : 32)
             .background(backgroundColor)
-            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .strokeBorder(borderColor, lineWidth: 1)
             }
             .opacity(isEnabled ? (configuration.isPressed ? 0.78 : 1) : 0.45)
     }
+
+    private var cornerRadius: CGFloat { isPill ? 15 : 9 }
 
     private var foregroundColor: Color {
         switch kind {
@@ -107,7 +114,7 @@ private struct AppActionButtonStyle: ButtonStyle {
 
     private var backgroundColor: Color {
         switch kind {
-        case .secondary: AppTheme.Surface.control
+        case .secondary: isPill ? AppTheme.Surface.card : AppTheme.Surface.control
         case .primary: AppTheme.Action.primaryFill
         case .destructive: AppTheme.Action.destructiveFill
         }
@@ -115,7 +122,7 @@ private struct AppActionButtonStyle: ButtonStyle {
 
     private var borderColor: Color {
         switch kind {
-        case .secondary: AppTheme.Border.control
+        case .secondary: isPill ? AppTheme.Border.subtle : AppTheme.Border.control
         case .primary: AppTheme.Accent.border
         case .destructive: Color.white.opacity(0.14)
         }

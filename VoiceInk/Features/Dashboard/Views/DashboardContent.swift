@@ -506,8 +506,7 @@ private struct DashboardAccessibilityReminder: View {
 
             Spacer(minLength: 12)
 
-            Button("Open Settings", action: onOpenSettings)
-                .controlSize(.small)
+            AppActionButton("Open Settings", action: onOpenSettings)
                 .help("Open Accessibility settings")
         }
         .padding(16)
@@ -546,8 +545,7 @@ private struct DashboardNoModesReminder: View {
 
             Spacer(minLength: 12)
 
-            Button("Manage Modes", action: onOpenModes)
-                .controlSize(.small)
+            AppActionButton("Manage Modes", action: onOpenModes)
                 .help("Open Modes settings")
         }
         .padding(16)
