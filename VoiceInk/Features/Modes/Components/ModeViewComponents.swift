@@ -262,54 +262,58 @@ struct ConfigurationRow: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                HStack(spacing: 12) {
-                    ZStack {
-                        ModeIconView(icon: config.icon, size: config.icon.kind == .emoji ? 20 : 16)
-                    }
-                    .frame(width: 40, height: 40)
-                    .background(
-                        AppCardBackground(isSelected: false, cornerRadius: AppTheme.Radius.pill)
-                    )
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(config.name)
-                            .font(.system(size: 15, weight: .semibold))
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-
-                        HStack(spacing: 12) {
-                            if appCount > 0 {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "app.fill")
-                                        .font(.system(size: 10))
-                                    Text(appText)
-                                        .font(.caption2)
-                                }
-                            }
-
-                            if websiteCount > 0 {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "globe")
-                                        .font(.system(size: 10))
-                                    Text(websiteText)
-                                        .font(.caption2)
-                                }
-                            }
-                        }
-                        .padding(.top, 2)
-                        .foregroundColor(.secondary)
-                    }
-
-                    Spacer()
-
-                    if config.isDefault {
-                        DefaultModeIndicator()
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
+                // A Button, not a tap gesture, so Edit is reachable with the keyboard and VoiceOver.
+                Button {
                     onEditConfig(config)
+                } label: {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            ModeIconView(icon: config.icon, size: config.icon.kind == .emoji ? 20 : 16)
+                        }
+                        .frame(width: 40, height: 40)
+                        .background(
+                            AppCardBackground(isSelected: false, cornerRadius: AppTheme.Radius.pill)
+                        )
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(config.name)
+                                .font(.system(size: 15, weight: .semibold))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+
+                            HStack(spacing: 12) {
+                                if appCount > 0 {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "app.fill")
+                                            .font(.system(size: 10))
+                                        Text(appText)
+                                            .font(.caption2)
+                                    }
+                                }
+
+                                if websiteCount > 0 {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "globe")
+                                            .font(.system(size: 10))
+                                        Text(websiteText)
+                                            .font(.caption2)
+                                    }
+                                }
+                            }
+                            .padding(.top, 2)
+                            .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        if config.isDefault {
+                            DefaultModeIndicator()
+                        }
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityHint("Edit mode")
 
                 if !config.isDefault {
                     Toggle(
