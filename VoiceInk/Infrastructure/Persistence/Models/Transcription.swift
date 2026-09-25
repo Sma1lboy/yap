@@ -22,6 +22,11 @@ final class Transcription {
     var aiEnhancementModelName: String?
     /// True when a Yap Cloud call (transcription or cleanup) succeeded for this record; History tags it.
     var usedYapCloud: Bool?
+    /// OpenRouter generation ids of this record's Yap Cloud calls, used to look up what they were charged.
+    var yapCloudTranscriptionGenerationID: String?
+    var yapCloudEnhancementGenerationID: String?
+    /// Cached total charge of those calls (positive micros), filled the first time History shows the cost.
+    var yapCloudCostMicros: Int64?
     var promptName: String?
     var transcriptionDuration: TimeInterval?
     var enhancementDuration: TimeInterval?
