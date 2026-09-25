@@ -221,6 +221,28 @@
         }
       }
     },
+    "%@ of audio" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Audio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ d'audio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共 %@ 录音"
+          }
+        }
+      }
+    },
     "%@ requires macOS 26 or later" : {
       "localizations" : {
         "de" : {
@@ -263,6 +285,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ 到 %@"
+          }
+        }
+      }
+    },
+    "%@ vs last week" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ggü. Vorwoche"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ par rapport à la semaine dernière"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "比上周同期 %@"
           }
         }
       }
@@ -401,6 +445,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@，%2$lld 个词"
+          }
+        }
+      }
+    },
+    "%@× typing speed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@× Tippgeschwindigkeit"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@× la vitesse de frappe"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打字速度的 %@ 倍"
           }
         }
       }
@@ -1144,6 +1210,82 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld 个文件"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld items" : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Eintrag"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Einträge"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld item"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld items"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld élément"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld éléments"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 条"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 条"
                 }
               }
             }
@@ -3872,6 +4014,28 @@
         }
       }
     },
+    "Active today" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute aktiv"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actif aujourd'hui"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天已使用"
+          }
+        }
+      }
+    },
     "Add" : {
       "localizations" : {
         "de" : {
@@ -6499,6 +6663,28 @@
         }
       }
     },
+    "Canceled" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abgebrochen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulé"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已取消"
+          }
+        }
+      }
+    },
     "Cannot Save Mode" : {
       "localizations" : {
         "de" : {
@@ -7237,6 +7423,28 @@
         }
       }
     },
+    "Collapse" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einklappen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduire"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收起"
+          }
+        }
+      }
+    },
     "Combines transcription with an LLM to create a polished version." : {
       "localizations" : {
         "de" : {
@@ -7882,30 +8090,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "复制文本"
-          }
-        }
-      }
-    },
-    "Copy transcript" : {
-      "comment" : "Label for a button that copies the transcript text to the clipboard.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Transkript kopieren"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copier la transcription"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "复制转写文本"
           }
         }
       }
@@ -8763,6 +8947,28 @@
         }
       }
     },
+    "Day streak" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tage in Folge"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jours d'affilée"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连续使用天数"
+          }
+        }
+      }
+    },
     "Deactivate" : {
       "localizations" : {
         "de" : {
@@ -9487,6 +9693,28 @@
         }
       }
     },
+    "Dictate today to keep it" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute diktieren, um sie zu halten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dictez aujourd'hui pour la conserver"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "今天听写一次就能保持"
+          }
+        }
+      }
+    },
     "Dictated words chart" : {
       "comment" : "A label for a chart that shows the number of words dictated over a period of time.",
       "isCommentAutoGenerated" : true,
@@ -9552,6 +9780,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选好转写模型之前无法听写，练习步骤会跳过。之后随时可以在设置或 ~/.config/yap/config.json 里配置。"
+          }
+        }
+      }
+    },
+    "Dictations" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diktate"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dictées"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "听写次数"
           }
         }
       }
@@ -11436,6 +11686,28 @@
         }
       }
     },
+    "Expand" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausklappen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Développer"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "展开"
+          }
+        }
+      }
+    },
     "Experience Yap" : {
       "localizations" : {
         "de" : {
@@ -11718,6 +11990,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "立即失败"
+          }
+        }
+      }
+    },
+    "Failed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehlgeschlagen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "失败"
           }
         }
       }
@@ -12996,6 +13290,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "历史记录设置"
+          }
+        }
+      }
+    },
+    "Hold %@ and start talking" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ gedrückt halten und lossprechen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintenez %@ et commencez à parler"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按住 %@ 开始说话"
           }
         }
       }
@@ -16654,6 +16970,28 @@
         }
       }
     },
+    "No audio yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch kein Audio"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore d'audio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有录音"
+          }
+        }
+      }
+    },
     "No automatic triggers" : {
       "localizations" : {
         "de" : {
@@ -18039,6 +18377,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "备忘录"
+          }
+        }
+      }
+    },
+    "Nothing dictated yet this week" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Woche noch nichts diktiert"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien dicté cette semaine"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本周还没有听写"
+          }
+        }
+      }
+    },
+    "Nothing to compare with last week" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Vergleich zur Vorwoche"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien à comparer avec la semaine dernière"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上周同期没有记录"
           }
         }
       }
@@ -19968,30 +20350,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "实时"
-          }
-        }
-      }
-    },
-    "Recent Transcripts" : {
-      "comment" : "A label displayed above the user's recent transcripts.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktuelle Transkripte"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Transcriptions récentes"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最近转写"
           }
         }
       }
@@ -23456,6 +23814,28 @@
         }
       }
     },
+    "Speaking pace" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprechtempo"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Débit de parole"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "说话速度"
+          }
+        }
+      }
+    },
     "SpeechAnalyzer requires macOS 26 or later." : {
       "localizations" : {
         "de" : {
@@ -23631,6 +24011,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开始录音"
+          }
+        }
+      }
+    },
+    "Start today" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heute starten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commencez aujourd'hui"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从今天开始"
           }
         }
       }
@@ -25716,6 +26118,28 @@
         }
       }
     },
+    "This week · %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Woche · %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette semaine · %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本周 · %@"
+          }
+        }
+      }
+    },
     "This will delete %lld audio files (%@)." : {
       "localizations" : {
         "de" : {
@@ -26682,28 +27106,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "试试简单听写"
-          }
-        }
-      }
-    },
-    "Try a different search term" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anderen Suchbegriff versuchen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Essayez un autre terme de recherche"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请尝试其他搜索词"
           }
         }
       }
@@ -28289,6 +28691,28 @@
         }
       }
     },
+    "Words per day this week" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wörter pro Tag diese Woche"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mots par jour cette semaine"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本周每日字数"
+          }
+        }
+      }
+    },
     "Write an Email" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -29097,6 +29521,28 @@
         }
       }
     },
+    "Yesterday" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestern"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "昨天"
+          }
+        }
+      }
+    },
     "You Control It" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -29368,28 +29814,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的设置已成功导出到 %@。"
-          }
-        }
-      }
-    },
-    "Your transcription history will appear here" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deine Transkriptionshistorie wird hier angezeigt"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Votre historique de transcription apparaîtra ici"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你的转写记录将显示在这里"
           }
         }
       }
@@ -29757,6 +30181,28 @@
         }
       }
     },
+    "vs typing at 40 wpm" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ggü. Tippen mit 40 WpM"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "par rapport à 40 mots/min au clavier"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "相比每分钟打 40 字"
+          }
+        }
+      }
+    },
     "with Yap" : {
       "comment" : "A description of the time saved with Yap.",
       "isCommentAutoGenerated" : true,
@@ -29901,6 +30347,28 @@
         }
       }
     },
+    "words dictated" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wörter diktiert"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mots dictés"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字"
+          }
+        }
+      }
+    },
     "words per average session" : {
       "comment" : "A label describing the average number of words per dictation session.",
       "isCommentAutoGenerated" : true,
@@ -29921,6 +30389,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "平均每次听写词数"
+          }
+        }
+      }
+    },
+    "wpm" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WpM"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "mots/min"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字/分钟"
           }
         }
       }

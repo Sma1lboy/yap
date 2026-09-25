@@ -35,16 +35,6 @@ struct DashboardContent: View {
     @AppStorage(AutoLearnSettings.isEnabledKey) private var isAutoLearnEnabled = true
     @AppStorage(AutoLearnSettings.hasFailureKey) private var hasAutoLearnFailure = false
     @AppStorage(AutoLearnSettings.failureAcknowledgedKey) private var isAutoLearnFailureAcknowledged = false
-    @Query(Self.recentTranscriptionsDescriptor()) private var recentTranscriptionCandidates: [Transcription]
-
-    private static func recentTranscriptionsDescriptor() -> FetchDescriptor<Transcription> {
-        var descriptor = FetchDescriptor<Transcription>(
-            sortBy: [SortDescriptor(\Transcription.timestamp, order: .reverse)]
-        )
-        descriptor.fetchLimit = 25
-        return descriptor
-    }
-
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
 
@@ -56,28 +46,15 @@ struct DashboardContent: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            let contentWidth = DashboardLayout.contentWidth(for: geometry.size.width)
-
-            ZStack(alignment: .top) {
-                DashboardAmbientBackground()
-
+        Group {
+            if isInsightsViewPresented {
                 ScrollView {
-                    Group {
-                        if isInsightsViewPresented {
-                            dashboardInsightsView
-                        } else {
-                            dashboardMainContent(availableWidth: contentWidth)
-                        }
-                    }
-                    .frame(width: contentWidth, alignment: .top)
-                    .frame(
-                        minHeight: max(0, geometry.size.height - DashboardLayout.contentBottomOffset),
-                        alignment: .top
-                    )
-                    .padding(.vertical, DashboardLayout.pageVerticalPadding)
-                    .padding(.horizontal, DashboardLayout.pageHorizontalPadding)
+                    dashboardInsightsView
+                        .padding(.vertical, DashboardLayout.pageVerticalPadding)
+                        .padding(.horizontal, DashboardLayout.pageHorizontalPadding)
                 }
+            } else {
+                HistoryView { homeHeader }
             }
         }
         .task {
@@ -206,10 +183,9 @@ struct DashboardContent: View {
         }
     }
 
-    private func dashboardMainContent(availableWidth: CGFloat) -> some View {
+    /// Scrolls above the history list: reminders, this week's panel, footer links.
+    private var homeHeader: some View {
         VStack(alignment: .leading, spacing: DashboardLayout.sectionSpacing) {
-            homeHeader
-
             if !isAccessibilityEnabled {
                 DashboardAccessibilityReminder(onOpenSettings: openAccessibilitySettings)
             }
@@ -218,30 +194,10 @@ struct DashboardContent: View {
                 DashboardNoModesReminder(onOpenModes: ModeSetupNavigator.openModesSettings)
             }
 
-            if !recentDashboardTranscriptions.isEmpty {
-                DashboardTranscriptCards(transcriptions: recentDashboardTranscriptions)
-            }
+            HomeWeekPanel(modeSummary: defaultModeSummary)
 
             footerLinks
         }
-        .frame(width: availableWidth, alignment: .topLeading)
-    }
-
-    private var homeHeader: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(verbatim: "Yap")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundStyle(AppTheme.Text.primary)
-
-            if let defaultModeSummary {
-                Text(verbatim: defaultModeSummary)
-                    .font(.system(size: 13))
-                    .foregroundStyle(AppTheme.Text.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// "shortcut · transcription model · enhancement model" for the default mode.
@@ -303,31 +259,6 @@ struct DashboardContent: View {
         .buttonStyle(.link)
         .font(.system(size: 12))
         .foregroundStyle(AppTheme.Text.secondary)
-    }
-
-    private var recentDashboardTranscriptions: [Transcription] {
-        Array(
-            recentTranscriptionCandidates
-                .filter { transcription in
-                    isRecentDashboardTranscription(transcription)
-                }
-                .prefix(5)
-        )
-    }
-
-    private func isRecentDashboardTranscription(_ transcription: Transcription) -> Bool {
-        let text = transcription.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else {
-            return false
-        }
-
-        if transcription.transcriptionStatus == TranscriptionStatus.failed.rawValue
-            || transcription.transcriptionStatus == TranscriptionStatus.canceled.rawValue
-        {
-            return false
-        }
-
-        return text.range(of: "Transcription Failed:", options: [.caseInsensitive, .anchored]) == nil
     }
 
     private var selectedProductivityPoints: [DashboardProductivityPoint] {
@@ -622,13 +553,5 @@ private struct DashboardNoModesReminder: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppCardBackground(cornerRadius: 16))
-    }
-}
-
-private struct DashboardAmbientBackground: View {
-    var body: some View {
-        Color.clear
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
     }
 }

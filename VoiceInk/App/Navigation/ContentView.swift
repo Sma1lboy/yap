@@ -30,7 +30,7 @@ final class MainWindowNavigation: ObservableObject {
     }
 
     func navigate(to destination: ViewType) {
-        selectedView = destination
+        selectedView = destination == .history ? .dashboard : destination
     }
 }
 
@@ -84,14 +84,12 @@ struct ContentView: View {
     @ViewBuilder
     private func detailView(for viewType: ViewType) -> some View {
         switch viewType {
-        case .dashboard:
+        case .dashboard, .history:
             DashboardView()
         case .models:
             ModelManagementView()
         case .transcribeAudio:
             AudioTranscribeView()
-        case .history:
-            HistoryView()
         case .audio:
             AudioSetupView()
         case .dictionary:

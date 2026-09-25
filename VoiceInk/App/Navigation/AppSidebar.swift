@@ -71,7 +71,6 @@ private extension ViewType {
     static let primaryItems: [ViewType] = [
         .dashboard,
         .modes,
-        .history,
         .dictionary,
         .models,
         .audio,
@@ -81,9 +80,11 @@ private extension ViewType {
         .settings,
     ]
 
-    /// Reachable only from other screens (History toolbar, Finder "Open With"), not the sidebar.
+    /// Not in the sidebar: Transcribe Audio opens from the Home list toolbar and Finder "Open With";
+    /// History is part of Home (navigating to it lands on Home).
     static let hiddenItems: [ViewType] = [
         .transcribeAudio,
+        .history,
     ]
 
     static func assertSidebarItemsCoverAllCases() {
