@@ -327,6 +327,7 @@ struct ConfigurationRow: View {
                     )
                     .toggleStyle(SwitchToggleStyle(tint: AppTheme.Accent.primary))
                     .labelsHidden()
+                    .accessibilityLabel(String(format: String(localized: "Enable %@"), config.name))
                 }
             }
             .padding(.vertical, 12)
