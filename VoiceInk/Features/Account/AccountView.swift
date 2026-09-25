@@ -114,7 +114,7 @@ private struct SignedInSections: View {
         } header: {
             Text("Add Funds")
         } footer: {
-            Text("Checkout opens in your browser. Refresh after paying to see the new balance.")
+            Text("Checkout opens in your browser. Your balance updates when you come back to Yap.")
         }
 
         Section("Recent Activity") {

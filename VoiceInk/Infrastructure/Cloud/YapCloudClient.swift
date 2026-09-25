@@ -41,6 +41,13 @@ final class YapCloud: ObservableObject {
         if let data = defaults.data(forKey: Self.catalogKey) {
             catalog = try? JSONDecoder().decode(YapCloudCatalog.self, from: data)
         }
+        // Paying happens in the browser; coming back to Yap is when the new balance should show
+        // (Account, the Home card and the menu bar all read `me`).
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { await self?.refreshAccount() }
+        }
     }
 
     // MARK: - Shared state other features read

@@ -6945,24 +6945,24 @@
         }
       }
     },
-    "Checkout opens in your browser. Refresh after paying to see the new balance." : {
+    "Checkout opens in your browser. Your balance updates when you come back to Yap." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der Bezahlvorgang öffnet sich im Browser. Aktualisiere nach dem Bezahlen, um das neue Guthaben zu sehen."
+            "value" : "Der Bezahlvorgang öffnet sich im Browser. Dein Guthaben wird aktualisiert, sobald du zu Yap zurückkehrst."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le paiement s'ouvre dans votre navigateur. Actualisez après avoir payé pour voir le nouveau solde."
+            "value" : "Le paiement s’ouvre dans votre navigateur. Votre solde se met à jour quand vous revenez dans Yap."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "支付页面会在浏览器中打开。付款后点「刷新」查看新余额。"
+            "value" : "支付页面会在浏览器中打开。付款后回到 Yap，余额会自动更新。"
           }
         }
       }
