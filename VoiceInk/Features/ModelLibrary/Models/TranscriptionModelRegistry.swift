@@ -19,7 +19,7 @@ enum TranscriptionModelRegistry {
             return openRouter
         }
 
-        return models.first { $0.name == key && $0.provider != .openRouter }
+        return models.first { $0.name == key && $0.provider != .openRouter && $0.provider != .yapCloud }
     }
 
     private static let predefinedModels: [any TranscriptionModel] = {

@@ -197,11 +197,23 @@ struct ModeConfigFormView: View {
             } else {
                 let availableModels = warmupSnapshot.usableTranscriptionModels
                 let openRouterModels = availableModels.filter { $0.provider == .openRouter }
+                let yapCloudModels = availableModels.filter { $0.provider == .yapCloud }
 
                 LabeledContent("Model") {
                     Menu {
-                        ForEach(availableModels.filter { $0.provider != .openRouter }, id: \.selectionKey) { model in
+                        ForEach(
+                            availableModels.filter { $0.provider != .openRouter && $0.provider != .yapCloud },
+                            id: \.selectionKey
+                        ) { model in
                             transcriptionModelMenuItem(model)
+                        }
+
+                        if !yapCloudModels.isEmpty {
+                            Menu("Yap Cloud") {
+                                ForEach(yapCloudModels, id: \.selectionKey) { model in
+                                    transcriptionModelMenuItem(model)
+                                }
+                            }
                         }
 
                         if !openRouterModels.isEmpty {

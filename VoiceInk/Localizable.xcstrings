@@ -29066,6 +29066,50 @@
         }
       }
     },
+    "Yap Cloud" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud"
+          }
+        }
+      }
+    },
+    "Yap Cloud speech-to-text model, billed to your balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap-Cloud-Sprache-zu-Text-Modell, wird vom Guthaben abgebucht"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèle de transcription Yap Cloud, facturé sur votre solde"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 语音转文字模型,费用从余额扣除"
+          }
+        }
+      }
+    },
     "Yap Insights" : {
       "localizations" : {
         "de" : {

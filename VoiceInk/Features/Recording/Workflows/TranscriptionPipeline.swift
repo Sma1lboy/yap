@@ -210,10 +210,12 @@ class TranscriptionPipeline {
                         transcription.enhancedText = failureMessage
                         responseError = errorDescription
                         await MainActor.run {
-                            NotificationManager.shared.showNotification(
-                                title: failureMessage,
-                                type: .warning
-                            )
+                            if !YapCloud.notifyIfInsufficientBalance(error) {
+                                NotificationManager.shared.showNotification(
+                                    title: failureMessage,
+                                    type: .warning
+                                )
+                            }
                         }
                         if shouldCancel() {
                             await finishCanceledTranscription()
@@ -226,6 +228,7 @@ class TranscriptionPipeline {
             transcription.transcriptionStatus = TranscriptionStatus.completed.rawValue
         } catch {
             let errorDescription = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            await MainActor.run { _ = YapCloud.notifyIfInsufficientBalance(error) }
 
             if let nativeAppleError = error as? NativeAppleTranscriptionService.ServiceError,
                 nativeAppleError.shouldShowNotification
