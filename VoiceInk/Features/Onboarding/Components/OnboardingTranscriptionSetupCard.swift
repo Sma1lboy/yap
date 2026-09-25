@@ -187,7 +187,7 @@ struct OnboardingTranscriptionSetupCard: View {
                 Text("Use Yap Cloud (pay as you go)")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(AppTheme.Text.primary)
-                Text("Same models as Recommended, no API key: sign in with your email and top up a balance. Each dictation is charged at cost plus a small markup.")
+                Text("Same models as Your OpenRouter Key, no API key: sign in with your email and pay from a balance. Each dictation costs the model's price plus 10%.")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(AppTheme.Text.secondary)
                     .fixedSize(horizontal: false, vertical: true)
