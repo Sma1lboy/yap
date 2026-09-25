@@ -18,6 +18,26 @@ protocol ConfigCloudStore: AnyObject {
     func putConfig(_ data: Data, ifMatch: String?) async throws -> String
 }
 
+/// One stored version of the synced config, as listed by the server.
+struct CloudConfigVersionInfo: Equatable, Identifiable {
+    let version: String
+    let updatedAt: Date?
+    /// The Mac that wrote it, when the server knows.
+    let deviceName: String?
+    let bytes: Int?
+
+    var id: String { version }
+}
+
+/// Earlier versions of the synced config (paygate `GET /v1/config/versions[/{v}]`). Optional: a store without it
+/// just has no Version History. Restoring is a normal `putConfig` with If-Match, so it needs nothing more.
+protocol ConfigVersionHistoryStore: AnyObject {
+    /// Newest first.
+    func listConfigVersions() async throws -> [CloudConfigVersionInfo]
+    /// The config bytes stored as `version`.
+    func fetchConfigVersion(_ version: String) async throws -> Data
+}
+
 /// Keeps config.json in sync across Macs through a `ConfigCloudStore`, when "Sync via Yap Cloud" is on.
 /// Pulls at launch, pushes after local changes (via `YapConfigLoader`'s change observer).
 /// A failed put is re-read: if the stored version moved, the two sides are merged by id and put once more;
@@ -66,6 +86,25 @@ final class CloudConfigSync: ObservableObject {
     }
 
     var isAvailable: Bool { store?.isSignedIn == true }
+
+    /// Signed in and the store keeps earlier versions.
+    var supportsHistory: Bool { isAvailable && historyStore != nil }
+    private var historyStore: (any ConfigVersionHistoryStore)? { store as? any ConfigVersionHistoryStore }
+
+    // MARK: - Version history
+
+    /// The stored versions, newest first, plus the current one's config for comparing against.
+    func loadHistory() async throws -> (versions: [CloudConfigVersionInfo], current: YapConfig?) {
+        guard let historyStore, let store else { return ([], nil) }
+        let versions = try await historyStore.listConfigVersions()
+        let current = try await store.fetchConfig().map { try YapConfig.decode($0.config) }
+        return (versions, current)
+    }
+
+    func config(atVersion version: String) async throws -> YapConfig {
+        guard let historyStore else { throw CocoaError(.featureUnsupported) }
+        return try YapConfig.decode(try await historyStore.fetchConfigVersion(version))
+    }
     var isEnabled: Bool { isAvailable && defaults.bool(forKey: Self.enabledKey) }
 
     func sync() async {

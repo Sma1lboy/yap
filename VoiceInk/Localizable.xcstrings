@@ -8075,6 +8075,28 @@
         }
       }
     },
+    "Compared with the current version" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Vergleich zur aktuellen Version"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par rapport à la version actuelle"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与当前版本相比"
+          }
+        }
+      }
+    },
     "Compiling %@" : {
       "localizations" : {
         "de" : {
@@ -9103,6 +9125,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "创建时间"
+          }
+        }
+      }
+    },
+    "Current" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuell"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actuelle"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前"
           }
         }
       }
@@ -12354,6 +12398,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "估算令牌"
+          }
+        }
+      }
+    },
+    "Every change synced through Yap Cloud is kept as a version." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede über Yap Cloud synchronisierte Änderung wird als Version aufbewahrt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque modification synchronisée via Yap Cloud est conservée comme une version."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过 Yap Cloud 同步的每次改动都会保存为一个版本。"
           }
         }
       }
@@ -15754,6 +15820,7 @@
       }
     },
     "Local models keep everything on this Mac. Cloud providers and Yap Cloud get only what you send them." : {
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -15773,8 +15840,7 @@
             "value" : "本地模型的所有数据都留在这台 Mac 上。云端提供商和 Yap Cloud 只会收到你发送的内容。"
           }
         }
-      },
-      "extractionState" : "manual"
+      }
     },
     "Local models keep everything on this Mac. With your own API key, audio and text go only to the provider you choose. With Yap Cloud, they pass through Yap's server on the way to the model provider; the server records the model and cost for billing. Transcripts are stored on this Mac." : {
       "localizations" : {
@@ -18662,6 +18728,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有可导入的有效条目。"
+          }
+        }
+      }
+    },
+    "No versions yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Versionen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune version pour l’instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有版本。"
           }
         }
       }
@@ -23488,6 +23576,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请选择支持的转录语言或区域设置。如可用，将显示自动多语言转录。"
+          }
+        }
+      }
+    },
+    "Select a version to compare it with the current one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle eine Version, um sie mit der aktuellen zu vergleichen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez une version pour la comparer à la version actuelle."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择一个版本，和当前版本比较。"
           }
         }
       }
@@ -28996,6 +29106,28 @@
         }
       }
     },
+    "Unknown device" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekanntes Gerät"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareil inconnu"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知设备"
+          }
+        }
+      }
+    },
     "Unnamed device" : {
       "localizations" : {
         "de" : {
@@ -29569,6 +29701,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "版本"
+          }
+        }
+      }
+    },
+    "Version History" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versionsverlauf"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historique des versions"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本历史"
+          }
+        }
+      }
+    },
+    "Version History…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versionsverlauf …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historique des versions…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本历史…"
           }
         }
       }
