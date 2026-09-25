@@ -70,8 +70,13 @@ jobs:
           security find-identity -v -p codesigning | tee "$RUNNER_TEMP/identities.txt"
           grep -q '"Yap Self-Signed"' "$RUNNER_TEMP/identities.txt"
 
-      - name: Build (LOCAL_BUILD, self-signed)
-        run: make local LOCAL_CODESIGN_IDENTITY="Yap Self-Signed" EXTRA_BUILD_SETTINGS="MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD"
+      # Xcode 遇到非 Apple 签发的证书会退回 "Sign to Run Locally"（ad-hoc），
+      # 所以先 ad-hoc 编译，再用自签证书整体重签；保留每个组件自己的 entitlements 和 hardened runtime
+      - name: Build (LOCAL_BUILD)
+        run: make local LOCAL_CODESIGN_IDENTITY=- EXTRA_BUILD_SETTINGS="MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD"
+
+      - name: Re-sign with Yap Self-Signed
+        run: codesign --force --deep --preserve-metadata=entitlements,runtime --sign "Yap Self-Signed" ~/Downloads/Yap.app
 
       - name: Verify signature
         run: |
