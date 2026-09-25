@@ -8950,6 +8950,28 @@
         }
       }
     },
+    "Covered by sign-up credit" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Davon aus Startguthaben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dont crédit d'inscription"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其中赠额"
+          }
+        }
+      }
+    },
     "Create & Select" : {
       "localizations" : {
         "de" : {
@@ -21013,6 +21035,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "实时"
+          }
+        }
+      }
+    },
+    "Receipt" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beleg"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reçu"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收据"
           }
         }
       }

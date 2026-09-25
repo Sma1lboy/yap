@@ -109,16 +109,26 @@ Task { @MainActor in
     await check("usage") {
         let usage = try await cloud.fetchUsage()
         try expect(usage.totalMicros == usage.byModel.reduce(0) { $0 + $1.micros }, "total != sum(byModel)")
+        try expect(usage.creditMicros != nil && usage.paidMicros != nil, "creditMicros/paidMicros missing")
+        try expect(usage.creditMicros! + usage.paidMicros! == usage.totalMicros,
+                   "credit \(usage.creditMicros!) + paid \(usage.paidMicros!) != total \(usage.totalMicros)")
         if let spent = me?.monthSpentMicros {
             try expect(usage.totalMicros == spent, "usage \(usage.totalMicros) != me.monthSpentMicros \(spent)")
         }
-        return "\(usage.totalMicros) micros over \(usage.byModel.count) models, matches monthSpent"
+        return "\(usage.totalMicros) micros (credit \(usage.creditMicros!) + paid \(usage.paidMicros!)) over \(usage.byModel.count) models, matches monthSpent"
     }
 
     await check("devices") {
         let devices = try await cloud.fetchDevices()
         try expect(devices.filter(\.current).count == 1, "\(devices.filter(\.current).count) current devices")
-        return "\(devices.count) device(s), one current"
+        // Removing an id that isn't ours / doesn't exist must be a DEVICE_NOT_FOUND no-op, never a sign-out.
+        let (status, data) = try await raw("DELETE", "/v1/me/devices/999999999")
+        let error = YapCloudError(status: status, body: data, authenticated: true)
+        guard case .server(404, "DEVICE_NOT_FOUND", _, _, _) = error else {
+            throw Failed(description: "DELETE unknown id → HTTP \(status) \(error)")
+        }
+        try expect(try await cloud.fetchDevices().count == devices.count, "device list changed")
+        return "\(devices.count) device(s), one current; unknown id → 404 DEVICE_NOT_FOUND"
     }
 
     await check("limits set/clear") {

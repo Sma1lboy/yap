@@ -761,8 +761,10 @@ struct YapCloudLedgerEntry: Decodable, Identifiable {
     let amountMicros: Int64
     let model: String?
     let createdAt: String
+    /// Stripe receipt for topup rows, once paygate sends it.
+    let receiptURL: URL?
 
-    enum CodingKeys: String, CodingKey { case id, kind, amountUsd, amountMicros, model, createdAt }
+    enum CodingKeys: String, CodingKey { case id, kind, amountUsd, amountMicros, model, createdAt, receiptUrl }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -771,6 +773,8 @@ struct YapCloudLedgerEntry: Decodable, Identifiable {
         amountMicros = try c.decodeMicros(.amountMicros, fallback: .amountUsd)
         model = try c.decodeIfPresent(String.self, forKey: .model)
         createdAt = try c.decode(String.self, forKey: .createdAt)
+        receiptURL = try c.decodeIfPresent(String.self, forKey: .receiptUrl)
+            .flatMap(URL.init(string:)).flatMap { $0.scheme == "https" ? $0 : nil }
     }
 
     var createdDate: Date? { YapCloud.parseDate(createdAt) }
@@ -831,6 +835,9 @@ struct YapCloudMonthlySpend: Decodable, Equatable {
     let byModel: [ModelSpend]
     /// Start of the window (paygate default: 1st of the current UTC month).
     let since: Date?
+    /// Part of the spend covered by sign-up credit / by paid balance (`total = credit + paid`); nil on older servers.
+    let creditMicros: Int64?
+    let paidMicros: Int64?
 
     var topModels: [ModelSpend] { Array(byModel.prefix(5)) }
 
@@ -861,13 +868,19 @@ struct YapCloudMonthlySpend: Decodable, Equatable {
         return (micros + n / 2) / n
     }
 
-    enum CodingKeys: String, CodingKey { case totalMicros, totalUsd, byModel, since }
+    enum CodingKeys: String, CodingKey {
+        case totalMicros, totalUsd, byModel, since, creditMicros, creditUsd, paidMicros, paidUsd
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         totalMicros = try c.decodeMicros(.totalMicros, fallback: .totalUsd)
         byModel = try c.decode([ModelSpend].self, forKey: .byModel)
         since = try c.decodeIfPresent(String.self, forKey: .since).flatMap(YapCloud.parseDate)
+        creditMicros = c.contains(.creditMicros) || c.contains(.creditUsd)
+            ? try c.decodeMicros(.creditMicros, fallback: .creditUsd) : nil
+        paidMicros = c.contains(.paidMicros) || c.contains(.paidUsd)
+            ? try c.decodeMicros(.paidMicros, fallback: .paidUsd) : nil
     }
 }
 
@@ -1026,7 +1039,19 @@ struct YapCloudConfigDocument: Equatable {
                      {"model":"c","micros":20,"calls":1},{"model":"d","micros":10,"calls":1},{"model":"e","micros":8,"calls":1},
                      {"model":"f","usd":"0.000005","calls":1}]}
                     """#))
-            assert(usage.since == parseDate("2026-09-01T00:00:00.000Z"))
+            assert(usage.since == parseDate("2026-09-01T00:00:00.000Z") && usage.creditMicros == nil)
+            let split = try! JSONDecoder().decode(
+                YapCloudMonthlySpend.self,
+                from: json(#"{"totalMicros":300,"creditMicros":200,"creditUsd":"0.000200","paidUsd":"0.000100","byModel":[]}"#))
+            assert(split.creditMicros == 200 && split.paidMicros == 100)
+            let receipts = try! JSONDecoder().decode(
+                YapCloudLedger.self,
+                from: json(#"""
+                    {"entries":[
+                     {"id":"2","kind":"topup","amountMicros":5000000,"createdAt":"2026-09-25T10:00:00Z","receiptUrl":"https://pay.stripe.com/receipts/x"},
+                     {"id":"1","kind":"topup","amountMicros":5000000,"createdAt":"2026-09-25T10:00:00Z","receiptUrl":"javascript:alert(1)"}]}
+                    """#)).entries
+            assert(receipts[0].receiptURL?.host == "pay.stripe.com" && receipts[1].receiptURL == nil)
             assert(usage.totalMicros == 193 && usage.byModel.count == 6 && usage.topModels.count == 5)
             assert(usage.byModel[0] == .init(model: "a", micros: 100, calls: 2) && usage.byModel[1].model == nil)
             assert(usage.byModel[5].micros == 5)
