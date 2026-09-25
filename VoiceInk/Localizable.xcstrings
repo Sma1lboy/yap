@@ -27546,6 +27546,28 @@
         }
       }
     },
+    "Yap can't access the microphone. Allow it in System Settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap hat keinen Zugriff auf das Mikrofon. Erlaube ihn in den Systemeinstellungen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap n’a pas accès au micro. Autorisez-le dans Réglages Système."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 无法使用麦克风，请在系统设置中允许。"
+          }
+        }
+      }
+    },
     "Yap could not switch to another microphone." : {
       "localizations" : {
         "de" : {

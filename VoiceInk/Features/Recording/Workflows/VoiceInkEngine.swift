@@ -490,6 +490,19 @@ class VoiceInkEngine: NSObject, ObservableObject {
             return false
         }
 
+        // .notDetermined is left to the system prompt that recording triggers.
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .denied, .restricted:
+            await failRecordingPreflight(
+                title: String(localized: "Yap can't access the microphone. Allow it in System Settings."),
+                actionLabel: String(localized: "Open Settings"),
+                action: PrivacySettingsPane.microphone.open
+            )
+            return false
+        default:
+            break
+        }
+
         return true
     }
 
