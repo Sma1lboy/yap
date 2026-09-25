@@ -79,6 +79,7 @@ Schema v2 (`"version": 2`) describes all settings. It uses the same JSON shapes 
 | `dictionary` | `{ "vocabulary": ["Yap"], "replacements": { "yep": "Yap" } }`. Merged into the existing dictionary. |
 | `general` | Same object as the export's `generalSettings`: global shortcuts, launch at login, recorder style, retention, paste and auto-learn settings. |
 | `customModels` | Custom transcription model definitions, same objects as the export's `customCloudModels`, merged by `id`. `apiKey` is never written; a model synced from another Mac shows "API key needed" in Models until you add its key. |
+| `customProviders` | Custom enhancement providers: `{ id, name, baseURL, models, selectedModel }`, merged by `id`. No key is ever written; a provider synced from another Mac shows "API key needed" in Models until you add its key. |
 | `modified` | `{ "modes": { "<id>": "<ISO 8601 time>" }, "prompts": {…}, "vocabulary": { "<word>": … }, "replacements": { "<source>": … } }`: when each entry last changed. Written by Yap; you don't need to edit it. |
 | `deleted` | Same shape: tombstones for deleted entries. An entry is removed (from the file and from the app) when its tombstone is newer than its `modified` time, or it has none. Tombstones older than 90 days are dropped. |
 
@@ -113,11 +114,11 @@ If the account hasn't synced any settings yet, the sheet says so and just leaves
 
 ### Deleted items
 
-When you delete a mode, prompt, dictionary entry or custom model, Yap records the deletion (in the `deleted` map) so the other Macs delete it too instead of bringing it back. If another Mac edited the same item after you deleted it, the edit wins and the item stays. Deletion records are kept for 90 days, then removed.
+When you delete a mode, prompt, dictionary entry, custom model or custom provider, Yap records the deletion (in the `deleted` map) so the other Macs delete it too instead of bringing it back. If another Mac edited the same item after you deleted it, the edit wins and the item stays. Deletion records are kept for 90 days, then removed.
 
 ### API keys stay on each Mac
 
-API keys are never written to config.json or sent to Yap Cloud. Yap only reads them from `keys` (as `env:NAME` or a literal you typed yourself). Custom model definitions sync without their keys and show **API key needed** in Models until you add the key on that Mac. The Yap Cloud sign-in token also stays on the Mac it belongs to.
+API keys are never written to config.json or sent to Yap Cloud. Yap only reads them from `keys` (as `env:NAME` or a literal you typed yourself). Custom models and custom enhancement providers sync without their keys and show **API key needed** in Models until you add the key on that Mac. The Yap Cloud sign-in token also stays on the Mac it belongs to.
 
 ### Recommended models
 

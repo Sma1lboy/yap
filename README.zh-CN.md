@@ -79,6 +79,7 @@ Schema v2（`"version": 2`）可以描述全部设置。它和 **设置 → 备�
 | `dictionary` | `{ "vocabulary": ["Yap"], "replacements": { "yep": "Yap" } }`。合并进现有词典。 |
 | `general` | 和导出文件里的 `generalSettings` 相同：全局快捷键、开机启动、录音条样式、保留时长、粘贴和自动学习设置。 |
 | `customModels` | 自定义转写模型的定义，和导出文件里的 `customCloudModels` 相同，按 `id` 合并。永远不写 `apiKey`；从另一台 Mac 同步来的模型会在「模型」页标注 **需要填 API key**，直到你在这台 Mac 上填好。 |
+| `customProviders` | 自定义润色服务商：`{ id, name, baseURL, models, selectedModel }`，按 `id` 合并。永远不写 key；从另一台 Mac 同步来的服务商会在「模型」页标注 **需要填 API key**，直到你在这台 Mac 上填好。 |
 | `modified` | `{ "modes": { "<id>": "<ISO 8601 时间>" }, "prompts": {…}, "vocabulary": { "<词>": … }, "replacements": { "<原文>": … } }`：每个条目最后一次修改的时间。由 Yap 写入，不需要手动编辑。 |
 | `deleted` | 结构同上：已删除条目的删除记录。如果某个条目的删除时间晚于它的 `modified` 时间（或者它没有修改时间），这个条目会被删掉（文件里和应用里都删）。超过 90 天的删除记录会被清理。 |
 
@@ -113,11 +114,11 @@ Schema v2（`"version": 2`）可以描述全部设置。它和 **设置 → 备�
 
 ### 删除记录
 
-你删除一个模式、提示词、词典条目或自定义模型时，Yap 会记下这次删除（在 `deleted` 里），让其他 Mac 也把它删掉，而不是再把它同步回来。如果另一台 Mac 在你删除之后又改了同一个条目，以那次修改为准，条目保留。删除记录保留 90 天后清理。
+你删除一个模式、提示词、词典条目、自定义模型或自定义服务商时，Yap 会记下这次删除（在 `deleted` 里），让其他 Mac 也把它删掉，而不是再把它同步回来。如果另一台 Mac 在你删除之后又改了同一个条目，以那次修改为准，条目保留。删除记录保留 90 天后清理。
 
 ### API key 只留在各自的 Mac 上
 
-API key 永远不会写进 config.json，也不会上传到 Yap Cloud。Yap 只从 `keys` 读取 key（`env:NAME`，或你自己写的明文）。自定义模型的定义同步时不带 key，会在「模型」页标注 **需要填 API key**，直到你在那台 Mac 上填好。Yap Cloud 的登录凭证也只留在它所属的那台 Mac 上。
+API key 永远不会写进 config.json，也不会上传到 Yap Cloud。Yap 只从 `keys` 读取 key（`env:NAME`，或你自己写的明文）。自定义模型和自定义润色服务商同步时不带 key，会在「模型」页标注 **需要填 API key**，直到你在那台 Mac 上填好。Yap Cloud 的登录凭证也只留在它所属的那台 Mac 上。
 
 ### 推荐模型
 
