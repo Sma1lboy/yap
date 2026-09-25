@@ -3123,7 +3123,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ein genauerer Blick auf deine VoiceInk-Nutzung."
+            "value" : "Ein genauerer Blick auf deine Yap-Nutzung."
           }
         },
         "fr" : {
@@ -6637,7 +6637,7 @@
         }
       }
     },
-    "Check the default model try again. If the problem persists, try a different model." : {
+    "Check the default model and try again. If the problem persists, try a different model." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -6648,13 +6648,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vérifiez le modèle par défaut, réessayez. Si le problème persiste, essayez un autre modèle."
+            "value" : "Vérifiez le modèle par défaut et réessayez. Si le problème persiste, essayez un autre modèle."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "请检查默认模型并重试。如果问题仍然存在，请尝试其他模型。"
+            "value" : "请检查默认模型后重试。如果问题仍然存在，请尝试其他模型。"
           }
         }
       }
@@ -6840,7 +6840,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wähle eine VoiceInk-Wörterbuchdatei im JSON-Format."
+            "value" : "Wähle eine Yap-Wörterbuchdatei im JSON-Format."
           }
         },
         "fr" : {
@@ -9763,7 +9763,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahme schließen"
+            "value" : "Yap-Aufnahme schließen"
           }
         },
         "fr" : {
@@ -9807,7 +9807,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahme schließen und aktive Aufnahme abbrechen."
+            "value" : "Yap-Aufnahme schließen und aktive Aufnahme abbrechen."
           }
         },
         "fr" : {
@@ -11527,7 +11527,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Einstellungen exportieren"
+            "value" : "Yap-Einstellungen exportieren"
           }
         },
         "fr" : {
@@ -12797,28 +12797,6 @@
         }
       }
     },
-    "Hold %@ and start talking" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ gedrückt halten und lossprechen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Maintenez %@ et commencez à parler"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按住 %@ 开始说话"
-          }
-        }
-      }
-    },
     "Home" : {
       "localizations" : {
         "de" : {
@@ -13224,7 +13202,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Einstellungen importieren"
+            "value" : "Yap-Einstellungen importieren"
           }
         },
         "fr" : {
@@ -17961,7 +17939,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Öffne aktuelle Transkriptionen, ohne das VoiceInk-Hauptfenster zu öffnen. Suche, wähle eine aus und drücke die Eingabetaste, um sie in deine aktuelle App einzufügen."
+            "value" : "Öffne aktuelle Transkriptionen, ohne das Yap-Hauptfenster zu öffnen. Suche, wähle eine aus und drücke die Eingabetaste, um sie in deine aktuelle App einzufügen."
           }
         },
         "fr" : {
@@ -18871,6 +18849,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在准备下载…"
+          }
+        }
+      }
+    },
+    "Press %@ and start talking" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drücke %@ und leg los"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez sur %@ et commencez à parler"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按下 %@ 开始说话"
           }
         }
       }
@@ -20388,24 +20388,24 @@
         }
       }
     },
-    "Required for Yap shortcuts and app-wide controls to work properly." : {
+    "Required for Yap to paste transcripts into other apps and for its shortcuts to work." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erforderlich für VoiceInk-Tastaturkürzel und app-weite Steuerung."
+            "value" : "Erforderlich, damit Yap Transkripte in andere Apps einfügen kann und die Tastaturkürzel funktionieren."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Requis pour que les raccourcis Yap et les commandes à l’échelle de l’application fonctionnent correctement."
+            "value" : "Nécessaire pour que Yap puisse coller les transcriptions dans d’autres apps et que ses raccourcis fonctionnent."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap 的快捷键和全局控制需要此权限才能正常工作。"
+            "value" : "Yap 需要此权限才能把转写结果粘贴到其他 App，快捷键也依赖它。"
           }
         }
       }
@@ -22980,7 +22980,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahme für Sprachtranskription starten oder stoppen."
+            "value" : "Yap-Aufnahme für Sprachtranskription starten oder stoppen."
           }
         },
         "fr" : {
@@ -24935,7 +24935,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Diese Datei enthält kein gültiges VoiceInk-Wörterbuch."
+            "value" : "Diese Datei enthält kein gültiges Yap-Wörterbuch."
           }
         },
         "fr" : {
@@ -25350,7 +25350,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahme umschalten"
+            "value" : "Yap-Aufnahme umschalten"
           }
         },
         "fr" : {
@@ -27330,7 +27330,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Einblicke"
+            "value" : "Yap-Einblicke"
           }
         },
         "fr" : {
@@ -27352,7 +27352,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Modi"
+            "value" : "Yap-Modi"
           }
         },
         "fr" : {
@@ -27528,7 +27528,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-App ist nicht verfügbar"
+            "value" : "Yap-App ist nicht verfügbar"
           }
         },
         "fr" : {
@@ -27707,7 +27707,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Wirkungsübersicht"
+            "value" : "Yap-Wirkungsübersicht"
           }
         },
         "fr" : {
@@ -27795,7 +27795,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Modi umfassen Diktat, Verbesserung, E-Mail, Assistent, Umschreiben, Fragen, Zusammenfassen und Übersetzen."
+            "value" : "Yap-Modi umfassen Diktat, Verbesserung, E-Mail, Assistent, Umschreiben, Fragen, Zusammenfassen und Übersetzen."
           }
         },
         "fr" : {
@@ -27863,7 +27863,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahme geschlossen"
+            "value" : "Yap-Aufnahme geschlossen"
           }
         },
         "fr" : {
@@ -27885,7 +27885,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahme umgeschaltet"
+            "value" : "Yap-Aufnahme umgeschaltet"
           }
         },
         "fr" : {
@@ -27907,7 +27907,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "VoiceInk-Aufnahmedienst ist nicht verfügbar"
+            "value" : "Yap-Aufnahmedienst ist nicht verfügbar"
           }
         },
         "fr" : {
@@ -28440,28 +28440,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "例如：my email, my mail"
-          }
-        }
-      }
-    },
-    "e.g. support@tryvoiceink.com" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "z. B. support@tryvoiceink.com"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "par ex. support@tryvoiceink.com"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "例如：support@tryvoiceink.com"
           }
         }
       }

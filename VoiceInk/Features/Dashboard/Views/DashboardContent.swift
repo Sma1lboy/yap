@@ -498,7 +498,7 @@ private struct DashboardAccessibilityReminder: View {
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
-                Text("Required for Yap shortcuts and app-wide controls to work properly.")
+                Text("Required for Yap to paste transcripts into other apps and for its shortcuts to work.")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineLimit(2)

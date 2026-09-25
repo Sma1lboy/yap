@@ -304,7 +304,7 @@ struct HistoryView<Header: View>: View {
         guard let shortcut = ShortcutStore.shortcut(for: .primaryRecording)?.displayString, !shortcut.isEmpty else {
             return String(localized: "No transcriptions yet")
         }
-        return String(format: String(localized: "Hold %@ and start talking"), shortcut)
+        return String(format: String(localized: "Press %@ and start talking"), shortcut)
     }
 
     // MARK: - Card List

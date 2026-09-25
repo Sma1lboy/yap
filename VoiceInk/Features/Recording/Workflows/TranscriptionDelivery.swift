@@ -70,7 +70,7 @@ final class TranscriptionDelivery {
         SoundManager.shared.playStopSound()
 
         if let responseError = item.responseError {
-            await actions.failResponse("Enhancement failed: \(responseError)")
+            await actions.failResponse(EnhancementFailureFormatter.message(description: responseError))
         } else if let text = item.text,
             item.responseConfig != nil
         {
