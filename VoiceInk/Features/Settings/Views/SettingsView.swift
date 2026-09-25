@@ -342,7 +342,7 @@ struct SettingsView: View {
                 } else if let date = configLoader.lastWritten {
                     Text(
                         String(
-                            format: String(localized: "Written at %@"), date.formatted(date: .omitted, time: .standard))
+                            format: String(localized: "Written at %@"), date.formatted(date: .abbreviated, time: .shortened))
                     )
                     .settingsDescription()
                 }
@@ -419,7 +419,7 @@ struct SettingsView: View {
                 Text(
                     String(
                         format: String(localized: "Loaded at %@"),
-                        date.formatted(date: .omitted, time: .standard)
+                        date.formatted(date: .abbreviated, time: .shortened)
                     )
                 )
                 Text(
@@ -446,7 +446,7 @@ struct SettingsView: View {
         case .idle:
             EmptyView()
         case .synced(let date):
-            Text(String(format: String(localized: "Synced at %@"), date.formatted(date: .omitted, time: .standard)))
+            Text(String(format: String(localized: "Synced at %@"), date.formatted(date: .abbreviated, time: .shortened)))
                 .settingsDescription()
         case .conflict:
             VStack(alignment: .leading, spacing: 6) {
