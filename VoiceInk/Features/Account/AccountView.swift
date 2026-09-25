@@ -39,7 +39,10 @@ struct AccountView: View {
                 } header: {
                     Text("Yap Cloud")
                 } footer: {
-                    Text("Pay as you go: one balance covers transcription and enhancement, no API keys to manage. New accounts get $1 of free credit.")
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Pay as you go: one balance covers transcription and enhancement, no API keys to manage. New accounts get $1 of free credit.")
+                        YapCloudLegalText()
+                    }
                 }
             }
             modelsSection
@@ -149,7 +152,10 @@ private struct SignedInSections: View {
         } header: {
             Text("Yap Cloud")
         } footer: {
-            Text("With Sync via Yap Cloud on (Settings > Config & Sync), your modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server. API keys stay on each Mac.")
+            VStack(alignment: .leading, spacing: 6) {
+                Text("With Sync via Yap Cloud on (Settings > Config & Sync), your modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server. API keys stay on each Mac.")
+                YapCloudLegalLinks()
+            }
         }
 
         Section {
@@ -714,5 +720,34 @@ private struct DevicesSection: View {
                 errorMessage = error.localizedDescription
             }
         }
+    }
+}
+
+/// Terms of Service and Privacy Policy links (URLs live in YapCloud).
+struct YapCloudLegalLinks: View {
+    var body: some View {
+        HStack(spacing: 14) {
+            Link("Terms of Service", destination: YapCloud.termsURL)
+            Link("Privacy Policy", destination: YapCloud.privacyPolicyURL)
+        }
+    }
+}
+
+/// "By continuing, you agree to the Terms of Service and Privacy Policy.", with both names as links.
+/// Built from one localized format so each language places the links where its grammar needs them.
+struct YapCloudLegalText: View {
+    var body: some View {
+        Text(attributed)
+    }
+
+    private var attributed: AttributedString {
+        let terms = String(localized: "Terms of Service")
+        let privacy = String(localized: "Privacy Policy")
+        var text = AttributedString(
+            String(format: String(localized: "By continuing, you agree to the %1$@ and %2$@."), terms, privacy))
+        for (name, url) in [(terms, YapCloud.termsURL), (privacy, YapCloud.privacyPolicyURL)] {
+            if let range = text.range(of: name) { text[range].link = url }
+        }
+        return text
     }
 }

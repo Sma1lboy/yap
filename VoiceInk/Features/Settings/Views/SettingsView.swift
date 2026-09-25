@@ -349,6 +349,8 @@ struct SettingsView: View {
 
                     Link("Report an Issue", destination: AppIdentity.issuesURL)
                 }
+
+                YapCloudLegalLinks()
             }
         }
         .formStyle(.grouped)

@@ -231,6 +231,11 @@ struct OnboardingTranscriptionSetupCard: View {
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(AppTheme.Status.error)
             }
+
+            YapCloudLegalText()
+                .font(.system(size: 11))
+                .foregroundColor(AppTheme.Text.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(16)
         .background(AppMaterialCardBackground(cornerRadius: 12))
