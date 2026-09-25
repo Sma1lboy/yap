@@ -4,6 +4,15 @@
         <title>Yap</title>
         <link>https://github.com/Sma1lboy/yap</link>
         <item>
+            <title>Yap 1.1.0</title>
+            <pubDate>Fri, 25 Sep 2026 17:35:43 GMT</pubDate>
+            <sparkle:version>1015</sparkle:version>
+            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.1.0</link>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.1.0/Yap.zip" sparkle:edSignature="wWTfEK/y7nScxrM69a/IvbYcpZZqNmy19KTT6KiuqDRf2N69ckTipth0C4+QNnr/d5uKXXco1DlEw3e8txWCAw==" length="45487529" type="application/octet-stream" />
+        </item>
+        <item>
             <title>Yap 1.0.0</title>
             <pubDate>Fri, 25 Sep 2026 05:49:36 GMT</pubDate>
             <sparkle:version>1005</sparkle:version>
