@@ -106,6 +106,14 @@ final class YapCloud: ObservableObject {
         catalogLock.withLock { catalog?.models ?? [] }
     }
 
+    /// "10%" from the catalog's markup; nil until a catalog with a markup has loaded, so copy that quotes
+    /// the price can hide itself instead of guessing.
+    var markupPercentText: String? {
+        guard let markup = catalogLock.withLock({ catalog?.markup }), let value = Double(markup.string), value >= 0
+        else { return nil }
+        return value.formatted(.percent.precision(.fractionLength(0...2)))
+    }
+
     var transcriptionModels: [YapCloudModel] { models.filter(\.isTranscription) }
     var chatModels: [YapCloudModel] { models.filter(\.isChat) }
 
@@ -1282,6 +1290,8 @@ struct YapCloudMonthlySpend: Decodable, Equatable {
 
 struct YapCloudCatalog: Codable {
     let models: [YapCloudModel]
+    /// paygate's MARKUP (0.1 = +10%). Optional: catalogs cached by older builds don't have it.
+    var markup: YapCloudScalar?
 }
 
 struct YapCloudModel: Codable, Hashable {
@@ -1387,6 +1397,7 @@ struct YapCloudConfigDocument: Equatable {
                      {"id":"deepseek/deepseek-v4.1-flash","architecture":{"input_modalities":["text"],"output_modalities":["text"]},"pricing":{"prompt":0.00000011,"completion":"0.00000044"}},
                      {"id":"legacy","pricing":{"prompt":"1"}}]}
                     """#))
+            assert(catalog.markup?.double == 0.1)
             assert(catalog.models.map(\.isTranscription) == [true, false, false])
             assert(catalog.models.map(\.isChat) == [false, true, true])
             assert(catalog.models[0].price("audio") == 0.0000275 && catalog.models[1].price("prompt") == 0.00000011)

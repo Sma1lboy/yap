@@ -11476,6 +11476,28 @@
         }
       }
     },
+    "Each dictation costs the model's price plus %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jedes Diktat kostet den Modellpreis plus %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque dictée coûte le prix du modèle plus %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每次听写按模型价格加 %@ 计费。"
+          }
+        }
+      }
+    },
     "Each trigger word can only belong to one mode" : {
       "localizations" : {
         "de" : {
@@ -23307,24 +23329,24 @@
         }
       }
     },
-    "Same models as Your OpenRouter Key, no API key: sign in with your email and pay from a balance. Each dictation costs the model's price plus 10%." : {
+    "Same models as Your OpenRouter Key, no API key: sign in with your email and pay from a balance." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dieselben Modelle wie bei „Eigener OpenRouter-Schlüssel“, ohne API-Schlüssel: Melde dich mit deiner E-Mail an und bezahle aus einem Guthaben. Jedes Diktat kostet den Modellpreis plus 10 %."
+            "value" : "Dieselben Modelle wie bei „Eigener OpenRouter-Schlüssel“, ohne API-Schlüssel: Melde dich mit deiner E-Mail an und bezahle aus einem Guthaben."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les mêmes modèles que « Votre clé OpenRouter », sans clé API : connectez-vous avec votre e-mail et payez depuis un solde. Chaque dictée coûte le prix du modèle plus 10 %."
+            "value" : "Les mêmes modèles que « Votre clé OpenRouter », sans clé API : connectez-vous avec votre e-mail et payez depuis un solde."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "模型和「自带 OpenRouter Key」一样，但不需要 API key：用邮箱登录，从余额里扣费。每次听写按模型价格加 10% 计费。"
+            "value" : "模型和「自带 OpenRouter Key」一样，但不需要 API key：用邮箱登录，从余额里扣费。"
           }
         }
       }
