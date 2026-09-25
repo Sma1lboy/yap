@@ -5497,6 +5497,28 @@
         }
       }
     },
+    "Another Mac changed the settings in the meantime. Look at the history again, then restore." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein anderer Mac hat die Einstellungen inzwischen geändert. Sieh dir den Verlauf erneut an und stelle dann wieder her."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un autre Mac a modifié les réglages entre-temps. Consultez à nouveau l’historique, puis restaurez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这期间另一台 Mac 改了设置。请重新查看历史后再恢复。"
+          }
+        }
+      }
+    },
     "Appearance" : {
       "localizations" : {
         "de" : {
@@ -8075,6 +8097,28 @@
         }
       }
     },
+    "Compared with the current version" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Vergleich zur aktuellen Version"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Par rapport à la version actuelle"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与当前版本相比"
+          }
+        }
+      }
+    },
     "Compiling %@" : {
       "localizations" : {
         "de" : {
@@ -9103,6 +9147,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "创建时间"
+          }
+        }
+      }
+    },
+    "Current" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuell"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actuelle"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前"
           }
         }
       }
@@ -12354,6 +12420,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "估算令牌"
+          }
+        }
+      }
+    },
+    "Every change synced through Yap Cloud is kept as a version." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede über Yap Cloud synchronisierte Änderung wird als Version aufbewahrt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque modification synchronisée via Yap Cloud est conservée comme une version."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过 Yap Cloud 同步的每次改动都会保存为一个版本。"
           }
         }
       }
@@ -15732,6 +15820,7 @@
       }
     },
     "Local models keep everything on this Mac. Cloud providers and Yap Cloud get only what you send them." : {
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -15751,8 +15840,7 @@
             "value" : "本地模型的所有数据都留在这台 Mac 上。云端提供商和 Yap Cloud 只会收到你发送的内容。"
           }
         }
-      },
-      "extractionState" : "manual"
+      }
     },
     "Local models keep everything on this Mac. With your own API key, audio and text go only to the provider you choose. With Yap Cloud, they pass through Yap's server on the way to the model provider; the server records the model and cost for billing. If you turn on Sync via Yap Cloud, your modes, prompts, dictionary, shortcuts and custom models are stored there too, never your API keys. Transcripts are stored on this Mac." : {
       "localizations" : {
@@ -18640,6 +18728,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有可导入的有效条目。"
+          }
+        }
+      }
+    },
+    "No versions yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Versionen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune version pour l’instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有版本。"
           }
         }
       }
@@ -22369,6 +22479,50 @@
         }
       }
     },
+    "Restore This Version…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Version wiederherstellen …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer cette version…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复这个版本…"
+          }
+        }
+      }
+    },
+    "Restore this version?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Version wiederherstellen?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer cette version ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复这个版本？"
+          }
+        }
+      }
+    },
     "Restoring applies these settings on this Mac and turns on Sync via Yap Cloud. API keys aren't synced; add them on this Mac if a provider needs one." : {
       "localizations" : {
         "de" : {
@@ -23470,6 +23624,28 @@
         }
       }
     },
+    "Select a version to compare it with the current one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle eine Version, um sie mit der aktuellen zu vergleichen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez une version pour la comparer à la version actuelle."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择一个版本，和当前版本比较。"
+          }
+        }
+      }
+    },
     "Select all text, press your shortcut, read the sample text aloud, then press it again." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -24145,6 +24321,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已成功从 %@ 导入设置。\n\n已导入：%@。"
+          }
+        }
+      }
+    },
+    "Settings on all your Macs change to this version. Modes, prompts, dictionary entries and custom models added since then are deleted. The current version stays in the history." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen auf all deinen Macs werden auf diese Version gesetzt. Seitdem hinzugefügte Modi, Prompts, Wörterbucheinträge und eigene Modelle werden gelöscht. Die aktuelle Version bleibt im Verlauf."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les réglages de tous vos Mac reviennent à cette version. Les modes, prompts, entrées du dictionnaire et modèles personnalisés ajoutés depuis sont supprimés. La version actuelle reste dans l’historique."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你所有 Mac 上的设置都会变成这个版本。在那之后新增的模式、提示词、词典条目和自定义模型会被删除。当前版本仍保留在历史里。"
           }
         }
       }
@@ -28996,6 +29194,28 @@
         }
       }
     },
+    "Unknown device" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekanntes Gerät"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareil inconnu"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知设备"
+          }
+        }
+      }
+    },
     "Unnamed device" : {
       "localizations" : {
         "de" : {
@@ -29569,6 +29789,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "版本"
+          }
+        }
+      }
+    },
+    "Version History" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versionsverlauf"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historique des versions"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本历史"
+          }
+        }
+      }
+    },
+    "Version History…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versionsverlauf …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historique des versions…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本历史…"
           }
         }
       }

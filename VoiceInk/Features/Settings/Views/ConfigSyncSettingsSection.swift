@@ -6,6 +6,7 @@ struct ConfigSyncSettingsSection: View {
     @ObservedObject private var cloudConfigSync = CloudConfigSync.shared
     @AppStorage(YapConfigLoader.keepInSyncKey) private var keepConfigFileInSync = false
     @AppStorage(CloudConfigSync.enabledKey) private var syncConfigViaCloud = false
+    @State private var isShowingVersionHistory = false
 
     var body: some View {
         Section {
@@ -67,6 +68,10 @@ struct ConfigSyncSettingsSection: View {
             // A stale "Synced at" or conflict banner is misleading (and its buttons no-op) once sync is off.
             if syncConfigViaCloud && cloudConfigSync.isAvailable {
                 cloudSyncStatus
+                if cloudConfigSync.supportsHistory {
+                    Button("Version History…") { isShowingVersionHistory = true }
+                        .sheet(isPresented: $isShowingVersionHistory) { ConfigVersionHistorySheet() }
+                }
             }
         } header: {
             Text("Config & Sync")
