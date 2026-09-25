@@ -134,6 +134,10 @@ struct AudioFileRow: View {
         }
         .contentShape(Rectangle())
         .onTapGesture { onToggleExpand() }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint(isExpanded ? LocalizedStringKey("Collapse") : "Expand")
+        .accessibilityAction { onToggleExpand() }
 
         if isExpanded, let transcription = item.transcription {
             if transcription.enhancedText != nil {
