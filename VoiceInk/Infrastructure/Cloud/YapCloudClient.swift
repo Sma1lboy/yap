@@ -17,6 +17,8 @@ final class YapCloud: ObservableObject {
     static let maximumTopUpUSD = 500
     /// Below this ($1), Home and the menu bar show a prominent "add funds" entry.
     static let lowBalanceMicros: Int64 = 1_000_000
+    /// paygate's maximum `limit` for `/v1/ledger`.
+    static let ledgerFetchLimit = 500
 
     private static let tokenKey = "yapCloudToken"
     private static let emailKey = "yapCloudEmail"
@@ -32,6 +34,7 @@ final class YapCloud: ObservableObject {
     @Published private(set) var isSignedIn = false
     @Published private(set) var me: YapCloudMe?
     @Published private(set) var ledger: [YapCloudLedgerEntry] = []
+    @Published private(set) var monthlySpend: YapCloudMonthlySpend?
 
     private init() {
         #if DEBUG
@@ -123,6 +126,7 @@ final class YapCloud: ObservableObject {
         isSignedIn = false
         me = nil
         ledger = []
+        monthlySpend = nil
         NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
     }
 
@@ -175,7 +179,13 @@ final class YapCloud: ObservableObject {
         guard token != nil else { return }
         do {
             me = try await fetchMe()
-            ledger = try await fetchLedger()
+            // One request feeds both Recent Activity and This Month. ponytail: paygate's ledger has no paging or
+            // time filter (newest 500 max), so heavy months are marked partial until it gets a usage summary.
+            let rows = try await fetchLedger(limit: Self.ledgerFetchLimit)
+            ledger = Array(rows.prefix(20))
+            let monthStart = Calendar.current.dateInterval(of: .month, for: Date())?.start ?? Date()
+            monthlySpend = YapCloudMonthlySpend(
+                rows, since: monthStart, limitReached: rows.count >= Self.ledgerFetchLimit)
         } catch YapCloudError.notSignedIn {
             clearSession()
         } catch {
@@ -479,6 +489,37 @@ private struct YapCloudCheckout: Decodable {
     let url: String
 }
 
+/// Usage charges since a date, summed in micros: total plus the top models.
+struct YapCloudMonthlySpend: Equatable {
+    struct ModelSpend: Equatable {
+        let model: String
+        let micros: Int64
+    }
+
+    let totalMicros: Int64
+    let topModels: [ModelSpend]
+    /// The fetched rows stop inside the period, so older charges are missing from the total.
+    let isPartial: Bool
+
+    init(_ entries: [YapCloudLedgerEntry], since start: Date, limitReached: Bool, top: Int = 5) {
+        var byModel: [String: Int64] = [:]
+        var total: Int64 = 0
+        for entry in entries where entry.kind == "usage" {
+            guard let date = entry.createdDate, date >= start else { continue }
+            total -= entry.amountMicros
+            byModel[entry.model ?? "", default: 0] -= entry.amountMicros
+        }
+        totalMicros = total
+        topModels = byModel
+            .map { ModelSpend(model: $0.key, micros: $0.value) }
+            .sorted { $0.micros != $1.micros ? $0.micros > $1.micros : $0.model < $1.model }
+            .prefix(top)
+            .map { $0 }
+        // Newest first: if the oldest fetched row is still inside the period, the limit cut it off.
+        isPartial = limitReached && (entries.last?.createdDate.map { $0 >= start } ?? true)
+    }
+}
+
 struct YapCloudCatalog: Codable {
     let models: [YapCloudModel]
 }
@@ -598,6 +639,27 @@ struct YapCloudConfigDocument: Equatable {
             assert(formatLedgerAmount(micros: -999_904, kind: "adjust") == "-$1.00")
             assert(formatLedgerAmount(micros: 10_000_000, kind: "topup") == "$10.00")
             assert(999_999 < lowBalanceMicros && !(1_000_000 < lowBalanceMicros))
+
+            // Monthly spend: usage rows since the start date only, spend positive, top N by micros then name
+            let rows = try! JSONDecoder().decode(
+                YapCloudLedger.self,
+                from: json(#"""
+                    {"entries":[
+                     {"id":"7","kind":"usage","amountMicros":-92,"model":"b","createdAt":"2026-09-25T10:00:00.000Z"},
+                     {"id":"6","kind":"usage","amountMicros":-8,"model":"a","createdAt":"2026-09-20T10:00:00.000Z"},
+                     {"id":"5","kind":"topup","amountMicros":5000000,"createdAt":"2026-09-10T10:00:00.000Z"},
+                     {"id":"4","kind":"usage","amountMicros":-100,"model":"a","createdAt":"2026-09-02T10:00:00.000Z"},
+                     {"id":"3","kind":"usage","amountMicros":-50,"model":"c","createdAt":"2026-09-01T10:00:00.000Z"},
+                     {"id":"2","kind":"usage","amountMicros":-7,"createdAt":"2026-09-01T11:00:00.000Z"},
+                     {"id":"1","kind":"usage","amountMicros":-999,"model":"old","createdAt":"2026-08-31T23:00:00.000Z"}]}
+                    """#)).entries
+            let september = ISO8601DateFormatter().date(from: "2026-09-01T00:00:00Z")!
+            let spend = YapCloudMonthlySpend(rows, since: september, limitReached: false, top: 3)
+            assert(spend.totalMicros == 257 && !spend.isPartial)
+            assert(spend.topModels == [.init(model: "a", micros: 108), .init(model: "b", micros: 92), .init(model: "c", micros: 50)])
+            assert(YapCloudMonthlySpend(rows, since: september, limitReached: true).isPartial == false)
+            assert(YapCloudMonthlySpend(Array(rows.prefix(4)), since: september, limitReached: true).isPartial)
+            assert(YapCloudMonthlySpend([], since: september, limitReached: false).totalMicros == 0)
 
             // Top-up amounts
             assert(isValidTopUp(5) && isValidTopUp(20) && isValidTopUp(500))

@@ -120,6 +120,32 @@ private struct SignedInSections: View {
             Text("Checkout opens in your browser. Your balance updates when you come back to Yap.")
         }
 
+        if let spend = cloud.monthlySpend {
+            Section {
+                LabeledContent("Total") {
+                    Text(YapCloud.formatLedgerAmount(micros: spend.totalMicros, kind: "usage"))
+                        .monospacedDigit()
+                }
+                ForEach(spend.topModels, id: \.model) { item in
+                    LabeledContent {
+                        Text(YapCloud.formatLedgerAmount(micros: item.micros, kind: "usage"))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    } label: {
+                        Text(item.model.isEmpty ? String(localized: "Other") : item.model)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                }
+            } header: {
+                Text("This Month")
+            } footer: {
+                if spend.isPartial {
+                    Text("Counts only your latest 500 charges, so this month's total may be higher.")
+                }
+            }
+        }
+
         Section("Recent Activity") {
             if cloud.ledger.isEmpty {
                 Text("No charges or top-ups yet.")

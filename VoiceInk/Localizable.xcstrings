@@ -8510,6 +8510,28 @@
         }
       }
     },
+    "Counts only your latest 500 charges, so this month's total may be higher." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berücksichtigt nur deine letzten 500 Abbuchungen, der Monatsbetrag kann also höher sein."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seuls vos 500 derniers débits sont comptés ; le total du mois peut être plus élevé."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只统计了最近 500 笔扣费，本月实际花费可能更高。"
+          }
+        }
+      }
+    },
     "Create & Select" : {
       "localizations" : {
         "de" : {
@@ -18863,6 +18885,28 @@
         }
       }
     },
+    "Other" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonstige"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autre"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他"
+          }
+        }
+      }
+    },
     "Output" : {
       "localizations" : {
         "de" : {
@@ -25761,6 +25805,28 @@
         }
       }
     },
+    "This Month" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Monat"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce mois-ci"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本月花费"
+          }
+        }
+      }
+    },
     "This Year" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -26421,6 +26487,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "充值"
+          }
+        }
+      }
+    },
+    "Total" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesamt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "合计"
           }
         }
       }
