@@ -392,10 +392,10 @@ struct VoiceInkApp: App {
                 .environmentObject(aiService)
                 .environmentObject(enhancementService)
         } label: {
+            // Template duck glyph (design/logo.svg simplified) at the 18pt size of system menu bar icons.
             let image: NSImage = {
-                let ratio = $0.size.height / $0.size.width
-                $0.size.height = 22
-                $0.size.width = 22 / ratio
+                $0.size = NSSize(width: 18, height: 18)
+                $0.isTemplate = true
                 return $0
             }(NSImage(named: "menuBarIcon")!)
 
