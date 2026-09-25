@@ -42,8 +42,25 @@ enum ShortcutValidator {
             return .alreadyUsedBy(existingAction.displayName)
         }
 
+        #if DEBUG
+            if releaseAppShortcuts.contains(where: { $0.conflicts(with: shortcut) }) {
+                return .alreadyUsedBy("Yap")
+            }
+        #endif
+
         return nil
     }
+
+    #if DEBUG
+        /// The dev build runs next to the installed release app; sharing a trigger would fire both.
+        private static var releaseAppShortcuts: [Shortcut] {
+            guard let defaults = UserDefaults(suiteName: "me.sma1lboy.yap") else { return [] }
+            return defaults.dictionaryRepresentation().compactMap { key, value in
+                guard key.hasPrefix("Shortcut_"), let data = value as? Data else { return nil }
+                return try? JSONDecoder().decode(Shortcut.self, from: data)
+            }
+        }
+    #endif
 
     private static func userRecordingShortcutError(
         for shortcut: Shortcut,
