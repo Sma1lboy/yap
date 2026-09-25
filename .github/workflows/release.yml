@@ -83,8 +83,8 @@ jobs:
       # 所以先 ad-hoc 编译，再用自签证书整体重签；保留每个组件自己的 entitlements 和 hardened runtime
       # 本地模型相关的 Swift 包（mlx、FluidAudio、TranscribeCpp…）已经稳定，不必每次重编：
       # 缓存整个 DerivedData，依赖锁文件不变就只重编 App 自己的代码
-      - name: Cache Xcode build
-        uses: actions/cache@v4
+      - name: Restore Xcode build cache
+        uses: actions/cache/restore@v4
         with:
           path: .local-build
           key: xcbuild-${{ runner.os }}-xcode26.6-${{ hashFiles('VoiceInk.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.run_id }}
@@ -106,6 +106,14 @@ jobs:
           codesign --verify --deep --strict ~/Downloads/Yap.app
           codesign -dr - ~/Downloads/Yap.app 2>&1 | tee "$RUNNER_TEMP/requirement.txt"
           grep -qE 'certificate (leaf|root)' "$RUNNER_TEMP/requirement.txt" || { echo "::error::designated requirement is not certificate-based"; exit 1; }
+
+      # tag 作用域的缓存别的 tag 读不到，所以发版构建只恢复、不保存（省约 45 秒）
+      - name: Save Xcode build cache
+        if: github.ref_type != 'tag'
+        uses: actions/cache/save@v4
+        with:
+          path: .local-build
+          key: xcbuild-${{ runner.os }}-xcode26.6-${{ hashFiles('VoiceInk.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.run_id }}
 
       - name: Package
         run: ditto -c -k --keepParent ~/Downloads/Yap.app Yap.zip
