@@ -29,30 +29,14 @@ struct YapCloudProvider: CloudProvider {
         audioData: Data, fileName: String, apiKey: String, model: String, language: String?,
         customVocabulary: [String], timeout: TimeInterval
     ) async throws -> String {
-        defer { YapCloud.shared.scheduleBalanceRefresh() }
         var body: [String: Any] = [
             "model": model,
             "input_audio": ["data": audioData.base64EncodedString(), "format": Self.audioFormat(fileName)],
         ]
         if let language, !language.isEmpty { body["language"] = language }
 
-        var request = URLRequest(url: YapCloud.shared.baseURL.appendingPathComponent("v1/audio/transcriptions"))
-        request.httpMethod = "POST"
-        request.timeoutInterval = timeout
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        // Ephemeral session, as for custom endpoints: avoids HTTP/3 uploads that stall behind some VPNs.
-        let session = URLSession(configuration: .ephemeral)
-        defer { session.finishTasksAndInvalidate() }
-        let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw CloudTranscriptionError.networkError(URLError(.badServerResponse))
-        }
-        guard (200..<300).contains(http.statusCode) else {
-            throw YapCloudError(status: http.statusCode, body: data, authenticated: true)
-        }
+        let timeout = YapCloud.wavDuration(audioData).map(YapCloud.transcriptionTimeout) ?? timeout
+        let data = try await YapCloud.shared.proxy("/v1/audio/transcriptions", body: body, timeout: timeout)
         guard let text = (try? JSONDecoder().decode(Response.self, from: data))?.text, !text.isEmpty else {
             throw CloudTranscriptionError.noTranscriptionReturned
         }

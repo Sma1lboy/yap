@@ -170,12 +170,14 @@ Task { @MainActor in
     await check("402 chat") {
         guard let balance else { return "SKIP: /v1/me failed" }
         guard balance <= 0 else { return "SKIP: balance > 0 (a real call would be billed)" }
-        let (status, data) = try await raw(
-            "POST", "/v1/chat/completions",
-            json: ["model": "deepseek/deepseek-v4.1-flash", "messages": [["role": "user", "content": "hi"]], "stream": false])
-        let error = YapCloudError(status: status, body: data, authenticated: true)
-        try expect(error == .insufficientBalance, "HTTP \(status) → \(error)")
-        return "INSUFFICIENT_BALANCE"
+        do {
+            _ = try await cloud.chatCompletion(
+                model: "deepseek/deepseek-v4.1-flash", messages: [["role": "user", "content": "hi"]], temperature: 0.3,
+                timeout: 30)
+            throw Failed(description: "chat succeeded at a zero balance")
+        } catch YapCloudError.insufficientBalance {
+            return "INSUFFICIENT_BALANCE (via YapCloud.chatCompletion)"
+        }
     }
     await check("402 transcription") {
         guard let balance else { return "SKIP: /v1/me failed" }
