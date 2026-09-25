@@ -618,6 +618,86 @@ extension String {
 
 #if DEBUG
     extension YapConfig {
+        /// A config with every field set (and every general setting), for checking config.schema.json covers what
+        /// Yap writes. Adding a field to YapConfig or GeneralBackup without filling it here fails the check.
+        static func fullyPopulated() -> YapConfig {
+            let shortcut = ShortcutBackup(.key(keyCode: 49, modifierFlags: [.command, .shift]))
+            let mode = ModeConfig(name: "Dictation", isAIEnhancementEnabled: true, isDefault: true)
+            let now = Date(timeIntervalSince1970: 1_800_000_000)
+            let stamps = Stamps(
+                modes: [mode.id.uuidString: now], prompts: ["p": now], vocabulary: ["Yap": now],
+                replacements: ["yep": now], customModels: ["m": now], customProviders: ["c": now])
+            var config = YapConfig(
+                keys: ["openrouter": "env:OPENROUTER_API_KEY"],
+                transcription: .init(provider: "openrouter", model: "microsoft/mai-transcribe-2"),
+                enhancement: .init(enabled: true, provider: "openrouter", model: "m", prompt: "prompt.md"),
+                defaultMode: .init(screenContext: false, clipboardContext: false, selectedTextContext: true))
+            config.version = currentVersion
+            config.modes = [mode]
+            config.modeShortcuts = [mode.id.uuidString: shortcut]
+            config.prompts = [CustomPrompt(title: "Tidy", promptText: "Tidy it.")]
+            config.dictionary = .init(vocabulary: ["Yap"], replacements: ["yep": "Yap"])
+            config.general = GeneralBackup(
+                primaryRecordingShortcut: shortcut, secondaryRecordingShortcut: shortcut,
+                pasteLastTranscriptionShortcut: shortcut, pasteLastEnhancementShortcut: shortcut,
+                retryLastTranscriptionShortcut: shortcut, cancelRecorderShortcut: shortcut,
+                openHistoryWindowShortcut: shortcut, quickAddToDictionaryShortcut: shortcut,
+                primaryRecordingShortcutRawValue: "custom", secondaryRecordingShortcutRawValue: "none",
+                primaryRecordingShortcutModeRawValue: "hybrid", secondaryRecordingShortcutModeRawValue: "toggle",
+                launchAtLoginEnabled: true, isMenuBarOnly: false, recorderType: "notch",
+                appAppearancePreference: "system", appLanguagePreference: "system",
+                isTranscriptionCleanupEnabled: false, transcriptionRetentionMinutes: 1440, isAudioCleanupEnabled: true,
+                audioRetentionPeriod: 7, isSystemMuteEnabled: true, isPauseMediaEnabled: false,
+                audioResumptionDelay: 0.5, isTextFormattingEnabled: true, restoreClipboardAfterPaste: true,
+                clipboardRestoreDelay: 2, finishAndSendKey: "none", isAutoLearnDictionaryEnabled: false,
+                autoLearnReviewSchedule: "manually", autoLearnProvider: "OpenRouter", autoLearnModel: "m")
+            config.customModels = [
+                CustomModelBackup(
+                    model: CustomCloudModel(
+                        id: UUID(), name: "w", displayName: "Whisper", description: "", apiEndpoint: "https://x/v1",
+                        modelName: "whisper-1", isMultilingual: true, supportedLanguages: [:]))
+            ]
+            config.customProviders = [
+                CustomAIProviderConfig(name: "Local", baseURL: "http://x/v1", models: ["m"], selectedModel: "m")
+            ]
+            config.modified = stamps
+            config.deleted = stamps
+            return config
+        }
+
+        /// No stored property is nil (one level deep).
+        private static func allFieldsSet(_ value: Any) -> Bool {
+            Mirror(reflecting: value).children.allSatisfy { child in
+                let mirror = Mirror(reflecting: child.value)
+                return mirror.displayStyle != .optional || !mirror.children.isEmpty
+            }
+        }
+
+        /// Every key Yap writes at the top level (and inside `general`) is described in config.schema.json.
+        static func schemaSelfCheck() {
+            guard
+                let url = Bundle.main.url(forResource: "config.schema", withExtension: "json"),
+                let schema = (try? Data(contentsOf: url)).flatMap({ try? JSONSerialization.jsonObject(with: $0) })
+                    as? [String: Any]
+            else { return assertionFailure("config.schema.json is not in the app bundle") }
+            let full = fullyPopulated()
+            assert(allFieldsSet(full), "fullyPopulated() leaves a YapConfig field nil; fill it in")
+            assert(full.general.map(allFieldsSet) == true, "fullyPopulated() leaves a GeneralBackup field nil")
+            guard let data = try? full.encoded(),
+                let written = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+                let general = written["general"] as? [String: Any]
+            else { return assertionFailure("fully populated config should encode") }
+
+            func properties(_ object: Any?) -> Set<String> {
+                Set(((object as? [String: Any])?["properties"] as? [String: Any] ?? [:]).keys)
+            }
+            let topLevel = Set(written.keys).subtracting(properties(schema))
+            assert(topLevel.isEmpty, "config.schema.json has no properties for \(topLevel.sorted())")
+            let generalSchema = (schema["$defs"] as? [String: Any])?["general"]
+            let generalKeys = Set(general.keys).subtracting(properties(generalSchema))
+            assert(generalKeys.isEmpty, "config.schema.json's general has no properties for \(generalKeys.sorted())")
+        }
+
         private struct Tag: Identifiable, Equatable {
             let id: Int
             var value = ""

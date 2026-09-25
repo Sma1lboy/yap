@@ -127,6 +127,7 @@ final class YapConfigLoader: ObservableObject {
     func applyAtLaunch() {
         #if DEBUG
             YapConfig.selfCheck()
+            YapConfig.schemaSelfCheck()
             RecommendedSetup.selfCheck()
             Shortcut.configStringSelfCheck()
             VoiceInkImport.selfCheck()
