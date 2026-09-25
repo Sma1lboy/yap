@@ -342,7 +342,7 @@ struct SettingsView: View {
                 } else if let date = configLoader.lastWritten {
                     Text(
                         String(
-                            format: String(localized: "Written at %@"), date.formatted(date: .omitted, time: .standard))
+                            format: String(localized: "Written at %@"), date.formatted(date: .abbreviated, time: .shortened))
                     )
                     .settingsDescription()
                 }
@@ -360,7 +360,10 @@ struct SettingsView: View {
                             : String(localized: "Sign in to Yap Cloud to sync this config between Macs."))
                 }
                 .disabled(!cloudConfigSync.isAvailable)
-                cloudSyncStatus
+                // A stale "Synced at" or conflict banner is misleading (and its buttons no-op) once sync is off.
+                if syncConfigViaCloud && cloudConfigSync.isAvailable {
+                    cloudSyncStatus
+                }
             } header: {
                 Text("Config File")
             } footer: {
@@ -416,7 +419,7 @@ struct SettingsView: View {
                 Text(
                     String(
                         format: String(localized: "Loaded at %@"),
-                        date.formatted(date: .omitted, time: .standard)
+                        date.formatted(date: .abbreviated, time: .shortened)
                     )
                 )
                 Text(
@@ -443,7 +446,7 @@ struct SettingsView: View {
         case .idle:
             EmptyView()
         case .synced(let date):
-            Text(String(format: String(localized: "Synced at %@"), date.formatted(date: .omitted, time: .standard)))
+            Text(String(format: String(localized: "Synced at %@"), date.formatted(date: .abbreviated, time: .shortened)))
                 .settingsDescription()
         case .conflict:
             VStack(alignment: .leading, spacing: 6) {
@@ -460,9 +463,14 @@ struct SettingsView: View {
                 }
             }
         case .error(let message):
-            Text(String(format: String(localized: "Cloud sync failed: %@"), message))
-                .foregroundColor(AppTheme.Status.error)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(String(format: String(localized: "Cloud sync failed: %@"), message))
+                    .foregroundColor(AppTheme.Status.error)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Retry") {
+                    Task { await cloudConfigSync.sync() }
+                }
+            }
         }
     }
 

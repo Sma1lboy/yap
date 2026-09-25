@@ -41,6 +41,13 @@ final class YapCloud: ObservableObject {
         if let data = defaults.data(forKey: Self.catalogKey) {
             catalog = try? JSONDecoder().decode(YapCloudCatalog.self, from: data)
         }
+        // Paying happens in the browser; coming back to Yap is when the new balance should show
+        // (Account, the Home card and the menu bar all read `me`).
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { await self?.refreshAccount() }
+        }
     }
 
     // MARK: - Shared state other features read
@@ -259,11 +266,12 @@ final class YapCloud: ObservableObject {
         return sign + "$" + String(units / scale) + fraction
     }
 
-    /// Ledger amounts: usage rows are usually under a cent, so they get 4 decimals (below $0.0001: "<$0.0001");
+    /// Ledger amounts: usage rows are usually under a cent, so they get 4 decimals (below $0.0001: "-<$0.0001",
+    /// keeping the sign so a charge never reads as a credit);
     /// top-ups and adjustments get 2.
     static func formatLedgerAmount(micros: Int64, kind: String) -> String {
         guard kind == "usage" else { return formatUSD(micros: micros) }
-        if micros != 0 && micros.magnitude < 100 { return "<$0.0001" }
+        if micros != 0 && micros.magnitude < 100 { return (micros < 0 ? "-" : "") + "<$0.0001" }
         return formatUSD(micros: micros, decimals: 4)
     }
 
@@ -584,7 +592,7 @@ struct YapCloudConfigDocument: Equatable {
             assert(formatUSD(micros: 999_999) == "$1.00" && formatUSD(micros: 5_000_000_000) == "$5000.00")
             assert(formatUSD(micros: -1_200, decimals: 4) == "-$0.0012" && formatUSD(micros: 12_345_678, decimals: 4) == "$12.3457")
             assert(formatUSD(micros: 7, decimals: 6) == "$0.000007" && formatUSD(micros: 2_500_000, decimals: 0) == "$3")
-            assert(formatLedgerAmount(micros: -92, kind: "usage") == "<$0.0001")
+            assert(formatLedgerAmount(micros: -92, kind: "usage") == "-<$0.0001")
             assert(formatLedgerAmount(micros: -150, kind: "usage") == "-$0.0002")
             assert(formatLedgerAmount(micros: 0, kind: "usage") == "$0.0000")
             assert(formatLedgerAmount(micros: -999_904, kind: "adjust") == "-$1.00")

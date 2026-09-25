@@ -47,7 +47,10 @@ struct AccountView: View {
             } header: {
                 Text("Models & Pricing")
             } footer: {
-                Text(String(format: String(localized: "Server: %@"), cloud.baseURL.absoluteString))
+                // The paygate host is only useful when pointing a dev build at another server.
+                #if DEBUG
+                    Text(String(format: String(localized: "Server: %@"), cloud.baseURL.absoluteString))
+                #endif
             }
         }
     }
@@ -114,7 +117,7 @@ private struct SignedInSections: View {
         } header: {
             Text("Add Funds")
         } footer: {
-            Text("Checkout opens in your browser. Refresh after paying to see the new balance.")
+            Text("Checkout opens in your browser. Your balance updates when you come back to Yap.")
         }
 
         Section("Recent Activity") {
@@ -174,7 +177,9 @@ private struct LedgerRow: View {
     private var title: String {
         switch entry.kind {
         case "topup": return String(localized: "Top-up")
-        case "usage": return entry.model ?? String(localized: "Usage")
+        case "usage":
+            guard let model = entry.model else { return String(localized: "Usage") }
+            return YapCloud.shared.models.first { $0.id == model }?.displayName ?? model
         default: return String(localized: "Adjustment")
         }
     }
@@ -226,12 +231,16 @@ struct YapCloudSignInForm: View {
                         .onSubmit(verify)
                     Button("Sign In", action: verify)
                         .keyboardShortcut(.defaultAction)
-                        .disabled(isWorking || code.trimmingCharacters(in: .whitespaces).count != 6)
+                        .disabled(isWorking || codeDigits.count != 6)
                 }
-                Button("Use a different email") {
-                    codeSent = false
-                    code = ""
-                    errorMessage = nil
+                HStack(spacing: 16) {
+                    Button("Resend Code", action: sendCode)
+                        .disabled(isWorking)
+                    Button("Use a different email") {
+                        codeSent = false
+                        code = ""
+                        errorMessage = nil
+                    }
                 }
                 .buttonStyle(.link)
             } else {
@@ -266,10 +275,15 @@ struct YapCloudSignInForm: View {
         }
     }
 
+    /// Codes pasted from email often carry spaces or dashes ("123 456").
+    private var codeDigits: String {
+        code.filter(\.isNumber)
+    }
+
     private func verify() {
-        let trimmed = code.trimmingCharacters(in: .whitespaces)
-        guard trimmed.count == 6 else { return }
-        run { try await YapCloud.shared.verify(email: email, code: trimmed) }
+        let digits = codeDigits
+        guard digits.count == 6 else { return }
+        run { try await YapCloud.shared.verify(email: email, code: digits) }
     }
 
     private func run(_ work: @escaping @MainActor () async throws -> Void) {
