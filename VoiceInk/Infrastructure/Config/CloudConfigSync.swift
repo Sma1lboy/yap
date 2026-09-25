@@ -114,7 +114,7 @@ final class CloudConfigSync: ObservableObject {
         if local == syncedData || syncedData == nil {
             try await pull(remote)
         } else {
-            try await mergeAndPut(local: local, remote: remote, store: store)
+            try await mergeAndPut(local: local, remote: remote, store: store, retryOnConflict: true)
         }
     }
 
@@ -124,15 +124,15 @@ final class CloudConfigSync: ObservableObject {
         record(version: remote.version, data: await localConfig() ?? remote.config)
     }
 
-    private func mergeAndPut(local: Data, remote: some CloudConfigDocument, store: any ConfigCloudStore)
-        async throws
-    {
+    private func mergeAndPut(
+        local: Data, remote: some CloudConfigDocument, store: any ConfigCloudStore, retryOnConflict: Bool
+    ) async throws {
         let base = defaults.data(forKey: Self.dataKey).flatMap { try? YapConfig.decode($0) }
         let merged = try YapConfig.threeWayMerged(
             base: base, local: YapConfig.decode(local), remote: YapConfig.decode(remote.config)
         ).encoded()
         try await applyRemote(merged)
-        try await put(merged, ifMatch: remote.version, store: store, retryOnConflict: false)
+        try await put(merged, ifMatch: remote.version, store: store, retryOnConflict: retryOnConflict)
     }
 
     private func put(_ data: Data, ifMatch: String?, store: any ConfigCloudStore, retryOnConflict: Bool = true)
@@ -144,11 +144,9 @@ final class CloudConfigSync: ObservableObject {
             // Only a conflict if the stored version really moved; other errors (offline, 5xx) pass through.
             guard let remote = try? await store.fetchConfig(), remote.version != ifMatch else { throw error }
             guard retryOnConflict else { throw ConflictError() }
-            do {
-                try await mergeAndPut(local: data, remote: remote, store: store)
-            } catch {
-                throw ConflictError()
-            }
+            // A second version move surfaces as ConflictError from the inner put; a network or server error
+            // during the retry passes through as itself, so Settings offers Retry instead of conflict choices.
+            try await mergeAndPut(local: data, remote: remote, store: store, retryOnConflict: false)
         }
     }
 
@@ -167,14 +165,19 @@ final class CloudConfigSync: ObservableObject {
             }
             var document: Document?
             var isSignedIn: Bool { true }
-            /// Simulates another Mac writing right before our next put.
-            var interleavedWrite: Data?
+            /// Each put first lets "another Mac" write the next of these.
+            var interleavedWrites: [Data] = []
+            /// Puts (1-based, counted from the last reset) that fail as if offline.
+            var offlinePuts: Set<Int> = []
+            var putCount = 0
 
             func fetchConfig() async throws -> Document? { document }
 
             func putConfig(_ data: Data, ifMatch: String?) async throws -> String {
-                if let other = interleavedWrite {
-                    interleavedWrite = nil
+                putCount += 1
+                if offlinePuts.contains(putCount) { throw URLError(.notConnectedToInternet) }
+                if !interleavedWrites.isEmpty {
+                    let other = interleavedWrites.removeFirst()
                     document = Document(version: String((Int(document?.version ?? "0") ?? 0) + 1), config: other)
                 }
                 guard ifMatch == document?.version else { throw URLError(.badServerResponse) }
@@ -224,12 +227,26 @@ final class CloudConfigSync: ObservableObject {
             // 3. Conflict: this Mac adds "Notes" while another Mac adds "Code" just before our put;
             //    the put fails, both sides merge by id and the retry succeeds with both modes.
             local = config(["Dictation", "Email", "Notes"])
-            store.interleavedWrite = config(["Dictation", "Email", "Code"], words: ["Yap"])
+            store.interleavedWrites = [config(["Dictation", "Email", "Code"], words: ["Yap"])]
             await sync.sync()
             assert(Set(names(store.document?.config)) == ["Dictation", "Email", "Code", "Notes"])
             assert(names(local) == names(store.document?.config))
             assert((try? YapConfig.decode(local))?.dictionary?.vocabulary == ["Yap"])
             assert(defaults.string(forKey: versionKey) == store.document?.version && sync.status != .conflict)
+
+            // 4. #34: going offline during the merge retry is an error with a reason, not a conflict.
+            local = config(["Dictation", "Email", "Code", "Notes"], words: ["Yap", "Rove"])
+            store.interleavedWrites = [config(["Dictation"], words: ["Yap"])]
+            (store.putCount, store.offlinePuts) = (0, [2])
+            await sync.sync()
+            guard case .error = sync.status else { return assertionFailure("offline retry should be .error") }
+
+            // 5. A real conflict: the cloud moves on both the merged put and its retry.
+            store.interleavedWrites = [config(["Dictation"]), config(["Dictation", "Email"])]
+            (store.putCount, store.offlinePuts) = (0, [])
+            local = config(["Dictation", "Notes"])
+            await sync.sync()
+            assert(sync.status == .conflict)
         }
     }
 #endif

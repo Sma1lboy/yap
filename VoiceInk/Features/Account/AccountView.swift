@@ -23,6 +23,7 @@ struct AccountView: View {
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
+        .modifier(CloudSyncOffer())
         .task(id: cloud.isSignedIn) {
             await cloud.refreshAccount()
             await cloud.refreshModels()
@@ -63,23 +64,49 @@ private struct SignedInSections: View {
     @State private var customAmount = ""
     @State private var isOpeningCheckout = false
     @State private var errorMessage: String?
+    @State private var isConfirmingSignOut = false
 
     var body: some View {
         Section("Yap Cloud") {
             LabeledContent("Email address", value: cloud.me?.email ?? cloud.email ?? "")
-            LabeledContent("Balance") {
+            LabeledContent {
                 if let balance = cloud.balanceMicros {
                     Text(YapCloud.formatUSD(micros: balance))
                         .monospacedDigit()
                         .foregroundStyle(balance > 0 ? AppTheme.Text.primary : AppTheme.Status.error)
-                } else {
+                } else if cloud.isRefreshingAccount {
                     ProgressView().controlSize(.small)
+                } else {
+                    Text(verbatim: "—").foregroundStyle(.secondary)
                 }
+            } label: {
+                Text("Balance")
+                if let updatedAt = cloud.balanceUpdatedAt {
+                    Text(
+                        String(
+                            format: String(localized: "Last updated %@"),
+                            updatedAt.formatted(date: .abbreviated, time: .shortened)))
+                }
+            }
+            if let error = cloud.accountRefreshError {
+                Text(String(format: String(localized: "Couldn't refresh your account: %@"), error))
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.Status.error)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             HStack {
                 Button("Refresh") { Task { await cloud.refreshAccount() } }
+                    .disabled(cloud.isRefreshingAccount)
+                if cloud.isRefreshingAccount { ProgressView().controlSize(.small) }
                 Spacer()
-                Button("Sign Out") { Task { await cloud.signOut() } }
+                Button("Sign Out") { isConfirmingSignOut = true }
+                    .confirmationDialog(
+                        "Sign out of Yap Cloud?", isPresented: $isConfirmingSignOut
+                    ) {
+                        Button("Sign Out", role: .destructive, action: signOut)
+                    } message: {
+                        Text("Modes that use Yap Cloud stop working until you sign in again or switch them to another provider.")
+                    }
             }
         }
 
@@ -132,22 +159,29 @@ private struct SignedInSections: View {
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                     } label: {
-                        Text(item.model.isEmpty ? String(localized: "Other") : item.model)
+                        Text(item.model ?? String(localized: "Other"))
                             .lineLimit(1)
                             .truncationMode(.middle)
                     }
                 }
             } header: {
                 Text("This Month")
-            } footer: {
-                if spend.isPartial {
-                    Text("Counts only your latest 500 charges, so this month's total may be higher.")
-                }
             }
         }
 
         Section("Recent Activity") {
-            if cloud.ledger.isEmpty {
+            if !cloud.isLedgerLoaded {
+                if cloud.isRefreshingAccount {
+                    ProgressView().controlSize(.small)
+                } else {
+                    HStack {
+                        Text("Couldn't load recent activity.")
+                            .foregroundStyle(AppTheme.Status.error)
+                        Spacer()
+                        Button("Retry") { Task { await cloud.refreshAccount() } }
+                    }
+                }
+            } else if cloud.ledger.isEmpty {
                 Text("No charges or top-ups yet.")
                     .foregroundStyle(.secondary)
             } else {
@@ -156,6 +190,23 @@ private struct SignedInSections: View {
                 }
             }
         }
+    }
+
+    private func signOut() {
+        cloud.signOut()
+        let modesUsingCloud = ModeManager.shared.configurations.filter { mode in
+            mode.selectedTranscriptionModelName?.hasPrefix("YapCloud:") == true
+                || (mode.isAIEnhancementEnabled && mode.selectedAIProvider == AIProvider.yapCloud.rawValue)
+        }
+        guard !modesUsingCloud.isEmpty else { return }
+        NotificationManager.shared.showNotification(
+            title: String(
+                format: String(localized: "Still using Yap Cloud: %@. Switch them to another provider in Modes."),
+                modesUsingCloud.map(\.name).joined(separator: ", ")),
+            type: .warning,
+            duration: 10,
+            actionButton: (String(localized: "Manage Modes"), ModeSetupNavigator.openModesSettings)
+        )
     }
 
     private func openCheckout() {

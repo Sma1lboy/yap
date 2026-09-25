@@ -17,8 +17,6 @@ final class YapCloud: ObservableObject {
     static let maximumTopUpUSD = 500
     /// Below this ($1), Home and the menu bar show a prominent "add funds" entry.
     static let lowBalanceMicros: Int64 = 1_000_000
-    /// paygate's maximum `limit` for `/v1/ledger`.
-    static let ledgerFetchLimit = 500
 
     private static let tokenKey = "yapCloudToken"
     private static let emailKey = "yapCloudEmail"
@@ -32,8 +30,17 @@ final class YapCloud: ObservableObject {
     private var balanceRefresh: Task<Void, Never>?
 
     @Published private(set) var isSignedIn = false
-    @Published private(set) var me: YapCloudMe?
+    @Published private(set) var me: YapCloudMe? {
+        didSet { balanceUpdatedAt = me == nil ? nil : Date() }
+    }
+    @Published private(set) var balanceUpdatedAt: Date?
     @Published private(set) var ledger: [YapCloudLedgerEntry] = []
+    /// False until a ledger fetch succeeds, so a failed load is never shown as "no activity".
+    @Published private(set) var isLedgerLoaded = false
+    @Published private(set) var isRefreshingAccount = false
+    /// Why the last Account refresh failed; nil after a successful one.
+    @Published private(set) var accountRefreshError: String?
+    /// This month's spend from `/v1/usage`; nil until loaded.
     @Published private(set) var monthlySpend: YapCloudMonthlySpend?
 
     private init() {
@@ -98,7 +105,7 @@ final class YapCloud: ObservableObject {
             authenticated: false)
         let response = try Self.decode(YapCloudVerifyResponse.self, from: data)
         guard keychain.save(response.token, forKey: Self.tokenKey, syncable: false) else {
-            throw YapCloudError.server(status: 0, code: nil, message: String(localized: "Couldn't save the sign-in token to the keychain."))
+            throw YapCloudError.keychainUnavailable
         }
         defaults.set(response.user.email, forKey: Self.emailKey)
         isSignedIn = true
@@ -107,16 +114,23 @@ final class YapCloud: ObservableObject {
         await refreshModels()
     }
 
+    /// Signs out locally right away; revoking the token server-side is best effort, so being offline
+    /// never leaves the user waiting on the 20s request timeout.
     @MainActor
-    func signOut() async {
-        if token != nil {
+    func signOut() {
+        guard let token else {
+            clearSession()
+            return
+        }
+        clearSession()
+        Task {
             do {
-                _ = try await send("POST", "/v1/auth/logout")
+                _ = try await sendWithResponse(
+                    "POST", "/v1/auth/logout", headers: ["Authorization": "Bearer \(token)"], authenticated: false)
             } catch {
                 logger.error("Logout request failed: \(error.localizedDescription, privacy: .public)")
             }
         }
-        clearSession()
     }
 
     @MainActor
@@ -126,6 +140,8 @@ final class YapCloud: ObservableObject {
         isSignedIn = false
         me = nil
         ledger = []
+        isLedgerLoaded = false
+        accountRefreshError = nil
         monthlySpend = nil
         NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
     }
@@ -138,6 +154,13 @@ final class YapCloud: ObservableObject {
 
     func fetchLedger(limit: Int = 20) async throws -> [YapCloudLedgerEntry] {
         try Self.decode(YapCloudLedger.self, from: try await send("GET", "/v1/ledger?limit=\(limit)")).entries
+    }
+
+    /// Usage spend in `[since, now)`, summed by the server. `since` is the local start of the month for "This Month".
+    func fetchUsage(since: Date) async throws -> YapCloudMonthlySpend {
+        let formatter = ISO8601DateFormatter()
+        let query = formatter.string(from: since).addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? ""
+        return try Self.decode(YapCloudMonthlySpend.self, from: try await send("GET", "/v1/usage?since=\(query)"))
     }
 
     /// Returns the Stripe Checkout URL for a top-up of `amountUSD` dollars.
@@ -176,20 +199,21 @@ final class YapCloud: ObservableObject {
     /// Reloads balance and the last 20 ledger rows for the Account page. Signs out on a revoked token.
     @MainActor
     func refreshAccount() async {
-        guard token != nil else { return }
+        guard token != nil, !isRefreshingAccount else { return }
+        isRefreshingAccount = true
+        defer { isRefreshingAccount = false }
         do {
             me = try await fetchMe()
-            // One request feeds both Recent Activity and This Month. ponytail: paygate's ledger has no paging or
-            // time filter (newest 500 max), so heavy months are marked partial until it gets a usage summary.
-            let rows = try await fetchLedger(limit: Self.ledgerFetchLimit)
-            ledger = Array(rows.prefix(20))
+            ledger = try await fetchLedger()
+            isLedgerLoaded = true
             let monthStart = Calendar.current.dateInterval(of: .month, for: Date())?.start ?? Date()
-            monthlySpend = YapCloudMonthlySpend(
-                rows, since: monthStart, limitReached: rows.count >= Self.ledgerFetchLimit)
+            monthlySpend = try await fetchUsage(since: monthStart)
+            accountRefreshError = nil
         } catch YapCloudError.notSignedIn {
             clearSession()
         } catch {
             logger.error("Account refresh failed: \(error.localizedDescription, privacy: .public)")
+            accountRefreshError = error.localizedDescription
         }
     }
 
@@ -220,7 +244,7 @@ final class YapCloud: ObservableObject {
         do {
             let (data, response) = try await sendWithResponse("GET", "/v1/config")
             return YapCloudConfigDocument(body: data, etag: response.value(forHTTPHeaderField: "ETag"))
-        } catch YapCloudError.server(let status, _, _) where status == 404 {
+        } catch YapCloudError.server(let status, _, _, _, _) where status == 404 {
             return nil
         }
     }
@@ -251,17 +275,31 @@ final class YapCloud: ObservableObject {
             name: .navigateToDestination, object: nil, userInfo: ["destination": "Account"])
     }
 
-    /// Shows the "add funds" notification when `error` is a Yap Cloud 402. Returns whether it did.
+    /// Shows the account notification when `error` is a Yap Cloud 402 (Add Funds) or 401 (sign in again).
+    /// Returns whether it did, so callers can skip their generic failure message.
     @MainActor
     @discardableResult
-    static func notifyIfInsufficientBalance(_ error: Error) -> Bool {
-        guard case YapCloudError.insufficientBalance = error else { return false }
-        NotificationManager.shared.showNotification(
-            title: YapCloudError.insufficientBalance.errorDescription ?? "",
-            type: .error,
-            duration: 8,
-            onTap: { showAddFunds() },
-            actionButton: (label: String(localized: "Add Funds"), action: { showAddFunds() }))
+    static func notifyIfAccountProblem(_ error: Error) -> Bool {
+        switch error {
+        case YapCloudError.insufficientBalance:
+            NotificationManager.shared.showNotification(
+                title: YapCloudError.insufficientBalance.errorDescription ?? "",
+                type: .error,
+                duration: 8,
+                onTap: { showAddFunds() },
+                actionButton: (label: String(localized: "Add Funds"), action: { showAddFunds() }))
+        case YapCloudError.notSignedIn:
+            // The token was rejected (revoked or expired); drop it so Account shows the sign-in form.
+            shared.clearSession()
+            NotificationManager.shared.showNotification(
+                title: YapCloudError.notSignedIn.errorDescription ?? "",
+                type: .error,
+                duration: 8,
+                onTap: { showAddFunds() },
+                actionButton: (label: String(localized: "Open Account"), action: { showAddFunds() }))
+        default:
+            return false
+        }
         return true
     }
 
@@ -346,8 +384,12 @@ enum YapCloudError: LocalizedError, Equatable {
     case notSignedIn
     case insufficientBalance
     case invalidAmount
+    case keychainUnavailable
     case versionConflict(current: YapCloudConfigDocument?)
-    case server(status: Int, code: String?, message: String)
+    /// `message` is paygate's English text, kept for logs; users see a description mapped from `code`.
+    /// `retryAfterSeconds` comes with RATE_LIMITED, `attemptsRemaining` with INVALID_CODE.
+    case server(
+        status: Int, code: String?, message: String, retryAfterSeconds: Int? = nil, attemptsRemaining: Int? = nil)
 
     /// Maps a non-2xx paygate response (`{"error":{"code","message"}}`).
     init(status: Int, body: Data, authenticated: Bool) {
@@ -362,7 +404,10 @@ enum YapCloudError: LocalizedError, Equatable {
             self = .versionConflict(current: YapCloudConfigDocument(conflictBody: body))
         default:
             let message = envelope?.error?.message ?? String(data: body, encoding: .utf8) ?? ""
-            self = .server(status: status, code: code, message: message.isEmpty ? "HTTP \(status)" : message)
+            self = .server(
+                status: status, code: code, message: message.isEmpty ? "HTTP \(status)" : message,
+                retryAfterSeconds: envelope?.error?.retryAfterSeconds,
+                attemptsRemaining: envelope?.error?.attemptsRemaining)
         }
     }
 
@@ -376,10 +421,59 @@ enum YapCloudError: LocalizedError, Equatable {
             return String(
                 format: String(localized: "Enter a whole-dollar amount between $%lld and $%lld."),
                 Int64(YapCloud.checkoutPresets.min()!), Int64(YapCloud.maximumTopUpUSD))
+        case .keychainUnavailable:
+            return String(localized: "Couldn't save the sign-in token to the keychain.")
         case .versionConflict:
             return String(localized: "The cloud config changed on another device.")
-        case .server(_, _, let message):
-            return message
+        case .server(_, let code, _, let retryAfterSeconds, let attemptsRemaining):
+            return Self.description(
+                forCode: code, retryAfterSeconds: retryAfterSeconds, attemptsRemaining: attemptsRemaining)
+        }
+    }
+
+    /// Codes from paygate docs/api.md and its fail() calls. Unknown codes and non-paygate failures
+    /// (no code) read as a temporary outage; the raw HTTP status is never shown.
+    private static func description(forCode code: String?, retryAfterSeconds: Int?, attemptsRemaining: Int?) -> String {
+        switch code {
+        case "INVALID_CODE":
+            if let attemptsRemaining {
+                return String(
+                    format: String(localized: "That code isn't right. Attempts left: %lld."), Int64(attemptsRemaining))
+            }
+            return String(localized: "That code isn't right. Check the email and try again.")
+        case "CODE_EXPIRED":
+            return String(localized: "That code has expired. Send a new code.")
+        case "CODE_NOT_FOUND":
+            return String(localized: "There's no active code for this email. Send a new code.")
+        case "TOO_MANY_ATTEMPTS":
+            return String(localized: "Too many wrong tries for this code. Send a new code.")
+        case "EMAIL_SEND_FAILED":
+            return String(localized: "Couldn't send the email. Try again in a moment.")
+        case "INVALID_EMAIL":
+            return String(localized: "Enter a valid email address.")
+        case "RATE_LIMITED":
+            if let retryAfterSeconds, retryAfterSeconds > 0 {
+                let minutes = Int64((retryAfterSeconds + 59) / 60)
+                return String(
+                    format: String(localized: "Too many requests. Try again in %lld min."), minutes)
+            }
+            return String(localized: "Too many requests. Wait a moment and try again.")
+        case "UPSTREAM_UNAVAILABLE":
+            return String(localized: "The AI service is unreachable right now. Nothing was charged. Try again shortly.")
+        case "STRIPE_ERROR":
+            return String(localized: "Payment service is unavailable right now. Try again shortly.")
+        case "INVALID_AMOUNT":
+            return YapCloudError.invalidAmount.errorDescription ?? ""
+        case "MODEL_NOT_ALLOWED":
+            return String(localized: "This model isn't available on Yap Cloud. Choose another model.")
+        case "STRIPE_NOT_CONFIGURED":
+            return String(localized: "Adding funds isn't available yet.")
+        case "CONFIG_TOO_LARGE":
+            return String(localized: "The config is too large to sync (limit 256 KB).")
+        case let code?:
+            return String(format: String(localized: "Yap Cloud is temporarily unavailable. Try again shortly. (%@)"), code)
+        case nil:
+            return String(localized: "Yap Cloud is temporarily unavailable. Try again shortly.")
         }
     }
 
@@ -387,6 +481,8 @@ enum YapCloudError: LocalizedError, Equatable {
         struct Body: Decodable {
             let code: String?
             let message: String?
+            let retryAfterSeconds: Int?
+            let attemptsRemaining: Int?
         }
         let error: Body?
     }
@@ -489,34 +585,41 @@ private struct YapCloudCheckout: Decodable {
     let url: String
 }
 
-/// Usage charges since a date, summed in micros: total plus the top models.
-struct YapCloudMonthlySpend: Equatable {
-    struct ModelSpend: Equatable {
-        let model: String
+/// `GET /v1/usage`: spend (positive micros) since a date, total plus per-model, sorted by spend.
+struct YapCloudMonthlySpend: Decodable, Equatable {
+    struct ModelSpend: Decodable, Equatable {
+        /// nil for charges the server recorded without a model.
+        let model: String?
         let micros: Int64
+        let calls: Int
+
+        enum CodingKeys: String, CodingKey { case model, micros, usd, calls }
+
+        init(model: String?, micros: Int64, calls: Int) {
+            self.model = model
+            self.micros = micros
+            self.calls = calls
+        }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            model = try c.decodeIfPresent(String.self, forKey: .model)
+            micros = try c.decodeMicros(.micros, fallback: .usd)
+            calls = try c.decodeIfPresent(Int.self, forKey: .calls) ?? 0
+        }
     }
 
     let totalMicros: Int64
-    let topModels: [ModelSpend]
-    /// The fetched rows stop inside the period, so older charges are missing from the total.
-    let isPartial: Bool
+    let byModel: [ModelSpend]
 
-    init(_ entries: [YapCloudLedgerEntry], since start: Date, limitReached: Bool, top: Int = 5) {
-        var byModel: [String: Int64] = [:]
-        var total: Int64 = 0
-        for entry in entries where entry.kind == "usage" {
-            guard let date = entry.createdDate, date >= start else { continue }
-            total -= entry.amountMicros
-            byModel[entry.model ?? "", default: 0] -= entry.amountMicros
-        }
-        totalMicros = total
-        topModels = byModel
-            .map { ModelSpend(model: $0.key, micros: $0.value) }
-            .sorted { $0.micros != $1.micros ? $0.micros > $1.micros : $0.model < $1.model }
-            .prefix(top)
-            .map { $0 }
-        // Newest first: if the oldest fetched row is still inside the period, the limit cut it off.
-        isPartial = limitReached && (entries.last?.createdDate.map { $0 >= start } ?? true)
+    var topModels: [ModelSpend] { Array(byModel.prefix(5)) }
+
+    enum CodingKeys: String, CodingKey { case totalMicros, totalUsd, byModel }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        totalMicros = try c.decodeMicros(.totalMicros, fallback: .totalUsd)
+        byModel = try c.decode([ModelSpend].self, forKey: .byModel)
     }
 }
 
@@ -591,6 +694,16 @@ struct YapCloudConfigDocument: Equatable {
                 YapCloudError(status: 401, body: json(#"{"error":{"code":"INVALID_CODE","message":"Wrong code"}}"#), authenticated: false)
                     == .server(status: 401, code: "INVALID_CODE", message: "Wrong code"))
             assert(YapCloudError(status: 500, body: Data(), authenticated: true) == .server(status: 500, code: nil, message: "HTTP 500"))
+            assert(YapCloudError(status: 500, body: Data(), authenticated: true).errorDescription?.contains("500") == false)
+            assert(YapCloudError.server(status: 503, code: "SOMETHING_NEW", message: "x").errorDescription?
+                .contains("SOMETHING_NEW") == true)
+            assert(YapCloudError.server(status: 429, code: "RATE_LIMITED", message: "x").errorDescription?
+                .contains("RATE_LIMITED") == false)
+            assert(
+                YapCloudError(
+                    status: 429, body: Data(#"{"error":{"code":"RATE_LIMITED","message":"m","retryAfterSeconds":61}}"#.utf8),
+                    authenticated: false)
+                    == .server(status: 429, code: "RATE_LIMITED", message: "m", retryAfterSeconds: 61))
             let conflict = YapCloudError(
                 status: 409, body: json(#"{"error":{"code":"VERSION_CONFLICT"},"current":{"version":7,"config":{"a":1}}}"#),
                 authenticated: true)
@@ -640,26 +753,19 @@ struct YapCloudConfigDocument: Equatable {
             assert(formatLedgerAmount(micros: 10_000_000, kind: "topup") == "$10.00")
             assert(999_999 < lowBalanceMicros && !(1_000_000 < lowBalanceMicros))
 
-            // Monthly spend: usage rows since the start date only, spend positive, top N by micros then name
-            let rows = try! JSONDecoder().decode(
-                YapCloudLedger.self,
+            // /v1/usage
+            let usage = try! JSONDecoder().decode(
+                YapCloudMonthlySpend.self,
                 from: json(#"""
-                    {"entries":[
-                     {"id":"7","kind":"usage","amountMicros":-92,"model":"b","createdAt":"2026-09-25T10:00:00.000Z"},
-                     {"id":"6","kind":"usage","amountMicros":-8,"model":"a","createdAt":"2026-09-20T10:00:00.000Z"},
-                     {"id":"5","kind":"topup","amountMicros":5000000,"createdAt":"2026-09-10T10:00:00.000Z"},
-                     {"id":"4","kind":"usage","amountMicros":-100,"model":"a","createdAt":"2026-09-02T10:00:00.000Z"},
-                     {"id":"3","kind":"usage","amountMicros":-50,"model":"c","createdAt":"2026-09-01T10:00:00.000Z"},
-                     {"id":"2","kind":"usage","amountMicros":-7,"createdAt":"2026-09-01T11:00:00.000Z"},
-                     {"id":"1","kind":"usage","amountMicros":-999,"model":"old","createdAt":"2026-08-31T23:00:00.000Z"}]}
-                    """#)).entries
-            let september = ISO8601DateFormatter().date(from: "2026-09-01T00:00:00Z")!
-            let spend = YapCloudMonthlySpend(rows, since: september, limitReached: false, top: 3)
-            assert(spend.totalMicros == 257 && !spend.isPartial)
-            assert(spend.topModels == [.init(model: "a", micros: 108), .init(model: "b", micros: 92), .init(model: "c", micros: 50)])
-            assert(YapCloudMonthlySpend(rows, since: september, limitReached: true).isPartial == false)
-            assert(YapCloudMonthlySpend(Array(rows.prefix(4)), since: september, limitReached: true).isPartial)
-            assert(YapCloudMonthlySpend([], since: september, limitReached: false).totalMicros == 0)
+                    {"since":"2026-09-01T00:00:00.000Z","until":"x","totalMicros":193,"totalUsd":"0.000193","byModel":[
+                     {"model":"a","micros":100,"usd":"0.000100","calls":2},{"model":null,"micros":50,"usd":"0.000050","calls":1},
+                     {"model":"c","micros":20,"calls":1},{"model":"d","micros":10,"calls":1},{"model":"e","micros":8,"calls":1},
+                     {"model":"f","usd":"0.000005","calls":1}]}
+                    """#))
+            assert(usage.totalMicros == 193 && usage.byModel.count == 6 && usage.topModels.count == 5)
+            assert(usage.byModel[0] == .init(model: "a", micros: 100, calls: 2) && usage.byModel[1].model == nil)
+            assert(usage.byModel[5].micros == 5)
+            assert(try! JSONDecoder().decode(YapCloudMonthlySpend.self, from: json(#"{"totalMicros":0,"byModel":[]}"#)).topModels.isEmpty)
 
             // Top-up amounts
             assert(isValidTopUp(5) && isValidTopUp(20) && isValidTopUp(500))
