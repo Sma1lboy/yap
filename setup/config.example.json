@@ -1,4 +1,5 @@
 {
+  "$schema": "./config.schema.json",
   "keys": {
     "openrouter": "env:OPENROUTER_API_KEY"
   },

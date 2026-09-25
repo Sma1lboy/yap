@@ -1,0 +1,938 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Sma1lboy/yap/config.schema.json",
+  "title": "Yap config.json",
+  "description": "~/.config/yap/config.json. Every field is optional; empty strings, arrays and objects count as unset. v1 fields (keys, transcription, enhancement, defaultMode) apply on top of the v2 sections. See the README's Config & Sync section.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path or URL of this schema, for editors. Yap ignores it."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Schema version: 2. Omitted means v1. A higher number (from a newer Yap) still loads; unknown fields are ignored.",
+      "examples": [
+        2
+      ]
+    },
+    "keys": {
+      "type": "object",
+      "description": "API keys by provider name, saved to the keychain. \"env:NAME\" reads the environment, then ~/.env. Yap never writes a literal key back.",
+      "additionalProperties": {
+        "type": "string",
+        "description": "\"env:NAME\" or the key itself.",
+        "examples": [
+          "env:OPENROUTER_API_KEY"
+        ]
+      },
+      "examples": [
+        {
+          "openrouter": "env:OPENROUTER_API_KEY"
+        }
+      ]
+    },
+    "transcription": {
+      "type": "object",
+      "description": "Speech-to-text provider and model, applied to every mode.",
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string",
+          "description": "Provider, case and spaces ignored.",
+          "examples": [
+            "openrouter",
+            "yapcloud",
+            "groq",
+            "local"
+          ]
+        },
+        "model": {
+          "type": "string",
+          "description": "Model name as the provider calls it.",
+          "examples": [
+            "microsoft/mai-transcribe-2"
+          ]
+        }
+      }
+    },
+    "enhancement": {
+      "type": "object",
+      "description": "Cleanup provider/model for modes with enhancement on, and the default mode's prompt.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Turns enhancement on or off for the default mode."
+        },
+        "provider": {
+          "type": "string",
+          "description": "Provider, case and spaces ignored.",
+          "examples": [
+            "openrouter",
+            "yapcloud",
+            "groq"
+          ]
+        },
+        "model": {
+          "type": "string",
+          "description": "Model name as the provider calls it.",
+          "examples": [
+            "deepseek/deepseek-v4.1-flash"
+          ]
+        },
+        "prompt": {
+          "type": "string",
+          "description": "A file next to config.json (\"prompt.md\"), an absolute or ~/ path, the prompt text itself, or \"recommended\" for the prompt bundled with Yap.",
+          "examples": [
+            "prompt.md",
+            "recommended"
+          ]
+        }
+      }
+    },
+    "defaultMode": {
+      "type": "object",
+      "description": "Extra context the default mode sends to the model.",
+      "additionalProperties": false,
+      "properties": {
+        "screenContext": {
+          "type": "boolean",
+          "description": "Send visible screen text."
+        },
+        "clipboardContext": {
+          "type": "boolean",
+          "description": "Send the clipboard."
+        },
+        "selectedTextContext": {
+          "type": "boolean",
+          "description": "Send the selected text."
+        }
+      }
+    },
+    "modes": {
+      "type": "array",
+      "description": "Modes, merged by id: a mode here replaces the app's mode with the same id; modes only in the app stay.",
+      "items": {
+        "$ref": "#/$defs/mode"
+      }
+    },
+    "modeShortcuts": {
+      "type": "object",
+      "description": "Mode id → shortcut. Ids not in modes are ignored.",
+      "propertyNames": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/shortcut"
+      }
+    },
+    "prompts": {
+      "type": "array",
+      "description": "Custom prompts, merged by id.",
+      "items": {
+        "$ref": "#/$defs/prompt"
+      }
+    },
+    "dictionary": {
+      "type": "object",
+      "description": "Merged into the existing dictionary.",
+      "additionalProperties": false,
+      "properties": {
+        "vocabulary": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Words and names the transcriber should know.",
+          "examples": [
+            [
+              "Yap"
+            ]
+          ]
+        },
+        "replacements": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Source text → replacement.",
+          "examples": [
+            {
+              "yep": "Yap"
+            }
+          ]
+        }
+      }
+    },
+    "general": {
+      "$ref": "#/$defs/general"
+    },
+    "customModels": {
+      "type": "array",
+      "description": "Custom transcription model definitions (OpenAI-compatible), merged by id. Keys stay in each Mac's keychain.",
+      "items": {
+        "$ref": "#/$defs/customModel"
+      }
+    },
+    "customProviders": {
+      "type": "array",
+      "description": "Custom enhancement providers (OpenAI-compatible chat), merged by id. Keys stay in each Mac's keychain.",
+      "items": {
+        "$ref": "#/$defs/customProvider"
+      }
+    },
+    "modified": {
+      "type": "object",
+      "description": "When each entry last changed. Written by Yap; no need to edit.",
+      "additionalProperties": false,
+      "properties": {
+        "modes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": "Mode id → time."
+        },
+        "prompts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": "Prompt id → time."
+        },
+        "vocabulary": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": "Word → time."
+        },
+        "replacements": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": "Replacement source → time."
+        },
+        "customModels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": "Custom transcription model id → time."
+        },
+        "customProviders": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": "Custom enhancement provider id → time."
+        }
+      }
+    },
+    "deleted": {
+      "type": "object",
+      "description": "Deletion records: an entry is removed when its record is newer than its modified time. Kept 90 days. Written by Yap.",
+      "additionalProperties": false,
+      "properties": {
+        "modes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": "Mode id → time."
+        },
+        "prompts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": "Prompt id → time."
+        },
+        "vocabulary": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": "Word → time."
+        },
+        "replacements": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": "Replacement source → time."
+        },
+        "customModels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": "Custom transcription model id → time."
+        },
+        "customProviders": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": "Custom enhancement provider id → time."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "shortcut": {
+      "type": "object",
+      "description": "A shortcut: the readable \"shortcut\" string, or the raw fields Yap writes (they win when both are present).",
+      "anyOf": [
+        {
+          "required": [
+            "shortcut"
+          ]
+        },
+        {
+          "required": [
+            "kind",
+            "keyCode",
+            "modifierFlagsRawValue"
+          ]
+        },
+        {
+          "required": [
+            "carbonKeyCode",
+            "carbonModifiers"
+          ]
+        }
+      ],
+      "properties": {
+        "shortcut": {
+          "type": "string",
+          "pattern": "^(?:(?:cmd|command|shift|opt|option|alt|ctrl|control|fn|function)\\+)*(?:[a-z0-9]|f(?:[1-9]|1[0-9]|20)|space|return|enter|tab|escape|esc|delete|backspace|forwarddelete|left|right|up|down|home|end|pageup|pagedown|[-=\\[\\];',./\\\\`]|cmd|command|shift|opt|option|alt|ctrl|control|fn|function)$|^(?:left|right)-(?:cmd|command|shift|opt|option|ctrl|control)$|^fn$",
+          "description": "Modifiers cmd shift opt ctrl fn joined by +, then a key by its US-layout name; or one modifier key alone (right-opt, left-cmd, fn). Lowercase; Yap also accepts other case.",
+          "examples": [
+            "cmd+shift+space",
+            "ctrl+f5",
+            "right-opt",
+            "fn"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "key",
+            "modifierOnly",
+            "mouseButton"
+          ],
+          "description": "Raw: what the shortcut is."
+        },
+        "keyCode": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "Raw: macOS virtual key code (mouse button number for mouseButton; 65535 = any key of the modifiers)."
+        },
+        "modifierFlagsRawValue": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Raw: NSEvent.ModifierFlags bits."
+        },
+        "carbonKeyCode": {
+          "type": "integer",
+          "description": "Legacy (older backups)."
+        },
+        "carbonModifiers": {
+          "type": "integer",
+          "description": "Legacy (older backups)."
+        }
+      }
+    },
+    "mode": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "isAIEnhancementEnabled"
+      ],
+      "description": "One mode, same object as modeConfigs in a Settings export.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$",
+          "description": "Stable id; entries merge by it."
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name.",
+          "minLength": 1
+        },
+        "icon": {
+          "type": "object",
+          "required": [
+            "kind",
+            "value"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "symbol",
+                "emoji"
+              ]
+            },
+            "value": {
+              "type": "string",
+              "description": "SF Symbol name or emoji."
+            }
+          },
+          "description": "Icon."
+        },
+        "isAIEnhancementEnabled": {
+          "type": "boolean",
+          "description": "Clean up the transcript with the AI model."
+        },
+        "selectedPrompt": {
+          "type": "string",
+          "description": "Prompt id (a prompt's id as a string)."
+        },
+        "selectedTranscriptionModelName": {
+          "type": "string",
+          "description": "Transcription model: its name, or \"OpenRouter:<uuid>\" / \"YapCloud:<uuid>\" keys the app writes."
+        },
+        "isRealtimeTranscriptionEnabled": {
+          "type": "boolean",
+          "description": "Stream while recording, where the model supports it."
+        },
+        "selectedLanguage": {
+          "type": "string",
+          "description": "Language code, or \"auto\".",
+          "examples": [
+            "auto",
+            "en",
+            "zh"
+          ]
+        },
+        "isTextFormattingEnabled": {
+          "type": "boolean",
+          "description": "Format text (paragraphs) after transcription."
+        },
+        "useClipboardContext": {
+          "type": "boolean",
+          "description": "Send the clipboard to the model."
+        },
+        "useSelectedTextContext": {
+          "type": "boolean",
+          "description": "Send the selected text to the model."
+        },
+        "useScreenCapture": {
+          "type": "boolean",
+          "description": "Send visible screen text to the model."
+        },
+        "selectedAIProvider": {
+          "enum": [
+            "Cerebras",
+            "Groq",
+            "Gemini",
+            "Anthropic",
+            "OpenAI",
+            "OpenRouter",
+            "Yap Cloud",
+            "Mistral",
+            "ElevenLabs",
+            "Deepgram",
+            "Soniox",
+            "Speechmatics",
+            "AssemblyAI",
+            "VoiceInk Refine",
+            "Ollama",
+            "Local CLI",
+            "Custom"
+          ],
+          "description": "Enhancement provider."
+        },
+        "selectedAIModel": {
+          "type": "string",
+          "description": "Enhancement model name."
+        },
+        "outputMode": {
+          "enum": [
+            "paste",
+            "respond",
+            "customCommand"
+          ],
+          "description": "What happens with the result."
+        },
+        "customCommand": {
+          "type": "object",
+          "properties": {
+            "command": {
+              "type": "string",
+              "description": "Shell command that receives the text."
+            }
+          },
+          "description": "For outputMode customCommand."
+        },
+        "isEnabled": {
+          "type": "boolean",
+          "description": "Mode is available."
+        },
+        "isDefault": {
+          "type": "boolean",
+          "description": "The default mode (one per app)."
+        },
+        "triggerWords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Spoken words that switch to this mode."
+        },
+        "appConfigs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/appConfig"
+          },
+          "description": "Apps that activate this mode."
+        },
+        "urlConfigs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/urlConfig"
+          },
+          "description": "Websites that activate this mode."
+        },
+        "triggerGroups": {
+          "type": "array",
+          "description": "Named groups of apps and websites.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "appConfigs",
+              "urlConfigs"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
+              },
+              "templateId": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "appConfigs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/appConfig"
+                }
+              },
+              "urlConfigs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/urlConfig"
+                }
+              }
+            }
+          }
+        },
+        "emoji": {
+          "type": "string",
+          "deprecated": true,
+          "description": "Legacy icon; use icon."
+        },
+        "selectedWhisperModel": {
+          "type": "string",
+          "deprecated": true,
+          "description": "Legacy; use selectedTranscriptionModelName."
+        }
+      }
+    },
+    "appConfig": {
+      "type": "object",
+      "required": [
+        "id",
+        "bundleIdentifier",
+        "appName"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
+        },
+        "bundleIdentifier": {
+          "type": "string",
+          "description": "App bundle id.",
+          "examples": [
+            "com.apple.mail"
+          ]
+        },
+        "appName": {
+          "type": "string",
+          "description": "App name."
+        }
+      }
+    },
+    "urlConfig": {
+      "type": "object",
+      "required": [
+        "id",
+        "url"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
+        },
+        "url": {
+          "type": "string",
+          "description": "Website, e.g. github.com."
+        }
+      }
+    },
+    "prompt": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "promptText"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$",
+          "description": "Stable id; modes reference it."
+        },
+        "title": {
+          "type": "string",
+          "description": "Name shown in the app.",
+          "minLength": 1
+        },
+        "promptText": {
+          "type": "string",
+          "description": "The instructions."
+        },
+        "useSystemInstructions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Wrap the text in Yap's standard cleanup instructions."
+        }
+      }
+    },
+    "general": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Same object as generalSettings in a Settings export.",
+      "properties": {
+        "primaryRecordingShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Record (primary)."
+        },
+        "secondaryRecordingShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Record (secondary)."
+        },
+        "pasteLastTranscriptionShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Paste last transcription."
+        },
+        "pasteLastEnhancementShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Paste last enhanced result."
+        },
+        "retryLastTranscriptionShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Retry last transcription."
+        },
+        "cancelRecorderShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Cancel recording."
+        },
+        "openHistoryWindowShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Open history."
+        },
+        "quickAddToDictionaryShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Add selection to dictionary."
+        },
+        "primaryRecordingShortcutRawValue": {
+          "enum": [
+            "none",
+            "custom"
+          ],
+          "description": "Whether the primary record shortcut is set."
+        },
+        "secondaryRecordingShortcutRawValue": {
+          "enum": [
+            "none",
+            "custom"
+          ],
+          "description": "Whether the secondary record shortcut is set."
+        },
+        "primaryRecordingShortcutModeRawValue": {
+          "enum": [
+            "toggle",
+            "pushToTalk",
+            "hybrid",
+            "doubleTap"
+          ],
+          "description": "How the primary shortcut records."
+        },
+        "secondaryRecordingShortcutModeRawValue": {
+          "enum": [
+            "toggle",
+            "pushToTalk",
+            "hybrid",
+            "doubleTap"
+          ],
+          "description": "How the secondary shortcut records."
+        },
+        "launchAtLoginEnabled": {
+          "type": "boolean",
+          "description": "Open Yap at login."
+        },
+        "isMenuBarOnly": {
+          "type": "boolean",
+          "description": "Hide the Dock icon."
+        },
+        "recorderType": {
+          "enum": [
+            "notch",
+            "mini"
+          ],
+          "description": "Recorder style."
+        },
+        "appAppearancePreference": {
+          "enum": [
+            "system",
+            "light",
+            "dark"
+          ],
+          "description": "Appearance."
+        },
+        "appLanguagePreference": {
+          "enum": [
+            "system",
+            "en",
+            "de",
+            "fr",
+            "zh-Hans"
+          ],
+          "description": "App language."
+        },
+        "isTranscriptionCleanupEnabled": {
+          "type": "boolean",
+          "description": "Delete old transcripts automatically."
+        },
+        "transcriptionRetentionMinutes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Keep transcripts this many minutes."
+        },
+        "isAudioCleanupEnabled": {
+          "type": "boolean",
+          "description": "Delete old recordings automatically."
+        },
+        "audioRetentionPeriod": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Keep recordings this many days."
+        },
+        "isSystemMuteEnabled": {
+          "type": "boolean",
+          "description": "Mute system audio while recording."
+        },
+        "isPauseMediaEnabled": {
+          "type": "boolean",
+          "description": "Pause playing media while recording."
+        },
+        "audioResumptionDelay": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Seconds before unmuting / resuming media."
+        },
+        "isTextFormattingEnabled": {
+          "type": "boolean",
+          "description": "Format text (paragraphs) after transcription."
+        },
+        "restoreClipboardAfterPaste": {
+          "type": "boolean",
+          "description": "Put the previous clipboard back after pasting."
+        },
+        "clipboardRestoreDelay": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Seconds before restoring the clipboard."
+        },
+        "finishAndSendKey": {
+          "enum": [
+            "none",
+            "enter",
+            "shiftEnter",
+            "commandEnter"
+          ],
+          "description": "Key pressed after pasting."
+        },
+        "isAutoLearnDictionaryEnabled": {
+          "type": "boolean",
+          "description": "Learn dictionary words from your corrections."
+        },
+        "autoLearnReviewSchedule": {
+          "enum": [
+            "immediately",
+            "manually"
+          ],
+          "description": "When learned words are reviewed."
+        },
+        "autoLearnProvider": {
+          "enum": [
+            "Cerebras",
+            "Groq",
+            "Gemini",
+            "Anthropic",
+            "OpenAI",
+            "OpenRouter",
+            "Yap Cloud",
+            "Mistral",
+            "ElevenLabs",
+            "Deepgram",
+            "Soniox",
+            "Speechmatics",
+            "AssemblyAI",
+            "VoiceInk Refine",
+            "Ollama",
+            "Local CLI",
+            "Custom"
+          ],
+          "description": "Provider that reviews learned words."
+        },
+        "autoLearnModel": {
+          "type": "string",
+          "description": "Model that reviews learned words."
+        },
+        "isExperimentalFeaturesEnabled": {
+          "type": "boolean",
+          "deprecated": true,
+          "description": "Removed; ignored."
+        }
+      }
+    },
+    "customModel": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "displayName",
+        "description",
+        "apiEndpoint",
+        "modelName",
+        "isMultilingualModel",
+        "supportedLanguages"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Internal name."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Name shown in Models."
+        },
+        "description": {
+          "type": "string",
+          "description": "Shown under the name."
+        },
+        "apiEndpoint": {
+          "type": "string",
+          "description": "OpenAI-compatible transcription endpoint.",
+          "format": "uri"
+        },
+        "modelName": {
+          "type": "string",
+          "description": "Model name sent to the endpoint."
+        },
+        "isMultilingualModel": {
+          "type": "boolean",
+          "description": "Supports languages other than English."
+        },
+        "supportedLanguages": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Language code → name."
+        },
+        "apiKey": {
+          "type": "string",
+          "deprecated": true,
+          "description": "Read from old backups and saved to the keychain; never written. Don't put keys here."
+        }
+      }
+    },
+    "customProvider": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "baseURL",
+        "models",
+        "selectedModel"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name shown in Models."
+        },
+        "baseURL": {
+          "type": "string",
+          "description": "OpenAI-compatible base URL.",
+          "format": "uri"
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Model names."
+        },
+        "selectedModel": {
+          "type": "string",
+          "description": "The model used."
+        }
+      }
+    }
+  }
+}

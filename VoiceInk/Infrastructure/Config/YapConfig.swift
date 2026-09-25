@@ -150,8 +150,14 @@ struct YapConfig: Codable, Equatable {
 
     static let promptID = UUID(uuidString: "A1B2C3D4-0000-4000-8000-00000000C0DE")!
 
+    /// `$schema` value written into config.json: the schema Yap keeps next to it, for editor completion and
+    /// validation. Reading ignores the key (like any unknown one).
+    static let schemaReference = "./config.schema.json"
+    static let schemaFileName = "config.schema.json"
+
     static let template = """
         {
+          "$schema": "\(schemaReference)",
           "keys": { "openrouter": "" },
           "transcription": { "provider": "", "model": "" },
           "enhancement": { "provider": "", "model": "", "prompt": "" },
@@ -215,7 +221,18 @@ struct YapConfig: Codable, Equatable {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         encoder.dateEncodingStrategy = .iso8601
-        return try encoder.encode(self) + Data("\n".utf8)
+        return try encoder.encode(WithSchemaReference(config: self)) + Data("\n".utf8)
+    }
+
+    /// Encodes `"$schema"` alongside the config's own keys (sorted first, since `$` sorts before letters).
+    private struct WithSchemaReference: Encodable {
+        let config: YapConfig
+        private enum Key: String, CodingKey { case schema = "$schema" }
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: Key.self)
+            try container.encode(YapConfig.schemaReference, forKey: .schema)
+            try config.encode(to: encoder)
+        }
     }
 
     // MARK: - Export

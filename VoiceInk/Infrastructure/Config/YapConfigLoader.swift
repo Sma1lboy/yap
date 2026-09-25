@@ -115,6 +115,7 @@ final class YapConfigLoader: ObservableObject {
             apply(config, source: .file, live: true, patchModes: true, sections: sections)
         }
         await resolveRemoteSelections()
+        installSchema()
         await CloudConfigSync.shared.sync()
         CloudConfigSync.shared.startAutomaticPulls()
         observeSettingsChanges()
@@ -270,7 +271,24 @@ final class YapConfigLoader: ObservableObject {
             try old.write(to: backupURL)
         }
         try data.write(to: fileURL, options: .atomic)
+        installSchema()
         return true
+    }
+
+    /// Keeps config.schema.json (bundled) next to config.json so the file's `"$schema"` reference resolves.
+    /// Only where the config directory already exists; rewritten when this build's schema differs.
+    func installSchema() {
+        guard FileManager.default.fileExists(atPath: directoryURL.path),
+            let bundled = Bundle.main.url(forResource: "config.schema", withExtension: "json"),
+            let schema = try? Data(contentsOf: bundled)
+        else { return }
+        let target = directoryURL.appendingPathComponent(YapConfig.schemaFileName)
+        guard (try? Data(contentsOf: target)) != schema else { return }
+        do {
+            try schema.write(to: target, options: .atomic)
+        } catch {
+            logger.error("config.schema.json: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     /// The "Write current settings to config" button, and auto-sync.
@@ -320,6 +338,7 @@ final class YapConfigLoader: ObservableObject {
             if !FileManager.default.fileExists(atPath: fileURL.path) {
                 try Data(YapConfig.template.utf8).write(to: fileURL)
             }
+            installSchema()
             NSWorkspace.shared.open(fileURL)
         } catch {
             status = .error(error.localizedDescription)
