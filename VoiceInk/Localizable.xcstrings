@@ -9151,28 +9151,6 @@
         }
       }
     },
-    "Current" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aktuell"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Actuelle"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "当前"
-          }
-        }
-      }
-    },
     "Current Entries Removed" : {
       "localizations" : {
         "de" : {
@@ -9191,6 +9169,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将移除当前条目"
+          }
+        }
+      }
+    },
+    "Current version: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktuelle Version: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version actuelle : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前版本：%@"
           }
         }
       }
@@ -17792,6 +17792,28 @@
         }
       }
     },
+    "No earlier versions yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine früheren Versionen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune version antérieure pour l’instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有更早的版本。"
+          }
+        }
+      }
+    },
     "No enhancement" : {
       "localizations" : {
         "de" : {
@@ -18772,28 +18794,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有可导入的有效条目。"
-          }
-        }
-      }
-    },
-    "No versions yet." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Noch keine Versionen."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucune version pour l’instant."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "还没有版本。"
           }
         }
       }

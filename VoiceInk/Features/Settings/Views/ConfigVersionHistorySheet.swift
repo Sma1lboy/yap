@@ -8,6 +8,7 @@ struct ConfigVersionHistorySheet: View {
 
     @State private var versions: [CloudConfigVersionInfo] = []
     @State private var current: YapConfig?
+    @State private var currentVersion: String?
     @State private var selection: CloudConfigVersionInfo.ID?
     @State private var selectedConfig: YapConfig?
     @State private var isLoading = true
@@ -15,11 +16,8 @@ struct ConfigVersionHistorySheet: View {
     @State private var isConfirmingRestore = false
     @State private var isRestoring = false
 
-    /// The selected version, unless it's already the current one.
-    private var restorableVersion: String? {
-        guard let selection, selection != versions.first?.version else { return nil }
-        return selection
-    }
+    /// Every listed version is an earlier one; the current version isn't in the list.
+    private var restorableVersion: String? { selection }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -31,10 +29,15 @@ struct ConfigVersionHistorySheet: View {
             if isLoading {
                 ProgressView().frame(maxWidth: .infinity, minHeight: 200)
             } else if versions.isEmpty {
-                Text("No versions yet.")
+                Text("No earlier versions yet.")
                     .foregroundColor(AppTheme.Text.secondary)
                     .frame(maxWidth: .infinity, minHeight: 200)
             } else {
+                if let currentVersion {
+                    Text(String(format: String(localized: "Current version: %@"), currentVersion))
+                        .font(.subheadline)
+                        .foregroundColor(AppTheme.Text.secondary)
+                }
                 List(versions, selection: $selection) { info in
                     row(info)
                 }
@@ -83,11 +86,10 @@ struct ConfigVersionHistorySheet: View {
                     .foregroundColor(AppTheme.Text.secondary)
             }
             Spacer()
-            if info.version == versions.first?.version {
-                Text("Current")
-                    .font(.caption)
-                    .foregroundColor(AppTheme.Text.secondary)
-            }
+            Text(verbatim: "v\(info.version)")
+                .font(.caption)
+                .monospacedDigit()
+                .foregroundColor(AppTheme.Text.secondary)
         }
     }
 
@@ -124,7 +126,7 @@ struct ConfigVersionHistorySheet: View {
         isLoading = true
         defer { isLoading = false }
         do {
-            (versions, current) = try await sync.loadHistory()
+            (versions, current, currentVersion) = try await sync.loadHistory()
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription

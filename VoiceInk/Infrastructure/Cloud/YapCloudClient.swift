@@ -391,6 +391,20 @@ final class YapCloud: ObservableObject {
         return newVersion
     }
 
+    /// Versions replaced by earlier PUTs (not the current one), newest first, at most 20.
+    func fetchConfigVersions() async throws -> [YapCloudConfigVersion] {
+        try Self.decode([YapCloudConfigVersion].self, from: try await send("GET", "/v1/config/versions"))
+    }
+
+    /// One earlier version's config. The current version, or one pruned from history, is 404 VERSION_NOT_FOUND.
+    func fetchConfig(version: String) async throws -> YapCloudConfigDocument {
+        let path = "/v1/config/versions/" + (version.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? version)
+        guard let document = YapCloudConfigDocument(body: try await send("GET", path), etag: nil) else {
+            throw YapCloudError.server(status: 200, code: nil, message: "Malformed config version")
+        }
+        return document
+    }
+
     // MARK: - Funds
 
     /// Opens Account so the user can add funds; used by the insufficient-balance notification.
@@ -1019,6 +1033,17 @@ struct YapCloudLedgerEntry: Decodable, Identifiable {
 }
 
 /// One signed-in device (one token) from `GET /v1/me/devices`.
+/// `GET /v1/config/versions` entry.
+struct YapCloudConfigVersion: Decodable, Equatable {
+    let version: YapCloudScalar
+    let updatedAt: String?
+    /// Nil once the device that wrote it has signed out.
+    let deviceName: String?
+    let bytes: Int?
+
+    var updatedDate: Date? { updatedAt.flatMap(YapCloud.parseDate) }
+}
+
 struct YapCloudDevice: Decodable, Identifiable, Equatable {
     let id: YapCloudScalar
     let deviceName: String?
