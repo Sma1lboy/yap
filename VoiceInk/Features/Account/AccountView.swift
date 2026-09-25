@@ -5,6 +5,20 @@ import SwiftUI
 struct AccountView: View {
     @ObservedObject private var cloud = YapCloud.shared
     @EnvironmentObject private var transcriptionModelManager: TranscriptionModelManager
+    @State private var isShowingAllModels = false
+    @State private var modelQuery = ""
+
+    /// YapCloudPicks in order, transcription first; models missing from the catalog are skipped.
+    private var recommendedModels: [YapCloudModel] {
+        (YapCloudPicks.transcription + YapCloudPicks.enhancement).compactMap { id in cloud.models.first { $0.id == id } }
+    }
+
+    private var allModels: [YapCloudModel] {
+        let q = modelQuery.trimmingCharacters(in: .whitespaces)
+        let models = cloud.transcriptionModels + cloud.chatModels
+        guard !q.isEmpty else { return models }
+        return models.filter { $0.id.localizedCaseInsensitiveContains(q) || $0.displayName.localizedCaseInsensitiveContains(q) }
+    }
 
     var body: some View {
         Form {
@@ -35,13 +49,13 @@ struct AccountView: View {
     private var modelsSection: some View {
         if !cloud.models.isEmpty {
             Section {
-                DisclosureGroup("Transcription") {
-                    ForEach(cloud.transcriptionModels, id: \.id) { model in
-                        ModelPriceRow(model: model)
-                    }
+                ForEach(recommendedModels, id: \.id) { model in
+                    ModelPriceRow(model: model)
                 }
-                DisclosureGroup("Enhancement") {
-                    ForEach(cloud.chatModels, id: \.id) { model in
+                DisclosureGroup("All Models", isExpanded: $isShowingAllModels) {
+                    TextField("Search models", text: $modelQuery)
+                        .textFieldStyle(.roundedBorder)
+                    ForEach(allModels, id: \.id) { model in
                         ModelPriceRow(model: model)
                     }
                 }
