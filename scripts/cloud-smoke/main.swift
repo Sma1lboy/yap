@@ -5,13 +5,44 @@ import Foundation
 setvbuf(stdout, nil, _IOLBF, 0)
 let env = ProcessInfo.processInfo.environment
 
-guard let token = env["YAP_CLOUD_SMOKE_TOKEN"], !token.isEmpty else {
+/// A one-time token from paygate's scripts/issue-token.ts (over railway ssh, from a linked checkout). It is signed
+/// out when the run ends, so smoke runs don't pile up devices on the account.
+func issueToken(email: String, in directory: String) -> String? {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+    process.arguments = ["railway", "ssh", "-s", "paygate", "--", "bun", "run", "scripts/issue-token.ts", email,
+                         "--device-name", "cloud-smoke"]
+    process.currentDirectoryURL = URL(fileURLWithPath: directory)
+    let output = Pipe()
+    process.standardOutput = output
+    process.standardError = FileHandle.nullDevice
+    guard (try? process.run()) != nil else { return nil }
+    process.waitUntilExit()
+    let token = String(data: output.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+    return process.terminationStatus == 0 && token?.isEmpty == false ? token : nil
+}
+
+let smokeEmail = env["YAP_CLOUD_SMOKE_EMAIL"].flatMap { $0.isEmpty ? nil : $0 } ?? "smoke+yap@sma1lboy.me"
+/// True when this run issued its own token (and must sign it out); a token passed in is never signed out.
+var isOneTimeToken = false
+var suppliedToken = env["YAP_CLOUD_SMOKE_TOKEN"].flatMap { $0.isEmpty ? nil : $0 }
+if suppliedToken == nil, let paygateDir = env["PAYGATE_DIR"], !paygateDir.isEmpty {
+    suppliedToken = issueToken(email: smokeEmail, in: paygateDir)
+    isOneTimeToken = suppliedToken != nil
+    if suppliedToken == nil { print("issue-token.ts failed in \(paygateDir) (railway linked? logged in?)") }
+}
+guard let token = suppliedToken else {
     print("""
-        YAP_CLOUD_SMOKE_TOKEN is not set. Issue one for the smoke account from a Railway-linked paygate checkout
-        (prints only the token; creates the account without sign-up credit, so it starts at the $0 these checks need):
+        No token. Either let the run issue (and afterwards sign out) a one-time token for \(smokeEmail) with paygate's
+        scripts/issue-token.ts, from a Railway-linked paygate checkout (no sign-up credit, so the account stays at $0):
+
+          PAYGATE_DIR=<paygate checkout> make cloud-smoke
+
+        or pass a long-lived token yourself (never signed out by the run):
 
           export YAP_CLOUD_SMOKE_TOKEN=$(cd <paygate checkout> && \\
-              railway ssh -s paygate -- bun run scripts/issue-token.ts smoke+yap@sma1lboy.me --device-name cloud-smoke)
+              railway ssh -s paygate -- bun run scripts/issue-token.ts \(smokeEmail) --device-name cloud-smoke)
 
         Fallback while sign-in codes are still only logged (RESEND_API_KEY unset): POST /v1/auth/start, read
         "code for smoke+yap" from `railway logs -s paygate`, POST /v1/auth/verify, use the returned token.
@@ -367,6 +398,12 @@ Task { @MainActor in
         return "transcription \(sttID) = \(charges[sttID]!) micros, chat \(chatID) = \(charges[chatID]!) micros; both match ceil(cost×(1+markup)); balance back to 0"
     }
 
+    // A token this run issued is signed out on every path to exit, so devices don't accumulate.
+    if isOneTimeToken {
+        let status = (try? await raw("POST", "/v1/auth/logout").0) ?? 0
+        print("     signed out one-time token: HTTP \(status)")
+        if status != 204 { failures += 1 }
+    }
     print(failures == 0 ? "cloud-smoke: all checks passed" : "cloud-smoke: \(failures) check(s) failed")
     exit(failures == 0 ? 0 : 1)
 }
