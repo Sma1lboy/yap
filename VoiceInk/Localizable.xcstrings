@@ -30748,6 +30748,28 @@
         }
       }
     },
+    "What's New in %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neu in %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveautés de %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 的新变化"
+          }
+        }
+      }
+    },
     "When this month's spending reaches the cap, Yap Cloud stops charging until next month or until you raise it." : {
       "localizations" : {
         "de" : {
