@@ -1,8 +1,8 @@
 #!/bin/bash
 # `make sync-e2e`: registers a throwaway Yap Cloud account with two devices (two tokens = two Macs), runs the
 # sync scenarios against live paygate, then deletes the account (the binary does it; the trap is the fallback).
-# Needs the Railway CLI logged in: sign-in codes are read from paygate's log (no email is sent while
-# RESEND_API_KEY is unset).
+# Needs the Railway CLI logged in. Tokens come from paygate's scripts/issue-token.ts over `railway ssh`
+# (no email, zero balance, no signup credit); if that fails, it signs in with a code read from paygate's log.
 set -euo pipefail
 BASE="${YAP_CLOUD_SMOKE_URL:-https://paygate-production-2502.up.railway.app}"
 RAILWAY_PROJECT="${PAYGATE_RAILWAY_PROJECT:-8651e3c3-6d6c-4d56-a8e8-df9d89ed3f34}"  # paygate-yap
@@ -35,6 +35,11 @@ sign_in() {  # $1 = device name, $2 = code to skip → prints "<code> <token>"
     echo "$code $token"
 }
 
+issue_token() {  # $1 = device name → prints a token, or nothing
+    railway ssh -p "$RAILWAY_PROJECT" -s paygate -e production -- \
+        bun run scripts/issue-token.ts "$EMAIL" --device-name "$1" 2>/dev/null | tr -d '[:space:]' || true
+}
+
 TOKEN_A=""
 cleanup() {
     if [ -n "$TOKEN_A" ]; then
@@ -44,10 +49,17 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# `read <<<"$(…)"` would swallow a failed sign-in, so each step is checked.
-SIGNED_IN_A=$(sign_in "sync-e2e Mac A") || exit 1
-read -r CODE_A TOKEN_A <<<"$SIGNED_IN_A"
-SIGNED_IN_B=$(sign_in "sync-e2e Mac B" "$CODE_A") || exit 1
-read -r _ TOKEN_B <<<"$SIGNED_IN_B"
+TOKEN_A=$(issue_token "sync-e2e Mac A")
+TOKEN_B=$([ -n "$TOKEN_A" ] && issue_token "sync-e2e Mac B" || true)
+if [ -n "$TOKEN_A" ] && [ -n "$TOKEN_B" ]; then
+    echo "     tokens                      issued by paygate scripts/issue-token.ts"
+else
+    echo "     tokens                      issue-token.ts unavailable, signing in with codes from paygate's log"
+    # `read <<<"$(…)"` would swallow a failed sign-in, so each step is checked.
+    SIGNED_IN_A=$(sign_in "sync-e2e Mac A") || exit 1
+    read -r CODE_A TOKEN_A <<<"$SIGNED_IN_A"
+    SIGNED_IN_B=$(sign_in "sync-e2e Mac B" "$CODE_A") || exit 1
+    read -r _ TOKEN_B <<<"$SIGNED_IN_B"
+fi
 echo "     account                     $EMAIL (deleted at the end)"
 SYNC_E2E_EMAIL="$EMAIL" SYNC_E2E_TOKEN_A="$TOKEN_A" SYNC_E2E_TOKEN_B="$TOKEN_B" YAP_CLOUD_SMOKE_URL="$BASE" "$BIN"
