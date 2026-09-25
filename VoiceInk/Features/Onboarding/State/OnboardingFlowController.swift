@@ -50,7 +50,7 @@ final class OnboardingFlowController {
             let result = await OpenRouterProvider().verifyAPIKey(newKey)
             guard result.isValid else {
                 return result.errorMessage
-                    ?? String(localized: "Could not verify this API key. Check the key and try again.")
+                    ?? String(localized: "Could not verify this API key. Check the key and your internet connection, then try again.")
             }
             guard APIKeyManager.shared.saveAPIKey(newKey, forProvider: providerKey) else {
                 return String(localized: "The key worked, but Yap could not save it securely.")
@@ -422,14 +422,6 @@ final class OnboardingFlowController {
                 for: .primaryRecording
             )
         }
-    }
-
-    func skipOnboarding(onComplete: () -> Void) {
-        OnboardingStorageKeys.onboardingKeys.forEach {
-            coordinator.defaults.removeObject(forKey: $0)
-        }
-        reapplyConfigFile(includingRecommendedSetup: false)
-        onComplete()
     }
 
     /// Onboarding rewrites the starter modes, so the recommended preset (if chosen) and then config.json are

@@ -19,7 +19,7 @@ struct OnboardingTrustScreen: View {
         } bottomBar: {
             OnboardingBottomBar(
                 leadingTitle: "Back",
-                primaryTitle: "Continue",
+                primaryTitle: "Start Using Yap",
                 isPrimaryEnabled: true,
                 onLeading: onBack,
                 onPrimary: onContinue

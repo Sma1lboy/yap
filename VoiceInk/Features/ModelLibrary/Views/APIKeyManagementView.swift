@@ -295,7 +295,7 @@ struct APIKeyManagementView: View {
                                         alertMessage =
                                             errorMessage
                                             ?? String(
-                                                localized: "Could not verify this API key. Check the key and try again."
+                                                localized: "Could not verify this API key. Check the key and your internet connection, then try again."
                                             )
                                         showAlert = true
                                     }
