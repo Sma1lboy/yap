@@ -362,9 +362,6 @@ private struct ProviderChoiceButton: View {
                         .foregroundColor(AppTheme.Text.primary)
                         .lineLimit(1)
 
-                    if provider == .groq {
-                        RecommendedProviderPill()
-                    }
                 }
 
                 Spacer(minLength: 0)
@@ -386,22 +383,6 @@ private struct ProviderChoiceButton: View {
 
 }
 
-private struct RecommendedProviderPill: View {
-    var body: some View {
-        Text("Recommended")
-            .font(.system(size: 9, weight: .semibold))
-            .foregroundColor(AppTheme.Text.muted)
-            .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(Capsule().fill(AppTheme.Surface.control.opacity(0.55)))
-            .overlay(
-                Capsule()
-                    .stroke(AppTheme.Border.control.opacity(0.28), lineWidth: 1)
-            )
-    }
-}
 
 fileprivate func providerDescriptor(for provider: AIProvider) -> ProviderDescriptor {
     ProviderDescriptor(
