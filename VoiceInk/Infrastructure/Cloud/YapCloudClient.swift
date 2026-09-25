@@ -30,8 +30,16 @@ final class YapCloud: ObservableObject {
     private var balanceRefresh: Task<Void, Never>?
 
     @Published private(set) var isSignedIn = false
-    @Published private(set) var me: YapCloudMe?
+    @Published private(set) var me: YapCloudMe? {
+        didSet { balanceUpdatedAt = me == nil ? nil : Date() }
+    }
+    @Published private(set) var balanceUpdatedAt: Date?
     @Published private(set) var ledger: [YapCloudLedgerEntry] = []
+    /// False until a ledger fetch succeeds, so a failed load is never shown as "no activity".
+    @Published private(set) var isLedgerLoaded = false
+    @Published private(set) var isRefreshingAccount = false
+    /// Why the last Account refresh failed; nil after a successful one.
+    @Published private(set) var accountRefreshError: String?
 
     private init() {
         #if DEBUG
@@ -123,6 +131,8 @@ final class YapCloud: ObservableObject {
         isSignedIn = false
         me = nil
         ledger = []
+        isLedgerLoaded = false
+        accountRefreshError = nil
         NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
     }
 
@@ -172,14 +182,19 @@ final class YapCloud: ObservableObject {
     /// Reloads balance and the last 20 ledger rows for the Account page. Signs out on a revoked token.
     @MainActor
     func refreshAccount() async {
-        guard token != nil else { return }
+        guard token != nil, !isRefreshingAccount else { return }
+        isRefreshingAccount = true
+        defer { isRefreshingAccount = false }
         do {
             me = try await fetchMe()
             ledger = try await fetchLedger()
+            isLedgerLoaded = true
+            accountRefreshError = nil
         } catch YapCloudError.notSignedIn {
             clearSession()
         } catch {
             logger.error("Account refresh failed: \(error.localizedDescription, privacy: .public)")
+            accountRefreshError = error.localizedDescription
         }
     }
 

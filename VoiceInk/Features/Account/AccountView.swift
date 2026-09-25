@@ -67,17 +67,35 @@ private struct SignedInSections: View {
     var body: some View {
         Section("Account") {
             LabeledContent("Email address", value: cloud.me?.email ?? cloud.email ?? "")
-            LabeledContent("Balance") {
+            LabeledContent {
                 if let balance = cloud.balanceMicros {
                     Text(YapCloud.formatUSD(micros: balance))
                         .monospacedDigit()
                         .foregroundStyle(balance > 0 ? AppTheme.Text.primary : AppTheme.Status.error)
-                } else {
+                } else if cloud.isRefreshingAccount {
                     ProgressView().controlSize(.small)
+                } else {
+                    Text(verbatim: "—").foregroundStyle(.secondary)
                 }
+            } label: {
+                Text("Balance")
+                if let updatedAt = cloud.balanceUpdatedAt {
+                    Text(
+                        String(
+                            format: String(localized: "Last updated %@"),
+                            updatedAt.formatted(date: .abbreviated, time: .shortened)))
+                }
+            }
+            if let error = cloud.accountRefreshError {
+                Text(String(format: String(localized: "Couldn't refresh your account: %@"), error))
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.Status.error)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             HStack {
                 Button("Refresh") { Task { await cloud.refreshAccount() } }
+                    .disabled(cloud.isRefreshingAccount)
+                if cloud.isRefreshingAccount { ProgressView().controlSize(.small) }
                 Spacer()
                 Button("Sign Out") { Task { await cloud.signOut() } }
             }
@@ -121,7 +139,18 @@ private struct SignedInSections: View {
         }
 
         Section("Recent Activity") {
-            if cloud.ledger.isEmpty {
+            if !cloud.isLedgerLoaded {
+                if cloud.isRefreshingAccount {
+                    ProgressView().controlSize(.small)
+                } else {
+                    HStack {
+                        Text("Couldn't load recent activity.")
+                            .foregroundStyle(AppTheme.Status.error)
+                        Spacer()
+                        Button("Retry") { Task { await cloud.refreshAccount() } }
+                    }
+                }
+            } else if cloud.ledger.isEmpty {
                 Text("No charges or top-ups yet.")
                     .foregroundStyle(.secondary)
             } else {

@@ -8444,6 +8444,50 @@
         }
       }
     },
+    "Couldn't load recent activity." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Aktivitäten konnten nicht geladen werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible de charger l’activité récente."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法加载最近记录。"
+          }
+        }
+      }
+    },
+    "Couldn't refresh your account: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto konnte nicht aktualisiert werden: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’actualiser votre compte : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法刷新账户：%@"
+          }
+        }
+      }
+    },
     "Couldn't save the sign-in token to the keychain." : {
       "localizations" : {
         "de" : {
@@ -14396,6 +14440,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已拷贝上次转写"
+          }
+        }
+      }
+    },
+    "Last updated %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt aktualisiert: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière mise à jour : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次更新于 %@"
           }
         }
       }
