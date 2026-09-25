@@ -6157,6 +6157,28 @@
         }
       }
     },
+    "Auto-delete transcripts and audio" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkripte und Audio automatisch löschen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suppression automatique des transcriptions et de l’audio"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动删除转写记录和录音"
+          }
+        }
+      }
+    },
     "Auto-detect" : {
       "comment" : "Displayed as the default language option when the user is not selecting a specific language.",
       "localizations" : {
@@ -13363,6 +13385,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "历史记录设置"
+          }
+        }
+      }
+    },
+    "History Settings…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlaufseinstellungen…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réglages de l’historique…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "历史记录设置…"
           }
         }
       }
