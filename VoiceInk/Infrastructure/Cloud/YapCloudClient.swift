@@ -722,41 +722,20 @@ final class YapCloud: ObservableObject {
         return ["", "/", "/refresh"].contains(url.path.lowercased())
     }
 
-    /// Shows the account notification when `error` is a Yap Cloud 402 (Add Funds) or 401 (sign in again).
-    /// Returns whether it did, so callers can skip their generic failure message.
+    /// Shows the account notification for errors the user fixes in Account (see `YapCloudError.recoveryAction`)
+    /// and for `.unreachable`. Returns whether it did, so callers can skip their generic failure message.
     @MainActor
     @discardableResult
     static func notifyIfAccountProblem(_ error: Error) -> Bool {
-        switch error {
-        case YapCloudError.insufficientBalance:
-            NotificationManager.shared.showNotification(
-                title: YapCloudError.insufficientBalance.errorDescription ?? "",
-                type: .error,
-                duration: 8,
-                onTap: { showAddFunds() },
-                actionButton: (label: String(localized: "Add Funds"), action: { showAddFunds() }))
-        case YapCloudError.monthlyCapReached:
-            NotificationManager.shared.showNotification(
-                title: YapCloudError.monthlyCapReached.errorDescription ?? "",
-                type: .error,
-                duration: 8,
-                onTap: { showAddFunds() },
-                actionButton: (label: String(localized: "Adjust Cap"), action: { showAddFunds() }))
-        case YapCloudError.unreachable:
-            NotificationManager.shared.showNotification(
-                title: YapCloudError.unreachable.errorDescription ?? "", type: .error, duration: 5)
-        case let error as YapCloudError where error.isAuthFailure:
-            // The token was rejected (revoked or expired); drop it so Account shows the sign-in form.
-            shared.clearSession()
-            NotificationManager.shared.showNotification(
-                title: error.errorDescription ?? "",
-                type: .error,
-                duration: 8,
-                onTap: { showAddFunds() },
-                actionButton: (label: String(localized: "Open Account"), action: { showAddFunds() }))
-        default:
-            return false
-        }
+        guard let error = error as? YapCloudError, error.recoveryAction != nil || error == .unreachable else { return false }
+        // A rejected token (revoked or expired): drop it so Account shows the sign-in form.
+        if error.isAuthFailure { shared.clearSession() }
+        NotificationManager.shared.showNotification(
+            title: error.errorDescription ?? "",
+            type: .error,
+            duration: error.recoveryAction == nil ? 5 : 8,
+            onTap: error.recoveryAction == nil ? nil : { showAddFunds() },
+            actionButton: error.recoveryAction.map { (label: $0, action: { showAddFunds() }) })
         return true
     }
 
@@ -938,6 +917,17 @@ enum YapCloudError: LocalizedError, Equatable {
 
     /// The token no longer works (revoked, never valid, or expired): sign out locally.
     var isAuthFailure: Bool { self == .notSignedIn || self == .sessionExpired }
+
+    /// Errors the user resolves on the Account page, with the button that opens it; nil for everything else.
+    /// Used by the failure toast and by the pre-recording check, so both offer the same fix.
+    var recoveryAction: String? {
+        switch self {
+        case .notSignedIn, .sessionExpired: return String(localized: "Open Account")
+        case .insufficientBalance: return String(localized: "Add Funds")
+        case .monthlyCapReached: return String(localized: "Adjust Cap")
+        default: return nil
+        }
+    }
 
     var errorDescription: String? {
         switch self {
@@ -1563,6 +1553,8 @@ struct YapCloudConfigDocument: Equatable {
             let expired = YapCloudError(status: 401, body: json(#"{"error":{"code":"TOKEN_EXPIRED","message":"x"}}"#), authenticated: true)
             assert(expired == .sessionExpired && expired.isAuthFailure && YapCloudError.notSignedIn.isAuthFailure)
             assert(!YapCloudError.insufficientBalance.isAuthFailure)
+            assert(YapCloudError.sessionExpired.recoveryAction != nil && YapCloudError.monthlyCapReached.recoveryAction != nil)
+            assert(YapCloudError.unreachable.recoveryAction == nil && YapCloudError.recordingTooLong.recoveryAction == nil)
             // OpenRouter's own errors pass through with a numeric code
             let passthrough = YapCloudError(status: 400, body: json(#"{"error":{"code":400,"message":"bad model"}}"#), authenticated: true)
             assert(passthrough == .server(status: 400, code: "400", message: "bad model"))
