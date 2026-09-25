@@ -69,7 +69,7 @@ extension AIService {
                 model: resolvedModel,
                 messages: allMessages.map { ["role": $0.role, "content": $0.content] },
                 temperature: 0.3,
-                timeout: timeout
+                timeout: YapCloud.enhancementTimeout
             )
         case .custom:
             guard

@@ -35,6 +35,7 @@ struct YapCloudProvider: CloudProvider {
         ]
         if let language, !language.isEmpty { body["language"] = language }
 
+        let timeout = YapCloud.wavDuration(audioData).map(YapCloud.transcriptionTimeout) ?? timeout
         let data = try await YapCloud.shared.proxy("/v1/audio/transcriptions", body: body, timeout: timeout)
         guard let text = (try? JSONDecoder().decode(Response.self, from: data))?.text, !text.isEmpty else {
             throw CloudTranscriptionError.noTranscriptionReturned

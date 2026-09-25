@@ -393,6 +393,39 @@ final class YapCloud: ObservableObject {
         }
     }
 
+    /// Enhancement requests through Yap Cloud: model latency plus paygate's hop, independent of the user's
+    /// per-provider enhancement timeout (7 s default), which a cold route can exceed.
+    static let enhancementTimeout: TimeInterval = 30
+
+    /// Transcription time grows with the recording: 10 s + 1.5 × its length, at most 120 s.
+    static func transcriptionTimeout(audioSeconds: Double) -> TimeInterval {
+        min(120, 10 + 1.5 * max(0, audioSeconds))
+    }
+
+    /// Length of a WAV from its chunks (`fmt ` byte rate, `data` size); nil if not a WAV. Chunks are walked rather
+    /// than read at fixed offsets because macOS writers put a FLLR/JUNK chunk before `fmt `.
+    static func wavDuration(_ data: Data) -> Double? {
+        let bytes = [UInt8](data.prefix(8192))
+        guard bytes.count >= 12, bytes[0..<4].elementsEqual("RIFF".utf8), bytes[8..<12].elementsEqual("WAVE".utf8)
+        else { return nil }
+        func u32(_ i: Int) -> Int { Int(bytes[i]) | Int(bytes[i + 1]) << 8 | Int(bytes[i + 2]) << 16 | Int(bytes[i + 3]) << 24 }
+        var byteRate = 0
+        var offset = 12
+        while offset + 8 <= bytes.count {
+            let id = bytes[offset..<offset + 4], size = u32(offset + 4)
+            if id.elementsEqual("fmt ".utf8), offset + 20 <= bytes.count {
+                byteRate = u32(offset + 16)
+            } else if id.elementsEqual("data".utf8) {
+                guard byteRate > 0 else { return nil }
+                // Some writers leave the size at 0 / max while streaming; fall back to the file length.
+                let payload = size > 0 && offset + 8 + size <= data.count ? size : data.count - offset - 8
+                return Double(payload) / Double(byteRate)
+            }
+            offset += 8 + size + (size & 1)
+        }
+        return nil
+    }
+
     /// Non-streaming chat completion through paygate; returns the first choice's text.
     func chatCompletion(model: String, messages: [[String: String]], temperature: Double, timeout: TimeInterval)
         async throws -> String
@@ -1204,6 +1237,19 @@ struct YapCloudConfigDocument: Equatable {
             assert(!isAccountRefreshURL(URL(string: "yap://account/delete")!) && !isAccountRefreshURL(URL(string: "yap://settings")!))
             assert(!isAccountRefreshURL(URL(string: "https://account/refresh")!))
             assert(isAccountRefreshURL(URL(string: "yap-dev://account/refresh")!) && !isAccountRefreshURL(URL(string: "yapx://account")!))
+
+            // Timeouts
+            assert(transcriptionTimeout(audioSeconds: 0) == 10 && transcriptionTimeout(audioSeconds: 20) == 40)
+            assert(transcriptionTimeout(audioSeconds: 600) == 120)
+            var wav = Data("RIFF".utf8) + Data(repeating: 0, count: 4) + Data("WAVEfmt ".utf8)
+            wav += Data([16, 0, 0, 0, 1, 0, 1, 0, 0x80, 0x3E, 0, 0, 0, 0x7D, 0, 0, 2, 0, 16, 0])  // 16 kHz mono s16: 32000 B/s
+            wav += Data("data".utf8) + Data([0x00, 0xFA, 0, 0]) + Data(count: 64_000)  // 64000 bytes = 2 s
+            assert(wavDuration(wav) == 2 && wavDuration(Data("not a wav".utf8)) == nil)
+            var padded = Data("RIFF".utf8) + Data(repeating: 0, count: 4) + Data("WAVE".utf8)
+            padded += Data("FLLR".utf8) + Data([4, 0, 0, 0]) + Data(count: 4)  // filler chunk before fmt
+            padded += Data("fmt ".utf8) + Data([16, 0, 0, 0, 1, 0, 1, 0, 0x80, 0x3E, 0, 0, 0, 0x7D, 0, 0, 2, 0, 16, 0])
+            padded += Data("data".utf8) + Data([0x00, 0x7D, 0, 0]) + Data(count: 32_000)
+            assert(wavDuration(padded) == 1)
 
             // Proxy retry policy: only provably-unbilled failures, once
             assert(isSafeToRetry(URLError(.cannotConnectToHost)) && isSafeToRetry(URLError(.notConnectedToInternet)))
