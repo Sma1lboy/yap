@@ -189,6 +189,52 @@ struct YapConfig: Codable, Equatable {
         return (try? encoder.encode(lhs)) == (try? encoder.encode(rhs))
     }
 
+    /// Three-way merge for cloud sync: starts from `remote` and re-applies what changed in `local` since `base`
+    /// (the last synced state). Modes, prompts, shortcuts and dictionary entries merge by id/key, so two Macs
+    /// editing different modes both keep their edit; other fields take local only when it changed. Without a
+    /// base (first sync on this Mac) remote wins and only local entries remote doesn't have are added.
+    static func threeWayMerged(base: YapConfig?, local: YapConfig, remote: YapConfig) -> YapConfig {
+        func edits<T: Identifiable & Encodable>(_ path: KeyPath<YapConfig, [T]?>) -> [T] {
+            let items = local[keyPath: path] ?? []
+            guard let base else {
+                let remoteIDs = Set((remote[keyPath: path] ?? []).map(\.id))
+                return items.filter { !remoteIDs.contains($0.id) }
+            }
+            let baseItems = base[keyPath: path] ?? []
+            return items.filter { item in
+                baseItems.first { $0.id == item.id }.map { !sameContent($0, item) } ?? true
+            }
+        }
+        func merged<V: Equatable>(_ path: KeyPath<YapConfig, [String: V]?>) -> [String: V]? {
+            let edits = (local[keyPath: path] ?? [:]).filter { key, value in
+                base.map { $0[keyPath: path]?[key] != value } ?? (remote[keyPath: path]?[key] == nil)
+            }
+            return (remote[keyPath: path] ?? [:]).merging(edits) { $1 }
+        }
+        func pick<T: Equatable>(_ path: KeyPath<YapConfig, T?>) -> T? {
+            if let base, local[keyPath: path] != base[keyPath: path] { return local[keyPath: path] }
+            return remote[keyPath: path] ?? (base == nil ? local[keyPath: path] : nil)
+        }
+
+        var result = remote
+        result.version = currentVersion
+        result.keys = pick(\.keys)
+        result.transcription = pick(\.transcription)
+        result.enhancement = pick(\.enhancement)
+        result.defaultMode = pick(\.defaultMode)
+        result.general = pick(\.general)
+        result.modes = mergedByID(remote.modes ?? [], edits(\.modes))
+        result.prompts = mergedByID(remote.prompts ?? [], edits(\.prompts))
+        result.modeShortcuts = merged(\.modeShortcuts)
+        let remoteWords = remote.dictionary?.vocabulary ?? []
+        let baseWords = Set(base.map { $0.dictionary?.vocabulary ?? [] } ?? remoteWords)
+        let newWords = (local.dictionary?.vocabulary ?? []).filter { !baseWords.contains($0) }
+        result.dictionary = DictionarySection(
+            vocabulary: remoteWords + newWords.filter { !remoteWords.contains($0) },
+            replacements: merged(\.dictionary?.replacements))
+        return result.normalized()
+    }
+
     /// Human-readable decoding error that names the JSON path, e.g. `enhancement.enabled: Expected Bool`.
     static func describe(_ error: Error) -> String {
         func path(_ codingPath: [CodingKey]) -> String {

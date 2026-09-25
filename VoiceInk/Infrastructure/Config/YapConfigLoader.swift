@@ -102,6 +102,7 @@ final class YapConfigLoader: ObservableObject {
             apply(config, source: .file, live: true, patchModes: true, sections: sections)
         }
         await resolveRemoteSelections()
+        await CloudConfigSync.shared.sync()
         observeSettingsChanges()
     }
 
@@ -113,6 +114,7 @@ final class YapConfigLoader: ObservableObject {
             YapConfig.selfCheck()
             RecommendedSetup.selfCheck()
             Self.selfCheck()
+            Task { await CloudConfigSync.selfCheck() }
         #endif
         guard let config = load() else { return }
         apply(config, source: .file, live: false, patchModes: defaults.bool(forKey: OnboardingSettings.completedV2Key))
@@ -242,12 +244,13 @@ final class YapConfigLoader: ObservableObject {
     }
 
     private func settingsDidChange() {
-        guard defaults.bool(forKey: Self.keepInSyncKey) else { return }
+        guard defaults.bool(forKey: Self.keepInSyncKey) || CloudConfigSync.shared.isEnabled else { return }
         pendingSync?.cancel()
         pendingSync = Task { [weak self] in
             try? await Task.sleep(for: .seconds(2))
             guard !Task.isCancelled, let self else { return }
-            await self.writeCurrentSettings()
+            if self.defaults.bool(forKey: Self.keepInSyncKey) { await self.writeCurrentSettings() }
+            await CloudConfigSync.shared.sync()
         }
     }
 

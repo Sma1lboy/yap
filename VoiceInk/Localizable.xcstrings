@@ -7445,6 +7445,28 @@
         }
       }
     },
+    "Cloud sync failed: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cloud-Synchronisierung fehlgeschlagen: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échec de la synchronisation cloud : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "云同步失败：%@"
+          }
+        }
+      }
+    },
     "Collapse" : {
       "localizations" : {
         "de" : {
@@ -14385,6 +14407,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保持配置文件同步"
+          }
+        }
+      }
+    },
+    "Keep This Mac's Settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen dieses Macs behalten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conserver les réglages de ce Mac"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留这台 Mac 的设置"
+          }
+        }
+      }
+    },
+    "Keeps this config the same on every Mac signed in to your account." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hält diese Konfiguration auf jedem Mac mit deinem Konto gleich."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garde cette configuration identique sur chaque Mac connecté à votre compte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让登录同一账户的每台 Mac 使用同一份配置。"
           }
         }
       }
@@ -23741,6 +23807,28 @@
         }
       }
     },
+    "Sign in to Yap Cloud to sync this config between Macs." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melde dich bei Yap Cloud an, um diese Konfiguration zwischen Macs zu synchronisieren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connectez-vous à Yap Cloud pour synchroniser cette configuration entre vos Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录 Yap Cloud 后可在多台 Mac 之间同步这份配置。"
+          }
+        }
+      }
+    },
     "Skip API Setup" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -24698,6 +24786,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已切换到：%@"
+          }
+        }
+      }
+    },
+    "Sync via Yap Cloud" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über Yap Cloud synchronisieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchroniser via Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过 Yap Cloud 同步"
+          }
+        }
+      }
+    },
+    "Synced at %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisiert um %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchronisé à %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已于 %@ 同步"
           }
         }
       }
@@ -25983,6 +26115,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在思考"
+          }
+        }
+      }
+    },
+    "This Mac and Yap Cloud both changed the config and couldn't be merged automatically." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Mac und Yap Cloud haben die Konfiguration beide geändert; sie konnte nicht automatisch zusammengeführt werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce Mac et Yap Cloud ont tous deux modifié la configuration, qui n’a pas pu être fusionnée automatiquement."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这台 Mac 和 Yap Cloud 都改了配置，无法自动合并。"
           }
         }
       }
@@ -27642,6 +27796,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用云端"
+          }
+        }
+      }
+    },
+    "Use Cloud Version" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cloud-Version verwenden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser la version du cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用云端版本"
           }
         }
       }
