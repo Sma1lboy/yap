@@ -10880,6 +10880,28 @@
         }
       }
     },
+    "Don't show this again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht mehr anzeigen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ne plus afficher"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不再提示"
+          }
+        }
+      }
+    },
     "Done" : {
       "localizations" : {
         "de" : {
@@ -31937,6 +31959,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的设置已成功导出到 %@。"
+          }
+        }
+      }
+    },
+    "Your trial credit is almost used up. Add funds to keep dictating." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Startguthaben ist fast aufgebraucht. Lade Guthaben auf, um weiter zu diktieren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre crédit d'essai est presque épuisé. Ajoutez des fonds pour continuer à dicter."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体验额度快用完了，充值后即可继续听写。"
+          }
+        }
+      }
+    },
+    "Your trial credit is almost used up. At your pace, $5 lasts about %lld days." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Startguthaben ist fast aufgebraucht. Bei deinem Verbrauch reichen $5 etwa %lld Tage."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre crédit d'essai est presque épuisé. À votre rythme, 5 $ durent environ %lld jours."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体验额度快用完了，充值 $5 大约够用 %lld 天。"
+          }
+        }
+      }
+    },
+    "Your trial credit is almost used up. At your pace, $5 lasts more than a year." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Startguthaben ist fast aufgebraucht. Bei deinem Verbrauch reichen $5 über ein Jahr."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre crédit d'essai est presque épuisé. À votre rythme, 5 $ durent plus d'un an."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "体验额度快用完了，按你的用量，充值 $5 够用一年以上。"
           }
         }
       }

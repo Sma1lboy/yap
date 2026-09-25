@@ -185,6 +185,7 @@ final class YapCloud: ObservableObject {
         accountRefreshError = nil
         monthlySpend = nil
         devices = nil
+        trialNudge = nil
         devicesError = nil
         NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
     }
@@ -226,6 +227,62 @@ final class YapCloud: ObservableObject {
     /// same one `monthSpentMicros` and the monthly cap use, so the card and "used of cap" always agree.
     func fetchUsage() async throws -> YapCloudMonthlySpend {
         try Self.decode(YapCloudMonthlySpend.self, from: try await send("GET", "/v1/usage"))
+    }
+
+    /// All-time usage (`since` far in the past): `paidMicros == 0` means no real money was ever spent.
+    func fetchLifetimeUsage() async throws -> YapCloudMonthlySpend {
+        try Self.decode(YapCloudMonthlySpend.self, from: try await send("GET", "/v1/usage?since=2020-01-01T00:00:00Z"))
+    }
+
+    // MARK: - Trial credit nudge
+
+    /// "Trial credit almost used up; $5 lasts about N days". Shown on Account and Home until dismissed (once per
+    /// account) or until the user tops up.
+    struct TrialNudge: Equatable {
+        /// Days $5 lasts at the pace since sign-up; nil when it can't be estimated yet.
+        let daysForFiveDollars: Int64?
+    }
+
+    @Published private(set) var trialNudge: TrialNudge?
+
+    static let trialNudgeThresholdMicros: Int64 = 200_000
+
+    /// Pure decision: under $0.20 left, some sign-up credit spent, never any paid money.
+    static func trialNudge(
+        balanceMicros: Int64, lifetimePaidMicros: Int64, lifetimeCreditMicros: Int64, signupAt: Date?, now: Date
+    ) -> TrialNudge? {
+        guard balanceMicros < trialNudgeThresholdMicros, lifetimePaidMicros == 0, lifetimeCreditMicros > 0 else { return nil }
+        let days = signupAt.flatMap { signup in
+            YapCloudMonthlySpend.runway(
+                balanceMicros: 5_000_000, spentMicros: lifetimeCreditMicros,
+                elapsedSeconds: Int64(now.timeIntervalSince(signup)))?.days
+        }
+        return TrialNudge(daysForFiveDollars: days)
+    }
+
+    private func trialNudgeKey() -> String? { me.map { "yapCloudTrialNudgeDismissed." + $0.id.string } }
+
+    @MainActor
+    func dismissTrialNudge() {
+        if let key = trialNudgeKey() { defaults.set(true, forKey: key) }
+        trialNudge = nil
+    }
+
+    /// After an account refresh. The extra /v1/usage request only happens once the balance is under $0.20.
+    @MainActor
+    private func evaluateTrialNudge() async {
+        guard let me, let key = trialNudgeKey(), !defaults.bool(forKey: key),
+            me.balanceMicros < Self.trialNudgeThresholdMicros
+        else {
+            trialNudge = nil
+            return
+        }
+        guard let lifetime = try? await fetchLifetimeUsage() else { return }
+        // Newest-first ledger: a trial user's sign-up credit row is usually still on the first page.
+        let signupAt = ledger.last { $0.kind == "credit" }?.createdDate
+        trialNudge = Self.trialNudge(
+            balanceMicros: me.balanceMicros, lifetimePaidMicros: lifetime.paidMicros ?? 1,
+            lifetimeCreditMicros: lifetime.creditMicros ?? 0, signupAt: signupAt, now: Date())
     }
 
     /// Returns the Stripe Checkout URL for a top-up of `amountUSD` dollars.
@@ -274,6 +331,7 @@ final class YapCloud: ObservableObject {
             isLedgerLoaded = true
             monthlySpend = try await fetchUsage()
             accountRefreshError = nil
+            await evaluateTrialNudge()
         } catch YapCloudError.notSignedIn {
             clearSession()
         } catch YapCloudError.unreachable {
@@ -1321,6 +1379,19 @@ struct YapCloudConfigDocument: Equatable {
             assert(isSafeToRetry(YapCloudError.server(status: 502, code: "UPSTREAM_UNAVAILABLE", message: "")))
             assert(!isSafeToRetry(YapCloudError.insufficientBalance) && !isSafeToRetry(YapCloudError.notSignedIn))
             assert(!isSafeToRetry(YapCloudError.server(status: 400, code: "MODEL_NOT_ALLOWED", message: "")))
+
+            // Trial nudge: < $0.20, credit spent, nothing paid; N from the pace since sign-up
+            let signup = parseDate("2026-09-01T00:00:00Z")!
+            let tenDaysLater = signup.addingTimeInterval(10 * 86_400)
+            assert(trialNudge(balanceMicros: 150_000, lifetimePaidMicros: 0, lifetimeCreditMicros: 850_000, signupAt: signup, now: tenDaysLater)
+                == TrialNudge(daysForFiveDollars: 58))  // 85 000 micros/day → 5 000 000 / 85 000 = 58
+            assert(trialNudge(balanceMicros: 200_000, lifetimePaidMicros: 0, lifetimeCreditMicros: 800_000, signupAt: signup, now: tenDaysLater) == nil)
+            assert(trialNudge(balanceMicros: 100_000, lifetimePaidMicros: 1, lifetimeCreditMicros: 900_000, signupAt: signup, now: tenDaysLater) == nil)
+            assert(trialNudge(balanceMicros: 100_000, lifetimePaidMicros: 0, lifetimeCreditMicros: 0, signupAt: signup, now: tenDaysLater) == nil)
+            assert(trialNudge(balanceMicros: 100_000, lifetimePaidMicros: 0, lifetimeCreditMicros: 900_000, signupAt: nil, now: tenDaysLater)
+                == TrialNudge(daysForFiveDollars: nil))
+            assert(trialNudge(balanceMicros: 100_000, lifetimePaidMicros: 0, lifetimeCreditMicros: 900_000,
+                              signupAt: signup, now: signup.addingTimeInterval(86_400)) == TrialNudge(daysForFiveDollars: nil))
 
             // Top-up amounts
             assert(isValidTopUp(5) && isValidTopUp(20) && isValidTopUp(500))
