@@ -29,7 +29,7 @@ enum AppTheme {
         static let card = Color(nsColor: .separatorColor).opacity(0.35)
         static let control = Color(nsColor: .separatorColor)
         static let tint = Color.primary.opacity(0.12)
-        static let sidePanelOuter = Color.white.opacity(0.12)
+        static let sidePanelOuter = Color.primary.opacity(0.12)
     }
 
     enum Selection {

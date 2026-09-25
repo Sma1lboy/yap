@@ -100,7 +100,7 @@ struct ModelActionLabel: View {
                 .lineLimit(1)
         }
         .font(.system(size: 12, weight: .semibold))
-        .foregroundStyle(isPrimary ? Color.white : AppTheme.Text.primary)
+        .foregroundStyle(isPrimary ? AppTheme.Text.onAccent : AppTheme.Text.primary)
         .padding(.horizontal, isPrimary ? 14 : 12)
         .frame(height: 34)
         .background(isPrimary ? AppTheme.Accent.primary : AppTheme.Surface.subtle)

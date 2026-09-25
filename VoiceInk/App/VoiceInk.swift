@@ -378,6 +378,12 @@ struct VoiceInkApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {}
 
+            // The app has no Settings scene; ⌘, opens the Settings page of the main window.
+            CommandGroup(replacing: .appSettings) {
+                Button("Settings…", action: SettingsNavigator.open)
+                    .keyboardShortcut(",", modifiers: .command)
+            }
+
             CommandGroup(after: .appInfo) {
                 CheckForUpdatesView(updaterViewModel: updaterViewModel)
             }

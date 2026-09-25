@@ -116,7 +116,7 @@ struct FluidAudioModelCardView: View {
                         Image(systemName: isDownloading ? "xmark.circle" : "arrow.down.circle")
                     }
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(AppTheme.Text.onAccent)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(
@@ -146,6 +146,8 @@ struct FluidAudioModelCardView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
+                .help("More Actions")
+                .accessibilityLabel("More Actions")
                 .frame(width: 20, height: 20)
             }
         }

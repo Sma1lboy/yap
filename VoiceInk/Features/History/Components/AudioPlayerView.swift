@@ -324,7 +324,7 @@ private struct AsyncCircleButton: View {
                         } else if showSuccess {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(AppTheme.Status.success)
+                                .foregroundStyle(AppTheme.Status.positive)
                         } else {
                             Image(systemName: defaultIcon)
                                 .font(.system(size: 14, weight: .semibold))
@@ -431,6 +431,8 @@ struct AudioPlayerView: View {
                         icon: playerManager.isPlaying ? "pause.fill" : "play.fill",
                         action: { playerManager.isPlaying ? playerManager.pause() : playerManager.play() }
                     )
+                    .help(playerManager.isPlaying ? LocalizedStringKey("Pause") : "Play")
+                    .accessibilityLabel(playerManager.isPlaying ? LocalizedStringKey("Pause") : "Play")
                     .scaleEffect(isHovering ? 1.05 : 1.0)
                     .onHover { hovering in
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {

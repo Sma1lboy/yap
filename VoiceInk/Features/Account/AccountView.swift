@@ -296,6 +296,9 @@ struct YapCloudSignInForm: View {
     @State private var codeSent = false
     @State private var isWorking = false
     @State private var errorMessage: String?
+    @FocusState private var focusedField: Field?
+
+    private enum Field { case email, code }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -305,6 +308,8 @@ struct YapCloudSignInForm: View {
                 HStack {
                     TextField("Code", text: $code)
                         .textFieldStyle(.roundedBorder)
+                        .textContentType(.oneTimeCode)
+                        .focused($focusedField, equals: .code)
                         .onSubmit(verify)
                     Button("Sign In", action: verify)
                         .keyboardShortcut(.defaultAction)
@@ -325,6 +330,7 @@ struct YapCloudSignInForm: View {
                     TextField("Email address", text: $email)
                         .textFieldStyle(.roundedBorder)
                         .textContentType(.emailAddress)
+                        .focused($focusedField, equals: .email)
                         .onSubmit(sendCode)
                     Button("Send Code", action: sendCode)
                         .keyboardShortcut(.defaultAction)
@@ -340,6 +346,8 @@ struct YapCloudSignInForm: View {
                 }
             }
         }
+        .onAppear { focusedField = codeSent ? .code : .email }
+        .onChange(of: codeSent) { _, sent in focusedField = sent ? .code : .email }
     }
 
     private func sendCode() {
@@ -364,6 +372,8 @@ struct YapCloudSignInForm: View {
     }
 
     private func run(_ work: @escaping @MainActor () async throws -> Void) {
+        // Return in a text field submits even while the button is disabled.
+        guard !isWorking else { return }
         isWorking = true
         errorMessage = nil
         Task { @MainActor in

@@ -202,7 +202,7 @@ struct AudioTranscribeView: View {
                         Text("Start")
                             .font(.system(size: 12, weight: .semibold))
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(AppTheme.Text.onAccent)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(

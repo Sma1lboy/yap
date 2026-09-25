@@ -77,6 +77,8 @@ struct AppNotificationView: View {
                         .foregroundColor(.white.opacity(0.6))
                 }
                 .buttonStyle(PlainButtonStyle())
+                .help("Close")
+                .accessibilityLabel("Close")
                 .frame(width: 16, height: 16)
             }
             .padding(.horizontal, 16)
