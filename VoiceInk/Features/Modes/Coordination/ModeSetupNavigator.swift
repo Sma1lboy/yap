@@ -17,6 +17,12 @@ enum AudioSetupNavigator {
     }
 }
 
+enum SettingsNavigator {
+    static func open() {
+        MainWindowNavigator.open(destination: .settings)
+    }
+}
+
 private enum MainWindowNavigator {
     static func open(destination: ViewType) {
         MainWindowNavigation.shared.navigate(to: destination)
