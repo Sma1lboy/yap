@@ -4787,6 +4787,28 @@
         }
       }
     },
+    "Adding funds isn't available yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben aufladen ist noch nicht verfügbar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’ajout de fonds n’est pas encore disponible."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂时还不能充值。"
+          }
+        }
+      }
+    },
     "Additional Shortcuts" : {
       "localizations" : {
         "de" : {
@@ -11489,6 +11511,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请输入用于 AI 润色的模型 ID。"
+          }
+        }
+      }
+    },
+    "Enter a valid email address." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib eine gültige E-Mail-Adresse ein."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez une adresse e-mail valide."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入有效的邮箱地址。"
           }
         }
       }
@@ -24834,6 +24878,28 @@
         }
       }
     },
+    "That code is wrong or has expired. Check the email or send a new code." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Code ist falsch oder abgelaufen. Prüfe die E-Mail oder fordere einen neuen Code an."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce code est incorrect ou a expiré. Vérifiez l’e-mail ou demandez un nouveau code."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证码错误或已过期。请核对邮件，或重新发送验证码。"
+          }
+        }
+      }
+    },
     "That replacement would create a loop between existing rules" : {
       "comment" : "Error shown when saving a word replacement would make two rules replace each other in a loop.",
       "localizations" : {
@@ -25194,6 +25260,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "云端配置已在另一台设备上被修改。"
+          }
+        }
+      }
+    },
+    "The config is too large to sync (limit 256 KB)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Konfiguration ist zu groß zum Synchronisieren (max. 256 KB)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La configuration est trop volumineuse pour être synchronisée (256 Ko max.)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "配置文件太大，无法同步（上限 256 KB）。"
           }
         }
       }
@@ -26097,6 +26185,28 @@
         }
       }
     },
+    "This model isn't available on Yap Cloud. Choose another model." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Modell ist in Yap Cloud nicht verfügbar. Wähle ein anderes Modell."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce modèle n’est pas disponible sur Yap Cloud. Choisissez-en un autre."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 不提供这个模型，请换一个模型。"
+          }
+        }
+      }
+    },
     "This removes %@ and %@. This action cannot be undone." : {
       "localizations" : {
         "de" : {
@@ -26487,6 +26597,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "令牌数量根据请求文本估算。"
+          }
+        }
+      }
+    },
+    "Too many requests. Wait a moment and try again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu viele Anfragen. Warte kurz und versuche es erneut."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trop de requêtes. Patientez un instant et réessayez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请求太频繁，请稍后再试。"
           }
         }
       }
@@ -28685,6 +28817,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap Cloud 暂时没有可用的转写模型。"
+          }
+        }
+      }
+    },
+    "Yap Cloud is temporarily unavailable. Try again shortly." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud ist vorübergehend nicht verfügbar. Versuche es gleich noch einmal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud est temporairement indisponible. Réessayez dans un instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 服务暂时不可用，请稍后再试。"
+          }
+        }
+      }
+    },
+    "Yap Cloud is temporarily unavailable. Try again shortly. (%@)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud ist vorübergehend nicht verfügbar. Versuche es gleich noch einmal. (%@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud est temporairement indisponible. Réessayez dans un instant. (%@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 服务暂时不可用，请稍后再试。（%@）"
           }
         }
       }

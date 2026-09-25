@@ -103,7 +103,7 @@ final class YapCloud: ObservableObject {
             authenticated: false)
         let response = try Self.decode(YapCloudVerifyResponse.self, from: data)
         guard keychain.save(response.token, forKey: Self.tokenKey, syncable: false) else {
-            throw YapCloudError.server(status: 0, code: nil, message: String(localized: "Couldn't save the sign-in token to the keychain."))
+            throw YapCloudError.keychainUnavailable
         }
         defaults.set(response.user.email, forKey: Self.emailKey)
         isSignedIn = true
@@ -372,7 +372,9 @@ enum YapCloudError: LocalizedError, Equatable {
     case notSignedIn
     case insufficientBalance
     case invalidAmount
+    case keychainUnavailable
     case versionConflict(current: YapCloudConfigDocument?)
+    /// `message` is paygate's English text, kept for logs; users see a description mapped from `code`.
     case server(status: Int, code: String?, message: String)
 
     /// Maps a non-2xx paygate response (`{"error":{"code","message"}}`).
@@ -402,10 +404,37 @@ enum YapCloudError: LocalizedError, Equatable {
             return String(
                 format: String(localized: "Enter a whole-dollar amount between $%lld and $%lld."),
                 Int64(YapCloud.checkoutPresets.min()!), Int64(YapCloud.maximumTopUpUSD))
+        case .keychainUnavailable:
+            return String(localized: "Couldn't save the sign-in token to the keychain.")
         case .versionConflict:
             return String(localized: "The cloud config changed on another device.")
-        case .server(_, _, let message):
-            return message
+        case .server(_, let code, _):
+            return Self.description(forCode: code)
+        }
+    }
+
+    /// Codes from paygate docs/api.md and its fail() calls. Unknown codes and non-paygate failures
+    /// (no code) read as a temporary outage; the raw HTTP status is never shown.
+    private static func description(forCode code: String?) -> String {
+        switch code {
+        case "INVALID_CODE":
+            return String(localized: "That code is wrong or has expired. Check the email or send a new code.")
+        case "INVALID_EMAIL":
+            return String(localized: "Enter a valid email address.")
+        case "RATE_LIMITED":
+            return String(localized: "Too many requests. Wait a moment and try again.")
+        case "INVALID_AMOUNT":
+            return YapCloudError.invalidAmount.errorDescription ?? ""
+        case "MODEL_NOT_ALLOWED":
+            return String(localized: "This model isn't available on Yap Cloud. Choose another model.")
+        case "STRIPE_NOT_CONFIGURED":
+            return String(localized: "Adding funds isn't available yet.")
+        case "CONFIG_TOO_LARGE":
+            return String(localized: "The config is too large to sync (limit 256 KB).")
+        case let code?:
+            return String(format: String(localized: "Yap Cloud is temporarily unavailable. Try again shortly. (%@)"), code)
+        case nil:
+            return String(localized: "Yap Cloud is temporarily unavailable. Try again shortly.")
         }
     }
 
@@ -586,6 +615,11 @@ struct YapCloudConfigDocument: Equatable {
                 YapCloudError(status: 401, body: json(#"{"error":{"code":"INVALID_CODE","message":"Wrong code"}}"#), authenticated: false)
                     == .server(status: 401, code: "INVALID_CODE", message: "Wrong code"))
             assert(YapCloudError(status: 500, body: Data(), authenticated: true) == .server(status: 500, code: nil, message: "HTTP 500"))
+            assert(YapCloudError(status: 500, body: Data(), authenticated: true).errorDescription?.contains("500") == false)
+            assert(YapCloudError.server(status: 503, code: "SOMETHING_NEW", message: "x").errorDescription?
+                .contains("SOMETHING_NEW") == true)
+            assert(YapCloudError.server(status: 429, code: "RATE_LIMITED", message: "x").errorDescription?
+                .contains("RATE_LIMITED") == false)
             let conflict = YapCloudError(
                 status: 409, body: json(#"{"error":{"code":"VERSION_CONFLICT"},"current":{"version":7,"config":{"a":1}}}"#),
                 authenticated: true)
