@@ -80,7 +80,7 @@ struct InsightPeriodPicker: View {
 
 enum ModelLinks {
     static func openRecommendedModels() {
-        if let url = URL(string: "https://tryvoiceink.com/docs/recommended-models") {
+        if let url = URL(string: "https://github.com/Sma1lboy/yap#readme") {
             NSWorkspace.shared.open(url)
         }
     }

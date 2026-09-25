@@ -33,11 +33,11 @@ struct GitHubStarPromptCard: View {
     private var askContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Help people discover VoiceInk")
+                Text("Help people discover Yap")
                     .font(.system(size: 14.5, weight: .bold))
                     .foregroundStyle(.primary)
 
-                Text("If VoiceInk has been useful, a star on GitHub helps others find it.")
+                Text("If Yap has been useful, a star on GitHub helps others find it.")
                     .font(.system(size: 11.5, weight: .regular))
                     .foregroundStyle(.secondary)
                     .lineSpacing(2)

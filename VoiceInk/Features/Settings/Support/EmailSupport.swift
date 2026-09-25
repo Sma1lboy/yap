@@ -2,57 +2,36 @@ import AppKit
 import Foundation
 import SwiftUI
 
+/// Opens a prefilled GitHub issue on the Yap repository. System info is also copied to the clipboard in case the body is truncated.
 @MainActor
 struct EmailSupport {
-    private static let supportEmailAddress = "support@tryvoiceink.com"
-    private static let supportEmailSubject = "VoiceInk Support Request"
-
     static func generateSupportEmailBody() -> String {
         let systemInfo = SystemInfoService.shared.getSystemInfoString()
 
         return """
-
-            ------------------------
-            ✨ **SCREEN RECORDING HIGHLY RECOMMENDED** ✨
-            ▶️ Create a quick screen recording showing the issue!
-            ▶️ It helps me understand and fix the problem much faster.
-
-            📝 ISSUE DETAILS:
-            - What steps did you take before the issue occurred?
-            - What did you expect to happen?
-            - What actually happened instead?
+            **What happened**
 
 
-            ## 📋 COMMON ISSUES:
-            Check out our Common Issues page before sending an email: https://tryvoiceink.com/common-issues
-            ------------------------
+            **What you expected**
 
-            System Information:
+
+            **Steps to reproduce**
+
+
+            <details><summary>System information</summary>
+
+            ```
             \(systemInfo)
-
-
+            ```
+            </details>
             """
     }
 
-    static func generateSupportEmailURL() -> URL? {
-        let encodedSubject = supportEmailSubject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        return URL(string: "mailto:\(supportEmailAddress)?subject=\(encodedSubject)")
-    }
-
     static func openSupportEmail() {
-        let body = generateSupportEmailBody()
-
-        if let sharingService = NSSharingService(named: .composeEmail) {
-            sharingService.recipients = [supportEmailAddress]
-            sharingService.subject = supportEmailSubject
-            sharingService.perform(withItems: [body])
-            return
-        }
-
         SystemInfoService.shared.copySystemInfoToClipboard()
 
-        if let emailURL = generateSupportEmailURL() {
-            NSWorkspace.shared.open(emailURL)
-        }
+        var components = URLComponents(url: AppIdentity.issuesURL.appendingPathComponent("new"), resolvingAgainstBaseURL: false)
+        components?.queryItems = [URLQueryItem(name: "body", value: generateSupportEmailBody())]
+        NSWorkspace.shared.open(components?.url ?? AppIdentity.issuesURL)
     }
 }

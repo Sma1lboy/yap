@@ -25,7 +25,6 @@ struct VoiceInkApp: App {
     @StateObject private var licenseViewModel = LicenseViewModel.shared
     @StateObject private var activeWindowService = ActiveWindowService.shared
     @AppStorage(OnboardingSettings.completedV2Key) private var hasCompletedOnboardingV2 = false
-    @AppStorage("enableAnnouncements") private var enableAnnouncements = true
     @State private var showMenuBarIcon = true
     @State private var didShowLaunchReminders = false
 
@@ -71,7 +70,7 @@ struct VoiceInkApp: App {
                     alert.messageText = String(localized: "Storage Warning")
                     alert.informativeText = String(
                         localized:
-                            "VoiceInk couldn't access its storage location. Your transcriptions will not be saved between sessions."
+                            "Yap couldn't access its storage location. Your transcriptions will not be saved between sessions."
                     )
                     alert.alertStyle = .warning
                     alert.addButton(withTitle: String(localized: "OK"))
@@ -84,7 +83,7 @@ struct VoiceInkApp: App {
                     "❌ All ModelContainer init attempts failed.\nPersistent:\n\(persistentDetail, privacy: .public)\nIn-memory:\n\(memoryDetail, privacy: .public)"
                 )
                 fatalError(
-                    "VoiceInk failed to initialize storage.\nPersistent:\n\(persistentDetail)\nIn-memory:\n\(memoryDetail)"
+                    "Yap failed to initialize storage.\nPersistent:\n\(persistentDetail)\nIn-memory:\n\(memoryDetail)"
                 )
             }
         }
@@ -115,7 +114,7 @@ struct VoiceInkApp: App {
 
         // 1. Create modelsDirectory URL
         let appSupportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("com.prakashjoshipax.VoiceInk")
+            .appendingPathComponent(AppIdentity.supportDirectoryName)
         let modelsDirectory = appSupportDirectory.appendingPathComponent("WhisperModels")
 
         // 2. Create model managers
@@ -223,7 +222,7 @@ struct VoiceInkApp: App {
 
     private static func createPersistentContainer(schema: Schema, logger: Logger) throws -> ModelContainer {
         let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("com.prakashjoshipax.VoiceInk", isDirectory: true)
+            .appendingPathComponent(AppIdentity.supportDirectoryName, isDirectory: true)
 
         try? FileManager.default.createDirectory(at: appSupportURL, withIntermediateDirectories: true)
 
@@ -291,7 +290,7 @@ struct VoiceInkApp: App {
     }
 
     var body: some Scene {
-        Window("VoiceInk", id: AppWindowID.main) {
+        Window("Yap", id: AppWindowID.main) {
             Group {
                 if hasCompletedOnboardingV2 {
                     ContentView()
@@ -308,26 +307,14 @@ struct VoiceInkApp: App {
                         .environmentObject(enhancementService)
                         .modelContainer(container)
                         .lazyChangeLogPresenter { isPresenting in
-                            if isPresenting {
-                                if enableAnnouncements {
-                                    AnnouncementsService.shared.stop()
-                                }
-                            } else {
-                                if enableAnnouncements {
-                                    AnnouncementsService.shared.start()
-                                }
+                            if !isPresenting {
                                 showLaunchRemindersIfNeeded()
                             }
                         }
                         .onAppear {
                             if !ChangeLogManager.needsPresentation() {
-                                if enableAnnouncements {
-                                    AnnouncementsService.shared.start()
-                                }
                                 showLaunchRemindersIfNeeded()
                             }
-
-                            GitHubStarPromptCoordinator.shared.scheduleIfNeeded(modelContainer: container)
 
                             // Run due audio-only cleanup and schedule future checks when transcript cleanup is not managing retention.
                             if !UserDefaults.standard.bool(forKey: CleanupSettingsKeys.isTranscriptionCleanupEnabled)
@@ -358,7 +345,6 @@ struct VoiceInkApp: App {
                             }
                         )
                         .onDisappear {
-                            AnnouncementsService.shared.stop()
                             whisperModelManager.unloadModel()
 
                             // Stop the automatic audio cleanup process

@@ -115,7 +115,7 @@ final class LicenseViewModel: ObservableObject {
         case .unavailable:
             setStorageError(
                 String(
-                    localized: "VoiceInk couldn't start the trial because the macOS Keychain is unavailable. Quit and reopen VoiceInk. If the problem continues, restart your Mac."
+                    localized: "Yap couldn't start the trial because the macOS Keychain is unavailable. Quit and reopen Yap. If the problem continues, restart your Mac."
                 )
             )
             return false
@@ -166,7 +166,7 @@ final class LicenseViewModel: ObservableObject {
         switch licenseState {
         case .unlicensed, .trialExpired:
             return String(
-                format: String(localized: "Your trial has ended. Upgrade to VoiceInk Pro at %@"),
+                format: String(localized: "Your trial has ended. Upgrade to Yap Pro at %@"),
                 "tryvoiceink.com/buy"
             )
         case .trial, .licensed:
@@ -286,7 +286,7 @@ final class LicenseViewModel: ObservableObject {
                 code
             )
         } catch LicenseStorageError.failed {
-            setStorageError(String(localized: "VoiceInk couldn't save the license. Please try again."))
+            setStorageError(String(localized: "Yap couldn't save the license. Please try again."))
         } catch let urlError as URLError {
             logger.error("🔑 License network error: \(urlError, privacy: .public)")
             validationMessage = String(
@@ -378,7 +378,7 @@ final class LicenseViewModel: ObservableObject {
             }
             try clearStoredLicense(resetTrialAt: deactivationDate)
         } catch LicenseStorageError.failed {
-            setStorageError(String(localized: "VoiceInk couldn't remove the saved license. Please try again."))
+            setStorageError(String(localized: "Yap couldn't remove the saved license. Please try again."))
         } catch {
             logger.error("🔑 License deactivation failed: \(error, privacy: .public)")
             validationSuccess = false
@@ -571,7 +571,7 @@ final class LicenseViewModel: ObservableObject {
     private var keychainUnavailableMessage: String {
         let recoveryMessage = String(
             localized:
-                "VoiceInk couldn't access the macOS Keychain. Quit and reopen VoiceInk. If the problem continues, restart your Mac."
+                "Yap couldn't access the macOS Keychain. Quit and reopen Yap. If the problem continues, restart your Mac."
         )
 
         guard let persistentStateErrorStatus else { return recoveryMessage }

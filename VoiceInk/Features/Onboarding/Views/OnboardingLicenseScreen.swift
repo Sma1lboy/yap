@@ -45,7 +45,7 @@ struct OnboardingLicenseScreen: View {
         OnboardingStepScreen(
             systemImage: "checkmark.seal.fill",
             title: "Verification Successful",
-            subtitle: "Your license key is verified. VoiceInk is ready to use on this Mac.",
+            subtitle: "Your license key is verified. Yap is ready to use on this Mac.",
             contentMaxWidth: 560
         ) {
             OnboardingVerifiedLicenseCard(

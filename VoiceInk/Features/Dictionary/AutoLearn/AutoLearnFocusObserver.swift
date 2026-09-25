@@ -53,7 +53,7 @@ final class AutoLearnFocusObserver: @unchecked Sendable {
                 handler: handler
             )
         }
-        thread.name = "VoiceInk Auto Learn Focus Observer"
+        thread.name = "Yap Auto Learn Focus Observer"
         thread.qualityOfService = .utility
         thread.start()
     }

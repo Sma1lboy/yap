@@ -92,7 +92,7 @@ struct DictionarySettingsView: View {
         AppScreenHeader(
             title: "Dictionary",
             infoMessage: dictionaryInfoMessage,
-            infoURL: "https://tryvoiceink.com/docs/auto-learn-dictionary"
+            infoURL: "https://github.com/Sma1lboy/yap#readme"
         ) {
             HStack(spacing: 8) {
                 if hasAutoLearnFailure {

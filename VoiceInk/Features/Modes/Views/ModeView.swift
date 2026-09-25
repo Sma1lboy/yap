@@ -98,8 +98,8 @@ struct ModeView: View {
         VStack(spacing: 0) {
             AppScreenHeader(
                 title: "Modes",
-                infoMessage: "Modes help you set up VoiceInk for different writing tasks, workflows, and scenarios.",
-                infoURL: "https://tryvoiceink.com/docs/modes"
+                infoMessage: "Modes help you set up Yap for different writing tasks, workflows, and scenarios.",
+                infoURL: "https://github.com/Sma1lboy/yap#readme"
             ) {
                 headerControls
             }
@@ -124,7 +124,7 @@ struct ModeView: View {
                                                 .foregroundColor(.primary)
 
                                             Text(
-                                                "Set how VoiceInk transcribes and formats your speech, then start dictating in any app."
+                                                "Set how Yap transcribes and formats your speech, then start dictating in any app."
                                             )
                                             .font(.system(size: 14))
                                             .foregroundColor(.secondary)

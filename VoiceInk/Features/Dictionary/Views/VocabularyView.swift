@@ -149,7 +149,7 @@ struct VocabularyInfoPopover: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
-            Text(verbatim: "Prakash, VoiceInk, SwiftData, WebSocket")
+            Text(verbatim: "Yap, OpenRouter, SwiftData, WebSocket")
                 .font(.callout)
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)

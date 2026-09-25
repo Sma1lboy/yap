@@ -93,7 +93,7 @@ struct DashboardEditorialSummaryCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DashboardInsightCardBackground(cornerRadius: 16))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("VoiceInk impact summary")
+        .accessibilityLabel("Yap impact summary")
     }
 
     private var averageSessionText: String {

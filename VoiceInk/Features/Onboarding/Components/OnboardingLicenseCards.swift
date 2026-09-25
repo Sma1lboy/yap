@@ -77,7 +77,7 @@ struct OnboardingLicenseSetupCard: View {
 
             OnboardingLicenseActionRow(
                 title: "Start 7-day Trial",
-                subtitle: "Use VoiceInk now.",
+                subtitle: "Use Yap now.",
                 systemImage: "calendar",
                 isEnabled: true,
                 action: onStartTrial
@@ -93,7 +93,7 @@ struct OnboardingVerifiedLicenseCard: View {
 
     var body: some View {
         LicenseActiveSummaryCard(
-            title: "VoiceInk Pro",
+            title: "Yap Pro",
             subtitle: String(localized: "License active on this Mac."),
             licenseKey: licenseKey,
             didCopyLicenseKey: didCopyLicenseKey,
