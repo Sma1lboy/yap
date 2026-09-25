@@ -324,7 +324,7 @@ private struct AsyncCircleButton: View {
                         } else if showSuccess {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(AppTheme.Status.success)
+                                .foregroundStyle(AppTheme.Status.positive)
                         } else {
                             Image(systemName: defaultIcon)
                                 .font(.system(size: 14, weight: .semibold))
