@@ -42,6 +42,13 @@ final class YapCloud: ObservableObject {
     @Published private(set) var accountRefreshError: String?
     /// This month's spend from `/v1/usage`; nil until loaded.
     @Published private(set) var monthlySpend: YapCloudMonthlySpend?
+    /// Set when Checkout opens; cleared once the balance goes up (or the user stops waiting).
+    @Published private(set) var pendingTopUp: PendingTopUp?
+
+    struct PendingTopUp: Equatable {
+        let balanceBeforeMicros: Int64
+        let startedAt: Date
+    }
 
     private init() {
         #if DEBUG
@@ -56,7 +63,7 @@ final class YapCloud: ObservableObject {
         NotificationCenter.default.addObserver(
             forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            Task { await self?.refreshAccount() }
+            Task { @MainActor in await self?.refreshAfterReturning() }
         }
     }
 
@@ -227,6 +234,7 @@ final class YapCloud: ObservableObject {
         defer { isRefreshingAccount = false }
         do {
             me = try await fetchMe()
+            settlePendingTopUp()
             ledger = try await fetchLedger()
             isLedgerLoaded = true
             let monthStart = Calendar.current.dateInterval(of: .month, for: Date())?.start ?? Date()
@@ -296,6 +304,54 @@ final class YapCloud: ObservableObject {
         NSApp.activate(ignoringOtherApps: true)
         NotificationCenter.default.post(
             name: .navigateToDestination, object: nil, userInfo: ["destination": "Account"])
+    }
+
+    // MARK: - Top-up flow
+
+    /// Opens Stripe Checkout in the browser and starts waiting for the balance to go up.
+    @MainActor
+    func openCheckout(amountUSD: Int) async throws {
+        let url = try await checkoutURL(amountUSD: amountUSD)
+        // The balance to compare against once the payment lands.
+        if let fresh = try? await fetchMe() { me = fresh }
+        pendingTopUp = PendingTopUp(balanceBeforeMicros: balanceMicros ?? 0, startedAt: Date())
+        NSWorkspace.shared.open(url)
+    }
+
+    @MainActor
+    func stopWaitingForTopUp() { pendingTopUp = nil }
+
+    /// Coming back from the browser: refresh, and while a payment is pending re-check a couple of times,
+    /// since Stripe's webhook can land a few seconds after the success page.
+    @MainActor
+    func refreshAfterReturning() async {
+        await refreshAccount()
+        for delay in [3, 8] where pendingTopUp != nil {
+            try? await Task.sleep(for: .seconds(delay))
+            await refreshAccount()
+        }
+    }
+
+    /// After a /v1/me fetch: a higher balance while waiting means the top-up arrived; say so once.
+    @MainActor
+    private func settlePendingTopUp() {
+        guard let pending = pendingTopUp else { return }
+        if Date().timeIntervalSince(pending.startedAt) > 2 * 3600 {
+            pendingTopUp = nil
+            return
+        }
+        guard let balance = balanceMicros,
+            let credited = Self.creditedMicros(before: pending.balanceBeforeMicros, after: balance)
+        else { return }
+        pendingTopUp = nil
+        NotificationManager.shared.showNotification(
+            title: String(format: String(localized: "Added %@ to your Yap Cloud balance."), Self.formatUSD(micros: credited)),
+            type: .success,
+            duration: 5)
+    }
+
+    static func creditedMicros(before: Int64, after: Int64) -> Int64? {
+        after > before ? after - before : nil
     }
 
     /// `yap://account/refresh` (also `yap://account`), the link paygate's checkout success page returns to.
@@ -858,6 +914,11 @@ struct YapCloudConfigDocument: Equatable {
             assert(monthlyCapMicros(fromDollars: "") == nil && monthlyCapMicros(fromDollars: "abc") == nil)
             assert(formatExactUSD(micros: 100) == "$0.0001" && formatExactUSD(micros: 5_000_000) == "$5.00")
             assert(formatExactUSD(micros: 1_234_567) == "$1.234567" && formatExactUSD(micros: 0) == "$0.00")
+
+            // Top-up arrival
+            assert(creditedMicros(before: 5, after: 10_000_005) == 10_000_000)
+            assert(creditedMicros(before: 5, after: 5) == nil && creditedMicros(before: 5, after: 3) == nil)
+            assert(creditedMicros(before: -200, after: 4_999_800) == 5_000_000)
 
             // yap:// links
             assert(isAccountRefreshURL(URL(string: "yap://account/refresh")!) && isAccountRefreshURL(URL(string: "YAP://Account")!))

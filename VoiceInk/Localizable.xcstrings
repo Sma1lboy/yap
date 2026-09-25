@@ -4830,6 +4830,28 @@
         }
       }
     },
+    "Added %@ to your Yap Cloud balance." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ wurde deinem Yap-Cloud-Guthaben gutgeschrieben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ajoutés à votre solde Yap Cloud."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已到账 %@,Yap Cloud 余额已更新。"
+          }
+        }
+      }
+    },
     "Added “%@” to Dictionary" : {
       "comment" : "Success notification showing the correction Auto Learn added to the Dictionary.",
       "localizations" : {
@@ -24846,6 +24868,28 @@
         }
       }
     },
+    "Stop Waiting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht mehr warten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter d'attendre"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不再等待"
+          }
+        }
+      }
+    },
     "Stop recording" : {
       "localizations" : {
         "de" : {
@@ -29111,6 +29155,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "等待中"
+          }
+        }
+      }
+    },
+    "Waiting for payment to complete…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warte auf Abschluss der Zahlung …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En attente de la fin du paiement…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等待付款完成…"
           }
         }
       }
