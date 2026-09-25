@@ -420,7 +420,9 @@ final class OnboardingCoordinator: ObservableObject {
         case .recommended:
             return APIKeyManager.shared.hasAPIKey(forProvider: AIProvider.openRouter.rawValue)
         case .yapCloud:
+            // A $0 balance would make the first practice dictation fail with 402.
             return YapCloud.shared.token != nil && selectedOnboardingTranscriptionModel != nil
+                && (YapCloud.shared.balanceMicros ?? 0) > 0
         case .local:
             return isTranscriptionModelDownloaded
         case .cloud:

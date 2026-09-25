@@ -299,3 +299,39 @@ struct YapCloudSignInForm: View {
         }
     }
 }
+
+/// Preset top-up buttons that open Stripe Checkout directly (onboarding can't navigate to Account).
+struct YapCloudQuickTopUp: View {
+    @State private var isOpening = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                ForEach(YapCloud.checkoutPresets, id: \.self) { amount in
+                    Button(String(format: String(localized: "Add $%lld"), Int64(amount))) { open(amount) }
+                        .disabled(isOpening)
+                }
+                if isOpening { ProgressView().controlSize(.small) }
+            }
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.Status.error)
+            }
+        }
+    }
+
+    private func open(_ amount: Int) {
+        isOpening = true
+        errorMessage = nil
+        Task { @MainActor in
+            defer { isOpening = false }
+            do {
+                NSWorkspace.shared.open(try await YapCloud.shared.checkoutURL(amountUSD: amount))
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+}

@@ -3966,6 +3966,28 @@
         }
       }
     },
+    "Add $%lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "$%lld aufladen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter %lld $"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值 $%lld"
+          }
+        }
+      }
+    },
     "Add %@" : {
       "localizations" : {
         "de" : {
@@ -4471,6 +4493,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加填充词"
+          }
+        }
+      }
+    },
+    "Add funds to start dictating. Your balance updates when you come back to Yap." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lade Guthaben auf, um mit dem Diktieren zu beginnen. Das Guthaben aktualisiert sich, wenn du zu Yap zurückkehrst."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez des fonds pour commencer à dicter. Votre solde se met à jour à votre retour dans Yap."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值后即可开始听写。回到 Yap 时余额会自动更新。"
           }
         }
       }
@@ -6451,6 +6495,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "余额"
+          }
+        }
+      }
+    },
+    "Balance %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "余额 %@"
           }
         }
       }
@@ -23362,24 +23428,46 @@
         }
       }
     },
-    "Signed in as %@. Add funds anytime under Account." : {
+    "Signed in as %@" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Angemeldet als %@. Guthaben kannst du jederzeit unter „Konto“ aufladen."
+            "value" : "Angemeldet als %@"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connecté en tant que %@. Ajoutez des fonds à tout moment dans Compte."
+            "value" : "Connecté en tant que %@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已登录:%@。随时可以在「账户」里充值。"
+            "value" : "已登录:%@"
+          }
+        }
+      }
+    },
+    "Signed in to Yap Cloud" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei Yap Cloud angemeldet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecté à Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已登录 Yap Cloud"
           }
         }
       }
