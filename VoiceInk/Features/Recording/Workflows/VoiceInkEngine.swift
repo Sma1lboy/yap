@@ -554,26 +554,13 @@ class VoiceInkEngine: NSObject, ObservableObject {
         guard usesYapCloud else { return nil }
 
         let cloud = YapCloud.shared
-        if !cloud.isSignedIn {
-            return (
-                YapCloudError.notSignedIn.errorDescription ?? "",
-                String(localized: "Open Account"),
-                YapCloud.showAddFunds
-            )
-        }
-        if cloud.me?.isAtMonthlyCap == true {
-            return (
-                YapCloudError.monthlyCapReached.errorDescription ?? "",
-                String(localized: "Adjust Cap"),
-                YapCloud.showAddFunds
-            )
-        }
-        if let balance = cloud.balanceMicros, balance <= 0 {
-            return (
-                YapCloudError.insufficientBalance.errorDescription ?? "",
-                String(localized: "Add Funds"),
-                YapCloud.showAddFunds
-            )
+        let error: YapCloudError? =
+            !cloud.isSignedIn ? .notSignedIn
+            : cloud.me?.isAtMonthlyCap == true ? .monthlyCapReached
+            : (cloud.balanceMicros ?? 1) <= 0 ? .insufficientBalance
+            : nil
+        if let error, let label = error.recoveryAction {
+            return (error.errorDescription ?? "", label, YapCloud.showAddFunds)
         }
         return nil
     }

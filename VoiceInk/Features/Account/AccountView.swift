@@ -211,9 +211,9 @@ private struct SignedInSections: View {
                             .monospacedDigit()
                     }
                 }
-                if let credit = spend.creditMicros, credit > 0 {
+                if spend.creditMicros > 0 {
                     LabeledContent("Covered by sign-up credit") {
-                        Text(YapCloud.formatLedgerAmount(micros: credit, kind: "usage"))
+                        Text(YapCloud.formatLedgerAmount(micros: spend.creditMicros, kind: "usage"))
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                     }
@@ -240,28 +240,26 @@ private struct SignedInSections: View {
             }
         }
 
-        if cloud.me?.supportsMonthlyCap == true {
-            MonthlyCapSection()
-        }
+        MonthlyCapSection()
 
         Section("Recent Activity") {
-            if !cloud.isLedgerLoaded {
-                if cloud.isRefreshingAccount {
-                    ProgressView().controlSize(.small)
+            if let ledger = cloud.ledger {
+                if ledger.isEmpty {
+                    Text("No charges or top-ups yet.")
+                        .foregroundStyle(.secondary)
                 } else {
-                    HStack {
-                        Text("Couldn't load recent activity.")
-                            .foregroundStyle(AppTheme.Status.error)
-                        Spacer()
-                        Button("Retry") { Task { await cloud.refreshAccount() } }
+                    ForEach(ledger, id: \.id.string) { entry in
+                        LedgerRow(entry: entry)
                     }
                 }
-            } else if cloud.ledger.isEmpty {
-                Text("No charges or top-ups yet.")
-                    .foregroundStyle(.secondary)
+            } else if cloud.isRefreshingAccount {
+                ProgressView().controlSize(.small)
             } else {
-                ForEach(cloud.ledger, id: \.id.string) { entry in
-                    LedgerRow(entry: entry)
+                HStack {
+                    Text("Couldn't load recent activity.")
+                        .foregroundStyle(AppTheme.Status.error)
+                    Spacer()
+                    Button("Retry") { Task { await cloud.refreshAccount() } }
                 }
             }
         }
@@ -283,7 +281,7 @@ private struct SignedInSections: View {
 
     /// nil until this month has 3+ days of usage (see YapCloudMonthlySpend.runway).
     private var balanceRunway: YapCloudMonthlySpend.Runway? {
-        guard let balance = cloud.balanceMicros, let spend = cloud.monthlySpend, let since = spend.since else { return nil }
+        guard let balance = cloud.balanceMicros, let spend = cloud.monthlySpend, let since = spend.sinceDate else { return nil }
         return YapCloudMonthlySpend.runway(
             balanceMicros: balance, spentMicros: spend.totalMicros,
             elapsedSeconds: Int64(Date().timeIntervalSince(since)))
@@ -383,9 +381,7 @@ private struct ModelPriceRow: View {
         if model.isTranscription {
             return String(localized: "Pay as you go")
         }
-        let perMillion = { (key: String) in
-            ((model.price(key) ?? 0) * 1_000_000).formatted(.currency(code: "USD").precision(.fractionLength(2)))
-        }
+        let perMillion = { (key: String) in YapCloud.formatUSD(micros: model.pricePerMillionMicros(key) ?? 0) }
         return String(format: String(localized: "%@ in / %@ out per 1M tokens"), perMillion("prompt"), perMillion("completion"))
     }
 }

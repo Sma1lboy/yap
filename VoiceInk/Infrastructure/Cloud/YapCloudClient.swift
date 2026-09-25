@@ -37,9 +37,8 @@ final class YapCloud: ObservableObject {
         didSet { balanceUpdatedAt = me == nil ? nil : Date() }
     }
     @Published private(set) var balanceUpdatedAt: Date?
-    @Published private(set) var ledger: [YapCloudLedgerEntry] = []
-    /// False until a ledger fetch succeeds, so a failed load is never shown as "no activity".
-    @Published private(set) var isLedgerLoaded = false
+    /// The last 20 ledger rows; nil until a fetch succeeds, so a failed load is never shown as "no activity".
+    @Published private(set) var ledger: [YapCloudLedgerEntry]?
     @Published private(set) var isRefreshingAccount = false
     /// Why the last Account refresh failed; nil after a successful one.
     @Published private(set) var accountRefreshError: String?
@@ -51,9 +50,9 @@ final class YapCloud: ObservableObject {
     /// successful request, and /healthz is polled every 15 s while it's set.
     @Published private(set) var isUnreachable = false
     private var healthPoll: Task<Void, Never>?
-    /// Signed-in devices for Account; nil until loaded or while paygate doesn't have the endpoint (404).
+    /// Signed-in devices for Account; nil until loaded.
     @Published private(set) var devices: [YapCloudDevice]?
-    /// Why the device list failed to load (not set for the 404 of an undeployed endpoint).
+    /// Why the device list failed to load.
     @Published private(set) var devicesError: String?
 
     struct PendingTopUp: Equatable {
@@ -146,7 +145,7 @@ final class YapCloud: ObservableObject {
     private func announceSignupCreditIfNew(userID: String) {
         let key = "yapCloudSignupCreditShown." + userID
         guard !defaults.bool(forKey: key), (balanceMicros ?? 0) > 0,
-            let credit = Self.signupCreditMicros(in: ledger, now: Date())
+            let credit = Self.signupCreditMicros(in: ledger ?? [], now: Date())
         else { return }
         defaults.set(true, forKey: key)
         Self.showCredited(
@@ -191,8 +190,7 @@ final class YapCloud: ObservableObject {
         defaults.removeObject(forKey: Self.emailKey)
         isSignedIn = false
         me = nil
-        ledger = []
-        isLedgerLoaded = false
+        ledger = nil
         accountRefreshError = nil
         monthlySpend = nil
         devices = nil
@@ -290,10 +288,10 @@ final class YapCloud: ObservableObject {
         }
         guard let lifetime = try? await fetchLifetimeUsage() else { return }
         // Newest-first ledger: a trial user's sign-up credit row is usually still on the first page.
-        let signupAt = ledger.last { $0.kind == "credit" }?.createdDate
+        let signupAt = ledger?.last { $0.kind == "credit" }?.createdDate
         trialNudge = Self.trialNudge(
-            balanceMicros: me.balanceMicros, lifetimePaidMicros: lifetime.paidMicros ?? 1,
-            lifetimeCreditMicros: lifetime.creditMicros ?? 0, signupAt: signupAt, now: Date())
+            balanceMicros: me.balanceMicros, lifetimePaidMicros: lifetime.paidMicros,
+            lifetimeCreditMicros: lifetime.creditMicros, signupAt: signupAt, now: Date())
     }
 
     /// Returns the Stripe Checkout URL for a top-up of `amountUSD` dollars.
@@ -339,7 +337,6 @@ final class YapCloud: ObservableObject {
             me = try await fetchMe()
             settlePendingTopUp()
             ledger = try await fetchLedger()
-            isLedgerLoaded = true
             monthlySpend = try await fetchUsage()
             accountRefreshError = nil
             await evaluateTrialNudge()
@@ -510,14 +507,6 @@ final class YapCloud: ObservableObject {
     struct GenerationCharge: Decodable {
         let generationId: String
         let amountMicros: Int64
-
-        enum CodingKeys: String, CodingKey { case generationId, amountMicros, amountUsd }
-
-        init(from decoder: Decoder) throws {
-            let c = try decoder.container(keyedBy: CodingKeys.self)
-            generationId = try c.decode(String.self, forKey: .generationId)
-            amountMicros = try c.decodeMicros(.amountMicros, fallback: .amountUsd)
-        }
     }
 
     /// What each generation was charged, in positive micros, via `GET /v1/ledger?generationIds=` (≤ 50 per
@@ -628,10 +617,10 @@ final class YapCloud: ObservableObject {
     // MARK: - Devices
 
     func fetchDevices() async throws -> [YapCloudDevice] {
-        try YapCloudDevice.decodeList(try await send("GET", "/v1/me/devices"))
+        try Self.decode([YapCloudDevice].self, from: try await send("GET", "/v1/me/devices"))
     }
 
-    /// Loads the device list for Account. A 404 (endpoint not deployed yet) leaves `devices` nil, hiding the section.
+    /// Loads the device list for Account.
     @MainActor
     func refreshDevices() async {
         guard token != nil else { return }
@@ -640,8 +629,6 @@ final class YapCloud: ObservableObject {
             devicesError = nil
         } catch let error as YapCloudError where error.isAuthFailure {
             clearSession()
-        } catch YapCloudError.server(let status, _, _, _, _) where status == 404 {
-            devices = nil
         } catch {
             logger.error("Device list failed: \(error.localizedDescription, privacy: .public)")
             devicesError = error.localizedDescription
@@ -733,41 +720,20 @@ final class YapCloud: ObservableObject {
         return ["", "/", "/refresh"].contains(url.path.lowercased())
     }
 
-    /// Shows the account notification when `error` is a Yap Cloud 402 (Add Funds) or 401 (sign in again).
-    /// Returns whether it did, so callers can skip their generic failure message.
+    /// Shows the account notification for errors the user fixes in Account (see `YapCloudError.recoveryAction`)
+    /// and for `.unreachable`. Returns whether it did, so callers can skip their generic failure message.
     @MainActor
     @discardableResult
     static func notifyIfAccountProblem(_ error: Error) -> Bool {
-        switch error {
-        case YapCloudError.insufficientBalance:
-            NotificationManager.shared.showNotification(
-                title: YapCloudError.insufficientBalance.errorDescription ?? "",
-                type: .error,
-                duration: 8,
-                onTap: { showAddFunds() },
-                actionButton: (label: String(localized: "Add Funds"), action: { showAddFunds() }))
-        case YapCloudError.monthlyCapReached:
-            NotificationManager.shared.showNotification(
-                title: YapCloudError.monthlyCapReached.errorDescription ?? "",
-                type: .error,
-                duration: 8,
-                onTap: { showAddFunds() },
-                actionButton: (label: String(localized: "Adjust Cap"), action: { showAddFunds() }))
-        case YapCloudError.unreachable:
-            NotificationManager.shared.showNotification(
-                title: YapCloudError.unreachable.errorDescription ?? "", type: .error, duration: 5)
-        case let error as YapCloudError where error.isAuthFailure:
-            // The token was rejected (revoked or expired); drop it so Account shows the sign-in form.
-            shared.clearSession()
-            NotificationManager.shared.showNotification(
-                title: error.errorDescription ?? "",
-                type: .error,
-                duration: 8,
-                onTap: { showAddFunds() },
-                actionButton: (label: String(localized: "Open Account"), action: { showAddFunds() }))
-        default:
-            return false
-        }
+        guard let error = error as? YapCloudError, error.recoveryAction != nil || error == .unreachable else { return false }
+        // A rejected token (revoked or expired): drop it so Account shows the sign-in form.
+        if error.isAuthFailure { shared.clearSession() }
+        NotificationManager.shared.showNotification(
+            title: error.errorDescription ?? "",
+            type: .error,
+            duration: error.recoveryAction == nil ? 5 : 8,
+            onTap: error.recoveryAction == nil ? nil : { showAddFunds() },
+            actionButton: error.recoveryAction.map { (label: $0, action: { showAddFunds() }) })
         return true
     }
 
@@ -802,10 +768,11 @@ final class YapCloud: ObservableObject {
         return formatUSD(micros: micros, decimals: 4)
     }
 
-    /// Exact decimal string ("12.50", "-0.0021", legacy number text) → micros, rounded to the nearest micro.
-    static func micros(fromDecimal string: String) -> Int64? {
+    /// Exact decimal string ("12.50", "1.089e-07") → micros, rounded to the nearest micro. `times` scales first,
+    /// e.g. a per-token price × 1 000 000 tokens.
+    static func micros(fromDecimal string: String, times multiplier: Decimal = 1) -> Int64? {
         guard var value = Decimal(string: string, locale: Locale(identifier: "en_US_POSIX")) else { return nil }
-        value *= 1_000_000
+        value *= multiplier * 1_000_000
         var rounded = Decimal()
         NSDecimalRound(&rounded, &value, 0, .plain)
         return NSDecimalNumber(decimal: rounded).int64Value
@@ -950,6 +917,17 @@ enum YapCloudError: LocalizedError, Equatable {
     /// The token no longer works (revoked, never valid, or expired): sign out locally.
     var isAuthFailure: Bool { self == .notSignedIn || self == .sessionExpired }
 
+    /// Errors the user resolves on the Account page, with the button that opens it; nil for everything else.
+    /// Used by the failure toast and by the pre-recording check, so both offer the same fix.
+    var recoveryAction: String? {
+        switch self {
+        case .notSignedIn, .sessionExpired: return String(localized: "Open Account")
+        case .insufficientBalance: return String(localized: "Add Funds")
+        case .monthlyCapReached: return String(localized: "Adjust Cap")
+        default: return nil
+        }
+    }
+
     var errorDescription: String? {
         switch self {
         case .notSignedIn:
@@ -1056,7 +1034,6 @@ enum YapCloudError: LocalizedError, Equatable {
 /// Number, or string holding one (Postgres numerics arrive as strings). Also carries ids of either type.
 struct YapCloudScalar: Codable, Hashable {
     let string: String
-    var double: Double { Double(string) ?? 0 }
 
     init(_ string: String) { self.string = string }
 
@@ -1087,49 +1064,17 @@ private struct YapCloudVerifyResponse: Decodable {
     let user: YapCloudUser
 }
 
-extension KeyedDecodingContainer {
-    /// Money as integer micros: `<name>Micros` when present, else the `<name>Usd` decimal string (or the legacy
-    /// JSON number, read as its text) parsed with Decimal. Never passes through Double arithmetic.
-    func decodeMicros(_ microsKey: Key, fallback usdKey: Key) throws -> Int64 {
-        if let micros = try decodeIfPresent(Int64.self, forKey: microsKey) { return micros }
-        let text = try decode(YapCloudScalar.self, forKey: usdKey).string
-        guard let micros = YapCloud.micros(fromDecimal: text) else {
-            throw DecodingError.dataCorruptedError(forKey: usdKey, in: self, debugDescription: "Not a decimal: \(text)")
-        }
-        return micros
-    }
-}
-
 struct YapCloudMe: Decodable {
     let id: YapCloudScalar
     let email: String
     let balanceMicros: Int64
-    /// False until paygate ships spending caps (`monthlyCapMicros` absent from /v1/me); Account hides the cap UI.
-    let supportsMonthlyCap: Bool
     /// nil = no cap.
     let monthlyCapMicros: Int64?
-    /// This month's spend as the server counts it for the cap.
-    let monthSpentMicros: Int64?
-
-    enum CodingKeys: String, CodingKey {
-        case id, email, balanceUsd, balanceMicros, monthlyCapMicros, monthSpentMicros
-    }
-
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        id = try c.decode(YapCloudScalar.self, forKey: .id)
-        email = try c.decode(String.self, forKey: .email)
-        balanceMicros = try c.decodeMicros(.balanceMicros, fallback: .balanceUsd)
-        supportsMonthlyCap = c.contains(.monthlyCapMicros)
-        monthlyCapMicros = try c.decodeIfPresent(Int64.self, forKey: .monthlyCapMicros)
-        monthSpentMicros = try c.decodeIfPresent(Int64.self, forKey: .monthSpentMicros)
-    }
+    /// This month's spend (UTC month) as the server counts it for the cap.
+    let monthSpentMicros: Int64
 
     /// Known to be at or over the cap, so a billed call would get 402 MONTHLY_CAP_REACHED.
-    var isAtMonthlyCap: Bool {
-        guard let cap = monthlyCapMicros, let spent = monthSpentMicros else { return false }
-        return spent >= cap
-    }
+    var isAtMonthlyCap: Bool { monthlyCapMicros.map { monthSpentMicros >= $0 } ?? false }
 }
 
 struct YapCloudLedgerEntry: Decodable, Identifiable {
@@ -1138,33 +1083,14 @@ struct YapCloudLedgerEntry: Decodable, Identifiable {
     let amountMicros: Int64
     let model: String?
     let createdAt: String
-    /// Stripe receipt for topup rows, once paygate sends it.
-    let receiptURL: URL?
-    /// The OpenRouter generation a usage row charged (top-level `generationId`, else `meta.generationId`).
-    let generationId: String?
-
-    enum CodingKeys: String, CodingKey {
-        case id, kind, amountUsd, amountMicros, model, createdAt, receiptUrl, generationId, meta
-    }
-    private struct Meta: Decodable { let generationId: String? }
-
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        id = try c.decode(YapCloudScalar.self, forKey: .id)
-        kind = try c.decode(String.self, forKey: .kind)
-        amountMicros = try c.decodeMicros(.amountMicros, fallback: .amountUsd)
-        model = try c.decodeIfPresent(String.self, forKey: .model)
-        createdAt = try c.decode(String.self, forKey: .createdAt)
-        receiptURL = try c.decodeIfPresent(String.self, forKey: .receiptUrl)
-            .flatMap(URL.init(string:)).flatMap { $0.scheme == "https" ? $0 : nil }
-        generationId = try c.decodeIfPresent(String.self, forKey: .generationId)
-            ?? (try? c.decodeIfPresent(Meta.self, forKey: .meta))?.generationId
-    }
+    /// Stripe's hosted receipt, on topup rows.
+    let receiptUrl: String?
 
     var createdDate: Date? { YapCloud.parseDate(createdAt) }
+    /// https receipts only.
+    var receiptURL: URL? { receiptUrl.flatMap(URL.init(string:)).flatMap { $0.scheme == "https" ? $0 : nil } }
 }
 
-/// One signed-in device (one token) from `GET /v1/me/devices`.
 /// Result of `fetchConfig(ifNoneMatch:)`.
 enum YapCloudConfigFetch {
     /// Never written (404).
@@ -1185,6 +1111,7 @@ struct YapCloudConfigVersion: Decodable, Equatable {
     var updatedDate: Date? { updatedAt.flatMap(YapCloud.parseDate) }
 }
 
+/// One signed-in device (one token) from `GET /v1/me/devices`.
 struct YapCloudDevice: Decodable, Identifiable, Equatable {
     let id: YapCloudScalar
     let deviceName: String?
@@ -1194,13 +1121,6 @@ struct YapCloudDevice: Decodable, Identifiable, Equatable {
     let current: Bool
 
     var lastUsedDate: Date? { lastUsedAt.flatMap(YapCloud.parseDate) ?? YapCloud.parseDate(createdAt) }
-
-    /// Accepts a bare array or `{devices: [...]}`.
-    static func decodeList(_ data: Data) throws -> [YapCloudDevice] {
-        struct Wrapped: Decodable { let devices: [YapCloudDevice] }
-        if let list = try? JSONDecoder().decode([YapCloudDevice].self, from: data) { return list }
-        return try JSONDecoder().decode(Wrapped.self, from: data).devices
-    }
 }
 
 private struct YapCloudLedger: Decodable {
@@ -1218,30 +1138,17 @@ struct YapCloudMonthlySpend: Decodable, Equatable {
         let model: String?
         let micros: Int64
         let calls: Int
-
-        enum CodingKeys: String, CodingKey { case model, micros, usd, calls }
-
-        init(model: String?, micros: Int64, calls: Int) {
-            self.model = model
-            self.micros = micros
-            self.calls = calls
-        }
-
-        init(from decoder: Decoder) throws {
-            let c = try decoder.container(keyedBy: CodingKeys.self)
-            model = try c.decodeIfPresent(String.self, forKey: .model)
-            micros = try c.decodeMicros(.micros, fallback: .usd)
-            calls = try c.decodeIfPresent(Int.self, forKey: .calls) ?? 0
-        }
     }
 
     let totalMicros: Int64
     let byModel: [ModelSpend]
-    /// Start of the window (paygate default: 1st of the current UTC month).
-    let since: Date?
-    /// Part of the spend covered by sign-up credit / by paid balance (`total = credit + paid`); nil on older servers.
-    let creditMicros: Int64?
-    let paidMicros: Int64?
+    /// Start of the window, ISO 8601 (paygate default: 1st of the current UTC month).
+    let since: String
+    /// Part of the spend covered by sign-up credit / by paid balance (`total = credit + paid`).
+    let creditMicros: Int64
+    let paidMicros: Int64
+
+    var sinceDate: Date? { YapCloud.parseDate(since) }
 
     var topModels: [ModelSpend] { Array(byModel.prefix(5)) }
 
@@ -1271,21 +1178,6 @@ struct YapCloudMonthlySpend: Decodable, Equatable {
         let n = Int64(calls)
         return (micros + n / 2) / n
     }
-
-    enum CodingKeys: String, CodingKey {
-        case totalMicros, totalUsd, byModel, since, creditMicros, creditUsd, paidMicros, paidUsd
-    }
-
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        totalMicros = try c.decodeMicros(.totalMicros, fallback: .totalUsd)
-        byModel = try c.decode([ModelSpend].self, forKey: .byModel)
-        since = try c.decodeIfPresent(String.self, forKey: .since).flatMap(YapCloud.parseDate)
-        creditMicros = c.contains(.creditMicros) || c.contains(.creditUsd)
-            ? try c.decodeMicros(.creditMicros, fallback: .creditUsd) : nil
-        paidMicros = c.contains(.paidMicros) || c.contains(.paidUsd)
-            ? try c.decodeMicros(.paidMicros, fallback: .paidUsd) : nil
-    }
 }
 
 struct YapCloudCatalog: Codable {
@@ -1313,9 +1205,11 @@ struct YapCloudModel: Codable, Hashable {
 
     var displayName: String { name ?? id }
     var isTranscription: Bool { architecture?.outputModalities?.contains("transcription") == true }
-    /// Models without architecture predate the contract's split; treat them as chat models.
-    var isChat: Bool { architecture?.outputModalities.map { $0.contains("text") } ?? true }
-    func price(_ key: String) -> Double? { pricing?[key]?.double }
+    var isChat: Bool { architecture?.outputModalities?.contains("text") == true }
+    /// Price per 1M units (tokens) of `key` in micros, from the JSON number's text via Decimal (no Double math).
+    func pricePerMillionMicros(_ key: String) -> Int64? {
+        pricing?[key].flatMap { YapCloud.micros(fromDecimal: $0.string, times: 1_000_000) }
+    }
 }
 
 struct YapCloudConfigDocument: Equatable {
@@ -1329,10 +1223,12 @@ struct YapCloudConfigDocument: Equatable {
         self.init(object: object, etag: etag)
     }
 
-    /// 409 bodies carry the current document either at the top level or under `current`.
+    /// A 409 body: `{error, current:{version, updatedAt, config}|null}`.
     init?(conflictBody: Data) {
-        guard let object = try? JSONSerialization.jsonObject(with: conflictBody) as? [String: Any] else { return nil }
-        self.init(object: (object["current"] as? [String: Any]) ?? object, etag: nil)
+        guard let object = try? JSONSerialization.jsonObject(with: conflictBody) as? [String: Any],
+            let current = object["current"] as? [String: Any]
+        else { return nil }
+        self.init(object: current, etag: nil)
     }
 
     private init?(object: [String: Any], etag: String?) {
@@ -1375,33 +1271,27 @@ struct YapCloudConfigDocument: Equatable {
                 status: 409, body: json(#"{"error":{"code":"VERSION_CONFLICT"},"current":{"version":7,"config":{"a":1}}}"#),
                 authenticated: true)
             assert(conflict == .versionConflict(current: YapCloudConfigDocument(body: json(#"{"version":"7","config":{"a":1}}"#), etag: nil)))
+            assert(YapCloudError(status: 409, body: json(#"{"error":{"code":"VERSION_CONFLICT"},"current":null}"#), authenticated: true)
+                == .versionConflict(current: nil))
 
-            // Decoding: numbers as numbers or strings
-            func me(_ body: String) -> Int64? { try? JSONDecoder().decode(YapCloudMe.self, from: json(body)).balanceMicros }
-            assert(me(#"{"id":3,"email":"a@b.c","balanceUsd":"12.50"}"#) == 12_500_000)
-            assert(me(#"{"id":"u","email":"a@b.c","balanceUsd":"12.50","balanceMicros":12500001}"#) == 12_500_001)
-            assert(me(#"{"id":"u","email":"a@b.c","balanceUsd":0}"#) == 0)
-            assert(me(#"{"id":"u","email":"a@b.c","balanceUsd":9.9979}"#) == 9_997_900)
-            assert(me(#"{"id":"u","email":"a@b.c","balanceUsd":"-0.0000210000"}"#) == -21)
-            assert(me(#"{"id":"u","email":"a@b.c","balanceUsd":"abc"}"#) == nil)
-            assert(micros(fromDecimal: "0.0000005") == 1 && micros(fromDecimal: "1.1e-07") == 0)
+            // Decoding (the shapes paygate sends: integer *Micros, string ids)
             let ledger = try! JSONDecoder().decode(
                 YapCloudLedger.self,
-                from: json(#"{"entries":[{"id":"u1","kind":"usage","amountUsd":-0.0021,"model":"m","createdAt":"2026-09-25T10:00:00.123Z","meta":{}}]}"#))
-            assert(ledger.entries[0].amountMicros == -2_100 && ledger.entries[0].createdDate != nil)
+                from: json(#"{"entries":[{"id":"21","kind":"usage","amountUsd":"-0.000048","amountMicros":-48,"model":"m","createdAt":"2026-09-25T10:00:00.123Z","meta":{}}]}"#))
+            assert(ledger.entries[0].amountMicros == -48 && ledger.entries[0].createdDate != nil)
+            assert(micros(fromDecimal: "0.0000005") == 1 && micros(fromDecimal: "1.1e-07") == 0)
             let catalog = try! JSONDecoder().decode(
                 YapCloudCatalog.self,
                 from: json(#"""
                     {"markup":0.1,"models":[
-                     {"id":"microsoft/mai-transcribe-2","name":"MAI","architecture":{"input_modalities":["audio"],"output_modalities":["transcription"]},"pricing":{"prompt":"0","completion":"0","audio":"0.0000275"}},
-                     {"id":"deepseek/deepseek-v4.1-flash","architecture":{"input_modalities":["text"],"output_modalities":["text"]},"pricing":{"prompt":0.00000011,"completion":"0.00000044"}},
-                     {"id":"legacy","pricing":{"prompt":"1"}}]}
+                     {"id":"microsoft/mai-transcribe-2","name":"MAI","architecture":{"input_modalities":["audio"],"output_modalities":["transcription"]},"pricing":{"prompt":0.11,"completion":0}},
+                     {"id":"deepseek/deepseek-v4.1-flash","architecture":{"input_modalities":["text"],"output_modalities":["text"]},"pricing":{"prompt":1.089e-07,"completion":6.6e-07}}]}
                     """#))
-            assert(catalog.markup?.double == 0.1)
-            assert(catalog.models.map(\.isTranscription) == [true, false, false])
-            assert(catalog.models.map(\.isChat) == [false, true, true])
-            assert(catalog.models[0].price("audio") == 0.0000275 && catalog.models[1].price("prompt") == 0.00000011)
-            assert(catalog.models[1].displayName == "deepseek/deepseek-v4.1-flash" && catalog.models[2].price("audio") == nil)
+            assert(catalog.markup != nil)
+            assert(catalog.models.map(\.isTranscription) == [true, false] && catalog.models.map(\.isChat) == [false, true])
+            assert(catalog.models[1].displayName == "deepseek/deepseek-v4.1-flash")
+            assert(catalog.models[1].pricePerMillionMicros("prompt") == 108_900 && catalog.models[1].pricePerMillionMicros("x") == nil)
+            assert(formatUSD(micros: catalog.models[1].pricePerMillionMicros("completion")!) == "$0.66")
 
             // Config document
             let doc = YapCloudConfigDocument(body: json(#"{"version":2,"updatedAt":"x","config":{"b":1,"a":2}}"#), etag: #""5""#)
@@ -1441,16 +1331,12 @@ struct YapCloudConfigDocument: Equatable {
             let usage = try! JSONDecoder().decode(
                 YapCloudMonthlySpend.self,
                 from: json(#"""
-                    {"since":"2026-09-01T00:00:00.000Z","until":"x","totalMicros":193,"totalUsd":"0.000193","byModel":[
+                    {"since":"2026-09-01T00:00:00.000Z","until":"x","totalMicros":193,"totalUsd":"0.000193","creditMicros":0,"paidMicros":193,"byModel":[
                      {"model":"a","micros":100,"usd":"0.000100","calls":2},{"model":null,"micros":50,"usd":"0.000050","calls":1},
                      {"model":"c","micros":20,"calls":1},{"model":"d","micros":10,"calls":1},{"model":"e","micros":8,"calls":1},
-                     {"model":"f","usd":"0.000005","calls":1}]}
+                     {"model":"f","micros":5,"calls":1}]}
                     """#))
-            assert(usage.since == parseDate("2026-09-01T00:00:00.000Z") && usage.creditMicros == nil)
-            let split = try! JSONDecoder().decode(
-                YapCloudMonthlySpend.self,
-                from: json(#"{"totalMicros":300,"creditMicros":200,"creditUsd":"0.000200","paidUsd":"0.000100","byModel":[]}"#))
-            assert(split.creditMicros == 200 && split.paidMicros == 100)
+            assert(usage.sinceDate == parseDate("2026-09-01T00:00:00.000Z") && usage.creditMicros == 0 && usage.paidMicros == 193)
             let receipts = try! JSONDecoder().decode(
                 YapCloudLedger.self,
                 from: json(#"""
@@ -1462,14 +1348,14 @@ struct YapCloudConfigDocument: Equatable {
             assert(usage.totalMicros == 193 && usage.byModel.count == 6 && usage.topModels.count == 5)
             assert(usage.byModel[0] == .init(model: "a", micros: 100, calls: 2) && usage.byModel[1].model == nil)
             assert(usage.byModel[5].micros == 5)
-            assert(try! JSONDecoder().decode(YapCloudMonthlySpend.self, from: json(#"{"totalMicros":0,"byModel":[]}"#)).topModels.isEmpty)
+            assert(try! JSONDecoder().decode(
+                YapCloudMonthlySpend.self, from: json(#"{"since":"x","totalMicros":0,"creditMicros":0,"paidMicros":0,"byModel":[]}"#)
+            ).topModels.isEmpty)
 
             // Monthly cap (fake /v1/me and 402 bodies until paygate ships it)
-            let noCapField = try! JSONDecoder().decode(YapCloudMe.self, from: json(#"{"id":"u","email":"a@b.c","balanceMicros":5}"#))
-            assert(!noCapField.supportsMonthlyCap && noCapField.monthlyCapMicros == nil && !noCapField.isAtMonthlyCap)
             let uncapped = try! JSONDecoder().decode(
                 YapCloudMe.self, from: json(#"{"id":"u","email":"a@b.c","balanceMicros":5,"monthlyCapMicros":null,"monthSpentMicros":900}"#))
-            assert(uncapped.supportsMonthlyCap && uncapped.monthlyCapMicros == nil && !uncapped.isAtMonthlyCap)
+            assert(uncapped.monthlyCapMicros == nil && !uncapped.isAtMonthlyCap)
             let capped = try! JSONDecoder().decode(
                 YapCloudMe.self,
                 from: json(#"{"id":"u","email":"a@b.c","balanceMicros":5,"monthlyCapMicros":5000000,"monthSpentMicros":5000000}"#))
@@ -1496,12 +1382,11 @@ struct YapCloudConfigDocument: Equatable {
                 [{"id":"d1","deviceName":"Jackson's MacBook Pro","createdAt":"2026-09-01T10:00:00.000Z","lastUsedAt":"2026-09-25T09:00:00Z","current":true},
                  {"id":7,"deviceName":null,"createdAt":"2026-08-01T10:00:00Z","lastUsedAt":null,"current":false}]
                 """#
-            let devices = try! YapCloudDevice.decodeList(json(devicesJSON))
+            let devices = try! JSONDecoder().decode([YapCloudDevice].self, from: json(devicesJSON))
             assert(devices.count == 2 && devices[0].current && !devices[1].current)
             assert(devices[1].id.string == "7" && devices[1].deviceName == nil)
             assert(devices[0].lastUsedDate == parseDate("2026-09-25T09:00:00Z"))
             assert(devices[1].lastUsedDate == parseDate("2026-08-01T10:00:00Z"))
-            assert(try! YapCloudDevice.decodeList(json(#"{"devices":\#(devicesJSON)}"#)) == devices)
 
             // Sign-up credit: a recent positive credit row only
             let credits = try! JSONDecoder().decode(
@@ -1553,14 +1438,9 @@ struct YapCloudConfigDocument: Equatable {
                 [GenerationCharge].self,
                 from: json(#"""
                     [{"generationId":"gen-2","amountMicros":-48,"amountUsd":"-0.000048","model":"m","createdAt":"2026-09-25T23:33:00.183Z"},
-                     {"generationId":"gen-stt-1","amountUsd":"-0.000031","model":"m","createdAt":"2026-09-25T23:32:59.635Z"}]
+                     {"generationId":"gen-stt-1","amountMicros":-31,"amountUsd":"-0.000031","model":"m","createdAt":"2026-09-25T23:32:59.635Z"}]
                     """#))
             assert(charged.map(\.generationId) == ["gen-2", "gen-stt-1"] && charged.map(\.amountMicros) == [-48, -31])
-            let metaRow = try! JSONDecoder().decode(
-                YapCloudLedger.self,
-                from: json(#"{"entries":[{"id":"9","kind":"usage","amountMicros":-92,"createdAt":"2026-09-25T10:00:00Z","meta":{"generationId":"gen-stt-1"}}]}"#)
-            ).entries
-            assert(metaRow[0].generationId == "gen-stt-1")
             let collector = GenerationCollector()
             $generationCollector.withValue(collector) { generationCollector?.add("gen-a") }
             assert(collector.last == "gen-a" && generationCollector == nil)
@@ -1577,6 +1457,8 @@ struct YapCloudConfigDocument: Equatable {
             let expired = YapCloudError(status: 401, body: json(#"{"error":{"code":"TOKEN_EXPIRED","message":"x"}}"#), authenticated: true)
             assert(expired == .sessionExpired && expired.isAuthFailure && YapCloudError.notSignedIn.isAuthFailure)
             assert(!YapCloudError.insufficientBalance.isAuthFailure)
+            assert(YapCloudError.sessionExpired.recoveryAction != nil && YapCloudError.monthlyCapReached.recoveryAction != nil)
+            assert(YapCloudError.unreachable.recoveryAction == nil && YapCloudError.recordingTooLong.recoveryAction == nil)
             // OpenRouter's own errors pass through with a numeric code
             let passthrough = YapCloudError(status: 400, body: json(#"{"error":{"code":400,"message":"bad model"}}"#), authenticated: true)
             assert(passthrough == .server(status: 400, code: "400", message: "bad model"))
