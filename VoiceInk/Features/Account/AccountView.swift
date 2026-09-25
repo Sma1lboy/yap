@@ -24,7 +24,7 @@ struct AccountView: View {
         Form {
             if cloud.isUnreachable {
                 Section {
-                    Label("Yap Cloud is temporarily unreachable.", systemImage: "wifi.exclamationmark")
+                    Label("Yap Cloud is temporarily unavailable. Try again shortly.", systemImage: "wifi.exclamationmark")
                         .foregroundStyle(AppTheme.Status.warningStrong)
                 }
             }
