@@ -260,7 +260,7 @@ final class OnboardingCoordinator: ObservableObject {
         ]
 
         let supportedProviders = AIProvider.allCases.filter { provider in
-            provider.supportsEnhancement && provider.requiresAPIKey && provider != .custom
+            provider.supportsEnhancement && provider.requiresAPIKey && provider != .custom && provider != .yapCloud
         }
 
         return supportedProviders.sorted { first, second in
@@ -285,7 +285,7 @@ final class OnboardingCoordinator: ObservableObject {
             "Speechmatics", "xAI", "Mistral", "Groq", "Gemini",
         ]
 
-        return CloudProviderRegistry.allProviders.sorted { first, second in
+        return CloudProviderRegistry.allProviders.filter { $0.modelProvider != .yapCloud }.sorted { first, second in
             let firstIndex = preferredOrder.firstIndex(of: first.providerKey) ?? Int.max
             let secondIndex = preferredOrder.firstIndex(of: second.providerKey) ?? Int.max
             if firstIndex != secondIndex { return firstIndex < secondIndex }
@@ -308,6 +308,9 @@ final class OnboardingCoordinator: ObservableObject {
         case .recommended:
             return CloudProviderRegistry.provider(for: .openRouter)?.models
                 .first { $0.name == RecommendedSetup.transcriptionModel }
+        case .yapCloud:
+            let models = YapCloudProvider().models
+            return models.first { $0.name == RecommendedSetup.transcriptionModel } ?? models.first
         case .local:
             return requiredTranscriptionModel
         case .cloud:
@@ -373,8 +376,9 @@ final class OnboardingCoordinator: ObservableObject {
     }
 
     var selectedOnboardingProvider: AIProvider {
+        // Yap Cloud is only reachable through its own setup kind, not the API key step's list.
         if let storedProvider = AIProvider(rawValue: storedOnboardingAIProvider),
-            onboardingProviderOptions.contains(storedProvider)
+            storedProvider == .yapCloud || onboardingProviderOptions.contains(storedProvider)
         {
             return storedProvider
         }
@@ -427,6 +431,8 @@ final class OnboardingCoordinator: ObservableObject {
         switch transcriptionSetupKind {
         case .recommended:
             return APIKeyManager.shared.hasAPIKey(forProvider: AIProvider.openRouter.rawValue)
+        case .yapCloud:
+            return YapCloud.shared.token != nil && selectedOnboardingTranscriptionModel != nil
         case .local:
             return isTranscriptionModelDownloaded
         case .cloud:
@@ -480,6 +486,7 @@ enum OnboardingStorageKeys {
 
 enum OnboardingTranscriptionSetupKind: String, CaseIterable, Identifiable {
     case recommended
+    case yapCloud
     case cloud
     case local
 
@@ -489,6 +496,8 @@ enum OnboardingTranscriptionSetupKind: String, CaseIterable, Identifiable {
         switch self {
         case .recommended:
             return "Recommended"
+        case .yapCloud:
+            return "Yap Cloud"
         case .local:
             return "Local"
         case .cloud:

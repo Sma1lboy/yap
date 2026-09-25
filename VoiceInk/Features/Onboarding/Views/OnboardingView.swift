@@ -89,6 +89,9 @@ struct OnboardingView: View {
                                 enhancementService: enhancementService
                             )
                         },
+                        onContinueYapCloud: {
+                            await coordinator.flow.applyYapCloudSetup(enhancementService: enhancementService)
+                        },
                         onRequestSkip: coordinator.flow.requestSkipTranscriptionSetup,
                         onConfirmSkip: coordinator.flow.skipTranscriptionSetupAndContinue
                     )

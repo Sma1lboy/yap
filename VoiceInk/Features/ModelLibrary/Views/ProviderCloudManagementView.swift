@@ -25,7 +25,8 @@ struct CloudProviderManagementView: View {
             )
         }
 
-        for cloudProvider in CloudProviderRegistry.allProviders {
+        // Yap Cloud has no key to paste; it is managed from Account.
+        for cloudProvider in CloudProviderRegistry.allProviders where cloudProvider.modelProvider != .yapCloud {
             let alreadyIncluded = descriptors.contains {
                 $0.providerKey.caseInsensitiveCompare(cloudProvider.providerKey) == .orderedSame
             }

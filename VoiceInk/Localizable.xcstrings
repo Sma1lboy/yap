@@ -22603,6 +22603,28 @@
         }
       }
     },
+    "Same models as Recommended, no API key: sign in with your email and top up a balance. Each dictation is charged at cost plus a small markup." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieselben Modelle wie bei „Empfohlen“, ohne API-Schlüssel: Melde dich mit deiner E-Mail an und lade Guthaben auf. Jedes Diktat wird zum Selbstkostenpreis plus kleinem Aufschlag berechnet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les mêmes modèles que Recommandé, sans clé API : connectez-vous avec votre e-mail et rechargez un solde. Chaque dictée est facturée au coût réel plus une petite marge."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型和「推荐」一样,但不需要 API key:用邮箱登录、充值余额即可。每次听写按实际成本加少量加价扣费。"
+          }
+        }
+      }
+    },
     "Sample text" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -24221,6 +24243,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "退出登录"
+          }
+        }
+      }
+    },
+    "Sign in to Yap Cloud to continue." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Melde dich bei Yap Cloud an, um fortzufahren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connectez-vous à Yap Cloud pour continuer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先登录 Yap Cloud 再继续。"
+          }
+        }
+      }
+    },
+    "Signed in as %@. Add funds anytime under Account." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Angemeldet als %@. Guthaben kannst du jederzeit unter „Konto“ aufladen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecté en tant que %@. Ajoutez des fonds à tout moment dans Compte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已登录:%@。随时可以在「账户」里充值。"
           }
         }
       }
@@ -28196,6 +28262,28 @@
         }
       }
     },
+    "Use Yap Cloud (pay as you go)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud verwenden (nutzungsbasiert)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser Yap Cloud (paiement à l'usage)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 Yap Cloud(按量付费)"
+          }
+        }
+      }
+    },
     "Use Yap now." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -29590,6 +29678,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap Cloud"
+          }
+        }
+      }
+    },
+    "Yap Cloud has no transcription models available right now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud hat gerade keine Transkriptionsmodelle verfügbar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud n'a aucun modèle de transcription disponible pour le moment."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 暂时没有可用的转写模型。"
           }
         }
       }

@@ -19,6 +19,8 @@ struct OnboardingModelScreen: View {
     let onContinue: () -> Void
     /// Verifies/saves the key (nil = use the stored one) and applies the preset; returns an error to show.
     let onContinueRecommended: (String?) async -> String?
+    /// Applies the Yap Cloud preset for the signed-in account; returns an error to show.
+    let onContinueYapCloud: () async -> String?
     let onRequestSkip: () -> Void
     let onConfirmSkip: () -> Void
 
@@ -34,6 +36,8 @@ struct OnboardingModelScreen: View {
         switch setupKind {
         case .recommended:
             return (isSetupReady || !trimmedRecommendedKey.isEmpty) && !isApplyingRecommended
+        case .yapCloud:
+            return isSetupReady && !isApplyingRecommended
         case .local:
             return isSetupReady && !isLocalDownloading
         case .cloud:
@@ -42,12 +46,14 @@ struct OnboardingModelScreen: View {
     }
 
     private func continueTapped() {
-        guard setupKind == .recommended else { return onContinue() }
+        guard setupKind == .recommended || setupKind == .yapCloud else { return onContinue() }
         let key = trimmedRecommendedKey
         isApplyingRecommended = true
         recommendedError = nil
         Task {
-            let error = await onContinueRecommended(key.isEmpty ? nil : key)
+            let error = setupKind == .yapCloud
+                ? await onContinueYapCloud()
+                : await onContinueRecommended(key.isEmpty ? nil : key)
             isApplyingRecommended = false
             recommendedError = error
             if error == nil { recommendedAPIKey = "" }
