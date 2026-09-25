@@ -66,7 +66,7 @@ struct CustomModelBackup: Codable {
     }
 }
 
-struct GeneralBackup: Codable {
+struct GeneralBackup: Codable, Equatable {
     let primaryRecordingShortcut: ShortcutBackup?
     let secondaryRecordingShortcut: ShortcutBackup?
     let pasteLastTranscriptionShortcut: ShortcutBackup?

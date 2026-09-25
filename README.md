@@ -46,6 +46,19 @@ Yap reads `~/.config/yap/config.json` (or `$XDG_CONFIG_HOME/yap/config.json`) at
 | `enhancement` | Cleanup provider/model for modes that have enhancement on. `prompt` is a file next to the config (or an absolute path) or the prompt text itself; `"recommended"` uses the prompt bundled with the app. It becomes the default mode's prompt. |
 | `defaultMode` | Which extra context the default mode sends to the model. All off keeps dictation fast and private. |
 
+Schema v2 (`"version": 2`) adds whole-settings sections. They use the same JSON shapes as Settings → Backup → Export, so an exported file's sections can be pasted in. A file without `version` is v1 and reads exactly as before.
+
+| Field (v2) | Meaning |
+|---|---|
+| `version` | `2`. Omitted means v1. |
+| `modes` | Array of modes, same objects as `modeConfigs` in an export. Replaces all modes. |
+| `modeShortcuts` | `{ "<mode id>": <shortcut> }`, same as the export's `modeShortcuts`. Ids not in `modes` are ignored. |
+| `prompts` | Array of `{ id, title, promptText, useSystemInstructions }`. Replaces all custom prompts. |
+| `dictionary` | `{ "vocabulary": ["Yap"], "replacements": { "yep": "Yap" } }`. Merged into the existing dictionary. |
+| `general` | Same object as the export's `generalSettings`: global shortcuts, launch at login, recorder style, retention, paste and auto-learn settings. |
+
+v2 sections apply first, then the v1 fields on top, so `enhancement.prompt` and `defaultMode` win over the same settings inside `modes`. Empty arrays and objects count as unset. API keys are only ever read from `keys` (`env:NAME` or literal); custom model definitions are not part of the config because they can carry keys.
+
 Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription `microsoft/mai-transcribe-2` (80/82, $0.10/h), cleanup `deepseek/deepseek-v4.1-flash` (9/9 cases, ~0.5 s). Onboarding's "Recommended" option applies exactly this setup with one OpenRouter key. Re-run `setup/bench.py` after editing `VoiceInk/Resources/RecommendedPrompt.md`.
 
 ## Releasing

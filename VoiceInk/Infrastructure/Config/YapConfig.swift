@@ -1,6 +1,7 @@
 import Foundation
 
-/// Schema v1 of `~/.config/yap/config.json`. Every field is optional; empty strings count as unset.
+/// `~/.config/yap/config.json`. Every field is optional; empty strings, arrays and objects count as unset.
+/// v2 adds whole-settings sections that reuse the backup export types, so both files share one JSON shape.
 struct YapConfig: Codable, Equatable {
     struct Transcription: Codable, Equatable {
         var provider: String?
@@ -21,10 +22,42 @@ struct YapConfig: Codable, Equatable {
         var selectedTextContext: Bool?
     }
 
+    struct DictionarySection: Codable, Equatable {
+        var vocabulary: [String]?
+        var replacements: [String: String]?
+    }
+
     var keys: [String: String]?
     var transcription: Transcription?
     var enhancement: Enhancement?
     var defaultMode: DefaultMode?
+
+    // v2
+    var version: Int?
+    var modes: [ModeConfig]?
+    var modeShortcuts: [String: ShortcutBackup]?
+    var prompts: [CustomPrompt]?
+    var dictionary: DictionarySection?
+    var general: GeneralBackup?
+
+    var hasSections: Bool {
+        modes != nil || prompts != nil || dictionary != nil || general != nil
+    }
+
+    /// The v2 sections as a backup file plus the categories present, for `BackupImporter`.
+    var backupSections: (file: BackupFile, categories: [BackupCategory])? {
+        guard hasSections else { return nil }
+        let categories: [BackupCategory] = [
+            prompts.map { _ in .prompts }, modes.map { _ in .modes }, dictionary.map { _ in .dictionary },
+            general.map { _ in .general },
+        ].compactMap { $0 }
+        let file = BackupFile(
+            version: "config-v\(version ?? 1)", customPrompts: prompts ?? [], modeConfigs: modes ?? [],
+            modeShortcuts: modeShortcuts, vocabularyWords: dictionary?.vocabulary?.map(WordBackup.init(word:)),
+            wordReplacements: dictionary?.replacements, generalSettings: general, customEmojis: nil,
+            customCloudModels: nil)
+        return (file, categories)
+    }
 
     static let promptID = UUID(uuidString: "A1B2C3D4-0000-4000-8000-00000000C0DE")!
 
@@ -66,6 +99,15 @@ struct YapConfig: Codable, Equatable {
             config.enhancement = enhancement == Enhancement() ? nil : enhancement
         }
         if config.defaultMode == DefaultMode() { config.defaultMode = nil }
+        if config.modes?.isEmpty == true { config.modes = nil }
+        if config.modeShortcuts?.isEmpty == true { config.modeShortcuts = nil }
+        if config.prompts?.isEmpty == true { config.prompts = nil }
+        if var dictionary = config.dictionary {
+            dictionary.vocabulary = dictionary.vocabulary?.compactMap(\.nonEmpty)
+            if dictionary.vocabulary?.isEmpty == true { dictionary.vocabulary = nil }
+            if dictionary.replacements?.isEmpty == true { dictionary.replacements = nil }
+            config.dictionary = dictionary == DictionarySection() ? nil : dictionary
+        }
         return config
     }
 
@@ -158,6 +200,37 @@ extension String {
             } catch {
                 assert(describe(error).hasPrefix("enhancement.enabled:"))
             }
+
+            // v1 files read the same and carry no sections.
+            let v1 = try? decode(Data(#"{"keys":{"openrouter":"env:K"},"defaultMode":{"screenContext":true}}"#.utf8))
+            assert(v1?.keys == ["openrouter": "env:K"] && v1?.defaultMode?.screenContext == true)
+            assert(v1?.version == nil && v1?.hasSections == false && v1?.backupSections == nil)
+
+            let modeID = "11111111-1111-4111-8111-111111111111"
+            let v2Text = """
+                {
+                  "version": 2,
+                  "enhancement": { "prompt": "Fix grammar." },
+                  "modes": [{ "id": "\(modeID)", "name": "Email", "isAIEnhancementEnabled": true, "isDefault": true }],
+                  "modeShortcuts": { "\(modeID)": { "kind": "key", "keyCode": 0, "modifierFlagsRawValue": 1048576 } },
+                  "prompts": [{ "id": "22222222-2222-4222-8222-222222222222", "title": "T", "promptText": "P" }],
+                  "dictionary": { "vocabulary": ["Yap", " "], "replacements": {} },
+                  "general": { "isMenuBarOnly": true, "recorderType": "notch" }
+                }
+                """
+            guard let v2 = try? decode(Data(v2Text.utf8)) else { return assertionFailure("v2 should decode") }
+            assert(v2.version == 2 && v2.enhancement?.prompt == "Fix grammar.")
+            assert(v2.modes?.first?.name == "Email" && v2.modes?.first?.isDefault == true)
+            assert(v2.modeShortcuts?[modeID]?.shortcut.keyCode == 0)
+            assert(v2.prompts?.first?.useSystemInstructions == true)
+            assert(v2.dictionary == DictionarySection(vocabulary: ["Yap"], replacements: nil))
+            assert(v2.general?.isMenuBarOnly == true && v2.general?.recorderType == "notch")
+            let sections = v2.backupSections
+            assert(sections?.categories == [.prompts, .modes, .dictionary, .general])
+            assert(sections?.file.vocabularyWords?.map(\.word) == ["Yap"] && sections?.file.modeShortcuts?.count == 1)
+
+            let empty = try? decode(Data(#"{"version":2,"modes":[],"prompts":[],"dictionary":{"vocabulary":[]}}"#.utf8))
+            assert(empty?.hasSections == false)
         }
     }
 #endif

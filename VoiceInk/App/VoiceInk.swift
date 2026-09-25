@@ -149,15 +149,6 @@ struct VoiceInkApp: App {
         whisperModelManager.loadAvailableModels()
         transcriptionModelManager.refreshAllAvailableModels()
         transcriptionModelManager.loadCurrentTranscriptionModel()
-        YapConfigLoader.shared.attach(
-            aiService: aiService,
-            enhancementService: enhancementService,
-            transcriptionModelManager: transcriptionModelManager
-        )
-        Task { @MainActor in
-            await YapConfigLoader.shared.resolveRemoteSelections()
-        }
-
         _whisperModelManager = State(initialValue: whisperModelManager)
         _fluidAudioModelManager = State(initialValue: fluidAudioModelManager)
         _transcriptionModelManager = StateObject(wrappedValue: transcriptionModelManager)
@@ -171,6 +162,19 @@ struct VoiceInkApp: App {
         let menuBarManager = MenuBarManager()
         _menuBarManager = StateObject(wrappedValue: menuBarManager)
         menuBarManager.configure(engine: engine)
+
+        YapConfigLoader.shared.attach(
+            aiService: aiService,
+            enhancementService: enhancementService,
+            transcriptionModelManager: transcriptionModelManager,
+            recordingShortcutManager: recordingShortcutManager,
+            menuBarManager: menuBarManager,
+            recorderUIManager: recorderUIManager,
+            modelContext: resolvedContainer.mainContext
+        )
+        Task { @MainActor in
+            await YapConfigLoader.shared.finishLaunch()
+        }
 
         let activeWindowService = ActiveWindowService.shared
         _activeWindowService = StateObject(wrappedValue: activeWindowService)

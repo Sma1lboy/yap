@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import SwiftData
 import os
 
 /// The mode changes a config file asks for. Pure so it can be checked without UserDefaults.
@@ -62,6 +63,10 @@ final class YapConfigLoader: ObservableObject {
     private weak var aiService: AIService?
     private weak var enhancementService: AIEnhancementService?
     private weak var transcriptionModelManager: TranscriptionModelManager?
+    private weak var recordingShortcutManager: RecordingShortcutManager?
+    private weak var menuBarManager: MenuBarManager?
+    private weak var recorderUIManager: RecorderUIManager?
+    private var modelContext: ModelContext?
     private var config: YapConfig?
     private let defaults = UserDefaults.standard
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "YapConfig")
@@ -73,11 +78,26 @@ final class YapConfigLoader: ObservableObject {
 
     func attach(
         aiService: AIService, enhancementService: AIEnhancementService,
-        transcriptionModelManager: TranscriptionModelManager
+        transcriptionModelManager: TranscriptionModelManager, recordingShortcutManager: RecordingShortcutManager,
+        menuBarManager: MenuBarManager, recorderUIManager: RecorderUIManager, modelContext: ModelContext
     ) {
         self.aiService = aiService
         self.enhancementService = enhancementService
         self.transcriptionModelManager = transcriptionModelManager
+        self.recordingShortcutManager = recordingShortcutManager
+        self.menuBarManager = menuBarManager
+        self.recorderUIManager = recorderUIManager
+        self.modelContext = modelContext
+    }
+
+    /// Second half of launch, once services are attached: v2 sections need them, so they apply here
+    /// (after onboarding, like the mode patch), then the v1 fields again on top.
+    func finishLaunch() async {
+        if let config, config.hasSections, defaults.bool(forKey: OnboardingSettings.completedV2Key) {
+            let sections = await applySections(config)
+            apply(config, source: .file, live: true, patchModes: true, sections: sections)
+        }
+        await resolveRemoteSelections()
     }
 
     /// Launch path: writes keys and UserDefaults before services read them at init.
@@ -136,7 +156,8 @@ final class YapConfigLoader: ObservableObject {
     /// Live path for the Settings button and onboarding completion: also updates in-memory service state.
     func reload() async {
         guard let config = load() else { return }
-        apply(config, source: .file, live: true, patchModes: true)
+        let sections = await applySections(config)
+        apply(config, source: .file, live: true, patchModes: true, sections: sections)
         await resolveRemoteSelections()
     }
 
@@ -187,9 +208,36 @@ final class YapConfigLoader: ObservableObject {
 
     // MARK: - Applying
 
-    private func apply(_ config: YapConfig, source: Source, live: Bool, patchModes: Bool) {
-        var applied: [String] = []
-        var skipped: [String] = []
+    /// Imports the v2 sections through the backup importer, one category at a time so one failure doesn't
+    /// block the rest. Returns (applied, skipped) section names for the status line.
+    private func applySections(_ config: YapConfig) async -> (applied: [String], skipped: [String]) {
+        guard let (file, categories) = config.backupSections else { return ([], []) }
+        guard let enhancementService, let recordingShortcutManager, let menuBarManager, let recorderUIManager,
+            let modelContext, let transcriptionModelManager
+        else { return ([], categories.map(\.rawValue)) }
+        var result: (applied: [String], skipped: [String]) = ([], [])
+        for category in categories {
+            do {
+                try await BackupImporter.apply(
+                    file, categories: [category], enhancementService: enhancementService,
+                    recordingShortcutManager: recordingShortcutManager, menuBarManager: menuBarManager,
+                    mediaController: .shared, playbackController: .shared, recorderUIManager: recorderUIManager,
+                    modelContext: modelContext, transcriptionModelManager: transcriptionModelManager)
+                result.applied.append(category.rawValue)
+            } catch {
+                logger.error("config.json \(category.rawValue, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                result.skipped.append(category.rawValue)
+            }
+        }
+        return result
+    }
+
+    private func apply(
+        _ config: YapConfig, source: Source, live: Bool, patchModes: Bool,
+        sections: (applied: [String], skipped: [String]) = ([], [])
+    ) {
+        var applied = sections.applied
+        var skipped = sections.skipped
 
         // Keys
         var keysChanged = false
