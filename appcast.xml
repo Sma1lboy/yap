@@ -1,7 +1,16 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
         <title>Yap</title>
         <link>https://github.com/Sma1lboy/yap</link>
+        <item>
+            <title>Yap 1.0.0</title>
+            <pubDate>Fri, 25 Sep 2026 05:49:36 GMT</pubDate>
+            <sparkle:version>1005</sparkle:version>
+            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.0.0</link>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.0.0/Yap.zip" sparkle:edSignature="/CeumSi+lIDrLODZo8LYzw+reeWWcAADav3kopYJcu1uEA6qTV7xztgZPgrVBCRx8NL9zNjwzMqH9vUki+htAA==" length="45048163" type="application/octet-stream" />
+        </item>
     </channel>
 </rss>
