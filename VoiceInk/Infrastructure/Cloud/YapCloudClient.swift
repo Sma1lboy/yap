@@ -356,7 +356,11 @@ final class YapCloud: ObservableObject {
     @MainActor
     func removeDevice(_ device: YapCloudDevice) async throws {
         let id = device.id.string.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed.subtracting(["/"])) ?? ""
-        _ = try await send("DELETE", "/v1/me/devices/\(id)")
+        do {
+            _ = try await send("DELETE", "/v1/me/devices/\(id)")
+        } catch YapCloudError.server(_, let code, _, _, _) where code == "DEVICE_NOT_FOUND" {
+            // Already signed out elsewhere; the reload below drops it from the list.
+        }
         devices = try await fetchDevices()
     }
 
