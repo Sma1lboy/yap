@@ -1,6 +1,6 @@
 name: Build Yap
 
-# 推 v* tag 发 Release；手动触发只产出 artifact
+# 推 vX.Y.Z tag 发 Release + 更新 appcast/cask；手动触发只产出 artifact
 on:
   push:
     tags: ["v*"]
@@ -16,6 +16,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # tag 构建：MARKETING_VERSION 取 tag；手动触发：0.0.0-dev，不发布
+      # build 号 = 1000 + run_number，单调递增且大于上游的 220
+      - name: Version
+        run: |
+          BUILD=$((1000 + GITHUB_RUN_NUMBER))
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            if ! [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::tag $GITHUB_REF_NAME must match vX.Y.Z"; exit 1
+            fi
+            VERSION="${GITHUB_REF_NAME#v}"
+            RELEASE=true
+          else
+            VERSION="0.0.0-dev"
+            RELEASE=false
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "BUILD=$BUILD" >> "$GITHUB_ENV"
+          echo "RELEASE=$RELEASE" >> "$GITHUB_ENV"
+          echo "Yap $VERSION ($BUILD), release=$RELEASE"
+
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.6.app
 
@@ -29,8 +49,35 @@ jobs:
           path: ~/VoiceInk-Dependencies
           key: whisper-${{ runner.os }}-xcode26.6-v1
 
-      - name: Build (LOCAL_BUILD, ad-hoc signed)
-        run: make local LOCAL_CODESIGN_IDENTITY=-
+      # 自签证书：固定的 designated requirement 让 TCC 权限跨版本保留。
+      # 不受信任的自签证书 codesign 找不到，所以要装进 System keychain 并信任。
+      - name: Import signing certificate
+        env:
+          YAP_SIGNING_P12: ${{ secrets.YAP_SIGNING_P12 }}
+          YAP_SIGNING_PASSWORD: ${{ secrets.YAP_SIGNING_PASSWORD }}
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/yap-signing.keychain-db"
+          KC_PASS=$(openssl rand -hex 16)
+          echo "$YAP_SIGNING_P12" | base64 --decode > "$RUNNER_TEMP/yap.p12"
+          security create-keychain -p "$KC_PASS" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KC_PASS" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/yap.p12" -k "$KEYCHAIN" -P "$YAP_SIGNING_PASSWORD" -f pkcs12 -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KC_PASS" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          security find-certificate -c "Yap Self-Signed" -p "$KEYCHAIN" > "$RUNNER_TEMP/yap-cert.pem"
+          sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain "$RUNNER_TEMP/yap-cert.pem"
+          security find-identity -v -p codesigning | tee "$RUNNER_TEMP/identities.txt"
+          grep -q '"Yap Self-Signed"' "$RUNNER_TEMP/identities.txt"
+
+      - name: Build (LOCAL_BUILD, self-signed)
+        run: make local LOCAL_CODESIGN_IDENTITY="Yap Self-Signed" EXTRA_BUILD_SETTINGS="MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD"
+
+      - name: Verify signature
+        run: |
+          codesign --verify --deep --strict ~/Downloads/Yap.app
+          codesign -dr - ~/Downloads/Yap.app 2>&1 | tee "$RUNNER_TEMP/requirement.txt"
+          grep -q 'certificate leaf' "$RUNNER_TEMP/requirement.txt" || { echo "::error::designated requirement is not certificate-based"; exit 1; }
 
       - name: Package
         run: ditto -c -k --keepParent ~/Downloads/Yap.app Yap.zip
@@ -40,20 +87,40 @@ jobs:
           name: Yap
           path: Yap.zip
 
+      - name: Sparkle sign
+        if: env.RELEASE == 'true'
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/sparkle"
+          curl -fsSL https://github.com/sparkle-project/Sparkle/releases/download/2.9.2/Sparkle-2.9.2.tar.xz | tar -xJ -C "$RUNNER_TEMP/sparkle"
+          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$RUNNER_TEMP/ed.key"
+          SIGN=$("$RUNNER_TEMP/sparkle/bin/sign_update" --ed-key-file "$RUNNER_TEMP/ed.key" Yap.zip)
+          rm -f "$RUNNER_TEMP/ed.key"
+          echo "$SIGN"
+          echo "SPARKLE_SIGN=$SIGN" >> "$GITHUB_ENV"
+
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: env.RELEASE == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" Yap.zip --title "Yap $GITHUB_REF_NAME" --notes "Ad-hoc signed build of the Yap fork of VoiceInk (GPL-3.0). Install with setup/install.sh."
+        run: gh release create "$GITHUB_REF_NAME" Yap.zip --title "Yap $VERSION" --notes "Self-signed (not notarized) build of Yap, a fork of VoiceInk (GPL-3.0). Install with Homebrew (brew install --cask) or setup/install.sh; existing installs update in-app via Sparkle."
 
-      # 把 Homebrew cask 指到这个版本，各机器 brew upgrade 即可更新
-      - name: Bump cask
-        if: startsWith(github.ref, 'refs/tags/')
+      # appcast 和 Homebrew cask 同一个提交指到这个版本：app 内 Sparkle 更新，brew upgrade 也能更新
+      - name: Bump appcast and cask
+        if: env.RELEASE == 'true'
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
           SHA=$(shasum -a 256 Yap.zip | cut -d' ' -f1)
           git fetch origin main && git checkout main
+          python3 scripts/appcast.py appcast.xml "$VERSION" "$BUILD" "$SPARKLE_SIGN"
           sed -i '' -e "s/^  version \".*\"/  version \"$VERSION\"/" -e "s/^  sha256 .*/  sha256 \"$SHA\"/" Casks/yap.rb
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-          git commit -am "cask: yap $VERSION" && git push origin main
+          git add appcast.xml Casks/yap.rb
+          git commit -m "release: yap $VERSION (appcast + cask)" && git push origin main
+
+      - name: Clean up signing keychain
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/yap-signing.keychain-db" || true
+          rm -f "$RUNNER_TEMP/yap.p12" "$RUNNER_TEMP/ed.key"

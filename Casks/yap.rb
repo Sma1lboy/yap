@@ -12,7 +12,7 @@ cask "yap" do
 
   app "Yap.app"
 
-  # ad-hoc 签名，没有经过苹果公证：去掉隔离标记才能直接打开
+  # 自签名，没有经过苹果公证：去掉隔离标记才能直接打开；版本号和 sha256 由 CI 在打 tag 时更新
   postflight do
     system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{appdir}/Yap.app"]
   end

@@ -4,6 +4,8 @@ WHISPER_CPP_DIR := $(DEPS_DIR)/whisper.cpp
 FRAMEWORK_PATH := $(WHISPER_CPP_DIR)/build-apple/whisper.xcframework
 LOCAL_DERIVED_DATA := $(CURDIR)/.local-build
 LOCAL_CODESIGN_IDENTITY ?=
+# Extra xcodebuild settings for `local`, e.g. MARKETING_VERSION=1.0.0 CURRENT_PROJECT_VERSION=1042
+EXTRA_BUILD_SETTINGS ?=
 RUN_APP_NAME ?= VoiceInk
 
 .PHONY: all clean whisper setup build local check healthcheck help dev run
@@ -81,6 +83,7 @@ local: check setup
 		DEVELOPMENT_TEAM="" \
 		CODE_SIGN_ENTITLEMENTS="$(CURDIR)/VoiceInk/VoiceInk.local.entitlements" \
 		SWIFT_ACTIVE_COMPILATION_CONDITIONS='$$(inherited) LOCAL_BUILD' \
+		$(EXTRA_BUILD_SETTINGS) \
 		-skipPackagePluginValidation \
 		-skipMacroValidation \
 		build
