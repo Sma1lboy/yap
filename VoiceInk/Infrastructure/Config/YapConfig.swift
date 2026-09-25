@@ -44,16 +44,40 @@ struct YapConfig: Codable, Equatable {
         modes != nil || prompts != nil || dictionary != nil || general != nil
     }
 
-    /// The v2 sections as a backup file plus the categories present, for `BackupImporter`.
-    var backupSections: (file: BackupFile, categories: [BackupCategory])? {
+    static let currentVersion = 2
+
+    /// True when the file was written by a newer Yap; its unknown fields were ignored.
+    var isNewerVersion: Bool { (version ?? 1) > Self.currentVersion }
+
+    /// Items in `overrides` replace the item with the same id in `base` in place; new ids are appended.
+    static func mergedByID<T: Identifiable>(_ base: [T], _ overrides: [T]) -> [T] {
+        var result = base
+        for item in overrides {
+            if let index = result.firstIndex(where: { $0.id == item.id }) {
+                result[index] = item
+            } else {
+                result.append(item)
+            }
+        }
+        return result
+    }
+
+    /// The v2 sections as a backup file plus the categories present, for `BackupImporter`. The importer replaces
+    /// modes, prompts and mode shortcuts wholesale, so they are merged by id into the current ones here:
+    /// entries in the file win, entries only in the app stay.
+    func backupSections(
+        currentModes: [ModeConfig], currentPrompts: [CustomPrompt], currentModeShortcuts: [String: ShortcutBackup]
+    ) -> (file: BackupFile, categories: [BackupCategory])? {
         guard hasSections else { return nil }
         let categories: [BackupCategory] = [
             prompts.map { _ in .prompts }, modes.map { _ in .modes }, dictionary.map { _ in .dictionary },
             general.map { _ in .general },
         ].compactMap { $0 }
         let file = BackupFile(
-            version: "config-v\(version ?? 1)", customPrompts: prompts ?? [], modeConfigs: modes ?? [],
-            modeShortcuts: modeShortcuts, vocabularyWords: dictionary?.vocabulary?.map(WordBackup.init(word:)),
+            version: "config-v\(version ?? 1)",
+            customPrompts: Self.mergedByID(currentPrompts, prompts ?? []),
+            modeConfigs: Self.mergedByID(currentModes, modes ?? []),
+            modeShortcuts: currentModeShortcuts.merging(modeShortcuts ?? [:]) { $1 }, vocabularyWords: dictionary?.vocabulary?.map(WordBackup.init(word:)),
             wordReplacements: dictionary?.replacements, generalSettings: general, customEmojis: nil,
             customCloudModels: nil)
         return (file, categories)
@@ -176,6 +200,12 @@ extension String {
 
 #if DEBUG
     extension YapConfig {
+        private struct Tag: Identifiable, Equatable {
+            let id: Int
+            var value = ""
+            init(_ id: Int, _ value: String = "") { (self.id, self.value) = (id, value) }
+        }
+
         static func selfCheck() {
             let env = parseDotEnv("# c\nexport A=\"x y\"\nB='z'\nC=plain=eq\n\nD=")
             assert(env == ["A": "x y", "B": "z", "C": "plain=eq", "D": ""])
@@ -204,7 +234,8 @@ extension String {
             // v1 files read the same and carry no sections.
             let v1 = try? decode(Data(#"{"keys":{"openrouter":"env:K"},"defaultMode":{"screenContext":true}}"#.utf8))
             assert(v1?.keys == ["openrouter": "env:K"] && v1?.defaultMode?.screenContext == true)
-            assert(v1?.version == nil && v1?.hasSections == false && v1?.backupSections == nil)
+            assert(v1?.version == nil && v1?.hasSections == false && v1?.isNewerVersion == false)
+            assert(v1?.backupSections(currentModes: [], currentPrompts: [], currentModeShortcuts: [:]) == nil)
 
             let modeID = "11111111-1111-4111-8111-111111111111"
             let v2Text = """
@@ -225,9 +256,20 @@ extension String {
             assert(v2.prompts?.first?.useSystemInstructions == true)
             assert(v2.dictionary == DictionarySection(vocabulary: ["Yap"], replacements: nil))
             assert(v2.general?.isMenuBarOnly == true && v2.general?.recorderType == "notch")
-            let sections = v2.backupSections
+            // Merge by id: the file's "Email" replaces the app's mode with that id, "Local" and its shortcut stay.
+            let appEmail = ModeConfig(id: UUID(uuidString: modeID)!, name: "Old", isAIEnhancementEnabled: false)
+            let local = ModeConfig(name: "Local", isAIEnhancementEnabled: false)
+            let localShortcut = ShortcutBackup(Shortcut.key(keyCode: 1, modifierFlags: []))
+            let sections = v2.backupSections(
+                currentModes: [appEmail, local], currentPrompts: [],
+                currentModeShortcuts: [local.id.uuidString: localShortcut])
             assert(sections?.categories == [.prompts, .modes, .dictionary, .general])
-            assert(sections?.file.vocabularyWords?.map(\.word) == ["Yap"] && sections?.file.modeShortcuts?.count == 1)
+            assert(sections?.file.modeConfigs.map(\.name) == ["Email", "Local"])
+            assert(sections?.file.modeShortcuts?[local.id.uuidString] == localShortcut)
+            assert(sections?.file.modeShortcuts?[modeID]?.shortcut.keyCode == 0)
+            assert(sections?.file.vocabularyWords?.map(\.word) == ["Yap"] && sections?.file.customPrompts.count == 1)
+            assert(mergedByID([Tag(1), Tag(2)], [Tag(2, "b"), Tag(3)]) == [Tag(1), Tag(2, "b"), Tag(3)])
+            assert((try? decode(Data(#"{"version":3,"future":{}}"#.utf8)))?.isNewerVersion == true)
 
             let empty = try? decode(Data(#"{"version":2,"modes":[],"prompts":[],"dictionary":{"vocabulary":[]}}"#.utf8))
             assert(empty?.hasSections == false)

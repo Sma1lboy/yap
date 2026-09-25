@@ -26133,6 +26133,28 @@
         }
       }
     },
+    "This file comes from a newer version of Yap. Fields it doesn't recognize were ignored." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Datei stammt aus einer neueren Yap-Version. Unbekannte Felder wurden ignoriert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce fichier provient d’une version plus récente de Yap. Les champs non reconnus ont été ignorés."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件来自更新版本的 Yap，未识别字段已忽略。"
+          }
+        }
+      }
+    },
     "This file does not contain a valid Yap dictionary." : {
       "localizations" : {
         "de" : {

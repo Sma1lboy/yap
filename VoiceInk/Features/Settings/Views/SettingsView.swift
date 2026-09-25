@@ -311,6 +311,12 @@ struct SettingsView: View {
 
                 configFileStatus
 
+                if configLoader.fileIsNewerVersion {
+                    Text("This file comes from a newer version of Yap. Fields it doesn't recognize were ignored.")
+                        .foregroundColor(AppTheme.Status.warningStrong)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 HStack {
                     Button("Open") {
                         configLoader.openConfigFile()

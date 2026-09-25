@@ -50,10 +50,10 @@ Schema v2 (`"version": 2`) adds whole-settings sections. They use the same JSON 
 
 | Field (v2) | Meaning |
 |---|---|
-| `version` | `2`. Omitted means v1. |
-| `modes` | Array of modes, same objects as `modeConfigs` in an export. Replaces all modes. |
+| `version` | `2`. Omitted means v1. A higher number (file from a newer Yap) still loads; Settings → Config File notes that unknown fields were ignored. |
+| `modes` | Array of modes, same objects as `modeConfigs` in an export. Merged by `id`: a mode in the file replaces the app's mode with the same id; modes only in the app stay. |
 | `modeShortcuts` | `{ "<mode id>": <shortcut> }`, same as the export's `modeShortcuts`. Ids not in `modes` are ignored. |
-| `prompts` | Array of `{ id, title, promptText, useSystemInstructions }`. Replaces all custom prompts. |
+| `prompts` | Array of `{ id, title, promptText, useSystemInstructions }`. Merged by `id` like `modes`. |
 | `dictionary` | `{ "vocabulary": ["Yap"], "replacements": { "yep": "Yap" } }`. Merged into the existing dictionary. |
 | `general` | Same object as the export's `generalSettings`: global shortcuts, launch at login, recorder style, retention, paste and auto-learn settings. |
 

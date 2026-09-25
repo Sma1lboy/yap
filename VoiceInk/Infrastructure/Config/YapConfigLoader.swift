@@ -59,6 +59,8 @@ final class YapConfigLoader: ObservableObject {
     static let shared = YapConfigLoader()
 
     @Published private(set) var status: Status = .notFound
+    /// The loaded file has a `version` newer than this build understands.
+    @Published private(set) var fileIsNewerVersion = false
 
     private weak var aiService: AIService?
     private weak var enhancementService: AIEnhancementService?
@@ -190,6 +192,7 @@ final class YapConfigLoader: ObservableObject {
 
     private func load() -> YapConfig? {
         config = nil
+        fileIsNewerVersion = false
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
             status = .notFound
             return nil
@@ -197,6 +200,7 @@ final class YapConfigLoader: ObservableObject {
         do {
             let loaded = try YapConfig.decode(Data(contentsOf: fileURL))
             config = loaded
+            fileIsNewerVersion = loaded.isNewerVersion
             return loaded
         } catch {
             let message = YapConfig.describe(error)
@@ -211,10 +215,20 @@ final class YapConfigLoader: ObservableObject {
     /// Imports the v2 sections through the backup importer, one category at a time so one failure doesn't
     /// block the rest. Returns (applied, skipped) section names for the status line.
     private func applySections(_ config: YapConfig) async -> (applied: [String], skipped: [String]) {
-        guard let (file, categories) = config.backupSections else { return ([], []) }
+        guard config.hasSections else { return ([], []) }
         guard let enhancementService, let recordingShortcutManager, let menuBarManager, let recorderUIManager,
             let modelContext, let transcriptionModelManager
-        else { return ([], categories.map(\.rawValue)) }
+        else { return ([], ["sections"]) }
+        let currentModes = ModeManager.shared.configurations
+        let currentModeShortcuts = Dictionary(
+            uniqueKeysWithValues: currentModes.compactMap { mode in
+                ShortcutStore.shortcut(for: .mode(mode.id)).map { (mode.id.uuidString, ShortcutBackup($0)) }
+            })
+        guard
+            let (file, categories) = config.backupSections(
+                currentModes: currentModes, currentPrompts: enhancementService.customPrompts,
+                currentModeShortcuts: currentModeShortcuts)
+        else { return ([], []) }
         var result: (applied: [String], skipped: [String]) = ([], [])
         for category in categories {
             do {
