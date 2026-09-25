@@ -7119,6 +7119,28 @@
         }
       }
     },
+    "By continuing, you agree to the %1$@ and %2$@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn du fortfährst, stimmst du den %1$@ und der %2$@ zu."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En continuant, vous acceptez les %1$@ et la %2$@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续即表示你同意%1$@和%2$@。"
+          }
+        }
+      }
+    },
     "CLI Provider" : {
       "localizations" : {
         "de" : {
@@ -21058,6 +21080,28 @@
         }
       }
     },
+    "Privacy Policy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datenschutzerklärung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Politique de confidentialité"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐私政策"
+          }
+        }
+      }
+    },
     "Privacy Starts Here" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -23263,24 +23307,24 @@
         }
       }
     },
-    "Same models as Recommended, no API key: sign in with your email and top up a balance. Each dictation is charged at cost plus a small markup." : {
+    "Same models as Your OpenRouter Key, no API key: sign in with your email and pay from a balance. Each dictation costs the model's price plus 10%." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dieselben Modelle wie bei „Empfohlen“, ohne API-Schlüssel: Melde dich mit deiner E-Mail an und lade Guthaben auf. Jedes Diktat wird zum Selbstkostenpreis plus kleinem Aufschlag berechnet."
+            "value" : "Dieselben Modelle wie bei „Eigener OpenRouter-Schlüssel“, ohne API-Schlüssel: Melde dich mit deiner E-Mail an und bezahle aus einem Guthaben. Jedes Diktat kostet den Modellpreis plus 10 %."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les mêmes modèles que Recommandé, sans clé API : connectez-vous avec votre e-mail et rechargez un solde. Chaque dictée est facturée au coût réel plus une petite marge."
+            "value" : "Les mêmes modèles que « Votre clé OpenRouter », sans clé API : connectez-vous avec votre e-mail et payez depuis un solde. Chaque dictée coûte le prix du modèle plus 10 %."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "模型和「推荐」一样,但不需要 API key:用邮箱登录、充值余额即可。每次听写按实际成本加少量加价扣费。"
+            "value" : "模型和「自带 OpenRouter Key」一样，但不需要 API key：用邮箱登录，从余额里扣费。每次听写按模型价格加 10% 计费。"
           }
         }
       }
@@ -26521,6 +26565,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "模板"
+          }
+        }
+      }
+    },
+    "Terms of Service" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzungsbedingungen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conditions d’utilisation"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务条款"
           }
         }
       }

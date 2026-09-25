@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yap — dictation for macOS</title>
+<meta name="description" content="Hold a shortcut, talk in Chinese, English or both, and let go: Yap pastes clean text into any Mac app.">
+<link rel="icon" href="data:,">
+<style>
+/*
+  Design tokens mirror the app's VoiceInk/DesignSystem/Theme/AppTheme.swift, which is built on macOS system
+  colors (NSColor). Values below are those system colors' light/dark appearances.
+  - Accent: AppTheme.Accent.primary = Color.accentColor, and the app's AccentColor asset is empty, so the app
+    follows the user's macOS accent. The page does the same with CSS `AccentColor` where the browser exposes
+    it, falling back to macOS's default blue (systemBlue).
+  - Text.primary / secondary / muted = labelColor / secondaryLabelColor / secondary at 70%.
+  - Surface.window = windowBackgroundColor; Surface.control = controlBackgroundColor;
+    Surface.subtle = primary at 6%; Surface.card = secondary at 10%.
+  - Border.card = separatorColor at 35%; Border.control = separatorColor.
+  - Status.positive = systemGreen (used for "included" ticks only).
+  - Radius: card 12, control 14, pill 22. Weights: titles bold, figures and buttons semibold
+    (AppActionButton is 12pt semibold; the Home hero number is semibold).
+  - Yellow comes only from the duck in design/logo.svg (#FFD84D); it marks the brand, never a state.
+*/
+:root {
+  color-scheme: light;
+  --accent: #007aff;
+  --on-accent: #ffffff;
+  --window: #ececec;
+  --control: #ffffff;
+  --text: rgba(0, 0, 0, 0.85);
+  --text-secondary: rgba(0, 0, 0, 0.50);
+  --text-muted: rgba(0, 0, 0, 0.35);
+  --separator: rgba(0, 0, 0, 0.10);
+  --surface-subtle: rgba(0, 0, 0, 0.06);
+  --surface-card: rgba(128, 128, 128, 0.10);
+  --positive: #34c759;
+  --duck: #ffd84d;
+  --radius-card: 12px;
+  --radius-control: 14px;
+  --radius-pill: 22px;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+}
+/* Text on the accent stays white, like the app's Text.onAccent (alternateSelectedControlTextColor). */
+@supports (color: AccentColor) {
+  :root { --accent: AccentColor; }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --window: #1e1e1e;
+    --control: #2a2a2a;
+    --text: rgba(255, 255, 255, 0.85);
+    --text-secondary: rgba(255, 255, 255, 0.55);
+    --text-muted: rgba(255, 255, 255, 0.38);
+    --separator: rgba(255, 255, 255, 0.12);
+    --surface-subtle: rgba(255, 255, 255, 0.06);
+    --surface-card: rgba(128, 128, 128, 0.14);
+    --positive: #30d158;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  @supports not (color: AccentColor) { :root { --accent: #0a84ff; } }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--window);
+  color: var(--text);
+  font: 15px/1.55 var(--font);
+  -webkit-font-smoothing: antialiased;
+  padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 24px; }
+
+/* Language switch: only the active language's blocks are shown. */
+html[data-lang="en"] [lang="zh-Hans"],
+html[data-lang="zh-Hans"] [lang="en"]:not(html) { display: none !important; }
+
+header.top {
+  position: sticky; top: 0; z-index: 10;
+  background: color-mix(in srgb, var(--window) 88%, transparent);
+  backdrop-filter: saturate(160%) blur(16px);
+  -webkit-backdrop-filter: saturate(160%) blur(16px);
+  border-bottom: 1px solid var(--separator);
+}
+header.top .wrap { display: flex; align-items: center; gap: 16px; height: 56px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 700; font-size: 17px; }
+.brand:hover { text-decoration: none; }
+.brand svg { width: 30px; height: 30px; }
+nav.links { display: flex; gap: 18px; margin-left: auto; font-size: 13px; }
+nav.links a { color: var(--text-secondary); }
+nav.links a:hover { color: var(--text); text-decoration: none; }
+.lang-toggle {
+  font: 600 12px var(--font); color: var(--text);
+  background: var(--control); border: 1px solid var(--separator);
+  border-radius: var(--radius-pill); padding: 5px 12px; cursor: pointer;
+}
+.lang-toggle:focus-visible, .copy:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+section { padding-block: 64px; border-bottom: 1px solid var(--separator); }
+section:last-of-type { border-bottom: 0; }
+h1 { font-size: clamp(34px, 6vw, 52px); line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 16px; font-weight: 700; text-wrap: balance; }
+h2 { font-size: 26px; letter-spacing: -0.01em; margin: 0 0 8px; font-weight: 700; }
+h3 { font-size: 16px; margin: 0 0 6px; font-weight: 600; }
+.lead { font-size: 18px; color: var(--text-secondary); max-width: 40em; margin: 0; }
+.section-intro { color: var(--text-secondary); margin: 0 0 28px; max-width: 42em; }
+
+.hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 48px; align-items: center; }
+.hero-mark svg { width: 88px; height: 88px; margin-bottom: 20px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+.btn {
+  display: inline-flex; align-items: center; height: 36px; padding: 0 16px;
+  border-radius: 9px; font: 600 13px var(--font);
+  border: 1px solid var(--separator); background: var(--control); color: var(--text);
+}
+.btn:hover { text-decoration: none; filter: brightness(0.97); }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+
+/* The transcript card: what you say vs what Yap pastes. */
+.demo { margin: 0; background: var(--control); border: 1px solid var(--separator); border-radius: var(--radius-card); overflow: hidden; }
+.demo .row { padding: 16px 18px; }
+.demo .row + .row { border-top: 1px solid var(--separator); }
+.demo .label { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.demo .said { color: var(--text-secondary); font-size: 15px; }
+.demo .pasted { font-size: 16px; font-weight: 500; }
+.keycap {
+  display: inline-block; font: 600 11px var(--font); color: var(--text);
+  border: 1px solid var(--separator); border-bottom-width: 2px; background: var(--surface-subtle);
+  border-radius: 6px; padding: 1px 7px; text-transform: none; letter-spacing: 0;
+}
+
+.code {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--control); border: 1px solid var(--separator); border-radius: var(--radius-card);
+  padding: 14px 16px;
+}
+/* The command scrolls on its own so Copy stays visible on narrow screens. */
+.code code { font: 13px/1.5 var(--mono); white-space: pre; flex: 1; min-width: 0; overflow-x: auto; }
+.copy {
+  font: 600 12px var(--font); color: var(--text); background: var(--surface-subtle);
+  border: 1px solid var(--separator); border-radius: 8px; padding: 4px 10px; cursor: pointer; flex-shrink: 0;
+}
+.note { color: var(--text-muted); font-size: 13px; margin: 12px 0 0; }
+
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.card { background: var(--control); border: 1px solid var(--separator); border-radius: var(--radius-card); padding: 22px; }
+.card .tag {
+  display: inline-block; font-size: 11px; font-weight: 600; color: var(--text-secondary);
+  background: var(--surface-subtle); border-radius: var(--radius-pill); padding: 2px 9px; margin-bottom: 10px;
+}
+.card .tag.brand { background: color-mix(in srgb, var(--duck) 35%, transparent); color: var(--text); }
+.price { font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 4px 0 2px; }
+.price small { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+ul.ticks { list-style: none; padding: 0; margin: 14px 0 0; }
+ul.ticks li { padding-left: 22px; position: relative; margin: 6px 0; color: var(--text); }
+ul.ticks li::before {
+  content: ""; position: absolute; left: 2px; top: 0.55em; width: 9px; height: 5px;
+  border-left: 2px solid var(--positive); border-bottom: 2px solid var(--positive); transform: rotate(-45deg);
+}
+.also { margin-top: 16px; color: var(--text-secondary); font-size: 14px; }
+
+.flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.flow .card p { margin: 0; color: var(--text-secondary); }
+
+.privacy { display: grid; grid-template-columns: 1fr 1.4fr; gap: 32px; align-items: start; }
+.privacy .claim { font-size: 22px; font-weight: 600; margin: 0 0 10px; }
+.privacy dl { margin: 0; display: grid; gap: 14px; }
+.privacy dt { font-weight: 600; }
+.privacy dd { margin: 2px 0 0; color: var(--text-secondary); }
+
+footer { padding-block: 36px 48px; color: var(--text-secondary); font-size: 13px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: baseline; }
+footer .spacer { flex: 1; }
+
+@media (max-width: 760px) {
+  nav.links { display: none; }
+  .lang-toggle { margin-left: auto; }
+  section { padding-block: 44px; }
+  .hero, .grid2, .flow, .privacy { grid-template-columns: 1fr; }
+  .hero { gap: 28px; }
+}
+</style>
+</head>
+<body>
+
+<!-- The duck from design/logo.svg, defined once and reused. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="yap-logo" viewBox="100 100 824 824">
+    <defs>
+      <linearGradient id="yap-bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#34343A"/>
+        <stop offset="1" stop-color="#202024"/>
+      </linearGradient>
+      <clipPath id="yap-tile"><rect x="100" y="100" width="824" height="824" rx="186"/></clipPath>
+    </defs>
+    <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#yap-bg)"/>
+    <g clip-path="url(#yap-tile)">
+      <path d="M492 470 C470 400 506 342 566 350 C614 356 630 404 598 432 C582 446 558 442 552 424 C568 424 580 412 572 396 C560 376 524 382 520 418 C518 440 526 458 538 474 Z" fill="#F7C83A"/>
+      <circle cx="330" cy="870" r="440" fill="#FFD84D"/>
+      <rect x="-22" y="-60" width="44" height="120" rx="22" fill="#2A2320" transform="translate(438 640) rotate(18)"/>
+      <rect x="-22" y="-60" width="44" height="120" rx="22" fill="#2A2320" transform="translate(612 708) rotate(18)"/>
+      <ellipse cx="364" cy="730" rx="52" ry="34" fill="#FF9E9E" opacity="0.75"/>
+      <ellipse cx="690" cy="752" rx="40" ry="28" fill="#FF9E9E" opacity="0.75"/>
+      <path d="M470 812 C520 776 640 778 690 818 C708 834 698 852 676 852 C620 850 540 846 490 842 C464 838 454 824 470 812 Z" fill="#FF9A3C"/>
+      <path d="M496 850 C556 860 634 862 676 856 C662 888 608 902 558 894 C526 888 504 872 496 850 Z" fill="#E8772A"/>
+    </g>
+  </symbol>
+</svg>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Yap">
+      <svg aria-hidden="true"><use href="#yap-logo"/></svg>
+      <span>Yap</span>
+    </a>
+    <nav class="links" aria-label="Sections">
+      <a href="#install"><span lang="en">Install</span><span lang="zh-Hans">安装</span></a>
+      <a href="#pricing"><span lang="en">Pricing</span><span lang="zh-Hans">价格</span></a>
+      <a href="#sync"><span lang="en">Sync</span><span lang="zh-Hans">同步</span></a>
+      <a href="#privacy"><span lang="en">Privacy</span><span lang="zh-Hans">隐私</span></a>
+    </nav>
+    <button class="lang-toggle" type="button" id="lang-toggle" aria-label="Switch language / 切换语言">中文</button>
+  </div>
+</header>
+
+<main id="top">
+
+<section>
+  <div class="wrap hero">
+    <div>
+      <div class="hero-mark"><svg aria-hidden="true"><use href="#yap-logo"/></svg></div>
+      <h1>
+        <span lang="en">Hold a key, talk, let go.</span>
+        <span lang="zh-Hans">按住快捷键，说话，松开。</span>
+      </h1>
+      <p class="lead" lang="en">Yap is dictation for macOS. Talk in English, Chinese or both in one sentence; when you let go, clean text is pasted into whatever app you're in.</p>
+      <p class="lead" lang="zh-Hans">Yap 是 macOS 上的听写工具。中英混着说也行；一松开，整理好的文字就粘贴进你正在用的 app。</p>
+      <div class="actions">
+        <a class="btn primary" href="#install"><span lang="en">Install with Homebrew</span><span lang="zh-Hans">用 Homebrew 安装</span></a>
+        <a class="btn" href="https://github.com/Sma1lboy/yap/releases/latest"><span lang="en">Download the latest release</span><span lang="zh-Hans">下载最新版本</span></a>
+      </div>
+    </div>
+
+    <figure class="demo" aria-label="Example dictation">
+      <div class="row">
+        <div class="label">
+          <span lang="en">You say, holding</span><span lang="zh-Hans">按住</span>
+          <span class="keycap">⌥ Right Option</span>
+        </div>
+        <div class="said" lang="en">"um so the standup, 改到 Friday morning, and uh send Chris the onboarding review"</div>
+        <div class="said" lang="zh-Hans">“嗯那个 standup 我们改到 Friday morning 吧，然后呃 onboarding 的 review 发给 Chris”</div>
+      </div>
+      <div class="row">
+        <div class="label"><span lang="en">Yap pastes</span><span lang="zh-Hans">Yap 粘贴</span></div>
+        <div class="pasted" lang="en">Standup 改到 Friday morning. Send Chris the onboarding review.</div>
+        <div class="pasted" lang="zh-Hans">standup 改到 Friday morning，onboarding 的 review 发给 Chris。</div>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h2><span lang="en">Install</span><span lang="zh-Hans">安装</span></h2>
+    <p class="section-intro" lang="en">macOS 15 or later. Homebrew installs Yap and keeps it updated; the app also updates itself.</p>
+    <p class="section-intro" lang="zh-Hans">需要 macOS 15 或更高版本。Homebrew 负责安装和更新；app 自己也会检查更新。</p>
+    <div class="code">
+      <code id="brew-cmd">brew tap sma1lboy/yap https://github.com/Sma1lboy/yap
+brew install --cask sma1lboy/yap/yap</code>
+      <button class="copy" type="button" data-copy="brew-cmd"><span lang="en">Copy</span><span lang="zh-Hans">复制</span></button>
+    </div>
+    <p class="note" lang="en">Or download <a href="https://github.com/Sma1lboy/yap/releases/latest">Yap.zip from the latest release</a>. Builds are signed with a stable self-signed certificate but not notarized; Homebrew clears the quarantine flag for you.</p>
+    <p class="note" lang="zh-Hans">也可以从<a href="https://github.com/Sma1lboy/yap/releases/latest">最新版本</a>下载 Yap.zip。每个版本都用同一张自签名证书签名，但没有经过 Apple 公证；用 Homebrew 安装会自动去掉隔离标记。</p>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="wrap">
+    <h2><span lang="en">Two ways to run it</span><span lang="zh-Hans">两种用法</span></h2>
+    <p class="section-intro" lang="en">Both use the same models: MAI-Transcribe-2 for speech, DeepSeek V4.1 Flash to clean it up. Pick one during setup and switch any time.</p>
+    <p class="section-intro" lang="zh-Hans">两种方式用的是同一套模型：MAI-Transcribe-2 负责转写，DeepSeek V4.1 Flash 负责整理。首次设置时选一种，之后随时可以换。</p>
+    <div class="grid2">
+      <article class="card">
+        <span class="tag brand">Yap Cloud</span>
+        <h3><span lang="en">No API keys. Pay for what you use.</span><span lang="zh-Hans">不用 API key，用多少付多少。</span></h3>
+        <div class="price">$1 <small lang="en">free credit for new accounts</small><small lang="zh-Hans">新账户赠送额度</small></div>
+        <ul class="ticks" lang="en">
+          <li>Sign in with your email and a 6-digit code.</li>
+          <li>Each request costs the model's price plus 10%.</li>
+          <li>Top up $5, $10, $20 or any amount up to $500.</li>
+          <li>Set a monthly spending cap; at the cap, charges stop until next month.</li>
+          <li>See this month's spend and which Macs are signed in.</li>
+        </ul>
+        <ul class="ticks" lang="zh-Hans">
+          <li>用邮箱和 6 位验证码登录。</li>
+          <li>每次请求按模型价格加 10% 计费。</li>
+          <li>充值 $5、$10、$20，或最多 $500 的任意金额。</li>
+          <li>可以设置每月消费上限，达到后当月不再扣费。</li>
+          <li>能看到本月花费，以及哪些 Mac 登录了账户。</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">Your OpenRouter Key</span>
+        <h3><span lang="en">Bring your own key, pay OpenRouter directly.</span><span lang="zh-Hans">自带 key，费用直接付给 OpenRouter。</span></h3>
+        <div class="price">~$0.13 <small lang="en">per hour of speech, at OpenRouter's prices</small><small lang="zh-Hans">每小时语音，按 OpenRouter 的价格</small></div>
+        <ul class="ticks" lang="en">
+          <li>Paste an OpenRouter API key once; it stays in this Mac's keychain.</li>
+          <li>Audio and text go only to OpenRouter.</li>
+          <li>No account with Yap needed.</li>
+        </ul>
+        <ul class="ticks" lang="zh-Hans">
+          <li>粘贴一次 OpenRouter API key，它只保存在这台 Mac 的钥匙串里。</li>
+          <li>音频和文字只发送给 OpenRouter。</li>
+          <li>不需要 Yap 账户。</li>
+        </ul>
+      </article>
+    </div>
+    <p class="also" lang="en">Prefer another provider, or nothing leaving your Mac? Yap also works with your own key for other providers, or NVIDIA's Parakeet running locally.</p>
+    <p class="also" lang="zh-Hans">想用别的服务商，或者完全不出这台 Mac？也可以填其他服务商的 key，或在本机运行 NVIDIA 的 Parakeet 模型。</p>
+  </div>
+</section>
+
+<section id="sync">
+  <div class="wrap">
+    <h2><span lang="en">The same setup on every Mac</span><span lang="zh-Hans">每台 Mac 同一套设置</span></h2>
+    <p class="section-intro" lang="en">Your modes, prompts, dictionary and shortcuts live in one file, <code>~/.config/yap/config.json</code>. Turn on Sync via Yap Cloud and every Mac signed in to your account keeps it the same.</p>
+    <p class="section-intro" lang="zh-Hans">你的模式、提示词、词典和快捷键都在一个文件里：<code>~/.config/yap/config.json</code>。打开「通过 Yap Cloud 同步」，登录同一账户的每台 Mac 都保持一致。</p>
+    <div class="flow">
+      <div class="card">
+        <h3><span lang="en">Edit anywhere</span><span lang="zh-Hans">哪里改都行</span></h3>
+        <p lang="en">Change a setting in the app or in the file. Edits from different Macs are merged, and what you delete stays deleted.</p>
+        <p lang="zh-Hans">在 app 里改或直接改文件都可以。不同 Mac 的改动会自动合并，删掉的不会再回来。</p>
+      </div>
+      <div class="card">
+        <h3><span lang="en">New Mac in one step</span><span lang="zh-Hans">新 Mac 一步恢复</span></h3>
+        <p lang="en">The first setup screen can sign in and restore everything from your other Mac.</p>
+        <p lang="zh-Hans">首次设置的第一屏就能登录，把另一台 Mac 的设置全部恢复过来。</p>
+      </div>
+      <div class="card">
+        <h3><span lang="en">Version history</span><span lang="zh-Hans">版本历史</span></h3>
+        <p lang="en">Earlier synced versions are listed in Settings, and you can restore any of them. API keys are never uploaded.</p>
+        <p lang="zh-Hans">设置里能看到同步过的旧版本，可以恢复任意一个。API key 永远不会上传。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="privacy">
+  <div class="wrap privacy">
+    <div>
+      <h2><span lang="en">Privacy</span><span lang="zh-Hans">隐私</span></h2>
+      <p class="claim"><span lang="en">Yap collects no analytics.</span><span lang="zh-Hans">Yap 不收集任何分析数据。</span></p>
+      <p class="section-intro" lang="en">The same words you see on the last setup screen.</p>
+      <p class="section-intro" lang="zh-Hans">和首次设置最后一屏上的说明一致。</p>
+    </div>
+    <dl lang="en">
+      <div><dt>Local models</dt><dd>Everything stays on this Mac.</dd></div>
+      <div><dt>Your own API key</dt><dd>Audio and text go only to the provider you choose.</dd></div>
+      <div><dt>Yap Cloud</dt><dd>Audio and text pass through Yap's server on the way to the model provider; the server records the model and cost for billing.</dd></div>
+      <div><dt>Sync via Yap Cloud</dt><dd>If you turn it on, your modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server too, never your API keys.</dd></div>
+      <div><dt>Transcripts</dt><dd>Stored on this Mac.</dd></div>
+    </dl>
+    <dl lang="zh-Hans">
+      <div><dt>本地模型</dt><dd>所有数据都留在这台 Mac 上。</dd></div>
+      <div><dt>自己的 API key</dt><dd>音频和文字只会发送给你选择的提供商。</dd></div>
+      <div><dt>Yap Cloud</dt><dd>音频和文字会经过 Yap 的服务器转发给模型提供商，服务器会记录所用模型和费用用于计费。</dd></div>
+      <div><dt>通过 Yap Cloud 同步</dt><dd>开启后，你的模式、提示词、词典、快捷键和自定义模型也会保存在 Yap 的服务器上，API 密钥永远不会上传。</dd></div>
+      <div><dt>转写记录</dt><dd>保存在这台 Mac 上。</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section id="credits">
+  <div class="wrap">
+    <h2><span lang="en">Built on VoiceInk</span><span lang="zh-Hans">基于 VoiceInk</span></h2>
+    <p class="section-intro" lang="en">Yap is a fork of <a href="https://github.com/Beingpax/VoiceInk">VoiceInk</a> by Prakash Joshi Pax and, like it, is free software under the GPL-3.0 license. The source is on <a href="https://github.com/Sma1lboy/yap">GitHub</a>. If you'd rather have the official, notarized app, <a href="https://tryvoiceink.com/">buy VoiceInk</a>.</p>
+    <p class="section-intro" lang="zh-Hans">Yap fork 自 Prakash Joshi Pax 的 <a href="https://github.com/Beingpax/VoiceInk">VoiceInk</a>，和它一样以 GPL-3.0 许可证开源，源码在 <a href="https://github.com/Sma1lboy/yap">GitHub</a>。想要官方的、经过 Apple 公证的版本，请<a href="https://tryvoiceink.com/">购买 VoiceInk</a>。</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Yap</span>
+    <a href="https://github.com/Sma1lboy/yap">GitHub</a>
+    <!-- paygate serves /privacy and /terms (the app uses the same URLs, YapCloud.privacyPolicyURL / termsURL). -->
+    <a href="https://paygate-production-2502.up.railway.app/privacy"><span lang="en">Privacy Policy</span><span lang="zh-Hans">隐私政策</span></a>
+    <a href="https://paygate-production-2502.up.railway.app/terms"><span lang="en">Terms of Service</span><span lang="zh-Hans">服务条款</span></a>
+    <span class="spacer"></span>
+    <span>GPL-3.0</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var toggle = document.getElementById("lang-toggle");
+  function apply(lang) {
+    root.setAttribute("data-lang", lang);
+    root.setAttribute("lang", lang === "zh-Hans" ? "zh-Hans" : "en");
+    toggle.textContent = lang === "zh-Hans" ? "English" : "中文";
+  }
+  var saved = null;
+  try { saved = localStorage.getItem("yap-site-lang"); } catch (e) {}
+  var preferred = saved || ((navigator.language || "").toLowerCase().indexOf("zh") === 0 ? "zh-Hans" : "en");
+  apply(preferred);
+  toggle.addEventListener("click", function () {
+    var next = root.getAttribute("data-lang") === "zh-Hans" ? "en" : "zh-Hans";
+    apply(next);
+    try { localStorage.setItem("yap-site-lang", next); } catch (e) {}
+  });
+  document.querySelectorAll("[data-copy]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var text = document.getElementById(button.getAttribute("data-copy")).textContent;
+      var labels = button.querySelectorAll("span");
+      function done(ok) {
+        labels[0].textContent = ok ? "Copied" : "Select and copy";
+        labels[1].textContent = ok ? "已复制" : "请手动复制";
+        setTimeout(function () { labels[0].textContent = "Copy"; labels[1].textContent = "复制"; }, 1600);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+      } else { done(false); }
+    });
+  });
+})();
+</script>
+</body>
+</html>
