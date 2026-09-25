@@ -757,10 +757,11 @@ final class YapCloud: ObservableObject {
         return formatUSD(micros: micros, decimals: 4)
     }
 
-    /// Exact decimal string ("12.50", "-0.0021", legacy number text) → micros, rounded to the nearest micro.
-    static func micros(fromDecimal string: String) -> Int64? {
+    /// Exact decimal string ("12.50", "1.089e-07") → micros, rounded to the nearest micro. `times` scales first,
+    /// e.g. a per-token price × 1 000 000 tokens.
+    static func micros(fromDecimal string: String, times multiplier: Decimal = 1) -> Int64? {
         guard var value = Decimal(string: string, locale: Locale(identifier: "en_US_POSIX")) else { return nil }
-        value *= 1_000_000
+        value *= multiplier * 1_000_000
         var rounded = Decimal()
         NSDecimalRound(&rounded, &value, 0, .plain)
         return NSDecimalNumber(decimal: rounded).int64Value
@@ -1022,7 +1023,6 @@ enum YapCloudError: LocalizedError, Equatable {
 /// Number, or string holding one (Postgres numerics arrive as strings). Also carries ids of either type.
 struct YapCloudScalar: Codable, Hashable {
     let string: String
-    var double: Double { Double(string) ?? 0 }
 
     init(_ string: String) { self.string = string }
 
@@ -1193,7 +1193,10 @@ struct YapCloudModel: Codable, Hashable {
     var displayName: String { name ?? id }
     var isTranscription: Bool { architecture?.outputModalities?.contains("transcription") == true }
     var isChat: Bool { architecture?.outputModalities?.contains("text") == true }
-    func price(_ key: String) -> Double? { pricing?[key]?.double }
+    /// Price per 1M units (tokens) of `key` in micros, from the JSON number's text via Decimal (no Double math).
+    func pricePerMillionMicros(_ key: String) -> Int64? {
+        pricing?[key].flatMap { YapCloud.micros(fromDecimal: $0.string, times: 1_000_000) }
+    }
 }
 
 struct YapCloudConfigDocument: Equatable {
@@ -1273,6 +1276,8 @@ struct YapCloudConfigDocument: Equatable {
                     """#))
             assert(catalog.models.map(\.isTranscription) == [true, false] && catalog.models.map(\.isChat) == [false, true])
             assert(catalog.models[1].displayName == "deepseek/deepseek-v4.1-flash")
+            assert(catalog.models[1].pricePerMillionMicros("prompt") == 108_900 && catalog.models[1].pricePerMillionMicros("x") == nil)
+            assert(formatUSD(micros: catalog.models[1].pricePerMillionMicros("completion")!) == "$0.66")
 
             // Config document
             let doc = YapCloudConfigDocument(body: json(#"{"version":2,"updatedAt":"x","config":{"b":1,"a":2}}"#), etag: #""5""#)

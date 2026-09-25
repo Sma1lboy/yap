@@ -375,9 +375,7 @@ private struct ModelPriceRow: View {
         if model.isTranscription {
             return String(localized: "Pay as you go")
         }
-        let perMillion = { (key: String) in
-            ((model.price(key) ?? 0) * 1_000_000).formatted(.currency(code: "USD").precision(.fractionLength(2)))
-        }
+        let perMillion = { (key: String) in YapCloud.formatUSD(micros: model.pricePerMillionMicros(key) ?? 0) }
         return String(format: String(localized: "%@ in / %@ out per 1M tokens"), perMillion("prompt"), perMillion("completion"))
     }
 }
