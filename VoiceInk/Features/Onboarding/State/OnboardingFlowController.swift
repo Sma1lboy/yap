@@ -33,9 +33,54 @@ final class OnboardingFlowController {
             isTranscriptionSetupReady
         else { return }
         coordinator.hasSkippedTranscriptionSetup = false
+        coordinator.usedRecommendedSetup = false
         ensureDefaultOnboardingProvider()
         selectOnboardingProvider(coordinator.selectedOnboardingProvider, aiService: aiService)
         coordinator.storedStage = OnboardingStage.api.rawValue
+    }
+
+    /// Verifies and saves `newKey` (nil reuses the stored OpenRouter key), applies the recommended preset and
+    /// goes straight to the practice steps: the same key covers cleanup, so the AI key step is skipped.
+    /// Returns an error message to show, or nil on success.
+    func applyRecommendedSetup(newKey: String?, enhancementService: AIEnhancementService) async -> String? {
+        guard coordinator.requiredPermissionsGranted, coordinator.hasSelectedOnboardingMicrophone else { return nil }
+        let providerKey = AIProvider.openRouter.rawValue
+        if let newKey {
+            let result = await OpenRouterProvider().verifyAPIKey(newKey)
+            guard result.isValid else {
+                return result.errorMessage
+                    ?? String(localized: "Could not verify this API key. Check the key and try again.")
+            }
+            guard APIKeyManager.shared.saveAPIKey(newKey, forProvider: providerKey) else {
+                return String(localized: "The key worked, but Yap could not save it securely.")
+            }
+        }
+        guard let key = APIKeyManager.shared.getAPIKey(forProvider: providerKey) else {
+            return String(localized: "Paste your OpenRouter API key to continue.")
+        }
+
+        await YapConfigLoader.shared.apply(
+            config: .recommended(openRouterKey: key), source: .recommended, patchModes: false)
+        NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
+
+        coordinator.storedTranscriptionSetupKind = OnboardingTranscriptionSetupKind.recommended.rawValue
+        coordinator.usedRecommendedSetup = true
+        coordinator.hasSkippedTranscriptionSetup = false
+        coordinator.hasSkippedAPISetup = false
+        coordinator.storedOnboardingTranscriptionProvider = providerKey
+        coordinator.storedOnboardingAIProvider = providerKey
+        refreshTranscriptionSetupVerification()
+        refreshAPIVerification()
+        goToExperienceStep(
+            isTranscriptionSetupReady: coordinator.isTranscriptionSetupReady(isTranscriptionModelDownloaded: false),
+            enhancementService: enhancementService
+        )
+        return nil
+    }
+
+    /// The step before the practice steps: the AI key step, or the model step when the preset covered it.
+    private var stageBeforeExperience: OnboardingStage {
+        coordinator.usedRecommendedSetup ? .model : .api
     }
 
     func goBackToModelStep() {
@@ -87,6 +132,7 @@ final class OnboardingFlowController {
             coordinator.hasSelectedOnboardingMicrophone
         else { return }
         coordinator.hasSkippedTranscriptionSetup = true
+        coordinator.usedRecommendedSetup = false
         coordinator.storedStage = OnboardingStage.trust.rawValue
     }
 
@@ -142,7 +188,7 @@ final class OnboardingFlowController {
                 enhancementService: enhancementService
             )
         } else {
-            coordinator.storedStage = OnboardingStage.api.rawValue
+            coordinator.storedStage = stageBeforeExperience.rawValue
         }
     }
 
@@ -176,7 +222,7 @@ final class OnboardingFlowController {
         }
 
         guard coordinator.isReadyForExperience(isTranscriptionSetupReady: isTranscriptionSetupReady) else {
-            coordinator.storedStage = OnboardingStage.api.rawValue
+            coordinator.storedStage = stageBeforeExperience.rawValue
             return
         }
 
@@ -199,7 +245,7 @@ final class OnboardingFlowController {
 
     func goToPreviousLicenseStep(isTranscriptionSetupReady: Bool) {
         guard coordinator.isReadyForExperience(isTranscriptionSetupReady: isTranscriptionSetupReady) else {
-            coordinator.storedStage = OnboardingStage.api.rawValue
+            coordinator.storedStage = stageBeforeExperience.rawValue
             return
         }
 
@@ -286,7 +332,7 @@ final class OnboardingFlowController {
 
         if coordinator.stage == .api
             && (!coordinator.requiredPermissionsGranted || !coordinator.hasSelectedOnboardingMicrophone
-                || !isTranscriptionSetupReady)
+                || !isTranscriptionSetupReady || coordinator.usedRecommendedSetup)
         {
             goToFirstIncompleteSetupStep(isTranscriptionSetupReady: isTranscriptionSetupReady)
         }
@@ -330,7 +376,7 @@ final class OnboardingFlowController {
         } else if !isTranscriptionSetupReady {
             coordinator.storedStage = OnboardingStage.model.rawValue
         } else {
-            coordinator.storedStage = OnboardingStage.api.rawValue
+            coordinator.storedStage = stageBeforeExperience.rawValue
         }
     }
 
@@ -384,11 +430,12 @@ final class OnboardingFlowController {
             return
         }
 
+        let usedRecommendedSetup = coordinator.usedRecommendedSetup
         OnboardingStorageKeys.onboardingKeys.forEach {
             coordinator.defaults.removeObject(forKey: $0)
         }
         activateCleanTranscriptionMode()
-        reapplyConfigFile()
+        reapplyConfigFile(includingRecommendedSetup: usedRecommendedSetup)
         onComplete()
     }
 
@@ -396,13 +443,20 @@ final class OnboardingFlowController {
         OnboardingStorageKeys.onboardingKeys.forEach {
             coordinator.defaults.removeObject(forKey: $0)
         }
-        reapplyConfigFile()
+        reapplyConfigFile(includingRecommendedSetup: false)
         onComplete()
     }
 
-    /// Onboarding rewrites the starter modes, so config.json is applied again on top of them.
-    private func reapplyConfigFile() {
+    /// Onboarding rewrites the starter modes, so the recommended preset (if chosen) and then config.json are
+    /// applied again on top of them; config.json goes last so its fields win.
+    private func reapplyConfigFile(includingRecommendedSetup: Bool) {
         Task { @MainActor in
+            if includingRecommendedSetup,
+                let key = APIKeyManager.shared.getAPIKey(forProvider: AIProvider.openRouter.rawValue)
+            {
+                await YapConfigLoader.shared.apply(
+                    config: .recommended(openRouterKey: key), source: .recommended, patchModes: true)
+            }
             await YapConfigLoader.shared.reload()
         }
     }
@@ -432,6 +486,7 @@ final class OnboardingFlowController {
 
     func selectOnboardingTranscriptionSetup(_ kind: OnboardingTranscriptionSetupKind) {
         coordinator.storedTranscriptionSetupKind = kind.rawValue
+        if kind != .recommended { coordinator.usedRecommendedSetup = false }
         ensureDefaultOnboardingTranscriptionProvider()
         refreshTranscriptionSetupVerification()
     }
@@ -513,7 +568,8 @@ final class OnboardingFlowController {
         StarterModeFactory.install(
             kinds: installedKinds,
             provider: coordinator.selectedOnboardingProvider,
-            modelName: coordinator.selectedOnboardingProvider.defaultModel,
+            modelName: coordinator.usedRecommendedSetup
+                ? RecommendedSetup.enhancementModel : coordinator.selectedOnboardingProvider.defaultModel,
             transcriptionModelName: coordinator.selectedOnboardingTranscriptionModelName
                 ?? StarterModeFactory.defaultTranscriptionModelName,
             isRealtimeTranscriptionEnabled: coordinator.selectedOnboardingTranscriptionUsesRealtime,

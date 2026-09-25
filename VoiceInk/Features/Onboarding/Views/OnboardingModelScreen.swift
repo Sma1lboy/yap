@@ -17,8 +17,42 @@ struct OnboardingModelScreen: View {
     let onVerificationChanged: () -> Void
     let onBack: () -> Void
     let onContinue: () -> Void
+    /// Verifies/saves the key (nil = use the stored one) and applies the preset; returns an error to show.
+    let onContinueRecommended: (String?) async -> String?
     let onRequestSkip: () -> Void
     let onConfirmSkip: () -> Void
+
+    @State private var recommendedAPIKey = ""
+    @State private var recommendedError: String?
+    @State private var isApplyingRecommended = false
+
+    private var trimmedRecommendedKey: String {
+        recommendedAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isPrimaryEnabled: Bool {
+        switch setupKind {
+        case .recommended:
+            return (isSetupReady || !trimmedRecommendedKey.isEmpty) && !isApplyingRecommended
+        case .local:
+            return isSetupReady && !isLocalDownloading
+        case .cloud:
+            return isSetupReady
+        }
+    }
+
+    private func continueTapped() {
+        guard setupKind == .recommended else { return onContinue() }
+        let key = trimmedRecommendedKey
+        isApplyingRecommended = true
+        recommendedError = nil
+        Task {
+            let error = await onContinueRecommended(key.isEmpty ? nil : key)
+            isApplyingRecommended = false
+            recommendedError = error
+            if error == nil { recommendedAPIKey = "" }
+        }
+    }
 
     var body: some View {
         OnboardingStepScreen(
@@ -37,7 +71,10 @@ struct OnboardingModelScreen: View {
                     onSelectSetupKind: onSelectSetupKind,
                     onDownloadLocalModel: onDownload,
                     onCancelLocalModelDownload: onCancelDownload,
-                    onVerificationChanged: onVerificationChanged
+                    onVerificationChanged: onVerificationChanged,
+                    recommendedAPIKey: $recommendedAPIKey,
+                    recommendedError: recommendedError,
+                    isApplyingRecommended: isApplyingRecommended
                 )
                 OnboardingConfigFileHint()
             }
@@ -45,9 +82,9 @@ struct OnboardingModelScreen: View {
             OnboardingBottomBar(
                 leadingTitle: "Back",
                 primaryTitle: "Continue",
-                isPrimaryEnabled: isSetupReady && !(setupKind == .local && isLocalDownloading),
+                isPrimaryEnabled: isPrimaryEnabled,
                 onLeading: onBack,
-                onPrimary: onContinue,
+                onPrimary: continueTapped,
                 secondaryTitle: isSetupReady ? nil : "Set It Up Later",
                 onSecondary: onRequestSkip
             )
@@ -60,5 +97,6 @@ struct OnboardingModelScreen: View {
         } message: {
             Text("Dictation won't work until you choose a transcription model. The practice steps will be skipped. You can set it up anytime in Settings or in ~/.config/yap/config.json.")
         }
+        .onChange(of: recommendedAPIKey) { _, _ in recommendedError = nil }
     }
 }

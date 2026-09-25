@@ -6885,6 +6885,28 @@
         }
       }
     },
+    "Checking the key and applying the setup…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlüssel wird geprüft und die Einrichtung angewendet …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vérification de la clé et application de la configuration…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在验证密钥并应用配置…"
+          }
+        }
+      }
+    },
     "Checking whether this Apple Speech language is downloaded." : {
       "localizations" : {
         "de" : {
@@ -7863,6 +7885,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "继续"
+          }
+        }
+      }
+    },
+    "Continue checks the key, then sets up transcription and cleanup with it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„Weiter“ prüft den Schlüssel und richtet damit Transkription und Bereinigung ein."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« Continuer » vérifie la clé, puis configure la transcription et le nettoyage avec elle."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点继续会先验证密钥，再用它配置转写和整理。"
           }
         }
       }
@@ -15418,6 +15462,50 @@
         }
       }
     },
+    "Local models keep everything on this Mac. Cloud providers get only what you send them, with your own key." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lokale Modelle behalten alles auf diesem Mac. Cloud-Anbieter erhalten nur, was du ihnen schickst, mit deinem eigenen Schlüssel."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les modèles locaux gardent tout sur ce Mac. Les fournisseurs cloud ne reçoivent que ce que vous leur envoyez, avec votre propre clé."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地模型的所有数据都留在这台 Mac 上。云端服务商只收到你发给它的内容，用的是你自己的密钥。"
+          }
+        }
+      }
+    },
+    "Local models keep everything on this Mac. With a cloud provider, audio and text go only to the provider you choose, using your own API key. Transcripts are stored on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lokale Modelle behalten alles auf diesem Mac. Mit einem Cloud-Anbieter gehen Audio und Text nur an den Anbieter, den du wählst, mit deinem eigenen API-Schlüssel. Transkripte werden auf diesem Mac gespeichert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les modèles locaux gardent tout sur ce Mac. Avec un fournisseur cloud, l’audio et le texte ne vont qu’au fournisseur que vous choisissez, avec votre propre clé API. Les transcriptions sont stockées sur ce Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地模型的所有数据都留在这台 Mac 上。使用云端服务时，音频和文字只发给你选的服务商，用的是你自己的 API 密钥。转写记录保存在这台 Mac 上。"
+          }
+        }
+      }
+    },
     "Local server" : {
       "localizations" : {
         "de" : {
@@ -18901,6 +18989,28 @@
         }
       }
     },
+    "OpenRouter key found. Continue to use it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OpenRouter-Schlüssel gefunden. Fahre fort, um ihn zu verwenden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé OpenRouter trouvée. Continuez pour l’utiliser."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已找到 OpenRouter 密钥，点继续即可使用。"
+          }
+        }
+      }
+    },
     "OpenRouter speech-to-text model" : {
       "localizations" : {
         "de" : {
@@ -18919,6 +19029,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OpenRouter 语音转文字模型"
+          }
+        }
+      }
+    },
+    "OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinese–English cleanup · about $0.13 per hour of speech" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinesisch-englische Bereinigung · etwa 0,13 $ pro Stunde Sprache"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · nettoyage chinois-anglais · environ 0,13 $ par heure de parole"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · 中英混合整理 · 每小时语音约 $0.13"
           }
         }
       }
@@ -19411,6 +19543,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "有增强文本时粘贴增强文本，否则粘贴原始转录"
+          }
+        }
+      }
+    },
+    "Paste your OpenRouter API key to continue." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füge deinen OpenRouter-API-Schlüssel ein, um fortzufahren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collez votre clé API OpenRouter pour continuer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粘贴你的 OpenRouter API 密钥以继续。"
           }
         }
       }
@@ -27426,30 +27580,6 @@
         }
       }
     },
-    "Use NVIDIA's Parakeet model locally, or connect a cloud transcription provider." : {
-      "comment" : "Text displayed in an onboarding step when using NVIDIA's Parakeet model locally or connecting a cloud transcription provider.",
-      "isCommentAutoGenerated" : true,
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "NVIDIAs Parakeet-Modell lokal verwenden oder einen Cloud-Transkriptionsanbieter verbinden."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Utilisez le modèle Parakeet de NVIDIA localement ou connectez un fournisseur de transcription cloud."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在本地使用 NVIDIA 的 Parakeet 模型，或连接云端转写提供商。"
-          }
-        }
-      }
-    },
     "Use System Template" : {
       "localizations" : {
         "de" : {
@@ -27560,6 +27690,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将当前 App 中选中的文本用作此模式的上下文。"
+          }
+        }
+      }
+    },
+    "Use the recommended OpenRouter setup, another cloud provider, or NVIDIA's Parakeet model on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutze die empfohlene OpenRouter-Einrichtung, einen anderen Cloud-Anbieter oder NVIDIAs Parakeet-Modell auf diesem Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisez la configuration OpenRouter recommandée, un autre fournisseur cloud ou le modèle Parakeet de NVIDIA sur ce Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用推荐的 OpenRouter 配置、其他云端服务商，或在这台 Mac 上运行 NVIDIA 的 Parakeet 模型。"
           }
         }
       }
@@ -29119,6 +29271,28 @@
         }
       }
     },
+    "Yap has no server and collects no analytics." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap hat keinen Server und sammelt keine Analysedaten."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap n’a aucun serveur et ne collecte aucune statistique d’usage."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 没有服务器，也不收集任何统计数据。"
+          }
+        }
+      }
+    },
     "Yap impact summary" : {
       "comment" : "A label for a section of the app that shows the user how much time they've saved by using Yap.",
       "isCommentAutoGenerated" : true,
@@ -29227,50 +29401,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 支持上下文感知。"
-          }
-        }
-      }
-    },
-    "Yap is private by default" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap ist standardmäßig privat"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap est privé par défaut"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap 默认保护隐私"
-          }
-        }
-      }
-    },
-    "Yap is private by default. No data leaves your device unless you opt in." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap ist standardmäßig privat. Keine Daten verlassen dein Gerät, sofern du dem nicht zustimmst."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap est privé par défaut. Aucune donnée ne quitte votre appareil à moins que vous ne vous y inscriviez."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap 默认保护隐私。除非你主动选择，否则任何数据都不会离开你的设备。"
           }
         }
       }
@@ -29566,6 +29696,28 @@
         }
       }
     },
+    "You choose where your voice goes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du entscheidest, wohin deine Stimme geht"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous choisissez où va votre voix"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你的声音去哪里，由你决定"
+          }
+        }
+      }
+    },
     "You made room for" : {
       "comment" : "A heading for the summary of the user's productivity.",
       "isCommentAutoGenerated" : true,
@@ -29632,28 +29784,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下次启动 App 时，你会再次看到介绍页面。"
-          }
-        }
-      }
-    },
-    "Your data never has to leave your device." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deine Daten müssen dein Gerät nie verlassen."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vos données ne doivent jamais quitter votre appareil."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你的数据永远无需离开设备。"
           }
         }
       }

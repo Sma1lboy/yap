@@ -83,6 +83,12 @@ struct OnboardingView: View {
                                 aiService: aiService
                             )
                         },
+                        onContinueRecommended: {
+                            await coordinator.flow.applyRecommendedSetup(
+                                newKey: $0,
+                                enhancementService: enhancementService
+                            )
+                        },
                         onRequestSkip: coordinator.flow.requestSkipTranscriptionSetup,
                         onConfirmSkip: coordinator.flow.skipTranscriptionSetupAndContinue
                     )

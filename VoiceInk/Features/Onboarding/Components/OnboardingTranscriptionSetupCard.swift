@@ -13,6 +13,10 @@ struct OnboardingTranscriptionSetupCard: View {
     let onDownloadLocalModel: (FluidAudioModel) -> Void
     let onCancelLocalModelDownload: (FluidAudioModel) -> Void
     let onVerificationChanged: () -> Void
+    /// Recommended setup: key draft, the last error, and whether Continue is verifying/applying.
+    @Binding var recommendedAPIKey: String
+    let recommendedError: String?
+    let isApplyingRecommended: Bool
 
     @EnvironmentObject private var transcriptionModelManager: TranscriptionModelManager
     @State private var apiKey = ""
@@ -47,6 +51,8 @@ struct OnboardingTranscriptionSetupCard: View {
             setupSwitcher
 
             switch setupKind {
+            case .recommended:
+                recommendedSetup
             case .local:
                 localSetup
             case .cloud:
@@ -78,8 +84,9 @@ struct OnboardingTranscriptionSetupCard: View {
 
     private var setupSwitcher: some View {
         HStack(spacing: 8) {
-            setupChoice(.local, systemImage: "macbook")
+            setupChoice(.recommended, systemImage: "sparkles")
             setupChoice(.cloud, systemImage: "cloud.fill")
+            setupChoice(.local, systemImage: "macbook")
         }
         .padding(4)
         .background(AppMaterialCardBackground(cornerRadius: 12))
@@ -108,6 +115,104 @@ struct OnboardingTranscriptionSetupCard: View {
             .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+
+    private var hasStoredOpenRouterKey: Bool {
+        APIKeyManager.shared.hasAPIKey(forProvider: AIProvider.openRouter.rawValue)
+    }
+
+    private var recommendedSetup: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinese–English cleanup · about $0.13 per hour of speech")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(AppTheme.Text.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if hasStoredOpenRouterKey && recommendedAPIKey.isEmpty && recommendedError == nil {
+                HStack(alignment: .center, spacing: 9) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(AppTheme.Status.positive)
+                    Text("OpenRouter key found. Continue to use it.")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(AppTheme.Text.primary)
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .center) {
+                        Text(String(format: String(localized: "%@ API Key"), AIProvider.openRouter.rawValue))
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(AppTheme.Text.primary)
+                        Spacer()
+                        Button {
+                            NSWorkspace.shared.open(RecommendedSetup.apiKeyURL)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text("Get API key")
+                                Image(systemName: "arrow.up.right")
+                                    .font(.system(size: 9, weight: .semibold))
+                            }
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(AppTheme.Text.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    keyField(
+                        String(format: String(localized: "Paste %@ API key"), AIProvider.openRouter.rawValue),
+                        text: $recommendedAPIKey
+                    )
+                    .disabled(isApplyingRecommended)
+                }
+
+                recommendedStatusLine
+            }
+        }
+        .padding(16)
+        .background(AppMaterialCardBackground(cornerRadius: 12))
+    }
+
+    @ViewBuilder
+    private var recommendedStatusLine: some View {
+        if isApplyingRecommended {
+            HStack(spacing: 8) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Checking the key and applying the setup…")
+            }
+            .font(.system(size: 12))
+            .foregroundColor(AppTheme.Text.secondary)
+        } else if let recommendedError {
+            HStack(alignment: .top, spacing: 7) {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .padding(.top, 1)
+                Text(recommendedError)
+                    .font(.system(size: 12, weight: .medium))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .foregroundColor(AppTheme.Status.error)
+        } else {
+            Text("Continue checks the key, then sets up transcription and cleanup with it.")
+                .font(.system(size: 12))
+                .foregroundColor(AppTheme.Text.secondary)
+        }
+    }
+
+    private func keyField(_ placeholder: String, text: Binding<String>) -> some View {
+        SecureField(placeholder, text: text)
+            .textFieldStyle(.plain)
+            .font(.system(size: 13))
+            .padding(.horizontal, 12)
+            .frame(height: 38)
+            .background(
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(AppTheme.Surface.control)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .stroke(AppTheme.Border.control.opacity(0.45), lineWidth: 1)
+            )
     }
 
     @ViewBuilder
@@ -252,19 +357,7 @@ struct OnboardingTranscriptionSetupCard: View {
                 }
             }
 
-            SecureField(apiKeyPlaceholder, text: $apiKey)
-                .textFieldStyle(.plain)
-                .font(.system(size: 13))
-                .padding(.horizontal, 12)
-                .frame(height: 38)
-                .background(
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .fill(AppTheme.Surface.control)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .stroke(AppTheme.Border.control.opacity(0.45), lineWidth: 1)
-                )
+            keyField(apiKeyPlaceholder, text: $apiKey)
         }
     }
 
@@ -562,3 +655,35 @@ private struct RecommendedTranscriptionProviderPill: View {
             )
     }
 }
+
+#if DEBUG
+    private struct OnboardingTranscriptionSetupCardPreview: View {
+        let setupKind: OnboardingTranscriptionSetupKind
+        @State private var providerKey = "AssemblyAI"
+        @State private var recommendedKey = ""
+
+        var body: some View {
+            OnboardingTranscriptionSetupCard(
+                localModel: nil, setupKind: setupKind, providerOptions: CloudProviderRegistry.allProviders,
+                selectedProviderKey: $providerKey, isLocalDownloaded: false, isLocalDownloading: false,
+                localDownloadStatus: nil, onSelectSetupKind: { _ in }, onDownloadLocalModel: { _ in },
+                onCancelLocalModelDownload: { _ in }, onVerificationChanged: {},
+                recommendedAPIKey: $recommendedKey, recommendedError: nil, isApplyingRecommended: false
+            )
+            .environmentObject(
+                TranscriptionModelManager(
+                    whisperModelManager: WhisperModelManager(modelsDirectory: FileManager.default.temporaryDirectory),
+                    fluidAudioModelManager: FluidAudioModelManager()))
+            .frame(width: 560)
+            .padding()
+        }
+    }
+
+    #Preview("Recommended") {
+        OnboardingTranscriptionSetupCardPreview(setupKind: .recommended)
+    }
+
+    #Preview("Custom cloud") {
+        OnboardingTranscriptionSetupCardPreview(setupKind: .cloud)
+    }
+#endif
