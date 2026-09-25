@@ -16,7 +16,7 @@ struct AccountView: View {
                 } header: {
                     Text("Yap Cloud")
                 } footer: {
-                    Text("Pay as you go: one balance covers transcription and cleanup, no API keys to manage.")
+                    Text("Pay as you go: one balance covers transcription and enhancement, no API keys to manage.")
                 }
             }
             modelsSection
@@ -40,7 +40,7 @@ struct AccountView: View {
                         ModelPriceRow(model: model)
                     }
                 }
-                DisclosureGroup("Cleanup") {
+                DisclosureGroup("Enhancement") {
                     ForEach(cloud.chatModels, id: \.id) { model in
                         ModelPriceRow(model: model)
                     }
@@ -67,7 +67,7 @@ private struct SignedInSections: View {
     @State private var isConfirmingSignOut = false
 
     var body: some View {
-        Section("Account") {
+        Section("Yap Cloud") {
             LabeledContent("Email address", value: cloud.me?.email ?? cloud.email ?? "")
             LabeledContent {
                 if let balance = cloud.balanceMicros {
@@ -145,6 +145,28 @@ private struct SignedInSections: View {
             Text("Add Funds")
         } footer: {
             Text("Checkout opens in your browser. Your balance updates when you come back to Yap.")
+        }
+
+        if let spend = cloud.monthlySpend {
+            Section {
+                LabeledContent("Total") {
+                    Text(YapCloud.formatLedgerAmount(micros: spend.totalMicros, kind: "usage"))
+                        .monospacedDigit()
+                }
+                ForEach(spend.topModels, id: \.model) { item in
+                    LabeledContent {
+                        Text(YapCloud.formatLedgerAmount(micros: item.micros, kind: "usage"))
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    } label: {
+                        Text(item.model ?? String(localized: "Other"))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                }
+            } header: {
+                Text("This Month")
+            }
         }
 
         Section("Recent Activity") {
@@ -348,6 +370,42 @@ struct YapCloudSignInForm: View {
             defer { isWorking = false }
             do {
                 try await work()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+}
+
+/// Preset top-up buttons that open Stripe Checkout directly (onboarding can't navigate to Account).
+struct YapCloudQuickTopUp: View {
+    @State private var isOpening = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                ForEach(YapCloud.checkoutPresets, id: \.self) { amount in
+                    Button(String(format: String(localized: "Add $%lld"), Int64(amount))) { open(amount) }
+                        .disabled(isOpening)
+                }
+                if isOpening { ProgressView().controlSize(.small) }
+            }
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.Status.error)
+            }
+        }
+    }
+
+    private func open(_ amount: Int) {
+        isOpening = true
+        errorMessage = nil
+        Task { @MainActor in
+            defer { isOpening = false }
+            do {
+                NSWorkspace.shared.open(try await YapCloud.shared.checkoutURL(amountUSD: amount))
             } catch {
                 errorMessage = error.localizedDescription
             }

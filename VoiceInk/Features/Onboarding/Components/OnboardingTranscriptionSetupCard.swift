@@ -128,7 +128,7 @@ struct OnboardingTranscriptionSetupCard: View {
 
     private var recommendedSetup: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinese–English cleanup · about $0.13 per hour of speech")
+            Text("OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinese–English enhancement · about $0.13 per hour of speech")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(AppTheme.Text.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -194,9 +194,18 @@ struct OnboardingTranscriptionSetupCard: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(AppTheme.Status.positive)
-                    Text(String(format: String(localized: "Signed in as %@. Add funds anytime under Account."), yapCloud.email ?? ""))
+                    Text(yapCloudSignedInLine)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(AppTheme.Text.primary)
+                }
+                if let balance = yapCloud.balanceMicros, balance <= 0 {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Add funds to start dictating. Your balance updates when you come back to Yap.")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(AppTheme.Status.warningStrong)
+                            .fixedSize(horizontal: false, vertical: true)
+                        YapCloudQuickTopUp()
+                    }
                 }
                 if YapCloudProvider().models.isEmpty {
                     HStack(spacing: 8) {
@@ -218,7 +227,20 @@ struct OnboardingTranscriptionSetupCard: View {
         }
         .padding(16)
         .background(AppMaterialCardBackground(cornerRadius: 12))
-        .task { await yapCloud.refreshModels() }
+        .task(id: yapCloud.isSignedIn) {
+            await yapCloud.refreshModels()
+            await yapCloud.refreshAccount()
+        }
+        .onChange(of: yapCloud.balanceMicros) { _, _ in onVerificationChanged() }
+    }
+
+    /// "Signed in as a@b.c · Balance $4.20"; no email/balance yet → just the part that is known.
+    private var yapCloudSignedInLine: String {
+        let email = yapCloud.me?.email ?? yapCloud.email
+        let who = email.map { String(format: String(localized: "Signed in as %@"), $0) }
+            ?? String(localized: "Signed in to Yap Cloud")
+        guard let balance = yapCloud.balanceMicros else { return who }
+        return who + " · " + String(format: String(localized: "Balance %@"), YapCloud.formatUSD(micros: balance))
     }
 
     @ViewBuilder
@@ -242,7 +264,7 @@ struct OnboardingTranscriptionSetupCard: View {
             }
             .foregroundColor(AppTheme.Status.error)
         } else {
-            Text("Continue checks the key, then sets up transcription and cleanup with it.")
+            Text("Continue checks the key, then sets up transcription and enhancement with it.")
                 .font(.system(size: 12))
                 .foregroundColor(AppTheme.Text.secondary)
         }

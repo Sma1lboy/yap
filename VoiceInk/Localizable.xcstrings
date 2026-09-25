@@ -3966,6 +3966,28 @@
         }
       }
     },
+    "Add $%lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "$%lld aufladen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter %lld $"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值 $%lld"
+          }
+        }
+      }
+    },
     "Add %@" : {
       "localizations" : {
         "de" : {
@@ -4471,6 +4493,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加填充词"
+          }
+        }
+      }
+    },
+    "Add funds to start dictating. Your balance updates when you come back to Yap." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lade Guthaben auf, um mit dem Diktieren zu beginnen. Das Guthaben aktualisiert sich, wenn du zu Yap zurückkehrst."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez des fonds pour commencer à dicter. Votre solde se met à jour à votre retour dans Yap."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值后即可开始听写。回到 Yap 时余额会自动更新。"
           }
         }
       }
@@ -6477,6 +6521,28 @@
         }
       }
     },
+    "Balance %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "余额 %@"
+          }
+        }
+      }
+    },
     "Base URL" : {
       "localizations" : {
         "de" : {
@@ -7257,28 +7323,6 @@
         }
       }
     },
-    "Cleanup" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bereinigung"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nettoyage"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "整理"
-          }
-        }
-      }
-    },
     "Cleanup Complete" : {
       "localizations" : {
         "de" : {
@@ -7969,24 +8013,24 @@
         }
       }
     },
-    "Continue checks the key, then sets up transcription and cleanup with it." : {
+    "Continue checks the key, then sets up transcription and enhancement with it." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "„Weiter“ prüft den Schlüssel und richtet damit Transkription und Bereinigung ein."
+            "value" : "„Weiter“ prüft den Schlüssel und richtet damit Transkription und Verbesserung ein."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "« Continuer » vérifie la clé, puis configure la transcription et le nettoyage avec elle."
+            "value" : "« Continuer » vérifie la clé, puis configure la transcription et l'amélioration avec elle."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "点继续会先验证密钥，再用它配置转写和整理。"
+            "value" : "点继续会先验证密钥，再用它配置转写和润色。"
           }
         }
       }
@@ -18861,24 +18905,24 @@
         }
       }
     },
-    "OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinese–English cleanup · about $0.13 per hour of speech" : {
+    "OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinese–English enhancement · about $0.13 per hour of speech" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinesisch-englische Bereinigung · etwa 0,13 $ pro Stunde Sprache"
+            "value" : "OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinesisch-englische Verbesserung · etwa 0,13 $ pro Stunde Sprache"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · nettoyage chinois-anglais · environ 0,13 $ par heure de parole"
+            "value" : "OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · amélioration chinois-anglais · environ 0,13 $ par heure de parole"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · 中英混合整理 · 每小时语音约 $0.13"
+            "value" : "OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · 中英混合润色 · 每小时语音约 $0.13"
           }
         }
       }
@@ -19035,6 +19079,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "原文："
+          }
+        }
+      }
+    },
+    "Other" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonstige"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autre"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他"
           }
         }
       }
@@ -19463,24 +19529,24 @@
         }
       }
     },
-    "Pay as you go: one balance covers transcription and cleanup, no API keys to manage." : {
+    "Pay as you go: one balance covers transcription and enhancement, no API keys to manage." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nutzungsbasiert: Ein Guthaben deckt Transkription und Bereinigung ab, keine API-Schlüssel nötig."
+            "value" : "Nutzungsbasiert: Ein Guthaben deckt Transkription und Verbesserung ab, keine API-Schlüssel nötig."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Paiement à l'usage : un seul solde couvre la transcription et le nettoyage, sans clé API à gérer."
+            "value" : "Paiement à l'usage : un seul solde couvre la transcription et l'amélioration, sans clé API à gérer."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按量付费:一份余额同时支付转写和整理,不用管理 API key。"
+            "value" : "按量付费：一份余额同时支付转写和润色，不用管理 API Key。"
           }
         }
       }
@@ -23626,24 +23692,46 @@
         }
       }
     },
-    "Signed in as %@. Add funds anytime under Account." : {
+    "Signed in as %@" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Angemeldet als %@. Guthaben kannst du jederzeit unter „Konto“ aufladen."
+            "value" : "Angemeldet als %@"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connecté en tant que %@. Ajoutez des fonds à tout moment dans Compte."
+            "value" : "Connecté en tant que %@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已登录:%@。随时可以在「账户」里充值。"
+            "value" : "已登录:%@"
+          }
+        }
+      }
+    },
+    "Signed in to Yap Cloud" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei Yap Cloud angemeldet"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecté à Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已登录 Yap Cloud"
           }
         }
       }
@@ -26135,6 +26223,28 @@
         }
       }
     },
+    "This Month" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Monat"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce mois-ci"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本月花费"
+          }
+        }
+      }
+    },
     "This Year" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -26883,6 +26993,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "充值"
+          }
+        }
+      }
+    },
+    "Total" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesamt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "合计"
           }
         }
       }
@@ -27964,24 +28096,24 @@
         }
       }
     },
-    "Use the recommended OpenRouter setup, another cloud provider, or NVIDIA's Parakeet model on this Mac." : {
+    "Use the recommended OpenRouter setup, Yap Cloud, your own API key, or NVIDIA's Parakeet model on this Mac." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nutze die empfohlene OpenRouter-Einrichtung, einen anderen Cloud-Anbieter oder NVIDIAs Parakeet-Modell auf diesem Mac."
+            "value" : "Nutze die empfohlene OpenRouter-Einrichtung, Yap Cloud, deinen eigenen API-Schlüssel oder NVIDIAs Parakeet-Modell auf diesem Mac."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Utilisez la configuration OpenRouter recommandée, un autre fournisseur cloud ou le modèle Parakeet de NVIDIA sur ce Mac."
+            "value" : "Utilisez la configuration OpenRouter recommandée, Yap Cloud, votre propre clé API ou le modèle Parakeet de NVIDIA sur ce Mac."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "使用推荐的 OpenRouter 配置、其他云端服务商，或在这台 Mac 上运行 NVIDIA 的 Parakeet 模型。"
+            "value" : "使用推荐的 OpenRouter 配置、Yap Cloud、自带的 API Key，或在这台 Mac 上运行 NVIDIA 的 Parakeet 模型。"
           }
         }
       }
@@ -29995,6 +30127,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下次启动 App 时，你会再次看到介绍页面。"
+          }
+        }
+      }
+    },
+    "Your API Key" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigener API-Schlüssel"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre clé API"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自带 API Key"
           }
         }
       }

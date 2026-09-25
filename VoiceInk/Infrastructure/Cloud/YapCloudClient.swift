@@ -40,6 +40,8 @@ final class YapCloud: ObservableObject {
     @Published private(set) var isRefreshingAccount = false
     /// Why the last Account refresh failed; nil after a successful one.
     @Published private(set) var accountRefreshError: String?
+    /// This month's spend from `/v1/usage`; nil until loaded.
+    @Published private(set) var monthlySpend: YapCloudMonthlySpend?
 
     private init() {
         #if DEBUG
@@ -140,6 +142,7 @@ final class YapCloud: ObservableObject {
         ledger = []
         isLedgerLoaded = false
         accountRefreshError = nil
+        monthlySpend = nil
         NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
     }
 
@@ -151,6 +154,13 @@ final class YapCloud: ObservableObject {
 
     func fetchLedger(limit: Int = 20) async throws -> [YapCloudLedgerEntry] {
         try Self.decode(YapCloudLedger.self, from: try await send("GET", "/v1/ledger?limit=\(limit)")).entries
+    }
+
+    /// Usage spend in `[since, now)`, summed by the server. `since` is the local start of the month for "This Month".
+    func fetchUsage(since: Date) async throws -> YapCloudMonthlySpend {
+        let formatter = ISO8601DateFormatter()
+        let query = formatter.string(from: since).addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? ""
+        return try Self.decode(YapCloudMonthlySpend.self, from: try await send("GET", "/v1/usage?since=\(query)"))
     }
 
     /// Returns the Stripe Checkout URL for a top-up of `amountUSD` dollars.
@@ -196,6 +206,8 @@ final class YapCloud: ObservableObject {
             me = try await fetchMe()
             ledger = try await fetchLedger()
             isLedgerLoaded = true
+            let monthStart = Calendar.current.dateInterval(of: .month, for: Date())?.start ?? Date()
+            monthlySpend = try await fetchUsage(since: monthStart)
             accountRefreshError = nil
         } catch YapCloudError.notSignedIn {
             clearSession()
@@ -573,6 +585,44 @@ private struct YapCloudCheckout: Decodable {
     let url: String
 }
 
+/// `GET /v1/usage`: spend (positive micros) since a date, total plus per-model, sorted by spend.
+struct YapCloudMonthlySpend: Decodable, Equatable {
+    struct ModelSpend: Decodable, Equatable {
+        /// nil for charges the server recorded without a model.
+        let model: String?
+        let micros: Int64
+        let calls: Int
+
+        enum CodingKeys: String, CodingKey { case model, micros, usd, calls }
+
+        init(model: String?, micros: Int64, calls: Int) {
+            self.model = model
+            self.micros = micros
+            self.calls = calls
+        }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            model = try c.decodeIfPresent(String.self, forKey: .model)
+            micros = try c.decodeMicros(.micros, fallback: .usd)
+            calls = try c.decodeIfPresent(Int.self, forKey: .calls) ?? 0
+        }
+    }
+
+    let totalMicros: Int64
+    let byModel: [ModelSpend]
+
+    var topModels: [ModelSpend] { Array(byModel.prefix(5)) }
+
+    enum CodingKeys: String, CodingKey { case totalMicros, totalUsd, byModel }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        totalMicros = try c.decodeMicros(.totalMicros, fallback: .totalUsd)
+        byModel = try c.decode([ModelSpend].self, forKey: .byModel)
+    }
+}
+
 struct YapCloudCatalog: Codable {
     let models: [YapCloudModel]
 }
@@ -702,6 +752,20 @@ struct YapCloudConfigDocument: Equatable {
             assert(formatLedgerAmount(micros: -999_904, kind: "adjust") == "-$1.00")
             assert(formatLedgerAmount(micros: 10_000_000, kind: "topup") == "$10.00")
             assert(999_999 < lowBalanceMicros && !(1_000_000 < lowBalanceMicros))
+
+            // /v1/usage
+            let usage = try! JSONDecoder().decode(
+                YapCloudMonthlySpend.self,
+                from: json(#"""
+                    {"since":"2026-09-01T00:00:00.000Z","until":"x","totalMicros":193,"totalUsd":"0.000193","byModel":[
+                     {"model":"a","micros":100,"usd":"0.000100","calls":2},{"model":null,"micros":50,"usd":"0.000050","calls":1},
+                     {"model":"c","micros":20,"calls":1},{"model":"d","micros":10,"calls":1},{"model":"e","micros":8,"calls":1},
+                     {"model":"f","usd":"0.000005","calls":1}]}
+                    """#))
+            assert(usage.totalMicros == 193 && usage.byModel.count == 6 && usage.topModels.count == 5)
+            assert(usage.byModel[0] == .init(model: "a", micros: 100, calls: 2) && usage.byModel[1].model == nil)
+            assert(usage.byModel[5].micros == 5)
+            assert(try! JSONDecoder().decode(YapCloudMonthlySpend.self, from: json(#"{"totalMicros":0,"byModel":[]}"#)).topModels.isEmpty)
 
             // Top-up amounts
             assert(isValidTopUp(5) && isValidTopUp(20) && isValidTopUp(500))
