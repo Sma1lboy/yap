@@ -62,7 +62,7 @@ enum OnboardingStage: String, CaseIterable {
         case .contextAwareness:
             return String(localized: "Yap is Context-Aware")
         case .trust:
-            return String(localized: "Yap is Open Source")
+            return String(localized: "Privacy Starts Here")
         }
     }
 
@@ -113,7 +113,7 @@ enum OnboardingPermissionKind: String, CaseIterable, Identifiable {
         switch self {
         case .microphone:
             return OnboardingPermissionDescriptor(
-                title: "Microphone",
+                title: String(localized: "Microphone"),
                 subtitle: String(localized: "Yap uses your microphone to capture your voice.")
             )
 
