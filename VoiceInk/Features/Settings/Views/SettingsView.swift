@@ -251,17 +251,6 @@ struct SettingsView: View {
                     )
                 )
                 .disabled(launchAtLoginManager.isUpdating)
-
-                Toggle(
-                    "Automatically Check for Updates",
-                    isOn: Binding(
-                        get: { updaterViewModel.checksForUpdatesWhenDashboardAppears },
-                        set: { updaterViewModel.setChecksForUpdatesWhenDashboardAppears($0) }
-                    ))
-
-                Button("Reset Onboarding") {
-                    showResetOnboardingAlert = true
-                }
             }
 
             Section {
@@ -375,6 +364,10 @@ struct SettingsView: View {
 
             Section("Diagnostics") {
                 DiagnosticsSettingsView()
+
+                Button("Reset Onboarding") {
+                    showResetOnboardingAlert = true
+                }
             }
 
             Section("About") {
@@ -382,6 +375,13 @@ struct SettingsView: View {
                     Text(verbatim: appVersion)
                         .textSelection(.enabled)
                 }
+
+                Toggle(
+                    "Automatically Check for Updates",
+                    isOn: Binding(
+                        get: { updaterViewModel.checksForUpdatesWhenDashboardAppears },
+                        set: { updaterViewModel.setChecksForUpdatesWhenDashboardAppears($0) }
+                    ))
 
                 HStack {
                     Button("Check for Updates") {
