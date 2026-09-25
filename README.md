@@ -51,6 +51,8 @@ All of Yap's settings can live in one file, `~/.config/yap/config.json` (or `$XD
 
 Yap reads the file at every launch. Fields that are present override the in-app settings; missing or empty fields are left alone. **Open** creates the file from a template if it doesn't exist, **Show in Finder** reveals it, and **Reload** applies it again without restarting. The status line says which fields were applied and which were skipped (for example a key whose `env:` variable isn't set).
 
+Editing by hand: Yap keeps `config.schema.json` next to config.json (written at launch) and puts `"$schema": "./config.schema.json"` at the top of the files it writes. Editors that read JSON Schema (VS Code does by default) then complete field names and allowed values and flag typos as you type; add that line yourself to an older file.
+
 A minimal file (schema v1):
 
 ```json
