@@ -495,19 +495,32 @@ final class YapCloud: ObservableObject {
         return (try? JSONDecoder().decode(Body.self, from: body))?.id.flatMap { $0.isEmpty ? nil : $0 }
     }
 
+    /// One entry of `GET /v1/ledger?generationIds=`: `{generationId, amountMicros, amountUsd, model, createdAt}`.
+    struct GenerationCharge: Decodable {
+        let generationId: String
+        let amountMicros: Int64
+
+        enum CodingKeys: String, CodingKey { case generationId, amountMicros, amountUsd }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            generationId = try c.decode(String.self, forKey: .generationId)
+            amountMicros = try c.decodeMicros(.amountMicros, fallback: .amountUsd)
+        }
+    }
+
     /// What each generation was charged, in positive micros, via `GET /v1/ledger?generationIds=` (≤ 50 per
-    /// request). Ids without a usage row yet (charge still settling) are absent from the result.
+    /// request). Ids not charged yet (still settling), unknown or not this user's are absent from the result.
     func fetchCharges(generationIDs: [String]) async throws -> [String: Int64] {
+        struct Response: Decodable { let entries: [GenerationCharge] }
         var result: [String: Int64] = [:]
         let ids = Array(Set(generationIDs)).sorted()
         for start in stride(from: 0, to: ids.count, by: 50) {
             let chunk = ids[start..<min(start + 50, ids.count)].joined(separator: ",")
             let query = chunk.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? chunk
             let entries = try Self.decode(
-                YapCloudLedger.self, from: try await send("GET", "/v1/ledger?generationIds=\(query)")).entries
-            for entry in entries where entry.kind == "usage" {
-                if let id = entry.generationId { result[id, default: 0] -= entry.amountMicros }
-            }
+                Response.self, from: try await send("GET", "/v1/ledger?generationIds=\(query)")).entries
+            for entry in entries { result[entry.generationId, default: 0] -= entry.amountMicros }
         }
         return result
     }
@@ -1523,13 +1536,17 @@ struct YapCloudConfigDocument: Equatable {
             assert(generationID(header: nil, body: json(#"{"id":"gen-2","choices":[]}"#)) == "gen-2")
             assert(generationID(header: "", body: json(#"{"text":"hi"}"#)) == nil)
             let charged = try! JSONDecoder().decode(
-                YapCloudLedger.self,
+                [GenerationCharge].self,
                 from: json(#"""
-                    {"entries":[
-                     {"id":"9","kind":"usage","amountMicros":-92,"createdAt":"2026-09-25T10:00:00Z","meta":{"generationId":"gen-stt-1","cost":"0.0000833"}},
-                     {"id":"8","kind":"usage","amountMicros":-3,"createdAt":"2026-09-25T10:00:00Z","generationId":"gen-2","meta":{}}]}
-                    """#)).entries
-            assert(charged.map(\.generationId) == ["gen-stt-1", "gen-2"])
+                    [{"generationId":"gen-2","amountMicros":-48,"amountUsd":"-0.000048","model":"m","createdAt":"2026-09-25T23:33:00.183Z"},
+                     {"generationId":"gen-stt-1","amountUsd":"-0.000031","model":"m","createdAt":"2026-09-25T23:32:59.635Z"}]
+                    """#))
+            assert(charged.map(\.generationId) == ["gen-2", "gen-stt-1"] && charged.map(\.amountMicros) == [-48, -31])
+            let metaRow = try! JSONDecoder().decode(
+                YapCloudLedger.self,
+                from: json(#"{"entries":[{"id":"9","kind":"usage","amountMicros":-92,"createdAt":"2026-09-25T10:00:00Z","meta":{"generationId":"gen-stt-1"}}]}"#)
+            ).entries
+            assert(metaRow[0].generationId == "gen-stt-1")
             let collector = GenerationCollector()
             $generationCollector.withValue(collector) { generationCollector?.add("gen-a") }
             assert(collector.last == "gen-a" && generationCollector == nil)

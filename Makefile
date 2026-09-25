@@ -108,6 +108,8 @@ local: check setup
 
 # Yap Cloud regression checks against a live paygate (needs YAP_CLOUD_SMOKE_TOKEN; prints how to get one).
 # Compiles the real client files with small stubs, no app launch; restores anything it changes.
+# YAP_CLOUD_SMOKE_FUNDED=1 PAYGATE_DIR=<railway-linked paygate checkout> adds one real billed transcription + chat
+# (funds $0.01 via scripts/adjust.ts, checks the captured generation ids against the ledger, adjusts back to $0).
 CLOUD_SMOKE_BIN := $(CURDIR)/.local-build/cloud-smoke
 cloud-smoke:
 	@mkdir -p "$(dir $(CLOUD_SMOKE_BIN))"
