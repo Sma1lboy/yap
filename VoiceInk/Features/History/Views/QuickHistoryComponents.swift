@@ -151,6 +151,7 @@ struct QuickHistoryDetailActionBar: View {
         .buttonStyle(.plain)
         .disabled(isWorking || audioURL == nil)
         .help("Retranscribe with the selected mode")
+        .accessibilityLabel("Retranscribe with the selected mode")
     }
 
     private var finderButton: some View {
@@ -170,6 +171,7 @@ struct QuickHistoryDetailActionBar: View {
         .buttonStyle(.plain)
         .disabled(audioURL == nil)
         .help("Show recording in Finder")
+        .accessibilityLabel("Show recording in Finder")
     }
 
     private var infoButton: some View {
@@ -181,7 +183,8 @@ struct QuickHistoryDetailActionBar: View {
                 .background(QuickPanelButtonBackground(isSelected: isInfoPresented))
         }
         .buttonStyle(.plain)
-        .help(isInfoPresented ? "Hide transcription info" : "Show transcription info")
+        .help(isInfoPresented ? LocalizedStringKey("Hide transcription info") : "Show transcription info")
+        .accessibilityLabel(isInfoPresented ? LocalizedStringKey("Hide transcription info") : "Show transcription info")
     }
 
     private func actionLabel<Icon: View>(title: String, @ViewBuilder icon: () -> Icon) -> some View {

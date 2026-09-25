@@ -68,6 +68,7 @@ struct CustomSoundSettingsView: View {
             .buttonStyle(.borderless)
             .disabled(!isEnabled)
             .help("Test")
+            .accessibilityLabel("Test")
 
             Button {
                 selectSound(for: type)
@@ -76,6 +77,7 @@ struct CustomSoundSettingsView: View {
             }
             .buttonStyle(.borderless)
             .help("Choose")
+            .accessibilityLabel("Choose")
 
             if !customSoundManager.isDefaultSelection(for: type) {
                 Button {
@@ -89,6 +91,7 @@ struct CustomSoundSettingsView: View {
                 }
                 .buttonStyle(.borderless)
                 .help("Reset")
+                .accessibilityLabel("Reset")
             }
         }
     }

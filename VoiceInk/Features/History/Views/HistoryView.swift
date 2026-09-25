@@ -902,6 +902,7 @@ private struct HistoryCardRow: View {
                     }
                     .buttonStyle(.plain)
                     .help("View details")
+                    .accessibilityLabel("View details")
                 }
             }
         }

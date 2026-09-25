@@ -63,6 +63,7 @@ struct VocabularyView: View {
                 }
                 .buttonStyle(.borderless)
                 .help("Vocabulary examples")
+                .accessibilityLabel("Vocabulary examples")
                 .popover(isPresented: $showInfoPopover) {
                     VocabularyInfoPopover()
                 }

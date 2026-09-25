@@ -501,6 +501,7 @@ struct AssistantPanelView: View {
             .buttonStyle(.plain)
             .disabled(!canSendDraft)
             .help("Send follow up")
+            .accessibilityLabel("Send follow up")
         }
     }
 

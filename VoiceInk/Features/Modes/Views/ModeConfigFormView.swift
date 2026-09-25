@@ -566,6 +566,7 @@ struct ModeConfigFormView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Edit prompt")
+                .accessibilityLabel("Edit prompt")
             }
 
             AddIconButton(helpText: "Add prompt") {
