@@ -357,6 +357,7 @@ struct SettingsView: View {
         .sheet(isPresented: $isShowingHistorySettings) {
             HistorySettingsPanel(onClose: { isShowingHistorySettings = false })
                 .frame(width: 480, height: 560)
+                .onExitCommand { isShowingHistorySettings = false }
         }
         .alert("Reset Onboarding", isPresented: $showResetOnboardingAlert) {
             Button("Cancel", role: .cancel) {}

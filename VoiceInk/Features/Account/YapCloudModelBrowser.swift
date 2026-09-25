@@ -35,6 +35,7 @@ struct YapCloudModelBrowser: View {
                 Text(title).font(.headline)
                 Spacer()
                 Button("Done") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
             }
             TextField("Search models", text: $query)
                 .textFieldStyle(.roundedBorder)
