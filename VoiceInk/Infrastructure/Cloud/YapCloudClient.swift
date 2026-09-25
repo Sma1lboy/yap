@@ -14,16 +14,15 @@ final class YapCloud: ObservableObject {
     static let baseURLDefaultsKey = "yapCloudBaseURL"
     static let defaultBaseURL = "https://paygate-production-2502.up.railway.app"
     /// Served by paygate; also linked from site/index.html. Change the host here when paygate moves.
-    static let privacyPolicyURL = URL(string: defaultBaseURL + "/privacy")!
-    static let termsURL = URL(string: defaultBaseURL + "/terms")!
+    /// Top-up buttons; only those inside /v1/info's [minTopupUsd, maxTopupUsd] are offered.
     static let checkoutPresets = [5, 10, 20]
-    static let maximumTopUpUSD = 500
     /// Below this ($1), Home and the menu bar show a prominent "add funds" entry.
     static let lowBalanceMicros: Int64 = 1_000_000
 
     private static let tokenKey = "yapCloudToken"
     private static let emailKey = "yapCloudEmail"
     private static let catalogKey = "yapCloudModelCatalog"
+    private static let infoKey = "yapCloudInfo"
 
     private let keychain = KeychainService.shared
     private let defaults = UserDefaults.standard
@@ -33,6 +32,10 @@ final class YapCloud: ObservableObject {
     private var balanceRefresh: Task<Void, Never>?
 
     @Published private(set) var isSignedIn = false
+    /// paygate's public settings (`GET /v1/info`): prices, top-up range, sign-up credit, legal links, support.
+    /// Cached from the last successful fetch; nil if there never was one, and then copy that quotes these
+    /// numbers is hidden rather than falling back to built-in values.
+    @Published private(set) var info: YapCloudInfo?
     @Published private(set) var me: YapCloudMe? {
         didSet { balanceUpdatedAt = me == nil ? nil : Date() }
     }
@@ -68,6 +71,8 @@ final class YapCloud: ObservableObject {
         if let data = defaults.data(forKey: Self.catalogKey) {
             catalog = try? JSONDecoder().decode(YapCloudCatalog.self, from: data)
         }
+        info = defaults.data(forKey: Self.infoKey).flatMap { try? JSONDecoder().decode(YapCloudInfo.self, from: $0) }
+        Task { @MainActor in await refreshInfo() }
         // Paying happens in the browser; coming back to Yap is when the new balance should show
         // (Account, the Home card and the menu bar all read `me`).
         NotificationCenter.default.addObserver(
@@ -105,12 +110,22 @@ final class YapCloud: ObservableObject {
         catalogLock.withLock { catalog?.models ?? [] }
     }
 
-    /// "10%" from the catalog's markup; nil until a catalog with a markup has loaded, so copy that quotes
-    /// the price can hide itself instead of guessing.
+    /// "10%" from /v1/info's markup; nil until it has loaded, so copy that quotes the price hides itself.
     var markupPercentText: String? {
-        guard let markup = catalogLock.withLock({ catalog?.markup }), let value = Double(markup.string), value >= 0
-        else { return nil }
+        guard let value = info.flatMap({ Double($0.markup.string) }), value >= 0 else { return nil }
         return value.formatted(.percent.precision(.fractionLength(0...2)))
+    }
+
+    /// `GET /v1/info` (public), cached for the next launch. Keeps the last answer on failure.
+    @MainActor
+    func refreshInfo() async {
+        do {
+            let data = try await send("GET", "/v1/info", authenticated: false)
+            info = try Self.decode(YapCloudInfo.self, from: data)
+            defaults.set(data, forKey: Self.infoKey)
+        } catch {
+            logger.error("Info refresh failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     var transcriptionModels: [YapCloudModel] { models.filter(\.isTranscription) }
@@ -245,11 +260,13 @@ final class YapCloud: ObservableObject {
 
     // MARK: - Trial credit nudge
 
-    /// "Trial credit almost used up; $5 lasts about N days". Shown on Account and Home until dismissed (once per
-    /// account) or until the user tops up.
+    /// "Trial credit almost used up; $<minimum top-up> lasts about N days". Shown on Account and Home until
+    /// dismissed (once per account) or until the user tops up.
     struct TrialNudge: Equatable {
-        /// Days $5 lasts at the pace since sign-up; nil when it can't be estimated yet.
-        let daysForFiveDollars: Int64?
+        /// The smallest top-up (/v1/info minTopupUsd) and how many days it lasts at the pace since sign-up;
+        /// nil when either is unknown.
+        let topUpMicros: Int64?
+        let days: Int64?
     }
 
     @Published private(set) var trialNudge: TrialNudge?
@@ -258,15 +275,16 @@ final class YapCloud: ObservableObject {
 
     /// Pure decision: under $0.20 left, some sign-up credit spent, never any paid money.
     static func trialNudge(
-        balanceMicros: Int64, lifetimePaidMicros: Int64, lifetimeCreditMicros: Int64, signupAt: Date?, now: Date
+        balanceMicros: Int64, lifetimePaidMicros: Int64, lifetimeCreditMicros: Int64, signupAt: Date?,
+        minTopUpMicros: Int64?, now: Date
     ) -> TrialNudge? {
         guard balanceMicros < trialNudgeThresholdMicros, lifetimePaidMicros == 0, lifetimeCreditMicros > 0 else { return nil }
-        let days = signupAt.flatMap { signup in
-            YapCloudMonthlySpend.runway(
-                balanceMicros: 5_000_000, spentMicros: lifetimeCreditMicros,
-                elapsedSeconds: Int64(now.timeIntervalSince(signup)))?.days
-        }
-        return TrialNudge(daysForFiveDollars: days)
+        guard let minTopUpMicros, let signupAt,
+            let days = YapCloudMonthlySpend.runway(
+                balanceMicros: minTopUpMicros, spentMicros: lifetimeCreditMicros,
+                elapsedSeconds: Int64(now.timeIntervalSince(signupAt)))?.days
+        else { return TrialNudge(topUpMicros: nil, days: nil) }
+        return TrialNudge(topUpMicros: minTopUpMicros, days: days)
     }
 
     private func trialNudgeKey() -> String? { me.map { "yapCloudTrialNudgeDismissed." + $0.id.string } }
@@ -291,12 +309,13 @@ final class YapCloud: ObservableObject {
         let signupAt = ledger?.last { $0.kind == "credit" }?.createdDate
         trialNudge = Self.trialNudge(
             balanceMicros: me.balanceMicros, lifetimePaidMicros: lifetime.paidMicros,
-            lifetimeCreditMicros: lifetime.creditMicros, signupAt: signupAt, now: Date())
+            lifetimeCreditMicros: lifetime.creditMicros, signupAt: signupAt, minTopUpMicros: info?.minTopupMicros,
+            now: Date())
     }
 
     /// Returns the Stripe Checkout URL for a top-up of `amountUSD` dollars.
     func checkoutURL(amountUSD: Int) async throws -> URL {
-        guard Self.isValidTopUp(amountUSD) else { throw YapCloudError.invalidAmount }
+        guard isValidTopUp(amountUSD) else { throw YapCloudError.invalidAmount }
         let data = try await send("POST", "/v1/wallet/checkout", json: ["amountUsd": amountUSD])
         guard let url = URL(string: try Self.decode(YapCloudCheckout.self, from: data).url) else {
             throw YapCloudError.server(status: 200, code: nil, message: "Invalid checkout URL")
@@ -748,6 +767,11 @@ final class YapCloud: ObservableObject {
         return sign + "$" + String(units / scale) + fraction
     }
 
+    /// A price-list amount quoted in copy: "$5" when whole dollars, else exact ("$2.50").
+    static func formatPlainUSD(micros: Int64) -> String {
+        micros % 1_000_000 == 0 ? formatUSD(micros: micros, decimals: 0) : formatExactUSD(micros: micros)
+    }
+
     /// A user-set amount (the cap) shown without losing precision: 2 decimals, more only when needed (`$0.0001`).
     static func formatExactUSD(micros: Int64) -> String {
         var decimals = 2
@@ -778,9 +802,16 @@ final class YapCloud: ObservableObject {
         return NSDecimalNumber(decimal: rounded).int64Value
     }
 
-    static func isValidTopUp(_ amountUSD: Int) -> Bool {
-        (checkoutPresets.min()!...maximumTopUpUSD).contains(amountUSD)
+    /// Inside /v1/info's range; without it, any positive amount (paygate still enforces its range: INVALID_AMOUNT).
+    func isValidTopUp(_ amountUSD: Int) -> Bool { Self.isValidTopUp(amountUSD, info: info) }
+
+    static func isValidTopUp(_ amountUSD: Int, info: YapCloudInfo?) -> Bool {
+        guard let info else { return amountUSD > 0 }
+        return (info.minTopupMicros...info.maxTopupMicros).contains(Int64(amountUSD) * 1_000_000)
     }
+
+    /// The preset buttons paygate accepts (all of them before /v1/info has loaded).
+    var topUpPresets: [Int] { Self.checkoutPresets.filter(isValidTopUp) }
 
     // MARK: - HTTP
 
@@ -947,9 +978,11 @@ enum YapCloudError: LocalizedError, Equatable {
             // One sentence for "can't reach it" and "server-side failure"; the per-code fallback adds "(CODE)".
             return String(localized: "Yap Cloud is temporarily unavailable. Try again shortly.")
         case .invalidAmount:
+            guard let info = YapCloud.shared.info else { return String(localized: "Enter a whole-dollar amount.") }
             return String(
-                format: String(localized: "Enter a whole-dollar amount between $%lld and $%lld."),
-                Int64(YapCloud.checkoutPresets.min()!), Int64(YapCloud.maximumTopUpUSD))
+                format: String(localized: "Enter a whole-dollar amount between %@ and %@."),
+                YapCloud.formatPlainUSD(micros: info.minTopupMicros),
+                YapCloud.formatPlainUSD(micros: info.maxTopupMicros))
         case .keychainUnavailable:
             return String(localized: "Couldn't save the sign-in token to the keychain.")
         case .versionConflict:
@@ -1185,8 +1218,33 @@ struct YapCloudMonthlySpend: Decodable, Equatable {
 
 struct YapCloudCatalog: Codable {
     let models: [YapCloudModel]
-    /// paygate's MARKUP (0.1 = +10%). Optional: catalogs cached by older builds don't have it.
-    var markup: YapCloudScalar?
+}
+
+/// `GET /v1/info`: the deployment's public settings. Money fields are decimal USD (number or string).
+struct YapCloudInfo: Codable, Equatable {
+    struct Legal: Codable, Equatable {
+        let privacyUrl: String
+        let termsUrl: String
+        /// The documents are drafts (not yet final).
+        let draft: Bool
+    }
+
+    let productName: String
+    /// 0.1 = +10% on the provider's price.
+    let markup: YapCloudScalar
+    let minTopupUsd: YapCloudScalar
+    let maxTopupUsd: YapCloudScalar
+    /// 0 = no sign-up credit.
+    let signupCreditUsd: YapCloudScalar
+    let maxConcurrentCalls: Int
+    let supportEmail: String?
+    let legal: Legal
+
+    var minTopupMicros: Int64 { YapCloud.micros(fromDecimal: minTopupUsd.string) ?? 0 }
+    var maxTopupMicros: Int64 { YapCloud.micros(fromDecimal: maxTopupUsd.string) ?? 0 }
+    var signupCreditMicros: Int64 { YapCloud.micros(fromDecimal: signupCreditUsd.string) ?? 0 }
+    var privacyURL: URL? { URL(string: legal.privacyUrl).flatMap { $0.scheme == "https" ? $0 : nil } }
+    var termsURL: URL? { URL(string: legal.termsUrl).flatMap { $0.scheme == "https" ? $0 : nil } }
 }
 
 struct YapCloudModel: Codable, Hashable {
@@ -1290,7 +1348,7 @@ struct YapCloudConfigDocument: Equatable {
                      {"id":"microsoft/mai-transcribe-2","name":"MAI","architecture":{"input_modalities":["audio"],"output_modalities":["transcription"]},"pricing":{"prompt":0.11,"completion":0}},
                      {"id":"deepseek/deepseek-v4.1-flash","architecture":{"input_modalities":["text"],"output_modalities":["text"]},"pricing":{"prompt":1.089e-07,"completion":6.6e-07}}]}
                     """#))
-            assert(catalog.markup != nil)
+
             assert(catalog.models.map(\.isTranscription) == [true, false] && catalog.models.map(\.isChat) == [false, true])
             assert(catalog.models[1].displayName == "deepseek/deepseek-v4.1-flash")
             assert(catalog.models[1].pricePerMillionMicros("prompt") == 108_900 && catalog.models[1].pricePerMillionMicros("x") == nil)
@@ -1470,19 +1528,32 @@ struct YapCloudConfigDocument: Equatable {
             // Trial nudge: < $0.20, credit spent, nothing paid; N from the pace since sign-up
             let signup = parseDate("2026-09-01T00:00:00Z")!
             let tenDaysLater = signup.addingTimeInterval(10 * 86_400)
-            assert(trialNudge(balanceMicros: 150_000, lifetimePaidMicros: 0, lifetimeCreditMicros: 850_000, signupAt: signup, now: tenDaysLater)
-                == TrialNudge(daysForFiveDollars: 58))  // 85 000 micros/day → 5 000 000 / 85 000 = 58
-            assert(trialNudge(balanceMicros: 200_000, lifetimePaidMicros: 0, lifetimeCreditMicros: 800_000, signupAt: signup, now: tenDaysLater) == nil)
-            assert(trialNudge(balanceMicros: 100_000, lifetimePaidMicros: 1, lifetimeCreditMicros: 900_000, signupAt: signup, now: tenDaysLater) == nil)
-            assert(trialNudge(balanceMicros: 100_000, lifetimePaidMicros: 0, lifetimeCreditMicros: 0, signupAt: signup, now: tenDaysLater) == nil)
-            assert(trialNudge(balanceMicros: 100_000, lifetimePaidMicros: 0, lifetimeCreditMicros: 900_000, signupAt: nil, now: tenDaysLater)
-                == TrialNudge(daysForFiveDollars: nil))
-            assert(trialNudge(balanceMicros: 100_000, lifetimePaidMicros: 0, lifetimeCreditMicros: 900_000,
-                              signupAt: signup, now: signup.addingTimeInterval(86_400)) == TrialNudge(daysForFiveDollars: nil))
+            func nudge(balance: Int64 = 150_000, paid: Int64 = 0, credit: Int64 = 850_000, signupAt: Date? = signup,
+                       minTopUp: Int64? = 5_000_000, now: Date = tenDaysLater) -> TrialNudge? {
+                trialNudge(balanceMicros: balance, lifetimePaidMicros: paid, lifetimeCreditMicros: credit, signupAt: signupAt,
+                           minTopUpMicros: minTopUp, now: now)
+            }
+            assert(nudge() == TrialNudge(topUpMicros: 5_000_000, days: 58))  // 85 000 micros/day → 5 000 000 / 85 000 = 58
+            assert(nudge(minTopUp: 10_000_000) == TrialNudge(topUpMicros: 10_000_000, days: 117))
+            assert(nudge(balance: 200_000) == nil && nudge(paid: 1) == nil && nudge(credit: 0) == nil)
+            assert(nudge(signupAt: nil) == TrialNudge(topUpMicros: nil, days: nil))
+            assert(nudge(minTopUp: nil) == TrialNudge(topUpMicros: nil, days: nil))  // no /v1/info: no amount quoted
+            assert(nudge(now: signup.addingTimeInterval(86_400)) == TrialNudge(topUpMicros: nil, days: nil))
 
             // Top-up amounts
-            assert(isValidTopUp(5) && isValidTopUp(20) && isValidTopUp(500))
-            assert(!isValidTopUp(4) && !isValidTopUp(0) && !isValidTopUp(-10) && !isValidTopUp(501))
+            // /v1/info (fake until paygate ships it): money as numbers or strings, legal https only
+            let info = try! JSONDecoder().decode(YapCloudInfo.self, from: json(#"""
+                {"productName":"Yap Cloud","markup":0.1,"minTopupUsd":5,"maxTopupUsd":"500","signupCreditUsd":"1.00",
+                 "maxConcurrentCalls":4,"supportEmail":null,
+                 "legal":{"privacyUrl":"https://example.com/privacy","termsUrl":"http://example.com/terms","draft":true}}
+                """#))
+            assert(info.minTopupMicros == 5_000_000 && info.maxTopupMicros == 500_000_000 && info.signupCreditMicros == 1_000_000)
+            assert(info.supportEmail == nil && info.legal.draft && info.privacyURL != nil && info.termsURL == nil)
+            assert(isValidTopUp(5, info: info) && isValidTopUp(500, info: info))
+            assert(!isValidTopUp(4, info: info) && !isValidTopUp(0, info: info) && !isValidTopUp(501, info: info))
+            assert(isValidTopUp(1, info: nil) && !isValidTopUp(0, info: nil))  // no info: paygate enforces the range
+            assert(checkoutPresets.filter { isValidTopUp($0, info: info) } == [5, 10, 20])
+            assert(formatPlainUSD(micros: 5_000_000) == "$5" && formatPlainUSD(micros: 2_500_000) == "$2.50")
         }
     }
 #endif

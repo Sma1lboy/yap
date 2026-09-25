@@ -8475,6 +8475,28 @@
         }
       }
     },
+    "Contact Support" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support kontaktieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contacter l'assistance"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "联系支持"
+          }
+        }
+      }
+    },
     "Context Awareness" : {
       "localizations" : {
         "de" : {
@@ -11807,6 +11829,28 @@
         }
       }
     },
+    "Email support" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support per E-Mail"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écrire à l'assistance"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发邮件给支持"
+          }
+        }
+      }
+    },
     "Enable %@" : {
       "localizations" : {
         "de" : {
@@ -12351,24 +12395,46 @@
         }
       }
     },
-    "Enter a whole-dollar amount between $%lld and $%lld." : {
+    "Enter a whole-dollar amount between %@ and %@." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gib einen ganzen Dollarbetrag zwischen $%lld und $%lld ein."
+            "value" : "Gib einen ganzen Dollarbetrag zwischen %1$@ und %2$@ ein."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Saisissez un montant entier en dollars entre %lld $ et %lld $."
+            "value" : "Saisissez un montant entier en dollars entre %1$@ et %2$@."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "请输入 $%lld 到 $%lld 之间的整数美元金额。"
+            "value" : "请输入 %1$@ 到 %2$@ 之间的整数美元金额。"
+          }
+        }
+      }
+    },
+    "Enter a whole-dollar amount." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib einen ganzen Dollarbetrag ein."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez un montant entier en dollars."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入整数美元金额。"
           }
         }
       }
@@ -17446,24 +17512,24 @@
         }
       }
     },
-    "New accounts get $1 of free credit." : {
+    "New accounts get %@ of free credit." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Neue Konten erhalten $1 Startguthaben."
+            "value" : "Neue Konten erhalten %@ Startguthaben."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les nouveaux comptes reçoivent 1 $ de crédit offert."
+            "value" : "Les nouveaux comptes reçoivent %@ de crédit offert."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "新用户注册送 $1 额度。"
+            "value" : "新用户注册送 %@ 额度。"
           }
         }
       }
@@ -20608,24 +20674,24 @@
         }
       }
     },
-    "Pay as you go: one balance covers transcription and enhancement, no API keys to manage. New accounts get $1 of free credit." : {
+    "Pay as you go: one balance covers transcription and enhancement, no API keys to manage." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nutzungsbasiert: Ein Guthaben deckt Transkription und Verbesserung ab, keine API-Schlüssel nötig. Neue Konten erhalten $1 Startguthaben."
+            "value" : "Nutzungsbasiert: Ein Guthaben deckt Transkription und Verbesserung ab, keine API-Schlüssel nötig."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Paiement à l'usage : un seul solde couvre la transcription et l'amélioration, sans clé API à gérer. Les nouveaux comptes reçoivent 1 $ de crédit offert."
+            "value" : "Paiement à l'usage : un seul solde couvre la transcription et l'amélioration, sans clé API à gérer."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按量付费：一份余额同时支付转写和润色，不用管理 API Key。新用户注册送 $1 额度。"
+            "value" : "按量付费：一份余额同时支付转写和润色，不用管理 API Key。"
           }
         }
       }
@@ -32579,46 +32645,46 @@
         }
       }
     },
-    "Your trial credit is almost used up. At your pace, $5 lasts about %lld days." : {
+    "Your trial credit is almost used up. At your pace, %@ lasts about %lld days." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dein Startguthaben ist fast aufgebraucht. Bei deinem Verbrauch reichen $5 etwa %lld Tage."
+            "value" : "Dein Startguthaben ist fast aufgebraucht. Bei deinem Verbrauch reichen %1$@ etwa %2$lld Tage."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre crédit d'essai est presque épuisé. À votre rythme, 5 $ durent environ %lld jours."
+            "value" : "Votre crédit d'essai est presque épuisé. À votre rythme, %1$@ durent environ %2$lld jours."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "体验额度快用完了，充值 $5 大约够用 %lld 天。"
+            "value" : "体验额度快用完了，充值 %1$@ 大约够用 %2$lld 天。"
           }
         }
       }
     },
-    "Your trial credit is almost used up. At your pace, $5 lasts more than a year." : {
+    "Your trial credit is almost used up. At your pace, %@ lasts more than a year." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dein Startguthaben ist fast aufgebraucht. Bei deinem Verbrauch reichen $5 über ein Jahr."
+            "value" : "Dein Startguthaben ist fast aufgebraucht. Bei deinem Verbrauch reichen %@ über ein Jahr."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Votre crédit d'essai est presque épuisé. À votre rythme, 5 $ durent plus d'un an."
+            "value" : "Votre crédit d'essai est presque épuisé. À votre rythme, %@ durent plus d'un an."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "体验额度快用完了，按你的用量，充值 $5 够用一年以上。"
+            "value" : "体验额度快用完了，按你的用量，充值 %@ 够用一年以上。"
           }
         }
       }

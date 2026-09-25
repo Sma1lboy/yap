@@ -40,7 +40,8 @@ struct AccountView: View {
                     Text("Yap Cloud")
                 } footer: {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Pay as you go: one balance covers transcription and enhancement, no API keys to manage. New accounts get $1 of free credit.")
+                        Text("Pay as you go: one balance covers transcription and enhancement, no API keys to manage.")
+                        YapCloudSignupCreditText()
                         YapCloudLegalText()
                     }
                 }
@@ -135,6 +136,7 @@ private struct SignedInSections: View {
                     .foregroundStyle(AppTheme.Status.error)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            YapCloudSupportRow()
             HStack {
                 Button("Refresh") { Task { await cloud.refreshAccount() } }
                     .disabled(cloud.isRefreshingAccount)
@@ -160,7 +162,7 @@ private struct SignedInSections: View {
 
         Section {
             Picker("Amount (USD)", selection: $amount) {
-                ForEach(YapCloud.checkoutPresets, id: \.self) { preset in
+                ForEach(cloud.topUpPresets, id: \.self) { preset in
                     Text(verbatim: "$\(preset)").tag(Int?.some(preset))
                 }
                 Text("Custom").tag(Int?.none)
@@ -307,7 +309,7 @@ private struct SignedInSections: View {
     private func openCheckout() {
         let value = amount
             ?? Int(customAmount.trimmingCharacters(in: CharacterSet(charactersIn: "$ ").union(.whitespaces)))
-        guard let value, YapCloud.isValidTopUp(value) else {
+        guard let value, cloud.isValidTopUp(value) else {
             errorMessage = YapCloudError.invalidAmount.errorDescription
             return
         }
@@ -493,7 +495,7 @@ struct YapCloudQuickTopUp: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
-                ForEach(YapCloud.checkoutPresets, id: \.self) { amount in
+                ForEach(cloud.topUpPresets, id: \.self) { amount in
                     Button(String(format: String(localized: "Add $%lld"), Int64(amount))) { open(amount) }
                         .disabled(isOpening)
                 }
@@ -719,29 +721,69 @@ private struct DevicesSection: View {
     }
 }
 
-/// Terms of Service and Privacy Policy links (URLs live in YapCloud).
+/// Terms of Service and Privacy Policy links, from /v1/info (hidden until it has loaded).
 struct YapCloudLegalLinks: View {
+    @ObservedObject private var cloud = YapCloud.shared
+
     var body: some View {
-        HStack(spacing: 14) {
-            Link("Terms of Service", destination: YapCloud.termsURL)
-            Link("Privacy Policy", destination: YapCloud.privacyPolicyURL)
+        if let terms = cloud.info?.termsURL, let privacy = cloud.info?.privacyURL {
+            HStack(spacing: 14) {
+                Link("Terms of Service", destination: terms)
+                Link("Privacy Policy", destination: privacy)
+            }
+        }
+    }
+}
+
+/// "New accounts get $1 of free credit." from /v1/info; nothing when there is no sign-up credit or no info.
+struct YapCloudSignupCreditText: View {
+    @ObservedObject private var cloud = YapCloud.shared
+
+    var body: some View {
+        if let credit = cloud.info?.signupCreditMicros, credit > 0 {
+            Text(String(format: String(localized: "New accounts get %@ of free credit."), YapCloud.formatPlainUSD(micros: credit)))
+        }
+    }
+}
+
+/// "Contact support: <email>" with the address selectable (and a mailto link), when /v1/info has one.
+struct YapCloudSupportRow: View {
+    @ObservedObject private var cloud = YapCloud.shared
+
+    var body: some View {
+        if let email = cloud.info?.supportEmail, !email.isEmpty {
+            LabeledContent("Contact Support") {
+                HStack(spacing: 8) {
+                    Text(verbatim: email).textSelection(.enabled)
+                    if let mailto = URL(string: "mailto:" + email) {
+                        Link(destination: mailto) { Image(systemName: "envelope") }
+                            .help("Email support")
+                            .accessibilityLabel("Email support")
+                    }
+                }
+            }
         }
     }
 }
 
 /// "By continuing, you agree to the Terms of Service and Privacy Policy.", with both names as links.
 /// Built from one localized format so each language places the links where its grammar needs them.
+/// Hidden until /v1/info supplies the URLs.
 struct YapCloudLegalText: View {
+    @ObservedObject private var cloud = YapCloud.shared
+
     var body: some View {
-        Text(attributed)
+        if let terms = cloud.info?.termsURL, let privacy = cloud.info?.privacyURL {
+            Text(attributed(terms: terms, privacy: privacy))
+        }
     }
 
-    private var attributed: AttributedString {
+    private func attributed(terms termsURL: URL, privacy privacyURL: URL) -> AttributedString {
         let terms = String(localized: "Terms of Service")
         let privacy = String(localized: "Privacy Policy")
         var text = AttributedString(
             String(format: String(localized: "By continuing, you agree to the %1$@ and %2$@."), terms, privacy))
-        for (name, url) in [(terms, YapCloud.termsURL), (privacy, YapCloud.privacyPolicyURL)] {
+        for (name, url) in [(terms, termsURL), (privacy, privacyURL)] {
             if let range = text.range(of: name) { text[range].link = url }
         }
         return text
