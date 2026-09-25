@@ -101,6 +101,31 @@ final class CloudConfigSync: ObservableObject {
         return (versions, current)
     }
 
+    /// Makes `version`'s contents the current synced config: PUT as a new version with If-Match on the current
+    /// one, then apply here. Entries added since `version` get tombstones (`YapConfig.restoring`), so other Macs
+    /// delete them instead of merging them back. If another Mac wrote in between, this throws ConflictError
+    /// instead of merging: the user looks at the history again and decides.
+    func restoreVersion(_ version: String) async throws {
+        guard let store, let historyStore else { throw CocoaError(.featureUnsupported) }
+        isSyncing = true
+        defer { isSyncing = false }
+        let old = try YapConfig.decode(try await historyStore.fetchConfigVersion(version))
+        let current = try await store.fetchConfig()
+        let restored = try YapConfig.restoring(
+            old, over: current.map { try YapConfig.decode($0.config) } ?? YapConfig(), now: Date()
+        ).encoded()
+        let newVersion: String
+        do {
+            newVersion = try await store.putConfig(restored, ifMatch: current?.version)
+        } catch {
+            if let latest = try? await store.fetchConfig(), latest.version != current?.version { throw ConflictError() }
+            throw error
+        }
+        try await applyRemote(restored)
+        record(version: newVersion, data: await localConfig() ?? restored)
+        status = .synced(Date())
+    }
+
     func config(atVersion version: String) async throws -> YapConfig {
         guard let historyStore else { throw CocoaError(.featureUnsupported) }
         return try YapConfig.decode(try await historyStore.fetchConfigVersion(version))
@@ -213,12 +238,16 @@ final class CloudConfigSync: ObservableObject {
 
 #if DEBUG
     extension CloudConfigSync {
-        private final class FakeStore: ConfigCloudStore {
+        private final class FakeStore: ConfigCloudStore, ConfigVersionHistoryStore {
             struct Document: CloudConfigDocument {
                 let version: String
                 let config: Data
             }
-            var document: Document?
+            var document: Document? {
+                didSet { if let document { history.insert(document, at: 0) } }
+            }
+            /// Every stored version, newest first.
+            var history: [Document] = []
             var isSignedIn: Bool { true }
             /// Each put first lets "another Mac" write the next of these.
             var interleavedWrites: [Data] = []
@@ -227,6 +256,17 @@ final class CloudConfigSync: ObservableObject {
             var putCount = 0
 
             func fetchConfig() async throws -> Document? { document }
+
+            func listConfigVersions() async throws -> [CloudConfigVersionInfo] {
+                history.map { CloudConfigVersionInfo(version: $0.version, updatedAt: nil, deviceName: nil, bytes: nil) }
+            }
+
+            func fetchConfigVersion(_ version: String) async throws -> Data {
+                guard let document = history.first(where: { $0.version == version }) else {
+                    throw URLError(.fileDoesNotExist)
+                }
+                return document.config
+            }
 
             func putConfig(_ data: Data, ifMatch: String?) async throws -> String {
                 putCount += 1
@@ -302,6 +342,32 @@ final class CloudConfigSync: ObservableObject {
             local = config(["Dictation", "Notes"])
             await sync.sync()
             assert(sync.status == .conflict)
+
+            // 6. Restoring version 1 ("Dictation" only) over the current one: the cloud gets it as a new version
+            //    with tombstones for everything added since, and this Mac applies it.
+            store.interleavedWrites = []
+            (store.putCount, store.offlinePuts) = (0, [])
+            let firstVersion = store.history.last!.version
+            let beforeRestore = store.document!.version
+            let addedSince = (try? YapConfig.decode(store.document!.config))?.modes?
+                .filter { $0.name != "Dictation" }.map(\.id.uuidString) ?? []
+            try? await sync.restoreVersion(firstVersion)
+            let restored = try? YapConfig.decode(store.document!.config)
+            assert(store.document!.version != beforeRestore && restored?.modes?.map(\.name) == ["Dictation"])
+            assert(!addedSince.isEmpty && Set(restored?.deleted?.modes?.keys ?? [:].keys) == Set(addedSince))
+            assert(names(local) == ["Dictation"] && defaults.string(forKey: versionKey) == store.document?.version)
+            let versions = (try? await sync.loadHistory())?.versions.map(\.version)
+            assert(versions?.first == store.document?.version && versions?.last == firstVersion)
+
+            // 7. Another Mac wrote between reading the current version and the restore's put: a conflict, no merge.
+            store.interleavedWrites = [config(["Dictation", "Email"])]
+            let versionBefore = store.document!.version
+            do {
+                try await sync.restoreVersion(firstVersion)
+                assertionFailure("restore over a newer version should conflict")
+            } catch {
+                assert(error is ConflictError && store.document!.version == String(Int(versionBefore)! + 1))
+            }
         }
     }
 #endif

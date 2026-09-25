@@ -12,6 +12,14 @@ struct ConfigVersionHistorySheet: View {
     @State private var selectedConfig: YapConfig?
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var isConfirmingRestore = false
+    @State private var isRestoring = false
+
+    /// The selected version, unless it's already the current one.
+    private var restorableVersion: String? {
+        guard let selection, selection != versions.first?.version else { return nil }
+        return selection
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -41,14 +49,26 @@ struct ConfigVersionHistorySheet: View {
             }
 
             HStack {
+                if isRestoring { ProgressView().controlSize(.small) }
                 Spacer()
                 Button("Close") { dismiss() }
                     .keyboardShortcut(.cancelAction)
+                Button("Restore This Version…") { isConfirmingRestore = true }
+                    .disabled(restorableVersion == nil || selectedConfig == nil || isRestoring)
             }
         }
         .padding(24)
         .frame(width: 520)
         .task { await load() }
+        .confirmationDialog("Restore this version?", isPresented: $isConfirmingRestore) {
+            Button("Restore", role: .destructive) {
+                Task { await restore() }
+            }
+        } message: {
+            Text(
+                "Settings on all your Macs change to this version. Modes, prompts, dictionary entries and custom models added since then are deleted. The current version stays in the history."
+            )
+        }
         .onChange(of: selection) { _, version in
             Task { await select(version) }
         }
@@ -106,6 +126,21 @@ struct ConfigVersionHistorySheet: View {
         do {
             (versions, current) = try await sync.loadHistory()
             errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func restore() async {
+        guard let version = restorableVersion else { return }
+        isRestoring = true
+        defer { isRestoring = false }
+        do {
+            try await sync.restoreVersion(version)
+            dismiss()
+        } catch is CloudConfigSync.ConflictError {
+            errorMessage = String(localized: "Another Mac changed the settings in the meantime. Look at the history again, then restore.")
+            await load()
         } catch {
             errorMessage = error.localizedDescription
         }

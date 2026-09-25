@@ -5497,6 +5497,28 @@
         }
       }
     },
+    "Another Mac changed the settings in the meantime. Look at the history again, then restore." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein anderer Mac hat die Einstellungen inzwischen geändert. Sieh dir den Verlauf erneut an und stelle dann wieder her."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un autre Mac a modifié les réglages entre-temps. Consultez à nouveau l’historique, puis restaurez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这期间另一台 Mac 改了设置。请重新查看历史后再恢复。"
+          }
+        }
+      }
+    },
     "Appearance" : {
       "localizations" : {
         "de" : {
@@ -22479,6 +22501,50 @@
         }
       }
     },
+    "Restore This Version…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Version wiederherstellen …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer cette version…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复这个版本…"
+          }
+        }
+      }
+    },
+    "Restore this version?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Version wiederherstellen?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restaurer cette version ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复这个版本？"
+          }
+        }
+      }
+    },
     "Restoring applies these settings on this Mac and turns on Sync via Yap Cloud. API keys aren't synced; add them on this Mac if a provider needs one." : {
       "localizations" : {
         "de" : {
@@ -24277,6 +24343,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已成功从 %@ 导入设置。\n\n已导入：%@。"
+          }
+        }
+      }
+    },
+    "Settings on all your Macs change to this version. Modes, prompts, dictionary entries and custom models added since then are deleted. The current version stays in the history." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Einstellungen auf all deinen Macs werden auf diese Version gesetzt. Seitdem hinzugefügte Modi, Prompts, Wörterbucheinträge und eigene Modelle werden gelöscht. Die aktuelle Version bleibt im Verlauf."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les réglages de tous vos Mac reviennent à cette version. Les modes, prompts, entrées du dictionnaire et modèles personnalisés ajoutés depuis sont supprimés. La version actuelle reste dans l’historique."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你所有 Mac 上的设置都会变成这个版本。在那之后新增的模式、提示词、词典条目和自定义模型会被删除。当前版本仍保留在历史里。"
           }
         }
       }

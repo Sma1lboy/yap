@@ -471,6 +471,43 @@ struct YapConfig: Codable, Equatable {
         return config.normalized()
     }
 
+    // MARK: - Restoring an earlier version
+
+    /// The keys each tombstone kind covers in this config (mode ids, words, replacement sources…).
+    private var stampKeys: [(WritableKeyPath<Stamps, [String: Date]?>, Set<String>)] {
+        [
+            (\.modes, Set((modes ?? []).map(\.id.uuidString))),
+            (\.prompts, Set((prompts ?? []).map(\.id.uuidString))),
+            (\.vocabulary, Set(dictionary?.vocabulary ?? [])),
+            (\.replacements, Set(dictionary?.replacements?.keys ?? [:].keys)),
+            (\.customModels, Set((customModels ?? []).map(\.id.uuidString))),
+            (\.customProviders, Set((customProviders ?? []).map(\.id.uuidString))),
+        ]
+    }
+
+    /// Restoring `old` over `current` means "these contents, as of now", not "merge these in". Put back as-is,
+    /// `old` goes wrong two ways: applying only merges by id, so a Mac that has an entry added since keeps it and
+    /// its next export uploads it again; and tombstones written since `old` delete entries `old` brings back.
+    /// So: every entry in `old` is stamped modified `now` (beating those tombstones), and every entry in `current`
+    /// that `old` lacks gets a tombstone at `now`. Older tombstones for entries `old` doesn't have stay.
+    static func restoring(_ old: YapConfig, over current: YapConfig, now: Date) -> YapConfig {
+        let now = Date(timeIntervalSince1970: floor(now.timeIntervalSince1970))
+        var result = old
+        result.version = currentVersion
+        var modified = Stamps()
+        var deleted = current.deleted ?? Stamps()
+        let currentKeys = Dictionary(uniqueKeysWithValues: current.stampKeys.map { ($0.0, $0.1) })
+        for (kind, oldKeys) in old.stampKeys {
+            modified[keyPath: kind] = Dictionary(uniqueKeysWithValues: oldKeys.map { ($0, now) })
+            var tombstones = (deleted[keyPath: kind] ?? [:]).filter { !oldKeys.contains($0.key) }
+            for key in (currentKeys[kind] ?? []).subtracting(oldKeys) { tombstones[key] = now }
+            deleted[keyPath: kind] = tombstones
+        }
+        result.modified = modified
+        result.deleted = deleted
+        return result.resolvingTombstones(now: now)
+    }
+
     private func byID<T: Identifiable>(_ items: [T]?) -> [String: T] where T.ID == UUID {
         Dictionary((items ?? []).map { ($0.id.uuidString, $0) }, uniquingKeysWith: { $1 })
     }
@@ -723,6 +760,46 @@ extension String {
             let onOtherMac = modelDeleted.backupSections(
                 currentModes: [], currentPrompts: [], currentModeShortcuts: [:], currentCustomModels: [model])
             assert(onOtherMac?.file.customCloudModels?.isEmpty == true)
+
+            // Restoring an earlier version overwrites: entries added since then get tombstones.
+            do {
+                let (t1, t2) = (Date(timeIntervalSince1970: 1_800_000_000), Date(timeIntervalSince1970: 1_800_001_000))
+                let id = { (n: Int) in UUID(uuidString: String(format: "77777777-7777-4777-8777-%012d", n))! }
+                let mode = { (n: Int, name: String) in
+                    ModeConfig(id: id(n), name: name, isAIEnhancementEnabled: false, selectedLanguage: "en")
+                }
+                // The old version had A (old text) and C; since then A was edited, B added, C deleted, "y" added.
+                var old = YapConfig()
+                old.modes = [mode(1, "A old"), mode(3, "C")]
+                old.dictionary = .init(vocabulary: ["x"])
+                var current = YapConfig()
+                current.modes = [mode(1, "A new"), mode(2, "B")]
+                current.dictionary = .init(vocabulary: ["x", "y"])
+                current.modified = .init(modes: [id(1).uuidString: t1, id(2).uuidString: t1])
+                current.deleted = .init(modes: [id(3).uuidString: t1])
+
+                let restored = restoring(old, over: current, now: t2)
+                assert(restored.modes?.map(\.name) == ["A old", "C"] && restored.dictionary?.vocabulary == ["x"])
+                assert(restored.deleted?.modes == [id(2).uuidString: t2] && restored.deleted?.vocabulary == ["y": t2])
+                assert(restored.modified?.modes?[id(3).uuidString] == t2)
+
+                // Another Mac still on `current` pulls it: B and "y" go, C comes back, A has the old text.
+                let merged = threeWayMerged(base: current, local: current, remote: restored, now: t2)
+                assert(Set(merged.modes?.map(\.name) ?? []) == ["A old", "C"] && merged.dictionary?.vocabulary == ["x"])
+                let applied = restored.backupSections(
+                    currentModes: [mode(1, "A new"), mode(2, "B")], currentPrompts: [], currentModeShortcuts: [:])
+                assert(applied?.file.modeConfigs.map(\.name) == ["A old", "C"])
+
+                // Why not just put `old` back as-is: applying it on a Mac leaves B in the app (apply only merges),
+                // so that Mac's next export uploads B again; and C's older tombstone deletes the restored C.
+                var naive = old
+                naive.version = currentVersion
+                let naiveApplied = naive.backupSections(
+                    currentModes: [mode(1, "A new"), mode(2, "B")], currentPrompts: [], currentModeShortcuts: [:])
+                assert(naiveApplied?.file.modeConfigs.contains { $0.name == "B" } == true)
+                let naiveMerge = threeWayMerged(base: current, local: current, remote: naive, now: t2)
+                assert(naiveMerge.modes?.contains { $0.name == "C" } == false)
+            }
 
             // Tombstones. Base state as both Macs last synced it, every entry modified at t0.
             let t0 = Date(timeIntervalSince1970: 1_800_000_000)
