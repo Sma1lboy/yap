@@ -73,7 +73,7 @@ enum OnboardingStage: String, CaseIterable {
         case .microphone:
             return String(localized: "Pick the microphone Yap should use for recordings.")
         case .model:
-            return String(localized: "Use the recommended OpenRouter setup, Yap Cloud, your own API key, or NVIDIA's Parakeet model on this Mac.")
+            return String(localized: "Use Yap Cloud with no API key, the recommended OpenRouter setup with your own key, another provider's key, or NVIDIA's Parakeet model on this Mac.")
         case .api:
             return String(
                 localized:

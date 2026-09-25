@@ -29172,6 +29172,28 @@
         }
       }
     },
+    "Use Yap Cloud with no API key, the recommended OpenRouter setup with your own key, another provider's key, or NVIDIA's Parakeet model on this Mac." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutze Yap Cloud ohne API-Schlüssel, das empfohlene OpenRouter-Setup mit deinem eigenen Schlüssel, den Schlüssel eines anderen Anbieters oder NVIDIAs Parakeet-Modell auf diesem Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisez Yap Cloud sans clé API, la configuration OpenRouter recommandée avec votre propre clé, la clé d’un autre fournisseur, ou le modèle Parakeet de NVIDIA sur ce Mac."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用无需 API 密钥的 Yap Cloud、用你自己 key 的推荐 OpenRouter 配置、其他提供商的 key，或在这台 Mac 上运行 NVIDIA 的 Parakeet 模型。"
+          }
+        }
+      }
+    },
     "Use a different email" : {
       "localizations" : {
         "de" : {
@@ -29259,28 +29281,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将当前 App 中选中的文本用作此模式的上下文。"
-          }
-        }
-      }
-    },
-    "Use the recommended OpenRouter setup, Yap Cloud, your own API key, or NVIDIA's Parakeet model on this Mac." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nutze die empfohlene OpenRouter-Einrichtung, Yap Cloud, deinen eigenen API-Schlüssel oder NVIDIAs Parakeet-Modell auf diesem Mac."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Utilisez la configuration OpenRouter recommandée, Yap Cloud, votre propre clé API ou le modèle Parakeet de NVIDIA sur ce Mac."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "使用推荐的 OpenRouter 配置、Yap Cloud、自带的 API Key，或在这台 Mac 上运行 NVIDIA 的 Parakeet 模型。"
           }
         }
       }

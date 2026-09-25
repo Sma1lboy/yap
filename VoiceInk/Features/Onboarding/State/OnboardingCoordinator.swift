@@ -115,10 +115,13 @@ final class OnboardingCoordinator: ObservableObject {
         self.experienceStepIndex = defaults.integer(forKey: OnboardingStorageKeys.experienceIndex)
         self.storedOnboardingAIProvider =
             defaults.string(forKey: OnboardingStorageKeys.aiProvider) ?? AIProvider.groq.rawValue
+        // New users start on Yap Cloud (signup credit, no key to create); someone who already stored an
+        // OpenRouter key starts on the Recommended own-key setup that uses it.
         self.storedTranscriptionSetupKind =
-            defaults.string(
-                forKey: OnboardingStorageKeys.transcriptionSetupKind
-            ) ?? OnboardingTranscriptionSetupKind.recommended.rawValue
+            defaults.string(forKey: OnboardingStorageKeys.transcriptionSetupKind)
+            ?? (APIKeyManager.shared.hasAPIKey(forProvider: AIProvider.openRouter.rawValue)
+                ? OnboardingTranscriptionSetupKind.recommended
+                : OnboardingTranscriptionSetupKind.yapCloud).rawValue
         self.storedOnboardingTranscriptionProvider =
             defaults.string(
                 forKey: OnboardingStorageKeys.transcriptionProvider

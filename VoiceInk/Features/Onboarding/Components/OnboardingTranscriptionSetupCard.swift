@@ -88,8 +88,8 @@ struct OnboardingTranscriptionSetupCard: View {
 
     private var setupSwitcher: some View {
         HStack(spacing: 8) {
-            setupChoice(.recommended, systemImage: "sparkles")
             setupChoice(.yapCloud, systemImage: "creditcard")
+            setupChoice(.recommended, systemImage: "sparkles")
             setupChoice(.cloud, systemImage: "cloud.fill")
             setupChoice(.local, systemImage: "macbook")
         }
