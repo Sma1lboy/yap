@@ -166,6 +166,18 @@ Task { @MainActor in
         return "v\(doc.version) → v\(next) (same content), stale and create-only both 409"
     }
 
+    await check("config versions") {
+        let versions = try await cloud.fetchConfigVersions()
+        guard let newest = versions.first else { return "SKIP: no earlier config versions" }
+        let dates = versions.compactMap(\.updatedDate)
+        try expect(dates.count == versions.count, "unparseable updatedAt")
+        try expect(zip(dates, dates.dropFirst()).allSatisfy { $0 >= $1 }, "not newest first")
+        let document = try await cloud.fetchConfig(version: newest.version.string)
+        try expect(document.version == newest.version.string, "asked v\(newest.version.string), got v\(document.version)")
+        try expect((try? JSONSerialization.jsonObject(with: document.config)) != nil, "config is not JSON")
+        return "\(versions.count) earlier versions, newest v\(newest.version.string) fetched (\(document.config.count) bytes)"
+    }
+
     let balance = me?.balanceMicros
     await check("402 chat") {
         guard let balance else { return "SKIP: /v1/me failed" }
