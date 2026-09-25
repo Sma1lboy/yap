@@ -128,6 +128,10 @@ struct OnboardingTranscriptionSetupCard: View {
 
     private var recommendedSetup: some View {
         VStack(alignment: .leading, spacing: 14) {
+            Text("Uses your own OpenRouter key; you pay OpenRouter directly.")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(AppTheme.Text.primary)
+                .fixedSize(horizontal: false, vertical: true)
             Text("OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinese–English enhancement · about $0.13 per hour of speech")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(AppTheme.Text.secondary)

@@ -30,7 +30,7 @@ git clone https://github.com/Sma1lboy/yap && cd yap
 
 ## Yap Cloud
 
-Yap Cloud 是一个可选的账户：转写和润色的费用从预充值的余额里扣，不需要去 OpenRouter 或其他服务商申请 API key。用的模型和「推荐」配置相同。
+Yap Cloud 是一个可选的账户：转写和润色的费用从预充值的余额里扣，不需要去 OpenRouter 或其他服务商申请 API key。用的模型和「自带 OpenRouter Key」配置相同。
 
 **注册 / 登录。** 打开侧边栏的 **账户**，输入邮箱，再输入发到邮箱里的 6 位验证码。没有密码。新账户会得到 $1 的额度，在 **最近记录** 里显示为「注册赠送」。也可以在引导流程的模型那一步直接选 **使用 Yap Cloud(按量付费)**。
 
@@ -122,7 +122,7 @@ API key 永远不会写进 config.json，也不会上传到 Yap Cloud。Yap 只�
 
 ### 推荐模型
 
-当前选择（2026 年 9 月，11 段中英混说音频 / 82 个关键词）：转写用 `microsoft/mai-transcribe-2`（82 个里对 80 个，$0.10/小时），润色用 `deepseek/deepseek-v4.1-flash`（9/9 个用例，约 0.5 秒）。引导流程里的「推荐」选项用一个 OpenRouter key 就会应用这套配置。修改 `VoiceInk/Resources/RecommendedPrompt.md` 后请重新跑 `setup/bench.py`。
+当前选择（2026 年 9 月，11 段中英混说音频 / 82 个关键词）：转写用 `microsoft/mai-transcribe-2`（82 个里对 80 个，$0.10/小时），润色用 `deepseek/deepseek-v4.1-flash`（9/9 个用例，约 0.5 秒）。引导流程里的「自带 OpenRouter Key」选项用你自己的 OpenRouter key 应用这套配置，费用直接付给 OpenRouter。修改 `VoiceInk/Resources/RecommendedPrompt.md` 后请重新跑 `setup/bench.py`。
 
 ## 发布
 
