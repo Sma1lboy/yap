@@ -237,23 +237,23 @@ private struct SignedInSections: View {
         MonthlyCapSection()
 
         Section("Recent Activity") {
-            if !cloud.isLedgerLoaded {
-                if cloud.isRefreshingAccount {
-                    ProgressView().controlSize(.small)
+            if let ledger = cloud.ledger {
+                if ledger.isEmpty {
+                    Text("No charges or top-ups yet.")
+                        .foregroundStyle(.secondary)
                 } else {
-                    HStack {
-                        Text("Couldn't load recent activity.")
-                            .foregroundStyle(AppTheme.Status.error)
-                        Spacer()
-                        Button("Retry") { Task { await cloud.refreshAccount() } }
+                    ForEach(ledger, id: \.id.string) { entry in
+                        LedgerRow(entry: entry)
                     }
                 }
-            } else if cloud.ledger.isEmpty {
-                Text("No charges or top-ups yet.")
-                    .foregroundStyle(.secondary)
+            } else if cloud.isRefreshingAccount {
+                ProgressView().controlSize(.small)
             } else {
-                ForEach(cloud.ledger, id: \.id.string) { entry in
-                    LedgerRow(entry: entry)
+                HStack {
+                    Text("Couldn't load recent activity.")
+                        .foregroundStyle(AppTheme.Status.error)
+                    Spacer()
+                    Button("Retry") { Task { await cloud.refreshAccount() } }
                 }
             }
         }

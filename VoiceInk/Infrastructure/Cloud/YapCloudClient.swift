@@ -34,9 +34,8 @@ final class YapCloud: ObservableObject {
         didSet { balanceUpdatedAt = me == nil ? nil : Date() }
     }
     @Published private(set) var balanceUpdatedAt: Date?
-    @Published private(set) var ledger: [YapCloudLedgerEntry] = []
-    /// False until a ledger fetch succeeds, so a failed load is never shown as "no activity".
-    @Published private(set) var isLedgerLoaded = false
+    /// The last 20 ledger rows; nil until a fetch succeeds, so a failed load is never shown as "no activity".
+    @Published private(set) var ledger: [YapCloudLedgerEntry]?
     @Published private(set) var isRefreshingAccount = false
     /// Why the last Account refresh failed; nil after a successful one.
     @Published private(set) var accountRefreshError: String?
@@ -48,9 +47,9 @@ final class YapCloud: ObservableObject {
     /// successful request, and /healthz is polled every 15 s while it's set.
     @Published private(set) var isUnreachable = false
     private var healthPoll: Task<Void, Never>?
-    /// Signed-in devices for Account; nil until loaded or while paygate doesn't have the endpoint (404).
+    /// Signed-in devices for Account; nil until loaded.
     @Published private(set) var devices: [YapCloudDevice]?
-    /// Why the device list failed to load (not set for the 404 of an undeployed endpoint).
+    /// Why the device list failed to load.
     @Published private(set) var devicesError: String?
 
     struct PendingTopUp: Equatable {
@@ -135,7 +134,7 @@ final class YapCloud: ObservableObject {
     private func announceSignupCreditIfNew(userID: String) {
         let key = "yapCloudSignupCreditShown." + userID
         guard !defaults.bool(forKey: key), (balanceMicros ?? 0) > 0,
-            let credit = Self.signupCreditMicros(in: ledger, now: Date())
+            let credit = Self.signupCreditMicros(in: ledger ?? [], now: Date())
         else { return }
         defaults.set(true, forKey: key)
         Self.showCredited(
@@ -180,8 +179,7 @@ final class YapCloud: ObservableObject {
         defaults.removeObject(forKey: Self.emailKey)
         isSignedIn = false
         me = nil
-        ledger = []
-        isLedgerLoaded = false
+        ledger = nil
         accountRefreshError = nil
         monthlySpend = nil
         devices = nil
@@ -279,7 +277,7 @@ final class YapCloud: ObservableObject {
         }
         guard let lifetime = try? await fetchLifetimeUsage() else { return }
         // Newest-first ledger: a trial user's sign-up credit row is usually still on the first page.
-        let signupAt = ledger.last { $0.kind == "credit" }?.createdDate
+        let signupAt = ledger?.last { $0.kind == "credit" }?.createdDate
         trialNudge = Self.trialNudge(
             balanceMicros: me.balanceMicros, lifetimePaidMicros: lifetime.paidMicros,
             lifetimeCreditMicros: lifetime.creditMicros, signupAt: signupAt, now: Date())
@@ -328,7 +326,6 @@ final class YapCloud: ObservableObject {
             me = try await fetchMe()
             settlePendingTopUp()
             ledger = try await fetchLedger()
-            isLedgerLoaded = true
             monthlySpend = try await fetchUsage()
             accountRefreshError = nil
             await evaluateTrialNudge()
@@ -612,7 +609,7 @@ final class YapCloud: ObservableObject {
         try Self.decode([YapCloudDevice].self, from: try await send("GET", "/v1/me/devices"))
     }
 
-    /// Loads the device list for Account. A 404 (endpoint not deployed yet) leaves `devices` nil, hiding the section.
+    /// Loads the device list for Account.
     @MainActor
     func refreshDevices() async {
         guard token != nil else { return }
@@ -621,8 +618,6 @@ final class YapCloud: ObservableObject {
             devicesError = nil
         } catch let error as YapCloudError where error.isAuthFailure {
             clearSession()
-        } catch YapCloudError.server(let status, _, _, _, _) where status == 404 {
-            devices = nil
         } catch {
             logger.error("Device list failed: \(error.localizedDescription, privacy: .public)")
             devicesError = error.localizedDescription
