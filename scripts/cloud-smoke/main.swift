@@ -205,6 +205,48 @@ Task { @MainActor in
         }
     }
 
+    await check("401 bad token") {
+        var request = URLRequest(url: URL(string: "/v1/me", relativeTo: cloud.baseURL)!)
+        request.setValue("Bearer not-a-real-token", forHTTPHeaderField: "Authorization")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let status = (response as! HTTPURLResponse).statusCode
+        let error = YapCloudError(status: status, body: data, authenticated: true)
+        try expect(error.isAuthFailure, "HTTP \(status) → \(error)")
+        return "HTTP \(status) → \(error) (signs out)"
+    }
+
+    await check("413 payload too large") {
+        // Config's cap is 1 MB, the cheapest route to exceed; nothing is written (refused before parsing).
+        let (status, data) = try await raw("PUT", "/v1/config", json: ["config": ["pad": String(repeating: "x", count: 1_100_000)]])
+        let error = YapCloudError(status: status, body: data, authenticated: true)
+        guard case .server(413, "PAYLOAD_TOO_LARGE", _, _, _) = error else { throw Failed(description: "HTTP \(status) \(error)") }
+        try expect(YapCloud.transcriptionBodyFits(audioBytes: 30_000_000) && !YapCloud.transcriptionBodyFits(audioBytes: 32_000_000),
+                   "client-side 40 MB pre-check")
+        return "PAYLOAD_TOO_LARGE; recordings over ~31 MB are refused before upload"
+    }
+
+    await check("429 concurrent calls") {
+        guard let balance, balance <= 0 else { return "SKIP: needs a zero balance (calls would be billed)" }
+        // paygate takes the slot before reading the body, so parallel ~1 MB uploads overlap past the limit (4).
+        let body: [String: Any] = [
+            "model": "microsoft/mai-transcribe-2",
+            "input_audio": ["data": Data(count: 750_000).base64EncodedString(), "format": "wav"],
+        ]
+        let statuses = await withTaskGroup(of: (Int, Data)?.self) { group in
+            for _ in 0..<8 { group.addTask { try? await raw("POST", "/v1/audio/transcriptions", json: body) } }
+            var all: [(Int, Data)] = []
+            for await result in group { if let result { all.append(result) } }
+            return all
+        }
+        let errors = statuses.map { YapCloudError(status: $0.0, body: $0.1, authenticated: true) }
+        let busy = errors.filter { if case .server(429, "TOO_MANY_CONCURRENT_CALLS", _, _, _) = $0 { return true } else { return false } }
+        try expect(errors.allSatisfy { $0 == .insufficientBalance || busy.contains($0) }, "unexpected: \(errors)")
+        guard let sample = busy.first else { return "SKIP: uploads didn't overlap enough to hit the limit (\(errors.count)× 402)" }
+        try expect(YapCloud.isSafeToRetry(sample), "429 not retried")
+        try expect(!(sample.errorDescription ?? "").localizedCaseInsensitiveContains("too many"), "wording")
+        return "\(busy.count)/\(errors.count) got TOO_MANY_CONCURRENT_CALLS (retried once by the client), rest 402"
+    }
+
     print(failures == 0 ? "cloud-smoke: all checks passed" : "cloud-smoke: \(failures) check(s) failed")
     exit(failures == 0 ? 0 : 1)
 }

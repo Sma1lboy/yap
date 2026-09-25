@@ -35,8 +35,15 @@ struct YapCloudProvider: CloudProvider {
         ]
         if let language, !language.isEmpty { body["language"] = language }
 
+        // paygate caps the body at 40 MB (413 PAYLOAD_TOO_LARGE); don't upload what it would refuse.
+        guard YapCloud.transcriptionBodyFits(audioBytes: audioData.count) else { throw YapCloudError.recordingTooLong }
         let timeout = YapCloud.wavDuration(audioData).map(YapCloud.transcriptionTimeout) ?? timeout
-        let data = try await YapCloud.shared.proxy("/v1/audio/transcriptions", body: body, timeout: timeout)
+        let data: Data
+        do {
+            data = try await YapCloud.shared.proxy("/v1/audio/transcriptions", body: body, timeout: timeout)
+        } catch YapCloudError.server(413, _, _, _, _) {
+            throw YapCloudError.recordingTooLong
+        }
         guard let text = (try? JSONDecoder().decode(Response.self, from: data))?.text, !text.isEmpty else {
             throw CloudTranscriptionError.noTranscriptionReturned
         }
