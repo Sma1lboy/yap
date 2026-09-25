@@ -29,7 +29,7 @@ final class FileTranscriptionSession: TranscriptionSession {
 
     func prepare(configuration: TranscriptionRuntimeConfiguration) async throws -> ((Data) -> Void)? {
         self.model = configuration.model
-        self.context = configuration.requestContext.scoped(to: configuration.model)
+        self.context = configuration.requestContext
         return nil
     }
 
@@ -66,7 +66,7 @@ final class StreamingTranscriptionSession: TranscriptionSession {
 
     func prepare(configuration: TranscriptionRuntimeConfiguration) async throws -> ((Data) -> Void)? {
         let model = configuration.model
-        let context = configuration.requestContext.scoped(to: model)
+        let context = configuration.requestContext
 
         self.model = model
         self.context = context

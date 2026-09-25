@@ -104,14 +104,12 @@ class VoiceInkEngine: NSObject, ObservableObject {
     private var activePipelineUseCase: RecordingUseCase = .newSession
     private var activeRecordingContextStore: RecordingContextSnapshotStore?
     private var activeRecordingContextTasks: [Task<Void, Never>] = []
-    private var voiceInkRefinePreparationTask: Task<Void, Never>?
 
     let recorder = Recorder()
     var recordedFile: URL? = nil
     let recordingsDirectory: URL
 
     // Injected managers
-    let whisperModelManager: WhisperModelManager
     let transcriptionModelManager: TranscriptionModelManager
     weak var recorderUIManager: RecorderPanelPresenting?
 
@@ -126,12 +124,10 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
     init(
         modelContext: ModelContext,
-        whisperModelManager: WhisperModelManager,
         transcriptionModelManager: TranscriptionModelManager,
         enhancementService: AIEnhancementService? = nil
     ) {
         self.modelContext = modelContext
-        self.whisperModelManager = whisperModelManager
         self.transcriptionModelManager = transcriptionModelManager
         self.enhancementService = enhancementService
         if let aiService = enhancementService?.getAIService() {
@@ -147,11 +143,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
             .appendingPathComponent(AppIdentity.supportDirectoryName)
         self.recordingsDirectory = appSupportDirectory.appendingPathComponent("Recordings")
 
-        self.serviceRegistry = TranscriptionServiceRegistry(
-            modelProvider: whisperModelManager,
-            modelsDirectory: whisperModelManager.modelsDirectory,
-            modelContext: modelContext
-        )
+        self.serviceRegistry = TranscriptionServiceRegistry(modelContext: modelContext)
         self.pipeline = TranscriptionPipeline(
             modelContext: modelContext,
             serviceRegistry: serviceRegistry,
@@ -160,7 +152,6 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
         super.init()
 
-        setupNotifications()
         createRecordingsDirectoryIfNeeded()
     }
 
@@ -360,40 +351,6 @@ class VoiceInkEngine: NSObject, ObservableObject {
                                 self.recorder.onAudioChunk = nil
                                 _ = realtimeAudioGate.reset()
                             }
-
-                            self.scheduleVoiceInkRefinePreparation(for: startID)
-
-                            Task { @MainActor [weak self] in
-                                guard let self else { return }
-
-                                let currentModel = ModeRuntimeResolver.transcriptionConfiguration(
-                                    transcriptionModelManager: self.transcriptionModelManager
-                                )?.model
-
-                                if let model = currentModel,
-                                    model.provider == .whisper
-                                {
-                                    if let localWhisperModel = self.whisperModelManager.availableModels.first(where: {
-                                        $0.name == model.name
-                                    }),
-                                        self.whisperModelManager.whisperContext == nil
-                                    {
-                                        do {
-                                            try await self.whisperModelManager.loadModel(localWhisperModel)
-                                        } catch {
-                                            self.logger.error("❌ Model loading failed: \(error, privacy: .public)")
-                                        }
-                                    }
-                                } else if let fluidAudioModel = currentModel as? FluidAudioModel {
-                                    try? await self.serviceRegistry.fluidAudioTranscriptionService.loadModel(
-                                        for: fluidAudioModel)
-                                } else if let transcribeCppModel = currentModel as? TranscribeCppModel {
-                                    try? await self.serviceRegistry.transcribeCppTranscriptionService.loadModel(
-                                        for: transcribeCppModel)
-                                }
-
-                            }
-
                         } catch {
                             activeModeTask.cancel()
                             self.logger.error("Recording failed to start: \(error, privacy: .public)")
@@ -775,59 +732,6 @@ class VoiceInkEngine: NSObject, ObservableObject {
         return (mode.name, mode.icon.value)
     }
 
-    private func scheduleVoiceInkRefinePreparation(for recordingStartID: UUID) {
-        voiceInkRefinePreparationTask?.cancel()
-
-        voiceInkRefinePreparationTask = Task { @MainActor [weak self] in
-            guard let self,
-                self.recordingState == .recording,
-                self.activeRecordingStartID == recordingStartID,
-                !self.shouldCancelRecording,
-                let enhancementService = self.enhancementService,
-                let aiService = enhancementService.getAIService()
-            else {
-                return
-            }
-
-            let initialConfiguration = ModeRuntimeResolver.currentEnhancementConfiguration(
-                enhancementService: enhancementService,
-                aiService: aiService
-            )
-            guard initialConfiguration.isEnabled,
-                initialConfiguration.provider == .voiceInkRefine
-            else {
-                return
-            }
-
-            // Preserve an already-warm XPC model immediately, while retaining the
-            // debounce below before any new model preparation begins.
-            await aiService.voiceInkRefineService.keepPreparedModelWarmForRecording()
-
-            do {
-                try await Task.sleep(for: .milliseconds(450))
-            } catch {
-                return
-            }
-
-            guard self.recordingState == .recording,
-                self.activeRecordingStartID == recordingStartID,
-                !self.shouldCancelRecording
-            else {
-                return
-            }
-
-            let configuration = ModeRuntimeResolver.currentEnhancementConfiguration(
-                enhancementService: enhancementService,
-                aiService: aiService
-            )
-            guard configuration.isEnabled, configuration.provider == .voiceInkRefine else {
-                return
-            }
-
-            await aiService.voiceInkRefineService.prepareForRecording()
-        }
-    }
-
     // MARK: - Resource Cleanup
 
     private func cancelPipelineSession(transcriptionID: UUID, session: TranscriptionSession?) {
@@ -849,16 +753,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
     }
 
     private func finishRecorderSession() async {
-        let preparationTask = voiceInkRefinePreparationTask
-        voiceInkRefinePreparationTask = nil
-        preparationTask?.cancel()
-        await preparationTask?.value
-
         enhancementService?.clearCapturedContexts()
-        await enhancementService?
-            .getAIService()?
-            .voiceInkRefineService
-            .unloadPreparedModelIfNeeded()
     }
 
     func cleanupResources() async {
@@ -866,31 +761,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
         activeRecordingStartID = nil
         activeRecordingUseCase = .newSession
         await finishRecorderSession()
-        await whisperModelManager.cleanupResources()
-        await serviceRegistry.cleanup()
         logger.notice("cleanupResources: completed")
-    }
-
-    // MARK: - Notification Handling
-
-    func setupNotifications() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handlePromptChange),
-            name: .promptDidChange,
-            object: nil
-        )
-    }
-
-    @objc func handlePromptChange() {
-        Task {
-            let currentPrompt =
-                UserDefaults.standard.string(forKey: "TranscriptionPrompt")
-                ?? whisperModelManager.whisperPrompt.transcriptionPrompt
-            if let context = whisperModelManager.whisperContext {
-                await context.setPrompt(currentPrompt)
-            }
-        }
     }
 }
 

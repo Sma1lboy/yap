@@ -5,7 +5,6 @@ struct MenuBarView: View {
     @EnvironmentObject var engine: VoiceInkEngine
     @EnvironmentObject var recorderUIManager: RecorderUIManager
     @EnvironmentObject var transcriptionModelManager: TranscriptionModelManager
-    @EnvironmentObject var whisperModelManager: WhisperModelManager
     @EnvironmentObject var recordingShortcutManager: RecordingShortcutManager
     @EnvironmentObject var menuBarManager: MenuBarManager
     @EnvironmentObject var mainWindowNavigation: MainWindowNavigation

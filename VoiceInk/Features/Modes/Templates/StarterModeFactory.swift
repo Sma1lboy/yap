@@ -2,7 +2,9 @@ import AppKit
 import Foundation
 
 enum StarterModeFactory {
-    static let defaultTranscriptionModelName = "parakeet-tdt-0.6b-v3"
+    /// Selection key for OpenRouter's MAI-Transcribe-2.
+    static let defaultTranscriptionModelName =
+        "OpenRouter:\(OpenRouterProvider.stableID(for: "microsoft/mai-transcribe-2").uuidString)"
 
     static func install(
         kinds: [StarterModeKind],

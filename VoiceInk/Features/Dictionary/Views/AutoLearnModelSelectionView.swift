@@ -24,10 +24,7 @@ struct AutoLearnModelSelectionView: View {
     @State private var modelRefreshTask: Task<Void, Never>?
 
     private var providerOptions: [AIProvider] {
-        var providers = aiService.connectedProviders.filter {
-            AutoLearnProviderPolicy.isSupported($0)
-                && ($0 != .ollama || !aiService.isOllamaRefreshing && !aiService.availableModels(for: $0).isEmpty)
-        }
+        var providers = aiService.connectedProviders.filter(AutoLearnProviderPolicy.isSupported)
         if let selectedProvider, AutoLearnProviderPolicy.isSupported(selectedProvider),
             !providers.contains(selectedProvider)
         {
@@ -38,8 +35,7 @@ struct AutoLearnModelSelectionView: View {
 
     private var selectedProvider: AIProvider? {
         guard let provider = AIProvider(rawValue: autoLearnProvider),
-            AutoLearnProviderPolicy.isSupported(provider),
-            provider != .ollama || aiService.connectedProviders.contains(provider)
+            AutoLearnProviderPolicy.isSupported(provider)
         else {
             return nil
         }
@@ -62,9 +58,7 @@ struct AutoLearnModelSelectionView: View {
                 }
 
                 if let selectedProvider {
-                    if selectedProvider != .localCLI {
-                        modelPicker(for: selectedProvider)
-                    }
+                    modelPicker(for: selectedProvider)
 
                     if !aiService.connectedProviders.contains(selectedProvider) {
                         Text("The selected provider is currently unavailable.")
@@ -151,25 +145,14 @@ struct AutoLearnModelSelectionView: View {
         modelRefreshTask = Task {
             let modelAtStart = autoLearnModel
 
-            switch provider {
-            case .ollama:
-                let models = await aiService.refreshOllamaConnectionAndModels().map(\.name)
-                updateModelSelection(
-                    afterLoading: models,
-                    for: provider,
-                    modelAtStart: modelAtStart
-                )
-            case .openRouter:
-                await aiService.fetchOpenRouterModels()
-                guard !Task.isCancelled else { return }
-                updateModelSelection(
-                    afterLoading: aiService.availableModels(for: provider),
-                    for: provider,
-                    modelAtStart: modelAtStart
-                )
-            default:
-                break
-            }
+            guard provider == .openRouter else { return }
+            await aiService.fetchOpenRouterModels()
+            guard !Task.isCancelled else { return }
+            updateModelSelection(
+                afterLoading: aiService.availableModels(for: provider),
+                for: provider,
+                modelAtStart: modelAtStart
+            )
         }
     }
 

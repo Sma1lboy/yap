@@ -97,7 +97,7 @@ final class AutoLearnAIReviewer: @unchecked Sendable {
         }
 
         let connectedProviders = availableProviders(in: aiService)
-        // Respect the user's provider choice. Ollama keeps correction review on-device.
+        // Respect the user's provider choice.
         guard let provider = AutoLearnSettings.selectedProvider ?? connectedProviders.first,
             connectedProviders.contains(provider)
         else {
@@ -117,7 +117,7 @@ final class AutoLearnAIReviewer: @unchecked Sendable {
         )
         let requestText = String(decoding: requestData, as: UTF8.self)
 
-        let loggedModelName = modelName ?? "provider-default"
+        let loggedModelName = modelName
         logger.notice(
             "Auto Learn review started provider=\(provider.rawValue, privacy: .public) model=\(loggedModelName, privacy: .public) candidates=\(candidates.count, privacy: .public)"
         )
@@ -212,10 +212,7 @@ final class AutoLearnAIReviewer: @unchecked Sendable {
     }
 
     private func availableProviders(in aiService: AIService) -> [AIProvider] {
-        aiService.connectedProviders.filter {
-            AutoLearnProviderPolicy.isSupported($0)
-                && ($0 != .ollama || !aiService.availableModels(for: $0).isEmpty)
-        }
+        aiService.connectedProviders.filter(AutoLearnProviderPolicy.isSupported)
     }
 
     private func unresolvedReview(

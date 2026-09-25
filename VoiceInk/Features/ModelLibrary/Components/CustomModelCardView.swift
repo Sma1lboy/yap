@@ -92,3 +92,13 @@ struct CustomModelCardView: View {
         }
     }
 }
+
+func modelStatusPill(_ text: LocalizedStringKey, systemImage: String) -> some View {
+    Label(text, systemImage: systemImage)
+        .font(.system(size: 11, weight: .medium))
+        .foregroundColor(Color(.secondaryLabelColor))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(AppTheme.Surface.card)
+        .clipShape(Capsule())
+}

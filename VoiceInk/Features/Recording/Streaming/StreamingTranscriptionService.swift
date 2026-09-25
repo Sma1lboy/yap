@@ -124,7 +124,6 @@ class StreamingTranscriptionService {
     private var state: StreamingState = .idle
     private var committedSegments: [String] = []
     private let modelContext: ModelContext
-    private let fluidAudioService: FluidAudioTranscriptionService?
     private var onPartialTranscript: ((String) -> Void)?
     private let metrics = StreamingMetrics()
     private var stopStartedAt: Date?
@@ -132,11 +131,10 @@ class StreamingTranscriptionService {
     private var firstCommitLogged = false
 
     init(
-        modelContext: ModelContext, fluidAudioService: FluidAudioTranscriptionService? = nil,
+        modelContext: ModelContext,
         onPartialTranscript: ((String) -> Void)? = nil
     ) {
         self.modelContext = modelContext
-        self.fluidAudioService = fluidAudioService
         self.onPartialTranscript = onPartialTranscript
     }
 
@@ -298,22 +296,6 @@ class StreamingTranscriptionService {
     // MARK: - Private
 
     private func createProvider(for model: any TranscriptionModel) -> StreamingTranscriptionProvider {
-        if model.provider == .fluidAudio {
-            if FluidAudioModelManager.isNemotronModel(named: model.name) {
-                return FluidAudioNemotronStreamingProvider()
-            }
-
-            if FluidAudioModelManager.isParakeetUnifiedModel(named: model.name) {
-                return FluidAudioUnifiedStreamingProvider()
-            }
-
-            guard let fluidAudioService else {
-                fatalError(
-                    "FluidAudioTranscriptionService required for FluidAudio streaming. Ensure it is passed to StreamingTranscriptionService."
-                )
-            }
-            return FluidAudioStreamingProvider(fluidAudioService: fluidAudioService)
-        }
         guard let cloudProvider = CloudProviderRegistry.provider(for: model.provider),
             let streamingProvider = cloudProvider.makeStreamingProvider(modelContext: modelContext)
         else {
@@ -399,7 +381,7 @@ class StreamingTranscriptionService {
                             if prefix.isEmpty {
                                 display = text
                             } else if text.hasPrefix(prefix) || text.hasPrefix(prefix + " ") {
-                                // Provider already sends cumulative partials (e.g. FluidAudio fullText).
+                                // Provider already sends cumulative partials .
                                 display = text
                             } else {
                                 display = prefix + " " + text

@@ -2,27 +2,13 @@ import Foundation
 
 struct TranscriptionRequestContext {
     let language: String?
-    let prompt: String?
 
     static var currentDefaults: TranscriptionRequestContext {
-        let language = UserDefaults.standard.string(forKey: "SelectedLanguage") ?? "auto"
-        return TranscriptionRequestContext(
-            language: language,
-            prompt: WhisperPrompt.resolvedPrompt(for: language)
-        )
-    }
-
-    func scoped(to model: any TranscriptionModel) -> TranscriptionRequestContext {
-        guard model.provider == .whisper else {
-            return TranscriptionRequestContext(language: language, prompt: nil)
-        }
-
-        return self
+        TranscriptionRequestContext(language: UserDefaults.standard.string(forKey: "SelectedLanguage") ?? "auto")
     }
 }
 
 /// A protocol defining the interface for a transcription service.
-/// This allows for a unified way to handle both local and cloud-based transcription models.
 protocol TranscriptionService {
     /// Transcribes the audio from a given file URL.
     ///
@@ -37,7 +23,7 @@ protocol TranscriptionService {
 
 extension TranscriptionService {
     func transcribe(audioURL: URL, model: any TranscriptionModel) async throws -> String {
-        let context = TranscriptionRequestContext.currentDefaults.scoped(to: model)
+        let context = TranscriptionRequestContext.currentDefaults
         return try await transcribe(audioURL: audioURL, model: model, context: context)
     }
 }

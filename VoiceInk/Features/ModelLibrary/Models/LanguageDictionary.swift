@@ -34,21 +34,7 @@ enum TranscriptionLanguageSupport {
 }
 
 enum LanguageDictionary {
-    private static let whisperLanguageCodes: Set<String> = [
-        "auto",
-        "af", "am", "ar", "as", "az", "ba", "be", "bg", "bn", "bo",
-        "br", "bs", "ca", "cs", "cy", "da", "de", "el", "en", "es",
-        "et", "eu", "fa", "fi", "fo", "fr", "gl", "gu", "ha", "haw",
-        "he", "hi", "hr", "ht", "hu", "hy", "id", "is", "it", "ja",
-        "jw", "ka", "kk", "km", "kn", "ko", "la", "lb", "ln", "lo",
-        "lt", "lv", "mg", "mi", "mk", "ml", "mn", "mr", "ms", "mt",
-        "my", "ne", "nl", "nn", "no", "oc", "pa", "pl", "ps", "pt",
-        "ro", "ru", "sa", "sd", "si", "sk", "sl", "sn", "so", "sq",
-        "sr", "su", "sv", "sw", "ta", "te", "tg", "th", "tk", "tl",
-        "tr", "tt", "uk", "ur", "uz", "vi", "yi", "yo", "yue", "zh",
-    ]
-
-    static func forProvider(isMultilingual: Bool, provider: ModelProvider = .whisper) -> [String: String] {
+    static func forProvider(isMultilingual: Bool, provider: ModelProvider = .custom) -> [String: String] {
         if !isMultilingual {
             return ["en": "English"]
         }
@@ -60,26 +46,7 @@ enum LanguageDictionary {
             return forCodes(codes, includesAutoDetect: cloudProvider.includesAutoDetect)
         }
 
-        switch provider {
-        case .whisper:
-            return languages(matching: whisperLanguageCodes)
-
-        case .nativeApple:
-            return appleNative
-
-        case .fluidAudio:
-            let codes = [
-                "bg", "cs", "da", "de", "el", "en", "es", "et", "fi", "fr",
-                "hr", "hu", "it", "lt", "lv", "mt", "nl", "pl", "pt", "ro",
-                "ru", "sk", "sl", "sv", "uk",
-            ]
-            var filtered = all.filter { codes.contains($0.key) }
-            filtered["auto"] = "Auto-detect"
-            return filtered
-
-        default:
-            return all
-        }
+        return all
     }
 
     static func forCodes(_ codes: [String], includesAutoDetect: Bool = false) -> [String: String] {
@@ -87,96 +54,6 @@ enum LanguageDictionary {
         if includesAutoDetect { filtered["auto"] = "Auto-detect" }
         return filtered
     }
-
-    static let nemotronLatin: [String: String] = [
-        "auto": "Auto-detect",
-        "en-US": "English",
-        "fr-FR": "French",
-        "de-DE": "German",
-        "it-IT": "Italian",
-        "pt-BR": "Portuguese",
-        "es-US": "Spanish",
-    ]
-
-    static let nemotronMultilingual: [String: String] = [
-        "auto": "Auto-detect",
-        "ar-AR": "Arabic",
-        "bg-BG": "Bulgarian",
-        "hr-HR": "Croatian",
-        "cs-CZ": "Czech",
-        "da-DK": "Danish",
-        "nl-NL": "Dutch",
-        "en-US": "English",
-        "et-EE": "Estonian",
-        "fi-FI": "Finnish",
-        "fr-FR": "French",
-        "de-DE": "German",
-        "hi-IN": "Hindi",
-        "hu-HU": "Hungarian",
-        "it-IT": "Italian",
-        "ja-JP": "Japanese",
-        "ko-KR": "Korean",
-        "zh-CN": "Mandarin Chinese",
-        "nb-NO": "Norwegian Bokmal",
-        "pl-PL": "Polish",
-        "pt-BR": "Portuguese",
-        "ro-RO": "Romanian",
-        "ru-RU": "Russian",
-        "sk-SK": "Slovak",
-        "es-US": "Spanish",
-        "sv-SE": "Swedish",
-        "tr-TR": "Turkish",
-        "uk-UA": "Ukrainian",
-        "vi-VN": "Vietnamese",
-    ]
-
-    static let cohereTranscribe = forCodes([
-        "ar", "de", "el", "en", "es", "fr", "it", "ja", "ko", "nl", "pl", "pt", "vi", "zh",
-    ])
-
-    static let senseVoiceSmall = forCodes(
-        ["en", "ja", "ko", "yue", "zh"],
-        includesAutoDetect: true
-    )
-
-    private static func languages(matching codes: Set<String>) -> [String: String] {
-        all.filter { codes.contains($0.key) }
-    }
-
-    // Apple Native Speech languages in BCP-47 format.
-    // Queried from SpeechTranscriber.supportedLocales on macOS 26.4.
-    static let appleNative: [String: String] = [
-        "yue-CN": "Cantonese (China mainland)",
-        "zh-CN": "Chinese (China mainland)",
-        "zh-HK": "Chinese (Hong Kong)",
-        "zh-TW": "Chinese (Taiwan)",
-        "en-AU": "English (Australia)",
-        "en-CA": "English (Canada)",
-        "en-IN": "English (India)",
-        "en-IE": "English (Ireland)",
-        "en-NZ": "English (New Zealand)",
-        "en-SG": "English (Singapore)",
-        "en-ZA": "English (South Africa)",
-        "en-GB": "English (United Kingdom)",
-        "en-US": "English (United States)",
-        "fr-BE": "French (Belgium)",
-        "fr-CA": "French (Canada)",
-        "fr-FR": "French (France)",
-        "fr-CH": "French (Switzerland)",
-        "de-AT": "German (Austria)",
-        "de-DE": "German (Germany)",
-        "de-CH": "German (Switzerland)",
-        "it-IT": "Italian (Italy)",
-        "it-CH": "Italian (Switzerland)",
-        "ja-JP": "Japanese (Japan)",
-        "ko-KR": "Korean (South Korea)",
-        "pt-BR": "Portuguese (Brazil)",
-        "pt-PT": "Portuguese (Portugal)",
-        "es-CL": "Spanish (Chile)",
-        "es-MX": "Spanish (Mexico)",
-        "es-ES": "Spanish (Spain)",
-        "es-US": "Spanish (United States)",
-    ]
 
     static let all: [String: String] = [
         "auto": "Auto-detect",

@@ -1,6 +1,5 @@
 import AppIntents
 import AppKit
-import FluidAudio
 import OSLog
 import SwiftData
 import SwiftUI
@@ -11,9 +10,6 @@ struct VoiceInkApp: App {
     let container: ModelContainer
 
     @StateObject private var engine: VoiceInkEngine
-    // Retain managers without subscribing the entire scene to download progress.
-    @State private var whisperModelManager: WhisperModelManager
-    @State private var fluidAudioModelManager: FluidAudioModelManager
     @StateObject private var transcriptionModelManager: TranscriptionModelManager
     @StateObject private var recorderUIManager: RecorderUIManager
     @StateObject private var recordingShortcutManager: RecordingShortcutManager
@@ -34,9 +30,6 @@ struct VoiceInkApp: App {
     // Transcription auto-cleanup service for zero data retention
     private let transcriptionAutoCleanupService = TranscriptionAutoCleanupService.shared
 
-    // Model prewarm service for optimizing model on wake from sleep
-    @StateObject private var prewarmService: ModelPrewarmService
-
     init() {
         // Disable HTTP response caching — prevents API responses from being stored in Cache.db
         URLCache.shared = URLCache(memoryCapacity: 0, diskCapacity: 0)
@@ -45,6 +38,7 @@ struct VoiceInkApp: App {
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
         OnboardingV2Migration.prepareIfNeeded()
+        CloudOnlyMigration.runIfNeeded()
         // After the migration (it wipes modes on fresh installs) and before services read settings at init.
         YapConfigLoader.shared.applyAtLaunch()
 
@@ -96,7 +90,6 @@ struct VoiceInkApp: App {
         // Initialize services with proper sharing of instances
         let aiService = AIService()
         _aiService = StateObject(wrappedValue: aiService)
-        aiService.refreshOllamaAvailabilityInBackground()
         Task { @MainActor in
             await aiService.fetchOpenRouterModelsIfNeededForMigration()
         }
@@ -114,39 +107,26 @@ struct VoiceInkApp: App {
             )
         }
 
-        // 1. Create modelsDirectory URL
-        let appSupportDirectory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent(AppIdentity.supportDirectoryName)
-        let modelsDirectory = appSupportDirectory.appendingPathComponent("WhisperModels")
+        // 1. Create model manager
+        let transcriptionModelManager = TranscriptionModelManager()
 
-        // 2. Create model managers
-        let whisperModelManager = WhisperModelManager(modelsDirectory: modelsDirectory)
-        let fluidAudioModelManager = FluidAudioModelManager()
-        let transcriptionModelManager = TranscriptionModelManager(
-            whisperModelManager: whisperModelManager,
-            fluidAudioModelManager: fluidAudioModelManager
-        )
-
-        // 3. Create UI manager
+        // 2. Create UI manager
         let recorderUIManager = RecorderUIManager()
 
-        // 4. Create engine
+        // 3. Create engine
         let engine = VoiceInkEngine(
             modelContext: resolvedContainer.mainContext,
-            whisperModelManager: whisperModelManager,
             transcriptionModelManager: transcriptionModelManager,
             enhancementService: enhancementService
         )
 
-        // 5. Configure circular deps
+        // 4. Configure circular deps
         recorderUIManager.configure(engine: engine, recorder: engine.recorder)
         engine.recorderUIManager = recorderUIManager
 
-        // 6. Initialize model state
-        // Migration and refreshAllAvailableModels must run before loadCurrentTranscriptionModel so renamed keys are remapped and imported models are present when restoring the saved selection.
+        // 5. Initialize model state
+        // Migration and refreshAllAvailableModels must run before loadCurrentTranscriptionModel so renamed keys are remapped when restoring the saved selection.
         StreamingKeysMigration.run()
-        whisperModelManager.createModelsDirectoryIfNeeded()
-        whisperModelManager.loadAvailableModels()
         transcriptionModelManager.refreshAllAvailableModels()
         transcriptionModelManager.loadCurrentTranscriptionModel()
         YapConfigLoader.shared.attach(
@@ -158,13 +138,11 @@ struct VoiceInkApp: App {
             await YapConfigLoader.shared.resolveRemoteSelections()
         }
 
-        _whisperModelManager = State(initialValue: whisperModelManager)
-        _fluidAudioModelManager = State(initialValue: fluidAudioModelManager)
         _transcriptionModelManager = StateObject(wrappedValue: transcriptionModelManager)
         _recorderUIManager = StateObject(wrappedValue: recorderUIManager)
         _engine = StateObject(wrappedValue: engine)
 
-        // 7. Create other services that depend on engine
+        // 6. Create other services that depend on engine
         let recordingShortcutManager = RecordingShortcutManager(engine: engine, recorderUIManager: recorderUIManager)
         _recordingShortcutManager = StateObject(wrappedValue: recordingShortcutManager)
 
@@ -174,13 +152,6 @@ struct VoiceInkApp: App {
 
         let activeWindowService = ActiveWindowService.shared
         _activeWindowService = StateObject(wrappedValue: activeWindowService)
-
-        let prewarmService = ModelPrewarmService(
-            transcriptionModelManager: transcriptionModelManager,
-            whisperModelManager: whisperModelManager,
-            modelContext: resolvedContainer.mainContext
-        )
-        _prewarmService = StateObject(wrappedValue: prewarmService)
 
         appDelegate.menuBarManager = menuBarManager
 
@@ -305,8 +276,6 @@ struct VoiceInkApp: App {
                 if hasCompletedOnboardingV2 {
                     ContentView()
                         .environmentObject(engine)
-                        .environmentObject(whisperModelManager)
-                        .environmentObject(fluidAudioModelManager)
                         .environmentObject(transcriptionModelManager)
                         .environmentObject(recorderUIManager)
                         .environmentObject(recordingShortcutManager)
@@ -355,14 +324,11 @@ struct VoiceInkApp: App {
                             }
                         )
                         .onDisappear {
-                            whisperModelManager.unloadModel()
-
                             // Stop the automatic audio cleanup process
                             audioCleanupManager.stopAutomaticCleanup()
                         }
                 } else {
                     OnboardingView(hasCompletedOnboardingV2: $hasCompletedOnboardingV2)
-                        .environmentObject(fluidAudioModelManager)
                         .environmentObject(transcriptionModelManager)
                         .environmentObject(aiService)
                         .environmentObject(enhancementService)
@@ -397,8 +363,6 @@ struct VoiceInkApp: App {
         MenuBarExtra(isInserted: $showMenuBarIcon) {
             MenuBarView()
                 .environmentObject(engine)
-                .environmentObject(whisperModelManager)
-                .environmentObject(fluidAudioModelManager)
                 .environmentObject(transcriptionModelManager)
                 .environmentObject(recorderUIManager)
                 .environmentObject(recordingShortcutManager)

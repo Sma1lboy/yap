@@ -382,7 +382,6 @@ struct ConfigurationRow: View {
                 }
 
                 if config.isAIEnhancementEnabled,
-                    config.selectedAIProvider != AIProvider.localCLI.rawValue,
                     let modelName = config.selectedAIModel,
                     !modelName.isEmpty
                 {
@@ -427,11 +426,7 @@ struct ConfigurationRow: View {
                     HStack(spacing: 4) {
                         Image(systemName: "sparkles")
                             .font(.system(size: 10))
-                        Text(
-                            config.selectedAIProvider == AIProvider.voiceInkRefine.rawValue
-                                ? VoiceInkRefineService.providerName
-                                : selectedPrompt?.title ?? "AI"
-                        )
+                        Text(selectedPrompt?.title ?? "AI")
                             .font(.caption)
                     }
                     .padding(.horizontal, 6)

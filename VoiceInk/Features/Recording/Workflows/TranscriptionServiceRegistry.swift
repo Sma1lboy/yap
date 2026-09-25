@@ -5,48 +5,17 @@ import os
 
 @MainActor
 class TranscriptionServiceRegistry {
-    private weak var modelProvider: (any WhisperModelProvider)?
-    private let modelsDirectory: URL
     private let modelContext: ModelContext
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "TranscriptionServiceRegistry")
 
-    private(set) lazy var localTranscriptionService = WhisperTranscriptionService(
-        modelsDirectory: modelsDirectory,
-        modelProvider: modelProvider
-    )
     private(set) lazy var cloudTranscriptionService = CloudTranscriptionService(modelContext: modelContext)
-    private(set) lazy var nativeAppleTranscriptionService = NativeAppleTranscriptionService()
-    private(set) lazy var fluidAudioTranscriptionService = FluidAudioTranscriptionService()
-    private var cachedTranscribeCppTranscriptionService: TranscribeCppTranscriptionService?
 
-    var transcribeCppTranscriptionService: TranscribeCppTranscriptionService {
-        if let cachedTranscribeCppTranscriptionService {
-            return cachedTranscribeCppTranscriptionService
-        }
-        let service = TranscribeCppTranscriptionService()
-        cachedTranscribeCppTranscriptionService = service
-        return service
-    }
-
-    init(modelProvider: any WhisperModelProvider, modelsDirectory: URL, modelContext: ModelContext) {
-        self.modelProvider = modelProvider
-        self.modelsDirectory = modelsDirectory
+    init(modelContext: ModelContext) {
         self.modelContext = modelContext
     }
 
     func service(for provider: ModelProvider) -> TranscriptionService {
-        switch provider {
-        case .whisper:
-            return localTranscriptionService
-        case .fluidAudio:
-            return fluidAudioTranscriptionService
-        case .transcribeCpp:
-            return transcribeCppTranscriptionService
-        case .nativeApple:
-            return nativeAppleTranscriptionService
-        default:
-            return cloudTranscriptionService
-        }
+        cloudTranscriptionService
     }
 
     func transcribe(
@@ -56,7 +25,7 @@ class TranscriptionServiceRegistry {
         logger.debug(
             "Transcribing with \(model.displayName, privacy: .public) using \(String(describing: type(of: service)), privacy: .public)"
         )
-        return try await service.transcribe(audioURL: audioURL, model: model, context: context.scoped(to: model))
+        return try await service.transcribe(audioURL: audioURL, model: model, context: context)
     }
 
     /// Creates a streaming or file-based session for the resolved transcription configuration.
@@ -68,7 +37,6 @@ class TranscriptionServiceRegistry {
         if shouldUseRealtimeTranscription(for: configuration) {
             let streamingService = StreamingTranscriptionService(
                 modelContext: modelContext,
-                fluidAudioService: model.provider == .fluidAudio ? fluidAudioTranscriptionService : nil,
                 onPartialTranscript: onPartialTranscript
             )
             let fallback = service(for: model.provider)
@@ -81,10 +49,5 @@ class TranscriptionServiceRegistry {
     /// Whether the resolved transcription configuration should use real-time transcription.
     func shouldUseRealtimeTranscription(for configuration: TranscriptionRuntimeConfiguration) -> Bool {
         configuration.isRealtimeEnabled
-    }
-
-    func cleanup() async {
-        await fluidAudioTranscriptionService.cleanup()
-        cachedTranscribeCppTranscriptionService?.cleanup()
     }
 }

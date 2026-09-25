@@ -2,16 +2,8 @@ import AppKit
 import SwiftUI
 
 struct OnboardingTranscriptionSetupCard: View {
-    let localModel: FluidAudioModel?
-    let setupKind: OnboardingTranscriptionSetupKind
     let providerOptions: [any CloudProvider]
     @Binding var selectedProviderKey: String
-    let isLocalDownloaded: Bool
-    let isLocalDownloading: Bool
-    let localDownloadStatus: FluidAudioDownloadStatus?
-    let onSelectSetupKind: (OnboardingTranscriptionSetupKind) -> Void
-    let onDownloadLocalModel: (FluidAudioModel) -> Void
-    let onCancelLocalModelDownload: (FluidAudioModel) -> Void
     let onVerificationChanged: () -> Void
 
     @EnvironmentObject private var transcriptionModelManager: TranscriptionModelManager
@@ -43,16 +35,7 @@ struct OnboardingTranscriptionSetupCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            setupSwitcher
-
-            switch setupKind {
-            case .local:
-                localSetup
-            case .cloud:
-                cloudSetup
-            }
-        }
+        cloudSetup
         .onAppear {
             if selectedProviderKey.isEmpty, let selectedProvider {
                 selectedProviderKey = selectedProvider.providerKey
@@ -71,79 +54,9 @@ struct OnboardingTranscriptionSetupCard: View {
             verificationMessage = nil
             verificationDetailMessage = nil
         }
-        .task(id: "\(setupKind.rawValue):\(selectedProviderKey)") {
+        .task(id: selectedProviderKey) {
             await loadOpenRouterModelsIfNeeded()
         }
-    }
-
-    private var setupSwitcher: some View {
-        HStack(spacing: 8) {
-            setupChoice(.local, systemImage: "macbook")
-            setupChoice(.cloud, systemImage: "cloud.fill")
-        }
-        .padding(4)
-        .background(AppMaterialCardBackground(cornerRadius: 12))
-    }
-
-    private func setupChoice(_ kind: OnboardingTranscriptionSetupKind, systemImage: String) -> some View {
-        let isSelected = setupKind == kind
-
-        return Button {
-            onSelectSetupKind(kind)
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 12, weight: .semibold))
-
-                Text(kind.title)
-                    .font(.system(size: 12, weight: .semibold))
-            }
-            .foregroundColor(isSelected ? AppTheme.Text.primary : AppTheme.Text.secondary)
-            .frame(maxWidth: .infinity)
-            .frame(height: 36)
-            .background(
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(isSelected ? AppTheme.Surface.controlActive : AppTheme.Surface.clear)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-        }
-        .buttonStyle(.plain)
-    }
-
-    @ViewBuilder
-    private var localSetup: some View {
-        if let localModel {
-            TranscriptionModelDownloadCard(
-                model: localModel,
-                isDownloaded: isLocalDownloaded,
-                isDownloading: isLocalDownloading,
-                status: localDownloadStatus,
-                onDownload: {
-                    onDownloadLocalModel(localModel)
-                },
-                onCancel: {
-                    onCancelLocalModelDownload(localModel)
-                }
-            )
-        } else {
-            missingModelPanel
-        }
-    }
-
-    private var missingModelPanel: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(AppTheme.Status.error)
-
-            Text("Parakeet V3 is not available.")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(AppTheme.Text.secondary)
-
-            Spacer(minLength: 0)
-        }
-        .padding(16)
-        .background(AppMaterialCardBackground(cornerRadius: 12))
     }
 
     private var cloudSetup: some View {
@@ -433,8 +346,7 @@ struct OnboardingTranscriptionSetupCard: View {
     }
 
     private func loadOpenRouterModelsIfNeeded() async {
-        guard setupKind == .cloud,
-            selectedProvider?.modelProvider == .openRouter,
+        guard selectedProvider?.modelProvider == .openRouter,
             selectedProvider?.models.isEmpty == true,
             isSelectedProviderConnected,
             !isLoadingOpenRouterModels

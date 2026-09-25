@@ -39,16 +39,6 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.6.app
 
-      # mlx-swift 要编译 Metal shader，Xcode 26 默认不带这个组件
-      - name: Install Metal toolchain
-        run: xcodebuild -downloadComponent MetalToolchain
-
-      - name: Cache whisper.cpp framework
-        uses: actions/cache@v4
-        with:
-          path: ~/VoiceInk-Dependencies
-          key: whisper-${{ runner.os }}-xcode26.6-v1
-
       # 自签证书：固定的 designated requirement 让 TCC 权限跨版本保留。
       # 不受信任的自签证书 codesign 找不到，所以要装进 System keychain 并信任。
       - name: Import signing certificate

@@ -348,24 +348,22 @@ private struct ModelProviderIdentity {
         if let model = TranscriptionModelRegistry.models.first(where: { model in
             namesMatch(model.displayName, trimmedName) || namesMatch(model.name, trimmedName)
         }) {
-            if let transcribeCppModel = model as? TranscribeCppModel {
-                return transcribeCppIdentity(publisher: transcribeCppModel.publisher)
-            }
             return identity(for: model.provider)
         }
 
+        // History can still reference on-device models removed in the cloud-only build.
         if trimmedName.localizedCaseInsensitiveContains("parakeet")
             || trimmedName.localizedCaseInsensitiveContains("nemotron")
         {
-            return identity(for: .fluidAudio)
+            return legacyLocalIdentity(name: "Parakeet", systemImage: "waveform")
         }
 
         if trimmedName.localizedCaseInsensitiveContains("cohere") {
-            return transcribeCppIdentity(publisher: "Cohere")
+            return legacyLocalIdentity(name: "Cohere", systemImage: "waveform.badge.magnifyingglass")
         }
 
         if trimmedName.localizedCaseInsensitiveContains("apple") {
-            return identity(for: .nativeApple)
+            return legacyLocalIdentity(name: "Apple Speech", systemImage: "apple.logo")
         }
 
         if trimmedName.localizedCaseInsensitiveContains("whisper")
@@ -373,7 +371,7 @@ private struct ModelProviderIdentity {
             || trimmedName.localizedCaseInsensitiveContains("base")
             || trimmedName.localizedCaseInsensitiveContains("tiny")
         {
-            return identity(for: .whisper)
+            return legacyLocalIdentity(name: "Whisper", systemImage: "captions.bubble.fill")
         }
 
         return unknownIdentity(
@@ -428,22 +426,6 @@ private struct ModelProviderIdentity {
         let fallbackSystemImage: String
 
         switch provider {
-        case .whisper:
-            displayName = "Whisper"
-            providerKey = "Whisper"
-            fallbackSystemImage = "captions.bubble.fill"
-        case .fluidAudio:
-            displayName = "Parakeet"
-            providerKey = "Parakeet"
-            fallbackSystemImage = "waveform"
-        case .transcribeCpp:
-            displayName = "On-Device"
-            providerKey = "On-Device"
-            fallbackSystemImage = "waveform.badge.magnifyingglass"
-        case .nativeApple:
-            displayName = "Apple Speech"
-            providerKey = "Native Apple"
-            fallbackSystemImage = "apple.logo"
         case .custom:
             displayName = "Custom"
             providerKey = "Custom"
@@ -466,11 +448,11 @@ private struct ModelProviderIdentity {
         )
     }
 
-    private static func transcribeCppIdentity(publisher: String) -> ModelProviderIdentity {
+    private static func legacyLocalIdentity(name: String, systemImage: String) -> ModelProviderIdentity {
         ModelProviderIdentity(
-            providerName: publisher,
-            descriptor: descriptor(displayName: publisher, providerKey: publisher),
-            fallbackSystemImage: "waveform.badge.magnifyingglass"
+            providerName: name,
+            descriptor: descriptor(displayName: name, providerKey: name),
+            fallbackSystemImage: systemImage
         )
     }
 
@@ -481,12 +463,6 @@ private struct ModelProviderIdentity {
         let fallbackSystemImage: String
 
         switch provider {
-        case .voiceInkRefine:
-            fallbackSystemImage = "sparkles"
-        case .ollama:
-            fallbackSystemImage = "server.rack"
-        case .localCLI:
-            fallbackSystemImage = "terminal"
         case .custom:
             fallbackSystemImage = "slider.horizontal.3"
         default:
