@@ -3988,6 +3988,50 @@
         }
       }
     },
+    "Add First Replacement" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erste Ersetzung hinzufügen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un premier remplacement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加第一条替换"
+          }
+        }
+      }
+    },
+    "Add First Word" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erstes Wort hinzufügen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter un premier mot"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加第一个词"
+          }
+        }
+      }
+    },
     "Add Model" : {
       "localizations" : {
         "de" : {
@@ -4362,6 +4406,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加模型"
+          }
+        }
+      }
+    },
+    "Add names, product terms, and jargon so Yap spells them correctly." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füge Namen, Produktbegriffe und Fachwörter hinzu, damit Yap sie richtig schreibt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez des noms, des termes produit et du jargon pour que Yap les écrive correctement."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加人名、产品名和行业术语，让 Yap 把它们写对。"
           }
         }
       }
@@ -20054,6 +20120,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "替换词典"
+          }
+        }
+      }
+    },
+    "Replace words Yap often gets wrong, or expand shortcuts like “my email”." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersetze Wörter, die Yap oft falsch schreibt, oder erweitere Kürzel wie „my email“."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remplacez les mots que Yap écrit souvent mal, ou développez des raccourcis comme « my email »."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替换 Yap 常写错的词，或把“my email”这类简写展开成完整内容。"
           }
         }
       }

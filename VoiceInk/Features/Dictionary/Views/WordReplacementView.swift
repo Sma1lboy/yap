@@ -16,6 +16,7 @@ struct WordReplacementView: View {
     @State private var originalWord = ""
     @State private var replacementWord = ""
     @State private var showInfoPopover = false
+    @FocusState private var isOriginalFocused: Bool
 
     init() {
         _sortMode = State(initialValue: DictionarySortService.shared.savedWordReplacementMode())
@@ -78,6 +79,7 @@ struct WordReplacementView: View {
                     .font(.system(size: 13))
                     .onSubmit { addReplacement() }
                     .labelsHidden()
+                    .focused($isOriginalFocused)
 
                 Image(systemName: "arrow.right")
                     .foregroundColor(.secondary)
@@ -182,8 +184,14 @@ struct WordReplacementView: View {
                     }
                 }
                 .padding(.top, 4)
+            } else {
+                DictionaryEmptyState(
+                    systemImage: "arrow.left.arrow.right",
+                    message: "Replace words Yap often gets wrong, or expand shortcuts like “my email”.",
+                    buttonTitle: "Add First Replacement",
+                    action: { isOriginalFocused = true }
+                )
             }
-
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .sheet(isPresented: isEditingReplacement) {
