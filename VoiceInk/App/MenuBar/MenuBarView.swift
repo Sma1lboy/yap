@@ -51,12 +51,13 @@ struct MenuBarView: View {
 
             Menu {
                 ForEach(modeManager.enabledConfigurations) { config in
-                    Button {
-                        modeManager.setActiveConfiguration(config)
-                    } label: {
-                        let isActive = modeManager.currentEffectiveConfiguration?.id == config.id
-                        Text(isActive ? "\(config.name)  ✓" : config.name)
-                    }
+                    Toggle(
+                        config.name,
+                        isOn: Binding(
+                            get: { modeManager.currentEffectiveConfiguration?.id == config.id },
+                            set: { _ in modeManager.setActiveConfiguration(config) }
+                        )
+                    )
                 }
 
                 if modeManager.enabledConfigurations.isEmpty {
@@ -86,12 +87,13 @@ struct MenuBarView: View {
 
             Menu {
                 ForEach(audioDeviceManager.availableDevices, id: \.id) { device in
-                    Button {
-                        audioDeviceManager.selectDeviceAndSwitchToCustomMode(id: device.id)
-                    } label: {
-                        let isActive = audioDeviceManager.getCurrentDevice() == device.id
-                        Text(isActive ? "\(device.name)  ✓" : device.name)
-                    }
+                    Toggle(
+                        device.name,
+                        isOn: Binding(
+                            get: { audioDeviceManager.getCurrentDevice() == device.id },
+                            set: { _ in audioDeviceManager.selectDeviceAndSwitchToCustomMode(id: device.id) }
+                        )
+                    )
                 }
 
                 if audioDeviceManager.availableDevices.isEmpty {

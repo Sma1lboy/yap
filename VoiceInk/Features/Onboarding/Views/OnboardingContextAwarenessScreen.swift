@@ -168,8 +168,6 @@ private struct ContextAwarenessModePill: View {
 }
 
 private struct ContextAwarenessModeHub: View {
-    @State private var borderRotation = Angle.degrees(0)
-
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "sparkles.square.fill.on.square")
@@ -190,36 +188,7 @@ private struct ContextAwarenessModeHub: View {
         )
         .overlay(
             Capsule()
-                .stroke(AppTheme.Border.subtle.opacity(0.88), lineWidth: 1)
+                .stroke(AppTheme.Border.card, lineWidth: 1)
         )
-        .overlay(
-            Capsule()
-                .stroke(
-                    AngularGradient(
-                        colors: [
-                            AppTheme.Border.subtle.opacity(0.20),
-                            Color.white.opacity(0.72),
-                            AppTheme.Sidebar.modes.opacity(0.86),
-                            Color.white.opacity(0.54),
-                            AppTheme.Border.subtle.opacity(0.20),
-                        ],
-                        center: .center,
-                        angle: borderRotation
-                    ),
-                    lineWidth: 1.6
-                )
-        )
-        .overlay(
-            Capsule()
-                .stroke(Color.white.opacity(0.28), lineWidth: 0.7)
-                .padding(1.5)
-        )
-        .shadow(color: AppTheme.Sidebar.modes.opacity(0.22), radius: 16, y: 8)
-        .shadow(color: Color.white.opacity(0.18), radius: 7, y: -1)
-        .onAppear {
-            withAnimation(.linear(duration: 2.6).repeatForever(autoreverses: false)) {
-                borderRotation = .degrees(360)
-            }
-        }
     }
 }
