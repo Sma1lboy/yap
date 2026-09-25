@@ -367,7 +367,8 @@ final class YapConfigLoader: ObservableObject {
         guard
             let (file, categories) = config.backupSections(
                 currentModes: currentModes, currentPrompts: enhancementService.customPrompts,
-                currentModeShortcuts: currentModeShortcuts)
+                currentModeShortcuts: currentModeShortcuts,
+                currentCustomModels: CustomCloudModelManager.shared.customModels.map(CustomModelBackup.init(model:)))
         else { return ([], []) }
         var result: (applied: [String], skipped: [String]) = ([], [])
         if config.deleted?.vocabulary != nil || config.deleted?.replacements != nil {

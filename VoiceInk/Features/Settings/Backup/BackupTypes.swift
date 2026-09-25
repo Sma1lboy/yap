@@ -23,7 +23,9 @@ enum BackupCategory: String, CaseIterable, Hashable {
     }
 }
 
-struct CustomModelBackup: Codable {
+/// A custom transcription model definition. `apiKey` is read from old backups (and saved to the keychain) but
+/// never written: backups and config.json leave keys on the Mac they belong to.
+struct CustomModelBackup: Codable, Equatable, Identifiable {
     let id: UUID
     let name: String
     let displayName: String
@@ -33,6 +35,23 @@ struct CustomModelBackup: Codable {
     let isMultilingualModel: Bool
     let supportedLanguages: [String: String]
     let apiKey: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, displayName, description, apiEndpoint, modelName, isMultilingualModel, supportedLanguages,
+            apiKey
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(displayName, forKey: .displayName)
+        try container.encode(description, forKey: .description)
+        try container.encode(apiEndpoint, forKey: .apiEndpoint)
+        try container.encode(modelName, forKey: .modelName)
+        try container.encode(isMultilingualModel, forKey: .isMultilingualModel)
+        try container.encode(supportedLanguages, forKey: .supportedLanguages)
+    }
 
     init(model: CustomCloudModel) {
         self.id = model.id

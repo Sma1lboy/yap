@@ -3810,6 +3810,28 @@
         }
       }
     },
+    "API key needed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API-Schlüssel fehlt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé d’API requise"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要填 API key"
+          }
+        }
+      }
+    },
     "API key not configured for streaming transcription" : {
       "localizations" : {
         "de" : {
@@ -4714,6 +4736,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "添加提示词"
+          }
+        }
+      }
+    },
+    "Add this model's API key on this Mac" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Füge den API-Schlüssel dieses Modells auf diesem Mac hinzu"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajoutez la clé d’API de ce modèle sur ce Mac"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在这台 Mac 上填入这个模型的 API key"
           }
         }
       }

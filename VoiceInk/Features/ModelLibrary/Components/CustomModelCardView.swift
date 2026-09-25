@@ -31,6 +31,19 @@ struct CustomModelCardView: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(Color(.labelColor))
 
+            // Definitions synced from another Mac arrive without their key (keys never leave a Mac).
+            if (APIKeyManager.shared.getCustomModelAPIKey(forModelId: model.id) ?? "").isEmpty {
+                Button {
+                    editAction(model)
+                } label: {
+                    Label("API key needed", systemImage: "key")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(AppTheme.Status.warningStrong)
+                }
+                .buttonStyle(.plain)
+                .help("Add this model's API key on this Mac")
+            }
+
             Spacer()
         }
     }

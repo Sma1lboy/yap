@@ -39,6 +39,8 @@ struct YapConfig: Codable, Equatable {
     var prompts: [CustomPrompt]?
     var dictionary: DictionarySection?
     var general: GeneralBackup?
+    /// Custom transcription model definitions. Their API keys stay in each Mac's keychain, never in the config.
+    var customModels: [CustomModelBackup]?
 
     /// Per-entry times, keyed by mode/prompt id, vocabulary word or replacement source. `modified` is when this
     /// entry's content last changed on some Mac; `deleted` holds tombstones. Both are written by export and sync.
@@ -47,13 +49,14 @@ struct YapConfig: Codable, Equatable {
         var prompts: [String: Date]?
         var vocabulary: [String: Date]?
         var replacements: [String: Date]?
+        var customModels: [String: Date]?
 
         /// Nil when empty, and empty maps dropped, so a config without deletions has no `deleted` key.
         func normalized() -> Stamps? {
             func clean(_ times: [String: Date]?) -> [String: Date]? { times?.isEmpty == true ? nil : times }
             let result = Stamps(
                 modes: clean(modes), prompts: clean(prompts), vocabulary: clean(vocabulary),
-                replacements: clean(replacements))
+                replacements: clean(replacements), customModels: clean(customModels))
             return result == Stamps() ? nil : result
         }
 
@@ -66,7 +69,8 @@ struct YapConfig: Codable, Equatable {
             return Stamps(
                 modes: merge(lhs?.modes, rhs?.modes), prompts: merge(lhs?.prompts, rhs?.prompts),
                 vocabulary: merge(lhs?.vocabulary, rhs?.vocabulary),
-                replacements: merge(lhs?.replacements, rhs?.replacements)
+                replacements: merge(lhs?.replacements, rhs?.replacements),
+                customModels: merge(lhs?.customModels, rhs?.customModels)
             ).normalized()
         }
     }
@@ -75,7 +79,8 @@ struct YapConfig: Codable, Equatable {
     var deleted: Stamps?
 
     var hasSections: Bool {
-        modes != nil || prompts != nil || dictionary != nil || general != nil || deleted != nil
+        modes != nil || prompts != nil || dictionary != nil || general != nil || customModels != nil
+            || deleted != nil
     }
 
     static let currentVersion = 2
@@ -100,17 +105,21 @@ struct YapConfig: Codable, Equatable {
     /// modes, prompts and mode shortcuts wholesale, so they are merged by id into the current ones here:
     /// entries in the file win, entries only in the app stay.
     func backupSections(
-        currentModes: [ModeConfig], currentPrompts: [CustomPrompt], currentModeShortcuts: [String: ShortcutBackup]
+        currentModes: [ModeConfig], currentPrompts: [CustomPrompt], currentModeShortcuts: [String: ShortcutBackup],
+        currentCustomModels: [CustomModelBackup] = []
     ) -> (file: BackupFile, categories: [BackupCategory])? {
         guard hasSections else { return nil }
         let categories: [BackupCategory] = [
             prompts != nil || deleted?.prompts != nil ? .prompts : nil,
             modes != nil || deleted?.modes != nil ? .modes : nil,
             dictionary.map { _ in .dictionary }, general.map { _ in .general },
+            customModels != nil || deleted?.customModels != nil ? .customModels : nil,
         ].compactMap { $0 }
         // Tombstoned entries the file doesn't carry (it would only carry them if edited after the delete).
         let deadModes = Set(deleted?.modes?.keys ?? [:].keys).subtracting((modes ?? []).map(\.id.uuidString))
         let deadPrompts = Set(deleted?.prompts?.keys ?? [:].keys).subtracting((prompts ?? []).map(\.id.uuidString))
+        let deadModels = Set(deleted?.customModels?.keys ?? [:].keys)
+            .subtracting((customModels ?? []).map(\.id.uuidString))
         let file = BackupFile(
             version: "config-v\(version ?? 1)",
             customPrompts: Self.mergedByID(
@@ -119,7 +128,8 @@ struct YapConfig: Codable, Equatable {
             modeShortcuts: currentModeShortcuts.merging(modeShortcuts ?? [:]) { $1 },
             vocabularyWords: dictionary?.vocabulary?.map(WordBackup.init(word:)),
             wordReplacements: dictionary?.replacements, generalSettings: general, customEmojis: nil,
-            customCloudModels: nil)
+            customCloudModels: Self.mergedByID(
+                currentCustomModels.filter { !deadModels.contains($0.id.uuidString) }, customModels ?? []))
         return (file, categories)
     }
 
@@ -172,6 +182,7 @@ struct YapConfig: Codable, Equatable {
         if config.modes?.isEmpty == true { config.modes = nil }
         if config.modeShortcuts?.isEmpty == true { config.modeShortcuts = nil }
         if config.prompts?.isEmpty == true { config.prompts = nil }
+        if config.customModels?.isEmpty == true { config.customModels = nil }
         if var dictionary = config.dictionary {
             dictionary.vocabulary = dictionary.vocabulary?.compactMap(\.nonEmpty)
             if dictionary.vocabulary?.isEmpty == true { dictionary.vocabulary = nil }
@@ -219,6 +230,7 @@ struct YapConfig: Codable, Equatable {
         config.modes = backup.modeConfigs
         config.modeShortcuts = backup.modeShortcuts
         config.prompts = backup.customPrompts
+        config.customModels = backup.customCloudModels
         config.dictionary = DictionarySection(
             vocabulary: backup.vocabularyWords?.map(\.word).sorted(), replacements: backup.wordReplacements)
         config.general = backup.generalSettings
@@ -330,6 +342,7 @@ struct YapConfig: Codable, Equatable {
         result.general = pick(\.general)
         result.modes = mergedByID(remote.modes ?? [], edits(\.modes))
         result.prompts = mergedByID(remote.prompts ?? [], edits(\.prompts))
+        result.customModels = mergedByID(remote.customModels ?? [], edits(\.customModels))
         result.modeShortcuts = merged(\.modeShortcuts)
         let remoteWords = remote.dictionary?.vocabulary ?? []
         let baseWords = Set(base.map { $0.dictionary?.vocabulary ?? [] } ?? remoteWords)
@@ -373,6 +386,7 @@ struct YapConfig: Codable, Equatable {
         }
         let modes = byID(self.modes), oldModes = byID(baseline.modes)
         let prompts = byID(self.prompts), oldPrompts = byID(baseline.prompts)
+        let models = byID(self.customModels), oldModels = byID(baseline.customModels)
         let words = Dictionary(uniqueKeysWithValues: (dictionary?.vocabulary ?? []).map { ($0, true) })
         let oldWords = Dictionary(uniqueKeysWithValues: (baseline.dictionary?.vocabulary ?? []).map { ($0, true) })
         let rules = dictionary?.replacements ?? [:], oldRules = baseline.dictionary?.replacements ?? [:]
@@ -382,12 +396,14 @@ struct YapConfig: Codable, Equatable {
             modes: stamp(modes, oldModes, baseline.modified?.modes, same: Self.sameContent),
             prompts: stamp(prompts, oldPrompts, baseline.modified?.prompts, same: Self.sameContent),
             vocabulary: stamp(words, oldWords, baseline.modified?.vocabulary, same: ==),
-            replacements: stamp(rules, oldRules, baseline.modified?.replacements, same: ==))
+            replacements: stamp(rules, oldRules, baseline.modified?.replacements, same: ==),
+            customModels: stamp(models, oldModels, baseline.modified?.customModels, same: ==))
         config.deleted = Stamps(
             modes: tombstones(modes, oldModes, baseline.deleted?.modes),
             prompts: tombstones(prompts, oldPrompts, baseline.deleted?.prompts),
             vocabulary: tombstones(words, oldWords, baseline.deleted?.vocabulary),
-            replacements: tombstones(rules, oldRules, baseline.deleted?.replacements))
+            replacements: tombstones(rules, oldRules, baseline.deleted?.replacements),
+            customModels: tombstones(models, oldModels, baseline.deleted?.customModels))
         return config.resolvingTombstones(now: now)
     }
 
@@ -401,6 +417,9 @@ struct YapConfig: Codable, Equatable {
         }
         config.modes = modes?.filter { alive($0.id.uuidString, deleted?.modes, modified?.modes) }
         config.prompts = prompts?.filter { alive($0.id.uuidString, deleted?.prompts, modified?.prompts) }
+        config.customModels = customModels?.filter {
+            alive($0.id.uuidString, deleted?.customModels, modified?.customModels)
+        }
         config.modeShortcuts = modeShortcuts?.filter { alive($0.key, deleted?.modes, modified?.modes) }
         config.dictionary?.vocabulary = dictionary?.vocabulary?.filter {
             alive($0, deleted?.vocabulary, modified?.vocabulary)
@@ -417,12 +436,14 @@ struct YapConfig: Codable, Equatable {
         }
         config.deleted = Stamps(
             modes: fresh(deleted?.modes), prompts: fresh(deleted?.prompts),
-            vocabulary: fresh(deleted?.vocabulary), replacements: fresh(deleted?.replacements))
+            vocabulary: fresh(deleted?.vocabulary), replacements: fresh(deleted?.replacements),
+            customModels: fresh(deleted?.customModels))
         config.modified = Stamps(
             modes: present(modified?.modes, config.modes?.map(\.id.uuidString)),
             prompts: present(modified?.prompts, config.prompts?.map(\.id.uuidString)),
             vocabulary: present(modified?.vocabulary, config.dictionary?.vocabulary),
-            replacements: present(modified?.replacements, (config.dictionary?.replacements).map { Array($0.keys) }))
+            replacements: present(modified?.replacements, (config.dictionary?.replacements).map { Array($0.keys) }),
+            customModels: present(modified?.customModels, config.customModels?.map(\.id.uuidString)))
         return config.normalized()
     }
 
@@ -644,6 +665,27 @@ extension String {
             let legacyGeneral = try? decode(
                 Data(#"{"general":{"isExperimentalFeaturesEnabled":false,"isMenuBarOnly":true}}"#.utf8))
             assert(legacyGeneral?.general?.isMenuBarOnly == true)
+
+            // Custom model definitions: merged by id, never written with an API key.
+            let modelJSON = #"""
+                {"customModels":[{"id":"55555555-5555-4555-8555-555555555555","name":"m","displayName":"M",
+                "description":"","apiEndpoint":"https://x/v1","modelName":"whisper","isMultilingualModel":true,
+                "supportedLanguages":{},"apiKey":"sk-secret"}]}
+                """#
+            guard let withModel = try? decode(Data(modelJSON.utf8)), let model = withModel.customModels?.first else {
+                return assertionFailure("customModels should decode")
+            }
+            assert(model.apiKey == "sk-secret" && withModel.hasSections)
+            let written = (try? withModel.encoded()).flatMap { String(data: $0, encoding: .utf8) } ?? ""
+            assert(written.contains("whisper") && !written.contains("sk-secret") && !written.contains("apiKey"))
+            let modelSections = withModel.backupSections(
+                currentModes: [], currentPrompts: [], currentModeShortcuts: [:], currentCustomModels: [])
+            assert(modelSections?.categories == [.customModels] && modelSections?.file.customCloudModels?.count == 1)
+            let modelDeleted = YapConfig().stamped(baseline: withModel, now: Date(timeIntervalSince1970: 1_800_000_000))
+            assert(modelDeleted.deleted?.customModels?[model.id.uuidString] != nil)
+            let onOtherMac = modelDeleted.backupSections(
+                currentModes: [], currentPrompts: [], currentModeShortcuts: [:], currentCustomModels: [model])
+            assert(onOtherMac?.file.customCloudModels?.isEmpty == true)
 
             // Tombstones. Base state as both Macs last synced it, every entry modified at t0.
             let t0 = Date(timeIntervalSince1970: 1_800_000_000)
