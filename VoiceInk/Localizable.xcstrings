@@ -14906,6 +14906,28 @@
         }
       }
     },
+    "Last used %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt verwendet %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dernière utilisation %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近使用:%@"
+          }
+        }
+      }
+    },
     "Launch at Login" : {
       "localizations" : {
         "de" : {
@@ -21348,6 +21370,28 @@
         }
       }
     },
+    "Remove %@?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ entfernen?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retirer « %@ » ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除「%@」？"
+          }
+        }
+      }
+    },
     "Remove API Key?" : {
       "localizations" : {
         "de" : {
@@ -24440,6 +24484,28 @@
         }
       }
     },
+    "Signed-in Devices" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Angemeldete Geräte"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareils connectés"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已登录的设备"
+          }
+        }
+      }
+    },
     "Skip API Setup" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -25890,6 +25956,28 @@
         }
       }
     },
+    "That device is signed out of Yap Cloud and stops charging your balance. It can sign in again with your email." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Gerät wird von Yap Cloud abgemeldet und bucht nichts mehr von deinem Guthaben ab. Es kann sich mit deiner E-Mail wieder anmelden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cet appareil est déconnecté de Yap Cloud et ne débite plus votre solde. Il peut se reconnecter avec votre e-mail."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "那台设备会退出 Yap Cloud,不再从你的余额扣费。之后仍可用邮箱重新登录。"
+          }
+        }
+      }
+    },
     "That replacement would create a loop between existing rules" : {
       "comment" : "Error shown when saving a word replacement would make two rules replace each other in a loop.",
       "localizations" : {
@@ -26945,6 +27033,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在思考"
+          }
+        }
+      }
+    },
+    "This Mac" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Mac"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce Mac"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本机"
           }
         }
       }
@@ -28573,6 +28683,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未知"
+          }
+        }
+      }
+    },
+    "Unnamed device" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbenanntes Gerät"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appareil sans nom"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未命名设备"
           }
         }
       }

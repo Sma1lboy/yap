@@ -40,6 +40,7 @@ struct AccountView: View {
         .modifier(CloudSyncOffer())
         .task(id: cloud.isSignedIn) {
             await cloud.refreshAccount()
+            await cloud.refreshDevices()
             await cloud.refreshModels()
             transcriptionModelManager.refreshAllAvailableModels()
         }
@@ -221,6 +222,10 @@ private struct SignedInSections: View {
                     LedgerRow(entry: entry)
                 }
             }
+        }
+
+        if let devices = cloud.devices {
+            DevicesSection(devices: devices)
         }
     }
 
@@ -569,5 +574,86 @@ struct YapCloudTopUpWaitingRow: View {
                 .buttonStyle(.link)
         }
         .font(.callout)
+    }
+}
+
+/// Signed-in devices (one token each). This Mac is marked; others can be signed out remotely after a confirmation.
+private struct DevicesSection: View {
+    let devices: [YapCloudDevice]
+    @ObservedObject private var cloud = YapCloud.shared
+    @State private var pendingRemoval: YapCloudDevice?
+    @State private var removingID: String?
+    @State private var errorMessage: String?
+
+    var body: some View {
+        Section {
+            ForEach(devices) { device in
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Text(name(device))
+                            if device.current {
+                                Text("This Mac")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 1)
+                                    .background(Capsule().fill(AppTheme.Surface.subtle))
+                            }
+                        }
+                        if let date = device.lastUsedDate {
+                            Text(String(format: String(localized: "Last used %@"), date.formatted(.relative(presentation: .named))))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer()
+                    if !device.current {
+                        if removingID == device.id.string {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Button("Remove") { pendingRemoval = device }
+                                .disabled(removingID != nil)
+                        }
+                    }
+                }
+            }
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.Status.error)
+            }
+        } header: {
+            Text("Signed-in Devices")
+        }
+        .confirmationDialog(
+            String(format: String(localized: "Remove %@?"), pendingRemoval.map(name) ?? ""),
+            isPresented: Binding(get: { pendingRemoval != nil }, set: { if !$0 { pendingRemoval = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button("Remove", role: .destructive) {
+                if let device = pendingRemoval { remove(device) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("That device is signed out of Yap Cloud and stops charging your balance. It can sign in again with your email.")
+        }
+    }
+
+    private func name(_ device: YapCloudDevice) -> String {
+        device.deviceName.flatMap { $0.isEmpty ? nil : $0 } ?? String(localized: "Unnamed device")
+    }
+
+    private func remove(_ device: YapCloudDevice) {
+        removingID = device.id.string
+        errorMessage = nil
+        Task { @MainActor in
+            defer { removingID = nil }
+            do {
+                try await cloud.removeDevice(device)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
     }
 }

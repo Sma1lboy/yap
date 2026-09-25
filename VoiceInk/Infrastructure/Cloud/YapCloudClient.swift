@@ -44,6 +44,8 @@ final class YapCloud: ObservableObject {
     @Published private(set) var monthlySpend: YapCloudMonthlySpend?
     /// Set when Checkout opens; cleared once the balance goes up (or the user stops waiting).
     @Published private(set) var pendingTopUp: PendingTopUp?
+    /// Signed-in devices for Account; nil until loaded or while paygate doesn't have the endpoint (404).
+    @Published private(set) var devices: [YapCloudDevice]?
 
     struct PendingTopUp: Equatable {
         let balanceBeforeMicros: Int64
@@ -150,6 +152,7 @@ final class YapCloud: ObservableObject {
         isLedgerLoaded = false
         accountRefreshError = nil
         monthlySpend = nil
+        devices = nil
         NotificationCenter.default.post(name: .aiProviderKeyChanged, object: nil)
     }
 
@@ -304,6 +307,39 @@ final class YapCloud: ObservableObject {
             name: .navigateToDestination, object: nil, userInfo: ["destination": "Account"])
     }
 
+    // MARK: - Devices
+
+    func fetchDevices() async throws -> [YapCloudDevice] {
+        try YapCloudDevice.decodeList(try await send("GET", "/v1/me/devices"))
+    }
+
+    /// Loads the device list for Account. A 404 (endpoint not deployed yet) leaves `devices` nil, hiding the section.
+    @MainActor
+    func refreshDevices() async {
+        guard token != nil else { return }
+        do {
+            devices = try await fetchDevices()
+        } catch YapCloudError.notSignedIn {
+            clearSession()
+        } catch {
+            logger.error("Device list failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    /// Revokes another device's token (`DELETE /v1/me/devices/{id}`), then reloads the list.
+    @MainActor
+    func removeDevice(_ device: YapCloudDevice) async throws {
+        let id = device.id.string.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed.subtracting(["/"])) ?? ""
+        _ = try await send("DELETE", "/v1/me/devices/\(id)")
+        devices = try await fetchDevices()
+    }
+
+    static func parseDate(_ string: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: string) ?? ISO8601DateFormatter().date(from: string)
+    }
+
     // MARK: - Top-up flow
 
     /// Opens Stripe Checkout in the browser and starts waiting for the balance to go up.
@@ -353,8 +389,10 @@ final class YapCloud: ObservableObject {
     }
 
     /// `yap://account/refresh` (also `yap://account`), the link paygate's checkout success page returns to.
+    /// Dev builds register `yap-dev://` instead (YAP_URL_SCHEME) so they don't take links from the release app.
     static func isAccountRefreshURL(_ url: URL) -> Bool {
-        guard url.scheme?.lowercased() == "yap", url.host?.lowercased() == "account" else { return false }
+        guard ["yap", "yap-dev"].contains(url.scheme?.lowercased() ?? ""), url.host?.lowercased() == "account"
+        else { return false }
         return ["", "/", "/refresh"].contains(url.path.lowercased())
     }
 
@@ -694,10 +732,25 @@ struct YapCloudLedgerEntry: Decodable, Identifiable {
         createdAt = try c.decode(String.self, forKey: .createdAt)
     }
 
-    var createdDate: Date? {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: createdAt) ?? ISO8601DateFormatter().date(from: createdAt)
+    var createdDate: Date? { YapCloud.parseDate(createdAt) }
+}
+
+/// One signed-in device (one token) from `GET /v1/me/devices`.
+struct YapCloudDevice: Decodable, Identifiable, Equatable {
+    let id: YapCloudScalar
+    let deviceName: String?
+    let createdAt: String
+    let lastUsedAt: String?
+    /// The device making this request, i.e. this Mac.
+    let current: Bool
+
+    var lastUsedDate: Date? { lastUsedAt.flatMap(YapCloud.parseDate) ?? YapCloud.parseDate(createdAt) }
+
+    /// Accepts a bare array or `{devices: [...]}`.
+    static func decodeList(_ data: Data) throws -> [YapCloudDevice] {
+        struct Wrapped: Decodable { let devices: [YapCloudDevice] }
+        if let list = try? JSONDecoder().decode([YapCloudDevice].self, from: data) { return list }
+        return try JSONDecoder().decode(Wrapped.self, from: data).devices
     }
 }
 
@@ -918,11 +971,24 @@ struct YapCloudConfigDocument: Equatable {
             assert(creditedMicros(before: 5, after: 5) == nil && creditedMicros(before: 5, after: 3) == nil)
             assert(creditedMicros(before: -200, after: 4_999_800) == 5_000_000)
 
+            // Devices (fake /v1/me/devices until paygate ships it)
+            let devicesJSON = #"""
+                [{"id":"d1","deviceName":"Jackson's MacBook Pro","createdAt":"2026-09-01T10:00:00.000Z","lastUsedAt":"2026-09-25T09:00:00Z","current":true},
+                 {"id":7,"deviceName":null,"createdAt":"2026-08-01T10:00:00Z","lastUsedAt":null,"current":false}]
+                """#
+            let devices = try! YapCloudDevice.decodeList(json(devicesJSON))
+            assert(devices.count == 2 && devices[0].current && !devices[1].current)
+            assert(devices[1].id.string == "7" && devices[1].deviceName == nil)
+            assert(devices[0].lastUsedDate == parseDate("2026-09-25T09:00:00Z"))
+            assert(devices[1].lastUsedDate == parseDate("2026-08-01T10:00:00Z"))
+            assert(try! YapCloudDevice.decodeList(json(#"{"devices":\#(devicesJSON)}"#)) == devices)
+
             // yap:// links
             assert(isAccountRefreshURL(URL(string: "yap://account/refresh")!) && isAccountRefreshURL(URL(string: "YAP://Account")!))
             assert(isAccountRefreshURL(URL(string: "yap://account/refresh?session=cs_1")!))
             assert(!isAccountRefreshURL(URL(string: "yap://account/delete")!) && !isAccountRefreshURL(URL(string: "yap://settings")!))
             assert(!isAccountRefreshURL(URL(string: "https://account/refresh")!))
+            assert(isAccountRefreshURL(URL(string: "yap-dev://account/refresh")!) && !isAccountRefreshURL(URL(string: "yapx://account")!))
 
             // Top-up amounts
             assert(isValidTopUp(5) && isValidTopUp(20) && isValidTopUp(500))
