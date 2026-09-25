@@ -78,12 +78,13 @@ struct YapCloudTrialNudgeBanner: View {
     }
 
     private func message(_ nudge: YapCloud.TrialNudge) -> String {
-        guard let days = nudge.daysForFiveDollars else {
+        guard let topUp = nudge.topUpMicros, let days = nudge.days else {
             return String(localized: "Your trial credit is almost used up. Add funds to keep dictating.")
         }
+        let amount = YapCloud.formatPlainUSD(micros: topUp)
         if days > 365 {
-            return String(localized: "Your trial credit is almost used up. At your pace, $5 lasts more than a year.")
+            return String(format: String(localized: "Your trial credit is almost used up. At your pace, %@ lasts more than a year."), amount)
         }
-        return String(format: String(localized: "Your trial credit is almost used up. At your pace, $5 lasts about %lld days."), days)
+        return String(format: String(localized: "Your trial credit is almost used up. At your pace, %@ lasts about %lld days."), amount, days)
     }
 }
