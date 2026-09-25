@@ -165,7 +165,7 @@ private struct LedgerRow: View {
                 }
             }
             Spacer()
-            Text((entry.amountMicros > 0 ? "+" : "") + YapCloud.formatUSD(micros: entry.amountMicros))
+            Text((entry.amountMicros > 0 ? "+" : "") + YapCloud.formatLedgerAmount(micros: entry.amountMicros, kind: entry.kind))
                 .monospacedDigit()
                 .foregroundStyle(entry.amountMicros > 0 ? AppTheme.Status.positive : AppTheme.Text.primary)
         }

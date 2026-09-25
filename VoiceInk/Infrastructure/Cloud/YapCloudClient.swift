@@ -247,11 +247,23 @@ final class YapCloud: ObservableObject {
         return true
     }
 
-    /// `$12.35` / `-$0.40`: micros (1 USD = 1e6) rounded half-up to cents, integer math only.
-    static func formatUSD(micros: Int64) -> String {
-        let cents = (micros.magnitude + 5_000) / 10_000
-        let sign = micros < 0 && cents > 0 ? "-" : ""
-        return sign + "$" + String(cents / 100) + "." + String(format: "%02d", Int(cents % 100))
+    /// `$12.35` / `-$0.0012`: micros (1 USD = 1e6) rounded half-up to `decimals` places (0...6), integer math only.
+    static func formatUSD(micros: Int64, decimals: Int = 2) -> String {
+        var step: UInt64 = 1
+        for _ in 0..<(6 - decimals) { step *= 10 }
+        let units = (micros.magnitude + step / 2) / step
+        let scale = 1_000_000 / step
+        let sign = micros < 0 && units > 0 ? "-" : ""
+        let fraction = decimals == 0 ? "" : "." + String(String(units % scale + scale).dropFirst())
+        return sign + "$" + String(units / scale) + fraction
+    }
+
+    /// Ledger amounts: usage rows are usually under a cent, so they get 4 decimals (below $0.0001: "<$0.0001");
+    /// top-ups and adjustments get 2.
+    static func formatLedgerAmount(micros: Int64, kind: String) -> String {
+        guard kind == "usage" else { return formatUSD(micros: micros) }
+        if micros != 0 && micros.magnitude < 100 { return "<$0.0001" }
+        return formatUSD(micros: micros, decimals: 4)
     }
 
     /// Exact decimal string ("12.50", "-0.0021", legacy number text) → micros, rounded to the nearest micro.
@@ -569,6 +581,13 @@ struct YapCloudConfigDocument: Equatable {
             assert(formatUSD(micros: 12_345_678) == "$12.35" && formatUSD(micros: 0) == "$0.00")
             assert(formatUSD(micros: -400_000) == "-$0.40" && formatUSD(micros: -2_100) == "$0.00")
             assert(formatUSD(micros: 999_999) == "$1.00" && formatUSD(micros: 5_000_000_000) == "$5000.00")
+            assert(formatUSD(micros: -1_200, decimals: 4) == "-$0.0012" && formatUSD(micros: 12_345_678, decimals: 4) == "$12.3457")
+            assert(formatUSD(micros: 7, decimals: 6) == "$0.000007" && formatUSD(micros: 2_500_000, decimals: 0) == "$3")
+            assert(formatLedgerAmount(micros: -92, kind: "usage") == "<$0.0001")
+            assert(formatLedgerAmount(micros: -150, kind: "usage") == "-$0.0002")
+            assert(formatLedgerAmount(micros: 0, kind: "usage") == "$0.0000")
+            assert(formatLedgerAmount(micros: -999_904, kind: "adjust") == "-$1.00")
+            assert(formatLedgerAmount(micros: 10_000_000, kind: "topup") == "$10.00")
             assert(999_999 < lowBalanceMicros && !(1_000_000 < lowBalanceMicros))
 
             // Top-up amounts
