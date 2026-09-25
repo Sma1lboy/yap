@@ -8,6 +8,8 @@ struct OnboardingView: View {
     @EnvironmentObject var aiService: AIService
     @EnvironmentObject var enhancementService: AIEnhancementService
     @StateObject private var coordinator = OnboardingCoordinator()
+    @State private var isShowingCloudRestore = false
+    @State private var didRestoreFromCloud = false
     let contentMaxWidth: CGFloat = 560
 
     var body: some View {
@@ -39,8 +41,16 @@ struct OnboardingView: View {
                             NSApplication.shared.terminate(nil)
                         },
                         onRecheck: coordinator.permissions.refreshPermissionStatuses,
-                        onContinue: coordinator.flow.goToMicrophoneStep
+                        onContinue: coordinator.flow.goToMicrophoneStep,
+                        isRestoredFromCloud: didRestoreFromCloud || coordinator.restoredFromCloud,
+                        onRestoreFromCloud: { isShowingCloudRestore = true }
                     )
+                    .sheet(isPresented: $isShowingCloudRestore) {
+                        OnboardingCloudRestoreSheet { config in
+                            didRestoreFromCloud = true
+                            coordinator.flow.didRestoreFromCloud(config)
+                        }
+                    }
                     .transition(.opacity)
                 case .microphone:
                     OnboardingMicrophoneScreen(
@@ -106,9 +116,10 @@ struct OnboardingView: View {
                         providerOptions: coordinator.onboardingProviderOptions,
                         selectedProvider: coordinator.selectedOnboardingProviderBinding(aiService: aiService),
                         isSelectedProviderVerified: coordinator.isSelectedAPIProviderVerified,
+                        // After a restore this step exists only to add a missing key.
                         canContinue: coordinator.isReadyForExperience(
                             isTranscriptionSetupReady: isTranscriptionSetupReady
-                        ),
+                        ) && coordinator.restoreProviderMissingKey == nil,
                         isShowingSkipWarning: $coordinator.isShowingSkipAPISetupWarning,
                         onVerificationChanged: coordinator.flow.refreshAPIVerification,
                         onBack: coordinator.flow.goBackToModelStep,

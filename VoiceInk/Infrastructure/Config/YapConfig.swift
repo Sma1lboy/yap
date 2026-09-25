@@ -225,6 +225,64 @@ struct YapConfig: Codable, Equatable {
         return config.normalized()
     }
 
+    // MARK: - Restore on a new Mac
+
+    /// What restoring this config brings over, for the onboarding summary.
+    struct RestoreSummary: Equatable {
+        var modes = 0
+        var prompts = 0
+        var dictionaryEntries = 0
+        var shortcuts = 0
+    }
+
+    var restoreSummary: RestoreSummary {
+        let generalShortcuts: [ShortcutBackup?] = [
+            general?.primaryRecordingShortcut, general?.secondaryRecordingShortcut,
+            general?.pasteLastTranscriptionShortcut, general?.pasteLastEnhancementShortcut,
+            general?.retryLastTranscriptionShortcut, general?.cancelRecorderShortcut,
+            general?.openHistoryWindowShortcut, general?.quickAddToDictionaryShortcut,
+        ]
+        return RestoreSummary(
+            modes: modes?.count ?? 0, prompts: prompts?.count ?? 0,
+            dictionaryEntries: (dictionary?.vocabulary?.count ?? 0) + (dictionary?.replacements?.count ?? 0),
+            shortcuts: generalShortcuts.compactMap { $0 }.count + (modeShortcuts?.count ?? 0))
+    }
+
+    /// True when the config already sets up what onboarding's model, AI key and practice steps would:
+    /// modes, with a transcription model on the default one (or a `transcription` field).
+    var coversOnboardingSetup: Bool {
+        guard let modes, !modes.isEmpty else { return false }
+        return transcription?.model != nil
+            || modes.contains { $0.isDefault && $0.selectedTranscriptionModelName != nil }
+    }
+
+    /// Providers the config relies on, as written in it: transcription first (the `transcription` field, else the
+    /// `Provider:` prefix of the default mode's model key), then enhancement (field, else the default mode's).
+    var providerNames: [String] {
+        let defaultMode = modes?.first(where: \.isDefault)
+        let modeKey = defaultMode?.selectedTranscriptionModelName?.split(separator: ":", maxSplits: 1)
+        let transcriptionProvider =
+            transcription?.provider ?? (modeKey?.count == 2 ? modeKey.map { String($0[0]) } : nil)
+        let enhancementProvider = enhancement?.provider ?? defaultMode?.selectedAIProvider
+        var names: [String] = []
+        for name in [transcriptionProvider, enhancementProvider].compactMap({ $0 }) where !names.contains(name) {
+            names.append(name)
+        }
+        return names
+    }
+
+    /// The copy for another Mac: a prompt that names a local file (`"prompt.md"`) becomes the file's text, which
+    /// `resolvePrompt` reads back as inline text. `"recommended"` stays, since every Yap bundles that prompt.
+    func inliningPromptFile(_ resolve: (String) -> String?) -> YapConfig {
+        guard let raw = enhancement?.prompt,
+            raw.caseInsensitiveCompare(RecommendedSetup.promptKeyword) != .orderedSame,
+            let text = resolve(raw)
+        else { return self }
+        var config = self
+        config.enhancement?.prompt = text
+        return config
+    }
+
     // MARK: - Merge
 
     /// Content equality. `ModeConfig ==` compares only ids, so "did this change" checks compare JSON instead.
@@ -419,12 +477,33 @@ struct YapConfig: Codable, Equatable {
     /// Reads the prompt from a file when `value` names an existing file, otherwise returns it as inline text.
     static func resolvePrompt(_ value: String, configDirectory: URL, readFile: (URL) -> String?) -> String? {
         guard let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty else { return nil }
-        let expanded = (trimmed as NSString).expandingTildeInPath
-        let url =
-            expanded.hasPrefix("/")
-            ? URL(fileURLWithPath: expanded) : configDirectory.appendingPathComponent(trimmed)
-        if !trimmed.contains("\n"), let text = readFile(url) { return text }
+        if let url = promptFileURL(trimmed, configDirectory: configDirectory), let text = readFile(url) { return text }
         return trimmed
+    }
+
+    /// Where `value` would point as a prompt file: relative to the config dir, absolute, or `~/...`.
+    /// Nil for multi-line text, which is always inline. Whether the file exists is up to the caller.
+    static func promptFileURL(_ value: String, configDirectory: URL) -> URL? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !trimmed.contains("\n") else { return nil }
+        let expanded = (trimmed as NSString).expandingTildeInPath
+        return expanded.hasPrefix("/")
+            ? URL(fileURLWithPath: expanded) : configDirectory.appendingPathComponent(trimmed)
+    }
+
+    /// A config pulled from the cloud carries its prompt as text. When this Mac's config.json keeps the prompt in
+    /// a file (`localPrompt` names an existing file, per `existingFile`), the text goes into that file and the
+    /// reference stays; otherwise the text stays inline. `"recommended"` never goes into a file.
+    func keepingPromptFile(localPrompt: String?, existingFile: (String) -> URL?) -> (
+        config: YapConfig, promptFile: (url: URL, text: String)?
+    ) {
+        guard let text = enhancement?.prompt,
+            text.caseInsensitiveCompare(RecommendedSetup.promptKeyword) != .orderedSame,
+            let reference = localPrompt, reference != text, let url = existingFile(reference)
+        else { return (self, nil) }
+        var config = self
+        config.enhancement?.prompt = reference
+        return (config, (url, text))
     }
 }
 
@@ -510,6 +589,61 @@ extension String {
 
             let empty = try? decode(Data(#"{"version":2,"modes":[],"prompts":[],"dictionary":{"vocabulary":[]}}"#.utf8))
             assert(empty?.hasSections == false)
+
+            // A prompt file is inlined for the cloud copy; inline text and "recommended" pass through.
+            let resolve: (String) -> String? = { resolvePrompt($0, configDirectory: dir, readFile: read) }
+            let withFile = YapConfig(enhancement: .init(prompt: "prompt.md"))
+            assert(withFile.inliningPromptFile(resolve).enhancement?.prompt == "FILE")
+            let inline = YapConfig(enhancement: .init(prompt: "Fix grammar."))
+            assert(inline.inliningPromptFile(resolve) == inline)
+            let keyword = YapConfig(enhancement: .init(prompt: "Recommended"))
+            assert(keyword.inliningPromptFile(resolve) == keyword)
+            assert(YapConfig().inliningPromptFile(resolve) == YapConfig())
+
+            // Restore summary and onboarding coverage.
+            assert(v2.restoreSummary == RestoreSummary(modes: 1, prompts: 1, dictionaryEntries: 1, shortcuts: 1))
+            assert(!v2.coversOnboardingSetup && !YapConfig().coversOnboardingSetup)
+            var covered = v2
+            covered.transcription = .init(provider: "yapcloud", model: "m")
+            assert(covered.coversOnboardingSetup)
+
+            // Pulled prompt text goes into this Mac's prompt file when config.json references one.
+            let promptFile: (String) -> URL? = { $0 == "prompt.md" ? URL(fileURLWithPath: "/cfg/prompt.md") : nil }
+            let pulled = YapConfig(enhancement: .init(provider: "openrouter", prompt: "Pulled text."))
+            let intoFile = pulled.keepingPromptFile(localPrompt: "prompt.md", existingFile: promptFile)
+            assert(intoFile.config.enhancement == .init(provider: "openrouter", prompt: "prompt.md"))
+            assert(intoFile.promptFile?.url.path == "/cfg/prompt.md" && intoFile.promptFile?.text == "Pulled text.")
+            for local in [nil, "Old inline text.", "missing.md"] {
+                let inline = pulled.keepingPromptFile(localPrompt: local, existingFile: promptFile)
+                assert(inline.config == pulled && inline.promptFile == nil)
+            }
+            let pulledKeyword = YapConfig(enhancement: .init(prompt: "recommended"))
+            assert(pulledKeyword.keepingPromptFile(localPrompt: "prompt.md", existingFile: promptFile).promptFile == nil)
+            assert(promptFileURL("prompt.md", configDirectory: dir)?.path == "/cfg/prompt.md")
+            assert(promptFileURL("line one\nline two", configDirectory: dir) == nil)
+
+            // Providers a restored config relies on.
+            var restoredModes = YapConfig()
+            restoredModes.modes = [
+                ModeConfig(
+                    name: "D", isAIEnhancementEnabled: true, selectedTranscriptionModelName: "OpenRouter:ABC",
+                    selectedAIProvider: "Groq", isDefault: true)
+            ]
+            assert(restoredModes.providerNames == ["OpenRouter", "Groq"])
+            restoredModes.transcription = .init(provider: "yapcloud", model: "m")
+            restoredModes.enhancement = .init(provider: "yapcloud")
+            assert(restoredModes.providerNames == ["yapcloud"])
+            restoredModes = YapConfig()
+            restoredModes.modes = [
+                ModeConfig(
+                    name: "D", isAIEnhancementEnabled: false, selectedTranscriptionModelName: "whisper", isDefault: true)
+            ]
+            assert(restoredModes.providerNames.isEmpty)
+
+            // Older backups and configs still carry the removed isExperimentalFeaturesEnabled; it's ignored.
+            let legacyGeneral = try? decode(
+                Data(#"{"general":{"isExperimentalFeaturesEnabled":false,"isMenuBarOnly":true}}"#.utf8))
+            assert(legacyGeneral?.general?.isMenuBarOnly == true)
 
             // Tombstones. Base state as both Macs last synced it, every entry modified at t0.
             let t0 = Date(timeIntervalSince1970: 1_800_000_000)

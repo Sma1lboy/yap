@@ -47,6 +47,19 @@ struct YapModePatch: Equatable {
     }
 }
 
+extension AIProvider {
+    /// Config spelling: case and spaces don't matter ("openrouter", "Yap Cloud", "yapcloud").
+    init?(configName: String) {
+        let normalized = configName.replacingOccurrences(of: " ", with: "").lowercased()
+        guard
+            let provider = AIProvider.allCases.first(where: {
+                $0.rawValue.replacingOccurrences(of: " ", with: "").lowercased() == normalized
+            })
+        else { return nil }
+        self = provider
+    }
+}
+
 /// Applies `~/.config/yap/config.json` (or `$XDG_CONFIG_HOME/yap/config.json`) on top of in-app settings.
 @MainActor
 final class YapConfigLoader: ObservableObject {
@@ -188,6 +201,32 @@ final class YapConfigLoader: ObservableObject {
         guard let data = try? config.encoded() else { return nil }
         defaults.set(data, forKey: Self.baselineKey)
         return data
+    }
+
+    /// Writes a config pulled from Yap Cloud to config.json. If this Mac keeps its prompt in a file, the pulled
+    /// text goes into that file (previous one kept as `<name>.bak`) and config.json keeps the reference.
+    func writePulledConfig(_ data: Data) throws {
+        let existing = (try? Data(contentsOf: fileURL)).flatMap { try? YapConfig.decode($0) }
+        let (config, promptFile) = try YapConfig.decode(data).keepingPromptFile(
+            localPrompt: existing?.enhancement?.prompt
+        ) { reference in
+            YapConfig.promptFileURL(reference, configDirectory: directoryURL)
+                .flatMap { FileManager.default.fileExists(atPath: $0.path) ? $0 : nil }
+        }
+        if let promptFile, (try? String(contentsOf: promptFile.url, encoding: .utf8)) != promptFile.text {
+            let backupURL = promptFile.url.appendingPathExtension("bak")
+            try? FileManager.default.removeItem(at: backupURL)
+            try FileManager.default.copyItem(at: promptFile.url, to: backupURL)
+            try Data(promptFile.text.utf8).write(to: promptFile.url, options: .atomic)
+        }
+        try writeConfigFile(config.encoded())
+    }
+
+    /// `makeConfigData` for Yap Cloud: a prompt kept in a file next to config.json is sent as its text,
+    /// because the other Macs don't have that file.
+    func makeCloudConfigData() async -> Data? {
+        guard let data = await makeConfigData(), let config = try? YapConfig.decode(data) else { return nil }
+        return try? config.inliningPromptFile(promptText).encoded()
     }
 
     /// The last config this Mac exported or applied; export compares against it to stamp changes and deletions.
@@ -488,11 +527,7 @@ final class YapConfigLoader: ObservableObject {
     }
 
     private static func enhancementProvider(_ config: YapConfig) -> AIProvider? {
-        guard let name = config.enhancement?.provider else { return nil }
-        let normalized = name.replacingOccurrences(of: " ", with: "").lowercased()
-        return AIProvider.allCases.first {
-            $0.rawValue.replacingOccurrences(of: " ", with: "").lowercased() == normalized
-        }
+        config.enhancement?.provider.flatMap(AIProvider.init(configName:))
     }
 
     /// OpenRouter models use the same `OpenRouter:<UUID>` key the app writes; other providers use the model name.
