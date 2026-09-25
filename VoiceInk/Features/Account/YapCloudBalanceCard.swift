@@ -39,3 +39,51 @@ struct YapCloudBalanceCard: View {
         }
     }
 }
+
+/// Once per account: the sign-up credit is nearly gone and nothing was ever paid. Shown on Home and Account.
+struct YapCloudTrialNudgeBanner: View {
+    @ObservedObject private var cloud = YapCloud.shared
+    /// Home: a card with an Add Funds button. Account: a plain row (Add Funds is the next section).
+    var isHomeCard = true
+
+    var body: some View {
+        if let nudge = cloud.trialNudge {
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: "gift")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(AppTheme.Status.warningStrong)
+                    .frame(width: 34, height: 34)
+                Text(message(nudge))
+                    .font(.system(size: 12.5))
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 8)
+                if isHomeCard {
+                    Button("Add Funds", action: YapCloud.showAddFunds)
+                        .controlSize(.small)
+                        .buttonStyle(.borderedProminent)
+                }
+                Button {
+                    cloud.dismissTrialNudge()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .buttonStyle(.borderless)
+                .help("Don't show this again")
+                .accessibilityLabel("Don't show this again")
+            }
+            .padding(isHomeCard ? 16 : 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background { if isHomeCard { AppCardBackground(cornerRadius: 16) } }
+        }
+    }
+
+    private func message(_ nudge: YapCloud.TrialNudge) -> String {
+        guard let days = nudge.daysForFiveDollars else {
+            return String(localized: "Your trial credit is almost used up. Add funds to keep dictating.")
+        }
+        if days > 365 {
+            return String(localized: "Your trial credit is almost used up. At your pace, $5 lasts more than a year.")
+        }
+        return String(format: String(localized: "Your trial credit is almost used up. At your pace, $5 lasts about %lld days."), days)
+    }
+}

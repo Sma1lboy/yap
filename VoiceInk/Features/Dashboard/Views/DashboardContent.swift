@@ -196,6 +196,8 @@ struct DashboardContent: View {
 
             YapCloudBalanceCard()
 
+            YapCloudTrialNudgeBanner()
+
             HomeWeekPanel(modeSummary: defaultModeSummary)
 
             footerLinks

@@ -28,6 +28,9 @@ struct AccountView: View {
                         .foregroundStyle(AppTheme.Status.warningStrong)
                 }
             }
+            if cloud.isSignedIn, cloud.trialNudge != nil {
+                Section { YapCloudTrialNudgeBanner(isHomeCard: false) }
+            }
             if cloud.isSignedIn {
                 SignedInSections()
             } else {
