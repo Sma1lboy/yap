@@ -193,6 +193,28 @@
         }
       }
     },
+    "%@ in / %@ out per 1M tokens" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ Eingabe / %2$@ Ausgabe pro 1 Mio. Token"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ en entrée / %2$@ en sortie par million de jetons"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每百万 token:输入 %1$@ / 输出 %2$@"
+          }
+        }
+      }
+    },
     "%@ of %@" : {
       "localizations" : {
         "de" : {
@@ -3858,6 +3880,28 @@
         }
       }
     },
+    "Account" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compte"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "账户"
+          }
+        }
+      }
+    },
     "Accuracy" : {
       "localizations" : {
         "de" : {
@@ -4164,6 +4208,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "充值"
+          }
+        }
+      }
+    },
+    "Add Funds…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben aufladen …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter des fonds…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值…"
           }
         }
       }
@@ -4813,6 +4879,28 @@
         }
       }
     },
+    "Adjustment" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Korrektur"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调整"
+          }
+        }
+      }
+    },
     "Advanced" : {
       "localizations" : {
         "de" : {
@@ -5059,6 +5147,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已被“%@”使用"
+          }
+        }
+      }
+    },
+    "Amount" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Betrag"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montant"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "金额"
+          }
+        }
+      }
+    },
+    "Amount (USD)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Betrag (USD)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Montant (USD)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "金额(美元)"
           }
         }
       }
@@ -6417,6 +6549,28 @@
         }
       }
     },
+    "Balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "余额"
+          }
+        }
+      }
+    },
     "Base URL" : {
       "localizations" : {
         "de" : {
@@ -6951,6 +7105,28 @@
         }
       }
     },
+    "Checkout opens in your browser. Refresh after paying to see the new balance." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Bezahlvorgang öffnet sich im Browser. Aktualisiere nach dem Bezahlen, um das neue Guthaben zu sehen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le paiement s'ouvre dans votre navigateur. Actualisez après avoir payé pour voir le nouveau solde."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支付页面会在浏览器中打开。付款后点「刷新」查看新余额。"
+          }
+        }
+      }
+    },
     "Choose" : {
       "localizations" : {
         "de" : {
@@ -7219,6 +7395,28 @@
         }
       }
     },
+    "Cleanup" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereinigung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nettoyage"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整理"
+          }
+        }
+      }
+    },
     "Cleanup Complete" : {
       "localizations" : {
         "de" : {
@@ -7463,6 +7661,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "云服务提供商会根据其各自的隐私政策处理音频和文本。"
+          }
+        }
+      }
+    },
+    "Code" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "验证码"
           }
         }
       }
@@ -11047,6 +11267,28 @@
         }
       }
     },
+    "Email address" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E-Mail-Adresse"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adresse e-mail"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "邮箱"
+          }
+        }
+      }
+    },
     "Enable Accessibility Access" : {
       "localizations" : {
         "de" : {
@@ -11587,6 +11829,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请输入 $%lld 到 $%lld 之间的整数美元金额。"
+          }
+        }
+      }
+    },
+    "Enter the 6-digit code sent to %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib den 6-stelligen Code ein, der an %@ gesendet wurde."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez le code à 6 chiffres envoyé à %@."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入发送到 %@ 的 6 位验证码。"
           }
         }
       }
@@ -16285,6 +16549,28 @@
         }
       }
     },
+    "Models & Pricing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modelle & Preise"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèles et tarifs"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型与价格"
+          }
+        }
+      }
+    },
     "Modes" : {
       "localizations" : {
         "de" : {
@@ -17164,6 +17450,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无自动触发条件"
+          }
+        }
+      }
+    },
+    "No charges or top-ups yet." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Abbuchungen oder Aufladungen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun débit ni rechargement pour l'instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有扣费或充值记录。"
           }
         }
       }
@@ -19723,6 +20031,28 @@
         }
       }
     },
+    "Pay as you go: one balance covers transcription and cleanup, no API keys to manage." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzungsbasiert: Ein Guthaben deckt Transkription und Bereinigung ab, keine API-Schlüssel nötig."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paiement à l'usage : un seul solde couvre la transcription et le nettoyage, sans clé API à gérer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按量付费:一份余额同时支付转写和整理,不用管理 API key。"
+          }
+        }
+      }
+    },
     "Peak Dictation Hours" : {
       "comment" : "A title for a card that shows the peak hours of dictation.",
       "isCommentAutoGenerated" : true,
@@ -19945,6 +20275,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "高级功能已激活"
+          }
+        }
+      }
+    },
+    "Preset" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorgabe"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prédéfini"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "常用金额"
           }
         }
       }
@@ -20592,6 +20944,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "实时"
+          }
+        }
+      }
+    },
+    "Recent Activity" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Aktivität"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activité récente"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近记录"
           }
         }
       }
@@ -23059,6 +23433,28 @@
         }
       }
     },
+    "Send Code" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code senden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyer le code"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "发送验证码"
+          }
+        }
+      }
+    },
     "Send a note or join Discord" : {
       "comment" : "Title of a resource link that opens a report or feedback form.",
       "isCommentAutoGenerated" : true,
@@ -23781,6 +24177,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用实时模型录音时显示实时文本。"
+          }
+        }
+      }
+    },
+    "Sign In" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anmelden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se connecter"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录"
+          }
+        }
+      }
+    },
+    "Sign Out" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abmelden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se déconnecter"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出登录"
           }
         }
       }
@@ -26748,6 +27188,28 @@
         }
       }
     },
+    "Top-up" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufladung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechargement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "充值"
+          }
+        }
+      }
+    },
     "Transcribe File…" : {
       "localizations" : {
         "de" : {
@@ -27668,6 +28130,28 @@
         }
       }
     },
+    "Usage" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nutzung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utilisation"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用量"
+          }
+        }
+      }
+    },
     "Use Cloud" : {
       "localizations" : {
         "de" : {
@@ -27731,6 +28215,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "立即使用 Yap。"
+          }
+        }
+      }
+    },
+    "Use a different email" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere E-Mail-Adresse verwenden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser une autre adresse e-mail"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换一个邮箱"
           }
         }
       }
