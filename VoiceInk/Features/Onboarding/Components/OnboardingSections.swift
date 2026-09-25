@@ -27,6 +27,7 @@ struct OnboardingHeroHeader: View {
             Image(systemName: systemImage)
                 .font(.system(size: 24, weight: .semibold))
                 .foregroundColor(AppTheme.Text.primary)
+                .accessibilityHidden(true)
                 .frame(width: 56, height: 56)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -67,6 +68,9 @@ struct OnboardingProgressBadge: View {
             filledSegments: currentStep,
             progress: progress
         )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            String(format: String(localized: "Step %lld of %lld"), Int64(currentStep), Int64(totalSteps)))
     }
 }
 
@@ -84,6 +88,9 @@ struct OnboardingBottomBar: View {
     let onPrimary: () -> Void
     var secondaryTitle: String? = nil
     var onSecondary: (() -> Void)? = nil
+    /// Return triggers the primary button. Only for screens without text input: on the others Return
+    /// belongs to the field (API key, sign-in code, practice editor) and must not skip ahead.
+    var isPrimaryDefaultAction = false
 
     private enum Metrics {
         static let controlButtonWidth: CGFloat = 132
@@ -158,6 +165,7 @@ struct OnboardingBottomBar: View {
         }
         .buttonStyle(.plain)
         .disabled(!isPrimaryEnabled)
+        .keyboardShortcut(isPrimaryDefaultAction ? .defaultAction : nil)
     }
 }
 

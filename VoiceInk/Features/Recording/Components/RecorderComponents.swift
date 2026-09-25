@@ -272,6 +272,10 @@ struct RecorderModeButton: View {
         }
         .frame(width: buttonSize)
         .padding(padding)
+        // The icon is often just the mode's emoji; say the mode's name instead.
+        .accessibilityLabel(
+            modeManager.currentEffectiveConfiguration.map { String(format: String(localized: "Mode: %@"), $0.name) }
+                ?? String(localized: "No modes available"))
         .onHover {
             isHoveringButton = $0
             syncPopoverVisibility()

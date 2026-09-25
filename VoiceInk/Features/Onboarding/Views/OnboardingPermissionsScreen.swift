@@ -27,7 +27,8 @@ struct OnboardingPermissionsScreen: View {
                 primaryTitle: "Continue",
                 isPrimaryEnabled: isComplete,
                 onLeading: onRecheck,
-                onPrimary: onContinue
+                onPrimary: onContinue,
+                isPrimaryDefaultAction: true
             )
         }
     }
