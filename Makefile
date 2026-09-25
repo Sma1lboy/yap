@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke sync-e2e
 
 # Default target
 all: check build
@@ -118,6 +118,29 @@ cloud-smoke:
 		VoiceInk/Infrastructure/Cloud/YapCloudClient.swift VoiceInk/Infrastructure/Cloud/YapCloudProvider.swift
 	@"$(CLOUD_SMOKE_BIN)"
 
+SYNC_E2E_BIN := $(CURDIR)/.local-build/sync-e2e
+sync-e2e:
+	@mkdir -p "$(dir $(SYNC_E2E_BIN))"
+	@xcrun swiftc -DDEBUG -Onone -o "$(SYNC_E2E_BIN)" \
+		scripts/cloud-smoke/Stubs.swift scripts/sync-e2e/LoaderStub.swift scripts/sync-e2e/main.swift \
+		VoiceInk/Infrastructure/Config/YapConfig.swift \
+		VoiceInk/Infrastructure/Config/CloudConfigSync.swift \
+		VoiceInk/Infrastructure/Config/RecommendedSetup.swift \
+		VoiceInk/Infrastructure/Cloud/YapCloudClient.swift \
+		VoiceInk/Infrastructure/Cloud/YapCloudProvider.swift \
+		VoiceInk/Infrastructure/Cloud/YapCloud+ConfigSync.swift \
+		VoiceInk/Infrastructure/SystemIntegration/Lifecycle/LifecycleObserver.swift \
+		VoiceInk/Features/Settings/Backup/BackupTypes.swift \
+		VoiceInk/Features/Shortcuts/Models/ShortcutBackup.swift \
+		VoiceInk/Features/Shortcuts/Models/Shortcut.swift \
+		VoiceInk/Features/Shortcuts/Models/Shortcut+ConfigString.swift \
+		VoiceInk/Features/Modes/State/ModeConfig.swift \
+		VoiceInk/Features/Enhancement/Models/CustomPrompt.swift \
+		VoiceInk/Features/ModelLibrary/Models/CustomAIProviderConfig.swift \
+		VoiceInk/Features/Modes/Models/ModeTriggerModels.swift \
+		VoiceInk/Features/Modes/Models/ModeIcon.swift
+	@scripts/sync-e2e/run.sh "$(SYNC_E2E_BIN)"
+
 # Run application
 run:
 	@if [ -d "$$HOME/Downloads/$(RUN_APP_NAME).app" ]; then \
@@ -154,6 +177,7 @@ help:
 	@echo "  run                Launch the built VoiceInk app"
 	@echo "  dev                Build and run the app (for development)"
 	@echo "  cloud-smoke        Check the Yap Cloud client against live paygate (YAP_CLOUD_SMOKE_TOKEN)"
+	@echo "  sync-e2e           Two simulated Macs sync through live paygate (throwaway account, needs railway CLI)"
 	@echo "  all                Run full build process (default)"
 	@echo "  clean              Remove build artifacts"
 	@echo "  help               Show this help message"
