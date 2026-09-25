@@ -12,8 +12,12 @@ Install on a new Mac:
 
 ```bash
 git clone https://github.com/Sma1lboy/yap && cd yap
-OPENROUTER_API_KEY=sk-or-... ./setup/install.sh
+OPENROUTER_API_KEY=sk-or-... ./setup/install.sh   # installs via Homebrew when available, then applies setup/
 ```
+
+Just the app: `brew install --cask sma1lboy/yap/yap` after `brew tap sma1lboy/yap https://github.com/Sma1lboy/yap`. Update with `brew upgrade --cask yap`.
+
+Releasing: push a `v*` tag. CI builds `Yap.zip`, publishes the GitHub Release, and bumps `Casks/yap.rb`.
 
 macOS permissions (microphone, accessibility) and the hotkey still have to be granted by hand on each machine.
 

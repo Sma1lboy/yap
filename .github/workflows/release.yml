@@ -45,3 +45,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" Yap.zip --title "Yap $GITHUB_REF_NAME" --notes "Ad-hoc signed build of the Yap fork of VoiceInk (GPL-3.0). Install with setup/install.sh."
+
+      # 把 Homebrew cask 指到这个版本，各机器 brew upgrade 即可更新
+      - name: Bump cask
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SHA=$(shasum -a 256 Yap.zip | cut -d' ' -f1)
+          git fetch origin main && git checkout main
+          sed -i '' -e "s/^  version \".*\"/  version \"$VERSION\"/" -e "s/^  sha256 .*/  sha256 \"$SHA\"/" Casks/yap.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit -am "cask: yap $VERSION" && git push origin main

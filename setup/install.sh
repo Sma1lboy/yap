@@ -9,13 +9,19 @@ URL=https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip
 KEY="${OPENROUTER_API_KEY:-$(grep -s '^OPENROUTER_API_KEY=' ~/.env | cut -d= -f2- | tr -d "\"'" || true)}"
 [ -n "$KEY" ] || { echo "缺少 OPENROUTER_API_KEY（环境变量或 ~/.env）"; exit 1; }
 
-echo "==> 下载 Yap"
-TMP=$(mktemp -d)
-curl -fL --progress-bar "$URL" -o "$TMP/Yap.zip"   # curl 下载不带隔离标记，ad-hoc 签名也能直接打开
 osascript -e 'quit app "Yap"' 2>/dev/null || true
 while pgrep -x Yap >/dev/null; do sleep 0.5; done
-[ -d /Applications/Yap.app ] && mv /Applications/Yap.app "$TMP/Yap.old.app"   # 旧版挪到临时目录，不直接删
-ditto -x -k "$TMP/Yap.zip" /Applications
+if command -v brew >/dev/null; then
+  echo "==> 用 Homebrew 安装/更新 Yap"
+  brew tap sma1lboy/yap https://github.com/Sma1lboy/yap >/dev/null 2>&1 || true
+  brew upgrade --cask sma1lboy/yap/yap 2>/dev/null || brew install --cask sma1lboy/yap/yap
+else
+  echo "==> 下载 Yap"
+  TMP=$(mktemp -d)
+  curl -fL --progress-bar "$URL" -o "$TMP/Yap.zip"   # curl 下载不带隔离标记，ad-hoc 签名也能直接打开
+  [ -d /Applications/Yap.app ] && mv /Applications/Yap.app "$TMP/Yap.old.app"   # 旧版挪到临时目录，不直接删
+  ditto -x -k "$TMP/Yap.zip" /Applications
+fi
 
 echo "==> 写入 OpenRouter key"
 # 本地构建版找不到钥匙串条目时，会从这个字段读取并迁移进钥匙串
