@@ -617,8 +617,9 @@ private struct DevicesSection: View {
                         if removingID == device.id.string {
                             ProgressView().controlSize(.small)
                         } else {
-                            Button("Remove") { pendingRemoval = device }
+                            Button("Sign Out") { pendingRemoval = device }
                                 .disabled(removingID != nil)
+                                .accessibilityLabel(String(format: String(localized: "Sign out %@"), name(device)))
                         }
                     }
                 }
@@ -632,11 +633,11 @@ private struct DevicesSection: View {
             Text("Signed-in Devices")
         }
         .confirmationDialog(
-            String(format: String(localized: "Remove %@?"), pendingRemoval.map(name) ?? ""),
+            String(format: String(localized: "Sign out %@?"), pendingRemoval.map(name) ?? ""),
             isPresented: Binding(get: { pendingRemoval != nil }, set: { if !$0 { pendingRemoval = nil } }),
             titleVisibility: .visible
         ) {
-            Button("Remove", role: .destructive) {
+            Button("Sign Out", role: .destructive) {
                 if let device = pendingRemoval { remove(device) }
             }
             Button("Cancel", role: .cancel) {}

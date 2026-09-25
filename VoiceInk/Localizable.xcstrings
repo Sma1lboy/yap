@@ -21370,28 +21370,6 @@
         }
       }
     },
-    "Remove %@?" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "„%@“ entfernen?"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Retirer « %@ » ?"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "移除「%@」？"
-          }
-        }
-      }
-    },
     "Remove API Key?" : {
       "localizations" : {
         "de" : {
@@ -24414,6 +24392,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "用你在另一台 Mac 上使用的账户登录。"
+          }
+        }
+      }
+    },
+    "Sign out %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ abmelden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déconnecter %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让 %@ 退出登录"
+          }
+        }
+      }
+    },
+    "Sign out %@?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ abmelden?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déconnecter %@ ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让 %@ 退出登录？"
           }
         }
       }
