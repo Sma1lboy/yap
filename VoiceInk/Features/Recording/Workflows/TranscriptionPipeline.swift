@@ -147,6 +147,7 @@ class TranscriptionPipeline {
             transcription.text = cleanedText
             transcription.duration = actualDuration
             transcription.transcriptionModelName = model.displayName
+            if model.provider == .yapCloud { transcription.usedYapCloud = true }
             transcription.transcriptionDuration = transcriptionDuration
             transcription.modeName = modeMetadata.name
             transcription.modeEmoji = modeMetadata.emoji
@@ -198,6 +199,7 @@ class TranscriptionPipeline {
                             contextSnapshot: contextSnapshot
                         )
                         transcription.enhancedText = enhancementResult.text
+                        if resolvedEnhancementConfiguration.provider == .yapCloud { transcription.usedYapCloud = true }
                         transcription.promptName =
                             enhancementResult.promptName ?? resolvedEnhancementConfiguration.prompt?.title
                         transcription.enhancementDuration = enhancementResult.duration

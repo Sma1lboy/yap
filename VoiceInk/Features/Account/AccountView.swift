@@ -65,8 +65,8 @@ private struct SignedInSections: View {
         Section("Account") {
             LabeledContent("Email address", value: cloud.me?.email ?? cloud.email ?? "")
             LabeledContent("Balance") {
-                if let balance = cloud.me?.balanceUsd.double {
-                    Text(Self.usd(balance))
+                if let balance = cloud.balanceMicros {
+                    Text(YapCloud.formatUSD(micros: balance))
                         .monospacedDigit()
                         .foregroundStyle(balance > 0 ? AppTheme.Text.primary : AppTheme.Status.error)
                 } else {
@@ -149,9 +149,6 @@ private struct SignedInSections: View {
         }
     }
 
-    static func usd(_ value: Double) -> String {
-        value.formatted(.currency(code: "USD").precision(.fractionLength(abs(value) < 0.01 && value != 0 ? 4 : 2)))
-    }
 }
 
 private struct LedgerRow: View {
@@ -168,9 +165,9 @@ private struct LedgerRow: View {
                 }
             }
             Spacer()
-            Text((entry.amountUsd.double > 0 ? "+" : "") + SignedInSections.usd(entry.amountUsd.double))
+            Text((entry.amountMicros > 0 ? "+" : "") + YapCloud.formatUSD(micros: entry.amountMicros))
                 .monospacedDigit()
-                .foregroundStyle(entry.amountUsd.double > 0 ? AppTheme.Status.positive : AppTheme.Text.primary)
+                .foregroundStyle(entry.amountMicros > 0 ? AppTheme.Status.positive : AppTheme.Text.primary)
         }
     }
 
@@ -197,11 +194,11 @@ private struct ModelPriceRow: View {
         }
     }
 
-    /// Chat: USD per 1M input/output tokens. Transcription: the raw per-unit audio price paygate reports.
+    /// Chat: USD per 1M input/output tokens. Transcription prices come in per-model units (per second, per hour,
+    /// per token) that OpenRouter doesn't label, so no number is shown for them.
     private var price: String {
         if model.isTranscription {
-            let audio = model.price("audio") ?? model.price("prompt") ?? 0
-            return "$" + audio.formatted(.number.precision(.significantDigits(1...4)))
+            return String(localized: "Pay as you go")
         }
         let perMillion = { (key: String) in
             ((model.price(key) ?? 0) * 1_000_000).formatted(.currency(code: "USD").precision(.fractionLength(2)))

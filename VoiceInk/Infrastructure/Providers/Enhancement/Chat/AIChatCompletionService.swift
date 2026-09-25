@@ -62,6 +62,7 @@ extension AIService {
             result = completion.text
             openRouterCompletion = completion
         case .yapCloud:
+            defer { YapCloud.shared.scheduleBalanceRefresh() }
             do {
                 result = try await OpenAILLMClient.chatCompletion(
                     baseURL: URL(string: provider.baseURL)!,

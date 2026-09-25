@@ -700,6 +700,17 @@ private struct HistoryCardRow: View {
                     .background(Capsule().fill(AppTheme.Surface.subtle))
             }
 
+            if transcription.usedYapCloud == true {
+                Text("Yap Cloud")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(AppTheme.Text.secondary)
+                    .lineLimit(1)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(AppTheme.Surface.subtle))
+                    .help("Billed to your Yap Cloud balance")
+            }
+
             statusBadge
 
             Text(verbatim: metaText)

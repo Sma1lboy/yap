@@ -6685,6 +6685,28 @@
         }
       }
     },
+    "Billed to your Yap Cloud balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird vom Yap-Cloud-Guthaben abgebucht"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facturé sur votre solde Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "费用从 Yap Cloud 余额扣除"
+          }
+        }
+      }
+    },
     "Built in" : {
       "localizations" : {
         "de" : {
@@ -15902,6 +15924,50 @@
         }
       }
     },
+    "Low Yap Cloud balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap-Cloud-Guthaben niedrig"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde Yap Cloud faible"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 余额不足"
+          }
+        }
+      }
+    },
+    "Low balance (%@) — Add Funds" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthaben niedrig (%@) – aufladen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde faible (%@) — Ajouter des fonds"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "余额不足(%@)— 去充值"
+          }
+        }
+      }
+    },
     "Lowercase and Paste" : {
       "localizations" : {
         "de" : {
@@ -20027,6 +20093,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "录音时暂停媒体播放"
+          }
+        }
+      }
+    },
+    "Pay as you go" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach Verbrauch"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Facturé à l'usage"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按量计费"
           }
         }
       }
@@ -29678,6 +29766,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap Cloud"
+          }
+        }
+      }
+    },
+    "Yap Cloud balance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap-Cloud-Guthaben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 余额"
+          }
+        }
+      }
+    },
+    "Yap Cloud balance: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap-Cloud-Guthaben: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solde Yap Cloud : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud 余额:%@"
           }
         }
       }

@@ -20,6 +20,8 @@ final class Transcription {
     var audioFileURL: String?
     var transcriptionModelName: String?
     var aiEnhancementModelName: String?
+    /// True when a Yap Cloud call (transcription or cleanup) succeeded for this record; History tags it.
+    var usedYapCloud: Bool?
     var promptName: String?
     var transcriptionDuration: TimeInterval?
     var enhancementDuration: TimeInterval?

@@ -29,6 +29,7 @@ struct YapCloudProvider: CloudProvider {
         audioData: Data, fileName: String, apiKey: String, model: String, language: String?,
         customVocabulary: [String], timeout: TimeInterval
     ) async throws -> String {
+        defer { YapCloud.shared.scheduleBalanceRefresh() }
         var body: [String: Any] = [
             "model": model,
             "input_audio": ["data": audioData.base64EncodedString(), "format": Self.audioFormat(fileName)],

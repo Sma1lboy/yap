@@ -15,6 +15,8 @@ final class YapCloud: ObservableObject {
     static let defaultBaseURL = "https://paygate-production-2502.up.railway.app"
     static let checkoutPresets = [5, 10, 20]
     static let maximumTopUpUSD = 500
+    /// Below this ($1), Home and the menu bar show a prominent "add funds" entry.
+    static let lowBalanceMicros: Int64 = 1_000_000
 
     private static let tokenKey = "yapCloudToken"
     private static let emailKey = "yapCloudEmail"
@@ -25,6 +27,7 @@ final class YapCloud: ObservableObject {
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "YapCloud")
     private let catalogLock = NSLock()
     private var catalog: YapCloudCatalog?
+    private var balanceRefresh: Task<Void, Never>?
 
     @Published private(set) var isSignedIn = false
     @Published private(set) var me: YapCloudMe?
@@ -136,6 +139,29 @@ final class YapCloud: ObservableObject {
         return url
     }
 
+    var balanceMicros: Int64? { me?.balanceMicros }
+    var isLowBalance: Bool { balanceMicros.map { $0 < Self.lowBalanceMicros } ?? false }
+
+    /// Refetches `/v1/me` once, a moment after a billed call finishes (a dictation's transcription and cleanup
+    /// collapse into one fetch). Also called at launch. The billed request itself stays untouched.
+    func scheduleBalanceRefresh() {
+        Task { @MainActor in
+            guard isSignedIn else { return }
+            balanceRefresh?.cancel()
+            balanceRefresh = Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                do {
+                    me = try await fetchMe()
+                } catch YapCloudError.notSignedIn {
+                    clearSession()
+                } catch {
+                    logger.error("Balance refresh failed: \(error.localizedDescription, privacy: .public)")
+                }
+            }
+        }
+    }
+
     /// Reloads balance and the last 20 ledger rows for the Account page. Signs out on a revoked token.
     @MainActor
     func refreshAccount() async {
@@ -219,6 +245,22 @@ final class YapCloud: ObservableObject {
             onTap: { showAddFunds() },
             actionButton: (label: String(localized: "Add Funds"), action: { showAddFunds() }))
         return true
+    }
+
+    /// `$12.35` / `-$0.40`: micros (1 USD = 1e6) rounded half-up to cents, integer math only.
+    static func formatUSD(micros: Int64) -> String {
+        let cents = (micros.magnitude + 5_000) / 10_000
+        let sign = micros < 0 && cents > 0 ? "-" : ""
+        return sign + "$" + String(cents / 100) + "." + String(format: "%02d", Int(cents % 100))
+    }
+
+    /// Exact decimal string ("12.50", "-0.0021", legacy number text) → micros, rounded to the nearest micro.
+    static func micros(fromDecimal string: String) -> Int64? {
+        guard var value = Decimal(string: string, locale: Locale(identifier: "en_US_POSIX")) else { return nil }
+        value *= 1_000_000
+        var rounded = Decimal()
+        NSDecimalRound(&rounded, &value, 0, .plain)
+        return NSDecimalNumber(decimal: rounded).int64Value
     }
 
     static func isValidTopUp(_ amountUSD: Int) -> Bool {
@@ -355,18 +397,51 @@ private struct YapCloudVerifyResponse: Decodable {
     let user: YapCloudUser
 }
 
+extension KeyedDecodingContainer {
+    /// Money as integer micros: `<name>Micros` when present, else the `<name>Usd` decimal string (or the legacy
+    /// JSON number, read as its text) parsed with Decimal. Never passes through Double arithmetic.
+    func decodeMicros(_ microsKey: Key, fallback usdKey: Key) throws -> Int64 {
+        if let micros = try decodeIfPresent(Int64.self, forKey: microsKey) { return micros }
+        let text = try decode(YapCloudScalar.self, forKey: usdKey).string
+        guard let micros = YapCloud.micros(fromDecimal: text) else {
+            throw DecodingError.dataCorruptedError(forKey: usdKey, in: self, debugDescription: "Not a decimal: \(text)")
+        }
+        return micros
+    }
+}
+
 struct YapCloudMe: Decodable {
     let id: YapCloudScalar
     let email: String
-    let balanceUsd: YapCloudScalar
+    let balanceMicros: Int64
+
+    enum CodingKeys: String, CodingKey { case id, email, balanceUsd, balanceMicros }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(YapCloudScalar.self, forKey: .id)
+        email = try c.decode(String.self, forKey: .email)
+        balanceMicros = try c.decodeMicros(.balanceMicros, fallback: .balanceUsd)
+    }
 }
 
 struct YapCloudLedgerEntry: Decodable, Identifiable {
     let id: YapCloudScalar
     let kind: String
-    let amountUsd: YapCloudScalar
+    let amountMicros: Int64
     let model: String?
     let createdAt: String
+
+    enum CodingKeys: String, CodingKey { case id, kind, amountUsd, amountMicros, model, createdAt }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(YapCloudScalar.self, forKey: .id)
+        kind = try c.decode(String.self, forKey: .kind)
+        amountMicros = try c.decodeMicros(.amountMicros, fallback: .amountUsd)
+        model = try c.decodeIfPresent(String.self, forKey: .model)
+        createdAt = try c.decode(String.self, forKey: .createdAt)
+    }
 
     var createdDate: Date? {
         let formatter = ISO8601DateFormatter()
@@ -460,12 +535,18 @@ struct YapCloudConfigDocument: Equatable {
             assert(conflict == .versionConflict(current: YapCloudConfigDocument(body: json(#"{"version":"7","config":{"a":1}}"#), etag: nil)))
 
             // Decoding: numbers as numbers or strings
-            let me = try! JSONDecoder().decode(YapCloudMe.self, from: json(#"{"id":3,"email":"a@b.c","balanceUsd":"12.50"}"#))
-            assert(me.id.string == "3" && me.balanceUsd.double == 12.5)
+            func me(_ body: String) -> Int64? { try? JSONDecoder().decode(YapCloudMe.self, from: json(body)).balanceMicros }
+            assert(me(#"{"id":3,"email":"a@b.c","balanceUsd":"12.50"}"#) == 12_500_000)
+            assert(me(#"{"id":"u","email":"a@b.c","balanceUsd":"12.50","balanceMicros":12500001}"#) == 12_500_001)
+            assert(me(#"{"id":"u","email":"a@b.c","balanceUsd":0}"#) == 0)
+            assert(me(#"{"id":"u","email":"a@b.c","balanceUsd":9.9979}"#) == 9_997_900)
+            assert(me(#"{"id":"u","email":"a@b.c","balanceUsd":"-0.0000210000"}"#) == -21)
+            assert(me(#"{"id":"u","email":"a@b.c","balanceUsd":"abc"}"#) == nil)
+            assert(micros(fromDecimal: "0.0000005") == 1 && micros(fromDecimal: "1.1e-07") == 0)
             let ledger = try! JSONDecoder().decode(
                 YapCloudLedger.self,
                 from: json(#"{"entries":[{"id":"u1","kind":"usage","amountUsd":-0.0021,"model":"m","createdAt":"2026-09-25T10:00:00.123Z","meta":{}}]}"#))
-            assert(ledger.entries[0].amountUsd.double == -0.0021 && ledger.entries[0].createdDate != nil)
+            assert(ledger.entries[0].amountMicros == -2_100 && ledger.entries[0].createdDate != nil)
             let catalog = try! JSONDecoder().decode(
                 YapCloudCatalog.self,
                 from: json(#"""
@@ -483,6 +564,12 @@ struct YapCloudConfigDocument: Equatable {
             let doc = YapCloudConfigDocument(body: json(#"{"version":2,"updatedAt":"x","config":{"b":1,"a":2}}"#), etag: #""5""#)
             assert(doc?.version == "5" && doc?.config == json(#"{"a":2,"b":1}"#))
             assert(YapCloudConfigDocument(body: json(#"{"version":2}"#), etag: nil) == nil)
+
+            // Money formatting (integer micros → cents, half-up)
+            assert(formatUSD(micros: 12_345_678) == "$12.35" && formatUSD(micros: 0) == "$0.00")
+            assert(formatUSD(micros: -400_000) == "-$0.40" && formatUSD(micros: -2_100) == "$0.00")
+            assert(formatUSD(micros: 999_999) == "$1.00" && formatUSD(micros: 5_000_000_000) == "$5000.00")
+            assert(999_999 < lowBalanceMicros && !(1_000_000 < lowBalanceMicros))
 
             // Top-up amounts
             assert(isValidTopUp(5) && isValidTopUp(20) && isValidTopUp(500))
