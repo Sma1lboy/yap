@@ -30,6 +30,9 @@ struct CloudSyncOffer: ViewModifier {
     }
 
     private func update() {
+        #if DEBUG
+            if YapCloud.isSnapshotMode { return }
+        #endif
         isPresented = cloud.isSignedIn && !syncEnabled && !answered
     }
 }

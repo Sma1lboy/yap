@@ -41,6 +41,10 @@ struct VoiceInkApp: App {
         URLCache.shared = URLCache(memoryCapacity: 0, diskCapacity: 0)
 
         AppDefaults.registerDefaults()
+        #if DEBUG
+            // make ui-snapshots: render fake-data screens to /tmp/yap-ui/snapshots and exit.
+            UISnapshots.runIfRequested()
+        #endif
         // Before onboarding can complete in this session, so a fresh install isn't mistaken for an update.
         ReleaseNotesPresenter.shared.showsOnNextMainWindow = ReleaseNotes.recordLaunch()
         #if DEBUG
