@@ -67,7 +67,7 @@ struct AutoLearnModelSelectionView: View {
 
                     if !aiService.connectedProviders.contains(selectedProvider) {
                         Text("The selected provider is currently unavailable.")
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                             .foregroundStyle(.secondary)
                     }
                 }

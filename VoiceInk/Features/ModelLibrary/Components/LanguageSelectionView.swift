@@ -100,7 +100,7 @@ struct LanguageSelectionView: View {
     private var languageSelectionSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             Text("Transcription Language")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
 
             if transcriptionModelManager.currentTranscriptionModel != nil {
                 if hasLanguageChoices() {
@@ -128,20 +128,20 @@ struct LanguageSelectionView: View {
                         Text(
                             "Select a supported transcription language or locale. Automatic multilingual transcription is shown when available."
                         )
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                     }
                 } else {
                     // For English-only models, force set language to English
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                         Text("Language: English")
-                            .font(.subheadline)
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(.primary)
 
                         Text(
                             "This is an English-optimized model and only supports English transcription."
                         )
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                     }
                     .onAppear {
@@ -151,14 +151,14 @@ struct LanguageSelectionView: View {
                 }
             } else {
                 Text("No model selected")
-                    .font(.subheadline)
+                    .font(AppTheme.font(.caption))
                     .foregroundColor(.secondary)
             }
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppTheme.Surface.control)
-        .cornerRadius(10)
+        .cornerRadius(AppTheme.Radius.control)
     }
 
     // New compact view for menu bar

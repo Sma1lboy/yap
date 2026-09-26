@@ -53,12 +53,12 @@ struct ClipboardMessageModifier: ViewModifier {
                 Group {
                     if !message.isEmpty {
                         Text(message)
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(AppTheme.Status.positive)
                             .padding(.horizontal, AppTheme.Spacing.x2)
                             .padding(.vertical, AppTheme.Spacing.x1)
                             .background(AppTheme.Status.positive.opacity(0.10))
-                            .cornerRadius(4)
+                            .cornerRadius(AppTheme.Radius.small)
                             .transition(.opacity)
                             .animation(.easeInOut, value: message)
                     }

@@ -342,14 +342,14 @@ struct ModelManagementView: View {
                 .padding(.horizontal, AppTheme.Spacing.x3)
                 .padding(.vertical, AppTheme.Spacing.x2)
                 .background(AppTheme.Status.warningStrong.opacity(0.12))
-                .cornerRadius(6)
+                .cornerRadius(AppTheme.Radius.small)
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, AppTheme.Spacing.x4)
         .padding(.vertical, AppTheme.Spacing.x3)
         .background(AppTheme.Status.warningStrong.opacity(0.08))
-        .cornerRadius(8)
+        .cornerRadius(AppTheme.Radius.control)
     }
 
     private var localModels: [any TranscriptionModel] {

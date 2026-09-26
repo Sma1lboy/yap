@@ -114,7 +114,7 @@ struct LocalEnhancementServiceManagementView: View {
 
             if let ollamaUserRefreshError {
                 Text(ollamaUserRefreshError)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(AppTheme.Status.error)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.leading, LocalProviderMetrics.labelWidth + 12)
@@ -303,7 +303,7 @@ private struct LocalProviderDisclosureRow<Content: View>: View {
                     Spacer(minLength: 12)
 
                     statusTitle
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
 

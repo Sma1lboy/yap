@@ -129,13 +129,13 @@ private struct SignedInSections: View {
                             : String(
                                 format: String(localized: "At this month's pace (%@ a month), your balance lasts about %lld days."),
                                 pace, runway.days))
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let error = cloud.accountRefreshError {
                 Text(String(format: String(localized: "Couldn't refresh your account: %@"), error))
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(AppTheme.Status.error)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -182,7 +182,7 @@ private struct SignedInSections: View {
             HStack {
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(AppTheme.Status.error)
                 }
                 Spacer()
@@ -339,14 +339,14 @@ private struct LedgerRow: View {
                 Text(title)
                 if let date = entry.createdDate {
                     Text(date.formatted(date: .abbreviated, time: .shortened))
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(.secondary)
                 }
             }
             Spacer()
             if entry.kind == "topup", let receipt = entry.receiptURL {
                 Link("Receipt", destination: receipt).appLinkStyle()
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
             }
             Text((entry.amountMicros > 0 ? "+" : "") + YapCloud.formatLedgerAmount(micros: entry.amountMicros, kind: entry.kind))
                 .monospacedDigit()
@@ -445,7 +445,7 @@ struct YapCloudSignInForm: View {
                 if isWorking { ProgressView().controlSize(.small) }
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(AppTheme.Status.error)
                 }
             }
@@ -508,7 +508,7 @@ struct YapCloudQuickTopUp: View {
             }
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(AppTheme.Status.error)
             }
             if cloud.pendingTopUp != nil {
@@ -564,7 +564,7 @@ private struct MonthlyCapSection: View {
             HStack {
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(AppTheme.Status.error)
                 }
                 Spacer()
@@ -640,7 +640,7 @@ struct YapCloudTopUpWaitingRow: View {
             Button("Stop Waiting") { cloud.stopWaitingForTopUp() }
                 .buttonStyle(.link)
         }
-        .font(.callout)
+        .font(AppTheme.font(.footnote))
     }
 }
 
@@ -661,7 +661,7 @@ private struct DevicesSection: View {
                             Text(name(device))
                             if device.current {
                                 Text("This Mac")
-                                    .font(.caption)
+                                    .font(AppTheme.font(.caption))
                                     .foregroundStyle(.secondary)
                                     .padding(.horizontal, AppTheme.Spacing.x2)
                                     .padding(.vertical, AppTheme.Spacing.half)
@@ -670,7 +670,7 @@ private struct DevicesSection: View {
                         }
                         if let date = device.lastUsedDate {
                             Text(String(format: String(localized: "Last used %@"), date.formatted(.relative(presentation: .named))))
-                                .font(.caption)
+                                .font(AppTheme.font(.caption))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -688,7 +688,7 @@ private struct DevicesSection: View {
             }
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(AppTheme.Status.error)
             }
         } header: {

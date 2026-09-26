@@ -144,7 +144,7 @@ struct AppPanelHeader: View {
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
             Text(title)
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
 

@@ -14,7 +14,7 @@ struct ModeSettingsPanelView: View {
         VStack(spacing: 0) {
             HStack(spacing: AppTheme.Spacing.x3) {
                 Text("Modes Settings")
-                    .font(.headline)
+                    .font(AppTheme.font(.body, .semibold))
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
                 Spacer()

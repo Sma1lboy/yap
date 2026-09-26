@@ -295,7 +295,7 @@ struct TriggerPickerPopover: View {
                 Image(nsImage: app.icon)
                     .resizable()
                     .frame(width: 28, height: 28)
-                    .cornerRadius(6)
+                    .cornerRadius(AppTheme.Radius.small)
 
                 if let claimedBy {
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {

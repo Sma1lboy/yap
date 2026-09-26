@@ -25,7 +25,7 @@ struct HistoryAnalysisPanelView: View {
         HStack(spacing: AppTheme.Spacing.x3) {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                 Text("Performance Analysis")
-                    .font(.headline.weight(.semibold))
+                    .font(AppTheme.font(.body, .semibold))
 
                 Text(String(localized: "\(analysis.totalTranscripts) selected transcripts"))
                     .font(AppTheme.font(.caption, .medium))
@@ -84,7 +84,7 @@ struct HistoryAnalysisPanelView: View {
                 .foregroundStyle(AppTheme.Text.secondary)
 
             Text("No model performance in selection")
-                .font(.subheadline)
+                .font(AppTheme.font(.caption))
                 .foregroundStyle(AppTheme.Text.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

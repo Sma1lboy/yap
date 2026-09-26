@@ -116,7 +116,7 @@ private struct WhisperPromptSettingsSection: View {
 
                 if promptLanguage != "auto", isEditing {
                     TextEditor(text: $draftPrompt)
-                        .font(.body)
+                        .font(AppTheme.font(.body))
                         .padding(AppTheme.Spacing.x2)
                         .frame(height: 72)
                         .scrollContentBackground(.hidden)

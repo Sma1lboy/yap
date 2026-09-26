@@ -210,7 +210,7 @@ struct QuickHistoryDetailActionBar: View {
     private var promptPopover: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             Text("Select Prompt")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .padding(.horizontal)
                 .padding(.top, AppTheme.Spacing.x2)
 

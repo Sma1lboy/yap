@@ -531,7 +531,7 @@ struct AudioPlayerView: View {
     private var promptSelectionPopover: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             Text("Select Prompt")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .padding(.horizontal)
                 .padding(.top, AppTheme.Spacing.x2)

@@ -49,7 +49,7 @@ struct OnboardingCloudRestoreSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             Text("Restore Settings from Yap Cloud")
-                .font(.title3.weight(.semibold))
+                .font(AppTheme.font(.headline, .semibold))
 
             switch phase {
             case .signIn:

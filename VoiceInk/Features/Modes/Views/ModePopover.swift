@@ -17,7 +17,7 @@ struct ModePopover: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             Text("Select Mode")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .padding(.horizontal)
                 .padding(.top, AppTheme.Spacing.x2)
@@ -102,6 +102,6 @@ struct ModeRow: View {
         }
         .buttonStyle(.plain)
         .background(isSelected ? AppTheme.Selection.fill : Color.clear)
-        .cornerRadius(4)
+        .cornerRadius(AppTheme.Radius.small)
     }
 }

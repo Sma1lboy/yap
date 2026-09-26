@@ -71,7 +71,7 @@ struct AudioTranscribeView: View {
                         .foregroundColor(isDropTargeted ? AppTheme.Accent.text : AppTheme.Text.secondary)
 
                     Text("Drop audio or video files here")
-                        .font(.headline)
+                        .font(AppTheme.font(.body, .semibold))
 
                     Text("or")
                         .foregroundColor(.secondary)
@@ -86,7 +86,7 @@ struct AudioTranscribeView: View {
             .frame(maxWidth: 480, maxHeight: 200)
 
             Text("Supports WAV, MP3, M4A, AIFF, MP4, MOV, AAC, FLAC, CAF, AMR, OGG, OPUS, 3GP")
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
                 .padding(.top, AppTheme.Spacing.x3)
 
@@ -131,7 +131,7 @@ struct AudioTranscribeView: View {
             .scrollContentBackground(.hidden)
             .safeAreaInset(edge: .bottom) {
                 Text("Drop files anywhere to add more")
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, AppTheme.Spacing.x2)
@@ -145,7 +145,7 @@ struct AudioTranscribeView: View {
         HStack(spacing: AppTheme.Spacing.x3) {
             let count = transcriptionManager.queue.count
             Text(String(localized: "\(count) files"))
-                .font(.subheadline)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
 
             Button {
@@ -318,7 +318,7 @@ struct AudioTranscribeView: View {
             )
             .overlay {
                 Text("Drop to add files")
-                    .font(.subheadline.weight(.medium))
+                    .font(AppTheme.font(.caption, .medium))
                     .foregroundColor(AppTheme.Accent.text)
             }
             .padding(AppTheme.Spacing.x4)

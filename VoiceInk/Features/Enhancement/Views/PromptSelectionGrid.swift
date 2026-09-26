@@ -32,7 +32,7 @@ struct PromptSelectionGrid: View {
             if prompts.isEmpty {
                 Text("No prompts available")
                     .foregroundColor(.secondary)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
             } else {
                 let columns = [
                     GridItem(.adaptive(minimum: 120, maximum: 180), spacing: AppTheme.Spacing.x2)
@@ -65,11 +65,11 @@ struct PromptSelectionGrid: View {
                 // Helpful tip for users
                 HStack {
                     Image(systemName: "info.circle")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
 
                     Text("Double-click to edit • Right-click for more options")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                 }
                 .padding(.top, AppTheme.Spacing.x2)

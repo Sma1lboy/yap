@@ -38,10 +38,10 @@ struct InfoTip: View {
                         + Text(" ")
                         + Text("Learn more")
                         .foregroundColor(AppTheme.Accent.text))
-                        .font(.callout)
+                        .font(AppTheme.font(.footnote))
                 } else {
                     Text(message)
-                        .font(.callout)
+                        .font(AppTheme.font(.footnote))
                         .foregroundColor(.secondary)
                 }
             }

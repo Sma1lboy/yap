@@ -125,11 +125,11 @@ struct WordReplacementView: View {
 
                                 if sortMode == .originalAsc || sortMode == .originalDesc {
                                     Image(systemName: sortMode == .originalAsc ? "chevron.up" : "chevron.down")
-                                        .font(.caption)
+                                        .font(AppTheme.font(.caption))
                                         .foregroundColor(.secondary)
                                 } else if let dateSortIconName {
                                     Image(systemName: dateSortIconName)
-                                        .font(.caption)
+                                        .font(AppTheme.font(.caption))
                                         .foregroundColor(.secondary)
                                 }
                             }
@@ -151,11 +151,11 @@ struct WordReplacementView: View {
 
                                 if sortMode == .replacementAsc || sortMode == .replacementDesc {
                                     Image(systemName: sortMode == .replacementAsc ? "chevron.up" : "chevron.down")
-                                        .font(.caption)
+                                        .font(AppTheme.font(.caption))
                                         .foregroundColor(.secondary)
                                 } else if let dateSortIconName {
                                     Image(systemName: dateSortIconName)
-                                        .font(.caption)
+                                        .font(AppTheme.font(.caption))
                                         .foregroundColor(.secondary)
                                 }
                             }
@@ -246,79 +246,79 @@ struct WordReplacementInfoPopover: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             Text("How to use Word Replacements")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 Text("Separate multiple originals with commas:")
-                    .font(.subheadline)
+                    .font(AppTheme.font(.caption))
                     .foregroundColor(.secondary)
 
                 Text("Voicing, Voice ink, Voiceing")
-                    .font(.callout)
+                    .font(AppTheme.font(.footnote))
                     .padding(AppTheme.Spacing.x2)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color(.textBackgroundColor))
-                    .cornerRadius(6)
+                    .cornerRadius(AppTheme.Radius.small)
             }
 
             Divider()
 
             Text("Examples")
-                .font(.subheadline)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
 
             VStack(spacing: AppTheme.Spacing.x3) {
                 HStack(spacing: AppTheme.Spacing.x2) {
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                         Text("Original:")
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(.secondary)
                         Text("my website link")
-                            .font(.callout)
+                            .font(AppTheme.font(.footnote))
                     }
 
                     Image(systemName: "arrow.right")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
 
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                         Text("Replacement:")
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(.secondary)
                         Text(verbatim: "https://github.com/Sma1lboy/yap")
-                            .font(.callout)
+                            .font(AppTheme.font(.footnote))
                     }
                 }
                 .padding(AppTheme.Spacing.x3)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.textBackgroundColor))
-                .cornerRadius(6)
+                .cornerRadius(AppTheme.Radius.small)
 
                 HStack(spacing: AppTheme.Spacing.x2) {
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                         Text("Original:")
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(.secondary)
                         Text("Voicing, Voice ink")
-                            .font(.callout)
+                            .font(AppTheme.font(.footnote))
                     }
 
                     Image(systemName: "arrow.right")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
 
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                         Text("Replacement:")
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(.secondary)
                         Text("Yap")
-                            .font(.callout)
+                            .font(AppTheme.font(.footnote))
                     }
                 }
                 .padding(AppTheme.Spacing.x3)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.textBackgroundColor))
-                .cornerRadius(6)
+                .cornerRadius(AppTheme.Radius.small)
             }
         }
         .padding()

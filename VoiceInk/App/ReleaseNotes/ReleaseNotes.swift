@@ -87,7 +87,7 @@ struct ReleaseNotesSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(String(format: String(localized: "What's New in %@"), notes.version))
-                .font(.title2.weight(.bold))
+                .font(AppTheme.font(.headline, .semibold))
                 .padding([.horizontal, .top], 24)
                 .padding(.bottom, AppTheme.Spacing.x3)
 

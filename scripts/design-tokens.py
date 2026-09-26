@@ -129,7 +129,9 @@ def css(tokens):
 # Hard-coded styling in app code. Each pattern names what to use instead.
 FORBIDDEN = [
     (re.compile(r"\.system\(size:"), "font size → AppTheme.font(...)"),
-    (re.compile(r"cornerRadius: *[0-9]"), "corner radius → AppTheme.Radius.*"),
+    (re.compile(r"(?<![A-Za-z])\.font\(\.(largeTitle|title2|title3|title|headline|subheadline|body|callout|footnote|caption2|caption)\b"),
+     "system text style → AppTheme.font(...)"),
+    (re.compile(r"cornerRadius: *[0-9]|\.cornerRadius\( *[0-9]"), "corner radius → AppTheme.Radius.*"),
     (re.compile(r"\.padding\((\.[a-zA-Z]+, *)?-?(?!0\))[0-9]"), "padding → AppTheme.Spacing.*"),
     (re.compile(r"spacing: *(?!0\b)[0-9]"), "spacing → AppTheme.Spacing.*"),
     (re.compile(r"Color\((red|white|hue):|Color\(nsColor: *\.system|Color\.accentColor|"

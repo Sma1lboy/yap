@@ -34,7 +34,7 @@ struct EnhancementPromptPopover: View {
                     )
                 )
                 .foregroundColor(AppTheme.Text.primary)
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .lineLimit(1)
 
                 Spacer()
@@ -117,6 +117,6 @@ struct EnhancementPromptRow: View {
         }
         .buttonStyle(.plain)
         .background(isSelected ? AppTheme.Selection.fill : Color.clear)
-        .cornerRadius(4)
+        .cornerRadius(AppTheme.Radius.small)
     }
 }

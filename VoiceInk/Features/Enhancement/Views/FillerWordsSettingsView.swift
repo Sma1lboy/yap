@@ -85,7 +85,7 @@ struct FillerWordsSettingsSection: View {
     private var addWordPopover: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             Text("Add Filler Word")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
 
             TextField("Filler word", text: $newWord)
                 .textFieldStyle(.roundedBorder)
@@ -93,7 +93,7 @@ struct FillerWordsSettingsSection: View {
 
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(AppTheme.Status.error)
             }
 

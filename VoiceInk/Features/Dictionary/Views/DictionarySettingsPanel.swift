@@ -138,7 +138,7 @@ struct DictionarySettingsPanel: View {
     private var panelHeader: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
             Text("Dictionary Settings")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .fontWeight(.semibold)
 
             Spacer()

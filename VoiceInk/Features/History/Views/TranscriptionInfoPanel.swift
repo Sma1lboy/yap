@@ -15,7 +15,7 @@ struct TranscriptionInfoSidePanel: View {
     private var header: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
             Text("Info")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .fontWeight(.semibold)
 
             Spacer()

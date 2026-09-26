@@ -18,7 +18,7 @@ struct ModelPerformancePanel: View {
     private var header: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
             Text("AI Model Performance")
-                .font(.headline.weight(.semibold))
+                .font(AppTheme.font(.body, .semibold))
 
             Spacer()
 
@@ -113,7 +113,7 @@ private struct ModelPerformancePanelContent: View {
                 .foregroundColor(.secondary)
 
             Text("No model performance for this period")
-                .font(.subheadline)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

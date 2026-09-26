@@ -32,7 +32,7 @@ struct YapCloudModelBrowser: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             HStack {
-                Text(title).font(.headline)
+                Text(title).font(AppTheme.font(.body, .semibold))
                 Spacer()
                 Button("Done") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -48,12 +48,12 @@ struct YapCloudModelBrowser: View {
                         VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                             Text(model.name)
                             if model.name != model.detail {
-                                Text(model.detail).font(.caption).foregroundStyle(.secondary)
+                                Text(model.detail).font(AppTheme.font(.caption)).foregroundStyle(.secondary)
                             }
                         }
                         Spacer()
                         if let average = YapCloud.shared.averageCallLabel(model: model.detail) {
-                            Text(average).font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                            Text(average).font(AppTheme.font(.caption)).monospacedDigit().foregroundStyle(.secondary)
                         }
                         if model.id == selectedID {
                             Image(systemName: "checkmark").accessibilityHidden(true)

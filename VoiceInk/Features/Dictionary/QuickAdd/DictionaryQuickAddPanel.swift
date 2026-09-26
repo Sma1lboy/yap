@@ -116,7 +116,7 @@ struct DictionaryQuickAddView: View {
                 inputArea
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(AppTheme.Status.error)
                         .padding(.horizontal, AppTheme.Spacing.x4)
                         .padding(.bottom, AppTheme.Spacing.x2)

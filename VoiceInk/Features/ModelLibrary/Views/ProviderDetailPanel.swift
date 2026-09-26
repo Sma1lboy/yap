@@ -65,7 +65,7 @@ struct ProviderDetailPanel: View {
             )
 
             Text(descriptor.displayName)
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .fontWeight(.semibold)
 
             Spacer()
@@ -102,14 +102,14 @@ struct ProviderDetailPanel: View {
         if let verificationMessage {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text(verificationMessage)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .fontWeight(.medium)
                     .foregroundStyle(verificationSucceeded ? AppTheme.Status.positive : AppTheme.Status.error)
                     .fixedSize(horizontal: false, vertical: true)
 
                 if let verificationDetailMessage, !verificationSucceeded {
                     Text(verificationDetailMessage)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(AppTheme.Status.error.opacity(0.82))
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -282,7 +282,7 @@ struct ProviderDetailPanel: View {
             if models.count > 8 {
                 Divider()
                 Text("+\(models.count - 8) more transcription models available")
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .padding(.vertical, AppTheme.Spacing.x2)
             }
@@ -302,7 +302,7 @@ struct ProviderDetailPanel: View {
 
                 if provider != .openRouter && models.isEmpty {
                     Text("No models listed.")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .padding(.vertical, AppTheme.Spacing.x2)
                 } else {
@@ -322,7 +322,7 @@ struct ProviderDetailPanel: View {
                     if models.count > previewCount {
                         Divider()
                         Text("+\(models.count - previewCount) more enhancement models available")
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                             .foregroundStyle(.secondary)
                             .padding(.vertical, AppTheme.Spacing.x2)
                     }
@@ -380,7 +380,7 @@ struct ProviderDetailPanel: View {
 
                 if let subtitle {
                     Text(subtitle)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -390,7 +390,7 @@ struct ProviderDetailPanel: View {
 
             if let trailing {
                 Text(trailing)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(.secondary)
             }
         }

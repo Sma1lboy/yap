@@ -18,7 +18,7 @@ struct ModelUsagePanel: View {
     private var header: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
             Text("AI Model Usage")
-                .font(.headline.weight(.semibold))
+                .font(AppTheme.font(.body, .semibold))
 
             Spacer()
 
@@ -112,7 +112,7 @@ private struct ModelUsagePanelContent: View {
                 .foregroundColor(.secondary)
 
             Text("No model usage for this period")
-                .font(.subheadline)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

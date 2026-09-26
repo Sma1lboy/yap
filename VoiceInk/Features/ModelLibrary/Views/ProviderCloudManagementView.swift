@@ -62,7 +62,7 @@ struct CloudProviderManagementView: View {
                     .font(AppTheme.font(.headline, .semibold))
                 Text("Cloud providers process audio and text under their own privacy policies.")
                     .foregroundStyle(.secondary)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
             }
 
             ForEach(providerDescriptors) { descriptor in
@@ -254,7 +254,7 @@ private struct ProviderListRow: View {
                         .foregroundStyle(.primary)
 
                     Text(capabilitySummary)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }

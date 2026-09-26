@@ -153,7 +153,7 @@ struct AudioSetupView: View {
 
         return HStack(spacing: AppTheme.Spacing.x2) {
             Text("\(prioritizedDevice.priority + 1)")
-                .font(.body.monospacedDigit())
+                .font(AppTheme.font(.body).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .frame(width: 22, alignment: .leading)
 
@@ -164,7 +164,7 @@ struct AudioSetupView: View {
 
                 if !isAvailable {
                     Text("Unavailable")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -173,7 +173,7 @@ struct AudioSetupView: View {
 
             if isActive {
                 Label("Active", systemImage: "checkmark.circle.fill")
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .labelStyle(.titleAndIcon)
             }

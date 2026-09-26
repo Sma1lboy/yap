@@ -79,7 +79,7 @@ struct VocabularyView: View {
                                 .foregroundColor(.secondary)
 
                             Image(systemName: sortIconName)
-                                .font(.caption)
+                                .font(AppTheme.font(.caption))
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -163,32 +163,32 @@ struct VocabularyInfoPopover: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             Text("How to use Vocabulary")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
 
             Text(
                 "Vocabulary helps supported transcription models and AI enhancement preserve important names, technical terms, and unique spellings."
             )
-            .font(.subheadline)
+            .font(AppTheme.font(.caption))
             .foregroundColor(.secondary)
             .fixedSize(horizontal: false, vertical: true)
 
             Text("Add one entry at a time, or paste multiple entries separated by commas.")
-                .font(.subheadline)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Divider()
 
             Text("Examples")
-                .font(.subheadline)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
 
             Text(verbatim: "Yap, OpenRouter, SwiftData, WebSocket")
-                .font(.callout)
+                .font(AppTheme.font(.footnote))
                 .padding(AppTheme.Spacing.x2)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.textBackgroundColor))
-                .cornerRadius(6)
+                .cornerRadius(AppTheme.Radius.small)
         }
         .padding()
         .frame(width: 320)

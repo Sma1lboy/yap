@@ -105,7 +105,7 @@ private struct CustomProviderEmptyState: View {
                 .foregroundStyle(.secondary)
 
             Text(title)
-                .font(.subheadline.weight(.medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -153,12 +153,12 @@ private struct CustomEnhancementModelRow: View {
 
                 if provider.modelName.isEmpty {
                     Text("No model configured")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 } else {
                     Text(provider.modelName)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -758,7 +758,7 @@ private struct CustomModelErrorBox: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             ForEach(messages, id: \.self) { message in
                 Text(message)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(AppTheme.Status.error)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -776,7 +776,7 @@ private struct CustomModelEditorHeader: View {
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
             Text(title)
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
 

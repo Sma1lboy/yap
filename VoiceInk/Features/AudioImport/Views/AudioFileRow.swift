@@ -53,7 +53,7 @@ struct AudioFileRow: View {
             Spacer()
 
             Text("Waiting")
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
 
             Button {
@@ -84,7 +84,7 @@ struct AudioFileRow: View {
             Spacer()
 
             Text(LocalizedStringKey(phase.rawValue))
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(AppTheme.Accent.text)
         }
     }
@@ -121,13 +121,13 @@ struct AudioFileRow: View {
 
                 if transcription.duration > 0 {
                     Text(formatDuration(transcription.duration))
-                        .font(.caption.weight(.medium))
+                        .font(AppTheme.font(.caption, .medium))
                         .foregroundColor(.secondary)
                 }
             }
 
             Image(systemName: "chevron.right")
-                .font(.caption2.weight(.semibold))
+                .font(AppTheme.font(.micro, .semibold))
                 .foregroundColor(.secondary)
                 .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 .animation(.easeInOut(duration: 0.2), value: isExpanded)
@@ -160,12 +160,12 @@ struct AudioFileRow: View {
             HStack(spacing: AppTheme.Spacing.x3) {
                 if let model = transcription.transcriptionModelName {
                     Label(model, systemImage: "cpu")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                 }
                 if let prompt = transcription.promptName {
                     Label(prompt, systemImage: "sparkles")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                 }
                 Spacer()
@@ -178,7 +178,7 @@ struct AudioFileRow: View {
             selectedTab = tab
         } label: {
             Text(LocalizedStringKey(tab.rawValue))
-                .font(.subheadline.weight(selectedTab == tab ? .semibold : .regular))
+                .font(AppTheme.font(.caption, selectedTab == tab ? .semibold : .regular))
                 .foregroundColor(selectedTab == tab ? AppTheme.Accent.text : AppTheme.Text.secondary)
                 .padding(.horizontal, AppTheme.Spacing.x3)
                 .padding(.vertical, AppTheme.Spacing.x1)
@@ -203,7 +203,7 @@ struct AudioFileRow: View {
                     .truncationMode(.middle)
 
                 Text(message)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundColor(AppTheme.Status.error.opacity(0.80))
                     .lineLimit(2)
             }

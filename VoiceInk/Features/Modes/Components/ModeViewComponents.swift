@@ -8,7 +8,7 @@ struct VoiceInkButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.onAccent)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, AppTheme.Spacing.x3)
@@ -32,7 +32,7 @@ struct ModeEmptyStateView: View {
                 .foregroundColor(.secondary)
 
             Text("No Modes")
-                .font(.title2)
+                .font(AppTheme.font(.headline))
                 .fontWeight(.semibold)
 
             Text("Add customized modes for different contexts")
@@ -241,7 +241,7 @@ struct ConfigurationRow: View {
             onEditConfig(config)
         } label: {
             Text("Edit")
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, AppTheme.Spacing.x2)
                 .padding(.vertical, AppTheme.Spacing.half)
@@ -287,7 +287,7 @@ struct ConfigurationRow: View {
                                         Image(systemName: "app.fill")
                                             .font(AppTheme.font(.micro))
                                         Text(appText)
-                                            .font(.caption2)
+                                            .font(AppTheme.font(.micro))
                                     }
                                 }
 
@@ -296,7 +296,7 @@ struct ConfigurationRow: View {
                                         Image(systemName: "globe")
                                             .font(AppTheme.font(.micro))
                                         Text(websiteText)
-                                            .font(.caption2)
+                                            .font(AppTheme.font(.micro))
                                     }
                                 }
                             }
@@ -347,7 +347,7 @@ struct ConfigurationRow: View {
                     Image(systemName: "waveform")
                         .font(AppTheme.font(.micro))
                     Text(modelMetadata.label)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                 }
                 .foregroundStyle(modelMetadata.isWarning ? AppTheme.Status.error : AppTheme.Text.primary)
                 .padding(.horizontal, AppTheme.Spacing.x2)
@@ -372,7 +372,7 @@ struct ConfigurationRow: View {
                         Image(systemName: "globe")
                             .font(AppTheme.font(.micro))
                         Text(language)
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                     }
                     .padding(.horizontal, AppTheme.Spacing.x2)
                     .padding(.vertical, AppTheme.Spacing.half)
@@ -395,7 +395,7 @@ struct ConfigurationRow: View {
                         Image(systemName: "cpu")
                             .font(AppTheme.font(.micro))
                         Text(modelName.count > 20 ? String(modelName.prefix(18)) + "..." : modelName)
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                     }
                     .padding(.horizontal, AppTheme.Spacing.x2)
                     .padding(.vertical, AppTheme.Spacing.half)
@@ -414,7 +414,7 @@ struct ConfigurationRow: View {
                         Image(systemName: config.outputMode.iconName)
                             .font(AppTheme.font(.micro))
                         Text(config.outputMode.displayName)
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                     }
                     .padding(.horizontal, AppTheme.Spacing.x2)
                     .padding(.vertical, AppTheme.Spacing.half)
@@ -437,7 +437,7 @@ struct ConfigurationRow: View {
                                 ? VoiceInkRefineService.providerName
                                 : selectedPrompt?.title ?? "AI"
                         )
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                     }
                     .padding(.horizontal, AppTheme.Spacing.x2)
                     .padding(.vertical, AppTheme.Spacing.half)
@@ -542,7 +542,7 @@ struct AppGridItem: View {
                 Image(nsImage: app.icon)
                     .resizable()
                     .frame(width: 40, height: 40)
-                    .cornerRadius(8)
+                    .cornerRadius(AppTheme.Radius.control)
                     .shadow(color: Color(NSColor.shadowColor).opacity(0.1), radius: 2, x: 0, y: 1)
                 Text(app.name)
                     .font(AppTheme.font(.micro))

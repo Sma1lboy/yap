@@ -47,7 +47,7 @@ struct APIKeyManagementView: View {
                         .fill(AppTheme.Status.positive)
                         .frame(width: 8, height: 8)
                     Text("Connected")
-                        .font(.subheadline)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                 } else if aiService.selectedProvider == .ollama {
                     Spacer()
@@ -59,14 +59,14 @@ struct APIKeyManagementView: View {
                             .fill(AppTheme.Status.positive)
                             .frame(width: 8, height: 8)
                         Text("Connected")
-                            .font(.subheadline)
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(.secondary)
                     } else {
                         Circle()
                             .fill(AppTheme.Status.error)
                             .frame(width: 8, height: 8)
                         Text("Disconnected")
-                            .font(.subheadline)
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -190,7 +190,7 @@ struct APIKeyManagementView: View {
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                         HStack {
                             Text("Command")
-                                .font(.subheadline)
+                                .font(AppTheme.font(.caption))
                                 .foregroundColor(.secondary)
                             Spacer()
                             Menu("Load Template") {
@@ -241,17 +241,17 @@ struct APIKeyManagementView: View {
                     Text(
                         "Environment variables available: YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT. Custom commands can also read YAP_FULL_PROMPT from stdin."
                     )
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundColor(.secondary)
 
                     if !aiService.isAPIKeyValid {
                         Text("Load a template or enter a command to enable Local CLI enhancement.")
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(AppTheme.Status.warningStrong)
                     }
                 } else if aiService.selectedProvider == .custom {
                     Text("Manage custom enhancement models in the Custom tab.")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                 } else {
                     if aiService.isAPIKeyValid {
@@ -275,12 +275,12 @@ struct APIKeyManagementView: View {
                                         Image(systemName: "key.fill")
                                         Text("Get API Key")
                                     }
-                                    .font(.caption)
+                                    .font(AppTheme.font(.caption))
                                     .foregroundColor(AppTheme.Status.infoStrong)
                                     .padding(.vertical, AppTheme.Spacing.x1)
                                     .padding(.horizontal, AppTheme.Spacing.x2)
                                     .background(AppTheme.Status.infoStrong.opacity(0.10))
-                                    .cornerRadius(6)
+                                    .cornerRadius(AppTheme.Radius.small)
                                 }
                                 .buttonStyle(.plain)
                             }

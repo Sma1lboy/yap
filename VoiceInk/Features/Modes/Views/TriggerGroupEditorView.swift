@@ -104,7 +104,7 @@ struct TriggerGroupEditorView: View {
                             Image(nsImage: app.icon)
                                 .resizable()
                                 .frame(width: 22, height: 22)
-                                .cornerRadius(5)
+                                .cornerRadius(AppTheme.Radius.small)
                             Text(app.name)
                                 .font(AppTheme.font(.footnote, .medium))
                                 .foregroundStyle(.primary)

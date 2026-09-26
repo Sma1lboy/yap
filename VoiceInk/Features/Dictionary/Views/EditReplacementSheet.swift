@@ -45,7 +45,7 @@ struct EditReplacementSheet: View {
             Spacer()
 
             Text("Edit Word Replacement")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
 
             Spacer()
 
@@ -70,7 +70,7 @@ struct EditReplacementSheet: View {
 
     private var descriptionSection: some View {
         Text("Update the word or phrase that should be automatically replaced.")
-            .font(.subheadline)
+            .font(AppTheme.font(.caption))
             .foregroundColor(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal)
@@ -83,9 +83,9 @@ struct EditReplacementSheet: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 HStack {
                     Text("Original Text")
-                        .font(.headline)
+                        .font(AppTheme.font(.body, .semibold))
                     Text("Required")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                 }
                 TextField("Enter word or phrase to replace (use commas for multiple)", text: $originalWord)
@@ -98,17 +98,17 @@ struct EditReplacementSheet: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 HStack {
                     Text("Replacement Text")
-                        .font(.headline)
+                        .font(AppTheme.font(.body, .semibold))
                     Text("Required")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                 }
                 TextEditor(text: $replacementWord)
-                    .font(.body)
+                    .font(AppTheme.font(.body))
                     .frame(height: 100)
                     .padding(AppTheme.Spacing.x2)
                     .background(Color(.textBackgroundColor))
-                    .cornerRadius(6)
+                    .cornerRadius(AppTheme.Radius.small)
                     .overlay(
                         RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                             .stroke(AppTheme.Border.control, lineWidth: 1)

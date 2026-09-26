@@ -56,7 +56,7 @@ struct AutoLearnReviewPanel: View {
         HStack(spacing: AppTheme.Spacing.x3) {
             HStack(spacing: AppTheme.Spacing.x1) {
                 Text("Review Corrections")
-                    .font(.headline)
+                    .font(AppTheme.font(.body, .semibold))
                     .fontWeight(.semibold)
                     .foregroundStyle(AppTheme.Text.primary)
 

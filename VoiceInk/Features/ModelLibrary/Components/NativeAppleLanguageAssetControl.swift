@@ -70,12 +70,12 @@ struct NativeAppleLanguageAssetControl: View {
                 .frame(width: 28, height: 24)
         case .notSupported:
             Image(systemName: "exclamationmark.triangle")
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
                 .frame(width: 28, height: 24)
         case .assetManagementUnavailable:
             Image(systemName: "exclamationmark.triangle")
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
                 .frame(width: 28, height: 24)
         case .reservationLimitReached:

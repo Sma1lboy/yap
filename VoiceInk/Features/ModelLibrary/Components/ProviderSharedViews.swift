@@ -60,7 +60,7 @@ struct ProviderSectionHeader: View {
             Text(title)
                 .font(AppTheme.font(.headline, .semibold))
             Text(subtitle)
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -133,7 +133,7 @@ struct ProviderStatusBadge: View {
                 .frame(width: 6, height: 6)
 
             Text(title)
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .foregroundStyle(.secondary)
         }
     }
