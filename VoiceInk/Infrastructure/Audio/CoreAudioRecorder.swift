@@ -73,6 +73,10 @@ final class CoreAudioRecorder: @unchecked Sendable {
     // Conversion buffer, used only on audioProcessingQueue.
     private var conversionBuffer: UnsafeMutablePointer<Int16>?
     private var conversionBufferSize: UInt32 = 0
+    private let resampler = PCMResampler()
+    /// 16 kHz frames written to the current file, and whether any was non-zero; audioProcessingQueue only.
+    private var framesWritten: UInt64 = 0
+    private var wroteSignal = false
 
     // Audio metering. Store bit patterns so the render callback never locks.
     private let averagePowerBits = ManagedAtomic<UInt32>(Float32(-160.0).bitPattern)
@@ -190,6 +194,11 @@ final class CoreAudioRecorder: @unchecked Sendable {
             // The output file is per recording; the AUHAL setup above is reused.
             try createOutputFile(at: url)
             resetAudioProcessingState()
+            audioProcessingQueue.sync {
+                resampler.reset()
+                framesWritten = 0
+                wroteSignal = false
+            }
 
             try startAudioUnit()
         } catch {
@@ -227,12 +236,27 @@ final class CoreAudioRecorder: @unchecked Sendable {
         }
 
         drainAudioProcessingQueue()
+        let (frames, capturedSound) = audioProcessingQueue.sync {
+            flushResampler()
+            return (framesWritten, wroteSignal)
+        }
         logDroppedInputBufferCounters(context: "stop")
 
         closeOutputFile()
         recordingURL = nil
 
         resetMeters()
+
+        // Started but captured no frames, or only digital zero (a live mic always has a noise floor):
+        // whatever broke this AUHAL (stale format, a route change it never heard about) would break the
+        // next recording too, and before this only an app relaunch fixed it.
+        if wasRecording && !capturedSound {
+            logger.error(
+                "🎙️ Recording captured no sound (frames=\(frames, privacy: .public), all zero); discarding the prepared AUHAL"
+            )
+            teardownPreparedAudioUnit()
+            currentDeviceID = 0
+        }
     }
 
     /// Releases the prepared AUHAL and buffers. Use for app shutdown or hard recovery.
@@ -697,7 +721,36 @@ final class CoreAudioRecorder: @unchecked Sendable {
     }
 
     private func isPrepared(for deviceID: AudioDeviceID) -> Bool {
-        audioUnit != nil && isAudioUnitInitialized && currentDeviceID == deviceID && isDeviceAvailable(deviceID)
+        guard let audioUnit, isAudioUnitInitialized, currentDeviceID == deviceID, isDeviceAvailable(deviceID)
+        else { return false }
+
+        // Another app (a DAW, a Bluetooth route change) can change the device's sample rate without
+        // changing its ID. AUHAL needs the client rate to match the device rate, so a unit prepared at the
+        // old rate starts fine and then records nothing.
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyNominalSampleRate,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var nominalRate: Float64 = 0
+        var size = UInt32(MemoryLayout<Float64>.size)
+        var unitFormat = AudioStreamBasicDescription()
+        var formatSize = UInt32(MemoryLayout<AudioStreamBasicDescription>.size)
+        guard AudioObjectGetPropertyData(deviceID, &address, 0, nil, &size, &nominalRate) == noErr,
+            AudioUnitGetProperty(
+                audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 1, &unitFormat, &formatSize
+            ) == noErr
+        else { return false }
+
+        let current = nominalRate == deviceFormat.mSampleRate
+            && unitFormat.mSampleRate == deviceFormat.mSampleRate
+            && unitFormat.mChannelsPerFrame == deviceFormat.mChannelsPerFrame
+        if !current {
+            logger.notice(
+                "🎙️ Device \(deviceID, privacy: .public) format changed (\(self.deviceFormat.mSampleRate, privacy: .public) Hz → \(nominalRate, privacy: .public) Hz); rebuilding AUHAL"
+            )
+        }
+        return current
     }
 
     private func validateDevice(_ deviceID: AudioDeviceID) throws {
@@ -1030,51 +1083,45 @@ final class CoreAudioRecorder: @unchecked Sendable {
                 let clipped = max(-32768.0, min(32767.0, scaled))
                 outputBuffer[i] = Int16(clipped)
             }
-        } else {
-            // Sample rate conversion needed - use linear interpolation
-            for i in 0..<Int(outputFrameCount) {
-                let inputIndex = Double(i) / ratio
-                let inputIndexInt = Int(inputIndex)
-                let frac = Float32(inputIndex - Double(inputIndexInt))
-
-                var sample: Float32 = 0
-                let idx1 = min(inputIndexInt, Int(frameCount) - 1)
-                let idx2 = min(inputIndexInt + 1, Int(frameCount) - 1)
-
-                // Mix channels and interpolate
-                for ch in 0..<Int(inputChannels) {
-                    let s1 = inputSamples[idx1 * Int(inputChannels) + ch]
-                    let s2 = inputSamples[idx2 * Int(inputChannels) + ch]
-                    sample += s1 + frac * (s2 - s1)
-                }
-                sample /= Float32(inputChannels)
-
-                // Convert to Int16
-                let scaled = sample * 32767.0
-                let clipped = max(-32768.0, min(32767.0, scaled))
-                outputBuffer[i] = Int16(clipped)
-            }
+            writeOutput(outputBuffer, frameCount: outputFrameCount, to: file)
+        } else if let converted = resampler.process(
+            inputSamples, frameCount: frameCount, channels: inputChannels, sampleRate: inputSampleRate),
+            let data = converted.int16ChannelData?[0]
+        {
+            writeOutput(data, frameCount: converted.frameLength, to: file)
         }
+    }
 
-        // Write to file
+    /// Writes the resampler's held-back tail; runs on the processing queue before the file closes.
+    private func flushResampler() {
+        guard let file = audioFile, let tail = resampler.flush(), let data = tail.int16ChannelData?[0] else { return }
+        writeOutput(data, frameCount: tail.frameLength, to: file)
+    }
+
+    private func writeOutput(_ samples: UnsafeMutablePointer<Int16>, frameCount: UInt32, to file: ExtAudioFileRef) {
         var outputBufferList = AudioBufferList(
             mNumberBuffers: 1,
             mBuffers: AudioBuffer(
                 mNumberChannels: 1,
-                mDataByteSize: outputFrameCount * 2,
-                mData: outputBuffer
+                mDataByteSize: frameCount * 2,
+                mData: samples
             )
         )
 
-        let writeStatus = ExtAudioFileWrite(file, outputFrameCount, &outputBufferList)
+        let writeStatus = ExtAudioFileWrite(file, frameCount, &outputBufferList)
         if writeStatus != noErr {
             logger.error("🎙️ ExtAudioFileWrite failed with status: \(writeStatus, privacy: .public)")
+        } else {
+            framesWritten += UInt64(frameCount)
+            if !wroteSignal {
+                wroteSignal = UnsafeBufferPointer(start: samples, count: Int(frameCount)).contains { $0 != 0 }
+            }
         }
 
         // Send the same PCM data to the streaming callback if set.
         if let audioChunk = onAudioChunk {
-            let byteCount = Int(outputFrameCount) * MemoryLayout<Int16>.size
-            let data = Data(bytes: outputBuffer, count: byteCount)
+            let byteCount = Int(frameCount) * MemoryLayout<Int16>.size
+            let data = Data(bytes: samples, count: byteCount)
             audioChunk(data)
         }
     }

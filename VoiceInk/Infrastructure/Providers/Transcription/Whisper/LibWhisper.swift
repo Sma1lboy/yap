@@ -29,7 +29,65 @@ actor WhisperContext {
         }
     }
 
+    private var transcription = ""
+
     func fullTranscribe(samples: [Float]) -> Bool {
+        guard let context = context else { return false }
+        transcription = ""
+        whisper_reset_timings(context)
+
+        let isVADEnabled = UserDefaults.standard.bool(forKey: "IsVADEnabled")
+        guard samples.count > WhisperChunking.maxWindow, let speech = detectSpeech(samples) else {
+            return decode(samples[...], vad: isVADEnabled && vadModelPath != nil)
+        }
+
+        let windows = WhisperChunking.windows(speech: speech, total: samples.count, keepSilence: !isVADEnabled)
+        logger.notice(
+            "Decoding \(samples.count / WhisperChunking.sampleRate, privacy: .public)s in \(windows.count, privacy: .public) windows, VAD \(isVADEnabled, privacy: .public)"
+        )
+        for window in windows {
+            guard decode(samples[window], vad: false) else { return false }
+        }
+        return true
+    }
+
+    /// Speech ranges in samples, cut so no run exceeds one window. Nil when the VAD model is unavailable.
+    private func detectSpeech(_ samples: [Float]) -> [Range<Int>]? {
+        guard let vadModelPath,
+            let vctx = whisper_vad_init_from_file_with_params(vadModelPath, whisper_vad_default_context_params())
+        else { return nil }
+        defer { whisper_vad_free(vctx) }
+
+        var params = vadParams()
+        params.max_speech_duration_s = Float(WhisperChunking.maxWindow / WhisperChunking.sampleRate)
+        guard
+            let segments = samples.withUnsafeBufferPointer({
+                whisper_vad_segments_from_samples(vctx, params, $0.baseAddress, Int32($0.count))
+            })
+        else { return nil }
+        defer { whisper_vad_free_segments(segments) }
+
+        // Segment times are centiseconds.
+        let perCs = WhisperChunking.sampleRate / 100
+        return (0..<whisper_vad_segments_n_segments(segments)).map { i in
+            let t0 = Int(whisper_vad_segments_get_segment_t0(segments, i)) * perCs
+            let t1 = Int(whisper_vad_segments_get_segment_t1(segments, i)) * perCs
+            return min(t0, samples.count)..<min(max(t0, t1), samples.count)
+        }
+    }
+
+    private func vadParams() -> whisper_vad_params {
+        var vadParams = whisper_vad_default_params()
+        vadParams.threshold = 0.50
+        vadParams.min_speech_duration_ms = 250
+        vadParams.min_silence_duration_ms = 100
+        vadParams.max_speech_duration_s = Float.greatestFiniteMagnitude
+        vadParams.speech_pad_ms = 30
+        vadParams.samples_overlap = 0.1
+        return vadParams
+    }
+
+    private func decode(_ samples: ArraySlice<Float>, vad: Bool) -> Bool {
         guard let context = context else { return false }
 
         let maxThreads = max(1, min(8, cpuCount() - 2))
@@ -67,22 +125,10 @@ actor WhisperContext {
         params.single_segment = false
         params.temperature = 0.2
 
-        whisper_reset_timings(context)
-
-        // Configure VAD if enabled by user and model is available
-        let isVADEnabled = UserDefaults.standard.bool(forKey: "IsVADEnabled")
-        if isVADEnabled, let vadModelPath = self.vadModelPath {
+        if vad, let vadModelPath = self.vadModelPath {
             params.vad = true
             params.vad_model_path = (vadModelPath as NSString).utf8String
-
-            var vadParams = whisper_vad_default_params()
-            vadParams.threshold = 0.50
-            vadParams.min_speech_duration_ms = 250
-            vadParams.min_silence_duration_ms = 100
-            vadParams.max_speech_duration_s = Float.greatestFiniteMagnitude
-            vadParams.speech_pad_ms = 30
-            vadParams.samples_overlap = 0.1
-            params.vad_params = vadParams
+            params.vad_params = vadParams()
         } else {
             params.vad = false
         }
@@ -98,16 +144,16 @@ actor WhisperContext {
         languageCString = nil
         promptCString = nil
 
+        if success {
+            for i in 0..<whisper_full_n_segments(context) {
+                transcription += String(cString: whisper_full_get_segment_text(context, i))
+            }
+        }
         return success
     }
 
     func getTranscription() -> String {
-        guard let context = context else { return "" }
-        var transcription = ""
-        for i in 0..<whisper_full_n_segments(context) {
-            transcription += String(cString: whisper_full_get_segment_text(context, i))
-        }
-        return transcription
+        transcription
     }
 
     static func createContext(path: String) async throws -> WhisperContext {

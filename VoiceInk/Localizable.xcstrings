@@ -22185,6 +22185,28 @@
         }
       }
     },
+    "Recording was too short to transcribe. Try speaking a little longer." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Aufnahme war zu kurz zum Transkribieren. Sprich etwas länger."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’enregistrement est trop court pour être transcrit. Parlez un peu plus longtemps."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录音太短，没法转写。多说一会儿再试。"
+          }
+        }
+      }
+    },
     "Refresh" : {
       "localizations" : {
         "de" : {
@@ -27954,6 +27976,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "密钥有效，但 Yap 无法安全地存储它。"
+          }
+        }
+      }
+    },
+    "The microphone didn't pick up any sound. Try again, or choose another microphone in Audio Settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Mikrofon hat keinen Ton aufgenommen. Versuche es erneut oder wähle in den Audioeinstellungen ein anderes Mikrofon."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le micro n’a capté aucun son. Réessayez ou choisissez un autre micro dans les réglages audio."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "麦克风没有录到声音。再试一次，或者在音频设置里换一个麦克风。"
           }
         }
       }

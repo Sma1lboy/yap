@@ -104,6 +104,10 @@ class TranscriptionPipeline {
         }
 
         do {
+            if let issue = RecordedAudioIssue.check(audioURL) {
+                session?.cancel()
+                throw issue
+            }
             let transcriptionStart = Date()
             var text: String
             if let session {
@@ -247,7 +251,16 @@ class TranscriptionPipeline {
 
             let isHiddenNativeAppleError =
                 (error as? NativeAppleTranscriptionService.ServiceError).map { !$0.shouldShowNotification } ?? false
-            if !didNotifyAccount && !(error is CancellationError) && !isHiddenNativeAppleError {
+            if let issue = error as? RecordedAudioIssue {
+                // Nothing to retry: say what happened instead of showing a provider error.
+                NotificationManager.shared.showNotification(
+                    title: errorDescription,
+                    type: .warning,
+                    duration: 5,
+                    actionButton: issue == .noSound
+                        ? (String(localized: "Audio Settings"), AudioSetupNavigator.openAudioSettings) : nil
+                )
+            } else if !didNotifyAccount && !(error is CancellationError) && !isHiddenNativeAppleError {
                 transcriptionFailure = errorDescription
             }
 
