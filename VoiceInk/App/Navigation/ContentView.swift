@@ -79,9 +79,13 @@ struct ContentView: View {
     }
 
     @ViewBuilder
+    /// Runs up into the transparent title bar: no empty bar across the top. The pages' own top padding keeps
+    /// their headers clear of it, and the strip above the header drags the window.
     private var detailContent: some View {
         detailView(for: navigation.selectedView)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea(.container, edges: .top)
+            .windowDragArea(height: AppTheme.Spacing.x4)
             .background(detailBackground)
     }
 

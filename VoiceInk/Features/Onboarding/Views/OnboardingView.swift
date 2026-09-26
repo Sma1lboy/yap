@@ -224,6 +224,8 @@ struct OnboardingView: View {
 
         }
         .frame(minWidth: 820, minHeight: 680)
+        // Same window as the app: no title bar, the strip under the traffic lights drags it.
+        .windowDragArea(height: AppWindowLayout.titlebarHeight)
         .animation(.easeInOut(duration: 0.22), value: coordinator.stage)
         .onAppear {
             coordinator.flow.ensureDefaultOnboardingTranscriptionProvider()

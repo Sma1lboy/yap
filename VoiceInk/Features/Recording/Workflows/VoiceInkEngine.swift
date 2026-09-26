@@ -542,7 +542,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
     }
 
     /// A mode billed through Yap Cloud can't work signed out or with a known empty balance; catching that here
-    /// saves recording a whole dictation only to get a 401/402 afterwards.
+    /// saves recording a whole dictation only to get a 401/402 afterwards. When it can work, the connection to
+    /// paygate is opened now, while the user speaks.
     @MainActor
     private func yapCloudFailure(
         mode: ModeConfig,
@@ -562,6 +563,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
         if let error, let label = error.recoveryAction {
             return (error.errorDescription ?? "", label, YapCloud.showAddFunds)
         }
+        cloud.prewarm()
         return nil
     }
 
