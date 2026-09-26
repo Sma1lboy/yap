@@ -33,15 +33,18 @@ struct OnboardingTrustScreen: View {
 
 private struct OnboardingTrustContent: View {
     var body: some View {
-        ZStack {
-            TrustHeader()
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .padding(.top, 52)
-
-            TrustBody()
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                .offset(y: 24)
+        // Stacked, not overlaid: at the 750pt minimum height the centered body used to run into the header.
+        // Scrolls when the window is short; the bottom padding clears the overlaid Back / Start bar.
+        ScrollView {
+            VStack(spacing: 28) {
+                TrustHeader()
+                TrustBody()
+            }
+            .padding(.top, 44)
+            .padding(.bottom, 100)
+            .frame(maxWidth: .infinity)
         }
+        .scrollIndicators(.automatic)
         .padding(.horizontal, 28)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -72,14 +75,17 @@ private struct TrustHeader: View {
 private struct TrustBody: View {
     @Query(TrySayingCard.anyTranscription) private var existingTranscriptions: [Transcription]
 
-    /// Only for someone who hasn't dictated yet (e.g. after "Set It Up Later"); the map shrinks to make room.
+    /// Only for someone who hasn't dictated yet (e.g. after "Set It Up Later"). The card takes the decorative
+    /// map's place: squeezed smaller, the map draws past its frame into the headline and text.
     private var showsTrySaying: Bool { existingTranscriptions.isEmpty }
 
     var body: some View {
         VStack(spacing: 0) {
-            TrustMapView()
-                .frame(height: showsTrySaying ? 190 : 270)
-                .padding(.bottom, showsTrySaying ? 20 : 28)
+            if !showsTrySaying {
+                TrustMapView()
+                    .frame(height: 230)
+                    .padding(.bottom, 24)
+            }
 
             VStack(spacing: 10) {
                 Text("Yap collects no analytics.")
