@@ -30,7 +30,15 @@ struct ModelManagementView: View {
     @ObservedObject private var warmupCoordinator = WhisperModelWarmupCoordinator.shared
     private let voiceInkRefineService = VoiceInkRefineService.shared
 
-    @State private var selectedFilter: ModelFilter = .local
+    @State private var selectedFilter: ModelFilter = ModelManagementView.takeInitialFilter()
+
+    /// Set by the Yap Cloud page's back button so Models opens on Cloud, where Yap Cloud is listed.
+    @MainActor static var initialFilter: ModelFilter?
+
+    @MainActor private static func takeInitialFilter() -> ModelFilter {
+        defer { initialFilter = nil }
+        return initialFilter ?? .local
+    }
     @State private var activePanel: ModelManagementPanel?
 
     @State private var isShowingDeleteAlert = false

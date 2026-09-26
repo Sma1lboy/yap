@@ -19,3 +19,21 @@ Yap 网页和邮件的设计稿，都是可以直接用的静态 HTML/CSS。颜�
 - **占位符**用 `{{名字}}` 标出，每个文件开头的注释写了有哪些、从哪来。插进去的值照旧要 `escape()`。
 - **邮件**：现在 `mail.ts` 只发 `text`。改成同时发 `html` 和 `text`，现有的纯文本内容留作 text 部分。邮件里的十六进制颜色只能取 `docs/DESIGN.md` 浅色那一列，`make design-check` 会检查。
 - **改 token**：改 `docs/DESIGN.md`，跑 `make design-tokens`，再把新的 `tokens.css` 拷过去。不要在 paygate 里改颜色值。
+
+## Stripe 付款页的品牌设置
+
+Stripe 付款页（Checkout）上我们能改的只有下面几项，页面结构由 Stripe 决定。名称按 [Stripe 文档](https://docs.stripe.com/payments/checkout/customization/appearance?payment-ui=stripe-hosted)：Dashboard 里是 Settings › Branding › Checkout，API 里是创建 Checkout Session 时的 `branding_settings`。
+
+| 设置 | Dashboard / `branding_settings` | 值 | 理由 |
+|---|---|---|---|
+| 图标 | Icon / `icon` | `design/web/stripe-icon.png`（512×512 PNG） | `design/logo.svg` 去掉圆角和阴影后铺满正方形：Stripe 会自己加圆角或裁成圆形，自带圆角的图再被裁一次，四角会露出底色。只传 icon 时，Stripe 也把它当 favicon。 |
+| 按钮颜色 | Button color / `button_color` | `#FFD84D` | `color.accent` 的浅色值（鸭子头）。付款按钮是这一页唯一的主按钮，和 app、官网里黄色主按钮的用法一致。 |
+| 背景色 | Background color / `background_color` | `#26262B` | `color.surface` 的深色值，和图标底座同一色系：深石墨底配黄色按钮和鸭子图标，就是 app 图标本身的配色。 |
+| 名称 | Business name / `display_name` | `Yap Cloud` | 和 paygate 页面、邮件里的品牌名一致。 |
+| 字体 | `font_family` | 不设（默认） | 可选字体里没有 SF，而且大多数不支持 `zh`，中文会退回系统字体；不设最接近 app。 |
+| 形状 | `border_style` | `rounded` | 最接近 DESIGN.md 的 6px 输入框、10px 按钮圆角；不选 `pill` 和 `rectangular`。 |
+| Logo | Logo / `logo` | 不设 | 没有横版 logo；不设时 Stripe 显示 Icon 加名称。 |
+
+两种设法都可以：在 Dashboard 设一次（所有 Session 默认用它），或者 paygate 创建 Session 时传 `branding_settings`（没传的字段仍用 Dashboard 的值）。图标先上传成 Stripe File，再以 `icon[type]=file`、`icon[file]=<file id>` 传入。
+
+设好后请在测试模式下打开一次付款页，确认两件事：付款按钮上的字是深色（Stripe 按按钮颜色自动选字色，黄底应该配深色字）；深色背景上的文字清楚。

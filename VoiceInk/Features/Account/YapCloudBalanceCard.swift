@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Home card for Yap Cloud users: the balance, and a prominent "add funds" entry when it drops below $1.
+/// Home prompt when the Yap Cloud balance runs low, with Add Funds. Otherwise nothing: the balance lives on the
+/// Yap Cloud page (Models > Cloud), not on Home.
 struct YapCloudBalanceCard: View {
     @ObservedObject private var cloud = YapCloud.shared
 
@@ -12,15 +13,15 @@ struct YapCloudBalanceCard: View {
 
     @ViewBuilder
     private var card: some View {
-        if cloud.isSignedIn, let balance = cloud.balanceMicros {
+        if cloud.isSignedIn, cloud.isLowBalance, let balance = cloud.balanceMicros {
             HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
-                Image(systemName: cloud.isLowBalance ? "exclamationmark.triangle.fill" : "creditcard")
+                Image(systemName: "exclamationmark.triangle.fill")
                     .font(AppTheme.font(.headline, .medium))
-                    .foregroundStyle(cloud.isLowBalance ? AppTheme.Status.warningStrong : AppTheme.Text.secondary)
+                    .foregroundStyle(AppTheme.Status.warningStrong)
                     .frame(width: 34, height: 34)
 
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
-                    Text(cloud.isLowBalance ? "Low Yap Cloud balance" : "Yap Cloud balance")
+                    Text("Low Yap Cloud balance")
                         .font(AppTheme.font(.body, .semibold))
                         .foregroundStyle(.primary)
                     Text(verbatim: YapCloud.formatUSD(micros: balance))
@@ -29,14 +30,9 @@ struct YapCloudBalanceCard: View {
                         .foregroundStyle(balance > 0 ? AppTheme.Text.secondary : AppTheme.Status.error)
                 }
 
-                Spacer(minLength: 12)
+                Spacer(minLength: AppTheme.Spacing.x3)
 
-                if cloud.isLowBalance {
-                    AppActionButton("Add Funds", kind: .primary, action: YapCloud.showAddFunds)
-                } else {
-                    Button("Account", action: YapCloud.showAddFunds)
-                        .controlSize(.small)
-                }
+                AppActionButton("Add Funds", kind: .primary, action: YapCloud.showAddFunds)
             }
             .padding(AppTheme.Spacing.x4)
             .frame(maxWidth: .infinity, alignment: .leading)

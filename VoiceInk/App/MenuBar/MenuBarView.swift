@@ -53,19 +53,14 @@ struct MenuBarView: View {
 
             Divider()
 
-            if yapCloud.isSignedIn, let balance = yapCloud.balanceMicros {
-                if yapCloud.isLowBalance {
-                    Button {
-                        showMainWindowAndNavigate(to: "Account")
-                    } label: {
-                        Label(
-                            String(format: String(localized: "Low balance (%@) — Add Funds"), YapCloud.formatUSD(micros: balance)),
-                            systemImage: "exclamationmark.triangle.fill")
-                    }
-                } else {
-                    Button(String(format: String(localized: "Yap Cloud balance: %@"), YapCloud.formatUSD(micros: balance))) {
-                        showMainWindowAndNavigate(to: "Account")
-                    }
+            // The balance shows only when it needs acting on; otherwise it lives on the Yap Cloud page.
+            if yapCloud.isSignedIn, yapCloud.isLowBalance, let balance = yapCloud.balanceMicros {
+                Button {
+                    showMainWindowAndNavigate(to: "Account")
+                } label: {
+                    Label(
+                        String(format: String(localized: "Low balance (%@) — Add Funds"), YapCloud.formatUSD(micros: balance)),
+                        systemImage: "exclamationmark.triangle.fill")
                 }
 
                 Divider()
