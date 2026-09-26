@@ -49,6 +49,7 @@ struct VoiceInkApp: App {
         ReleaseNotesPresenter.shared.showsOnNextMainWindow = ReleaseNotes.recordLaunch()
         #if DEBUG
             ReleaseNotes.selfCheck()
+            WhisperChunking.selfCheck()
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
