@@ -119,6 +119,9 @@ final class YapCloud: ObservableObject {
     /// `GET /v1/info` (public), cached for the next launch. Keeps the last answer on failure.
     @MainActor
     func refreshInfo() async {
+        #if DEBUG
+            if Self.isSnapshotMode { return }
+        #endif
         do {
             let data = try await send("GET", "/v1/info", authenticated: false)
             info = try Self.decode(YapCloudInfo.self, from: data)
@@ -349,6 +352,9 @@ final class YapCloud: ObservableObject {
     /// Reloads balance and the last 20 ledger rows for the Account page. Signs out on a revoked token.
     @MainActor
     func refreshAccount() async {
+        #if DEBUG
+            if Self.isSnapshotMode { return }
+        #endif
         guard token != nil, !isRefreshingAccount else { return }
         isRefreshingAccount = true
         defer { isRefreshingAccount = false }
@@ -379,6 +385,9 @@ final class YapCloud: ObservableObject {
     /// Fetches `/v1/models`, persists it and tells model pickers to reload. Keeps the old catalog on failure.
     @MainActor
     func refreshModels() async {
+        #if DEBUG
+            if Self.isSnapshotMode { return }
+        #endif
         do {
             let fresh = try await fetchModels()
             catalogLock.withLock { catalog = fresh }
@@ -642,6 +651,9 @@ final class YapCloud: ObservableObject {
     /// Loads the device list for Account.
     @MainActor
     func refreshDevices() async {
+        #if DEBUG
+            if Self.isSnapshotMode { return }
+        #endif
         guard token != nil else { return }
         do {
             devices = try await fetchDevices()
@@ -1557,3 +1569,67 @@ struct YapCloudConfigDocument: Equatable {
         }
     }
 #endif
+
+#if DEBUG
+    // MARK: - UI snapshots (make ui-snapshots)
+
+    extension YapCloud {
+        /// Set by the snapshot renderer: every refresh above returns immediately, so nothing touches the network.
+        nonisolated(unsafe) static var isSnapshotMode = false
+
+        enum SnapshotState: String, CaseIterable {
+            case signedOut, funded, empty, unreachable
+        }
+
+        /// Fake account state for `make ui-snapshots`; in-memory only, nothing is written to the keychain or defaults.
+        @MainActor
+        func applySnapshotState(_ state: SnapshotState) {
+            func decode<T: Decodable>(_ type: T.Type, _ json: String) -> T {
+                try! JSONDecoder().decode(type, from: Data(json.utf8))
+            }
+            info = decode(YapCloudInfo.self, #"""
+                {"productName":"Yap Cloud","markup":0.1,"minTopupUsd":5,"maxTopupUsd":"500","signupCreditUsd":"1.00",
+                 "maxConcurrentCalls":4,"supportEmail":null,
+                 "legal":{"privacyUrl":"https://example.com/privacy","termsUrl":"https://example.com/terms","draft":true}}
+                """#)
+            let models = decode(YapCloudCatalog.self, #"""
+                {"markup":0.1,"models":[
+                 {"id":"microsoft/mai-transcribe-2","name":"MAI-Transcribe-2","architecture":{"input_modalities":["audio"],"output_modalities":["transcription"]},"pricing":{"audio":"0.0000275"}},
+                 {"id":"deepseek/deepseek-v4.1-flash","name":"DeepSeek V4.1 Flash","architecture":{"input_modalities":["text"],"output_modalities":["text"]},"pricing":{"prompt":0.00000011,"completion":"0.00000044"}}]}
+                """#)
+            catalogLock.withLock { catalog = models }
+            isSignedIn = state != .signedOut
+            isUnreachable = state == .unreachable
+            guard state != .signedOut else {
+                me = nil
+                ledger = nil
+                monthlySpend = nil
+                devices = nil
+                return
+            }
+            let balance = state == .empty ? 0 : 4_210_000
+            me = decode(YapCloudMe.self, #"{"id":"u","email":"jamie@example.com","balanceMicros":\#(balance),"monthlyCapMicros":20000000,"monthSpentMicros":1790000}"#)
+            guard state != .unreachable else {
+                // A refresh failed while offline: cached balance, nothing else loaded.
+                ledger = nil
+                devices = nil
+                return
+            }
+            ledger = decode([YapCloudLedgerEntry].self, #"""
+                [{"id":"1","kind":"usage","amountMicros":-2100,"model":"deepseek/deepseek-v4.1-flash","createdAt":"2026-09-25T10:02:00.000Z"},
+                 {"id":"2","kind":"usage","amountMicros":-41000,"model":"microsoft/mai-transcribe-2","createdAt":"2026-09-25T10:01:00.000Z"},
+                 {"id":"3","kind":"topup","amountMicros":5000000,"createdAt":"2026-09-20T08:00:00.000Z","receiptUrl":"https://example.com/r"},
+                 {"id":"4","kind":"credit","amountMicros":1000000,"createdAt":"2026-09-19T08:00:00.000Z"}]
+                """#)
+            monthlySpend = decode(YapCloudMonthlySpend.self, #"""
+                {"since":"2026-09-01T00:00:00.000Z","totalMicros":1790000,"creditMicros":1000000,"paidMicros":790000,"byModel":[
+                 {"model":"microsoft/mai-transcribe-2","micros":1530000,"calls":212},{"model":"deepseek/deepseek-v4.1-flash","micros":260000,"calls":198}]}
+                """#)
+            devices = decode([YapCloudDevice].self, #"""
+                [{"id":"1","deviceName":"Jamie's MacBook Pro","createdAt":"2026-09-19T08:00:00.000Z","lastUsedAt":"2026-09-25T10:02:00.000Z","current":true},
+                 {"id":"2","deviceName":"Studio Mac mini","createdAt":"2026-09-21T08:00:00.000Z","lastUsedAt":"2026-09-24T18:30:00.000Z","current":false}]
+                """#)
+        }
+    }
+#endif
+
