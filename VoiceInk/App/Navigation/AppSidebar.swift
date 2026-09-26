@@ -46,7 +46,7 @@ struct AppSidebar: View {
             ForEach(items) { viewType in
                 SidebarItemButton(
                     viewType: viewType,
-                    isSelected: selectedView == viewType
+                    isSelected: selectedView.sidebarOwner == viewType
                 ) {
                     selectedView = viewType
                 }
@@ -77,16 +77,22 @@ private extension ViewType {
     ]
 
     static let secondaryItems: [ViewType] = [
-        .account,
         .settings,
     ]
 
     /// Not in the sidebar: Transcribe Audio opens from the Home list toolbar and Finder "Open With";
-    /// History is part of Home (navigating to it lands on Home).
+    /// History is part of Home (navigating to it lands on Home). Account is the Yap Cloud provider page, opened
+    /// from Models > Cloud like every other provider, and from balance prompts.
     static let hiddenItems: [ViewType] = [
         .transcribeAudio,
         .history,
+        .account,
     ]
+
+    /// The sidebar entry a hidden page belongs to, highlighted while it's open.
+    var sidebarOwner: ViewType {
+        self == .account ? .models : self
+    }
 
     static func assertSidebarItemsCoverAllCases() {
         #if DEBUG
