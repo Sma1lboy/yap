@@ -8,6 +8,9 @@ class PlaybackController: ObservableObject {
     static let shared = PlaybackController()
     private var mediaController: MediaRemoteAdapter.MediaController
     private var wasPlayingWhenRecordingStarted = false
+    /// Set only once the pause command was actually sent; a recording canceled within the 50 ms before it
+    /// paused nothing, and resuming then would toggle playing media off.
+    private var didPauseMedia = false
     private var isMediaPlaying = false
     private var lastKnownTrackInfo: TrackInfo?
     private var originalMediaAppBundleId: String?
@@ -61,6 +64,7 @@ class PlaybackController: ObservableObject {
         resumeTask = nil
 
         wasPlayingWhenRecordingStarted = false
+        didPauseMedia = false
         originalMediaAppBundleId = nil
 
         guard isPauseMediaEnabled,
@@ -78,16 +82,27 @@ class PlaybackController: ObservableObject {
         guard !Task.isCancelled else { return }
 
         mediaController.pause()
+        didPauseMedia = true
     }
 
     func resumeMedia() async {
-        let shouldResume = wasPlayingWhenRecordingStarted
+        let shouldResume = wasPlayingWhenRecordingStarted && didPauseMedia
         let originalBundleId = originalMediaAppBundleId
         let delay = MediaController.shared.audioResumptionDelay
 
         defer {
             wasPlayingWhenRecordingStarted = false
+            didPauseMedia = false
             originalMediaAppBundleId = nil
+        }
+
+        // A recording canceled right after it started (fn + F-key, upstream #974) reaches here before
+        // MediaRemote has reported our own pause, so the track still reads as playing and resume was
+        // skipped about half the time. Give the report up to 0.5 s to arrive.
+        if shouldResume {
+            for _ in 0..<10 where lastKnownTrackInfo?.payload.isPlaying == true {
+                try? await Task.sleep(nanoseconds: 50_000_000)
+            }
         }
 
         guard isPauseMediaEnabled,
