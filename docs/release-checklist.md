@@ -19,16 +19,17 @@ Run before pushing a `vX.Y.Z` tag. One line per check; note failures in the rele
 - [ ] Update path: install the previous release, update in-app through Sparkle, settings and permissions survive.
 - [ ] Release notes: `docs/releases/X.Y.Z.md` is final and matches what ships.
 
-### Window chrome (1.2.0: traffic lights in the sidebar, no title bar)
+### Window chrome (1.2.0: traffic lights and brand header in the sidebar, no title bar)
 
 Run `make mock` (fake data, offline, its own settings; everything is removed when it quits). `make ui-snapshots` renders the layout but can't check what follows, which needs a real window and a mouse.
 
-- [ ] Traffic lights: with the window in front, close/minimize/zoom sit at the sidebar's top-left, in color, not overlapping "Home"; hover shows their ×/−/+ glyphs; each works.
-- [ ] No title bar strip: the page (Home's brand header, Modes, Models, the Yap Cloud page) starts right at the window's top edge; there's no empty band above it on the right.
-- [ ] Drag from the sidebar: drag the empty space next to the traffic lights (above "Home"): the window moves; clicking there selects nothing.
+- [ ] Traffic lights: with the window in front, close/minimize/zoom sit at the sidebar's top-left, in color, above the brand header (icon, Yap, version) without touching it; hover shows their ×/−/+ glyphs; each works.
+- [ ] Brand header: on every sidebar page the icon, "Yap" and the version (Settings › About › Version shows the same number) sit under the traffic lights, left-aligned with the menu icons; Home starts with the model line, no second brand header.
+- [ ] No title bar strip: the page (Home's model line, Modes, Models, the Yap Cloud page) starts right at the window's top edge; there's no empty band above it on the right.
+- [ ] Drag from the sidebar: drag the empty space next to the traffic lights, and the brand header itself: the window moves; clicking there selects nothing.
 - [ ] Drag from the page: drag the top ~16pt of Home, Modes, Models and the Yap Cloud page: the window moves; the header's buttons (Models' gear, Modes' +) still click and don't drag.
 - [ ] Double-click the top of the sidebar and of a page: the window zooms (System Settings › Desktop & Dock › "Double-click a window's title bar to": set it to Minimize, repeat, the window minimizes; set it to Do Nothing, nothing happens).
-- [ ] Full screen (green button or ⌃⌘F): the traffic lights hide and "Home" moves up to the top (no 28pt gap); moving the pointer to the top edge shows the menu bar without covering the first sidebar item; leaving full screen restores the gap under the traffic lights.
-- [ ] Narrowest window: drag the window to its minimum width (900pt): sidebar items and traffic lights don't overlap, the page header isn't clipped.
+- [ ] Full screen (green button or ⌃⌘F): the traffic lights hide and the brand header moves up (no 28pt gap), still shown; moving the pointer to the top edge shows the menu bar without covering it; leaving full screen restores the gap under the traffic lights.
+- [ ] Narrowest window: drag the window to its minimum width (900pt): traffic lights, brand header (version on one line) and sidebar items don't overlap, the page header isn't clipped.
 - [ ] Onboarding window: Settings › Reset Onboarding (or a fresh `make mock` with onboarding not completed): traffic lights sit top-left over the onboarding background with no title bar strip, and dragging the top 28pt moves the window.
 

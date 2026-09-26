@@ -16,7 +16,7 @@ Yap is a fork of [VoiceInk](https://github.com/Beingpax/VoiceInk) by Prakash Jos
 
 Pick one during setup and change it any time, per mode if you like:
 
-- **Local model**: NVIDIA's Parakeet, Whisper and others run on your Mac, fully offline. Cleanup can run locally too (Yap Refine, Ollama). Models → Local.
+- **Local model**: Whisper runs on your Mac, fully offline. For mixed Chinese–English speech that's Whisper Large v3 Turbo (Quantized), about 550 MB, and it's what onboarding's Local option downloads; NVIDIA's Parakeet models are an English-only alternative. Cleanup can run locally too (Yap Refine, Ollama). Models → Local; measurements in [docs/local-models.md](docs/local-models.md).
 - **Your own key**: OpenRouter or any other provider you already use; requests go straight to it, and the key stays in this Mac's keychain. The default OpenRouter setup is tuned for mixed Chinese–English speech (see `setup/`). Models → Cloud.
 - **Yap Cloud**: if you'd rather not get a key, sign in with your email and pay as you go. See [Yap Cloud](#yap-cloud).
 
