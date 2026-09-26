@@ -12,7 +12,7 @@ final class YapCloud: ObservableObject {
 
     static let providerName = "Yap Cloud"
     static let baseURLDefaultsKey = "yapCloudBaseURL"
-    static let defaultBaseURL = "https://paygate-production-2502.up.railway.app"
+    static let defaultBaseURL = "https://cloud.yap.sma1lboy.me"
     /// Served by paygate; also linked from site/index.html. Change the host here when paygate moves.
     /// Top-up buttons; only those inside /v1/info's [minTopupUsd, maxTopupUsd] are offered.
     static let checkoutPresets = [5, 10, 20]
