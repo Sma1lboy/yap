@@ -14,8 +14,14 @@ import subprocess
 import sys
 import tempfile
 
-SRC = "/tmp/yap-ui/snapshots"
-OUT = "/tmp/yap-ui"
+# --src DIR and --out NAME (default: the app snapshots → /tmp/yap-ui/review*.html).
+def _arg(flag, default):
+    return sys.argv[sys.argv.index(flag) + 1] if flag in sys.argv else default
+
+
+SRC = _arg("--src", "/tmp/yap-ui/snapshots")
+OUT_NAME = _arg("--out", "/tmp/yap-ui/review")
+OUT = os.path.dirname(OUT_NAME)
 LIMIT = 3_800_000
 WIDTH = 820  # px; the snapshots are 2x, so this is a bit under the window's point width
 QUALITY = 55
@@ -28,6 +34,8 @@ GROUPS = [
     ("recorder", "录音器"),
     ("onboarding", "Onboarding"),
     ("zh", "中文界面"),
+    ("site", "官网"),
+    ("web", "paygate 页面、邮件和 dashboard（design/web）"),
 ]
 
 STYLE = """
@@ -67,7 +75,8 @@ def shots():
 
 
 def group_of(base):
-    return "zh" if base.endswith("-zh") else base.split("-")[0]
+    group = base.split("-")[0]
+    return "zh" if base.endswith("-zh") and group not in ("site", "web") else group
 
 
 def jpeg(path, tmp):
@@ -87,14 +96,14 @@ def figure(base, uris):
 def page(title, sections, part, parts):
     nav = "".join(f'<a href="#{key}">{html.escape(label)}</a>' for key, label, _ in sections)
     body = "".join(f'<h2 id="{key}">{html.escape(label)}</h2>{"".join(figs)}' for key, label, figs in sections)
-    meta = f"第 {part} / {parts} 页 · 左浅色右深色 · make ui-snapshots 离屏渲染，假数据"
+    meta = f"第 {part} / {parts} 页 · 左浅色右深色 · 离屏渲染，假数据"
     return (f'<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
             f"<title>{html.escape(title)}</title><style>{STYLE}</style><main><h1>{html.escape(title)}</h1>"
             f'<p class="meta">{meta}</p><nav>{nav}</nav>{body}</main>')
 
 
 def main():
-    title = sys.argv[1] if len(sys.argv) > 1 else "Yap UI 基线"
+    title = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("--") else "Yap UI 基线"
     found = shots()
     if not found:
         sys.exit(f"No snapshots in {SRC}; run make ui-snapshots first.")
@@ -115,8 +124,9 @@ def main():
         size += len(fig)
     pages.append(current)
 
+    stem = os.path.basename(OUT_NAME)
     for old in os.listdir(OUT):
-        if re.fullmatch(r"review(-\d+)?\.html", old):
+        if re.fullmatch(re.escape(stem) + r"(-\d+)?\.html", old):
             os.remove(os.path.join(OUT, old))
     for i, figs in enumerate(pages, 1):
         sections = []
@@ -124,7 +134,7 @@ def main():
             if not sections or sections[-1][0] != key:
                 sections.append((key, labels.get(key, key), []))
             sections[-1][2].append(fig)
-        name = "review.html" if len(pages) == 1 else f"review-{i}.html"
+        name = f"{stem}.html" if len(pages) == 1 else f"{stem}-{i}.html"
         path = os.path.join(OUT, name)
         with open(path, "w") as f:
             f.write(page(title, sections, i, len(pages)))
