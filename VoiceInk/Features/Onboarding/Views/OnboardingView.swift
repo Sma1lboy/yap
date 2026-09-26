@@ -218,8 +218,8 @@ struct OnboardingView: View {
                 currentStep: coordinator.currentStepNumber,
                 totalSteps: coordinator.totalStepCount
             )
-            .padding(.leading, 28)
-            .padding(.bottom, 26)
+            .padding(.leading, AppTheme.Spacing.x8)
+            .padding(.bottom, AppTheme.Spacing.x6)
             .allowsHitTesting(false)
 
         }

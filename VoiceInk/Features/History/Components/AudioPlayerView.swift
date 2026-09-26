@@ -178,12 +178,12 @@ struct WaveformView: View {
                         ProgressView()
                             .controlSize(.small)
                         Text("Loading...")
-                            .font(.system(size: 10))
+                            .font(AppTheme.font(.micro))
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    HStack(spacing: 0.5) {
+                    HStack(spacing: AppTheme.Spacing.half) {
                         ForEach(0..<samples.count, id: \.self) { index in
                             WaveformBar(
                                 sample: samples[index],
@@ -197,15 +197,15 @@ struct WaveformView: View {
                     }
                     .opacity(0.6)
                     .frame(maxHeight: .infinity)
-                    .padding(.horizontal, 2)
+                    .padding(.horizontal, AppTheme.Spacing.half)
 
                     if isHovering {
                         Text(formatTime(duration * Double(hoverLocation / geometry.size.width)))
-                            .font(.system(size: 10, weight: .medium))
+                            .font(AppTheme.font(.micro, .medium))
                             .monospacedDigit()
                             .foregroundColor(AppTheme.Surface.window)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
+                            .padding(.horizontal, AppTheme.Spacing.x2)
+                            .padding(.vertical, AppTheme.Spacing.x1)
                             .background(Capsule().fill(AppTheme.Waveform.hoverBubble))
                             .offset(x: max(0, min(hoverLocation - 25, geometry.size.width - 50)))
                             .offset(y: -26)
@@ -288,7 +288,7 @@ private struct CircleIconButton: View {
     let icon: String
     let action: () -> Void
     var fill: Color = AppTheme.Surface.subtle
-    var iconFont: Font = .system(size: 14, weight: .semibold)
+    var iconFont: Font = AppTheme.font(.callout, .semibold)
 
     var body: some View {
         Button(action: action) {
@@ -323,11 +323,11 @@ private struct AsyncCircleButton: View {
                                 .controlSize(.small)
                         } else if showSuccess {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(AppTheme.font(.callout, .semibold))
                                 .foregroundStyle(AppTheme.Status.positive)
                         } else {
                             Image(systemName: defaultIcon)
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(AppTheme.font(.callout, .semibold))
                                 .foregroundStyle(.primary)
                         }
                     }
@@ -384,7 +384,7 @@ struct AudioPlayerView: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.x2) {
             WaveformView(
                 samples: playerManager.waveformSamples,
                 currentTime: playerManager.currentTime,
@@ -392,17 +392,17 @@ struct AudioPlayerView: View {
                 isLoading: playerManager.isLoadingWaveform,
                 onSeek: { playerManager.seek(to: $0) }
             )
-            .padding(.horizontal, 10)
+            .padding(.horizontal, AppTheme.Spacing.x3)
 
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Text(formatTime(playerManager.currentTime))
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppTheme.font(.caption, .medium))
                     .monospacedDigit()
                     .foregroundColor(.secondary)
 
                 Spacer()
 
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     CircleIconButton(icon: "folder", action: showInFinder)
                         .help("Show in Finder")
                         .accessibilityLabel("Show in Finder")
@@ -419,7 +419,7 @@ struct AudioPlayerView: View {
                                     playerManager.playbackRate == 1.0
                                         ? "1×" : playerManager.playbackRate == 1.5 ? "1.5×" : "2×"
                                 )
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(AppTheme.font(.caption, .semibold))
                                 .foregroundStyle(.primary)
                             )
                     }
@@ -476,14 +476,14 @@ struct AudioPlayerView: View {
                 Spacer()
 
                 Text(formatTime(playerManager.duration))
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppTheme.font(.caption, .medium))
                     .monospacedDigit()
                     .foregroundColor(.secondary)
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, AppTheme.Spacing.x3)
         }
-        .padding(.top, 8)
-        .padding(.bottom, 6)
+        .padding(.top, AppTheme.Spacing.x2)
+        .padding(.bottom, AppTheme.Spacing.x2)
         .onAppear {
             playerManager.loadAudio(from: url)
         }
@@ -508,7 +508,7 @@ struct AudioPlayerView: View {
                         ModeIconView(icon: selectedMode.icon, size: selectedMode.icon.kind == .emoji ? 14 : 12)
                     } else {
                         Image(systemName: "square.grid.2x2")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(AppTheme.font(.body, .semibold))
                             .foregroundStyle(.primary.opacity(0.6))
                     }
                 }
@@ -529,12 +529,12 @@ struct AudioPlayerView: View {
     }
 
     private var promptSelectionPopover: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             Text("Select Prompt")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .padding(.horizontal)
-                .padding(.top, 8)
+                .padding(.top, AppTheme.Spacing.x2)
 
             Divider()
                 .background(AppTheme.Border.subtle)
@@ -543,24 +543,24 @@ struct AudioPlayerView: View {
                 let prompts = enhancementService.allPrompts
                 let customPromptsUnavailable =
                     currentEnhancementConfiguration?.provider == .voiceInkRefine
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                     if customPromptsUnavailable {
                         Text(
                             "Custom prompts aren't available with Yap Refine. Select a Mode that uses another AI provider."
                         )
                         .foregroundColor(AppTheme.Text.secondary)
-                        .font(.system(size: 12))
+                        .font(AppTheme.font(.footnote))
                         .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, 8)
-                        .padding(.bottom, 6)
+                        .padding(.horizontal, AppTheme.Spacing.x2)
+                        .padding(.bottom, AppTheme.Spacing.x2)
                     }
 
                     if prompts.isEmpty {
                         Text("No Prompts Available")
                             .foregroundColor(AppTheme.Text.primary)
-                            .font(.system(size: 13))
+                            .font(AppTheme.font(.body))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
+                            .padding(.vertical, AppTheme.Spacing.x4)
                     } else {
                         ForEach(prompts) { prompt in
                             EnhancementPromptRow(
@@ -580,7 +580,7 @@ struct AudioPlayerView: View {
         }
         .frame(width: 220)
         .frame(maxHeight: 340)
-        .padding(.vertical, 8)
+        .padding(.vertical, AppTheme.Spacing.x2)
         .background(AppTheme.Surface.window)
         .popoverAppAppearance()
     }

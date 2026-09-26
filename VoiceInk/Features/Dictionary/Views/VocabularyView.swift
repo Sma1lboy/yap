@@ -39,11 +39,11 @@ struct VocabularyView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 TextField("", text: $newWord, prompt: Text("Add word to vocabulary"))
                     .textFieldStyle(.roundedBorder)
-                    .font(.system(size: 13))
+                    .font(AppTheme.font(.body))
                     .onSubmit { addWords() }
                     .labelsHidden()
                     .focused($isInputFocused)
@@ -71,31 +71,31 @@ struct VocabularyView: View {
             .animation(.easeInOut(duration: 0.2), value: shouldShowAddButton)
 
             if !vocabularyWords.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
                     Button(action: toggleSort) {
-                        HStack(spacing: 4) {
+                        HStack(spacing: AppTheme.Spacing.x1) {
                             Text(String(localized: "Vocabulary Words (\(vocabularyWords.count))"))
-                                .font(.system(size: 12, weight: .medium))
+                                .font(AppTheme.font(.footnote, .medium))
                                 .foregroundColor(.secondary)
 
                             Image(systemName: sortIconName)
-                                .font(.caption)
+                                .font(AppTheme.font(.caption))
                                 .foregroundColor(.secondary)
                         }
                     }
                     .buttonStyle(.plain)
                     .help("Change sort order")
 
-                    FlowLayout(spacing: 8) {
+                    FlowLayout(spacing: AppTheme.Spacing.x2) {
                         ForEach(sortedItems) { item in
                             VocabularyWordView(item: item) {
                                 removeWord(item)
                             }
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, AppTheme.Spacing.x1)
                 }
-                .padding(.top, 4)
+                .padding(.top, AppTheme.Spacing.x1)
             } else {
                 DictionaryEmptyState(
                     systemImage: "character.book.closed",
@@ -141,13 +141,13 @@ struct DictionaryEmptyState: View {
     let action: () -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: AppTheme.Spacing.x3) {
             Image(systemName: systemImage)
-                .font(.system(size: 28))
+                .font(AppTheme.font(.display))
                 .foregroundColor(.secondary.opacity(0.6))
 
             Text(message)
-                .font(.system(size: 13))
+                .font(AppTheme.font(.body))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -155,40 +155,40 @@ struct DictionaryEmptyState: View {
                 .controlSize(.small)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 24)
+        .padding(.vertical, AppTheme.Spacing.x6)
     }
 }
 
 struct VocabularyInfoPopover: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             Text("How to use Vocabulary")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
 
             Text(
                 "Vocabulary helps supported transcription models and AI enhancement preserve important names, technical terms, and unique spellings."
             )
-            .font(.subheadline)
+            .font(AppTheme.font(.caption))
             .foregroundColor(.secondary)
             .fixedSize(horizontal: false, vertical: true)
 
             Text("Add one entry at a time, or paste multiple entries separated by commas.")
-                .font(.subheadline)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             Divider()
 
             Text("Examples")
-                .font(.subheadline)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
 
             Text(verbatim: "Yap, OpenRouter, SwiftData, WebSocket")
-                .font(.callout)
-                .padding(8)
+                .font(AppTheme.font(.footnote))
+                .padding(AppTheme.Spacing.x2)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(.textBackgroundColor))
-                .cornerRadius(6)
+                .cornerRadius(AppTheme.Radius.small)
         }
         .padding()
         .frame(width: 320)
@@ -201,9 +201,9 @@ struct VocabularyWordView: View {
     @State private var isDeleteHovered = false
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Text(item.word)
-                .font(.system(size: 13))
+                .font(AppTheme.font(.body))
                 .lineLimit(1)
                 .foregroundColor(.primary)
 
@@ -221,14 +221,14 @@ struct VocabularyWordView: View {
                 }
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
+        .padding(.horizontal, AppTheme.Spacing.x2)
+        .padding(.vertical, AppTheme.Spacing.x2)
         .background {
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                 .fill(AppTheme.Surface.window.opacity(0.4))
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                 .stroke(AppTheme.Border.subtle, lineWidth: 1)
         }
         .shadow(color: Color.black.opacity(0.05), radius: 2, y: 1)

@@ -13,9 +13,9 @@ struct TranscriptionInfoSidePanel: View {
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Text("Info")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .fontWeight(.semibold)
 
             Spacer()
@@ -29,7 +29,7 @@ struct TranscriptionInfoSidePanel: View {
                 action: onClose
             )
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.headerHeight)
     }
 }
@@ -124,7 +124,7 @@ struct TranscriptionInfoPanel: View {
     private var aiRequestSection: some View {
         if transcription.aiRequestSystemMessage != nil || transcription.aiRequestUserMessage != nil {
             Section {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
                     if let systemMsg = transcription.aiRequestSystemMessage, !systemMsg.isEmpty {
                         requestMessageBlock(title: "System Prompt", message: systemMsg)
                     }
@@ -150,13 +150,13 @@ struct TranscriptionInfoPanel: View {
     // MARK: - Helpers
 
     private var aiRequestTokenEstimate: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: "number")
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundColor(.secondary)
 
             Text("Around \(estimatedAIRequestTokenCount.formatted()) tokens")
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundColor(.secondary)
                 .textSelection(.enabled)
         }
@@ -184,12 +184,12 @@ struct TranscriptionInfoPanel: View {
     }
 
     private func requestMessageBlock(title: LocalizedStringKey, message: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             Text(title)
-                .font(.system(size: 11, weight: .semibold))
+                .font(AppTheme.font(.caption, .semibold))
                 .foregroundColor(.secondary)
             Text(message)
-                .font(.system(size: 11, weight: .regular, design: .monospaced))
+                .font(AppTheme.font(.caption, .regular, design: .monospaced))
                 .lineSpacing(2)
                 .textSelection(.enabled)
                 .foregroundColor(.primary)
@@ -208,14 +208,14 @@ struct TranscriptionMetadataRow: View {
     let value: String
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: icon)
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundColor(.secondary)
                 .frame(width: 20, height: 20)
 
             Text(label)
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundColor(.secondary)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
@@ -224,7 +224,7 @@ struct TranscriptionMetadataRow: View {
             Spacer(minLength: 0)
 
             Text(value)
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundColor(.primary)
                 .lineLimit(1)
                 .truncationMode(.tail)

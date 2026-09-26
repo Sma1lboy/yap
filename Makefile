@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke mock ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke design-tokens design-check mock ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -48,7 +48,7 @@ setup: whisper
 	@echo "Whisper framework is ready at $(FRAMEWORK_PATH)"
 	@echo "Please ensure your Xcode project references the framework from this new location."
 
-build: setup
+build: setup design-check
 	xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug CODE_SIGN_IDENTITY="" \
 		-skipPackagePluginValidation \
 		-skipMacroValidation \
@@ -140,6 +140,14 @@ sync-e2e:
 		VoiceInk/Features/Modes/Models/ModeTriggerModels.swift \
 		VoiceInk/Features/Modes/Models/ModeIcon.swift
 	@scripts/sync-e2e/run.sh "$(SYNC_E2E_BIN)"
+
+# docs/DESIGN.md is the only source of design tokens: generate the app's DesignTokens.generated.swift and
+# design/web/tokens.css from it, and check that nothing hard-codes colors, font sizes, radii or spacing.
+design-tokens:
+	@python3 scripts/design-tokens.py
+
+design-check:
+	@python3 scripts/design-tokens.py --check
 
 # Run the Debug app with fake data (signed in, 20 transcripts, 5 modes…), offline, in its own settings domain
 # (me.sma1lboy.yap.mock). Everything it created is deleted on quit. See scripts/mock.sh.

@@ -23,27 +23,27 @@ struct OnboardingHeroHeader: View {
     let subtitle: String
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.x4) {
             Image(systemName: systemImage)
-                .font(.system(size: 24, weight: .semibold))
+                .font(AppTheme.font(.title, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .accessibilityHidden(true)
                 .frame(width: 56, height: 56)
                 .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.panel, style: .continuous)
                         .fill(AppTheme.Surface.controlActive)
                 )
 
-            VStack(spacing: 8) {
+            VStack(spacing: AppTheme.Spacing.x2) {
                 Text(LocalizedStringKey(title))
-                    .font(.system(size: 30, weight: .bold))
+                    .font(AppTheme.font(.display, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(LocalizedStringKey(subtitle))
-                    .font(.system(size: 14))
+                    .font(AppTheme.font(.callout))
                     .foregroundColor(AppTheme.Text.muted)
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
@@ -108,11 +108,11 @@ struct OnboardingBottomBar: View {
             HStack(spacing: 0) {
                 leadingSlot
                     .frame(maxWidth: .infinity, alignment: .leading)
-                HStack(spacing: 12) {
+                HStack(spacing: AppTheme.Spacing.x3) {
                     if let secondaryTitle, let onSecondary {
                         Button(action: onSecondary) {
                             Text(LocalizedStringKey(secondaryTitle))
-                                .font(.system(size: 14, weight: .medium))
+                                .font(AppTheme.font(.callout, .medium))
                                 .foregroundColor(AppTheme.Action.secondaryForeground)
                                 .lineLimit(1)
                                 .padding(.horizontal, Metrics.primaryButtonHorizontalPadding)
@@ -139,7 +139,7 @@ struct OnboardingBottomBar: View {
         if let leadingTitle, let onLeading {
             Button(action: onLeading) {
                 Text(LocalizedStringKey(leadingTitle))
-                    .font(.system(size: 14, weight: .medium))
+                    .font(AppTheme.font(.callout, .medium))
                     .foregroundColor(AppTheme.Action.secondaryForeground)
                     .frame(width: Metrics.controlButtonWidth, height: Metrics.buttonHeight)
                     .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.control))
@@ -156,7 +156,7 @@ struct OnboardingBottomBar: View {
     private var primaryButton: some View {
         Button(action: onPrimary) {
             Text(LocalizedStringKey(primaryTitle))
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(
                     isPrimaryEnabled ? AppTheme.Action.primaryForeground : AppTheme.Action.disabledForeground
                 )
@@ -287,7 +287,7 @@ private struct SegmentedProgressRing: View {
             }
 
             Text(progress, format: .percent.precision(.fractionLength(0)))
-                .font(.system(size: 10, weight: .semibold))
+                .font(AppTheme.font(.micro, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
         }
         .frame(width: 46, height: 46)

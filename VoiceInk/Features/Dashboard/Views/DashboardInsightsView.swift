@@ -17,7 +17,7 @@ struct DashboardInsightsView: View {
     let onViewModelPerformance: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x6) {
             header
 
             DashboardEditorialSummaryCard(
@@ -53,26 +53,26 @@ struct DashboardInsightsView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 3) {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.x4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text("Yap Insights")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(AppTheme.font(.display, .semibold, design: .rounded))
                     .foregroundStyle(AppTheme.Text.primary)
 
                 Text("A closer look at your Yap usage.")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(AppTheme.font(.body, .medium))
                     .foregroundStyle(AppTheme.Text.secondary)
             }
 
             Spacer()
 
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 AppIconButton(
                     systemName: "chevron.left",
                     help: "Back to dashboard",
                     size: 34,
                     iconSize: 12,
-                    cornerRadius: 17,
+                    cornerRadius: AppTheme.Radius.panel,
                     action: onBack
                 )
 

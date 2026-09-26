@@ -16,9 +16,9 @@ struct ModelPerformancePanel: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Text("AI Model Performance")
-                .font(.headline.weight(.semibold))
+                .font(AppTheme.font(.body, .semibold))
 
             Spacer()
 
@@ -31,7 +31,7 @@ struct ModelPerformancePanel: View {
                 action: onClose
             )
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.headerHeight)
     }
 
@@ -82,7 +82,7 @@ private struct ModelPerformancePanelContent: View {
             emptyState
         } else {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x6) {
                     ModelPerformanceDetailSection(
                         title: "Transcription Models",
                         valueTitle: "Avg. latency",
@@ -99,21 +99,21 @@ private struct ModelPerformancePanelContent: View {
                         rows: enhancementRows
                     )
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 76)
-                .padding(.bottom, 72)
+                .padding(.horizontal, AppTheme.Spacing.x5)
+                .padding(.top, 76)  // design-exempt: layout offset, not spacing
+                .padding(.bottom, 72)  // design-exempt: layout offset, not spacing
             }
         }
     }
 
     private var emptyState: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: "chart.bar.xaxis")
-                .font(.system(size: 32, weight: .light))
+                .font(AppTheme.font(.display, .regular))
                 .foregroundColor(.secondary)
 
             Text("No model performance for this period")
-                .font(.subheadline)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -128,27 +128,27 @@ private struct ModelPerformanceDetailSection: View {
     let rows: [ModelPerformanceDetailRowData]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
+            HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x3) {
                 Text(title)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text(valueTitle)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(AppTheme.font(.caption, .semibold))
                     .foregroundStyle(AppTheme.Text.secondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
                     .frame(width: 96, alignment: .trailing)
-                    .padding(.trailing, 4)
+                    .padding(.trailing, AppTheme.Spacing.x1)
             }
-            .font(.system(size: 13, weight: .semibold))
+            .font(AppTheme.font(.body, .semibold))
             .foregroundStyle(AppTheme.Text.primary)
             .lineLimit(1)
 
             if rows.isEmpty {
                 InsightEmptyState(title: emptyTitle, icon: emptyIcon)
             } else {
-                VStack(spacing: 8) {
+                VStack(spacing: AppTheme.Spacing.x2) {
                     ForEach(rows) { row in
                         ModelPerformanceDetailRow(row: row)
                     }
@@ -163,21 +163,21 @@ private struct ModelPerformanceDetailRow: View {
     let row: ModelPerformanceDetailRowData
 
     var body: some View {
-        HStack(alignment: .center, spacing: 10) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
             ModelProviderIcon(modelName: row.name, kind: row.kind, size: 24)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text(row.name)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .foregroundStyle(AppTheme.Text.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
                     .truncationMode(.tail)
 
                 if let detail = row.detail {
-                    HStack(spacing: 6) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         Text(detail)
-                            .font(.system(size: 10, weight: .medium))
+                            .font(AppTheme.font(.micro, .medium))
                             .foregroundStyle(AppTheme.Text.secondary)
                             .lineLimit(1)
                     }
@@ -186,15 +186,15 @@ private struct ModelPerformanceDetailRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             Text(row.averageLatencyText)
-                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .font(AppTheme.font(.body, .semibold, design: .monospaced))
                 .foregroundStyle(AppTheme.Text.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
                 .frame(width: 96, alignment: .trailing)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(AppCardBackground(cornerRadius: 10))
+        .padding(.horizontal, AppTheme.Spacing.x3)
+        .padding(.vertical, AppTheme.Spacing.x3)
+        .background(AppCardBackground(cornerRadius: AppTheme.Radius.control))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(row.name)
         .accessibilityValue(accessibilityValue)

@@ -50,7 +50,7 @@ struct MiniRecorderView<S: RecorderStateProvider & ObservableObject>: View {
                     )
                 }
             }
-            .padding(.leading, 10)
+            .padding(.leading, AppTheme.Spacing.x3)
 
             Spacer(minLength: 0)
 
@@ -65,7 +65,7 @@ struct MiniRecorderView<S: RecorderStateProvider & ObservableObject>: View {
                 buttonSize: 22,
                 padding: EdgeInsets()
             )
-            .padding(.trailing, 12)
+            .padding(.trailing, AppTheme.Spacing.x3)
         }
         .frame(height: controlBarHeight)
     }

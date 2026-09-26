@@ -41,7 +41,7 @@ struct AccountView: View {
                     Text("Yap Cloud")
                 } footer: {
                     // Trailing, like the grouped Form's own footer text on macOS.
-                    VStack(alignment: .trailing, spacing: 6) {
+                    VStack(alignment: .trailing, spacing: AppTheme.Spacing.x2) {
                         Text("Pay as you go: one balance covers transcription and enhancement, no API keys to manage.")
                         YapCloudSignupCreditText()
                         YapCloudLegalText()
@@ -132,13 +132,13 @@ private struct SignedInSections: View {
                             : String(
                                 format: String(localized: "At this month's pace (%@ a month), your balance lasts about %lld days."),
                                 pace, runway.days))
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let error = cloud.accountRefreshError {
                 Text(String(format: String(localized: "Couldn't refresh your account: %@"), error))
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(AppTheme.Status.error)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -160,7 +160,7 @@ private struct SignedInSections: View {
         } header: {
             Text("Yap Cloud")
         } footer: {
-            VStack(alignment: .trailing, spacing: 6) {
+            VStack(alignment: .trailing, spacing: AppTheme.Spacing.x2) {
                 Text("With Sync via Yap Cloud on (Settings > Config & Sync), your modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server. API keys stay on each Mac.")
                 YapCloudLegalLinks()
             }
@@ -185,7 +185,7 @@ private struct SignedInSections: View {
             HStack {
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(AppTheme.Status.error)
                 }
                 Spacer()
@@ -383,22 +383,22 @@ private struct LedgerRow: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                 Text(title)
                 if let date = entry.createdDate {
                     Text(date.formatted(date: .abbreviated, time: .shortened))
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(.secondary)
                 }
             }
             Spacer()
             if entry.kind == "topup", let receipt = entry.receiptURL {
-                Link("Receipt", destination: receipt)
-                    .font(.caption)
+                Link("Receipt", destination: receipt).appLinkStyle()
+                    .font(AppTheme.font(.caption))
             }
             Text((entry.amountMicros > 0 ? "+" : "") + YapCloud.formatLedgerAmount(micros: entry.amountMicros, kind: entry.kind))
                 .monospacedDigit()
-                .foregroundStyle(entry.amountMicros > 0 ? AppTheme.Status.positive : AppTheme.Text.primary)
+                .foregroundStyle(AppTheme.Text.primary)  // money coming in isn't a status (DESIGN.md)
         }
     }
 
@@ -456,7 +456,7 @@ struct YapCloudSignInForm: View {
     private enum Field { case email, code }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             if codeSent {
                 Text(String(format: String(localized: "Enter the 6-digit code sent to %@."), email))
                     .foregroundStyle(.secondary)
@@ -467,10 +467,11 @@ struct YapCloudSignInForm: View {
                         .focused($focusedField, equals: .code)
                         .onSubmit(verify)
                     Button("Sign In", action: verify)
+                        .buttonStyle(.appAction(.primary))
                         .keyboardShortcut(.defaultAction)
                         .disabled(isWorking || codeDigits.count != 6)
                 }
-                HStack(spacing: 16) {
+                HStack(spacing: AppTheme.Spacing.x4) {
                     Button("Resend Code", action: sendCode)
                         .disabled(isWorking)
                     Button("Use a different email") {
@@ -488,15 +489,16 @@ struct YapCloudSignInForm: View {
                         .focused($focusedField, equals: .email)
                         .onSubmit(sendCode)
                     Button("Send Code", action: sendCode)
+                        .buttonStyle(.appAction(.primary))
                         .keyboardShortcut(.defaultAction)
                         .disabled(isWorking || !email.contains("@"))
                 }
             }
-            HStack(spacing: 6) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 if isWorking { ProgressView().controlSize(.small) }
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(AppTheme.Status.error)
                 }
             }
@@ -549,8 +551,8 @@ struct YapCloudQuickTopUp: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 ForEach(cloud.topUpPresets, id: \.self) { amount in
                     Button(String(format: String(localized: "Add $%lld"), Int64(amount))) { open(amount) }
                         .disabled(isOpening)
@@ -559,7 +561,7 @@ struct YapCloudQuickTopUp: View {
             }
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(AppTheme.Status.error)
             }
             if cloud.pendingTopUp != nil {
@@ -615,7 +617,7 @@ private struct MonthlyCapSection: View {
             HStack {
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(AppTheme.Status.error)
                 }
                 Spacer()
@@ -683,7 +685,7 @@ struct YapCloudTopUpWaitingRow: View {
     @ObservedObject private var cloud = YapCloud.shared
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             ProgressView().controlSize(.small)
             Text("Waiting for payment to complete…")
                 .foregroundStyle(.secondary)
@@ -691,7 +693,7 @@ struct YapCloudTopUpWaitingRow: View {
             Button("Stop Waiting") { cloud.stopWaitingForTopUp() }
                 .buttonStyle(.link)
         }
-        .font(.callout)
+        .font(AppTheme.font(.footnote))
     }
 }
 
@@ -707,21 +709,21 @@ private struct DevicesSection: View {
         Section {
             ForEach(devices) { device in
                 HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
+                        HStack(spacing: AppTheme.Spacing.x2) {
                             Text(name(device))
                             if device.current {
                                 Text("This Mac")
-                                    .font(.caption)
+                                    .font(AppTheme.font(.caption))
                                     .foregroundStyle(.secondary)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 1)
+                                    .padding(.horizontal, AppTheme.Spacing.x2)
+                                    .padding(.vertical, AppTheme.Spacing.half)
                                     .background(Capsule().fill(AppTheme.Surface.subtle))
                             }
                         }
                         if let date = device.lastUsedDate {
                             Text(String(format: String(localized: "Last used %@"), date.formatted(.relative(presentation: .named))))
-                                .font(.caption)
+                                .font(AppTheme.font(.caption))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -739,7 +741,7 @@ private struct DevicesSection: View {
             }
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(AppTheme.Status.error)
             }
         } header: {
@@ -783,9 +785,9 @@ struct YapCloudLegalLinks: View {
 
     var body: some View {
         if let terms = cloud.info?.termsURL, let privacy = cloud.info?.privacyURL {
-            HStack(spacing: 14) {
-                Link("Terms of Service", destination: terms)
-                Link("Privacy Policy", destination: privacy)
+            HStack(spacing: AppTheme.Spacing.x4) {
+                Link("Terms of Service", destination: terms).appLinkStyle()
+                Link("Privacy Policy", destination: privacy).appLinkStyle()
             }
         }
     }
@@ -809,7 +811,7 @@ struct YapCloudSupportRow: View {
     var body: some View {
         if let email = cloud.info?.supportEmail, !email.isEmpty {
             LabeledContent("Contact Support") {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     Text(verbatim: email).textSelection(.enabled)
                     if let mailto = URL(string: "mailto:" + email) {
                         Link(destination: mailto) { Image(systemName: "envelope") }

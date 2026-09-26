@@ -92,14 +92,14 @@ struct ModeConfigFormView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Button {
                 isShowingIconPicker.toggle()
             } label: {
                 ModeIconView(icon: draft.icon, size: draft.icon.kind == .emoji ? 22 : 18)
                     .frame(width: 36, height: 36)
                     .background(
-                        AppCardBackground(isSelected: false, cornerRadius: 18)
+                        AppCardBackground(isSelected: false, cornerRadius: AppTheme.Radius.panel)
                     )
             }
             .buttonStyle(.plain)
@@ -112,7 +112,7 @@ struct ModeConfigFormView: View {
 
             TextField("Mode name", text: $draft.name)
                 .textFieldStyle(.plain)
-                .font(.system(size: 16, weight: .semibold))
+                .font(AppTheme.font(.headline, .semibold))
                 .focused($isNameFieldFocused)
 
             Spacer()
@@ -126,7 +126,7 @@ struct ModeConfigFormView: View {
                 action: onDismiss
             )
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.headerHeight)
     }
 
@@ -265,7 +265,7 @@ struct ModeConfigFormView: View {
                 isExpanded: $draft.isTranscriptionFormattingExpanded
             ) {
                 Toggle(isOn: $draft.isTextFormattingEnabled) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Text("Paragraph breaks")
                         InfoTip("Apply intelligent text formatting to break large block of text into paragraphs.")
                     }
@@ -320,8 +320,8 @@ struct ModeConfigFormView: View {
                 set: { draft.selectedLanguage = $0 }
             )
 
-            HStack(spacing: 8) {
-                HStack(spacing: 4) {
+            HStack(spacing: AppTheme.Spacing.x2) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Language")
                 }
 
@@ -533,7 +533,7 @@ struct ModeConfigFormView: View {
     }
 
     private var promptPicker: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Text("Prompt")
 
             Spacer(minLength: 12)
@@ -560,7 +560,7 @@ struct ModeConfigFormView: View {
                     openPromptEditor(.edit(selectedPrompt))
                 } label: {
                     Image(systemName: "pencil.circle.fill")
-                        .font(.system(size: 18))
+                        .font(AppTheme.font(.title3))
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.secondary)
                 }
@@ -580,7 +580,7 @@ struct ModeConfigFormView: View {
             title: "Context Awareness",
             isExpanded: $isContextAwarenessExpanded
         ) {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
                 contextToggles
             }
         }
@@ -589,21 +589,21 @@ struct ModeConfigFormView: View {
     private var contextToggles: some View {
         Group {
             Toggle(isOn: $draft.useSelectedTextContext) {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Selected Text")
                     InfoTip("Use selected text from the active app as context for this mode.")
                 }
             }
 
             Toggle(isOn: $draft.useClipboardContext) {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Clipboard")
                     InfoTip("Use clipboard text as context for this mode.")
                 }
             }
 
             Toggle(isOn: $draft.useScreenCapture) {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Screen")
                     InfoTip("Use captured on-screen text as context for this mode.")
                 }
@@ -650,7 +650,7 @@ struct ModeConfigFormView: View {
 
             if draft.outputMode != .respond {
                 Toggle(isOn: $draft.isDefault) {
-                    HStack(spacing: 6) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         Text("Set as default")
                         InfoTip("Default mode is used when no specific app or website matches are found.")
                     }
@@ -664,8 +664,8 @@ struct ModeConfigFormView: View {
     }
 
     private var customCommandControls: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Text("Command")
                 InfoTip(
                     LocalizedStringKey(
@@ -687,14 +687,14 @@ struct ModeConfigFormView: View {
             }
 
             TextEditor(text: $draft.customCommand)
-                .font(.system(size: 12, design: .monospaced))
+                .font(AppTheme.font(.footnote, .regular, design: .monospaced))
                 .frame(minHeight: 96)
                 .scrollContentBackground(.hidden)
-                .padding(8)
+                .padding(AppTheme.Spacing.x2)
                 .background(AppTheme.Surface.control)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.small))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 6)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                         .stroke(AppTheme.Border.control.opacity(0.4), lineWidth: 1)
                 )
 
@@ -724,7 +724,7 @@ struct ModeConfigFormView: View {
             .disabled(!draft.canSave)
             .keyboardShortcut(.return, modifiers: .command)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.footerHeight)
     }
 

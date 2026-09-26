@@ -36,34 +36,34 @@ private struct OnboardingTrustContent: View {
         // Stacked, not overlaid: at the 750pt minimum height the centered body used to run into the header.
         // Scrolls when the window is short; the bottom padding clears the overlaid Back / Start bar.
         ScrollView {
-            VStack(spacing: 28) {
+            VStack(spacing: AppTheme.Spacing.x8) {
                 TrustHeader()
                 TrustBody()
             }
-            .padding(.top, 44)
-            .padding(.bottom, 100)
+            .padding(.top, AppTheme.Spacing.x12)
+            .padding(.bottom, 100)  // design-exempt: layout offset, not spacing
             .frame(maxWidth: .infinity)
         }
         .scrollIndicators(.automatic)
-        .padding(.horizontal, 28)
+        .padding(.horizontal, AppTheme.Spacing.x8)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
 private struct TrustHeader: View {
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.x4) {
             Image(systemName: "lock.shield")
-                .font(.system(size: 24, weight: .semibold))
+                .font(AppTheme.font(.title, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .frame(width: 56, height: 56)
                 .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.panel, style: .continuous)
                         .fill(AppTheme.Surface.controlActive)
                 )
 
             Text("You choose where your voice goes")
-                .font(.system(size: 32, weight: .bold))
+                .font(AppTheme.font(.display, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
@@ -85,12 +85,12 @@ private struct TrustBody: View {
             if !showsTrySaying {
                 TrustMapView()
                     .frame(height: 230)
-                    .padding(.bottom, 24)
+                    .padding(.bottom, AppTheme.Spacing.x6)
             }
 
-            VStack(spacing: 10) {
+            VStack(spacing: AppTheme.Spacing.x3) {
                 Text("Yap collects no usage data. Transcripts are stored only on this Mac.")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(AppTheme.font(.title3, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -99,12 +99,12 @@ private struct TrustBody: View {
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) { showsPrivacyDetails.toggle() }
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Text("Privacy details")
                         Image(systemName: "chevron.down")
                             .rotationEffect(.degrees(showsPrivacyDetails ? 180 : 0))
                     }
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
                     .foregroundColor(AppTheme.Text.secondary)
                 }
                 .buttonStyle(.plain)
@@ -112,7 +112,7 @@ private struct TrustBody: View {
 
                 if showsPrivacyDetails {
                     Text("Local models keep everything on this Mac. With your own API key, audio and text go only to the provider you choose. With Yap Cloud, they pass through Yap's server on the way to the model provider; the server records the model and cost for billing. If you turn on Sync via Yap Cloud, your modes, prompts, dictionary, shortcuts and custom models are stored there too, never your API keys.")
-                        .font(.system(size: 13))
+                        .font(AppTheme.font(.body))
                         .foregroundColor(AppTheme.Text.secondary)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
@@ -121,14 +121,14 @@ private struct TrustBody: View {
                 }
 
                 Text("Yap picks a mode for the app you're in. Press Option 1-9 while recording to switch, and edit modes anytime.")
-                    .font(.system(size: 13))
+                    .font(AppTheme.font(.body))
                     .foregroundColor(AppTheme.Text.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: 610)
 
                 Text("Yap is also open source, so you can inspect every single line of code.")
-                    .font(.system(size: 13))
+                    .font(AppTheme.font(.body))
                     .foregroundColor(AppTheme.Text.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -137,7 +137,7 @@ private struct TrustBody: View {
 
             if showsTrySaying {
                 TrySayingCard()
-                    .padding(.top, 20)
+                    .padding(.top, AppTheme.Spacing.x5)
             }
         }
     }
@@ -208,17 +208,17 @@ private struct TrustPill: View {
     let title: String
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: systemImage)
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.secondary)
 
             Text(LocalizedStringKey(title))
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .lineLimit(1)
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, AppTheme.Spacing.x4)
         .frame(height: 42)
         .background(
             Capsule()
@@ -235,7 +235,7 @@ private struct TrustShield: View {
     var body: some View {
         ZStack {
             Image(systemName: "shield.fill")
-                .font(.system(size: 96, weight: .regular))
+                .font(AppTheme.font(.display, .regular))
                 .foregroundStyle(
                     LinearGradient(
                         colors: [
@@ -248,7 +248,7 @@ private struct TrustShield: View {
                 )
                 .overlay(
                     Image(systemName: "shield")
-                        .font(.system(size: 96, weight: .regular))
+                        .font(AppTheme.font(.display, .regular))
                         .foregroundColor(AppTheme.Border.control)
                 )
 

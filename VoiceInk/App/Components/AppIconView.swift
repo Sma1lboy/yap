@@ -13,9 +13,9 @@ struct AppIconView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 120, height: 120)
-                    .cornerRadius(30)
+                    .cornerRadius(30)  // design-exempt: app icon mask
                     .overlay(
-                        RoundedRectangle(cornerRadius: 30)
+                        RoundedRectangle(cornerRadius: 30)  // design-exempt: app icon mask
                             .stroke(.white.opacity(0.2), lineWidth: 1)
                     )
                     .shadow(color: AppTheme.Accent.border, radius: 20)

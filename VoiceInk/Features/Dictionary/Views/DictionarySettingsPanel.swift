@@ -54,7 +54,7 @@ struct DictionarySettingsPanel: View {
                                 }
                             }
                         } label: {
-                            HStack(spacing: 4) {
+                            HStack(spacing: AppTheme.Spacing.x1) {
                                 Text("Review corrections")
                                 InfoTip(
                                     "Choose when saved corrections are sent to your AI provider. Manual review keeps them local until you select Review Now."
@@ -136,9 +136,9 @@ struct DictionarySettingsPanel: View {
     }
 
     private var panelHeader: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Text("Dictionary Settings")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .fontWeight(.semibold)
 
             Spacer()
@@ -152,7 +152,7 @@ struct DictionarySettingsPanel: View {
                 action: onDismiss
             )
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.headerHeight)
     }
 

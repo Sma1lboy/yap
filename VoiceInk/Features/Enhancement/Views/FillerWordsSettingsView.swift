@@ -6,9 +6,9 @@ struct FillerWordChip: View {
     @State private var isHovered = false
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             Text(word)
-                .font(.system(size: 12))
+                .font(AppTheme.font(.footnote))
                 .lineLimit(1)
                 .foregroundColor(.primary)
 
@@ -16,7 +16,7 @@ struct FillerWordChip: View {
                 Image(systemName: "xmark.circle.fill")
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(isHovered ? AppTheme.Status.error : .secondary)
-                    .font(.system(size: 10))
+                    .font(AppTheme.font(.micro))
             }
             .buttonStyle(.borderless)
             .help("Remove")
@@ -27,14 +27,14 @@ struct FillerWordChip: View {
                 }
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, AppTheme.Spacing.x2)
+        .padding(.vertical, AppTheme.Spacing.x1)
         .background(
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                 .fill(AppTheme.Surface.window.opacity(0.4))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                 .stroke(AppTheme.Border.subtle, lineWidth: 1)
         )
     }
@@ -49,7 +49,7 @@ struct FillerWordsSettingsSection: View {
     var body: some View {
         Section {
             if !fillerWordManager.fillerWords.isEmpty {
-                FlowLayout(spacing: 6) {
+                FlowLayout(spacing: AppTheme.Spacing.x2) {
                     ForEach(fillerWordManager.fillerWords, id: \.self) { word in
                         FillerWordChip(word: word) {
                             withAnimation(.easeInOut(duration: 0.2)) {
@@ -61,7 +61,7 @@ struct FillerWordsSettingsSection: View {
             }
         } header: {
             HStack {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Remove Filler Words")
                     InfoTip(
                         "Automatically remove configured filler words like 'uh', 'um', or 'hmm' from transcriptions. If no filler words are configured, this cleanup is skipped."
@@ -83,9 +83,9 @@ struct FillerWordsSettingsSection: View {
     }
 
     private var addWordPopover: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             Text("Add Filler Word")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
 
             TextField("Filler word", text: $newWord)
                 .textFieldStyle(.roundedBorder)
@@ -93,7 +93,7 @@ struct FillerWordsSettingsSection: View {
 
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(AppTheme.Status.error)
             }
 
@@ -104,14 +104,13 @@ struct FillerWordsSettingsSection: View {
                     closeAddWordPopover()
                 }
 
-                Button("Add") {
+                AppActionButton("Add", kind: .primary) {
                     addWord()
                 }
-                .buttonStyle(.borderedProminent)
                 .disabled(newWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
-        .padding(16)
+        .padding(AppTheme.Spacing.x4)
         .frame(width: 260)
     }
 

@@ -15,32 +15,32 @@ struct ModePopover: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             Text("Select Mode")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .padding(.horizontal)
-                .padding(.top, 8)
+                .padding(.top, AppTheme.Spacing.x2)
 
             Divider()
                 .background(AppTheme.Border.subtle)
 
             ScrollView {
                 let enabledConfigs = modeManager.enabledConfigurations
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                     if enabledConfigs.isEmpty {
-                        VStack(alignment: .center, spacing: 8) {
+                        VStack(alignment: .center, spacing: AppTheme.Spacing.x2) {
                             Image(systemName: "sparkles")
                                 .foregroundColor(AppTheme.Text.secondary)
-                                .font(.system(size: 16))
+                                .font(AppTheme.font(.headline))
                             Text("No Modes Available")
                                 .foregroundColor(AppTheme.Text.primary)
-                                .font(.system(size: 13))
+                                .font(AppTheme.font(.body))
                                 .lineLimit(1)
                                 .truncationMode(.tail)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
+                        .padding(.vertical, AppTheme.Spacing.x4)
                     } else {
                         ForEach(enabledConfigs) { config in
                             ModeRow(
@@ -62,7 +62,7 @@ struct ModePopover: View {
         }
         .frame(width: 180)
         .frame(maxHeight: 340)
-        .padding(.vertical, 8)
+        .padding(.vertical, AppTheme.Spacing.x2)
         .background(AppTheme.Surface.window)
         .popoverAppAppearance()
     }
@@ -75,7 +75,7 @@ struct ModeRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 ModeIconView(
                     icon: config.icon,
                     size: config.icon.kind == .emoji ? 14 : 12,
@@ -85,23 +85,23 @@ struct ModeRow: View {
 
                 Text(config.name)
                     .foregroundColor(AppTheme.Text.primary)
-                    .font(.system(size: 13))
+                    .font(AppTheme.font(.body))
                     .lineLimit(1)
 
                 if isSelected {
                     Spacer()
                     Image(systemName: "checkmark")
                         .foregroundColor(AppTheme.Status.positive)
-                        .font(.system(size: 10))
+                        .font(AppTheme.font(.micro))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 4)
-            .padding(.horizontal, 8)
+            .padding(.vertical, AppTheme.Spacing.x1)
+            .padding(.horizontal, AppTheme.Spacing.x2)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .background(isSelected ? AppTheme.Selection.fill : Color.clear)
-        .cornerRadius(4)
+        .cornerRadius(AppTheme.Radius.small)
     }
 }

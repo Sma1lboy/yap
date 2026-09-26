@@ -29,8 +29,8 @@ struct ProviderBrandIcon: View {
                     .padding(size * 0.24)
             } else {
                 Image(systemName: fallbackSystemImage)
-                    .font(.system(size: iconSize, weight: .semibold))
-                    .foregroundStyle(isSelected ? AppTheme.Accent.primary : Color.secondary)
+                    .font(.system(size: iconSize, weight: .semibold))  // design-exempt: icon glyph sized to its container
+                    .foregroundStyle(isSelected ? AppTheme.Accent.text : AppTheme.Text.secondary)
             }
         }
         .frame(width: size, height: size)
@@ -56,11 +56,11 @@ struct ProviderSectionHeader: View {
     let subtitle: LocalizedStringKey
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
             Text(title)
-                .font(.system(size: 15, weight: .semibold))
+                .font(AppTheme.font(.headline, .semibold))
             Text(subtitle)
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -77,9 +77,9 @@ struct ProviderConfigurationGroup<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             Text(title)
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundStyle(.secondary)
 
             content()
@@ -97,18 +97,18 @@ struct ProviderModelListSection<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             Text(title)
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 0) {
                 content()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 4)
-            .background(ProviderSurface(cornerRadius: 10))
+            .padding(.horizontal, AppTheme.Spacing.x3)
+            .padding(.vertical, AppTheme.Spacing.x1)
+            .background(ProviderSurface(cornerRadius: AppTheme.Radius.control))
         }
     }
 }
@@ -127,13 +127,13 @@ struct ProviderStatusBadge: View {
     let color: Color
 
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             Circle()
                 .fill(color)
                 .frame(width: 6, height: 6)
 
             Text(title)
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .foregroundStyle(.secondary)
         }
     }

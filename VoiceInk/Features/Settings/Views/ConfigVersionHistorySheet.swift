@@ -20,9 +20,9 @@ struct ConfigVersionHistorySheet: View {
     private var restorableVersion: String? { selection }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             Text("Version History")
-                .font(.title3.weight(.semibold))
+                .font(AppTheme.font(.headline, .semibold))
             Text("Every change synced through Yap Cloud is kept as a version.")
                 .foregroundColor(AppTheme.Text.secondary)
 
@@ -35,7 +35,7 @@ struct ConfigVersionHistorySheet: View {
             } else {
                 if let currentVersion {
                     Text(String(format: String(localized: "Current version: %@"), currentVersion))
-                        .font(.subheadline)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(AppTheme.Text.secondary)
                 }
                 List(versions, selection: $selection) { info in
@@ -60,7 +60,7 @@ struct ConfigVersionHistorySheet: View {
                     .disabled(restorableVersion == nil || selectedConfig == nil || isRestoring)
             }
         }
-        .padding(24)
+        .padding(AppTheme.Spacing.x6)
         .frame(width: 520)
         .task { await load() }
         .confirmationDialog("Restore this version?", isPresented: $isConfirmingRestore) {
@@ -79,15 +79,15 @@ struct ConfigVersionHistorySheet: View {
 
     private func row(_ info: CloudConfigVersionInfo) -> some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                 Text(info.updatedAt?.formatted(date: .abbreviated, time: .shortened) ?? info.version)
                 Text(info.deviceName ?? String(localized: "Unknown device"))
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundColor(AppTheme.Text.secondary)
             }
             Spacer()
             Text(verbatim: "v\(info.version)")
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .monospacedDigit()
                 .foregroundColor(AppTheme.Text.secondary)
         }
@@ -98,9 +98,9 @@ struct ConfigVersionHistorySheet: View {
         if let selectedConfig, let current {
             let then = selectedConfig.restoreSummary
             let now = current.restoreSummary
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 Text("Compared with the current version")
-                    .font(.subheadline.weight(.medium))
+                    .font(AppTheme.font(.caption, .medium))
                 countRow("Modes", then.modes, now.modes)
                 countRow("Prompts", then.prompts, now.prompts)
                 countRow("Dictionary entries", then.dictionaryEntries, now.dictionaryEntries)

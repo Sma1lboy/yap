@@ -132,7 +132,7 @@ struct AudioSetupView: View {
         Button {
             audioDeviceManager.addPrioritizedDevice(uid: device.uid, name: device.name)
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Label(device.name, systemImage: "plus.circle")
                     .lineLimit(1)
 
@@ -151,20 +151,20 @@ struct AudioSetupView: View {
         let isAvailable = device != nil
         let isActive = device.map { audioDeviceManager.getCurrentDevice() == $0.id } ?? false
 
-        return HStack(spacing: 8) {
+        return HStack(spacing: AppTheme.Spacing.x2) {
             Text("\(prioritizedDevice.priority + 1)")
-                .font(.body.monospacedDigit())
+                .font(AppTheme.font(.body).monospacedDigit())
                 .foregroundStyle(.secondary)
                 .frame(width: 22, alignment: .leading)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                 Text(prioritizedDevice.name)
                     .foregroundStyle(isAvailable ? .primary : .secondary)
                     .lineLimit(1)
 
                 if !isAvailable {
                     Text("Unavailable")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -173,12 +173,12 @@ struct AudioSetupView: View {
 
             if isActive {
                 Label("Active", systemImage: "checkmark.circle.fill")
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .labelStyle(.titleAndIcon)
             }
 
-            HStack(spacing: 4) {
+            HStack(spacing: AppTheme.Spacing.x1) {
                 Button {
                     movePrioritizedDeviceUp(prioritizedDevice)
                 } label: {

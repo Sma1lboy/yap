@@ -11,7 +11,7 @@ struct DashboardTimeSavedSummary: Equatable {
 }
 
 struct DashboardTimeSavedCard: View {
-    private let savedTint = AppTheme.Accent.strong
+    private let savedTint = AppTheme.Accent.text
 
     let summary: DashboardTimeSavedSummary
     let period: DashboardInsightPeriod
@@ -43,33 +43,33 @@ struct DashboardTimeSavedCard: View {
 
     var body: some View {
         ZStack(alignment: .leading) {
-            DashboardInsightCardBackground(cornerRadius: 16)
+            DashboardInsightCardBackground(cornerRadius: AppTheme.Radius.panel)
 
             content
                 .frame(height: 196 - (20 * 2), alignment: .topLeading)
-                .padding(.horizontal, 22)
-                .padding(.vertical, 20)
+                .padding(.horizontal, AppTheme.Spacing.x6)
+                .padding(.vertical, AppTheme.Spacing.x5)
         }
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, minHeight: 196, maxHeight: 196, alignment: .topLeading)
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
             Text("You saved")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(AppTheme.font(.title3, .semibold, design: .rounded))
                 .foregroundStyle(AppTheme.Text.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.84)
 
             Text(summary.hasData ? savedTimeText : "--")
-                .font(.system(size: 58, weight: .heavy, design: .rounded))
+                .font(AppTheme.font(.display, .semibold, design: .rounded))
                 .foregroundStyle(savedTint)
                 .lineLimit(1)
                 .minimumScaleFactor(0.46)
 
             Text(period.timeSavedContext)
-                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .font(AppTheme.font(.body, .semibold, design: .rounded))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.82)
@@ -77,7 +77,7 @@ struct DashboardTimeSavedCard: View {
             Spacer(minLength: 12)
 
             Text(workdaySavingsText)
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.76)

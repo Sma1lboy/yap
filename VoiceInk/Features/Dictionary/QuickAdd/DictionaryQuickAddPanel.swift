@@ -116,14 +116,14 @@ struct DictionaryQuickAddView: View {
                 inputArea
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(AppTheme.Status.error)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 6)
+                        .padding(.horizontal, AppTheme.Spacing.x4)
+                        .padding(.bottom, AppTheme.Spacing.x2)
                 }
             }
-            .padding(.top, 52)
-            .padding(.bottom, 52)
+            .padding(.top, 52)  // design-exempt: layout offset, not spacing
+            .padding(.bottom, 52)  // design-exempt: layout offset, not spacing
         } header: {
             modeBar
         } footer: {
@@ -131,9 +131,9 @@ struct DictionaryQuickAddView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(VisualEffectView(material: .popover, blendingMode: .behindWindow))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.panel, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.panel, style: .continuous)
                 .strokeBorder(AppTheme.Border.tint, lineWidth: 0.5)
         )
         .onKeyPress(.escape) {
@@ -162,20 +162,20 @@ struct DictionaryQuickAddView: View {
     // MARK: - Mode Bar
 
     private var modeBar: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             ForEach(Mode.allCases, id: \.self) { m in
                 Button {
                     withAnimation(.easeInOut(duration: 0.15)) { mode = m }
                 } label: {
-                    HStack(spacing: 5) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Image(systemName: m.icon)
-                            .font(.system(size: 10, weight: .medium))
+                            .font(AppTheme.font(.micro, .medium))
                         Text(m.label)
-                            .font(.system(size: 12, weight: .medium))
+                            .font(AppTheme.font(.footnote, .medium))
                     }
                     .foregroundStyle(mode == m ? .primary : .secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, AppTheme.Spacing.x3)
+                    .padding(.vertical, AppTheme.Spacing.x1)
                     .background(
                         Capsule()
                             .fill(mode == m ? AppTheme.Selection.fill : Color.clear)
@@ -190,8 +190,8 @@ struct DictionaryQuickAddView: View {
                 action: onDismiss
             )
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 7)
+        .padding(.horizontal, AppTheme.Spacing.x4)
+        .padding(.vertical, AppTheme.Spacing.x2)
     }
 
     // MARK: - Input Area
@@ -206,37 +206,37 @@ struct DictionaryQuickAddView: View {
     }
 
     private var vocabularyInput: some View {
-        HStack(spacing: 11) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Image(systemName: "character.book.closed.fill")
-                .font(.system(size: 14))
+                .font(AppTheme.font(.callout))
                 .foregroundStyle(.secondary)
             TextField("", text: $wordInput, prompt: Text("e.g. Yap, OpenRouter").foregroundColor(.secondary))
                 .textFieldStyle(.roundedBorder)
-                .font(.system(size: 14))
+                .font(AppTheme.font(.callout))
                 .focused($focusedField, equals: .word)
                 .onSubmit { submitVocabulary() }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.horizontal, AppTheme.Spacing.x4)
+        .padding(.vertical, AppTheme.Spacing.x4)
     }
 
     private var replacementInputView: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 10) {
+        VStack(spacing: AppTheme.Spacing.x2) {
+            HStack(spacing: AppTheme.Spacing.x3) {
                 Text("Replace")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
                     .foregroundStyle(.secondary)
                     .frame(width: 56, alignment: .trailing)
                 TextField("", text: $originalInput, prompt: Text("e.g. my email, my mail").foregroundColor(.secondary))
                     .textFieldStyle(.roundedBorder)
-                    .font(.system(size: 14))
+                    .font(AppTheme.font(.callout))
                     .focused($focusedField, equals: .original)
                     .onSubmit { focusedField = .replacement }
             }
 
-            HStack(spacing: 10) {
+            HStack(spacing: AppTheme.Spacing.x3) {
                 Text("With")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
                     .foregroundStyle(.secondary)
                     .frame(width: 56, alignment: .trailing)
                 TextField(
@@ -244,13 +244,13 @@ struct DictionaryQuickAddView: View {
                     prompt: Text("e.g. hello@example.com").foregroundColor(.secondary)
                 )
                 .textFieldStyle(.roundedBorder)
-                .font(.system(size: 14))
+                .font(AppTheme.font(.callout))
                 .focused($focusedField, equals: .replacement)
                 .onSubmit { submitReplacement() }
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .padding(.horizontal, AppTheme.Spacing.x4)
+        .padding(.vertical, AppTheme.Spacing.x3)
     }
 
     // MARK: - Action Bar
@@ -260,18 +260,18 @@ struct DictionaryQuickAddView: View {
             Spacer()
 
             Button(action: submitCurrentInput) {
-                HStack(spacing: 7) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     Text("Add Now")
                     Text("↵")
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .font(AppTheme.font(.micro, .medium, design: .rounded))
                         .foregroundStyle(AppTheme.Text.muted)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 3)
-                        .background(AppTheme.Surface.controlActive, in: RoundedRectangle(cornerRadius: 5))
+                        .padding(.horizontal, AppTheme.Spacing.x1)
+                        .padding(.vertical, AppTheme.Spacing.x1)
+                        .background(AppTheme.Surface.controlActive, in: RoundedRectangle(cornerRadius: AppTheme.Radius.small))
                 }
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Text.secondary)
-                .padding(.horizontal, 10)
+                .padding(.horizontal, AppTheme.Spacing.x3)
                 .frame(height: 32)
                 .fixedSize(horizontal: true, vertical: false)
                 .background(QuickPanelButtonBackground())
@@ -280,7 +280,7 @@ struct DictionaryQuickAddView: View {
             .disabled(!canSubmitCurrentInput)
             .help("Add Now")
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, AppTheme.Spacing.x3)
         .frame(height: 44)
     }
 

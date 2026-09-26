@@ -10,7 +10,7 @@ struct ModeTriggerSelectionView: View {
     let loadInstalledAppsIfNeeded: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             ForEach($triggerGroups) { $group in
                 TriggerGroupRow(
                     group: $group,
@@ -26,9 +26,9 @@ struct ModeTriggerSelectionView: View {
 
             if !appConfigs.isEmpty {
                 LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 38), spacing: 8)],
+                    columns: [GridItem(.adaptive(minimum: 38), spacing: AppTheme.Spacing.x2)],
                     alignment: .leading,
-                    spacing: 8
+                    spacing: AppTheme.Spacing.x2
                 ) {
                     ForEach(appConfigs) { appConfig in
                         TriggerAppChip(appConfig: appConfig) {
@@ -39,7 +39,7 @@ struct ModeTriggerSelectionView: View {
             }
 
             if !websiteConfigs.isEmpty {
-                FlowLayout(spacing: 6) {
+                FlowLayout(spacing: AppTheme.Spacing.x2) {
                     ForEach(websiteConfigs) { urlConfig in
                         TriggerWebsiteChip(urlConfig: urlConfig) {
                             websiteConfigs.removeAll { $0.id == urlConfig.id }
@@ -49,7 +49,7 @@ struct ModeTriggerSelectionView: View {
             }
 
             if !triggerWords.isEmpty {
-                FlowLayout(spacing: 6) {
+                FlowLayout(spacing: AppTheme.Spacing.x2) {
                     ForEach(triggerWords, id: \.self) { word in
                         TriggerWordChip(word: word) {
                             triggerWords.removeAll { $0 == word }

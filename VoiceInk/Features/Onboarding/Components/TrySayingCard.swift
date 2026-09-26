@@ -12,25 +12,25 @@ struct TrySayingCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             Text("Try saying")
-                .font(.system(size: 11, weight: .semibold))
+                .font(AppTheme.font(.caption, .semibold))
                 .foregroundStyle(AppTheme.Text.muted)
             Text("“um so the standup, 改到 Friday morning, and uh send Chris the onboarding review”")
-                .font(.system(size: 13))
+                .font(AppTheme.font(.body))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x2) {
                 Text("Yap pastes")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(AppTheme.font(.caption, .semibold))
                     .foregroundStyle(AppTheme.Text.muted)
                 Text("Standup 改到 Friday morning. Send Chris the onboarding review.")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(AppTheme.font(.body, .medium))
                     .foregroundStyle(AppTheme.Text.primary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(14)
+        .padding(AppTheme.Spacing.x4)
         .frame(maxWidth: 520, alignment: .leading)
         .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.card))
         .accessibilityElement(children: .combine)

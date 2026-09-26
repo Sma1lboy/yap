@@ -90,16 +90,16 @@ struct ModelManagementView: View {
             headerSection
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
                     if SystemArchitecture.isIntelMac {
                         intelMacWarningBanner
                     }
 
                     availableModelsSection
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 18)
-                .padding(.bottom, 28)
+                .padding(.horizontal, AppTheme.Spacing.x6)
+                .padding(.top, AppTheme.Spacing.x5)
+                .padding(.bottom, AppTheme.Spacing.x8)
                 .frame(maxWidth: .infinity, alignment: .topLeading)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -170,7 +170,7 @@ struct ModelManagementView: View {
     }
 
     private var availableModelsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             modelFilterPicker
 
             switch selectedFilter {
@@ -212,7 +212,7 @@ struct ModelManagementView: View {
     }
 
     private var modelFilterPicker: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             ForEach(ModelFilter.allCases, id: \.self) { filter in
                 Button(action: {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -221,18 +221,18 @@ struct ModelManagementView: View {
                     activePanel = nil
                 }) {
                     Text(filter.title)
-                        .font(.system(size: 14, weight: selectedFilter == filter ? .semibold : .medium))
+                        .font(AppTheme.font(.callout, selectedFilter == filter ? .semibold : .medium))
                         .foregroundColor(selectedFilter == filter ? .primary : .primary.opacity(0.7))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, AppTheme.Spacing.x4)
+                        .padding(.vertical, AppTheme.Spacing.x2)
                         .background(
-                            AppMaterialCardBackground(isSelected: selectedFilter == filter, cornerRadius: 22)
+                            AppMaterialCardBackground(isSelected: selectedFilter == filter, cornerRadius: AppTheme.Radius.pill)
                         )
                 }
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .padding(.bottom, 8)
+        .padding(.bottom, AppTheme.Spacing.x2)
     }
 
     private var settingsButton: some View {
@@ -245,7 +245,7 @@ struct ModelManagementView: View {
     }
 
     private var localModelsSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: AppTheme.Spacing.x3) {
             VoiceInkRefineModelCardView(
                 service: voiceInkRefineService,
                 deleteAction: deleteVoiceInkRefineModel
@@ -296,16 +296,16 @@ struct ModelManagementView: View {
     }
 
     private var importLocalModelButton: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Button(action: { presentImportPanel() }) {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     Image(systemName: "square.and.arrow.down")
                     Text("Import Local Model…")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(AppTheme.font(.footnote, .semibold))
                 }
                 .frame(maxWidth: .infinity)
-                .padding(16)
-                .background(AppMaterialCardBackground(cornerRadius: 10))
+                .padding(AppTheme.Spacing.x4)
+                .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.control))
             }
             .buttonStyle(.plain)
 
@@ -316,13 +316,13 @@ struct ModelManagementView: View {
     }
 
     private var intelMacWarningBanner: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(AppTheme.Status.warningStrong)
 
             Text("Local models don't work reliably on Intel Macs")
-                .font(.system(size: 13, weight: .medium))
+                .font(AppTheme.font(.body, .medium))
                 .foregroundColor(.primary.opacity(0.85))
 
             Spacer()
@@ -332,24 +332,24 @@ struct ModelManagementView: View {
                     selectedFilter = .cloud
                 }
             }) {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Use Cloud")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(AppTheme.font(.footnote, .semibold))
                     Image(systemName: "arrow.right")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(AppTheme.font(.micro, .semibold))
                 }
                 .foregroundColor(AppTheme.Status.warningStrong)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.horizontal, AppTheme.Spacing.x3)
+                .padding(.vertical, AppTheme.Spacing.x2)
                 .background(AppTheme.Status.warningStrong.opacity(0.12))
-                .cornerRadius(6)
+                .cornerRadius(AppTheme.Radius.small)
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, AppTheme.Spacing.x4)
+        .padding(.vertical, AppTheme.Spacing.x3)
         .background(AppTheme.Status.warningStrong.opacity(0.08))
-        .cornerRadius(8)
+        .cornerRadius(AppTheme.Radius.control)
     }
 
     private var localModels: [any TranscriptionModel] {

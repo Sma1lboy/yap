@@ -14,8 +14,8 @@ struct FluidAudioModelCardView: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.x4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 headerSection
                 metadataSection
                 descriptionSection
@@ -25,14 +25,14 @@ struct FluidAudioModelCardView: View {
 
             actionSection
         }
-        .padding(16)
+        .padding(AppTheme.Spacing.x4)
         .background(AppMaterialCardBackground())
     }
 
     private var headerSection: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(model.displayName)
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(Color(.labelColor))
 
             Spacer()
@@ -40,38 +40,38 @@ struct FluidAudioModelCardView: View {
     }
 
     private var metadataSection: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Label(model.language, systemImage: "globe")
             Label(model.size, systemImage: "internaldrive")
-            HStack(spacing: 3) {
+            HStack(spacing: AppTheme.Spacing.x1) {
                 Text("Speed")
                 progressDotsWithNumber(value: model.speed * 10)
             }
             .fixedSize(horizontal: true, vertical: false)
-            HStack(spacing: 3) {
+            HStack(spacing: AppTheme.Spacing.x1) {
                 Text("Accuracy")
                 progressDotsWithNumber(value: model.accuracy * 10)
             }
             .fixedSize(horizontal: true, vertical: false)
         }
-        .font(.system(size: 11))
+        .font(AppTheme.font(.caption))
         .foregroundColor(Color(.secondaryLabelColor))
         .lineLimit(1)
     }
 
     private var descriptionSection: some View {
         Text(model.description)
-            .font(.system(size: 11))
+            .font(AppTheme.font(.caption))
             .foregroundColor(Color(.secondaryLabelColor))
             .lineLimit(2)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.top, 4)
+            .padding(.top, AppTheme.Spacing.x1)
     }
 
     private var progressSection: some View {
         Group {
             if let status = fluidAudioModelManager.downloadStatus(for: model) {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                     HStack {
                         Text(status.message)
                             .lineLimit(1)
@@ -87,20 +87,20 @@ struct FluidAudioModelCardView: View {
                         Text(status.fractionCompleted, format: .percent.precision(.fractionLength(0)))
                             .fontDesign(.monospaced)
                     }
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppTheme.font(.caption, .medium))
                     .foregroundColor(Color(.secondaryLabelColor))
 
                     ProgressView(value: status.fractionCompleted)
                         .progressViewStyle(LinearProgressViewStyle())
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 8)
+                .padding(.top, AppTheme.Spacing.x2)
             }
         }
     }
 
     private var actionSection: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             if isDownloaded && !isDownloading {
                 modelStatusPill("Downloaded", systemImage: "checkmark.circle")
             } else {
@@ -111,16 +111,17 @@ struct FluidAudioModelCardView: View {
                         fluidAudioModelManager.startDownload(model)
                     }
                 }) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Text(LocalizedStringKey(isDownloading ? "Cancel" : "Download"))
                         Image(systemName: isDownloading ? "xmark.circle" : "arrow.down.circle")
                     }
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(AppTheme.Text.onAccent)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .font(AppTheme.font(.footnote, .medium))
+                    .foregroundColor(AppTheme.Text.primary)
+                    .padding(.horizontal, AppTheme.Spacing.x3)
+                    .padding(.vertical, AppTheme.Spacing.x2)
                     .background(
-                        Capsule().fill(isDownloading ? AppTheme.Action.destructiveFill : AppTheme.Accent.primary)
+                        Capsule().fill(AppTheme.Surface.control)
+                        .overlay(Capsule().strokeBorder(AppTheme.Border.control))
                     )
                 }
                 .buttonStyle(.plain)
@@ -142,7 +143,7 @@ struct FluidAudioModelCardView: View {
 
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                        .font(.system(size: 14))
+                        .font(AppTheme.font(.callout))
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)

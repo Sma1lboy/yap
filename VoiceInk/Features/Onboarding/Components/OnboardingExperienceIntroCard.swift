@@ -9,10 +9,10 @@ struct OnboardingExperienceIntroCard: View {
     @State private var isVisible = false
 
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text(LocalizedStringKey(introText))
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(AppTheme.font(.headline, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -24,8 +24,8 @@ struct OnboardingExperienceIntroCard: View {
                 )
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, AppTheme.Spacing.x3)
+        .padding(.vertical, AppTheme.Spacing.x2)
         .fixedSize(horizontal: false, vertical: false)
         .opacity(isVisible ? 1 : 0)
         .scaleEffect(isVisible ? 1 : 0.98)

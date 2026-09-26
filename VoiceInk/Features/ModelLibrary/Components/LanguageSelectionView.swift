@@ -92,20 +92,20 @@ struct LanguageSelectionView: View {
 
     // The original full view layout for settings page
     private var fullView: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             languageSelectionSection
         }
     }
 
     private var languageSelectionSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             Text("Transcription Language")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
 
             if transcriptionModelManager.currentTranscriptionModel != nil {
                 if hasLanguageChoices() {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+                        HStack(spacing: AppTheme.Spacing.x2) {
                             Picker("Select Language", selection: selectedLanguageBinding) {
                                 ForEach(
                                     availableLanguagesForCurrentModel().sorted(by: {
@@ -128,20 +128,20 @@ struct LanguageSelectionView: View {
                         Text(
                             "Select a supported transcription language or locale. Automatic multilingual transcription is shown when available."
                         )
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                     }
                 } else {
                     // For English-only models, force set language to English
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                         Text("Language: English")
-                            .font(.subheadline)
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(.primary)
 
                         Text(
                             "This is an English-optimized model and only supports English transcription."
                         )
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                     }
                     .onAppear {
@@ -151,21 +151,21 @@ struct LanguageSelectionView: View {
                 }
             } else {
                 Text("No model selected")
-                    .font(.subheadline)
+                    .font(AppTheme.font(.caption))
                     .foregroundColor(.secondary)
             }
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppTheme.Surface.control)
-        .cornerRadius(10)
+        .cornerRadius(AppTheme.Radius.control)
     }
 
     // New compact view for menu bar
     private var menuItemView: some View {
         Group {
             if hasLanguageChoices() {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     Menu {
                         ForEach(
                             availableLanguagesForCurrentModel().sorted(by: {
@@ -189,7 +189,7 @@ struct LanguageSelectionView: View {
                         HStack {
                             Text(String(format: String(localized: "Language: %@"), currentLanguageDisplayName()))
                             Image(systemName: "chevron.up.chevron.down")
-                                .font(.system(size: 10))
+                                .font(AppTheme.font(.micro))
                         }
                     }
 

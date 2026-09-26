@@ -18,9 +18,9 @@ struct WhisperModelCardView: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.x4) {
             // Main Content
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 headerSection
                 metadataSection
                 descriptionSection
@@ -31,14 +31,14 @@ struct WhisperModelCardView: View {
             // Action Controls
             actionSection
         }
-        .padding(16)
+        .padding(AppTheme.Spacing.x4)
         .background(AppMaterialCardBackground())
     }
 
     private var headerSection: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(model.displayName)
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(Color(.labelColor))
 
             Spacer()
@@ -46,23 +46,23 @@ struct WhisperModelCardView: View {
     }
 
     private var metadataSection: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             // Language
             Label(model.language, systemImage: "globe")
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
 
             // Size
             Label(model.size, systemImage: "internaldrive")
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
 
             // Speed
-            HStack(spacing: 3) {
+            HStack(spacing: AppTheme.Spacing.x1) {
                 Text("Speed")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppTheme.font(.caption, .medium))
                     .foregroundColor(Color(.secondaryLabelColor))
                 progressDotsWithNumber(value: model.speed * 10)
             }
@@ -70,9 +70,9 @@ struct WhisperModelCardView: View {
             .fixedSize(horizontal: true, vertical: false)
 
             // Accuracy
-            HStack(spacing: 3) {
+            HStack(spacing: AppTheme.Spacing.x1) {
                 Text("Accuracy")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppTheme.font(.caption, .medium))
                     .foregroundColor(Color(.secondaryLabelColor))
                 progressDotsWithNumber(value: model.accuracy * 10)
             }
@@ -84,11 +84,11 @@ struct WhisperModelCardView: View {
 
     private var descriptionSection: some View {
         Text(model.description)
-            .font(.system(size: 11))
+            .font(AppTheme.font(.caption))
             .foregroundColor(Color(.secondaryLabelColor))
             .lineLimit(2)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.top, 4)
+            .padding(.top, AppTheme.Spacing.x1)
     }
 
     private var progressSection: some View {
@@ -99,31 +99,31 @@ struct WhisperModelCardView: View {
                     downloadProgress: downloadProgress,
                     isOptimizing: isWarming && !isDownloading
                 )
-                .padding(.top, 8)
+                .padding(.top, AppTheme.Spacing.x2)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
 
     private var actionSection: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             if isDownloaded {
                 modelStatusPill("Downloaded", systemImage: "checkmark.circle")
             } else {
                 Button(action: isDownloading ? cancelDownloadAction : downloadAction) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Text(LocalizedStringKey(isDownloading ? "Cancel" : "Download"))
-                            .font(.system(size: 12, weight: .medium))
+                            .font(AppTheme.font(.footnote, .medium))
                         Image(systemName: isDownloading ? "xmark.circle" : "arrow.down.circle")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(AppTheme.font(.footnote, .medium))
                     }
-                    .foregroundColor(AppTheme.Text.onAccent)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .foregroundColor(AppTheme.Text.primary)
+                    .padding(.horizontal, AppTheme.Spacing.x3)
+                    .padding(.vertical, AppTheme.Spacing.x2)
                     .background(
                         Capsule()
-                            .fill(isDownloading ? AppTheme.Action.destructiveFill : AppTheme.Accent.primary)
-                            .shadow(color: AppTheme.Accent.shadow, radius: 2, x: 0, y: 1)
+                            .fill(AppTheme.Surface.control)
+                            .overlay(Capsule().strokeBorder(AppTheme.Border.control))
                     )
                 }
                 .buttonStyle(.plain)
@@ -144,7 +144,7 @@ struct WhisperModelCardView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                        .font(.system(size: 14))
+                        .font(AppTheme.font(.callout))
                 }
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
@@ -165,25 +165,25 @@ struct ImportedWhisperModelCardView: View {
     var deleteAction: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.x4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(model.displayName)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(AppTheme.font(.body, .semibold))
                         .foregroundColor(Color(.labelColor))
                     Spacer()
                 }
 
                 Text("Imported local model")
-                    .font(.system(size: 11))
+                    .font(AppTheme.font(.caption))
                     .foregroundColor(Color(.secondaryLabelColor))
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 4)
+                    .padding(.top, AppTheme.Spacing.x1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 if isDownloaded {
                     modelStatusPill("Imported", systemImage: "checkmark.circle")
                 }
@@ -202,7 +202,7 @@ struct ImportedWhisperModelCardView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
-                            .font(.system(size: 14))
+                            .font(AppTheme.font(.callout))
                     }
                     .menuStyle(.borderlessButton)
                     .menuIndicator(.hidden)
@@ -212,7 +212,7 @@ struct ImportedWhisperModelCardView: View {
                 }
             }
         }
-        .padding(16)
+        .padding(AppTheme.Spacing.x4)
         .background(AppMaterialCardBackground())
     }
 }
@@ -220,16 +220,16 @@ struct ImportedWhisperModelCardView: View {
 // MARK: - Helper Views and Functions
 
 func progressDotsWithNumber(value: Double) -> some View {
-    HStack(spacing: 4) {
+    HStack(spacing: AppTheme.Spacing.x1) {
         progressDots(value: value)
         Text(String(format: "%.1f", value))
-            .font(.system(size: 10, weight: .medium, design: .monospaced))
+            .font(AppTheme.font(.micro, .medium, design: .monospaced))
             .foregroundColor(Color(.secondaryLabelColor))
     }
 }
 
 func progressDots(value: Double) -> some View {
-    HStack(spacing: 2) {
+    HStack(spacing: AppTheme.Spacing.half) {
         ForEach(0..<5) { index in
             Circle()
                 .fill(index < Int(value / 2) ? performanceColor(value: value / 10) : Color(.quaternaryLabelColor))
@@ -249,10 +249,10 @@ func performanceColor(value: Double) -> Color {
 
 func modelStatusPill(_ text: LocalizedStringKey, systemImage: String) -> some View {
     Label(text, systemImage: systemImage)
-        .font(.system(size: 11, weight: .medium))
+        .font(AppTheme.font(.caption, .medium))
         .foregroundColor(Color(.secondaryLabelColor))
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, AppTheme.Spacing.x2)
+        .padding(.vertical, AppTheme.Spacing.x1)
         .background(AppTheme.Surface.card)
         .clipShape(Capsule())
 }

@@ -9,19 +9,19 @@ struct DashboardProductivityCard: View {
     let onRefreshStats: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .center, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
+            HStack(alignment: .center, spacing: AppTheme.Spacing.x4) {
                 Text(period.chartTitle)
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(AppTheme.font(.title3, .semibold, design: .rounded))
                     .foregroundStyle(AppTheme.Text.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.84)
 
                 Spacer(minLength: 12)
 
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     Text(statusText)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(AppTheme.font(.footnote, .medium))
                         .foregroundStyle(AppTheme.Text.muted)
                         .lineLimit(1)
                         .minimumScaleFactor(0.86)
@@ -39,9 +39,9 @@ struct DashboardProductivityCard: View {
             DashboardProductivityChart(period: period, points: points)
                 .frame(height: 208)
         }
-        .padding(18)
+        .padding(AppTheme.Spacing.x5)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DashboardInsightCardBackground(cornerRadius: 16))
+        .background(DashboardInsightCardBackground(cornerRadius: AppTheme.Radius.panel))
     }
 
     private var statusText: String {
@@ -52,29 +52,29 @@ struct DashboardEditorialSummaryCard: View {
     let summary: DashboardTimeSavedSummary
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
             Text("You made room for")
-                .font(.system(size: 15, weight: .semibold))
+                .font(AppTheme.font(.headline, .semibold))
                 .foregroundStyle(AppTheme.Text.secondary)
 
-            HStack(alignment: .lastTextBaseline, spacing: 12) {
+            HStack(alignment: .lastTextBaseline, spacing: AppTheme.Spacing.x3) {
                 Text(summary.hasData ? Formatters.formattedSavedTime(summary.timeSaved) : "--")
-                    .font(.system(size: 54, weight: .heavy, design: .rounded))
-                    .foregroundStyle(AppTheme.Accent.strong)
+                    .font(AppTheme.font(.display, .semibold, design: .rounded))
+                    .foregroundStyle(AppTheme.Accent.text)
                     .lineLimit(1)
                     .minimumScaleFactor(0.55)
 
                 Text("of focused work")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(AppTheme.font(.title3, .semibold, design: .rounded))
                     .foregroundStyle(AppTheme.Text.secondary)
-                    .padding(.bottom, 7)
+                    .padding(.bottom, AppTheme.Spacing.x2)
             }
 
             Rectangle()
                 .fill(AppTheme.Text.primary)
                 .frame(height: 2)
 
-            HStack(alignment: .top, spacing: 30) {
+            HStack(alignment: .top, spacing: AppTheme.Spacing.x8) {
                 editorialFact(
                     value: summary.hasData ? Formatters.formattedCompactNumber(summary.wordCount) : "--",
                     copy: "words captured"
@@ -89,9 +89,9 @@ struct DashboardEditorialSummaryCard: View {
                 )
             }
         }
-        .padding(24)
+        .padding(AppTheme.Spacing.x6)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DashboardInsightCardBackground(cornerRadius: 16))
+        .background(DashboardInsightCardBackground(cornerRadius: AppTheme.Radius.panel))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Yap impact summary")
     }
@@ -102,12 +102,12 @@ struct DashboardEditorialSummaryCard: View {
     }
 
     private func editorialFact(value: String, copy: LocalizedStringKey) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
             Text(value)
-                .font(.system(size: 18, weight: .heavy, design: .rounded))
+                .font(AppTheme.font(.title3, .semibold, design: .rounded))
                 .foregroundStyle(AppTheme.Text.primary)
             Text(copy)
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -129,13 +129,13 @@ private struct DashboardStatsRefreshButton: View {
                         .transition(.opacity)
                 } else {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(AppTheme.font(.footnote, .semibold))
                         .foregroundStyle(AppTheme.Text.primary.opacity(0.72))
                         .transition(.opacity)
                 }
             }
             .frame(width: 34, height: 34)
-            .background(AppCardBackground(cornerRadius: 17))
+            .background(AppCardBackground(cornerRadius: AppTheme.Radius.panel))
             .animation(.easeInOut(duration: 0.18), value: isRefreshing)
         }
         .buttonStyle(.plain)
@@ -229,7 +229,7 @@ private struct DashboardProductivityChart: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.x3) {
             DashboardProductivityYAxis(labels: yAxisLabels)
                 .accessibilityHidden(true)
 
@@ -276,7 +276,7 @@ private struct DashboardProductivityYAxis: View {
             }
 
             Text("Words")
-                .font(.system(size: 10, weight: .semibold))
+                .font(AppTheme.font(.micro, .semibold))
                 .foregroundStyle(AppTheme.Text.secondary.opacity(0.82))
                 .lineLimit(1)
                 .frame(height: 30, alignment: .topLeading)
@@ -286,7 +286,7 @@ private struct DashboardProductivityYAxis: View {
 
     private func yAxisLabel(_ label: Int) -> some View {
         Text(Formatters.formattedAxisValue(label))
-            .font(.system(size: 11, weight: .medium))
+            .font(AppTheme.font(.caption, .medium))
             .foregroundStyle(AppTheme.Text.secondary)
             .lineLimit(1)
     }

@@ -38,18 +38,18 @@ struct AppNotificationView: View {
 
     var body: some View {
         ZStack {
-            HStack(alignment: .center, spacing: 12) {
+            HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
                 // Type icon
                 Image(systemName: type.iconName)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(AppTheme.font(.headline, .medium))
                     .foregroundColor(type.iconColor)
                     .frame(width: 20, height: 20)
 
                 // Single message text
                 Text(title)
-                    .font(.system(size: 12))
+                    .font(AppTheme.font(.footnote))
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundColor(.white)  // design-exempt: HUD, always dark
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
 
@@ -61,19 +61,19 @@ struct AppNotificationView: View {
                         onClose()
                     }) {
                         Text(actionButton.label)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .font(AppTheme.font(.caption, .semibold))
+                            .foregroundColor(.white)  // design-exempt: HUD, always dark
+                            .padding(.horizontal, AppTheme.Spacing.x2)
+                            .padding(.vertical, AppTheme.Spacing.x1)
                             .background(Color.white.opacity(0.14))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.small))
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
 
                 Button(action: onClose) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(AppTheme.font(.micro, .medium))
                         .foregroundColor(.white.opacity(0.6))
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -81,8 +81,8 @@ struct AppNotificationView: View {
                 .accessibilityLabel("Close")
                 .frame(width: 16, height: 16)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, AppTheme.Spacing.x4)
+            .padding(.vertical, AppTheme.Spacing.x3)
         }
         .frame(minWidth: 220, maxWidth: 750, minHeight: 44)
         .background(
@@ -97,7 +97,7 @@ struct AppNotificationView: View {
                         LinearGradient(
                             colors: [
                                 Color.black.opacity(0.95),
-                                Color(red: 0.15, green: 0.15, blue: 0.15).opacity(0.9),
+                                Color(red: 0.15, green: 0.15, blue: 0.15).opacity(0.9),  // design-exempt: HUD, always dark
                             ],
                             startPoint: .top,
                             endPoint: .bottom

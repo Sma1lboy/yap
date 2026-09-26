@@ -155,11 +155,11 @@ struct QuickPanelEscapeButton: View {
     var body: some View {
         Button(action: action) {
             Text("esc")
-                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .font(AppTheme.font(.caption, .medium, design: .rounded))
                 .foregroundStyle(AppTheme.Text.secondary)
-                .padding(.horizontal, 7)
-                .padding(.vertical, 4)
-                .background(AppTheme.Surface.controlActive, in: RoundedRectangle(cornerRadius: 5))
+                .padding(.horizontal, AppTheme.Spacing.x2)
+                .padding(.vertical, AppTheme.Spacing.x1)
+                .background(AppTheme.Surface.controlActive, in: RoundedRectangle(cornerRadius: AppTheme.Radius.small))
         }
         .buttonStyle(.plain)
         .help(help)

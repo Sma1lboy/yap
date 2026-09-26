@@ -234,7 +234,7 @@ struct DashboardContent: View {
     }
 
     private var footerLinks: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: AppTheme.Spacing.x4) {
             Button {
                 isInsightsViewPresented = true
             } label: {
@@ -261,7 +261,7 @@ struct DashboardContent: View {
             }
         }
         .buttonStyle(.link)
-        .font(.system(size: 12))
+        .font(AppTheme.font(.footnote))
         .foregroundStyle(AppTheme.Text.secondary)
     }
 
@@ -484,26 +484,26 @@ private struct DashboardAccessibilityReminder: View {
     let onOpenSettings: () -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
             ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .fill(AppTheme.Accent.fill)
 
                 Image(systemName: "hand.raised")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(AppTheme.font(.headline, .medium))
                     .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(AppTheme.Accent.primary)
+                    .foregroundStyle(AppTheme.Accent.text)
             }
             .frame(width: 34, height: 34)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text("Enable Accessibility Access")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(AppTheme.font(.body, .semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
                 Text("Required for Yap to paste transcripts into other apps and for its shortcuts to work.")
-                    .font(.system(size: 11))
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
@@ -513,9 +513,9 @@ private struct DashboardAccessibilityReminder: View {
             AppActionButton("Open Settings", action: onOpenSettings)
                 .help("Open Accessibility settings")
         }
-        .padding(16)
+        .padding(AppTheme.Spacing.x4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppCardBackground(cornerRadius: 16))
+        .background(AppCardBackground(cornerRadius: AppTheme.Radius.panel))
     }
 }
 
@@ -523,26 +523,26 @@ private struct DashboardNoModesReminder: View {
     let onOpenModes: () -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
             ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .fill(AppTheme.Accent.fill)
 
                 Image(systemName: "square.grid.2x2")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(AppTheme.font(.headline, .medium))
                     .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(AppTheme.Accent.primary)
+                    .foregroundStyle(AppTheme.Accent.text)
             }
             .frame(width: 34, height: 34)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text("Set Up a Mode")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(AppTheme.font(.body, .semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
                 Text("Yap needs at least one mode to record. Create one to start dictating.")
-                    .font(.system(size: 11))
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
@@ -552,8 +552,8 @@ private struct DashboardNoModesReminder: View {
             AppActionButton("Manage Modes", action: onOpenModes)
                 .help("Open Modes settings")
         }
-        .padding(16)
+        .padding(AppTheme.Spacing.x4)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppCardBackground(cornerRadius: 16))
+        .background(AppCardBackground(cornerRadius: AppTheme.Radius.panel))
     }
 }

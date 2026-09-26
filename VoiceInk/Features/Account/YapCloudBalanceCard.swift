@@ -13,18 +13,18 @@ struct YapCloudBalanceCard: View {
     @ViewBuilder
     private var card: some View {
         if cloud.isSignedIn, let balance = cloud.balanceMicros {
-            HStack(alignment: .center, spacing: 12) {
+            HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
                 Image(systemName: cloud.isLowBalance ? "exclamationmark.triangle.fill" : "creditcard")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(AppTheme.font(.headline, .medium))
                     .foregroundStyle(cloud.isLowBalance ? AppTheme.Status.warningStrong : AppTheme.Text.secondary)
                     .frame(width: 34, height: 34)
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                     Text(cloud.isLowBalance ? "Low Yap Cloud balance" : "Yap Cloud balance")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(AppTheme.font(.body, .semibold))
                         .foregroundStyle(.primary)
                     Text(verbatim: YapCloud.formatUSD(micros: balance))
-                        .font(.system(size: 12))
+                        .font(AppTheme.font(.footnote))
                         .monospacedDigit()
                         .foregroundStyle(balance > 0 ? AppTheme.Text.secondary : AppTheme.Status.error)
                 }
@@ -32,17 +32,15 @@ struct YapCloudBalanceCard: View {
                 Spacer(minLength: 12)
 
                 if cloud.isLowBalance {
-                    Button("Add Funds", action: YapCloud.showAddFunds)
-                        .controlSize(.small)
-                        .buttonStyle(.borderedProminent)
+                    AppActionButton("Add Funds", kind: .primary, action: YapCloud.showAddFunds)
                 } else {
                     Button("Account", action: YapCloud.showAddFunds)
                         .controlSize(.small)
                 }
             }
-            .padding(16)
+            .padding(AppTheme.Spacing.x4)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AppCardBackground(cornerRadius: 16))
+            .background(AppCardBackground(cornerRadius: AppTheme.Radius.panel))
         }
     }
 }
@@ -55,19 +53,17 @@ struct YapCloudTrialNudgeBanner: View {
 
     var body: some View {
         if let nudge = cloud.trialNudge {
-            HStack(alignment: .center, spacing: 12) {
+            HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
                 Image(systemName: "gift")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(AppTheme.font(.headline, .medium))
                     .foregroundStyle(AppTheme.Status.warningStrong)
                     .frame(width: 34, height: 34)
                 Text(message(nudge))
-                    .font(.system(size: 12.5))
+                    .font(AppTheme.font(.footnote))
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 8)
                 if isHomeCard {
-                    Button("Add Funds", action: YapCloud.showAddFunds)
-                        .controlSize(.small)
-                        .buttonStyle(.borderedProminent)
+                    AppActionButton("Add Funds", kind: .primary, action: YapCloud.showAddFunds)
                 }
                 Button {
                     cloud.dismissTrialNudge()
@@ -80,7 +76,7 @@ struct YapCloudTrialNudgeBanner: View {
             }
             .padding(isHomeCard ? 16 : 0)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background { if isHomeCard { AppCardBackground(cornerRadius: 16) } }
+            .background { if isHomeCard { AppCardBackground(cornerRadius: AppTheme.Radius.panel) } }
         }
     }
 

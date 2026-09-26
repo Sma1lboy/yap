@@ -20,7 +20,7 @@ struct OnboardingAPIScreen: View {
             stage: .api,
             contentMaxWidth: contentMaxWidth
         ) {
-            VStack(spacing: 14) {
+            VStack(spacing: AppTheme.Spacing.x4) {
                 AIProviderVerificationCard(
                     aiService: aiService,
                     providerOptions: providerOptions,

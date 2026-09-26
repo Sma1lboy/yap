@@ -6,8 +6,8 @@ struct VoiceInkRefineModelCardView: View {
     let deleteAction: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.x4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 headerSection
                 metadataSection
                 descriptionSection
@@ -17,29 +17,29 @@ struct VoiceInkRefineModelCardView: View {
 
             actionSection
         }
-        .padding(16)
+        .padding(AppTheme.Spacing.x4)
         .background(AppMaterialCardBackground())
     }
 
     private var headerSection: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(verbatim: VoiceInkRefineService.displayModelName)
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppTheme.font(.callout, .semibold))
                 .foregroundStyle(Color(.labelColor))
 
             Text("New")
-                .font(.system(size: 10, weight: .medium))
-                .foregroundColor(.black)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Capsule().fill(Color(red: 0.96, green: 0.79, blue: 0.63)))
+                .font(AppTheme.font(.micro, .medium))
+                .foregroundColor(AppTheme.Text.primary)
+                .padding(.horizontal, AppTheme.Spacing.x2)
+                .padding(.vertical, AppTheme.Spacing.half)
+                .background(Capsule().fill(AppTheme.Accent.fillSubtle))
 
             Spacer()
         }
     }
 
     private var metadataSection: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Label("Enhancement Model", systemImage: "sparkles")
             Label("On-Device", systemImage: "checkmark.shield")
             Label {
@@ -48,33 +48,33 @@ struct VoiceInkRefineModelCardView: View {
                 Image(systemName: "internaldrive")
             }
         }
-        .font(.system(size: 11))
+        .font(AppTheme.font(.caption))
         .foregroundColor(Color(.secondaryLabelColor))
         .lineLimit(1)
     }
 
     private var descriptionSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
             Text("Cleans up raw transcripts. Processing stays on your Mac.")
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let unavailableDescription = service.unavailableDescription {
                 Text(unavailableDescription)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppTheme.font(.caption, .medium))
                     .foregroundStyle(AppTheme.Status.warningStrong)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.top, 4)
+        .padding(.top, AppTheme.Spacing.x1)
     }
 
     @ViewBuilder
     private var progressSection: some View {
         if service.isDownloading {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 HStack {
                     Text(downloadDetail)
                         .lineLimit(1)
@@ -87,7 +87,7 @@ struct VoiceInkRefineModelCardView: View {
                     )
                     .fontDesign(.monospaced)
                 }
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundColor(Color(.secondaryLabelColor))
 
                 ProgressView(value: service.downloadProgress)
@@ -96,20 +96,20 @@ struct VoiceInkRefineModelCardView: View {
                     .accessibilityValue(Text(verbatim: downloadAccessibilityValue))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, 8)
+            .padding(.top, AppTheme.Spacing.x2)
         }
 
         if let downloadError = service.downloadError {
             Text(downloadError)
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Status.error)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 4)
+                .padding(.top, AppTheme.Spacing.x1)
         }
     }
 
     private var actionSection: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             switch service.availability {
             case .unsupportedIntel, .insufficientMemory:
                 modelStatusPill("Unavailable", systemImage: "exclamationmark.triangle")
@@ -118,15 +118,15 @@ struct VoiceInkRefineModelCardView: View {
                     Button {
                         service.cancelDownload()
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: AppTheme.Spacing.x1) {
                             Text("Cancel")
                             Image(systemName: "xmark.circle")
                         }
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(AppTheme.Text.onAccent)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Capsule().fill(AppTheme.Action.destructiveFill))
+                        .font(AppTheme.font(.footnote, .medium))
+                        .foregroundColor(AppTheme.Text.primary)
+                        .padding(.horizontal, AppTheme.Spacing.x3)
+                        .padding(.vertical, AppTheme.Spacing.x2)
+                        .background(Capsule().fill(AppTheme.Surface.control).overlay(Capsule().strokeBorder(AppTheme.Border.control)))
                     }
                     .buttonStyle(.plain)
                 } else if service.isDownloaded {
@@ -149,7 +149,7 @@ struct VoiceInkRefineModelCardView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
-                            .font(.system(size: 14))
+                            .font(AppTheme.font(.callout))
                     }
                     .menuStyle(.borderlessButton)
                     .menuIndicator(.hidden)
@@ -160,7 +160,7 @@ struct VoiceInkRefineModelCardView: View {
                     Button {
                         service.startDownload()
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: AppTheme.Spacing.x1) {
                             if service.downloadError == nil {
                                 Text("Download")
                             } else {
@@ -168,14 +168,14 @@ struct VoiceInkRefineModelCardView: View {
                             }
                             Image(systemName: "arrow.down.circle")
                         }
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(AppTheme.Text.onAccent)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
+                        .font(AppTheme.font(.footnote, .medium))
+                        .foregroundColor(AppTheme.Text.primary)
+                        .padding(.horizontal, AppTheme.Spacing.x3)
+                        .padding(.vertical, AppTheme.Spacing.x2)
                         .background(
                             Capsule()
-                                .fill(AppTheme.Accent.primary)
-                                .shadow(color: AppTheme.Accent.shadow, radius: 2, x: 0, y: 1)
+                                .fill(AppTheme.Surface.control)
+                                .overlay(Capsule().strokeBorder(AppTheme.Border.control))
                         )
                     }
                     .buttonStyle(.plain)

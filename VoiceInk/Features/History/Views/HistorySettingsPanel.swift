@@ -159,7 +159,7 @@ struct HistorySettingsPanel: View {
     }
 
     private func sectionHeader(_ title: LocalizedStringKey, tip: LocalizedStringKey) -> some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             Text(title)
 
             InfoTip(message: tip, iconSize: .small, iconColor: .secondary, width: 260)

@@ -120,7 +120,7 @@ struct HistoryView<Header: View>: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         header
-                            .padding(.bottom, 24)
+                            .padding(.bottom, AppTheme.Spacing.x6)
 
                         topBar
 
@@ -130,9 +130,9 @@ struct HistoryView<Header: View>: View {
                             cardListView
                         }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 28)
-                    .padding(.bottom, 24)
+                    .padding(.horizontal, AppTheme.Spacing.x6)
+                    .padding(.top, AppTheme.Spacing.x8)
+                    .padding(.bottom, AppTheme.Spacing.x6)
                 }
                 .focusable()
                 .focused($isListFocused)
@@ -213,17 +213,17 @@ struct HistoryView<Header: View>: View {
     // MARK: - Top Bar
 
     private var topBar: some View {
-        HStack(spacing: 10) {
-            HStack(spacing: 6) {
+        HStack(spacing: AppTheme.Spacing.x3) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.secondary)
-                    .font(.system(size: 12))
+                    .font(AppTheme.font(.footnote))
                 TextField("Search transcriptions...", text: $searchText)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 13))
+                    .font(AppTheme.font(.body))
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .padding(.horizontal, AppTheme.Spacing.x3)
+            .padding(.vertical, AppTheme.Spacing.x2)
             .background(
                 Capsule()
                     .fill(AppTheme.Surface.card)
@@ -245,13 +245,13 @@ struct HistoryView<Header: View>: View {
                 openPanel(mode: .historySettings)
             }
         }
-        .padding(.bottom, 4)
+        .padding(.bottom, AppTheme.Spacing.x1)
     }
 
     private var selectionBar: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: AppTheme.Spacing.x4) {
             Text(String(format: String(localized: "%lld selected"), Int64(selectedTranscriptions.count)))
-                .font(.system(size: 13, weight: .medium))
+                .font(AppTheme.font(.body, .medium))
                 .foregroundColor(.secondary)
 
             Spacer()
@@ -260,7 +260,7 @@ struct HistoryView<Header: View>: View {
                 openPanel(mode: .analysis)
             }) {
                 Label("Analyze", systemImage: "chart.bar.xaxis")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
             }
             .buttonStyle(.plain)
             .foregroundColor(.secondary)
@@ -269,14 +269,14 @@ struct HistoryView<Header: View>: View {
                 exportService.exportTranscriptionsToCSV(transcriptions: Array(selectedTranscriptions))
             }) {
                 Label("Export", systemImage: "square.and.arrow.up")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
             }
             .buttonStyle(.plain)
             .foregroundColor(.secondary)
 
             Button(action: { showDeleteConfirmation = true }) {
                 Label("Delete", systemImage: "trash")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
             }
             .buttonStyle(.plain)
             .foregroundColor(AppTheme.Status.error.opacity(0.80))
@@ -288,20 +288,20 @@ struct HistoryView<Header: View>: View {
                 Button("Deselect All") {
                     selectedTranscriptions.removeAll()
                 }
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .buttonStyle(.plain)
                 .foregroundColor(.secondary)
             } else {
                 Button("Select All") {
                     Task { await selectAllTranscriptions() }
                 }
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .buttonStyle(.plain)
                 .foregroundColor(.secondary)
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 10)
+        .padding(.horizontal, AppTheme.Spacing.x6)
+        .padding(.vertical, AppTheme.Spacing.x3)
         .background(
             AppTheme.Surface.window
                 .shadow(color: Color.black.opacity(0.1), radius: 3, y: -2)
@@ -311,12 +311,12 @@ struct HistoryView<Header: View>: View {
     // MARK: - Empty State
 
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.x4) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Image(systemName: searchText.isEmpty ? "mic" : "magnifyingglass")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(AppTheme.font(.body, .medium))
                 Text(verbatim: emptyStateMessage)
-                    .font(.system(size: 13))
+                    .font(AppTheme.font(.body))
             }
             .foregroundStyle(AppTheme.Text.secondary)
 
@@ -326,7 +326,7 @@ struct HistoryView<Header: View>: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 56)
+        .padding(.vertical, 56)  // design-exempt: layout offset, not spacing
     }
 
     private var emptyStateMessage: String {
@@ -365,7 +365,7 @@ struct HistoryView<Header: View>: View {
             ForEach(Array(group.items.enumerated()), id: \.element.id) { index, transcription in
                 if index > 0 {
                     Divider()
-                        .padding(.leading, 10)
+                        .padding(.leading, AppTheme.Spacing.x3)
                 }
 
                 HistoryCardRow(
@@ -395,16 +395,16 @@ struct HistoryView<Header: View>: View {
             Button(action: {
                 Task { await loadMoreContent() }
             }) {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     if isLoading {
                         ProgressView().controlSize(.small)
                     }
                     Text(isLoading ? "Loading..." : "Load More")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(AppTheme.font(.footnote, .medium))
                 }
                 .foregroundStyle(AppTheme.Text.secondary)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
+                .padding(.vertical, AppTheme.Spacing.x4)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -417,7 +417,7 @@ struct HistoryView<Header: View>: View {
 
         return HStack(alignment: .firstTextBaseline) {
             Text(verbatim: Self.dayTitle(group.id))
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundStyle(AppTheme.Text.primary)
 
             Spacer()
@@ -426,13 +426,13 @@ struct HistoryView<Header: View>: View {
                 verbatim: String(localized: "\(Int64(group.items.count)) items") + " \u{00B7} "
                     + String(localized: "\(Int64(words)) words")
             )
-            .font(.system(size: 11))
+            .font(AppTheme.font(.caption))
             .monospacedDigit()
             .foregroundStyle(AppTheme.Text.secondary)
         }
-        .padding(.horizontal, 10)
-        .padding(.top, 24)
-        .padding(.bottom, 6)
+        .padding(.horizontal, AppTheme.Spacing.x3)
+        .padding(.top, AppTheme.Spacing.x6)
+        .padding(.bottom, AppTheme.Spacing.x2)
     }
 
     private static func dayTitle(_ day: Date) -> String {
@@ -700,7 +700,7 @@ private struct HistoryCardRow: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.x3) {
             // Keeps its slot so text doesn't shift when the checkbox appears on hover.
             Toggle(
                 "Select transcription",
@@ -711,17 +711,17 @@ private struct HistoryCardRow: View {
             )
             .toggleStyle(CircularCheckboxStyle())
             .labelsHidden()
-            .padding(.top, -1)
+            .padding(.top, -AppTheme.Spacing.half)
             .opacity(isSelecting || isHovering || isChecked || isKeyboardFocused ? 1 : 0)
             .allowsHitTesting(isSelecting || isHovering || isChecked)
 
-            VStack(alignment: .leading, spacing: 6) {
-                VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                     metaLine
 
                     if !isExpanded {
                         Text(preferredCopyText)
-                            .font(.system(size: 13))
+                            .font(AppTheme.font(.body))
                             .lineSpacing(3)
                             .lineLimit(3)
                             .foregroundStyle(AppTheme.Text.primary)
@@ -738,18 +738,18 @@ private struct HistoryCardRow: View {
 
                 if isExpanded {
                     expandedContent
-                        .padding(.top, 6)
+                        .padding(.top, AppTheme.Spacing.x2)
                 }
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 12)
+        .padding(.horizontal, AppTheme.Spacing.x3)
+        .padding(.vertical, AppTheme.Spacing.x3)
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                 .fill(isHovering && !isExpanded ? AppTheme.Surface.subtle : Color.clear)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                 .strokeBorder(AppTheme.Accent.primary, lineWidth: 2)
                 .opacity(isKeyboardFocused ? 1 : 0)
         )
@@ -759,29 +759,29 @@ private struct HistoryCardRow: View {
     }
 
     private var metaLine: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Text(transcription.timestamp, format: .dateTime.hour().minute())
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .monospacedDigit()
                 .foregroundStyle(AppTheme.Text.secondary)
 
             if let modeName = transcription.modeName, !modeName.isEmpty {
                 Text(verbatim: modeName)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(AppTheme.font(.micro, .medium))
                     .foregroundStyle(AppTheme.Text.secondary)
                     .lineLimit(1)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, AppTheme.Spacing.x2)
+                    .padding(.vertical, AppTheme.Spacing.half)
                     .background(Capsule().fill(AppTheme.Surface.subtle))
             }
 
             if transcription.usedYapCloud == true {
                 Text("Yap Cloud")
-                    .font(.system(size: 10, weight: .medium))
+                    .font(AppTheme.font(.micro, .medium))
                     .foregroundStyle(AppTheme.Text.secondary)
                     .lineLimit(1)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, AppTheme.Spacing.x2)
+                    .padding(.vertical, AppTheme.Spacing.half)
                     .background(Capsule().fill(AppTheme.Surface.subtle))
                     .help("Billed to your Yap Cloud balance")
             }
@@ -789,14 +789,14 @@ private struct HistoryCardRow: View {
             statusBadge
 
             Text(verbatim: metaText)
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .monospacedDigit()
                 .foregroundStyle(AppTheme.Text.muted)
                 .lineLimit(1)
 
             Spacer(minLength: 8)
 
-            HStack(spacing: 2) {
+            HStack(spacing: AppTheme.Spacing.half) {
                 if !isExpanded {
                     rowActionButton(
                         systemName: didCopyCollapsedText ? "checkmark" : "doc.on.doc",
@@ -820,11 +820,11 @@ private struct HistoryCardRow: View {
         switch transcription.transcriptionStatus {
         case TranscriptionStatus.failed.rawValue:
             Label("Failed", systemImage: "exclamationmark.triangle")
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Status.error.opacity(0.85))
         case TranscriptionStatus.canceled.rawValue:
             Label("Canceled", systemImage: "xmark.circle")
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Text.muted)
         default:
             EmptyView()
@@ -836,7 +836,7 @@ private struct HistoryCardRow: View {
     ) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .frame(width: 24, height: 22)
                 .contentShape(Rectangle())
@@ -857,10 +857,10 @@ private struct HistoryCardRow: View {
     // MARK: - Expanded Content
 
     private var expandedContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             // Tabs
             if transcription.enhancedText != nil {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     ForEach(TranscriptionTab.allCases, id: \.self) { tab in
                         Button {
                             withAnimation(.easeInOut(duration: 0.15)) {
@@ -868,10 +868,10 @@ private struct HistoryCardRow: View {
                             }
                         } label: {
                             Text(LocalizedStringKey(tab.rawValue))
-                                .font(.system(size: 11, weight: .medium))
+                                .font(AppTheme.font(.caption, .medium))
                                 .foregroundColor(selectedTab == tab ? .primary : .secondary)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
+                                .padding(.horizontal, AppTheme.Spacing.x3)
+                                .padding(.vertical, AppTheme.Spacing.x1)
                                 .background(
                                     Capsule()
                                         .fill(selectedTab == tab ? AppTheme.Surface.controlActive : Color.clear)
@@ -900,13 +900,13 @@ private struct HistoryCardRow: View {
             {
                 Divider()
                 AudioPlayerView(url: url, transcription: transcription, onInfoTap: onShowInfo)
-                    .padding(.vertical, 4)
+                    .padding(.vertical, AppTheme.Spacing.x1)
             } else {
                 HStack {
                     Spacer()
                     Button(action: onShowInfo) {
                         Image(systemName: "info.circle")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(AppTheme.font(.callout, .medium))
                             .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
@@ -926,7 +926,7 @@ struct CircularCheckboxStyle: ToggleStyle {
             Image(systemName: configuration.isOn ? "checkmark.circle.fill" : "circle")
                 .symbolRenderingMode(.hierarchical)
                 .foregroundColor(configuration.isOn ? AppTheme.Selection.foreground : .secondary)
-                .font(.system(size: 16))
+                .font(AppTheme.font(.headline))
         }
         .buttonStyle(.plain)
         // The custom look drops the label and on/off state; VoiceOver gets a standard checkbox instead.
@@ -955,11 +955,11 @@ struct CircularCheckboxStyle: ToggleStyle {
         HistoryCardRow(
             transcription: dictated, wordCount: 14, isExpanded: false, isChecked: false, isSelecting: false,
             onToggleExpand: {}, onToggleCheck: {}, onShowInfo: {})
-        Divider().padding(.leading, 10)
+        Divider().padding(.leading, AppTheme.Spacing.x3)
         HistoryCardRow(
             transcription: failed, wordCount: 5, isExpanded: false, isChecked: true, isSelecting: true,
             onToggleExpand: {}, onToggleCheck: {}, onShowInfo: {})
     }
-    .padding(24)
+    .padding(AppTheme.Spacing.x6)
     .frame(width: 760)
 }

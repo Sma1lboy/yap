@@ -940,10 +940,17 @@ final class YapCloud: ObservableObject {
     /// Ledger amounts: usage rows are usually under a cent, so they get 4 decimals (below $0.0001: "-<$0.0001",
     /// keeping the sign so a charge never reads as a credit);
     /// top-ups and adjustments get 2.
+    /// Negative amounts use U+2212 (−), which lines up with + in a tabular column (DESIGN.md).
     static func formatLedgerAmount(micros: Int64, kind: String) -> String {
-        guard kind == "usage" else { return formatUSD(micros: micros) }
-        if micros != 0 && micros.magnitude < 100 { return (micros < 0 ? "-" : "") + "<$0.0001" }
-        return formatUSD(micros: micros, decimals: 4)
+        let text: String
+        if kind != "usage" {
+            text = formatUSD(micros: micros)
+        } else if micros != 0 && micros.magnitude < 100 {
+            text = (micros < 0 ? "-" : "") + "<$0.0001"
+        } else {
+            text = formatUSD(micros: micros, decimals: 4)
+        }
+        return text.replacingOccurrences(of: "-", with: "\u{2212}")
     }
 
     /// Exact decimal string ("12.50", "1.089e-07") → micros, rounded to the nearest micro. `times` scales first,
@@ -1543,11 +1550,11 @@ struct YapCloudConfigDocument: Equatable {
             assert(formatUSD(micros: 999_999) == "$1.00" && formatUSD(micros: 5_000_000_000) == "$5000.00")
             assert(formatUSD(micros: -1_200, decimals: 4) == "-$0.0012" && formatUSD(micros: 12_345_678, decimals: 4) == "$12.3457")
             assert(formatUSD(micros: 7, decimals: 6) == "$0.000007" && formatUSD(micros: 2_500_000, decimals: 0) == "$3")
-            assert(formatLedgerAmount(micros: -92, kind: "usage") == "-<$0.0001")
+            assert(formatLedgerAmount(micros: -92, kind: "usage") == "\u{2212}<$0.0001")
             assert(formatSpend(micros: 1_790_000) == "$1.79" && formatSpend(micros: 2_100) == "$0.0021")
-            assert(formatLedgerAmount(micros: -150, kind: "usage") == "-$0.0002")
+            assert(formatLedgerAmount(micros: -150, kind: "usage") == "\u{2212}$0.0002")
             assert(formatLedgerAmount(micros: 0, kind: "usage") == "$0.0000")
-            assert(formatLedgerAmount(micros: -999_904, kind: "adjust") == "-$1.00")
+            assert(formatLedgerAmount(micros: -999_904, kind: "adjust") == "\u{2212}$1.00")
             assert(formatLedgerAmount(micros: 10_000_000, kind: "topup") == "$10.00")
             assert(999_999 < lowBalanceMicros && !(1_000_000 < lowBalanceMicros))
 

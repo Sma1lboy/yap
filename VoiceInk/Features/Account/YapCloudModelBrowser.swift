@@ -30,9 +30,9 @@ struct YapCloudModelBrowser: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             HStack {
-                Text(title).font(.headline)
+                Text(title).font(AppTheme.font(.body, .semibold))
                 Spacer()
                 Button("Done") { dismiss() }
                     .keyboardShortcut(.cancelAction)
@@ -45,15 +45,15 @@ struct YapCloudModelBrowser: View {
                     dismiss()
                 } label: {
                     HStack {
-                        VStack(alignment: .leading, spacing: 1) {
+                        VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                             Text(model.name)
                             if model.name != model.detail {
-                                Text(model.detail).font(.caption).foregroundStyle(.secondary)
+                                Text(model.detail).font(AppTheme.font(.caption)).foregroundStyle(.secondary)
                             }
                         }
                         Spacer()
                         if let average = YapCloud.shared.averageCallLabel(model: model.detail) {
-                            Text(average).font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                            Text(average).font(AppTheme.font(.caption)).monospacedDigit().foregroundStyle(.secondary)
                         }
                         if model.id == selectedID {
                             Image(systemName: "checkmark").accessibilityHidden(true)
@@ -66,7 +66,7 @@ struct YapCloudModelBrowser: View {
             }
             .listStyle(.inset)
         }
-        .padding(16)
+        .padding(AppTheme.Spacing.x4)
         .frame(width: 420, height: 460)
     }
 }
@@ -84,7 +84,7 @@ struct YapCloudEnhancementModelPicker: View {
 
     var body: some View {
         LabeledContent("AI Model") {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Picker("", selection: $selection) {
                     ForEach(recommended, id: \.self) { id in
                         Text(YapCloud.shared.averageCallLabel(model: id).map { "\(id)  \($0)" } ?? id).tag(id)

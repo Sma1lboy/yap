@@ -41,7 +41,7 @@ struct QuickHistoryDetailActionBar: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             modeButton
             promptButton
             retryButton
@@ -50,7 +50,7 @@ struct QuickHistoryDetailActionBar: View {
             Spacer(minLength: 8)
             pasteButton
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, AppTheme.Spacing.x3)
         .frame(height: 44)
         .onChange(of: transcription.id) { _, _ in
             selectedPromptOverride = nil
@@ -104,20 +104,20 @@ struct QuickHistoryDetailActionBar: View {
 
     private var pasteButton: some View {
         Button(action: onPaste) {
-            HStack(spacing: 7) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Text("Paste Text")
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
                 Text("↵")
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .font(AppTheme.font(.micro, .medium, design: .rounded))
                     .foregroundStyle(AppTheme.Text.muted)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 3)
-                    .background(AppTheme.Surface.controlActive, in: RoundedRectangle(cornerRadius: 5))
+                    .padding(.horizontal, AppTheme.Spacing.x1)
+                    .padding(.vertical, AppTheme.Spacing.x1)
+                    .background(AppTheme.Surface.controlActive, in: RoundedRectangle(cornerRadius: AppTheme.Radius.small))
             }
-            .font(.system(size: 11, weight: .medium))
+            .font(AppTheme.font(.caption, .medium))
             .foregroundStyle(AppTheme.Text.secondary)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, AppTheme.Spacing.x3)
             .frame(minWidth: 112)
             .frame(height: 32)
             .fixedSize(horizontal: true, vertical: false)
@@ -141,7 +141,7 @@ struct QuickHistoryDetailActionBar: View {
                         .controlSize(.small)
                 } else {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(AppTheme.font(.footnote, .medium))
                 }
             }
             .foregroundStyle(AppTheme.Text.secondary)
@@ -163,7 +163,7 @@ struct QuickHistoryDetailActionBar: View {
             )
         } label: {
             Image(systemName: "folder")
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .frame(width: 34, height: 32)
                 .background(QuickPanelButtonBackground())
@@ -177,7 +177,7 @@ struct QuickHistoryDetailActionBar: View {
     private var infoButton: some View {
         Button(action: onToggleInfo) {
             Image(systemName: "info.circle")
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .frame(width: 34, height: 32)
                 .background(QuickPanelButtonBackground(isSelected: isInfoPresented))
@@ -188,18 +188,18 @@ struct QuickHistoryDetailActionBar: View {
     }
 
     private func actionLabel<Icon: View>(title: String, @ViewBuilder icon: () -> Icon) -> some View {
-        HStack(spacing: 7) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             icon()
             Text(title)
                 .lineLimit(1)
                 .truncationMode(.tail)
             Image(systemName: "chevron.down")
-                .font(.system(size: 8, weight: .semibold))
+                .font(AppTheme.font(.micro, .semibold))
                 .foregroundStyle(AppTheme.Text.muted)
         }
-        .font(.system(size: 11, weight: .medium))
+        .font(AppTheme.font(.caption, .medium))
         .foregroundStyle(AppTheme.Text.secondary)
-        .padding(.horizontal, 10)
+        .padding(.horizontal, AppTheme.Spacing.x3)
         .frame(maxWidth: 140)
         .frame(height: 32)
         .clipped()
@@ -208,11 +208,11 @@ struct QuickHistoryDetailActionBar: View {
     }
 
     private var promptPopover: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             Text("Select Prompt")
-                .font(.headline)
+                .font(AppTheme.font(.body, .semibold))
                 .padding(.horizontal)
-                .padding(.top, 8)
+                .padding(.top, AppTheme.Spacing.x2)
 
             Divider()
 
@@ -220,21 +220,21 @@ struct QuickHistoryDetailActionBar: View {
                 let prompts = enhancementService.allPrompts
                 let promptsUnavailable = enhancementConfiguration?.provider == .voiceInkRefine
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                     if promptsUnavailable {
                         Text("Custom prompts aren't available with Yap Refine. Select another mode first.")
-                            .font(.system(size: 12))
+                            .font(AppTheme.font(.footnote))
                             .foregroundStyle(AppTheme.Text.secondary)
                             .fixedSize(horizontal: false, vertical: true)
-                            .padding(.horizontal, 8)
-                            .padding(.bottom, 6)
+                            .padding(.horizontal, AppTheme.Spacing.x2)
+                            .padding(.bottom, AppTheme.Spacing.x2)
                     }
 
                     if prompts.isEmpty {
                         Text("No Prompts Available")
-                            .font(.system(size: 13))
+                            .font(AppTheme.font(.body))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
+                            .padding(.vertical, AppTheme.Spacing.x4)
                     } else {
                         ForEach(prompts) { prompt in
                             EnhancementPromptRow(
@@ -257,7 +257,7 @@ struct QuickHistoryDetailActionBar: View {
         }
         .frame(width: 230)
         .frame(maxHeight: 340)
-        .padding(.vertical, 8)
+        .padding(.vertical, AppTheme.Spacing.x2)
         .background(AppTheme.Surface.window)
         .popoverAppAppearance()
     }
@@ -411,14 +411,14 @@ struct QuickHistoryRow: View {
 
     var body: some View {
         Button(action: onSelect) {
-            HStack(spacing: 12) {
+            HStack(spacing: AppTheme.Spacing.x3) {
                 Image(systemName: "bubble.left")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(AppTheme.font(.title3, .medium))
                     .foregroundStyle(AppTheme.Text.primary)
                     .frame(width: 26)
 
                 Text(transcription.preferredHistoryText)
-                    .font(.system(size: 13))
+                    .font(AppTheme.font(.body))
                     .foregroundStyle(AppTheme.Text.primary)
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -427,7 +427,7 @@ struct QuickHistoryRow: View {
                     enhancedBadge
                 } else {
                     Text(transcription.timestamp, format: .relative(presentation: .named))
-                        .font(.system(size: 10))
+                        .font(AppTheme.font(.micro))
                         .foregroundStyle(AppTheme.Text.secondary)
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: false)
@@ -437,10 +437,10 @@ struct QuickHistoryRow: View {
                     modelBadge(modelName)
                 }
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, AppTheme.Spacing.x3)
             .frame(height: 46)
             .background(
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .fill(isSelected ? AppTheme.Selection.fill : (isHovered ? AppTheme.Surface.subtle : .clear))
             )
             .contentShape(Rectangle())
@@ -458,25 +458,25 @@ struct QuickHistoryRow: View {
 
     private var enhancedBadge: some View {
         Text("Enhanced")
-            .font(.system(size: 10, weight: .medium))
+            .font(AppTheme.font(.micro, .medium))
             .foregroundStyle(AppTheme.Text.secondary)
             .lineLimit(1)
             .truncationMode(.tail)
-            .padding(.horizontal, 7)
+            .padding(.horizontal, AppTheme.Spacing.x2)
             .frame(maxWidth: 64)
             .frame(height: 24)
-            .background(AppTheme.Surface.controlActive, in: RoundedRectangle(cornerRadius: 7))
+            .background(AppTheme.Surface.controlActive, in: RoundedRectangle(cornerRadius: AppTheme.Radius.small))
     }
 
     private func modelBadge(_ modelName: String) -> some View {
         Text(modelName)
-            .font(.system(size: 10, weight: .medium))
+            .font(AppTheme.font(.micro, .medium))
             .foregroundStyle(AppTheme.Text.secondary)
             .lineLimit(1)
             .truncationMode(.tail)
-            .padding(.horizontal, 7)
+            .padding(.horizontal, AppTheme.Spacing.x2)
             .frame(maxWidth: 84)
             .frame(height: 24)
-            .background(AppTheme.Surface.controlActive, in: RoundedRectangle(cornerRadius: 7))
+            .background(AppTheme.Surface.controlActive, in: RoundedRectangle(cornerRadius: AppTheme.Radius.small))
     }
 }

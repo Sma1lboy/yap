@@ -56,13 +56,13 @@ struct CloudProviderManagementView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text("Cloud Providers")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(AppTheme.font(.headline, .semibold))
                 Text("Cloud providers process audio and text under their own privacy policies.")
                     .foregroundStyle(.secondary)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
             }
 
             ForEach(providerDescriptors) { descriptor in
@@ -239,7 +239,7 @@ private struct ProviderListRow: View {
 
     var body: some View {
         Button(action: onSelect) {
-            HStack(spacing: 12) {
+            HStack(spacing: AppTheme.Spacing.x3) {
                 ProviderBrandIcon(
                     descriptor: descriptor,
                     fallbackSystemImage: iconName,
@@ -248,13 +248,13 @@ private struct ProviderListRow: View {
                     iconSize: 15
                 )
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                     Text(descriptor.displayName)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(AppTheme.font(.body, .semibold))
                         .foregroundStyle(.primary)
 
                     Text(capabilitySummary)
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -264,14 +264,14 @@ private struct ProviderListRow: View {
                 ProviderStatusBadge(title: statusText, color: statusColor)
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .foregroundStyle(.secondary)
             }
             .contentShape(Rectangle())
-            .padding(14)
+            .padding(AppTheme.Spacing.x4)
         }
         .buttonStyle(.plain)
-        .background(ProviderSurface(isActive: isSelected, cornerRadius: 10))
+        .background(ProviderSurface(isActive: isSelected, cornerRadius: AppTheme.Radius.control))
     }
 
 }

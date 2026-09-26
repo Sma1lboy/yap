@@ -23,7 +23,7 @@ struct ShortcutRecorder: View {
     }
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             Button {
                 if recorder.isRecording {
                     recorder.cancel()
@@ -98,14 +98,14 @@ struct ShortcutVisualization: View {
     var isCompact = false
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             if let shortcut {
                 ForEach(Array(shortcut.displayTokens.enumerated()), id: \.offset) { _, token in
                     ShortcutKeyCap(title: token, isRecording: isRecording, isCompact: isCompact)
                 }
             } else {
                 Text(isRecording ? LocalizedStringKey("Press shortcut") : LocalizedStringKey("Record"))
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                     .foregroundStyle(isRecording ? .primary : .secondary)
@@ -132,7 +132,7 @@ private struct ShortcutKeyCap: View {
 
     var body: some View {
         Text(title)
-            .font(.system(size: isCompact ? 9 : 11, weight: .semibold, design: .rounded))
+            .font(AppTheme.font(isCompact ? .micro : .caption, .semibold, design: .rounded))
             .lineLimit(1)
             .minimumScaleFactor(0.75)
             .foregroundStyle(foregroundColor)
@@ -157,7 +157,7 @@ private struct ShortcutKeyCap: View {
     }
 
     private var borderColor: Color {
-        isRecording ? AppTheme.Accent.foreground : foregroundColor.opacity(0.28)
+        isRecording ? AppTheme.Accent.text : foregroundColor.opacity(0.28)
     }
 }
 

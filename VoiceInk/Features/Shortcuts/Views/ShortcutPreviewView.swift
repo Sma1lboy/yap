@@ -10,7 +10,7 @@ struct ShortcutPreviewView: View {
 
     var body: some View {
         if let components, !components.isEmpty {
-            HStack(spacing: 6) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 ForEach(components, id: \.self) { component in
                     KeyCapView(text: component)
                 }
@@ -29,7 +29,7 @@ struct KeyCapView: View {
     @State private var isPressed = false
 
     private var keyColor: Color {
-        colorScheme == .dark ? Color(white: 0.2) : .white
+        AppTheme.Surface.control
     }
 
     private var surfaceGradient: LinearGradient {
@@ -60,22 +60,22 @@ struct KeyCapView: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 25, weight: .semibold, design: .rounded))
+            .font(AppTheme.font(.title, .semibold, design: .rounded))
             .foregroundColor(colorScheme == .dark ? .white : .black)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, AppTheme.Spacing.x3)
+            .padding(.vertical, AppTheme.Spacing.x2)
             .background(
                 ZStack {
                     // Main key surface
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                         .fill(surfaceGradient)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 8)
+                            RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                                 .fill(highlightGradient)
                         )
 
                     // Border
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                         .strokeBorder(
                             LinearGradient(
                                 colors: [
@@ -98,7 +98,7 @@ struct KeyCapView: View {
             )
             // Bottom edge shadow
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                     .fill(
                         LinearGradient(
                             colors: [
@@ -112,7 +112,7 @@ struct KeyCapView: View {
                     .offset(y: 1)
                     .blur(radius: 2)
                     .mask(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                             .fill(
                                 LinearGradient(
                                     colors: [.clear, .black],
@@ -125,14 +125,14 @@ struct KeyCapView: View {
             )
             // Inner shadow effect
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                     .stroke(
                         Color.white.opacity(colorScheme == .dark ? 0.1 : 0.3),
                         lineWidth: 1
                     )
                     .blur(radius: 1)
                     .offset(x: -1, y: -1)
-                    .mask(RoundedRectangle(cornerRadius: 8))
+                    .mask(RoundedRectangle(cornerRadius: AppTheme.Radius.control))
             )
             .scaleEffect(isPressed ? 0.95 : 1.0)
             .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isPressed)
@@ -148,7 +148,7 @@ struct KeyCapView: View {
 }
 
 #Preview {
-    VStack(spacing: 20) {
+    VStack(spacing: AppTheme.Spacing.x5) {
         ShortcutPreviewView(shortcut: ShortcutStore.shortcut(for: .primaryRecording))
         ShortcutPreviewView(shortcut: nil)
     }

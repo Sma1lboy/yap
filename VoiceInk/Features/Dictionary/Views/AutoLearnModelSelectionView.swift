@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AutoLearnSectionHeader: View {
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             Text("Auto Learn")
             InfoTip(
                 "Automatically learns corrections you make after dictation."
@@ -67,7 +67,7 @@ struct AutoLearnModelSelectionView: View {
 
                     if !aiService.connectedProviders.contains(selectedProvider) {
                         Text("The selected provider is currently unavailable.")
-                            .font(.caption)
+                            .font(AppTheme.font(.caption))
                             .foregroundStyle(.secondary)
                     }
                 }

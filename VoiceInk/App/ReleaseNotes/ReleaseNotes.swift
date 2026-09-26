@@ -87,23 +87,24 @@ struct ReleaseNotesSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(String(format: String(localized: "What's New in %@"), notes.version))
-                .font(.title2.weight(.bold))
+                .font(AppTheme.font(.headline, .semibold))
                 .padding([.horizontal, .top], 24)
-                .padding(.bottom, 12)
+                .padding(.bottom, AppTheme.Spacing.x3)
 
             ScrollView {
                 MarkdownContentView(notes.body, fontSize: 13, foregroundColor: AppTheme.Text.primary)
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 16)
+                    .padding(.horizontal, AppTheme.Spacing.x6)
+                    .padding(.bottom, AppTheme.Spacing.x4)
             }
 
             Divider()
             HStack {
                 Spacer()
                 Button("Done") { dismiss() }
+                    .buttonStyle(.appAction(.primary))
                     .keyboardShortcut(.defaultAction)
             }
-            .padding(16)
+            .padding(AppTheme.Spacing.x4)
         }
         .frame(width: 560, height: 620)
         .onExitCommand { dismiss() }

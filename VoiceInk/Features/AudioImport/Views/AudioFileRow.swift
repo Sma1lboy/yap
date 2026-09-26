@@ -53,7 +53,7 @@ struct AudioFileRow: View {
             Spacer()
 
             Text("Waiting")
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
 
             Button {
@@ -84,8 +84,8 @@ struct AudioFileRow: View {
             Spacer()
 
             Text(LocalizedStringKey(phase.rawValue))
-                .font(.caption)
-                .foregroundColor(AppTheme.Accent.primary)
+                .font(AppTheme.font(.caption))
+                .foregroundColor(AppTheme.Accent.text)
         }
     }
 
@@ -111,7 +111,7 @@ struct AudioFileRow: View {
             Spacer()
 
             if let transcription = item.transcription {
-                HStack(spacing: 2) {
+                HStack(spacing: AppTheme.Spacing.half) {
                     CopyIconButton(textToCopy: actionText)
                     SaveIconButton(
                         textToSave: actionText,
@@ -121,13 +121,13 @@ struct AudioFileRow: View {
 
                 if transcription.duration > 0 {
                     Text(formatDuration(transcription.duration))
-                        .font(.caption.weight(.medium))
+                        .font(AppTheme.font(.caption, .medium))
                         .foregroundColor(.secondary)
                 }
             }
 
             Image(systemName: "chevron.right")
-                .font(.caption2.weight(.semibold))
+                .font(AppTheme.font(.micro, .semibold))
                 .foregroundColor(.secondary)
                 .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 .animation(.easeInOut(duration: 0.2), value: isExpanded)
@@ -141,7 +141,7 @@ struct AudioFileRow: View {
 
         if isExpanded, let transcription = item.transcription {
             if transcription.enhancedText != nil {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     tabButton(tab: .original)
                     tabButton(tab: .enhanced)
                     Spacer()
@@ -157,15 +157,15 @@ struct AudioFileRow: View {
             }
             .frame(maxHeight: 350)
 
-            HStack(spacing: 12) {
+            HStack(spacing: AppTheme.Spacing.x3) {
                 if let model = transcription.transcriptionModelName {
                     Label(model, systemImage: "cpu")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                 }
                 if let prompt = transcription.promptName {
                     Label(prompt, systemImage: "sparkles")
-                        .font(.caption)
+                        .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
                 }
                 Spacer()
@@ -178,12 +178,12 @@ struct AudioFileRow: View {
             selectedTab = tab
         } label: {
             Text(LocalizedStringKey(tab.rawValue))
-                .font(.subheadline.weight(selectedTab == tab ? .semibold : .regular))
-                .foregroundColor(selectedTab == tab ? AppTheme.Accent.primary : .secondary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
+                .font(AppTheme.font(.caption, selectedTab == tab ? .semibold : .regular))
+                .foregroundColor(selectedTab == tab ? AppTheme.Accent.text : AppTheme.Text.secondary)
+                .padding(.horizontal, AppTheme.Spacing.x3)
+                .padding(.vertical, AppTheme.Spacing.x1)
                 .background(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.small, style: .continuous)
                         .fill(selectedTab == tab ? AppTheme.Accent.fill : Color.clear)
                 )
         }
@@ -197,13 +197,13 @@ struct AudioFileRow: View {
             Image(systemName: "exclamationmark.circle.fill")
                 .foregroundColor(AppTheme.Status.error)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                 Text(item.filename)
                     .lineLimit(1)
                     .truncationMode(.middle)
 
                 Text(message)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundColor(AppTheme.Status.error.opacity(0.80))
                     .lineLimit(2)
             }

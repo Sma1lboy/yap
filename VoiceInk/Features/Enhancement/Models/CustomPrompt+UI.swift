@@ -8,21 +8,21 @@ extension CustomPrompt {
     ) -> some View {
         // A Button so the chip is reachable with the keyboard and VoiceOver; double-click still edits.
         Button(action: onTap) {
-            HStack(spacing: 6) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Text(title)
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
-            .font(.system(size: 12, weight: .medium))
+            .font(AppTheme.font(.footnote, .medium))
             .foregroundStyle(isSelected ? AppTheme.Text.onAccent : Color.primary)
             .frame(maxWidth: .infinity, minHeight: 30)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, AppTheme.Spacing.x3)
             .background(
-                RoundedRectangle(cornerRadius: 7)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                     .fill(isSelected ? AppTheme.Accent.primary : AppTheme.Surface.control)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 7)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                     .stroke(AppTheme.Border.control, lineWidth: isSelected ? 0 : 0.5)
             )
             .contentShape(Rectangle())
@@ -76,17 +76,17 @@ extension CustomPrompt {
     static func addNewButton(action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Label("Add New", systemImage: "plus.circle.fill")
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, minHeight: 30)
-                .padding(.horizontal, 10)
+                .padding(.horizontal, AppTheme.Spacing.x3)
                 .background(
-                    RoundedRectangle(cornerRadius: 7)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                         .fill(AppTheme.Surface.control)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 7)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                         .stroke(AppTheme.Border.control, lineWidth: 0.5)
                 )
                 .contentShape(Rectangle())

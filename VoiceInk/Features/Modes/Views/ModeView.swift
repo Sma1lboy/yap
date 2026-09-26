@@ -70,7 +70,7 @@ struct ModeView: View {
     }
 
     private var headerControls: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             addModeButton
             settingsButton
         }
@@ -112,24 +112,24 @@ struct ModeView: View {
                     ScrollView {
                         VStack(spacing: 0) {
                             if modeManager.configurations.isEmpty {
-                                VStack(spacing: 24) {
+                                VStack(spacing: AppTheme.Spacing.x6) {
                                     Spacer()
                                         .frame(height: geometry.size.height * 0.2)
 
-                                    VStack(spacing: 16) {
+                                    VStack(spacing: AppTheme.Spacing.x4) {
                                         Image(systemName: "square.grid.2x2.fill")
-                                            .font(.system(size: 48, weight: .regular))
+                                            .font(AppTheme.font(.display, .regular))
                                             .foregroundColor(.secondary.opacity(0.6))
 
-                                        VStack(spacing: 8) {
+                                        VStack(spacing: AppTheme.Spacing.x2) {
                                             Text("Create your first mode")
-                                                .font(.system(size: 20, weight: .medium))
+                                                .font(AppTheme.font(.title, .medium))
                                                 .foregroundColor(.primary)
 
                                             Text(
                                                 "Set how Yap transcribes and formats your speech, then start dictating in any app."
                                             )
-                                            .font(.system(size: 14))
+                                            .font(AppTheme.font(.callout))
                                             .foregroundColor(.secondary)
                                             .multilineTextAlignment(.center)
                                             .lineSpacing(2)
@@ -148,8 +148,8 @@ struct ModeView: View {
                                             openPanel(mode: .edit(config))
                                         }
                                     )
-                                    .padding(.horizontal, 24)
-                                    .padding(.vertical, 20)
+                                    .padding(.horizontal, AppTheme.Spacing.x6)
+                                    .padding(.vertical, AppTheme.Spacing.x5)
 
                                     Spacer()
                                         .frame(height: 40)
@@ -206,9 +206,9 @@ struct SectionHeader: View {
 
     var body: some View {
         Text(title)
-            .font(.system(size: 16, weight: .bold))
+            .font(AppTheme.font(.headline, .semibold))
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, 8)
+            .padding(.bottom, AppTheme.Spacing.x2)
     }
 }
 

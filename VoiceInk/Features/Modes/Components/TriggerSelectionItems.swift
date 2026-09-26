@@ -12,18 +12,18 @@ struct TriggerGroupRow: View {
     @State private var isShowingEditor = false
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             TriggerSymbol(systemName: groupSystemImage)
 
             Text(group.name)
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .layoutPriority(1)
 
             Spacer(minLength: 12)
 
-            HStack(spacing: 12) {
+            HStack(spacing: AppTheme.Spacing.x3) {
                 TriggerGroupPreviewStack(appConfigs: group.appConfigs, urlConfigs: group.urlConfigs)
 
                 TriggerEditButton {
@@ -47,14 +47,14 @@ struct TriggerGroupRow: View {
             }
             .fixedSize()
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
+        .padding(.horizontal, AppTheme.Spacing.x2)
+        .padding(.vertical, AppTheme.Spacing.x2)
         .background {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                 .fill(AppTheme.Surface.control)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                 .strokeBorder(AppTheme.Border.control, lineWidth: 0.5)
         }
         .help(group.summaryText)
@@ -78,8 +78,8 @@ struct TriggerAppChip: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
             TriggerAppIcon(bundleId: appConfig.bundleIdentifier, size: 30)
-                .padding(3)
-                .background(AppCardBackground(cornerRadius: 8))
+                .padding(AppTheme.Spacing.x1)
+                .background(AppCardBackground(cornerRadius: AppTheme.Radius.control))
 
             TriggerRemoveButton(action: onRemove)
                 .offset(x: 5, y: -5)
@@ -127,29 +127,29 @@ private struct TriggerTextChip: View {
     let onRemove: () -> Void
 
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             Image(systemName: systemName)
-                .font(.system(size: 9, weight: .semibold))
+                .font(AppTheme.font(.micro, .semibold))
                 .foregroundStyle(.secondary)
 
             Text(title)
-                .font(.system(size: 12))
+                .font(AppTheme.font(.footnote))
                 .lineLimit(1)
                 .truncationMode(truncationMode)
                 .frame(maxWidth: 100, alignment: .leading)
 
             Button(action: onRemove) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(AppTheme.font(.micro, .semibold))
                     .foregroundStyle(.secondary)
                     .frame(width: 14, height: 14)
             }
             .buttonStyle(.plain)
             .help(removeHelp)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(AppCardBackground(cornerRadius: 7))
+        .padding(.horizontal, AppTheme.Spacing.x2)
+        .padding(.vertical, AppTheme.Spacing.x1)
+        .background(AppCardBackground(cornerRadius: AppTheme.Radius.small))
     }
 }
 
@@ -176,7 +176,7 @@ struct TriggerGroupPreviewStack: View {
     }
 
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             ZStack(alignment: .leading) {
                 ForEach(items.indices, id: \.self) { index in
                     previewTile(for: items[index])
@@ -188,11 +188,11 @@ struct TriggerGroupPreviewStack: View {
 
             if overflowCount > 0 {
                 Text("+\(overflowCount)")
-                    .font(.system(size: tileSize * 0.30, weight: .semibold))
+                    .font(.system(size: tileSize * 0.30, weight: .semibold))  // design-exempt: icon glyph sized to its container
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
-                    .padding(.horizontal, 5)
+                    .padding(.horizontal, AppTheme.Spacing.x1)
                     .frame(height: tileSize - 2)
                     .background {
                         RoundedRectangle(cornerRadius: tileSize * 0.32)
@@ -222,12 +222,12 @@ struct TriggerGroupPreviewStack: View {
                         .fill(AppTheme.Surface.card)
                         .frame(width: tileSize - 8, height: tileSize - 8)
                     Image(systemName: "globe")
-                        .font(.system(size: tileSize * 0.38, weight: .semibold))
+                        .font(.system(size: tileSize * 0.38, weight: .semibold))  // design-exempt: icon glyph sized to its container
                         .foregroundStyle(.primary)
                 }
             case .empty:
                 Image(systemName: "folder")
-                    .font(.system(size: tileSize * 0.43, weight: .medium))
+                    .font(.system(size: tileSize * 0.43, weight: .medium))  // design-exempt: icon glyph sized to its container
                     .foregroundStyle(.secondary)
             }
         }
@@ -284,7 +284,7 @@ struct TriggerAppIcon: View {
                 .clipShape(RoundedRectangle(cornerRadius: size * 0.22))
         } else {
             Image(systemName: "app.fill")
-                .font(.system(size: size * 0.58, weight: .medium))
+                .font(.system(size: size * 0.58, weight: .medium))  // design-exempt: icon glyph sized to its container
                 .foregroundStyle(.primary)
                 .frame(width: size, height: size)
                 .background {
@@ -301,7 +301,7 @@ struct TriggerRemoveButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: "xmark.circle.fill")
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.secondary)
         }
@@ -317,7 +317,7 @@ struct TriggerEditButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: "pencil.circle.fill")
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.secondary)
         }

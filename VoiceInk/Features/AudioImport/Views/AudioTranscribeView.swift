@@ -54,24 +54,24 @@ struct AudioTranscribeView: View {
             Spacer()
 
             ZStack {
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.card)
                     .fill(AppTheme.Surface.window.opacity(0.4))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.card)
                             .strokeBorder(
                                 style: StrokeStyle(lineWidth: 2, dash: [8])
                             )
-                            .foregroundColor(isDropTargeted ? AppTheme.Accent.primary : .gray.opacity(0.5))
+                            .foregroundColor(isDropTargeted ? AppTheme.Accent.text : AppTheme.Text.muted)
                     )
                     .animation(.easeInOut(duration: 0.15), value: isDropTargeted)
 
-                VStack(spacing: 14) {
+                VStack(spacing: AppTheme.Spacing.x4) {
                     Image(systemName: "arrow.down.doc")
-                        .font(.system(size: 32))
-                        .foregroundColor(isDropTargeted ? AppTheme.Accent.primary : .gray)
+                        .font(AppTheme.font(.display))
+                        .foregroundColor(isDropTargeted ? AppTheme.Accent.text : AppTheme.Text.secondary)
 
                     Text("Drop audio or video files here")
-                        .font(.headline)
+                        .font(AppTheme.font(.body, .semibold))
 
                     Text("or")
                         .foregroundColor(.secondary)
@@ -81,14 +81,14 @@ struct AudioTranscribeView: View {
                     }
                     .buttonStyle(.bordered)
                 }
-                .padding(32)
+                .padding(AppTheme.Spacing.x8)
             }
             .frame(maxWidth: 480, maxHeight: 200)
 
             Text("Supports WAV, MP3, M4A, AIFF, MP4, MOV, AAC, FLAC, CAF, AMR, OGG, OPUS, 3GP")
-                .font(.caption)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
-                .padding(.top, 12)
+                .padding(.top, AppTheme.Spacing.x3)
 
             Spacer()
         }
@@ -131,10 +131,10 @@ struct AudioTranscribeView: View {
             .scrollContentBackground(.hidden)
             .safeAreaInset(edge: .bottom) {
                 Text("Drop files anywhere to add more")
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, AppTheme.Spacing.x2)
             }
         }
     }
@@ -142,24 +142,24 @@ struct AudioTranscribeView: View {
     // MARK: - Top Bar
 
     private var topBar: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             let count = transcriptionManager.queue.count
             Text(String(localized: "\(count) files"))
-                .font(.subheadline)
+                .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
 
             Button {
                 selectFiles()
             } label: {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Image(systemName: "plus")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(AppTheme.font(.footnote, .medium))
                     Text("Add")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(AppTheme.font(.footnote, .medium))
                 }
                 .foregroundColor(.secondary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
+                .padding(.horizontal, AppTheme.Spacing.x3)
+                .padding(.vertical, AppTheme.Spacing.x1)
                 .background(
                     Capsule()
                         .fill(AppTheme.Surface.controlActive)
@@ -176,15 +176,15 @@ struct AudioTranscribeView: View {
                 Button {
                     transcriptionManager.cancelProcessing()
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Image(systemName: "stop.fill")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(AppTheme.font(.micro, .medium))
                         Text("Cancel")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(AppTheme.font(.footnote, .medium))
                     }
                     .foregroundColor(AppTheme.Status.error)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, AppTheme.Spacing.x3)
+                    .padding(.vertical, AppTheme.Spacing.x1)
                     .background(
                         Capsule()
                             .fill(AppTheme.Status.error.opacity(0.12))
@@ -196,15 +196,15 @@ struct AudioTranscribeView: View {
                 Button {
                     startProcessing()
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Image(systemName: "play.fill")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(AppTheme.font(.micro, .medium))
                         Text("Start")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(AppTheme.font(.footnote, .semibold))
                     }
                     .foregroundColor(AppTheme.Text.onAccent)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, AppTheme.Spacing.x3)
+                    .padding(.vertical, AppTheme.Spacing.x2)
                     .background(
                         Capsule()
                             .fill(AppTheme.Accent.primary)
@@ -223,15 +223,15 @@ struct AudioTranscribeView: View {
                     expandedItemId = nil
                 }
             } label: {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Image(systemName: "xmark.bin")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(AppTheme.font(.footnote, .medium))
                     Text("Clear")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(AppTheme.font(.footnote, .medium))
                 }
                 .foregroundColor(.secondary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
+                .padding(.horizontal, AppTheme.Spacing.x3)
+                .padding(.vertical, AppTheme.Spacing.x1)
                 .background(
                     Capsule()
                         .fill(AppTheme.Surface.controlActive)
@@ -240,21 +240,21 @@ struct AudioTranscribeView: View {
             .buttonStyle(.plain)
             .help("Clear all items")
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 10)
+        .padding(.horizontal, AppTheme.Spacing.x6)
+        .padding(.vertical, AppTheme.Spacing.x3)
     }
 
     private var modePicker: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Text("Mode")
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundColor(.secondary)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
 
             if modeManager.enabledConfigurations.isEmpty {
                 Text("None")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
@@ -262,20 +262,20 @@ struct AudioTranscribeView: View {
                 Button {
                     showModePopover.toggle()
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         ModeIconView(icon: selectedMode.icon, size: selectedMode.icon.kind == .emoji ? 13 : 11)
                             .frame(width: 16)
                         Text(selectedMode.name)
-                            .font(.system(size: 12, weight: .medium))
+                            .font(AppTheme.font(.footnote, .medium))
                             .lineLimit(1)
                             .truncationMode(.tail)
                         Image(systemName: "chevron.up.chevron.down")
-                            .font(.system(size: 9, weight: .semibold))
+                            .font(AppTheme.font(.micro, .semibold))
                             .foregroundColor(.secondary)
                     }
                     .foregroundColor(.primary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, AppTheme.Spacing.x3)
+                    .padding(.vertical, AppTheme.Spacing.x1)
                     .frame(maxWidth: 160, alignment: .leading)
                     .background(
                         Capsule()
@@ -310,18 +310,18 @@ struct AudioTranscribeView: View {
     // MARK: - Drop Overlay
 
     private var dropOverlay: some View {
-        RoundedRectangle(cornerRadius: 12)
+        RoundedRectangle(cornerRadius: AppTheme.Radius.card)
             .strokeBorder(AppTheme.Accent.primary, style: StrokeStyle(lineWidth: 2, dash: [8]))
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.card)
                     .fill(AppTheme.Accent.fillSubtle)
             )
             .overlay {
                 Text("Drop to add files")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundColor(AppTheme.Accent.primary)
+                    .font(AppTheme.font(.caption, .medium))
+                    .foregroundColor(AppTheme.Accent.text)
             }
-            .padding(16)
+            .padding(AppTheme.Spacing.x4)
             .transition(.opacity)
             .animation(.easeInOut(duration: 0.15), value: isDropTargeted)
     }

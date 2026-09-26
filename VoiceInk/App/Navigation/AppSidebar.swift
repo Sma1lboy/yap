@@ -19,12 +19,12 @@ struct AppSidebar: View {
     private var sidebarContent: some View {
         VStack(spacing: 0) {
             sidebarSection(ViewType.primaryItems)
-                .padding(.top, 10)
+                .padding(.top, AppTheme.Spacing.x3)
 
             Spacer(minLength: 16)
 
             sidebarSection(ViewType.secondaryItems)
-                .padding(.bottom, 14)
+                .padding(.bottom, AppTheme.Spacing.x4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -42,7 +42,7 @@ struct AppSidebar: View {
     }
 
     private func sidebarSection(_ items: [ViewType]) -> some View {
-        VStack(spacing: 3) {
+        VStack(spacing: AppTheme.Spacing.x1) {
             ForEach(items) { viewType in
                 SidebarItemButton(
                     viewType: viewType,
@@ -52,7 +52,7 @@ struct AppSidebar: View {
                 }
             }
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, AppTheme.Spacing.x3)
     }
 }
 
@@ -117,28 +117,28 @@ private struct SidebarItemButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 9) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Image(systemName: viewType.icon)
-                    .font(.system(size: 14, weight: .regular))
+                    .font(AppTheme.font(.callout, .regular))
                     .symbolRenderingMode(.monochrome)
                     .foregroundStyle(AppTheme.Text.secondary)
                     .frame(width: 20)
 
                 Text(viewType.title)
-                    .font(.system(size: 13.5, weight: isSelected ? .semibold : .regular))
+                    .font(AppTheme.font(.body, isSelected ? .semibold : .regular))
                     .foregroundStyle(AppTheme.Text.primary)
                     .lineLimit(1)
 
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, AppTheme.Spacing.x3)
             .frame(height: 32)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .fill(isSelected ? AppTheme.Selection.fill : Color.clear)
             )
-            .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
         }
         .buttonStyle(.plain)
         .help(viewType.title)

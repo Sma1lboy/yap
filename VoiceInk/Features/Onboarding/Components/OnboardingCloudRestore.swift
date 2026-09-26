@@ -6,21 +6,21 @@ struct OnboardingCloudRestoreHint: View {
     let onRestore: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             if isRestored {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(AppTheme.Status.positive)
                 Text("Settings restored from Yap Cloud")
-                    .font(.system(size: 11))
+                    .font(AppTheme.font(.caption))
                     .foregroundColor(AppTheme.Text.secondary)
             } else {
                 Text("Already have a Yap Cloud account?")
-                    .font(.system(size: 11))
+                    .font(AppTheme.font(.caption))
                     .foregroundColor(AppTheme.Text.secondary)
                 Button("Sign In and Restore Settings", action: onRestore)
                     .buttonStyle(.plain)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(AppTheme.Accent.primary)
+                    .font(AppTheme.font(.caption, .medium))
+                    .foregroundColor(AppTheme.Accent.text)
             }
         }
     }
@@ -47,9 +47,9 @@ struct OnboardingCloudRestoreSheet: View {
     @State private var isRestoring = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             Text("Restore Settings from Yap Cloud")
-                .font(.title3.weight(.semibold))
+                .font(AppTheme.font(.headline, .semibold))
 
             switch phase {
             case .signIn:
@@ -74,6 +74,7 @@ struct OnboardingCloudRestoreSheet: View {
                 Spacer()
                 if case .empty = phase {
                     Button("Done") { dismiss() }
+                        .buttonStyle(.appAction(.primary))
                         .keyboardShortcut(.defaultAction)
                 } else {
                     Button("Cancel") { dismiss() }
@@ -85,12 +86,13 @@ struct OnboardingCloudRestoreSheet: View {
                 if case .ready(let config, let document) = phase {
                     if isRestoring { ProgressView().controlSize(.small) }
                     Button("Restore") { Task { await restore(config, document) } }
+                        .buttonStyle(.appAction(.primary))
                         .keyboardShortcut(.defaultAction)
                         .disabled(isRestoring)
                 }
             }
         }
-        .padding(24)
+        .padding(AppTheme.Spacing.x6)
         .frame(width: 440)
         .task(id: cloud.isSignedIn) {
             if cloud.isSignedIn { await load() }
@@ -98,7 +100,7 @@ struct OnboardingCloudRestoreSheet: View {
     }
 
     private func summary(_ summary: YapConfig.RestoreSummary) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             Text("This account has settings synced from another Mac:")
             Form {
                 LabeledContent("Modes") { Text(verbatim: "\(summary.modes)") }
@@ -110,7 +112,7 @@ struct OnboardingCloudRestoreSheet: View {
             .scrollDisabled(true)
             .frame(height: 170)
             Text("Restoring applies these settings on this Mac and turns on Sync via Yap Cloud. API keys aren't synced; add them on this Mac if a provider needs one.")
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundColor(AppTheme.Text.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }

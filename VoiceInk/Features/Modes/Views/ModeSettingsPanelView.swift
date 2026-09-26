@@ -12,17 +12,17 @@ struct ModeSettingsPanelView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 12) {
+            HStack(spacing: AppTheme.Spacing.x3) {
                 Text("Modes Settings")
-                    .font(.headline)
+                    .font(AppTheme.font(.body, .semibold))
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
                 Spacer()
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(AppTheme.font(.callout, .medium))
                         .foregroundColor(.secondary)
-                        .padding(6)
+                        .padding(AppTheme.Spacing.x2)
                         .background(AppTheme.Surface.card)
                         .clipShape(Circle())
                 }
@@ -31,22 +31,22 @@ struct ModeSettingsPanelView: View {
                 .help("Close")
                 .accessibilityLabel("Close")
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.horizontal, AppTheme.Spacing.x5)
+            .padding(.vertical, AppTheme.Spacing.x4)
             .overlay(Divider().opacity(0.5), alignment: .bottom)
 
             HStack {
                 Text("Reorder Modes")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .foregroundStyle(.secondary)
                     + Text(" (drag to reorder)")
-                    .font(.system(size: 12))
+                    .font(AppTheme.font(.footnote))
                     .foregroundStyle(.tertiary)
                 Spacer()
             }
             .padding(.horizontal, contentInset)
-            .padding(.top, 18)
-            .padding(.bottom, 8)
+            .padding(.top, AppTheme.Spacing.x5)
+            .padding(.bottom, AppTheme.Spacing.x2)
 
             ModeReorderList(modeManager: modeManager)
                 .padding(.horizontal, contentInset)
@@ -58,8 +58,8 @@ struct ModeSettingsPanelView: View {
                     }
                 }
                 .padding(.horizontal, contentInset)
-                .padding(.top, 12)
-                .padding(.bottom, 16)
+                .padding(.top, AppTheme.Spacing.x3)
+                .padding(.bottom, AppTheme.Spacing.x4)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
@@ -78,7 +78,7 @@ private struct ModeReorderList: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 8) {
+            LazyVStack(spacing: AppTheme.Spacing.x2) {
                 ForEach(modeManager.configurations) { config in
                     ModeReorderRow(
                         config: config,
@@ -102,7 +102,7 @@ private struct ModeReorderList: View {
                     )
                 }
             }
-            .padding(.vertical, 2)
+            .padding(.vertical, AppTheme.Spacing.half)
         }
         .frame(maxHeight: .infinity)
         .onDrop(
@@ -123,23 +123,23 @@ private struct ModeReorderRow: View {
     @State private var isHovering = false
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             ZStack {
                 ModeIconView(icon: config.icon, size: config.icon.kind == .emoji ? 18 : 14)
             }
             .frame(width: 34, height: 34)
             .background(
-                AppCardBackground(isSelected: false, cornerRadius: 17)
+                AppCardBackground(isSelected: false, cornerRadius: AppTheme.Radius.panel)
             )
             .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text(config.name)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(AppTheme.font(.callout, .semibold))
                     .lineLimit(1)
                     .truncationMode(.tail)
 
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     ModeReorderMeta(icon: "app.fill", value: countText(config.allAppConfigs.count, plural: "Apps"))
                     ModeReorderMeta(icon: "globe", value: countText(config.allURLConfigs.count, plural: "Websites"))
                 }
@@ -147,7 +147,7 @@ private struct ModeReorderRow: View {
 
             Spacer(minLength: 10)
 
-            HStack(spacing: 6) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 if config.isDefault {
                     DefaultModeIndicator()
                 }
@@ -158,15 +158,15 @@ private struct ModeReorderRow: View {
             }
 
         }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 12)
+        .padding(.vertical, AppTheme.Spacing.x3)
+        .padding(.horizontal, AppTheme.Spacing.x3)
         .contentShape(Rectangle())
         .background {
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                 .fill(rowBackground)
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                 .strokeBorder(rowBorder, lineWidth: isTargeted ? 1.5 : 1)
         }
         .shadow(
@@ -223,12 +223,12 @@ private struct ModeReorderMeta: View {
     let value: String
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             Image(systemName: icon)
-                .font(.system(size: 9, weight: .medium))
+                .font(AppTheme.font(.micro, .medium))
 
             Text(value)
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .lineLimit(1)
         }
         .foregroundStyle(.secondary)
@@ -240,21 +240,21 @@ private struct ModeReorderBadge: View {
     var systemImage: String?
 
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             if let systemImage {
                 Image(systemName: systemImage)
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(AppTheme.font(.micro, .semibold))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.primary)
             }
 
             Text(title)
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
-        .padding(.horizontal, 7)
-        .padding(.vertical, 3)
+        .padding(.horizontal, AppTheme.Spacing.x2)
+        .padding(.vertical, AppTheme.Spacing.x1)
         .background {
             Capsule()
                 .fill(AppTheme.Surface.card)
@@ -270,18 +270,18 @@ private struct ModeReorderDragPreview: View {
     let config: ModeConfig
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             ModeIconView(icon: config.icon, size: config.icon.kind == .emoji ? 18 : 14)
 
             Text(config.name)
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppTheme.font(.callout, .semibold))
                 .lineLimit(1)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .padding(.horizontal, AppTheme.Spacing.x4)
+        .padding(.vertical, AppTheme.Spacing.x3)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.Radius.control))
         .overlay {
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                 .stroke(AppTheme.Border.control, lineWidth: 0.5)
         }
     }

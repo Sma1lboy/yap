@@ -24,7 +24,7 @@ struct AutoLearnFailurePanel: View {
                         Text(errorDescription)
                     } icon: {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(AppTheme.Status.warning)
                     }
                 }
 
@@ -89,8 +89,8 @@ struct AutoLearnFailurePanel: View {
             }
             .disabled(!isAutoLearnEnabled)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
+        .padding(.horizontal, AppTheme.Spacing.x5)
+        .padding(.vertical, AppTheme.Spacing.x4)
         .overlay(Divider().opacity(0.5), alignment: .top)
     }
 }
