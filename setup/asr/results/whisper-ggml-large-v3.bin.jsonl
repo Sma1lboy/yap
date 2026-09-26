@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那个JetHub Actions的pip line改一下,现在CIE太慢了。Build Cache好像没生效,我怀疑是Docker file里面layer的顺序有问题。", "secs": 4.3475399999999995, "load": 1.41619, "audio": 7.1158125}
+{"id": "standup", "text": "昨天我跟Sara对了一下API的Streamer,它那边的Crop to Resolver还差三个endpoint,预计周四能很近NP.", "secs": 3.6133500000000005, "load": 0.88507, "audio": 5.294625}
+{"id": "bug", "text": "这个bug只在Safari上复现,IOS17的webkit对indexed,d,b,the transaction处理不一样,retry逻辑要改成exponential backoff。", "secs": 3.72774, "load": 0.8906900000000001, "audio": 6.68625}
+{"id": "perf", "text": "我们把热计时的TCA从300秒降到60秒以后,P99拉伸器降到了120毫秒,QPS大概涨了40%。", "secs": 4.800140000000001, "load": 0.88342, "audio": 5.374625}
+{"id": "meeting", "text": "下午3点和凯宾还有Prior开个sync,讨论一下Q4的roadmap,重点是onboarding和retention这两个metric。", "secs": 4.614939999999999, "load": 0.9602200000000001, "audio": 5.560125}
+{"id": "ml", "text": "这只魔形用皮特律训练,84岁射程32,620张射程3D护士,在100上跑了大概8个小时,Los还在想。", "secs": 3.55013, "load": 0.8853300000000001, "audio": 5.838625}
+{"id": "frontend", "text": "那边把use effect换成react query之后,组件不用自己管loading状态了,tailwind的close也顺便整理了一遍。", "secs": 1.5032399999999995, "load": 0.9411900000000001, "audio": 5.6994375}
+{"id": "infra", "text": "有两个波地质仅仅是欧巴斯口,看乐视从广播在路径变了,很shark要从布白。", "secs": 3.35703, "load": 0.94167, "audio": 5.9825625}
+{"id": "product", "text": "这次 release 我们上了 dark mode 和一个新的 paywall,A,B,test 好了两周,conversion rate 提高了 1.8 个点。", "secs": 4.3105, "load": 0.96462, "audio": 5.3046875}
+{"id": "email", "text": "帮我给丽莎尔回个邮件,说Figma的设计到我看过了,下周一之前把Furspice发到Slice的TheSk山了底。", "secs": 5.016349999999999, "load": 1.5781800000000001, "audio": 5.1825625}
+{"id": "security", "text": "现在存在Local Storage里,有XSS风险,改成HTTP-only的cookie,再加上CSRF token校验。", "secs": 2.66493, "load": 1.503, "audio": 8.451}

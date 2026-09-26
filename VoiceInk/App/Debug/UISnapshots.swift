@@ -204,7 +204,7 @@
 
         private static func onboardingModel(_ kind: OnboardingTranscriptionSetupKind) -> some View {
             OnboardingModelScreen(
-                contentMaxWidth: 620, localModel: nil, setupKind: kind,
+                contentMaxWidth: 620, localModel: OnboardingCoordinator().requiredTranscriptionModel, setupKind: kind,
                 providerOptions: CloudProviderRegistry.allProviders, selectedProviderKey: .constant(""),
                 isLocalDownloaded: false, isLocalDownloading: false, localDownloadStatus: nil,
                 localDownloadError: nil, isSetupReady: false, isShowingSkipWarning: .constant(false),

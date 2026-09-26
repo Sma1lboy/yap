@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那个GitHub Actions的Pipeline改一下,现在这样一太慢了。Build Cache好像没生效,我怀疑是的Curve File里面layer的顺序有问题。", "secs": 1.5361130237579346, "load": 2.569938063621521, "audio": 7.1158125}
+{"id": "standup", "text": "所以,我的三八九零一下API的Schema,他们变得各自重做,开始三个Endpoint,与其他的东西,那么干。", "secs": 0.20625197887420654, "load": 2.569938063621521, "audio": 5.294625}
+{"id": "bug", "text": "这个bugger 在四Farway 上复现,iOS 17 的 WebKit 对Index D, B 的 Transaction 处理不一样,Retrace 逻辑要改成 Exponential Backup。", "secs": 0.24293899536132812, "load": 2.569938063621521, "audio": 6.68625}
+{"id": "perf", "text": "我们把个子的TPH从三百年到六十年以后,TPH是有来分析,几千多年以外要是什么样,QPH的来阀了百分之四十。", "secs": 0.21053695678710938, "load": 2.569938063621521, "audio": 5.374625}
+{"id": "meeting", "text": "下午三点和Cabin还有Priority Hacker Sync,讨论一下Q4的roadmap,重点是onboarding和retention这两个metric。", "secs": 0.20951104164123535, "load": 2.569938063621521, "audio": 5.560125}
+{"id": "ml", "text": "呃呃呃呃", "secs": 0.5497109889984131, "load": 2.569938063621521, "audio": 5.838625}
+{"id": "frontend", "text": "React那边把useEffect换成react Query之后,逐渐不用自己管loading状态了,JLYND的Closs也顺便整理了一遍。", "secs": 0.6896950006484985, "load": 2.569938063621521, "audio": 5.6994375}
+{"id": "infra", "text": "呃呃呃", "secs": 0.19994795322418213, "load": 2.569938063621521, "audio": 5.9825625}
+{"id": "product", "text": "这次release我们上了dark mode和一个新的paywall,A,B,chest跑了两周,conversion rate提高了1.8个点。", "secs": 1.0029959678649902, "load": 2.569938063621521, "audio": 5.3046875}
+{"id": "email", "text": "然后我在低下的这个邮件,说FIMA的设计到我看过了,下周一之前把Furst Pazk发到Slice的嘴塞圈的地。", "secs": 1.1847009658813477, "load": 2.569938063621521, "audio": 5.1825625}
+{"id": "security", "text": "All of the refresh token 现在存在 local storage 里,有 XSS 风险,改成 HTTP only the cookie,再加上 CSRF token 教验。", "secs": 0.35513901710510254, "load": 2.569938063621521, "audio": 8.451}

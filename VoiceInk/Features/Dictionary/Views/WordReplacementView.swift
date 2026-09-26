@@ -175,7 +175,10 @@ struct WordReplacementView: View {
                                 original: replacement.originalText,
                                 replacement: replacement.replacementText,
                                 onDelete: { removeReplacement(replacement) },
-                                onEdit: { editingReplacement = replacement }
+                                onEdit: { editingReplacement = replacement },
+                                onRemoveSource: { source in
+                                    removeSource(source, from: replacement)
+                                }
                             )
 
                             if replacement.persistentModelID != sortedReplacements.last?.persistentModelID {
@@ -230,6 +233,22 @@ struct WordReplacementView: View {
         }
     }
 
+    private func removeSource(_ source: String, from replacement: WordReplacement) {
+        let sources = WordReplacementVariants.parse(replacement.originalText)
+        guard sources.contains(source) else { return }
+
+        if let error = DictionaryService.removeWordReplacementSource(
+            source,
+            from: replacement,
+            context: modelContext
+        ) {
+            alertMessage = error
+            showAlert = true
+            return
+        }
+        NotificationCenter.default.post(name: .wordReplacementsDidChange, object: nil)
+    }
+
     private var isEditingReplacement: Binding<Bool> {
         Binding(
             get: { editingReplacement != nil },
@@ -265,6 +284,10 @@ struct WordReplacementInfoPopover: View {
                 .font(AppTheme.font(.caption))
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+
+            Text("Scroll horizontally to view all phrases.")
+                .font(AppTheme.font(.caption))
+                .foregroundColor(.secondary)
 
             Divider()
 
@@ -336,64 +359,88 @@ struct ReplacementRow: View {
     let replacement: String
     let onDelete: () -> Void
     let onEdit: () -> Void
-    @State private var isEditHovered = false
-    @State private var isDeleteHovered = false
+    let onRemoveSource: (String) -> Void
+
+    private var sources: [String] {
+        WordReplacementVariants.parse(original)
+    }
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Text(original)
-                .font(AppTheme.font(.body))
-                .lineLimit(2)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            ScrollView(.horizontal) {
+                HStack(spacing: AppTheme.Spacing.x2) {
+                    ForEach(sources, id: \.self) { source in
+                        ReplacementSourcePill(
+                            source: source,
+                            showsRemoveButton: sources.count > 1
+                        ) {
+                            onRemoveSource(source)
+                        }
+                    }
+                }
+            }
+            .scrollIndicators(.never)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .help(original)
 
             Image(systemName: "arrow.right")
                 .foregroundColor(.secondary)
                 .font(AppTheme.font(.micro))
                 .frame(width: 10)
 
-            ZStack(alignment: .trailing) {
-                Text(replacement)
-                    .font(AppTheme.font(.body))
-                    .lineLimit(2)
-                    .truncationMode(.middle)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.trailing, 50)  // design-exempt: layout offset, not spacing
+            HStack(spacing: AppTheme.Spacing.x2) {
+                ScrollView(.horizontal) {
+                    Text(replacement)
+                        .font(AppTheme.font(.body))
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
+                .scrollIndicators(.never)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .help(replacement)
 
                 HStack(spacing: AppTheme.Spacing.x2) {
                     Button(action: onEdit) {
                         Image(systemName: "pencil.circle.fill")
                             .symbolRenderingMode(.hierarchical)
-                            .foregroundColor(isEditHovered ? AppTheme.Accent.text : AppTheme.Text.secondary)
+                            .foregroundStyle(AppTheme.Text.primary)
                             .contentTransition(.symbolEffect(.replace))
                     }
                     .buttonStyle(.borderless)
                     .help("Edit replacement")
                     .accessibilityLabel("Edit replacement")
-                    .onHover { hover in
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isEditHovered = hover
-                        }
-                    }
 
                     Button(action: onDelete) {
                         Image(systemName: "xmark.circle.fill")
                             .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(isDeleteHovered ? AppTheme.Status.error : .secondary)
+                            .foregroundStyle(AppTheme.Text.primary)
                             .contentTransition(.symbolEffect(.replace))
                     }
                     .buttonStyle(.borderless)
                     .help("Remove replacement")
                     .accessibilityLabel("Remove replacement")
-                    .onHover { hover in
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isDeleteHovered = hover
-                        }
-                    }
                 }
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, AppTheme.Spacing.x2)
         .padding(.horizontal, AppTheme.Spacing.x1)
+    }
+}
+
+private struct ReplacementSourcePill: View {
+    let source: String
+    let showsRemoveButton: Bool
+    let onRemove: () -> Void
+
+    var body: some View {
+        DictionaryPill(
+            onRemove: showsRemoveButton ? onRemove : nil,
+            removeHelp: "Remove \(source) from Word Replacements",
+            removeAccessibilityLabel: "Remove \(source) from Word Replacements"
+        ) {
+            Text(source)
+                .fixedSize(horizontal: true, vertical: false)
+        }
     }
 }

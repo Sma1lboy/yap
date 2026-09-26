@@ -421,10 +421,11 @@ final class OnboardingCoordinator: ObservableObject {
         return onboardingProviderOptions.first ?? .groq
     }
 
-    var requiredTranscriptionModel: FluidAudioModel? {
+    /// docs/local-models.md: the best local model for Chinese–English speech per MB and per GB of memory.
+    var requiredTranscriptionModel: WhisperModel? {
         TranscriptionModelRegistry.models
-            .compactMap { $0 as? FluidAudioModel }
-            .first { $0.name == "parakeet-tdt-0.6b-v3" }
+            .compactMap { $0 as? WhisperModel }
+            .first { $0.name == "ggml-large-v3-turbo-q5_0" }
     }
 
     func selectedOnboardingTranscriptionProviderKeyBinding() -> Binding<String> {
@@ -453,9 +454,9 @@ final class OnboardingCoordinator: ObservableObject {
         )
     }
 
-    func isTranscriptionModelDownloaded(using modelManager: FluidAudioModelManager) -> Bool {
+    func isTranscriptionModelDownloaded(using modelManager: WhisperModelManager) -> Bool {
         guard let requiredTranscriptionModel else { return false }
-        return modelManager.isFluidAudioModelDownloaded(requiredTranscriptionModel)
+        return modelManager.availableModels.contains { $0.name == requiredTranscriptionModel.name }
     }
 
     func isTranscriptionSetupReady(isTranscriptionModelDownloaded: Bool) -> Bool {

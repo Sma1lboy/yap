@@ -132,7 +132,7 @@
     enum MockEnvironment {
         /// Before any manager reads settings, after the onboarding migration (it clears modes on fresh installs).
         static func seedSettings() {
-            guard AppIdentity.isMock else { return }
+            guard AppIdentity.isMock, !OfflineCheck.isRequested else { return }
             YapCloud.isSnapshotMode = true
             YapCloud.shared.applySnapshotState(.funded)
             UserDefaults.standard.set(true, forKey: OnboardingSettings.completedV2Key)
@@ -143,7 +143,7 @@
 
         /// After the stores exist: history and dictionary, once per launch (the stores start empty).
         static func seedStores(_ container: ModelContainer) {
-            guard AppIdentity.isMock else { return }
+            guard AppIdentity.isMock, !OfflineCheck.isRequested else { return }
             let context = container.mainContext
             guard (try? context.fetchCount(FetchDescriptor<Transcription>())) == 0 else { return }
             MockData.insertHistory(into: context)
@@ -152,7 +152,7 @@
         }
 
         static func attachCloudStore() {
-            guard AppIdentity.isMock else { return }
+            guard AppIdentity.isMock, !OfflineCheck.isRequested else { return }
             CloudConfigSync.shared.store = MockConfigStore()
         }
     }
