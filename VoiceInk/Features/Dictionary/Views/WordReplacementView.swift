@@ -261,6 +261,11 @@ struct WordReplacementInfoPopover: View {
                     .cornerRadius(AppTheme.Radius.small)
             }
 
+            Text("Type \\n in the replacement for a line break, \\n\\n for a new paragraph.")
+                .font(AppTheme.font(.caption))
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
             Divider()
 
             Text("Examples")

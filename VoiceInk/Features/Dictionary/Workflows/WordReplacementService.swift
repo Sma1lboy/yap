@@ -75,7 +75,7 @@ final class WordReplacementService {
                     in: modifiedText,
                     options: [],
                     range: range,
-                    withTemplate: replacementText
+                    withTemplate: NSRegularExpression.escapedTemplate(for: replacementText)
                 )
                 matchedRuleCount += 1
             } else {
@@ -89,6 +89,10 @@ final class WordReplacementService {
                 modifiedText = replacedText
                 matchedRuleCount += 1
             }
+        }
+
+        if matchedRuleCount > 0, rules.contains(where: { $0.replacement.contains("\n") }) {
+            modifiedText = ReplacementText.absorbingSpacesAroundLineBreaks(modifiedText)
         }
 
         logger.debug(
@@ -119,7 +123,7 @@ final class WordReplacementService {
                 WordReplacementVariants.parse(record.originalText).map {
                     (
                         original: $0,
-                        replacement: record.replacementText,
+                        replacement: ReplacementText.expand(record.replacementText),
                         dateAdded: record.dateAdded,
                         id: record.id.uuidString
                     )
@@ -189,4 +193,55 @@ final class WordReplacementService {
 
         return true
     }
+}
+
+/// Replacement text is stored as typed. `\n` in it means a line break so a rule like
+/// "new paragraph" → `\n\n` can insert paragraphs (upstream #975); the text field is one line and
+/// all-whitespace replacements were trimmed away.
+enum ReplacementText {
+    /// `\n` → line break, `\t` → tab, `\\` → one backslash; any other backslash stays as typed.
+    static func expand(_ text: String) -> String {
+        guard text.contains("\\") else { return text }
+        var result = ""
+        var escaping = false
+        for character in text {
+            if escaping {
+                switch character {
+                case "n": result.append("\n")
+                case "t": result.append("\t")
+                case "\\": result.append("\\")
+                default: result.append("\\"); result.append(character)
+                }
+                escaping = false
+            } else if character == "\\" {
+                escaping = true
+            } else {
+                result.append(character)
+            }
+        }
+        if escaping { result.append("\\") }
+        return result
+    }
+
+    /// "hello new paragraph world" → "hello \n\n world" → "hello\n\nworld".
+    static func absorbingSpacesAroundLineBreaks(_ text: String) -> String {
+        text.replacingOccurrences(of: "[ \t]*\n[ \t]*", with: "\n", options: .regularExpression)
+    }
+
+    #if DEBUG
+        static func selfCheck() {
+            assert(expand(#"\n\n"#) == "\n\n")
+            assert(expand(#"a\tb"#) == "a\tb")
+            assert(expand(#"C:\\path"#) == #"C:\path"#)
+            assert(expand(#"\d and \"#) == #"\d and \"#)
+            assert(expand("plain") == "plain")
+            assert(absorbingSpacesAroundLineBreaks("hello \n\n world") == "hello\n\nworld")
+            // Replacements with $ or \ are inserted literally, not as regex template references.
+            let regex = try! NSRegularExpression(pattern: "price")
+            let out = regex.stringByReplacingMatches(
+                in: "the price", range: NSRange(location: 0, length: 9),
+                withTemplate: NSRegularExpression.escapedTemplate(for: #"$0 \1"#))
+            assert(out == #"the $0 \1"#)
+        }
+    #endif
 }

@@ -78,13 +78,12 @@ extension AIService {
             else {
                 throw EnhancementError.notConfigured
             }
-            result = try await OpenAILLMClient.chatCompletion(
+            result = try await OpenAICompatibleChat.complete(
                 baseURL: baseURL,
                 apiKey: customConfiguration.apiKey,
                 model: customConfiguration.modelName,
                 messages: messages,
                 systemPrompt: systemPrompt,
-                temperature: 0.3,
                 timeout: timeout
             )
         case .voiceInkRefine:
@@ -115,13 +114,12 @@ extension AIService {
                 for: provider,
                 modelName: resolvedModel
             )
-            result = try await OpenAILLMClient.chatCompletion(
+            result = try await OpenAICompatibleChat.complete(
                 baseURL: baseURL,
                 apiKey: try chatAPIKey(for: provider, modelName: resolvedModel),
                 model: resolvedModel,
                 messages: messages,
                 systemPrompt: systemPrompt,
-                temperature: 0.3,
                 reasoningEffort: reasoningEffort,
                 extraBody: extraBody,
                 timeout: timeout

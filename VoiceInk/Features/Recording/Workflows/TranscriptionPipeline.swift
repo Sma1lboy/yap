@@ -178,8 +178,14 @@ class TranscriptionPipeline {
                 let isSkipShortEnhancementEnabled = UserDefaults.standard.bool(forKey: "SkipShortEnhancement")
                 let savedThreshold = UserDefaults.standard.integer(forKey: "ShortEnhancementWordThreshold")
                 let shortEnhancementWordThreshold = savedThreshold > 0 ? savedThreshold : 3
+                let contextSnapshot = await recordingContextSnapshot()
+                // With selected text captured, a short utterance is an instruction for that text
+                // ("make it formal"), not a transcript too short to clean up (upstream #968).
+                let hasSelectedTextContext =
+                    resolvedEnhancementConfiguration?.useSelectedTextContext == true
+                    && contextSnapshot?.selectedText?.isEmpty == false
                 let shouldSkipEnhancement =
-                    !shouldRespondInRecorder && isSkipShortEnhancementEnabled
+                    !shouldRespondInRecorder && !hasSelectedTextContext && isSkipShortEnhancementEnabled
                     && WordCounter.count(in: text) <= shortEnhancementWordThreshold
 
                 if let enhancementService,
@@ -200,7 +206,6 @@ class TranscriptionPipeline {
                     }
 
                     do {
-                        let contextSnapshot = await recordingContextSnapshot()
                         transcription.aiEnhancementModelName =
                             resolvedEnhancementConfiguration.modelName
                             ?? resolvedEnhancementConfiguration.provider?.defaultModel
