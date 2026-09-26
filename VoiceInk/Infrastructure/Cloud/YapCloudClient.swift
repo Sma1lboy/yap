@@ -795,6 +795,12 @@ final class YapCloud: ObservableObject {
         return formatUSD(micros: micros, decimals: decimals)
     }
 
+    /// Spend totals (This Month, pace): cents from $0.01 up ("$1.79"), 4 decimals only below a cent,
+    /// where they still carry information.
+    static func formatSpend(micros: Int64) -> String {
+        micros.magnitude >= 10_000 ? formatUSD(micros: micros) : formatLedgerAmount(micros: micros, kind: "usage")
+    }
+
     /// Ledger amounts: usage rows are usually under a cent, so they get 4 decimals (below $0.0001: "-<$0.0001",
     /// keeping the sign so a charge never reads as a credit);
     /// top-ups and adjustments get 2.
@@ -1378,6 +1384,7 @@ struct YapCloudConfigDocument: Equatable {
             assert(formatUSD(micros: -1_200, decimals: 4) == "-$0.0012" && formatUSD(micros: 12_345_678, decimals: 4) == "$12.3457")
             assert(formatUSD(micros: 7, decimals: 6) == "$0.000007" && formatUSD(micros: 2_500_000, decimals: 0) == "$3")
             assert(formatLedgerAmount(micros: -92, kind: "usage") == "-<$0.0001")
+            assert(formatSpend(micros: 1_790_000) == "$1.79" && formatSpend(micros: 2_100) == "$0.0021")
             assert(formatLedgerAmount(micros: -150, kind: "usage") == "-$0.0002")
             assert(formatLedgerAmount(micros: 0, kind: "usage") == "$0.0000")
             assert(formatLedgerAmount(micros: -999_904, kind: "adjust") == "-$1.00")

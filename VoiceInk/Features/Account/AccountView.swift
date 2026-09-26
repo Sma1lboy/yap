@@ -39,7 +39,8 @@ struct AccountView: View {
                 } header: {
                     Text("Yap Cloud")
                 } footer: {
-                    VStack(alignment: .leading, spacing: 6) {
+                    // Trailing, like the grouped Form's own footer text on macOS.
+                    VStack(alignment: .trailing, spacing: 6) {
                         Text("Pay as you go: one balance covers transcription and enhancement, no API keys to manage.")
                         YapCloudSignupCreditText()
                         YapCloudLegalText()
@@ -117,7 +118,9 @@ private struct SignedInSections: View {
                 }
             }
             if let runway = balanceRunway {
-                let pace = YapCloud.formatAverage(micros: runway.monthlyMicros)
+                let pace = runway.monthlyMicros >= 10_000
+                    ? "~" + YapCloud.formatSpend(micros: runway.monthlyMicros)
+                    : YapCloud.formatAverage(micros: runway.monthlyMicros)
                 Text(
                     runway.days > 365
                         ? String(format: String(localized: "At this month's pace (%@ a month), your balance lasts more than a year."), pace)
@@ -154,7 +157,7 @@ private struct SignedInSections: View {
         } header: {
             Text("Yap Cloud")
         } footer: {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .trailing, spacing: 6) {
                 Text("With Sync via Yap Cloud on (Settings > Config & Sync), your modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server. API keys stay on each Mac.")
                 YapCloudLegalLinks()
             }
@@ -204,29 +207,29 @@ private struct SignedInSections: View {
                         Text(
                             String(
                                 format: String(localized: "%@ used of %@ cap"),
-                                YapCloud.formatLedgerAmount(micros: spent, kind: "usage"), YapCloud.formatExactUSD(micros: cap))
+                                YapCloud.formatSpend(micros: spent), YapCloud.formatExactUSD(micros: cap))
                         )
                         .monospacedDigit()
                         .foregroundStyle(spent >= cap ? AppTheme.Status.error : AppTheme.Text.primary)
                     } else {
-                        Text(YapCloud.formatLedgerAmount(micros: spend.totalMicros, kind: "usage"))
+                        Text(YapCloud.formatSpend(micros: spend.totalMicros))
                             .monospacedDigit()
                     }
                 }
                 if spend.creditMicros > 0 {
                     LabeledContent("Covered by sign-up credit") {
-                        Text(YapCloud.formatLedgerAmount(micros: spend.creditMicros, kind: "usage"))
+                        Text(YapCloud.formatSpend(micros: spend.creditMicros))
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                     }
                 }
                 ForEach(spend.topModels, id: \.model) { item in
                     LabeledContent {
-                        Text(YapCloud.formatLedgerAmount(micros: item.micros, kind: "usage"))
+                        Text(YapCloud.formatSpend(micros: item.micros))
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                     } label: {
-                        Text(item.model ?? String(localized: "Other"))
+                        Text(item.model.map { id in cloud.models.first { $0.id == id }?.displayName ?? id } ?? String(localized: "Other"))
                             .lineLimit(1)
                             .truncationMode(.middle)
                         if let average = YapCloudMonthlySpend.averageMicros(item.micros, calls: item.calls) {
