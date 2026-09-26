@@ -186,10 +186,11 @@ struct OnboardingTranscriptionSetupCard: View {
         .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.card))
     }
 
-    /// The price sentence only appears once the catalog says what paygate's markup is.
+    /// One provider among the others, for people who'd rather not get a key: plain facts, no pitch. The price
+    /// sentence only appears once the catalog says what paygate's markup is.
     private var yapCloudDescription: String {
         let base = String(
-            localized: "Same models as Your OpenRouter Key, no API key: sign in with your email and pay from a balance.")
+            localized: "Yap Cloud runs the same models without one: sign in with your email and pay as you go.")
         guard let markup = yapCloud.markupPercentText else { return base }
         // Chinese sentences end in "。" and take no space before the next one.
         return base + (base.hasSuffix("。") ? "" : " ") + String(format: String(localized: "Each dictation costs the model's price plus %@."), markup)
@@ -198,7 +199,7 @@ struct OnboardingTranscriptionSetupCard: View {
     private var yapCloudSetup: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
-                Text("Use Yap Cloud (pay as you go)")
+                Text("Rather not get an API key yourself?")
                     .font(AppTheme.font(.body, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
                 Text(yapCloudDescription)
@@ -234,13 +235,10 @@ struct OnboardingTranscriptionSetupCard: View {
                     .foregroundColor(AppTheme.Text.secondary)
                 }
             } else {
-                // A promotion, not a status: brand tag, not green (DESIGN.md).
+                // Stated, not advertised: the credit is a fact about trying it out.
                 YapCloudSignupCreditText()
-                    .font(AppTheme.font(.footnote, .semibold))
-                    .foregroundColor(AppTheme.Text.primary)
-                    .padding(.horizontal, AppTheme.Spacing.x2)
-                    .padding(.vertical, AppTheme.Spacing.half)
-                    .background(Capsule().fill(AppTheme.Accent.fillSubtle))
+                    .font(AppTheme.font(.footnote))
+                    .foregroundColor(AppTheme.Text.secondary)
                 YapCloudSignInForm()
             }
 
