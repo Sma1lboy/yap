@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那个GitHub Actions的Pipeline改一下,现在CE太慢了。Build cache好像没生效,我怀疑是the Curve file里面Layer的顺序有问题。", "secs": 4.07597, "load": 1.30808, "audio": 7.1158125}
+{"id": "standup", "text": "昨天我跟Sara对了一下API的Stream,他那边的Cloud Service还差3个endpoint,预计周四能核心Nand Client。", "secs": 3.2788900000000005, "load": 0.92929, "audio": 5.294625}
+{"id": "bug", "text": "这个bug只在Safari上复现,iOS17的WebKit对IndexedDB的Transaction处理不一样,Retray逻辑要改成Exponential Backup。", "secs": 3.71516, "load": 0.8907, "audio": 6.68625}
+{"id": "perf", "text": "我们把Resist的TCA从300秒降到60秒以后,P99拉伸强到了120毫秒,又PS大概上了40%。", "secs": 2.66582, "load": 0.88834, "audio": 5.374625}
+{"id": "meeting", "text": "下午三点和Kevin还有Priya开个sync,讨论一下Q4的roadmap,重点是onboarding和retention这两个metric。", "secs": 3.6993499999999995, "load": 0.8876799999999999, "audio": 5.560125}
+{"id": "ml", "text": "这个模型用PTOG训练,把14寸射程32,620扎特尺3D互死,在100上跑了大概8个小时,Loss还在强。", "secs": 3.99495, "load": 0.89547, "audio": 5.838625}
+{"id": "frontend", "text": "React那边把UseEffect换成ReactQuery之后,组件不用自己管loading状态了,JLwind的clause也顺便整理了一遍。", "secs": 3.64357, "load": 0.89789, "audio": 5.6994375}
+{"id": "infra", "text": "(互动中)", "secs": 1.23819, "load": 0.88802, "audio": 5.9825625}
+{"id": "product", "text": "这次release我们上了dark mode和一个新的paywall,a,b,test跑了两周,conversion rate提高了1.8个点。", "secs": 3.43447, "load": 0.89832, "audio": 5.3046875}
+{"id": "email", "text": "帮我给Dishout回个邮件,说Feedback的设计稿我看过了,下周一之前把Failspot发到Slides的这次与上了笔。", "secs": 4.326639999999999, "load": 0.90551, "audio": 5.1825625}
+{"id": "security", "text": "O of the Refresh Token现在存在Local Storage里,有XSS风险,改成HTTP-only的Cookie,再加上CSRF Token校验。", "secs": 3.26359, "load": 0.89216, "audio": 8.451}

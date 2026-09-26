@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 struct OnboardingTranscriptionSetupCard: View {
-    let localModel: FluidAudioModel?
+    let localModel: WhisperModel?
     let setupKind: OnboardingTranscriptionSetupKind
     let providerOptions: [any CloudProvider]
     @Binding var selectedProviderKey: String
@@ -11,8 +11,8 @@ struct OnboardingTranscriptionSetupCard: View {
     let localDownloadStatus: FluidAudioDownloadStatus?
     let localDownloadError: String?
     let onSelectSetupKind: (OnboardingTranscriptionSetupKind) -> Void
-    let onDownloadLocalModel: (FluidAudioModel) -> Void
-    let onCancelLocalModelDownload: (FluidAudioModel) -> Void
+    let onDownloadLocalModel: (WhisperModel) -> Void
+    let onCancelLocalModelDownload: (WhisperModel) -> Void
     let onVerificationChanged: () -> Void
     /// Recommended setup: key draft, the last error, and whether Continue is verifying/applying.
     @Binding var recommendedAPIKey: String
@@ -341,7 +341,7 @@ struct OnboardingTranscriptionSetupCard: View {
                 .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(AppTheme.Status.error)
 
-            Text("Parakeet V3 is not available.")
+            Text("Large v3 Turbo is not available.")
                 .font(AppTheme.font(.footnote, .medium))
                 .foregroundColor(AppTheme.Text.secondary)
 

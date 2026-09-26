@@ -3,7 +3,7 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Binding var hasCompletedOnboardingV2: Bool
-    @EnvironmentObject var fluidAudioModelManager: FluidAudioModelManager
+    @EnvironmentObject var whisperModelManager: WhisperModelManager
     @EnvironmentObject var transcriptionModelManager: TranscriptionModelManager
     @EnvironmentObject var aiService: AIService
     @EnvironmentObject var enhancementService: AIEnhancementService
@@ -13,8 +13,11 @@ struct OnboardingView: View {
     let contentMaxWidth: CGFloat = 560
 
     var body: some View {
+        let localDownloadProgress = coordinator.requiredTranscriptionModel.flatMap {
+            whisperModelManager.downloadProgress[$0.name + "_main"]
+        }
         let isTranscriptionModelDownloaded = coordinator.isTranscriptionModelDownloaded(
-            using: fluidAudioModelManager
+            using: whisperModelManager
         )
         let isTranscriptionSetupReady = coordinator.isTranscriptionSetupReady(
             isTranscriptionModelDownloaded: isTranscriptionModelDownloaded
@@ -67,14 +70,12 @@ struct OnboardingView: View {
                         providerOptions: coordinator.onboardingTranscriptionProviderOptions,
                         selectedProviderKey: coordinator.selectedOnboardingTranscriptionProviderKeyBinding(),
                         isLocalDownloaded: isTranscriptionModelDownloaded,
-                        isLocalDownloading: coordinator.requiredTranscriptionModel.map {
-                            fluidAudioModelManager.isFluidAudioModelDownloading($0)
-                        } ?? false,
-                        localDownloadStatus: coordinator.requiredTranscriptionModel.flatMap {
-                            fluidAudioModelManager.downloadStatus(for: $0)
+                        isLocalDownloading: localDownloadProgress != nil,
+                        localDownloadStatus: localDownloadProgress.map {
+                            FluidAudioDownloadStatus(fractionCompleted: $0, message: String(localized: "Downloading..."))
                         },
                         localDownloadError: coordinator.requiredTranscriptionModel.flatMap {
-                            fluidAudioModelManager.downloadError(for: $0)
+                            whisperModelManager.downloadErrors[$0.name]
                         },
                         isSetupReady: isTranscriptionSetupReady,
                         isShowingSkipWarning: $coordinator.isShowingSkipTranscriptionSetupWarning,
@@ -82,11 +83,11 @@ struct OnboardingView: View {
                         onDownload: {
                             coordinator.flow.downloadTranscriptionModel(
                                 $0,
-                                modelManager: fluidAudioModelManager
+                                modelManager: whisperModelManager
                             )
                         },
                         onCancelDownload: {
-                            fluidAudioModelManager.cancelDownload($0)
+                            whisperModelManager.cancelDownload($0)
                         },
                         onVerificationChanged: coordinator.flow.refreshTranscriptionSetupVerification,
                         onBack: coordinator.flow.goBackToMicrophoneStep,
