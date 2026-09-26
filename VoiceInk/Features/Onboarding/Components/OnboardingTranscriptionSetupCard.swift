@@ -186,7 +186,8 @@ struct OnboardingTranscriptionSetupCard: View {
         let base = String(
             localized: "Same models as Your OpenRouter Key, no API key: sign in with your email and pay from a balance.")
         guard let markup = yapCloud.markupPercentText else { return base }
-        return base + " " + String(format: String(localized: "Each dictation costs the model's price plus %@."), markup)
+        // Chinese sentences end in "。" and take no space before the next one.
+        return base + (base.hasSuffix("。") ? "" : " ") + String(format: String(localized: "Each dictation costs the model's price plus %@."), markup)
     }
 
     private var yapCloudSetup: some View {

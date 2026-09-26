@@ -9338,13 +9338,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Coutume"
+            "value" : "Personnalisé"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "自定"
+            "value" : "自定义"
           }
         }
       }
@@ -29937,7 +29937,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "使用 Yap Cloud(按量付费)"
+            "value" : "使用 Yap Cloud（按量付费）"
           }
         }
       }
