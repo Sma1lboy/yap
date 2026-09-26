@@ -1,5 +1,6 @@
 import AVFoundation
 import Foundation
+import SwiftData
 import os
 
 class WhisperTranscriptionService: TranscriptionService {
@@ -8,10 +9,13 @@ class WhisperTranscriptionService: TranscriptionService {
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "WhisperTranscriptionService")
     private let modelsDirectory: URL
     private weak var modelProvider: (any WhisperModelProvider)?
+    /// Source of dictionary words for the prompt; nil (warmup) means no dictionary.
+    private let modelContext: ModelContext?
 
-    init(modelsDirectory: URL, modelProvider: (any WhisperModelProvider)? = nil) {
+    init(modelsDirectory: URL, modelProvider: (any WhisperModelProvider)? = nil, modelContext: ModelContext? = nil) {
         self.modelsDirectory = modelsDirectory
         self.modelProvider = modelProvider
+        self.modelContext = modelContext
     }
 
     func transcribe(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext) async throws
@@ -59,7 +63,8 @@ class WhisperTranscriptionService: TranscriptionService {
 
         // Set prompt
         await whisperContext.setLanguage(context.language)
-        await whisperContext.setPrompt(context.prompt ?? "")
+        await whisperContext.setPrompt(
+            WhisperPrompt.withVocabulary(context.prompt ?? "", words: await dictionaryWords()))
 
         // Transcribe
         let success = await whisperContext.fullTranscribe(samples: data)
@@ -80,6 +85,13 @@ class WhisperTranscriptionService: TranscriptionService {
         }
 
         return text
+    }
+
+    private func dictionaryWords() async -> [(word: String, dateAdded: Date)] {
+        guard let modelContext else { return [] }
+        return await MainActor.run {
+            ((try? modelContext.fetch(FetchDescriptor<VocabularyWord>())) ?? []).map { ($0.word, $0.dateAdded) }
+        }
     }
 
     private func readAudioSamples(_ url: URL) throws -> [Float] {
