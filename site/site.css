@@ -149,6 +149,8 @@ p { margin: 0 0 var(--space-3); }
 .faq summary::after { content: "+"; font-weight: 400; color: var(--text-3); font-size: var(--font-headline); line-height: 1; }
 .faq details[open] summary::after { content: "−"; }
 .faq details > div { padding: 0 0 var(--space-4); color: var(--text-2); max-width: 44em; }
+.faq details ol { margin: 0 0 var(--space-3); padding-left: var(--space-5); display: grid; gap: var(--space-1); }
+.faq details strong { color: var(--text); font-weight: 600; }
 
 /* ---------- Footer ---------- */
 .site-footer { border-top: 1px solid var(--border); padding-block: var(--space-8) var(--space-12); font-size: var(--font-footnote); color: var(--text-2); }

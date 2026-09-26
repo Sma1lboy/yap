@@ -22,36 +22,40 @@ struct AccountView: View {
     }
 
     var body: some View {
-        Form {
-            if cloud.isUnreachable {
-                Section {
-                    Label("Yap Cloud is temporarily unavailable. Try again shortly.", systemImage: "wifi.exclamationmark")
-                        .foregroundStyle(AppTheme.Status.warningStrong)
-                }
-            }
-            if cloud.isSignedIn, cloud.trialNudge != nil {
-                Section { YapCloudTrialNudgeBanner(isHomeCard: false) }
-            }
-            if cloud.isSignedIn {
-                SignedInSections()
-            } else {
-                Section {
-                    YapCloudSignInForm()
-                } header: {
-                    Text("Yap Cloud")
-                } footer: {
-                    // Trailing, like the grouped Form's own footer text on macOS.
-                    VStack(alignment: .trailing, spacing: AppTheme.Spacing.x2) {
-                        Text("Pay as you go: one balance covers transcription and enhancement, no API keys to manage.")
-                        YapCloudSignupCreditText()
-                        YapCloudLegalText()
+        VStack(spacing: 0) {
+            AppScreenHeader(title: "Account")
+            ScrollView {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x6) {
+                    if cloud.isUnreachable {
+                        AccountBanner(
+                            "Yap Cloud is temporarily unavailable. Try again shortly.", systemImage: "wifi.exclamationmark")
                     }
+                    if cloud.isSignedIn, cloud.trialNudge != nil {
+                        YapCloudTrialNudgeBanner(isHomeCard: false)
+                    }
+                    if cloud.isSignedIn {
+                        SignedInSections()
+                    } else {
+                        AccountSection("Yap Cloud") {
+                            Text("Pay as you go: one balance covers transcription and enhancement, no API keys to manage.")
+                                .foregroundStyle(AppTheme.Text.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            YapCloudSignupCreditText()
+                                .font(AppTheme.font(.footnote, .semibold))
+                            YapCloudSignInForm()
+                        } footer: {
+                            YapCloudLegalText()
+                        }
+                    }
+                    modelsSection
                 }
+                .frame(maxWidth: 720, alignment: .leading)
+                .padding(.horizontal, AppTheme.Spacing.x6)
+                .padding(.top, AppTheme.Spacing.x2)
+                .padding(.bottom, AppTheme.Spacing.x12)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            modelsSection
         }
-        .formStyle(.grouped)
-        .scrollContentBackground(.hidden)
         .modifier(CloudSyncOffer())
         .task(id: cloud.isSignedIn) {
             await cloud.refreshAccount()
@@ -64,19 +68,20 @@ struct AccountView: View {
     @ViewBuilder
     private var modelsSection: some View {
         if !cloud.models.isEmpty {
-            Section {
-                ForEach(recommendedModels, id: \.id) { model in
+            AccountSection("Models & Pricing") {
+                AccountRows(recommendedModels, id: \.id) { model in
                     ModelPriceRow(model: model)
                 }
                 DisclosureGroup("All Models", isExpanded: $isShowingAllModels) {
-                    TextField("Search models", text: $modelQuery)
-                        .textFieldStyle(.roundedBorder)
-                    ForEach(allModels, id: \.id) { model in
-                        ModelPriceRow(model: model)
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
+                        TextField("Search models", text: $modelQuery)
+                            .textFieldStyle(.roundedBorder)
+                        AccountRows(allModels, id: \.id) { model in
+                            ModelPriceRow(model: model)
+                        }
                     }
+                    .padding(.top, AppTheme.Spacing.x2)
                 }
-            } header: {
-                Text("Models & Pricing")
             } footer: {
                 // The paygate host is only useful when pointing a dev build at another server.
                 #if DEBUG
@@ -84,6 +89,121 @@ struct AccountView: View {
                 #endif
             }
         }
+    }
+}
+
+// MARK: - Page layout
+
+/// A titled card: Account's building block (DESIGN.md: 1px-bordered card, 16pt padding, explanation inside the
+/// card as a left-aligned footnote).
+private struct AccountSection<Content: View, Footer: View>: View {
+    let title: LocalizedStringKey?
+    @ViewBuilder let content: () -> Content
+    @ViewBuilder let footer: () -> Footer
+
+    init(
+        _ title: LocalizedStringKey?, @ViewBuilder content: @escaping () -> Content,
+        @ViewBuilder footer: @escaping () -> Footer
+    ) {
+        self.title = title
+        self.content = content
+        self.footer = footer
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+            if let title {
+                Text(title)
+                    .font(AppTheme.font(.body, .semibold))
+                    .foregroundStyle(AppTheme.Text.secondary)
+                    .accessibilityAddTraits(.isHeader)
+            }
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
+                content()
+                footer()
+                    .font(AppTheme.font(.footnote))
+                    .foregroundStyle(AppTheme.Text.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(AppTheme.Spacing.x4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(AppCardBackground(cornerRadius: AppTheme.Radius.card))
+        }
+    }
+}
+
+extension AccountSection where Footer == EmptyView {
+    init(_ title: LocalizedStringKey?, @ViewBuilder content: @escaping () -> Content) {
+        self.init(title, content: content, footer: { EmptyView() })
+    }
+}
+
+/// Label (with an optional second line) on the left, value or control on the right.
+private struct AccountRow<Trailing: View>: View {
+    let title: String
+    var detail: String?
+    @ViewBuilder let trailing: () -> Trailing
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x3) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
+                Text(title)
+                    .foregroundStyle(AppTheme.Text.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                if let detail {
+                    Text(detail)
+                        .font(AppTheme.font(.caption))
+                        .foregroundStyle(AppTheme.Text.muted)
+                }
+            }
+            Spacer(minLength: AppTheme.Spacing.x3)
+            trailing()
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Rows separated by hairlines.
+private struct AccountRows<Item, ID: Hashable, Row: View>: View {
+    let items: [Item]
+    let id: KeyPath<Item, ID>
+    @ViewBuilder let row: (Item) -> Row
+
+    init(_ items: [Item], id: KeyPath<Item, ID>, @ViewBuilder row: @escaping (Item) -> Row) {
+        self.items = items
+        self.id = id
+        self.row = row
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                if index > 0 { Divider().padding(.vertical, AppTheme.Spacing.x2) }
+                row(item)
+            }
+        }
+    }
+}
+
+/// Warning banner: needs attention, so it carries the warning color (DESIGN.md).
+private struct AccountBanner: View {
+    let text: LocalizedStringKey
+    let systemImage: String
+
+    init(_ text: LocalizedStringKey, systemImage: String) {
+        self.text = text
+        self.systemImage = systemImage
+    }
+
+    var body: some View {
+        Label(text, systemImage: systemImage)
+            .font(AppTheme.font(.footnote, .medium))
+            .foregroundStyle(AppTheme.Status.warning)
+            .padding(.horizontal, AppTheme.Spacing.x4)
+            .padding(.vertical, AppTheme.Spacing.x3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: AppTheme.Radius.card).fill(AppTheme.Status.warningFill))
     }
 }
 
@@ -99,74 +219,9 @@ private struct SignedInSections: View {
     @State private var exportError: String?
 
     var body: some View {
-        Section {
-            LabeledContent("Email address", value: cloud.me?.email ?? cloud.email ?? "")
-            LabeledContent {
-                if let balance = cloud.balanceMicros {
-                    Text(YapCloud.formatUSD(micros: balance))
-                        .monospacedDigit()
-                        .foregroundStyle(balance > 0 ? AppTheme.Text.primary : AppTheme.Status.error)
-                } else if cloud.isRefreshingAccount {
-                    ProgressView().controlSize(.small)
-                } else {
-                    Text(verbatim: "—").foregroundStyle(.secondary)
-                }
-            } label: {
-                Text("Balance")
-                if let updatedAt = cloud.balanceUpdatedAt {
-                    Text(
-                        String(
-                            format: String(localized: "Last updated %@"),
-                            updatedAt.formatted(date: .abbreviated, time: .shortened)))
-                }
-            }
-            if let runway = balanceRunway {
-                let pace = runway.monthlyMicros >= 10_000
-                    ? "~" + YapCloud.formatSpend(micros: runway.monthlyMicros)
-                    : YapCloud.formatAverage(micros: runway.monthlyMicros)
-                Text(
-                    runway.days > 365
-                        ? String(format: String(localized: "At this month's pace (%@ a month), your balance lasts more than a year."), pace)
-                        : runway.days == 0
-                            ? String(format: String(localized: "At this month's pace (%@ a month), your balance lasts less than a day."), pace)
-                            : String(
-                                format: String(localized: "At this month's pace (%@ a month), your balance lasts about %lld days."),
-                                pace, runway.days))
-                    .font(AppTheme.font(.caption))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            if let error = cloud.accountRefreshError {
-                Text(String(format: String(localized: "Couldn't refresh your account: %@"), error))
-                    .font(AppTheme.font(.caption))
-                    .foregroundStyle(AppTheme.Status.error)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            YapCloudSupportRow()
-            HStack {
-                Button("Refresh") { Task { await cloud.refreshAccount() } }
-                    .disabled(cloud.isRefreshingAccount)
-                if cloud.isRefreshingAccount { ProgressView().controlSize(.small) }
-                Spacer()
-                Button("Sign Out") { isConfirmingSignOut = true }
-                    .confirmationDialog(
-                        "Sign out of Yap Cloud?", isPresented: $isConfirmingSignOut
-                    ) {
-                        Button("Sign Out", role: .destructive, action: signOut)
-                    } message: {
-                        Text("Modes that use Yap Cloud stop working until you sign in again or switch them to another provider.")
-                    }
-            }
-        } header: {
-            Text("Yap Cloud")
-        } footer: {
-            VStack(alignment: .trailing, spacing: AppTheme.Spacing.x2) {
-                Text("With Sync via Yap Cloud on (Settings > Config & Sync), your modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server. API keys stay on each Mac.")
-                YapCloudLegalLinks()
-            }
-        }
+        balanceHeader
 
-        Section {
+        AccountSection("Add Funds") {
             Picker("Amount (USD)", selection: $amount) {
                 ForEach(cloud.topUpPresets, id: \.self) { preset in
                     Text(verbatim: "$\(preset)").tag(Int?.some(preset))
@@ -174,15 +229,18 @@ private struct SignedInSections: View {
                 Text("Custom").tag(Int?.none)
             }
             .pickerStyle(.segmented)
+            .labelsHidden()
+            .accessibilityLabel("Amount (USD)")
             .onChange(of: amount) { _, _ in errorMessage = nil }
             if amount == nil {
-                LabeledContent("Custom Amount (USD)") {
+                AccountRow(title: String(localized: "Custom Amount (USD)")) {
                     TextField("", text: $customAmount, prompt: Text(verbatim: "50"))
+                        .textFieldStyle(.roundedBorder)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 100)
                 }
             }
-            HStack {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 if let errorMessage {
                     Text(errorMessage)
                         .font(AppTheme.font(.caption))
@@ -190,21 +248,20 @@ private struct SignedInSections: View {
                 }
                 Spacer()
                 if isOpeningCheckout { ProgressView().controlSize(.small) }
-                Button("Add Funds…", action: openCheckout)
+                // The page's one primary action (DESIGN.md).
+                AppActionButton("Add Funds…", kind: .primary, action: openCheckout)
                     .disabled(isOpeningCheckout)
             }
             if cloud.pendingTopUp != nil {
                 YapCloudTopUpWaitingRow()
             }
-        } header: {
-            Text("Add Funds")
         } footer: {
             Text("Checkout opens in your browser. Your balance updates when you come back to Yap.")
         }
 
         if let spend = cloud.monthlySpend {
-            Section {
-                LabeledContent("Total") {
+            AccountSection("This Month") {
+                AccountRow(title: String(localized: "Total")) {
                     if let cap = cloud.me?.monthlyCapMicros {
                         let spent = cloud.me?.monthSpentMicros ?? spend.totalMicros
                         Text(
@@ -220,46 +277,44 @@ private struct SignedInSections: View {
                     }
                 }
                 if spend.creditMicros > 0 {
-                    LabeledContent("Covered by sign-up credit") {
+                    Divider()
+                    AccountRow(title: String(localized: "Covered by sign-up credit")) {
                         Text(YapCloud.formatSpend(micros: spend.creditMicros))
                             .monospacedDigit()
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(AppTheme.Text.secondary)
                     }
                 }
                 ForEach(spend.topModels, id: \.model) { item in
-                    LabeledContent {
+                    Divider()
+                    AccountRow(
+                        title: item.model.map { id in cloud.models.first { $0.id == id }?.displayName ?? id }
+                            ?? String(localized: "Other"),
+                        detail: YapCloudMonthlySpend.averageMicros(item.micros, calls: item.calls).map { average in
+                            String(
+                                format: String(localized: "%lld calls · %@ / call"), Int64(item.calls),
+                                YapCloud.formatAverage(micros: average))
+                        }
+                    ) {
                         Text(YapCloud.formatSpend(micros: item.micros))
                             .monospacedDigit()
-                            .foregroundStyle(.secondary)
-                    } label: {
-                        Text(item.model.map { id in cloud.models.first { $0.id == id }?.displayName ?? id } ?? String(localized: "Other"))
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        if let average = YapCloudMonthlySpend.averageMicros(item.micros, calls: item.calls) {
-                            Text(
-                                String(
-                                    format: String(localized: "%lld calls · %@ / call"), Int64(item.calls),
-                                    YapCloud.formatAverage(micros: average)))
-                        }
+                            .foregroundStyle(AppTheme.Text.secondary)
                     }
                 }
-            } header: {
-                Text("This Month")
             }
         }
 
         MonthlyCapSection()
 
-        Section("Recent Activity") {
+        AccountSection("Recent Activity") {
             if let ledger = cloud.ledger {
                 if ledger.isEmpty {
                     Text("No charges or top-ups yet.")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppTheme.Text.secondary)
                 } else {
-                    ForEach(ledger, id: \.id.string) { entry in
+                    AccountRows(ledger, id: \.id.string) { entry in
                         LedgerRow(entry: entry)
                     }
-                    HStack {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         if let exportError {
                             Text(exportError)
                                 .font(AppTheme.font(.caption))
@@ -267,7 +322,7 @@ private struct SignedInSections: View {
                         }
                         Spacer()
                         if isExporting { ProgressView().controlSize(.small) }
-                        Button("Export CSV…", action: exportCSV)
+                        AppActionButton("Export CSV…", action: exportCSV)
                             .disabled(isExporting)
                     }
                 }
@@ -278,7 +333,7 @@ private struct SignedInSections: View {
                     Text("Couldn't load recent activity.")
                         .foregroundStyle(AppTheme.Status.error)
                     Spacer()
-                    Button("Retry") { Task { await cloud.refreshAccount() } }
+                    AppActionButton("Retry") { Task { await cloud.refreshAccount() } }
                 }
             }
         }
@@ -286,18 +341,116 @@ private struct SignedInSections: View {
         if let devices = cloud.devices {
             DevicesSection(devices: devices)
         } else if let error = cloud.devicesError {
-            Section("Signed-in Devices") {
+            AccountSection("Signed-in Devices") {
                 HStack {
                     Text(String(format: String(localized: "Couldn't load devices: %@"), error))
                         .foregroundStyle(AppTheme.Status.error)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer()
-                    Button("Retry") { Task { await cloud.refreshDevices() } }
+                    AppActionButton("Retry") { Task { await cloud.refreshDevices() } }
                 }
             }
         }
 
-        DeleteAccountSection()
+        accountSection
+    }
+
+    /// The balance leads the page (DESIGN.md: display size, tabular digits), with refresh right next to it.
+    private var balanceHeader: some View {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.x4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
+                Text("Yap Cloud balance")
+                    .font(AppTheme.font(.footnote, .medium))
+                    .foregroundStyle(AppTheme.Text.secondary)
+                HStack(alignment: .center, spacing: AppTheme.Spacing.x2) {
+                    if let balance = cloud.balanceMicros {
+                        Text(YapCloud.formatUSD(micros: balance))
+                            .font(AppTheme.font(.display, .semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(balance > 0 ? AppTheme.Text.primary : AppTheme.Status.error)
+                            .accessibilityLabel(
+                                String(format: String(localized: "Balance %@"), YapCloud.formatUSD(micros: balance)))
+                    } else {
+                        Text(verbatim: "—")
+                            .font(AppTheme.font(.display, .semibold))
+                            .foregroundStyle(AppTheme.Text.muted)
+                    }
+                    if cloud.isRefreshingAccount {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        AppIconButton(
+                            systemName: "arrow.clockwise", help: "Refresh", size: 28, iconSize: 12,
+                            action: { Task { await cloud.refreshAccount() } })
+                    }
+                }
+                if let line = balanceNote {
+                    Text(line)
+                        .font(AppTheme.font(.footnote))
+                        .foregroundStyle(AppTheme.Text.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if let error = cloud.accountRefreshError {
+                    Text(String(format: String(localized: "Couldn't refresh your account: %@"), error))
+                        .font(AppTheme.font(.footnote))
+                        .foregroundStyle(AppTheme.Status.error)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: AppTheme.Spacing.x4)
+            Text(verbatim: cloud.me?.email ?? cloud.email ?? "")
+                .font(AppTheme.font(.footnote))
+                .foregroundStyle(AppTheme.Text.secondary)
+                .textSelection(.enabled)
+                .padding(.top, AppTheme.Spacing.half)
+        }
+    }
+
+    /// "At this month's pace …" and when the balance was last updated.
+    private var balanceNote: String? {
+        var parts: [String] = []
+        if let runway = balanceRunway {
+            let pace = runway.monthlyMicros >= 10_000
+                ? "~" + YapCloud.formatSpend(micros: runway.monthlyMicros)
+                : YapCloud.formatAverage(micros: runway.monthlyMicros)
+            parts.append(
+                runway.days > 365
+                    ? String(format: String(localized: "At this month's pace (%@ a month), your balance lasts more than a year."), pace)
+                    : runway.days == 0
+                        ? String(format: String(localized: "At this month's pace (%@ a month), your balance lasts less than a day."), pace)
+                        : String(
+                            format: String(localized: "At this month's pace (%@ a month), your balance lasts about %lld days."),
+                            pace, runway.days))
+        }
+        if let updatedAt = cloud.balanceUpdatedAt {
+            parts.append(
+                String(format: String(localized: "Last updated %@"), updatedAt.formatted(date: .omitted, time: .shortened)))
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    /// Sign-out (not destructive: nothing is lost) and account deletion, at the bottom.
+    private var accountSection: some View {
+        AccountSection("Account") {
+            YapCloudSupportRow()
+            AccountRow(
+                title: String(localized: "Sign out of Yap Cloud on this Mac"),
+                detail: String(localized: "Your settings and transcripts stay on this Mac.")
+            ) {
+                AppActionButton("Sign Out") { isConfirmingSignOut = true }
+                    .confirmationDialog("Sign out of Yap Cloud?", isPresented: $isConfirmingSignOut) {
+                        Button("Sign Out", role: .destructive, action: signOut)
+                    } message: {
+                        Text("Modes that use Yap Cloud stop working until you sign in again or switch them to another provider.")
+                    }
+            }
+            Divider()
+            DeleteAccountRow()
+        } footer: {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+                Text("With Sync via Yap Cloud on (Settings > Config & Sync), your modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server. API keys stay on each Mac.")
+                YapCloudLegalLinks()
+            }
+        }
     }
 
     /// nil until this month has 3+ days of usage (see YapCloudMonthlySpend.runway).
@@ -422,13 +575,10 @@ private struct ModelPriceRow: View {
     let model: YapCloudModel
 
     var body: some View {
-        LabeledContent {
+        AccountRow(title: model.displayName, detail: model.id) {
             Text(price)
                 .monospacedDigit()
-                .foregroundStyle(.secondary)
-        } label: {
-            Text(model.displayName)
-            Text(model.id)
+                .foregroundStyle(AppTheme.Text.secondary)
         }
     }
 
@@ -598,17 +748,22 @@ private struct MonthlyCapSection: View {
     private var savedCapMicros: Int64? { cloud.me?.monthlyCapMicros }
 
     var body: some View {
-        Section {
-            Picker("Monthly Cap", selection: $choice) {
-                Text("No Cap").tag(Choice.none)
-                ForEach(YapCloud.monthlyCapPresets, id: \.self) { dollars in
-                    Text(verbatim: "$\(dollars)").tag(Choice.preset(dollars))
+        AccountSection("Monthly Cap") {
+            AccountRow(title: String(localized: "Monthly Cap")) {
+                Picker("Monthly Cap", selection: $choice) {
+                    Text("No Cap").tag(Choice.none)
+                    ForEach(YapCloud.monthlyCapPresets, id: \.self) { dollars in
+                        Text(verbatim: "$\(dollars)").tag(Choice.preset(dollars))
+                    }
+                    Text("Custom").tag(Choice.custom)
                 }
-                Text("Custom").tag(Choice.custom)
+                .labelsHidden()
+                .fixedSize()
             }
             if choice == .custom {
-                LabeledContent("Cap (USD)") {
+                AccountRow(title: String(localized: "Cap (USD)")) {
                     TextField("", text: $customDollars, prompt: Text(verbatim: "50"))
+                        .textFieldStyle(.roundedBorder)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 100)
                 }
@@ -621,11 +776,9 @@ private struct MonthlyCapSection: View {
                 }
                 Spacer()
                 if isSaving { ProgressView().controlSize(.small) }
-                Button("Save", action: save)
+                AppActionButton("Save", action: save)
                     .disabled(isSaving || pendingCapMicros == .invalid || pendingCapMicros == .value(savedCapMicros))
             }
-        } header: {
-            Text("Monthly Cap")
         } footer: {
             Text("When this month's spending reaches the cap, Yap Cloud stops charging until next month or until you raise it.")
         }
@@ -705,8 +858,8 @@ private struct DevicesSection: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        Section {
-            ForEach(devices) { device in
+        AccountSection("Signed-in Devices") {
+            AccountRows(devices, id: \.id.string) { device in
                 HStack {
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                         HStack(spacing: AppTheme.Spacing.x2) {
@@ -714,10 +867,10 @@ private struct DevicesSection: View {
                             if device.current {
                                 Text("This Mac")
                                     .font(AppTheme.font(.caption))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(AppTheme.Text.primary)
                                     .padding(.horizontal, AppTheme.Spacing.x2)
                                     .padding(.vertical, AppTheme.Spacing.half)
-                                    .background(Capsule().fill(AppTheme.Surface.subtle))
+                                    .background(Capsule().fill(AppTheme.Accent.fillSubtle))
                             }
                         }
                         if let date = device.lastUsedDate {
@@ -731,7 +884,7 @@ private struct DevicesSection: View {
                         if removingID == device.id.string {
                             ProgressView().controlSize(.small)
                         } else {
-                            Button("Sign Out") { pendingRemoval = device }
+                            AppActionButton("Sign Out") { pendingRemoval = device }
                                 .disabled(removingID != nil)
                                 .accessibilityLabel(String(format: String(localized: "Sign out %@"), name(device)))
                         }
@@ -743,8 +896,6 @@ private struct DevicesSection: View {
                     .font(AppTheme.font(.caption))
                     .foregroundStyle(AppTheme.Status.error)
             }
-        } header: {
-            Text("Signed-in Devices")
         }
         .confirmationDialog(
             String(format: String(localized: "Sign out %@?"), pendingRemoval.map(name) ?? ""),
@@ -809,11 +960,14 @@ struct YapCloudSupportRow: View {
 
     var body: some View {
         if let email = cloud.info?.supportEmail, !email.isEmpty {
-            LabeledContent("Contact Support") {
+            AccountRow(title: String(localized: "Contact Support")) {
                 HStack(spacing: AppTheme.Spacing.x2) {
-                    Text(verbatim: email).textSelection(.enabled)
+                    Text(verbatim: email)
+                        .foregroundStyle(AppTheme.Text.secondary)
+                        .textSelection(.enabled)
                     if let mailto = URL(string: "mailto:" + email) {
                         Link(destination: mailto) { Image(systemName: "envelope") }
+                            .appLinkStyle()
                             .help("Email support")
                             .accessibilityLabel("Email support")
                     }
@@ -831,7 +985,9 @@ struct YapCloudLegalText: View {
 
     var body: some View {
         if let terms = cloud.info?.termsURL, let privacy = cloud.info?.privacyURL {
+            // Link runs take the tint, not the foreground style: ink in light mode, yellow in dark (DESIGN.md).
             Text(attributed(terms: terms, privacy: privacy))
+                .tint(AppTheme.Accent.text)
         }
     }
 
@@ -841,29 +997,26 @@ struct YapCloudLegalText: View {
         var text = AttributedString(
             String(format: String(localized: "By continuing, you agree to the %1$@ and %2$@."), terms, privacy))
         for (name, url) in [(terms, termsURL), (privacy, privacyURL)] {
-            if let range = text.range(of: name) { text[range].link = url }
+            if let range = text.range(of: name) {
+                text[range].link = url
+                text[range].underlineStyle = .single
+            }
         }
         return text
     }
 }
 
-/// Danger zone at the bottom of Account: delete the Yap Cloud account after typing its email.
-private struct DeleteAccountSection: View {
-    @ObservedObject private var cloud = YapCloud.shared
+/// Last row of Account: delete the Yap Cloud account after typing its email. The only destructive action
+/// on the page, so the only red button.
+private struct DeleteAccountRow: View {
     @State private var isConfirming = false
 
     var body: some View {
-        Section {
-            HStack {
-                Text("Deletes this account for every device. Your remaining balance is not refunded.")
-                    .font(AppTheme.font(.caption))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer()
-                Button("Delete Yap Cloud Account…", role: .destructive) { isConfirming = true }
-            }
-        } header: {
-            Text("Danger Zone")
+        AccountRow(
+            title: String(localized: "Delete Yap Cloud Account"),
+            detail: String(localized: "Deletes this account for every device. Your remaining balance is not refunded.")
+        ) {
+            AppActionButton("Delete…", kind: .destructive) { isConfirming = true }
         }
         .sheet(isPresented: $isConfirming) { DeleteAccountSheet() }
     }
