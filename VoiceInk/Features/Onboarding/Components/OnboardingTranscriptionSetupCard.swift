@@ -109,7 +109,12 @@ struct OnboardingTranscriptionSetupCard: View {
 
                 Text(kind.title)
                     .font(AppTheme.font(.footnote, .semibold))
+                    .lineLimit(1)
             }
+            // Each label keeps its width on one line; the tabs share what's left ("Your OpenRouter Key" wrapped
+            // when all four got a quarter).
+            .fixedSize(horizontal: true, vertical: false)
+            .padding(.horizontal, AppTheme.Spacing.x2)
             .foregroundColor(isSelected ? AppTheme.Text.primary : AppTheme.Text.secondary)
             .frame(maxWidth: .infinity)
             .frame(height: 36)
