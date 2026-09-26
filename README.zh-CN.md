@@ -6,6 +6,8 @@
 
 <p align="center">按住快捷键说话，中英混着说也行，松开就是整理好的文字。</p>
 
+<p align="center"><img src="design/screenshots/home-zh.png" width="720" alt="Yap 主页：Yap Cloud 余额、本周听写统计和今天中英混说的转写记录"></p>
+
 Yap 是 Prakash Joshi Pax 的 [VoiceInk](https://github.com/Beingpax/VoiceInk) 的一个分支，沿用同样的 GPL-3.0 许可证。应用本身的功劳都属于原作者；如果你想要官方签名公证、自动更新的版本，请[购买 VoiceInk](https://tryvoiceink.com/)。
 
 这个分支改了什么：

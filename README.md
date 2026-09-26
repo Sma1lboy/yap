@@ -6,6 +6,8 @@
 
 <p align="center">按住快捷键说话，中英混着说也行，松开就是整理好的文字。</p>
 
+<p align="center"><img src="design/screenshots/home-en.png" width="720" alt="Yap's Home: Yap Cloud balance, this week's dictation stats and today's transcripts, mixing English and Chinese"></p>
+
 Yap is a fork of [VoiceInk](https://github.com/Beingpax/VoiceInk) by Prakash Joshi Pax, distributed under the same GPL-3.0 license. All credit for the app goes to the original author — if you want the official, notarized, auto-updating build, [buy VoiceInk](https://tryvoiceink.com/).
 
 What this fork changes:
