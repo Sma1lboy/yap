@@ -206,8 +206,11 @@ final class YapCloud: ObservableObject {
         }
     }
 
+    /// Forgets the token and every account-derived state. Idempotent: callers that also see the same 401
+    /// don't post a second change notification.
     @MainActor
     private func clearSession() {
+        guard isSignedIn || token != nil else { return }
         keychain.delete(forKey: Self.tokenKey, syncable: false)
         defaults.removeObject(forKey: Self.emailKey)
         isSignedIn = false
@@ -492,6 +495,7 @@ final class YapCloud: ObservableObject {
         } catch {
             let classified = Self.classify(error)
             noteReachability(classified)
+            noteAuthFailure(classified)
             throw classified
         }
     }
@@ -874,8 +878,16 @@ final class YapCloud: ObservableObject {
         } catch {
             let classified = Self.classify(error)
             noteReachability(classified)
+            noteAuthFailure(classified)
             throw classified
         }
+    }
+
+    /// A rejected token (revoked on another Mac, account deleted, 90 days unused) signs this Mac out wherever the
+    /// 401 surfaced: account refresh, config sync, a dictation. Nothing retries with a token that's gone.
+    private func noteAuthFailure(_ error: Error) {
+        guard (error as? YapCloudError)?.isAuthFailure == true else { return }
+        Task { @MainActor in clearSession() }
     }
 
     /// Network failures and 502/503/504 all mean "Yap Cloud can't be reached right now" to the user.
