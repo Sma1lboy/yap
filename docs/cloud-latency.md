@@ -83,6 +83,25 @@ Transcription p50 is 100–150 ms lower than in §2 (436 → 290, 561 → 464, 7
 - The sleeps between stop and paste are on other paths: Yap Refine's 450 ms model-prep debounce, and the 150 ms before an auto-send key press after pasting.
 - What's left is the upload size. The long clip is 1.27 MB (1.7 MB in base64) and transcribes about 340 ms slower than the short one. Compressing before upload (FLAC is lossless, about half the size) could save part of that, but it adds encode time and needs checking that OpenRouter's transcription models accept the format. It's not done here, since the gain would be under ~200 ms on a 40 s dictation.
 
+## 5. Reasoning chosen per model from `/v1/models` (2026-09-26)
+
+paygate's `/v1/models` now passes through OpenRouter's `supported_parameters` and `reasoning` (`{mandatory, supported_efforts, default_effort}`) per model (paygate 3259c5c, client-guide §4). The fixed `reasoning: {enabled: false}` and the rule that learned models from their 400 are gone. `YapCloud.chatBody` now reads the metadata:
+
+- `reasoning` is null, or the model isn't in the catalog: no reasoning parameters.
+- `mandatory: false`: `{effort: "none", exclude: true}`. Checked directly on DeepSeek V4.1 Flash, where `supported_efforts` doesn't list `none`: 0 reasoning tokens, ~0.4 s. `low` still reasons (~270 tokens, 1.5–2.6 s).
+- `mandatory: true`: the lowest effort in `supported_efforts`. For gpt-5-mini that's `minimal`: 0 reasoning tokens, no 400, ~1 s.
+- Only parameters in `supported_parameters` are sent (gpt-5-mini doesn't list `temperature`), with `require_parameters` whenever the list is known.
+
+The catalog is now refreshed on every launch, not only from Account. Otherwise a catalog cached before paygate published this metadata would send the recommended model with no reasoning setting, back to the baseline's 8 s.
+
+| clip | audio | STT via Yap Cloud | STT direct | enhance via Yap Cloud | enhance direct | STT+enhance via Yap Cloud |
+|---|---|---|---|---|---|---|
+| short | 2.7 s, 90 KB | 436 / 650 | 1228 / 1378 | 315 / 362 | 324 / 400 | 743 / 1012 |
+| medium | 14.6 s, 459 KB | 456 / 525 | 1039 / 3077 | 400 / 557 | 356 / 419 | 925 / 1007 |
+| long | 40.4 s, 1267 KB | 1143 / 1359 | 1347 / 3092 | 604 / 660 | 627 / 969 | 1737 / 2015 |
+
+This change affects enhancement only, and enhancement didn't regress: 315 / 400 / 604 ms p50 against 273 / 350 / 615 ms in §3, and level with direct. Transcription was slower on this run's network, direct included (STT direct p95 3 s, a new connection 143 vs 115 ms), so the long-clip total is higher for reasons outside this change.
+
 ## Summary
 
 The long clip (40 s), transcribe + enhance through Yap Cloud, p50 / p95 in ms:
@@ -94,4 +113,4 @@ The long clip (40 s), transcribe + enhance through Yap Cloud, p50 / p95 in ms:
 | streamed (§2) | 1462 | 2617 |
 | pooled + prewarmed (§3) | 1252 | 1292 |
 
-The streamed row is noise on this link (see §2), not a regression. paygate is not the bottleneck: through Yap Cloud, transcription is faster than calling OpenRouter directly from this Mac, and enhancement matches direct once the connection is reused. The one paygate change that would help the client is passing OpenRouter's `supported_parameters` / `reasoning` for each model through `/v1/models`. The client could then choose reasoning settings up front instead of learning them from a 400.
+The streamed row is noise on this link (see §2), not a regression. paygate is not the bottleneck: through Yap Cloud, transcription is faster than calling OpenRouter directly from this Mac, and enhancement matches direct once the connection is reused. paygate now publishes each model's reasoning metadata in `/v1/models`, and the client sets reasoning from it before the call (§5).
