@@ -37,43 +37,92 @@ actor WhisperContext {
         whisper_reset_timings(context)
 
         let isVADEnabled = UserDefaults.standard.bool(forKey: "IsVADEnabled")
-        guard samples.count > WhisperChunking.maxWindow, let speech = detectSpeech(samples) else {
+        guard let (speech, probs) = detectSpeech(samples) else {
             return decode(samples[...], vad: isVADEnabled && vadModelPath != nil)
         }
 
-        let windows = WhisperChunking.windows(speech: speech, total: samples.count, keepSilence: !isVADEnabled)
+        let windows = WhisperChunking.windows(
+            speech: speech, probs: probs, total: samples.count, keepSilence: !isVADEnabled)
         logger.notice(
             "Decoding \(samples.count / WhisperChunking.sampleRate, privacy: .public)s in \(windows.count, privacy: .public) windows, VAD \(isVADEnabled, privacy: .public)"
         )
+        let autoLanguage = (language ?? "auto") == "auto"
         for window in windows {
-            guard decode(samples[window], vad: false) else { return false }
+            let runs = autoLanguage ? WhisperChunking.mergeRuns(languagePieces(samples, window, probs)) : []
+            if runs.count > 1 {
+                logger.notice("Mixed-language window: \(runs.map(\.language).joined(separator: ","), privacy: .public)")
+            }
+            if runs.isEmpty {
+                guard decode(samples[window], vad: false) else { return false }
+            }
+            for run in runs {
+                guard decode(samples[run.range], vad: false, language: run.language) else { return false }
+            }
         }
         return true
     }
 
-    /// Speech ranges in samples, cut so no run exceeds one window. Nil when the VAD model is unavailable.
-    private func detectSpeech(_ samples: [Float]) -> [Range<Int>]? {
+    /// Clean single-language windows detect at p > 0.99; a window holding an English stretch followed
+    /// by a Chinese one measured p = 0.56.
+    private static let mixedLanguageThreshold: Float = 0.8
+    private static let minLanguagePiece = 6 * WhisperChunking.sampleRate
+
+    /// Whisper decodes a window in one language, so a window holding an English stretch and a Chinese
+    /// one came out entirely in English with the Chinese translated (upstream #940 / #914). An ambiguous
+    /// window is halved at its quietest moment until each piece is confident or ~6 s long. A confident
+    /// window is decoded with the detected language rather than letting whisper_full detect it again.
+    /// Empty when detection fails; the caller then decodes with the configured language.
+    private func languagePieces(
+        _ samples: [Float], _ range: Range<Int>, _ probs: [Float]
+    ) -> [(range: Range<Int>, language: String)] {
+        guard let (language, probability) = detectLanguage(samples[range]) else { return [] }
+        let quarter = range.count / 4
+        guard probability < Self.mixedLanguageThreshold, range.count >= 2 * Self.minLanguagePiece,
+            let middle = WhisperChunking.quietestPoint(
+                probs, in: (range.lowerBound + quarter)..<(range.upperBound - quarter))
+        else { return [(range, language)] }
+
+        let left = languagePieces(samples, range.lowerBound..<middle, probs)
+        let right = languagePieces(samples, middle..<range.upperBound, probs)
+        return left.isEmpty || right.isEmpty ? [(range, language)] : left + right
+    }
+
+    private func detectLanguage(_ samples: ArraySlice<Float>) -> (language: String, probability: Float)? {
+        guard let context else { return nil }
+        let threads = Int32(max(1, min(8, cpuCount() - 2)))
+        let melStatus = samples.withUnsafeBufferPointer {
+            whisper_pcm_to_mel(context, $0.baseAddress, Int32($0.count), threads)
+        }
+        guard melStatus == 0 else { return nil }
+        var probabilities = [Float](repeating: 0, count: Int(whisper_lang_max_id()) + 1)
+        let id = whisper_lang_auto_detect(context, 0, threads, &probabilities)
+        guard id >= 0, let name = whisper_lang_str(id) else { return nil }
+        return (String(cString: name), probabilities[Int(id)])
+    }
+
+    /// Speech ranges in samples plus Silero's per-hop speech probabilities. Nil when the VAD model is
+    /// unavailable.
+    private func detectSpeech(_ samples: [Float]) -> ([Range<Int>], [Float])? {
         guard let vadModelPath,
             let vctx = whisper_vad_init_from_file_with_params(vadModelPath, whisper_vad_default_context_params())
         else { return nil }
         defer { whisper_vad_free(vctx) }
 
-        var params = vadParams()
-        params.max_speech_duration_s = Float(WhisperChunking.maxWindow / WhisperChunking.sampleRate)
         guard
-            let segments = samples.withUnsafeBufferPointer({
-                whisper_vad_segments_from_samples(vctx, params, $0.baseAddress, Int32($0.count))
-            })
+            samples.withUnsafeBufferPointer({ whisper_vad_detect_speech(vctx, $0.baseAddress, Int32($0.count)) }),
+            let segments = whisper_vad_segments_from_probs(vctx, vadParams())
         else { return nil }
         defer { whisper_vad_free_segments(segments) }
+        let probs = Array(UnsafeBufferPointer(start: whisper_vad_probs(vctx), count: Int(whisper_vad_n_probs(vctx))))
 
         // Segment times are centiseconds.
         let perCs = WhisperChunking.sampleRate / 100
-        return (0..<whisper_vad_segments_n_segments(segments)).map { i in
+        let speech = (0..<whisper_vad_segments_n_segments(segments)).map { i in
             let t0 = Int(whisper_vad_segments_get_segment_t0(segments, i)) * perCs
             let t1 = Int(whisper_vad_segments_get_segment_t1(segments, i)) * perCs
             return min(t0, samples.count)..<min(max(t0, t1), samples.count)
         }
+        return (speech, probs)
     }
 
     private func vadParams() -> whisper_vad_params {
@@ -87,13 +136,14 @@ actor WhisperContext {
         return vadParams
     }
 
-    private func decode(_ samples: ArraySlice<Float>, vad: Bool) -> Bool {
+    /// `language` overrides the configured one (used with a language already detected for this audio).
+    private func decode(_ samples: ArraySlice<Float>, vad: Bool, language: String? = nil) -> Bool {
         guard let context = context else { return false }
 
         let maxThreads = max(1, min(8, cpuCount() - 2))
         var params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY)
 
-        let selectedLanguage = language ?? "auto"
+        let selectedLanguage = language ?? self.language ?? "auto"
         if selectedLanguage != "auto" {
             languageCString = Array(selectedLanguage.utf8CString)
             params.language = languageCString?.withUnsafeBufferPointer { ptr in
