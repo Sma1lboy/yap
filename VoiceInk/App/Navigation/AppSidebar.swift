@@ -13,7 +13,7 @@ struct AppSidebar: View {
         }
         .frame(width: 220)
         .frame(maxHeight: .infinity)
-        // The window has no title bar: the sidebar runs to the top, its first item starts under the traffic
+        // The window has no title bar: the sidebar runs to the top, the brand header starts under the traffic
         // lights, and the space around them drags the window.
         .ignoresSafeArea(.container, edges: .top)
         .windowDragArea(height: topInset)
@@ -34,8 +34,13 @@ struct AppSidebar: View {
 
     private var sidebarContent: some View {
         VStack(spacing: 0) {
-            sidebarSection(ViewType.primaryItems)
+            SidebarBrandHeader()
+                // Left edge on the menu items' icons: section inset + item inset.
+                .padding(.horizontal, AppTheme.Spacing.x6)
                 .padding(.top, topInset)
+                .padding(.bottom, AppTheme.Spacing.x4)
+
+            sidebarSection(ViewType.primaryItems)
 
             Spacer(minLength: 16)
 
@@ -166,5 +171,51 @@ private struct SidebarItemButton: View {
         .help(viewType.title)
         .accessibilityLabel(viewType.title)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+/// Top of the sidebar, under the traffic lights: the app icon, "Yap" and the running version, on every page.
+/// The version moves under "Yap" when the line doesn't fit. Not interactive: the whole block drags the window.
+private struct SidebarBrandHeader: View {
+    var body: some View {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x2) {
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 30, height: 30)  // design-exempt: app icon size, not spacing
+                .accessibilityHidden(true)
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x2) { name; version }
+                VStack(alignment: .leading, spacing: 0) { name; version }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(WindowDragStrip())
+        .accessibilityElement(children: .combine)
+    }
+
+    private var name: some View {
+        Text(verbatim: "Yap")
+            .font(AppTheme.font(.headline, .semibold))
+            .foregroundStyle(AppTheme.Text.primary)
+            .fixedSize()
+    }
+
+    private var version: some View {
+        Text(verbatim: Self.versionText)
+            .font(AppTheme.font(.caption, .medium))
+            .monospacedDigit()
+            .foregroundStyle(AppTheme.Text.secondary)
+            .fixedSize()
+            .accessibilityLabel(String(format: String(localized: "Version %@"), Self.versionText))
+    }
+
+    /// "1.2.0"; Debug builds add the build number, "1.2.0 (220)", to tell dev builds apart.
+    static var versionText: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? ""
+        #if DEBUG
+            if let build = info?["CFBundleVersion"] as? String { return "\(version) (\(build))" }
+        #endif
+        return version
     }
 }
