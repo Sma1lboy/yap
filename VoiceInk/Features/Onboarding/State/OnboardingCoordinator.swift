@@ -179,7 +179,11 @@ final class OnboardingCoordinator: ObservableObject {
             return setupStepCount + activeExperienceSteps.count + contextAwarenessStepCount + 1
         }
 
-        return stage.stepNumber
+        switch stage {
+        case .permissions: return 1
+        case .microphone: return 2
+        default: return setupStepCount  // model, and api which continues the model choice
+        }
     }
 
     var totalStepCount: Int {
@@ -381,10 +385,12 @@ final class OnboardingCoordinator: ObservableObject {
         contextAwarenessInsertionIndices.count
     }
 
-    /// Steps before the practice screens. The Recommended and Yap Cloud presets skip the API key step, so the
-    /// counter shouldn't jump from 3 to 5 for them.
+    /// Steps before the practice screens: permissions, microphone, model. The API key screen continues the model
+    /// choice under the same number, and the microphone step isn't counted when it will be skipped (one input),
+    /// so the total stays the same whichever tab is picked.
+    /// ponytail: device count read live; plugging a mic in mid-onboarding changes the total once.
     private var setupStepCount: Int {
-        OnboardingStage.baseStepCount - (usedRecommendedSetup ? 1 : 0)
+        AudioDeviceManager.shared.availableDevices.count == 1 ? 2 : 3
     }
 
     private var contextAwarenessStepNumber: Int {
