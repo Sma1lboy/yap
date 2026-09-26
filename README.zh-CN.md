@@ -6,18 +6,19 @@
 
 <p align="center">按住快捷键说话，中英混着说也行，松开就是整理好的文字。</p>
 
-<p align="center"><img src="design/screenshots/home-zh.png" width="720" alt="Yap 主页：Yap Cloud 余额、本周听写统计和今天中英混说的转写记录"></p>
+<p align="center"><img src="design/screenshots/home-zh.png" width="720" alt="Yap 主页：本周听写统计和今天中英混说的转写记录"></p>
 
-Yap 是 Prakash Joshi Pax 的 [VoiceInk](https://github.com/Beingpax/VoiceInk) 的一个分支，沿用同样的 GPL-3.0 许可证。应用本身的功劳都属于原作者；如果你想要官方签名公证、自动更新的版本，请[购买 VoiceInk](https://tryvoiceink.com/)。
+Yap 是 macOS 上的开源听写 app，以 GPL-3.0 发布。按住快捷键说话，中文、英文或者一句话里混着说都行，松开后 Yap 转写、去掉口头禅、补好标点，再粘贴进你正在用的 app。「模式」可以按 app 用不同的提示词或模型（邮件、代码评审、聊天），「词典」让人名和术语按你的写法拼。
 
-这个分支改了什么：
+Yap 是 Prakash Joshi Pax 的 [VoiceInk](https://github.com/Beingpax/VoiceInk) 的一个分支。应用本身的功劳都属于原作者；如果你想要官方签名公证的版本，请[购买 VoiceInk](https://tryvoiceink.com/)。官网：[yap.sma1lboy.me](https://yap.sma1lboy.me)。
 
-- 独立的身份：应用名、bundle ID `me.sma1lboy.yap`、Application Support 目录和钥匙串命名空间都是自己的，可以和 VoiceInk 并存、互不共享数据。去掉了上游的公告、GitHub 求星提示、Pro/授权页面和上游更新日志。
-- 更安静的界面：单色侧边栏、显示默认模式和最近转写的主页、用 SF Symbols 代替 emoji。
-- 引导流程可以跳过转写和 AI 服务商的设置（「稍后设置」），改用 JSON 配置文件配置。
-- 自己的更新通道：CI 用固定的自签名证书给每个版本签名并发布，同时更新 Sparkle appcast（应用内更新）和 Homebrew cask。
-- 鸭子图标（`design/logo.svg`）。
-- `setup/`：一套针对中英混说、通过 OpenRouter 调好的配置，以及挑选模型用的评测脚本。
+## 声音交给谁处理
+
+首次设置时选一种，之后随时可以换，也可以每个模式用不同的：
+
+- **本地模型**：NVIDIA 的 Parakeet、Whisper 等模型在你的 Mac 上运行，完全离线。整理也可以在本地做（Yap Refine、Ollama）。在 模型 → 本地。
+- **自带 key**：OpenRouter，或者你已经在用的任何提供商；请求直接发给它，key 只存在这台 Mac 的钥匙串里。默认的 OpenRouter 配置为中英混说调过（见 `setup/`）。在 模型 → 云端。
+- **Yap Cloud**：不想自己申请 key 的话，用邮箱登录，按用量付费。见 [Yap Cloud](#yap-cloud)。
 
 ## 安装
 
@@ -30,20 +31,31 @@ git clone https://github.com/Sma1lboy/yap && cd yap
 
 只装应用：`brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew install --cask sma1lboy/yap/yap`。之后 Yap 会自己更新（应用菜单里的「检查更新…」），也可以用 `brew upgrade --cask yap`。
 
+**自己编译。** 装好 Xcode 后，在克隆下来的仓库里运行 `make local`，会编译 Yap 并把 `Yap.app` 复制到“下载”文件夹。发布版用自签名证书签名、没有经过 Apple 公证；直接下载 zip 第一次打开时提示“无法验证开发者”，处理方法见[官网 FAQ](https://yap.sma1lboy.me/#faq)。
+
+## 和 VoiceInk 有什么不同
+
+- 独立的身份：应用名、bundle ID `me.sma1lboy.yap`、Application Support 目录和钥匙串命名空间都是自己的，可以和 VoiceInk 并存、互不共享数据。去掉了上游的公告、GitHub 求星提示、Pro/授权页面和上游更新日志。
+- 更安静的界面：单色侧边栏、显示默认模式和最近转写的主页、用 SF Symbols 代替 emoji。
+- 引导流程可以跳过转写和 AI 服务商的设置（「稍后设置」），改用 JSON 配置文件配置。
+- 自己的更新通道：CI 用固定的自签名证书给每个版本签名并发布，同时更新 Sparkle appcast（应用内更新）和 Homebrew cask。
+- 鸭子图标（`design/logo.svg`）。
+- `setup/`：一套针对中英混说、通过 OpenRouter 调好的配置，以及挑选模型用的评测脚本。
+
 ## Yap Cloud
 
-Yap Cloud 是一个可选的账户：转写和润色的费用从预充值的余额里扣，不需要去 OpenRouter 或其他服务商申请 API key。用的模型和「自带 OpenRouter Key」配置相同。
+Yap Cloud 是三种用法之一：一个可选的账户，转写和润色的费用从预充值的余额里扣，适合不想去 OpenRouter 或其他服务商申请 API key 的人。用的模型和「自带 OpenRouter Key」配置相同。下面这些都在 Yap Cloud 页面：**模型 → 云端 → Yap Cloud**。
 
-**注册 / 登录。** 打开侧边栏的 **账户**，输入邮箱，再输入发到邮箱里的 6 位验证码。没有密码。新账户会得到 $1 的额度，在 **最近记录** 里显示为「注册赠送」。也可以在引导流程的模型那一步直接选 **使用 Yap Cloud(按量付费)**。
+**注册 / 登录。** 在 Yap Cloud 页面输入邮箱，再输入发到邮箱里的 6 位验证码。没有密码。新账户会得到 $1 的额度，在 **最近记录** 里显示为「注册赠送」。也可以在引导流程的模型那一步选 **Yap Cloud** 标签。
 
 <!-- 10% 即 paygate 的 MARKUP；修改时同步本文件、README.md 和 site/index.html。 -->
-**怎么收费。** 每次转写或润色请求，按模型服务商的价格加 10% 收费。**账户 → 模型与价格** 列出了可用的模型；**本月花费** 显示这个月花了多少、花在哪些模型上；**最近记录** 列出每一笔扣费和充值。
+**怎么收费。** 每次转写或润色请求，按模型服务商的价格加 10% 收费。**模型与价格** 列出了可用的模型；**本月花费** 显示这个月花了多少、花在哪些模型上；**最近记录** 列出每一笔扣费和充值。
 
-**充值。** 在 **账户 → 充值** 里选 $5、$10、$20，或者「自定」（$5 到 $500 之间的整数美元），点 **充值…**。付款页面会在浏览器里打开，回到 Yap 后余额会更新。余额低于 $1 时 Yap 会提示余额不足；余额用完后，Yap Cloud 的请求会停止，并弹出通知带你去账户页。
+**充值。** 在 **充值** 里选 $5、$10、$20，或者「自定义」（$5 到 $500 之间的整数美元），点 **充值…**。付款页面会在浏览器里打开，回到 Yap 后余额会更新。余额低于 $1 时 Yap 会提示余额不足；余额用完后，Yap Cloud 的请求会停止，并弹出通知带你去 Yap Cloud 页面。余额本身只在这个页面和这些提示里出现。
 
-**每月上限。** **账户 → 每月上限** 可以限制每个自然月的花费：选 $5、$10、$20、最多 $10,000 的自定金额，或者「无」。本月花费达到上限后，Yap Cloud 会停止扣费，直到下个月或你调高上限。上限设为 $0 会拦下所有 Yap Cloud 请求。
+**每月上限。** **每月上限** 可以限制每个自然月的花费：选 $5、$10、$20、最多 $10,000 的自定金额，或者「无」。本月花费达到上限后，Yap Cloud 会停止扣费，直到下个月或你调高上限。上限设为 $0 会拦下所有 Yap Cloud 请求。
 
-**设备。** 每台登录过的 Mac 都有自己的登录凭证（存在那台 Mac 的钥匙串里，不会同步）。**账户 → 已登录的设备** 列出这些设备和各自最后使用的时间；点 **移除** 会让那台 Mac 退出登录，不再从你的余额扣费，之后它可以用邮箱重新登录。账户页的 **退出登录** 让这台 Mac 退出；用到 Yap Cloud 的模式会停止工作，直到你重新登录或把它们换成别的服务商。
+**设备。** 每台登录过的 Mac 都有自己的登录凭证（存在那台 Mac 的钥匙串里，不会同步）。**已登录的设备** 列出这些设备和各自最后使用的时间；点其他 Mac 旁边的 **退出登录** 会让那台 Mac 退出，不再从你的余额扣费，之后它可以用邮箱重新登录。页面底部 **账户** 里的 **退出登录** 让这台 Mac 退出；用到 Yap Cloud 的模式会停止工作，直到你重新登录或把它们换成别的服务商。
 
 ## 配置与同步
 
