@@ -48,15 +48,17 @@
 
             var written: [String] = []
             func shot<V: View>(
-                _ name: String, size: CGSize = size, main: Bool = false, fullPage: Bool = false,
+                _ name: String, size: CGSize = size, main: Bool = false, fullPage: Bool = false, titled: Bool = false,
                 @ViewBuilder _ content: () -> V
             ) {
                 guard main || !isChinese else { return }
-                written += render(name + suffix, size: size, fullPage: fullPage) { app.environment(content()) }
+                written += render(name + suffix, size: size, fullPage: fullPage, titled: titled) {
+                    app.environment(content())
+                }
             }
             func page(_ name: String, _ view: ViewType, main: Bool = true) {
                 MainWindowNavigation.shared.selectedView = view
-                shot("page-\(name)", main: main, fullPage: true) { ContentView() }
+                shot("page-\(name)", main: main, fullPage: true, titled: true) { ContentView() }
             }
 
             // Sidebar pages, each whole.
@@ -222,11 +224,11 @@
         }
 
         private static func render<V: View>(
-            _ name: String, size: CGSize = size, fullPage: Bool, @ViewBuilder _ content: () -> V
+            _ name: String, size: CGSize = size, fullPage: Bool, titled: Bool = false, @ViewBuilder _ content: () -> V
         ) -> [String] {
             [NSAppearance.Name.aqua, .darkAqua].map { appearanceName in
                 let isDark = appearanceName == .darkAqua
-                var (host, window) = layOut(content(), size: size, appearanceName: appearanceName)
+                var (host, window) = layOut(content(), size: size, appearanceName: appearanceName, titled: titled)
                 if fullPage {
                     // Lazy stacks estimate their height, so re-measure after each resize (overflow can turn
                     // negative) until it settles. ponytail: the largest scroll view is assumed to be the page.
@@ -238,7 +240,8 @@
                         height = next
                         window.contentView = nil
                         (host, window) = layOut(
-                            content(), size: CGSize(width: size.width, height: height), appearanceName: appearanceName)
+                            content(), size: CGSize(width: size.width, height: height), appearanceName: appearanceName,
+                            titled: titled)
                     }
                 }
 
@@ -252,8 +255,11 @@
             }
         }
 
+        /// `titled`: the app's real window chrome (transparent title bar over full-size content, as
+        /// WindowManager.configureWindow sets up), captured from the window's frame view so the traffic lights and
+        /// the title-bar safe area are in the picture.
         private static func layOut<V: View>(
-            _ content: V, size: CGSize, appearanceName: NSAppearance.Name
+            _ content: V, size: CGSize, appearanceName: NSAppearance.Name, titled: Bool = false
         ) -> (NSView, NSWindow) {
             let host = NSHostingView(
                 rootView: content
@@ -261,14 +267,24 @@
                     .frame(width: size.width, height: size.height)
                     .background(Color(nsColor: .windowBackgroundColor)))
             host.frame = CGRect(origin: .zero, size: size)
-            let window = NSWindow(contentRect: host.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+            let style: NSWindow.StyleMask =
+                titled ? [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView] : [.borderless]
+            let window = NSWindow(contentRect: host.frame, styleMask: style, backing: .buffered, defer: false)
             window.appearance = NSAppearance(named: appearanceName)
+            if titled {
+                window.titlebarAppearsTransparent = true
+                window.titleVisibility = .hidden
+                // Full-size content: the window frame is the page size, title bar included.
+                window.setFrame(CGRect(origin: .zero, size: size), display: false)
+            }
             window.contentView = host
             host.layoutSubtreeIfNeeded()
             // Forms and lists fill their rows (and panels finish opening) on the next run-loop turns.
             RunLoop.main.run(until: Date().addingTimeInterval(0.6))
             host.layoutSubtreeIfNeeded()
-            return (host, window)
+            let captured = titled ? (host.superview ?? host) : host
+            captured.layoutSubtreeIfNeeded()
+            return (captured, window)
         }
 
         /// How much taller (or, negative, shorter) than its visible area the page's scroll view content is.

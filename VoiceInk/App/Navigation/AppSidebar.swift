@@ -2,6 +2,8 @@ import SwiftUI
 
 struct AppSidebar: View {
     @Binding var selectedView: ViewType
+    /// The traffic lights are hidden in full screen, so the space kept for them goes too.
+    @State private var isFullScreen = false
 
     var body: some View {
         ZStack(alignment: .trailing) {
@@ -11,15 +13,29 @@ struct AppSidebar: View {
         }
         .frame(width: 220)
         .frame(maxHeight: .infinity)
+        // The window has no title bar: the sidebar runs to the top, its first item starts under the traffic
+        // lights, and the space around them drags the window.
+        .ignoresSafeArea(.container, edges: .top)
+        .windowDragArea(height: topInset)
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didEnterFullScreenNotification)) { _ in
+            isFullScreen = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didExitFullScreenNotification)) { _ in
+            isFullScreen = false
+        }
         .onAppear {
             ViewType.assertSidebarItemsCoverAllCases()
         }
     }
 
+    private var topInset: CGFloat {
+        isFullScreen ? AppTheme.Spacing.x3 : AppWindowLayout.titlebarHeight + AppTheme.Spacing.x2
+    }
+
     private var sidebarContent: some View {
         VStack(spacing: 0) {
             sidebarSection(ViewType.primaryItems)
-                .padding(.top, AppTheme.Spacing.x3)
+                .padding(.top, topInset)
 
             Spacer(minLength: 16)
 
