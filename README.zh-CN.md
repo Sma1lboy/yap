@@ -16,7 +16,7 @@ Yap 是 Prakash Joshi Pax 的 [VoiceInk](https://github.com/Beingpax/VoiceInk) �
 
 首次设置时选一种，之后随时可以换，也可以每个模式用不同的：
 
-- **本地模型**：NVIDIA 的 Parakeet、Whisper 等模型在你的 Mac 上运行，完全离线。整理也可以在本地做（Yap Refine、Ollama）。在 模型 → 本地。
+- **本地模型**：Whisper 在你的 Mac 上运行，完全离线。中英混说用 Whisper Large v3 Turbo（Quantized），约 550MB，也是引导流程里“本地”选项下载的模型；NVIDIA 的 Parakeet 模型不支持中文，只适合纯英文，可选。整理也可以在本地做（Yap Refine、Ollama）。在 模型 → 本地；实测数据见 [docs/local-models.md](docs/local-models.md)。
 - **自带 key**：OpenRouter，或者你已经在用的任何提供商；请求直接发给它，key 只存在这台 Mac 的钥匙串里。默认的 OpenRouter 配置为中英混说调过（见 `setup/`）。在 模型 → 云端。
 - **Yap Cloud**：不想自己申请 key 的话，用邮箱登录，按用量付费。见 [Yap Cloud](#yap-cloud)。
 
