@@ -138,9 +138,14 @@ Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription 
 
 ## Releasing
 
-Before tagging, run `make cloud-smoke` (needs `YAP_CLOUD_SMOKE_TOKEN`; the command prints how to get one): it compiles the real Yap Cloud client against small stubs and checks it against live paygate — account, ledger paging, usage, models, config 409s, devices, the monthly cap (restored afterwards) and the 402s at a zero balance. It exits non-zero on any FAIL.
+Before tagging, run `scripts/preflight.sh X.Y.Z`. It runs every check and prints a PASS/FAIL table (exit code 1 if anything failed):
 
-Also run `make sync-e2e` after changing config sync (needs the Railway CLI logged in: tokens come from paygate's `scripts/issue-token.ts` over `railway ssh`, falling back to sign-in codes from paygate's log): it registers a throwaway account with two devices, runs the real sync code as two Macs against live paygate — first write and restore, concurrent edits with a real 409 and merge, delete, edit-after-delete, restoring a version without entries coming back — prints PASS/FAIL per scenario and deletes the account at the end.
+- `make build` and a Release build with `MARKETING_VERSION=X.Y.Z`, checking that `docs/releases/X.Y.Z.md` is bundled (built in `.local-build/preflight`, not copied to `~/Downloads`);
+- `make cloud-smoke`: the real Yap Cloud client against live paygate (account, ledger, usage, models, config 409s and versions, devices, monthly cap, 401/402/413/429);
+- `make sync-e2e`: two simulated Macs syncing through a throwaway account (first write and restore, concurrent edits with a real 409, delete, edit after delete, version restore);
+- `docs/releases/X.Y.Z.md` exists, and the numbers users read (sign-up credit, top-up range, markup, monthly cap in the release notes, both READMEs and `site/index.html`) match `/v1/info` and the app's constants.
+
+It needs the Railway CLI logged in (tokens come from paygate's `scripts/issue-token.ts`; `YAP_CLOUD_SMOKE_TOKEN` is used instead when set). Then go through the manual checks in `docs/release-checklist.md`. The release notes file is also what users see in the GitHub Release and in the in-app update dialog.
 
 Push a tag `vX.Y.Z`. CI (`.github/workflows/release.yml`) builds on macOS 26, signs with the "Yap Self-Signed" certificate, publishes `Yap.zip` to GitHub Releases, then commits the new `appcast.xml` item (Sparkle EdDSA-signed) and the `Casks/yap.rb` version in one commit to `main`. Build numbers are `1000 + run number`. CI also builds every push to `main` and once a week, so caches stay warm in `main`'s scope: the whisper.cpp framework, the compiled Swift packages (mlx, FluidAudio, TranscribeCpp — the stable local-model modules), and Xcode 26's content-hashed compilation cache for the app's own sources (a fresh checkout doesn't force a full recompile). A release takes about 3–4 minutes; changing `Package.resolved` triggers one full rebuild (~14 minutes).
 
