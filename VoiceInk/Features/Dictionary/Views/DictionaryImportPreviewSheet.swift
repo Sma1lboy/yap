@@ -34,7 +34,7 @@ struct DictionaryImportPreviewSheet: View {
     var body: some View {
         QuickPanelScaffold {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
                     importModeSection
 
                     if let summary {
@@ -47,7 +47,7 @@ struct DictionaryImportPreviewSheet: View {
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, AppTheme.Spacing.x5)
                 .padding(.top, QuickPanelMetrics.topEdgeHeight + 8)
                 .padding(.bottom, QuickPanelMetrics.bottomEdgeHeight + 8)
             }
@@ -93,9 +93,9 @@ struct DictionaryImportPreviewSheet: View {
     }
 
     private var importModeSection: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             Text("Import Mode")
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
 
             InfoTip(
                 message: importModeHelp,
@@ -124,11 +124,11 @@ struct DictionaryImportPreviewSheet: View {
     }
 
     private func summarySection(_ summary: DictionaryImportSummary) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             Text("Import Preview")
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
 
-            VStack(spacing: 8) {
+            VStack(spacing: AppTheme.Spacing.x2) {
                 summaryRow(
                     "Vocabulary",
                     value: String(localized: "\(summary.vocabularyToImport) entries")
@@ -189,25 +189,25 @@ struct DictionaryImportPreviewSheet: View {
                 if !hasImportableEntries {
                     Divider()
                     Label("No valid entries are available to import.", systemImage: "exclamationmark.triangle.fill")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(AppTheme.font(.footnote, .medium))
                         .foregroundStyle(AppTheme.Status.warningStrong)
                 }
             }
-            .padding(12)
-            .background(AppTheme.Surface.subtle, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .padding(AppTheme.Spacing.x3)
+            .background(AppTheme.Surface.subtle, in: RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
         }
     }
 
     private func summaryRow(_ title: LocalizedStringKey, value: String, color: Color = AppTheme.Text.primary) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
+        HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x3) {
             Text(title)
-                .font(.system(size: 12))
+                .font(AppTheme.font(.footnote))
                 .foregroundStyle(AppTheme.Text.secondary)
 
             Spacer(minLength: 12)
 
             Text(value)
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(color)
                 .multilineTextAlignment(.trailing)
         }
@@ -215,13 +215,13 @@ struct DictionaryImportPreviewSheet: View {
 
     private func errorSection(_ message: String) -> some View {
         Label(message, systemImage: "exclamationmark.triangle.fill")
-            .font(.system(size: 12))
+            .font(AppTheme.font(.footnote))
             .foregroundStyle(AppTheme.Status.error)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var footer: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             AppActionButton("Cancel", action: onCancel)
                 .keyboardShortcut(.cancelAction)
 
@@ -244,7 +244,7 @@ struct DictionaryImportPreviewSheet: View {
             }
             .disabled(!hasImportableEntries || summary == nil || isImporting)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.footerHeight)
     }
 

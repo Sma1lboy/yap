@@ -99,11 +99,11 @@ struct MenuBarView: View {
             } label: {
                 HStack {
                     Image(systemName: "sparkles.square.fill.on.square")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(AppTheme.font(.caption, .medium))
                     let activeMode = modeManager.currentEffectiveConfiguration
                     Text(String(format: String(localized: "Mode: %@"), activeMode?.name ?? String(localized: "None")))
                     Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 10))
+                        .font(AppTheme.font(.micro))
                 }
             }
 
@@ -125,10 +125,10 @@ struct MenuBarView: View {
             } label: {
                 HStack {
                     Image(systemName: "mic.fill")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(AppTheme.font(.caption, .medium))
                     Text("Audio Input")
                     Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 10))
+                        .font(AppTheme.font(.micro))
                 }
             }
 

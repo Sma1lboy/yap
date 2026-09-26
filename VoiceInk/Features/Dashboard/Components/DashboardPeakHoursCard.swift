@@ -14,7 +14,7 @@ struct DashboardPeakHoursCard: View {
 
     var body: some View {
         ZStack {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
                 header
 
                 DashboardPeakHoursHistogram(
@@ -32,31 +32,31 @@ struct DashboardPeakHoursCard: View {
             }
         }
         .fixedSize(horizontal: false, vertical: true)
-        .padding(18)
+        .padding(AppTheme.Spacing.x5)
         .frame(maxWidth: .infinity, minHeight: 196, maxHeight: 196, alignment: .topLeading)
-        .background(DashboardInsightCardBackground(cornerRadius: 16))
+        .background(DashboardInsightCardBackground(cornerRadius: AppTheme.Radius.panel))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Peak dictation hours")
         .accessibilityValue(accessibilityValue)
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
+        HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x3) {
             Text("Peak Dictation Hours")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(AppTheme.font(.title3, .semibold, design: .rounded))
                 .foregroundStyle(AppTheme.Text.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.84)
 
             Spacer(minLength: 0)
 
-            HStack(spacing: 5) {
+            HStack(spacing: AppTheme.Spacing.x1) {
                 Image(systemName: "clock")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .foregroundStyle(AppTheme.Text.secondary.opacity(0.78))
 
                 Text(canShowPattern ? windowText : "--")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .font(AppTheme.font(.body, .semibold, design: .rounded))
                     .foregroundStyle(AppTheme.Text.secondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.76)
@@ -81,22 +81,22 @@ struct DashboardPeakHoursCard: View {
     }
 
     private var lockedOverlay: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: "lock.fill")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(AppTheme.Accent.primary)
+                .font(AppTheme.font(.headline, .semibold))
+                .foregroundStyle(AppTheme.Accent.text)
                 .frame(width: 34, height: 34)
                 .background(AppTheme.Accent.fill)
-                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
 
             Text("Continue using Yap to unlock peak hours.")
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundStyle(AppTheme.Text.primary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .frame(maxWidth: 260)
         }
-        .padding(.horizontal, 18)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
@@ -124,7 +124,7 @@ struct DashboardPeakHoursCard: View {
 }
 
 private struct DashboardPeakHoursHistogram: View {
-    private let peakTint = AppTheme.Accent.strong
+    private let peakTint = AppTheme.Accent.text
     private let peakTintSoft = AppTheme.Accent.primary.opacity(0.46)
 
     let points: [DashboardHourlyActivityPoint]
@@ -133,14 +133,14 @@ private struct DashboardPeakHoursHistogram: View {
     let hasData: Bool
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.x2) {
             GeometryReader { geometry in
                 ZStack(alignment: .bottom) {
                     baseline
                         .frame(width: geometry.size.width)
                         .position(x: geometry.size.width / 2, y: geometry.size.height - 1)
 
-                    HStack(alignment: .bottom, spacing: 4) {
+                    HStack(alignment: .bottom, spacing: AppTheme.Spacing.x1) {
                         ForEach(points) { point in
                             ZStack(alignment: .bottom) {
                                 Capsule(style: .continuous)
@@ -213,7 +213,7 @@ private struct DashboardPeakHoursHistogram: View {
 
     private func axisLabel(_ label: LocalizedStringKey) -> some View {
         Text(label)
-            .font(.system(size: 10, weight: .semibold))
+            .font(AppTheme.font(.micro, .semibold))
             .foregroundStyle(AppTheme.Text.secondary)
             .lineLimit(1)
     }

@@ -76,7 +76,7 @@ struct PromptEditorView: View {
     var body: some View {
         QuickPanelScaffold {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
                     if case .add = mode {
                         templateMenu
                     }
@@ -84,9 +84,9 @@ struct PromptEditorView: View {
                     instructionsEditor
                     systemTemplateToggle
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 76)
-                .padding(.bottom, 72)
+                .padding(.horizontal, AppTheme.Spacing.x5)
+                .padding(.top, 76)  // design-exempt: layout offset, not spacing
+                .padding(.bottom, 72)  // design-exempt: layout offset, not spacing
             }
         } header: {
             header
@@ -111,12 +111,12 @@ struct PromptEditorView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Button {
                 dismissPanel()
             } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(AppTheme.font(.callout, .semibold))
                     .foregroundColor(.secondary)
                     .frame(width: 28, height: 28)
                     .background(AppTheme.Surface.card)
@@ -129,18 +129,18 @@ struct PromptEditorView: View {
 
             TextField("Prompt name", text: $title)
                 .textFieldStyle(.plain)
-                .font(.system(size: 16, weight: .semibold))
+                .font(AppTheme.font(.headline, .semibold))
 
             Spacer()
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.headerHeight)
     }
 
     private var systemTemplateToggle: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Toggle(isOn: $useSystemInstructions) {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Use System Template")
                     InfoTip(
                         "If enabled, your instructions are combined with a general-purpose template to improve transcription quality.\n\nDisable for full control over the AI's system prompt (for advanced users)."
@@ -166,7 +166,7 @@ struct PromptEditorView: View {
             }
         } label: {
             Label("Template", systemImage: "sparkles")
-                .font(.system(size: 13, weight: .medium))
+                .font(AppTheme.font(.body, .medium))
                 .foregroundColor(.secondary)
         }
         .menuStyle(.borderlessButton)
@@ -180,16 +180,16 @@ struct PromptEditorView: View {
                 .font(.system(.body, design: .monospaced))
                 .frame(height: 440)
                 .scrollContentBackground(.hidden)
-                .padding(8)
-                .background(AppCardBackground(cornerRadius: 8))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding(AppTheme.Spacing.x2)
+                .background(AppCardBackground(cornerRadius: AppTheme.Radius.control))
+                .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control))
 
             if promptText.isEmpty {
                 Text("Write prompt instructions")
                     .font(.system(.body, design: .monospaced))
                     .foregroundStyle(.tertiary)
-                    .padding(.horizontal, 14)
-                    .padding(.top, 10)
+                    .padding(.horizontal, AppTheme.Spacing.x4)
+                    .padding(.top, AppTheme.Spacing.x3)
                     .allowsHitTesting(false)
             }
         }
@@ -220,7 +220,7 @@ struct PromptEditorView: View {
             .keyboardShortcut(.return, modifiers: .command)
             .help("Save this prompt and select it.")
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.footerHeight)
     }
 

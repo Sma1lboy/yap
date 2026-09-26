@@ -49,20 +49,18 @@ struct EditReplacementSheet: View {
 
             Spacer()
 
-            Button("Save") { saveChanges() }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
+            AppActionButton("Save", kind: .primary) { saveChanges() }
                 .disabled(originalWord.isEmpty || replacementWord.isEmpty)
                 .keyboardShortcut(.return, modifiers: [])
         }
         .padding(.horizontal)
-        .padding(.vertical, 12)
-        .background(AppCardBackground(isSelected: false, cornerRadius: 16))
+        .padding(.vertical, AppTheme.Spacing.x3)
+        .background(AppCardBackground(isSelected: false, cornerRadius: AppTheme.Radius.panel))
     }
 
     private var formContent: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: AppTheme.Spacing.x5) {
                 descriptionSection
                 inputSection
             }
@@ -76,13 +74,13 @@ struct EditReplacementSheet: View {
             .foregroundColor(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal)
-            .padding(.top, 8)
+            .padding(.top, AppTheme.Spacing.x2)
     }
 
     private var inputSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.x4) {
             // Original Text Field
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 HStack {
                     Text("Original Text")
                         .font(.headline)
@@ -97,7 +95,7 @@ struct EditReplacementSheet: View {
             .padding(.horizontal)
 
             // Replacement Text Field
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 HStack {
                     Text("Replacement Text")
                         .font(.headline)
@@ -108,11 +106,11 @@ struct EditReplacementSheet: View {
                 TextEditor(text: $replacementWord)
                     .font(.body)
                     .frame(height: 100)
-                    .padding(8)
+                    .padding(AppTheme.Spacing.x2)
                     .background(Color(.textBackgroundColor))
                     .cornerRadius(6)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                             .stroke(AppTheme.Border.control, lineWidth: 1)
                     )
             }

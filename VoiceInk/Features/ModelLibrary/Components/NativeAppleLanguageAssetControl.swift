@@ -57,7 +57,7 @@ struct NativeAppleLanguageAssetControl: View {
         case .needsDownload:
             Button(action: downloadAsset) {
                 Image(systemName: "arrow.down.circle.fill")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(AppTheme.font(.callout, .semibold))
             }
             .buttonStyle(.plain)
             .help("Download")
@@ -81,7 +81,7 @@ struct NativeAppleLanguageAssetControl: View {
         case .reservationLimitReached:
             Button(action: refreshAssetState) {
                 Image(systemName: "exclamationmark.circle")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(AppTheme.font(.callout, .semibold))
             }
             .buttonStyle(.plain)
             .help("Refresh")
@@ -91,7 +91,7 @@ struct NativeAppleLanguageAssetControl: View {
         case .failed:
             Button(action: downloadAsset) {
                 Image(systemName: "arrow.clockwise.circle.fill")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(AppTheme.font(.callout, .semibold))
             }
             .buttonStyle(.plain)
             .help("Retry Download")

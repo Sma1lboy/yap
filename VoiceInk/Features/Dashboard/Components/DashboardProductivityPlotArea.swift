@@ -34,7 +34,7 @@ struct DashboardProductivityPlotArea: View {
                     if !hasVisibleWords {
                         DashboardProductivityEmptyHint()
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                            .padding(.bottom, 12)
+                            .padding(.bottom, AppTheme.Spacing.x3)
                     }
 
                     hoverLayer(size: geometry.size, plotHeight: plotHeight)
@@ -283,31 +283,31 @@ private struct DashboardProductivityHoverTooltip: View {
     let previousPoint: DashboardProductivityPoint?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
             Text(point.accessibilityLabel)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .font(AppTheme.font(.micro, .semibold, design: .rounded))
                 .foregroundStyle(AppTheme.Text.secondary)
 
             Text(wordsText(Formatters.formattedNumber(point.words)))
-                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .font(AppTheme.font(.footnote, .semibold, design: .rounded))
                 .foregroundStyle(AppTheme.Text.primary)
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
 
             Text(comparisonText)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .font(AppTheme.font(.micro, .semibold, design: .rounded))
                 .foregroundStyle(comparisonColor)
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.horizontal, AppTheme.Spacing.x3)
+        .padding(.vertical, AppTheme.Spacing.x2)
         .frame(width: 208, alignment: .leading)
         .background(
             Color(nsColor: .controlBackgroundColor),
-            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+            in: RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
         )
         .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
     }
@@ -360,24 +360,24 @@ private struct DashboardProductivityHoverTooltip: View {
 
 private struct DashboardProductivityEmptyHint: View {
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: "waveform.path.ecg")
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundStyle(AppTheme.Text.secondary.opacity(0.78))
 
             Text("No dictated words in this period yet")
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.78)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, AppTheme.Spacing.x3)
         .frame(height: 34)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.card, style: .continuous)
                 .fill(Color(nsColor: .controlBackgroundColor).opacity(0.72))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.card, style: .continuous)
                         .stroke(AppTheme.Border.subtle.opacity(0.58), lineWidth: 1)
                 )
         )
@@ -390,7 +390,7 @@ private struct DashboardProductivityXAxisLabel: View {
 
     var body: some View {
         Text(label)
-            .font(.system(size: 12, weight: .semibold))
+            .font(AppTheme.font(.footnote, .semibold))
             .foregroundStyle(AppTheme.Text.secondary)
             .lineLimit(1)
             .minimumScaleFactor(0.72)

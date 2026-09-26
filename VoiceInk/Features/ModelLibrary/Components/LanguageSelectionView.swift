@@ -92,20 +92,20 @@ struct LanguageSelectionView: View {
 
     // The original full view layout for settings page
     private var fullView: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             languageSelectionSection
         }
     }
 
     private var languageSelectionSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             Text("Transcription Language")
                 .font(.headline)
 
             if transcriptionModelManager.currentTranscriptionModel != nil {
                 if hasLanguageChoices() {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+                        HStack(spacing: AppTheme.Spacing.x2) {
                             Picker("Select Language", selection: selectedLanguageBinding) {
                                 ForEach(
                                     availableLanguagesForCurrentModel().sorted(by: {
@@ -133,7 +133,7 @@ struct LanguageSelectionView: View {
                     }
                 } else {
                     // For English-only models, force set language to English
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                         Text("Language: English")
                             .font(.subheadline)
                             .foregroundColor(.primary)
@@ -165,7 +165,7 @@ struct LanguageSelectionView: View {
     private var menuItemView: some View {
         Group {
             if hasLanguageChoices() {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     Menu {
                         ForEach(
                             availableLanguagesForCurrentModel().sorted(by: {
@@ -189,7 +189,7 @@ struct LanguageSelectionView: View {
                         HStack {
                             Text(String(format: String(localized: "Language: %@"), currentLanguageDisplayName()))
                             Image(systemName: "chevron.up.chevron.down")
-                                .font(.system(size: 10))
+                                .font(AppTheme.font(.micro))
                         }
                     }
 

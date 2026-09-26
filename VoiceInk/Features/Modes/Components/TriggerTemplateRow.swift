@@ -24,11 +24,11 @@ struct TriggerTemplateRow: View {
             guard !isDisabled else { return }
             onToggle(group)
         } label: {
-            HStack(spacing: 10) {
+            HStack(spacing: AppTheme.Spacing.x3) {
                 TriggerSymbol(systemName: template.systemImage)
 
                 Text(template.name)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(AppTheme.font(.body, .semibold))
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
@@ -36,31 +36,31 @@ struct TriggerTemplateRow: View {
 
                 if !group.isEmpty {
                     TriggerGroupPreviewStack(appConfigs: group.appConfigs, urlConfigs: group.urlConfigs, tileSize: 24)
-                        .padding(.trailing, 4)
+                        .padding(.trailing, AppTheme.Spacing.x1)
                 }
 
                 if isAdded {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(Color.accentColor)
+                        .font(AppTheme.font(.headline, .medium))
+                        .foregroundStyle(AppTheme.Accent.text)
                         .frame(width: 22, height: 22)
                 } else if !isDisabled {
                     Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(AppTheme.font(.callout, .medium))
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.secondary)
                         .frame(width: 22, height: 22)
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, AppTheme.Spacing.x2)
+            .padding(.vertical, AppTheme.Spacing.x2)
             .contentShape(Rectangle())
             .background {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .fill(cardBackground)
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .strokeBorder(cardBorder, lineWidth: 0.5)
             }
         }
@@ -74,12 +74,12 @@ struct TriggerSymbol: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                 .fill(AppTheme.Surface.control)
                 .frame(width: 28, height: 28)
 
             Image(systemName: systemName)
-                .font(.system(size: 13, weight: .medium))
+                .font(AppTheme.font(.body, .medium))
                 .foregroundStyle(.primary)
         }
     }

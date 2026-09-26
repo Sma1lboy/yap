@@ -31,7 +31,7 @@ struct AppIconButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: iconSize, weight: .medium))
+                .font(.system(size: iconSize, weight: .medium))  // design-exempt: icon glyph sized to its container
                 .foregroundColor(isDisabled ? .secondary.opacity(0.45) : .primary.opacity(0.7))
                 .frame(width: size, height: size)
                 .background(
@@ -42,6 +42,14 @@ struct AppIconButton: View {
         .disabled(isDisabled)
         .help(help)
         .accessibilityLabel(help)
+    }
+}
+
+extension ButtonStyle where Self == AppActionButtonStyle {
+    /// For a plain `Button` that must stay one (menus, `.keyboardShortcut(.defaultAction)`): the system's default
+    /// button would draw white text on the yellow accent.
+    static func appAction(_ kind: AppActionButtonKind) -> AppActionButtonStyle {
+        AppActionButtonStyle(kind: kind, isPill: false)
     }
 }
 
@@ -82,16 +90,16 @@ struct AppActionButton: View {
     }
 }
 
-private struct AppActionButtonStyle: ButtonStyle {
+struct AppActionButtonStyle: ButtonStyle {
     let kind: AppActionButtonKind
     let isPill: Bool
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 12, weight: .semibold))
+            .font(AppTheme.font(.footnote, .semibold))
             .foregroundStyle(foregroundColor)
-            .padding(.horizontal, 14)
+            .padding(.horizontal, AppTheme.Spacing.x4)
             .frame(height: isPill ? 30 : 32)
             .background(backgroundColor)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
@@ -102,7 +110,7 @@ private struct AppActionButtonStyle: ButtonStyle {
             .opacity(isEnabled ? (configuration.isPressed ? 0.78 : 1) : 0.45)
     }
 
-    private var cornerRadius: CGFloat { isPill ? 15 : 9 }
+    private var cornerRadius: CGFloat { isPill ? AppTheme.Radius.pill : AppTheme.Radius.control }
 
     private var foregroundColor: Color {
         switch kind {
@@ -134,7 +142,7 @@ struct AppPanelHeader: View {
     let onClose: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Text(title)
                 .font(.headline)
                 .fontWeight(.semibold)
@@ -151,8 +159,8 @@ struct AppPanelHeader: View {
                 action: onClose
             )
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, AppTheme.Spacing.x5)
+        .padding(.vertical, AppTheme.Spacing.x3)
         .overlay(Divider().opacity(0.5), alignment: .bottom)
         .zIndex(1)
     }
@@ -166,9 +174,9 @@ struct AppScreenHeader<Trailing: View>: View {
 
     var body: some View {
         HStack {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Text(title)
-                    .font(.system(size: 28, weight: .bold))
+                    .font(AppTheme.font(.display, .semibold))
                     .foregroundColor(.primary)
 
                 if let infoMessage {
@@ -185,9 +193,9 @@ struct AppScreenHeader<Trailing: View>: View {
             trailing()
         }
         .frame(height: 40)
-        .padding(.horizontal, 24)
-        .padding(.top, 20)
-        .padding(.bottom, 12)
+        .padding(.horizontal, AppTheme.Spacing.x6)
+        .padding(.top, AppTheme.Spacing.x5)
+        .padding(.bottom, AppTheme.Spacing.x3)
         .frame(maxWidth: .infinity)
     }
 }
@@ -198,5 +206,12 @@ extension AppScreenHeader where Trailing == EmptyView {
         self.infoMessage = infoMessage
         self.infoURL = infoURL
         self.trailing = { EmptyView() }
+    }
+}
+
+extension View {
+    /// Links per DESIGN.md: ink with an underline in light mode (yellow text is unreadable on white), yellow in dark.
+    func appLinkStyle() -> some View {
+        tint(AppTheme.Accent.text).underline()
     }
 }

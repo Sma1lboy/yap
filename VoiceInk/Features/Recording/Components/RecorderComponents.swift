@@ -23,9 +23,9 @@ struct RecorderToggleButton: View {
         Button(action: action) {
             Group {
                 if isEmoji {
-                    Text(icon).font(.system(size: 14))
+                    Text(icon).font(AppTheme.font(.callout))
                 } else {
-                    Image(systemName: icon).font(.system(size: 13))
+                    Image(systemName: icon).font(AppTheme.font(.body))
                 }
             }
             .foregroundColor(disabled ? .white.opacity(0.3) : (isEnabled ? .white : .white.opacity(0.6)))
@@ -91,12 +91,12 @@ struct RecorderRecordButton: View {
         switch visualState {
         case .ready:
             return StateColors(
-                surface: Color(red: 0.30, green: 0.30, blue: 0.32),
-                border: Color(red: 0.42, green: 0.42, blue: 0.44),
-                mark: Color(red: 0.78, green: 0.78, blue: 0.80)
+                surface: Color(red: 0.30, green: 0.30, blue: 0.32),  // design-exempt: HUD, always dark
+                border: Color(red: 0.42, green: 0.42, blue: 0.44),  // design-exempt: HUD, always dark
+                mark: Color(red: 0.78, green: 0.78, blue: 0.80)  // design-exempt: HUD, always dark
             )
         case .recording:
-            let red = AppTheme.Status.error
+            let red = AppTheme.Action.destructiveFill
             return StateColors(
                 surface: red.opacity(0.92),
                 border: red.opacity(0.98),
@@ -115,7 +115,7 @@ struct RecorderRecordButton: View {
     private var stateMark: some View {
         switch visualState {
         case .ready, .recording:
-            RoundedRectangle(cornerRadius: 2.2, style: .continuous)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.small, style: .continuous)
                 .fill(colors.mark)
                 .frame(width: 8, height: 8)
         case .processing:
@@ -169,7 +169,7 @@ struct RecorderCloseButton: View {
                     )
 
                 Image(systemName: "xmark")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(AppTheme.font(.micro, .semibold))
                     .foregroundColor(.white.opacity(0.86))
             }
             .frame(width: 21, height: 21)
@@ -314,11 +314,11 @@ struct LiveTranscriptView: View {
         ScrollViewReader { proxy in
             ScrollView(.vertical, showsIndicators: false) {
                 Text(text)
-                    .font(.system(size: 12))
+                    .font(AppTheme.font(.footnote))
                     .foregroundColor(.white.opacity(0.8))
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, AppTheme.Spacing.x4)
+                    .padding(.vertical, AppTheme.Spacing.x2)
                     .id("bottom")
             }
             .frame(height: 56)
@@ -407,12 +407,12 @@ struct AssistantPanelView: View {
     }
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.x2) {
             messageList
             followUpRow
         }
         .padding(.horizontal, horizontalPadding)
-        .padding(.vertical, 10)
+        .padding(.vertical, AppTheme.Spacing.x3)
         .frame(height: 320)
         .onAppear(perform: focusFollowUpFieldIfAvailable)
         .onChange(of: session.phase) {
@@ -430,7 +430,7 @@ struct AssistantPanelView: View {
     private var messageList: some View {
         ScrollViewReader { proxy in
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 8) {
+                VStack(spacing: AppTheme.Spacing.x2) {
                     ForEach(session.messages) { message in
                         AssistantMessageBubble(message: message)
                             .id(message.id)
@@ -438,15 +438,15 @@ struct AssistantPanelView: View {
 
                     if let statusText {
                         Text(statusText)
-                            .font(.system(size: 11))
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(.white.opacity(0.62))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, AppTheme.Spacing.x3)
+                            .padding(.vertical, AppTheme.Spacing.x1)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .id("status")
                     }
                 }
-                .padding(.vertical, 2)
+                .padding(.vertical, AppTheme.Spacing.half)
                 .overlay(alignment: .topLeading) {
                     if !session.messages.isEmpty {
                         CopyIconButton(textToCopy: fullConversationText)
@@ -464,11 +464,11 @@ struct AssistantPanelView: View {
     }
 
     private var followUpRow: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             ZStack(alignment: .leading) {
                 if shouldShowLiveFollowUpText {
                     Text(liveFollowUpText)
-                        .font(.system(size: 12))
+                        .font(AppTheme.font(.footnote))
                         .foregroundStyle(followUpTextColor)
                         .lineLimit(1)
                         .truncationMode(.head)
@@ -477,7 +477,7 @@ struct AssistantPanelView: View {
 
                 TextField("", text: $draftMessage)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 12))
+                    .font(AppTheme.font(.footnote))
                     .foregroundStyle(followUpTextColor)
                     .tint(followUpTextColor)
                     .disabled(!session.canSendFollowUp)
@@ -485,14 +485,14 @@ struct AssistantPanelView: View {
                     .onSubmit(sendDraftMessage)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
+            .padding(.horizontal, AppTheme.Spacing.x3)
+            .padding(.vertical, AppTheme.Spacing.x2)
             .background(Color.white.opacity(0.10))
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
 
             Button(action: sendDraftMessage) {
                 Image(systemName: "paperplane.fill")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(AppTheme.font(.micro, .semibold))
                     .foregroundColor(canSendDraft ? .black : .white.opacity(0.35))
                     .frame(width: 24, height: 24)
                     .background(canSendDraft ? Color.white.opacity(0.88) : Color.white.opacity(0.10))
@@ -560,10 +560,10 @@ private struct AssistantMessageBubble: View {
                 foregroundColor: .white.opacity(isUser ? 0.92 : 0.86),
                 alignment: .leading
             )
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
+            .padding(.horizontal, AppTheme.Spacing.x3)
+            .padding(.vertical, AppTheme.Spacing.x2)
             .background(isUser ? Color.white.opacity(0.16) : Color.white.opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
             .overlay(alignment: .bottomTrailing) {
                 if !isUser {
                     CopyIconButton(textToCopy: message.content)

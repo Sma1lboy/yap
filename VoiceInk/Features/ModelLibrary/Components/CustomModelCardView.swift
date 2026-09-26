@@ -10,8 +10,8 @@ struct CustomModelCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Main card content
-            HStack(alignment: .top, spacing: 16) {
-                VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .top, spacing: AppTheme.Spacing.x4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                     headerSection
                     metadataSection
                     descriptionSection
@@ -20,7 +20,7 @@ struct CustomModelCardView: View {
 
                 actionSection
             }
-            .padding(16)
+            .padding(AppTheme.Spacing.x4)
         }
         .background(AppMaterialCardBackground())
     }
@@ -28,7 +28,7 @@ struct CustomModelCardView: View {
     private var headerSection: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(model.displayName)
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(Color(.labelColor))
 
             // Definitions synced from another Mac arrive without their key (keys never leave a Mac).
@@ -37,7 +37,7 @@ struct CustomModelCardView: View {
                     editAction(model)
                 } label: {
                     Label("API key needed", systemImage: "key")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(AppTheme.font(.caption, .medium))
                         .foregroundColor(AppTheme.Status.warningStrong)
                 }
                 .buttonStyle(.plain)
@@ -49,21 +49,21 @@ struct CustomModelCardView: View {
     }
 
     private var metadataSection: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Label(model.modelName, systemImage: "cube")
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
 
             // Language
             Label(model.language, systemImage: "globe")
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
 
             // OpenAI Compatible
             Label("OpenAI Compatible", systemImage: "checkmark.seal")
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
         }
@@ -72,15 +72,15 @@ struct CustomModelCardView: View {
 
     private var descriptionSection: some View {
         Text(model.description)
-            .font(.system(size: 11))
+            .font(AppTheme.font(.caption))
             .foregroundColor(Color(.secondaryLabelColor))
             .lineLimit(2)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.top, 4)
+            .padding(.top, AppTheme.Spacing.x1)
     }
 
     private var actionSection: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             modelStatusPill("Configured", systemImage: "checkmark.circle")
 
             Menu {
@@ -97,7 +97,7 @@ struct CustomModelCardView: View {
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .font(.system(size: 14))
+                    .font(AppTheme.font(.callout))
             }
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)

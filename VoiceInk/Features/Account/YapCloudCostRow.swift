@@ -24,7 +24,7 @@ struct YapCloudCostRow: View {
 
     var body: some View {
         if transcription.usedYapCloud == true, !generationIDs.isEmpty {
-            HStack(spacing: 6) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 if let cost = transcription.yapCloudCostMicros {
                     Text(String(format: String(localized: "Cost %@ (%@)"),
                                 YapCloud.formatLedgerAmount(micros: cost, kind: "usage"), parts))
@@ -35,7 +35,7 @@ struct YapCloudCostRow: View {
                     Text("Cost not available yet")
                 }
             }
-            .font(.system(size: 11))
+            .font(AppTheme.font(.caption))
             .foregroundStyle(AppTheme.Text.secondary)
             .task(id: transcription.id) { await loadIfNeeded() }
         }

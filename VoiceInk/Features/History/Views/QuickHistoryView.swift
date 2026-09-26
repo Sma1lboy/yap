@@ -59,10 +59,10 @@ struct QuickHistoryView: View {
     }
 
     private var searchHeader: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: AppTheme.Spacing.x4) {
             TextField("Search transcriptions...", text: $viewModel.searchText)
                 .textFieldStyle(.plain)
-                .font(.system(size: 15))
+                .font(AppTheme.font(.headline))
                 .focused($isSearchFocused)
                 .frame(maxWidth: 340)
 
@@ -76,14 +76,14 @@ struct QuickHistoryView: View {
 
             escapeKeyCap
         }
-        .padding(.horizontal, 18)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.headerHeight)
     }
 
     private var resultsList: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: 4) {
+                LazyVStack(spacing: AppTheme.Spacing.x1) {
                     ForEach(viewModel.filteredTranscriptions) { transcription in
                         QuickHistoryRow(
                             transcription: transcription,
@@ -98,9 +98,9 @@ struct QuickHistoryView: View {
                         .id(transcription.id)
                     }
                 }
-                .padding(8)
-                .padding(.top, 58)
-                .padding(.bottom, 58)
+                .padding(AppTheme.Spacing.x2)
+                .padding(.top, 58)  // design-exempt: layout offset, not spacing
+                .padding(.bottom, 58)  // design-exempt: layout offset, not spacing
             }
             .scrollIndicators(.never)
             .frame(maxWidth: .infinity)
@@ -155,7 +155,7 @@ struct QuickHistoryView: View {
     }
 
     private func detailContent(_ transcription: Transcription) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             if transcription.hasEnhancedHistoryText {
                 detailTextSection("Enhanced", text: transcription.preferredHistoryText, isPrimary: true)
                 detailTextSection("Original", text: transcription.text, isPrimary: false)
@@ -164,27 +164,27 @@ struct QuickHistoryView: View {
             }
 
         }
-        .padding(14)
-        .padding(.top, 54)
-        .padding(.bottom, 58)
+        .padding(AppTheme.Spacing.x4)
+        .padding(.top, 54)  // design-exempt: layout offset, not spacing
+        .padding(.bottom, 58)  // design-exempt: layout offset, not spacing
     }
 
     private var detailHeader: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Button {
                 withAnimation(.easeOut(duration: 0.16)) {
                     viewModel.isShowingDetail = false
                 }
             } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(AppTheme.font(.callout, .semibold))
             }
             .buttonStyle(.plain)
             .help("Back to history")
             .accessibilityLabel("Back to history")
 
             Text("Transcription Details")
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppTheme.font(.callout, .semibold))
 
             Spacer()
             QuickHistoryWindowDragArea()
@@ -193,7 +193,7 @@ struct QuickHistoryView: View {
 
             escapeKeyCap
         }
-        .padding(.horizontal, 18)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: 52)
     }
 
@@ -216,18 +216,18 @@ struct QuickHistoryView: View {
 
     private func detailTextSection(_ title: LocalizedStringKey, text: String, isPrimary: Bool) -> some View {
         Text(text)
-            .font(.system(size: 13))
+            .font(AppTheme.font(.body))
             .foregroundStyle(isPrimary ? AppTheme.Text.primary : AppTheme.Text.secondary)
             .lineSpacing(2)
             .textSelection(.enabled)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(11)
+            .padding(AppTheme.Spacing.x3)
             .frame(maxWidth: .infinity, alignment: .topLeading)
             .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .fill(isPrimary ? AppTheme.Surface.control : AppTheme.Surface.subtle)
                     .overlay {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                             .stroke(AppTheme.Border.subtle, lineWidth: 1)
                     }
             )
@@ -236,20 +236,20 @@ struct QuickHistoryView: View {
                     textToCopy: text,
                     accessibilityLabel: "Copy text"
                 )
-                .padding(10)
+                .padding(AppTheme.Spacing.x3)
             }
             .overlay(alignment: .bottomTrailing) {
                 if shouldShowTextKind(for: text) {
                     Text(title)
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(AppTheme.font(.micro, .semibold))
                         .foregroundStyle(isPrimary ? AppTheme.Text.primary : AppTheme.Text.secondary)
-                        .padding(.horizontal, 7)
+                        .padding(.horizontal, AppTheme.Spacing.x2)
                         .frame(height: 21)
                         .background(
                             isPrimary ? AppTheme.Surface.controlActive : AppTheme.Surface.subtle,
-                            in: RoundedRectangle(cornerRadius: 6)
+                            in: RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                         )
-                        .padding(10)
+                        .padding(AppTheme.Spacing.x3)
                 }
             }
     }
@@ -268,15 +268,15 @@ struct QuickHistoryView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: AppTheme.Spacing.x3) {
             Spacer()
             Image(systemName: hasSearchQuery ? "magnifyingglass" : "text.bubble")
-                .font(.system(size: 28))
+                .font(AppTheme.font(.display))
                 .foregroundStyle(AppTheme.Text.muted)
             Text(hasSearchQuery ? "No matching transcriptions" : "No transcriptions yet")
-                .font(.system(size: 14, weight: .medium))
+                .font(AppTheme.font(.callout, .medium))
             Text(hasSearchQuery ? "Try another search term." : "Your recent transcriptions will appear here.")
-                .font(.system(size: 12))
+                .font(AppTheme.font(.footnote))
                 .foregroundStyle(AppTheme.Text.secondary)
             Spacer()
         }
@@ -284,7 +284,7 @@ struct QuickHistoryView: View {
     }
 
     private var keyboardHints: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             commandPill("Details", systemImage: nil, shortcut: "⌘↵") {
                 if viewModel.selectedTranscription != nil {
                     withAnimation(.easeOut(duration: 0.16)) {
@@ -301,7 +301,7 @@ struct QuickHistoryView: View {
                 }
             }
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, AppTheme.Spacing.x3)
         .frame(height: 44)
     }
 
@@ -312,7 +312,7 @@ struct QuickHistoryView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: 7) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 if let systemImage {
                     Image(systemName: systemImage)
                 }
@@ -320,15 +320,15 @@ struct QuickHistoryView: View {
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
                 Text(shortcut)
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .font(AppTheme.font(.micro, .medium, design: .rounded))
                     .foregroundStyle(AppTheme.Text.muted)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 3)
-                    .background(AppTheme.Surface.controlActive, in: RoundedRectangle(cornerRadius: 5))
+                    .padding(.horizontal, AppTheme.Spacing.x1)
+                    .padding(.vertical, AppTheme.Spacing.x1)
+                    .background(AppTheme.Surface.controlActive, in: RoundedRectangle(cornerRadius: AppTheme.Radius.small))
             }
-            .font(.system(size: 11, weight: .medium))
+            .font(AppTheme.font(.caption, .medium))
             .foregroundStyle(AppTheme.Text.secondary)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, AppTheme.Spacing.x3)
             .frame(height: 32)
             .fixedSize(horizontal: true, vertical: false)
             .background(

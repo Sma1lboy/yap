@@ -11,9 +11,9 @@ struct VoiceInkButton: View {
                 .font(.headline)
                 .foregroundColor(AppTheme.Text.onAccent)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+                .padding(.vertical, AppTheme.Spacing.x3)
                 .background(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                         .fill(isDisabled ? AppTheme.Accent.disabled : AppTheme.Accent.primary)
                 )
         }
@@ -26,9 +26,9 @@ struct ModeEmptyStateView: View {
     let action: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.x4) {
             Image(systemName: "bolt.circle.fill")
-                .font(.system(size: 48))
+                .font(AppTheme.font(.display))
                 .foregroundColor(.secondary)
 
             Text("No Modes")
@@ -55,7 +55,7 @@ struct ModeConfigurationsGrid: View {
     @EnvironmentObject var enhancementService: AIEnhancementService
 
     var body: some View {
-        LazyVStack(spacing: 12) {
+        LazyVStack(spacing: AppTheme.Spacing.x3) {
             ForEach($modeManager.configurations) { $config in
                 ConfigurationRow(
                     config: $config,
@@ -70,19 +70,19 @@ struct ModeConfigurationsGrid: View {
 
 struct DefaultModeIndicator: View {
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 11, weight: .semibold))
+                .font(AppTheme.font(.caption, .semibold))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.primary)
 
             Text("Default")
-                .font(.system(size: 11, weight: .semibold))
+                .font(AppTheme.font(.caption, .semibold))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
-        .padding(.leading, 7)
-        .padding(.trailing, 9)
+        .padding(.leading, AppTheme.Spacing.x2)
+        .padding(.trailing, AppTheme.Spacing.x2)
         .frame(height: 24)
         .background {
             Capsule()
@@ -243,8 +243,8 @@ struct ConfigurationRow: View {
             Text("Edit")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
+                .padding(.horizontal, AppTheme.Spacing.x2)
+                .padding(.vertical, AppTheme.Spacing.half)
                 .background(
                     Capsule()
                         .fill(AppTheme.Surface.control)
@@ -261,12 +261,12 @@ struct ConfigurationRow: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 12) {
+            HStack(spacing: AppTheme.Spacing.x3) {
                 // A Button, not a tap gesture, so Edit is reachable with the keyboard and VoiceOver.
                 Button {
                     onEditConfig(config)
                 } label: {
-                    HStack(spacing: 12) {
+                    HStack(spacing: AppTheme.Spacing.x3) {
                         ZStack {
                             ModeIconView(icon: config.icon, size: config.icon.kind == .emoji ? 20 : 16)
                         }
@@ -275,32 +275,32 @@ struct ConfigurationRow: View {
                             AppCardBackground(isSelected: false, cornerRadius: AppTheme.Radius.pill)
                         )
 
-                        VStack(alignment: .leading, spacing: 3) {
+                        VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                             Text(config.name)
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(AppTheme.font(.headline, .semibold))
                                 .lineLimit(1)
                                 .truncationMode(.tail)
 
-                            HStack(spacing: 12) {
+                            HStack(spacing: AppTheme.Spacing.x3) {
                                 if appCount > 0 {
-                                    HStack(spacing: 4) {
+                                    HStack(spacing: AppTheme.Spacing.x1) {
                                         Image(systemName: "app.fill")
-                                            .font(.system(size: 10))
+                                            .font(AppTheme.font(.micro))
                                         Text(appText)
                                             .font(.caption2)
                                     }
                                 }
 
                                 if websiteCount > 0 {
-                                    HStack(spacing: 4) {
+                                    HStack(spacing: AppTheme.Spacing.x1) {
                                         Image(systemName: "globe")
-                                            .font(.system(size: 10))
+                                            .font(AppTheme.font(.micro))
                                         Text(websiteText)
                                             .font(.caption2)
                                     }
                                 }
                             }
-                            .padding(.top, 2)
+                            .padding(.top, AppTheme.Spacing.half)
                             .foregroundColor(.secondary)
                         }
 
@@ -334,48 +334,48 @@ struct ConfigurationRow: View {
                     .accessibilityLabel(String(format: String(localized: "Enable %@"), config.name))
                 }
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 14)
+            .padding(.vertical, AppTheme.Spacing.x3)
+            .padding(.horizontal, AppTheme.Spacing.x4)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(AppMaterialCardBackground.fill)
 
             Divider()
 
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 let modelMetadata = transcriptionModelMetadata
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Image(systemName: "waveform")
-                        .font(.system(size: 10))
+                        .font(AppTheme.font(.micro))
                     Text(modelMetadata.label)
                         .font(.caption)
                 }
-                .foregroundStyle(modelMetadata.isWarning ? Color.white : Color.primary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
+                .foregroundStyle(modelMetadata.isWarning ? AppTheme.Status.error : AppTheme.Text.primary)
+                .padding(.horizontal, AppTheme.Spacing.x2)
+                .padding(.vertical, AppTheme.Spacing.half)
                 .background(
                     Capsule()
                         .fill(
                             modelMetadata.isWarning
-                                ? Color.red.opacity(0.80) : AppTheme.Surface.control)
+                                ? AppTheme.Status.errorFill : AppTheme.Surface.control)
                 )
                 .overlay(
                     Capsule()
                         .stroke(
                             modelMetadata.isWarning
-                                ? Color.red.opacity(0.80) : AppTheme.Border.control,
+                                ? AppTheme.Status.error.opacity(0.40) : AppTheme.Border.control,
                             lineWidth: 0.5
                         )
                 )
 
                 if let language = selectedLanguage, language != "Default" {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Image(systemName: "globe")
-                            .font(.system(size: 10))
+                            .font(AppTheme.font(.micro))
                         Text(language)
                             .font(.caption)
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, AppTheme.Spacing.x2)
+                    .padding(.vertical, AppTheme.Spacing.half)
                     .background(
                         Capsule()
                             .fill(AppTheme.Surface.control)
@@ -391,14 +391,14 @@ struct ConfigurationRow: View {
                     let modelName = config.selectedAIModel,
                     !modelName.isEmpty
                 {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Image(systemName: "cpu")
-                            .font(.system(size: 10))
+                            .font(AppTheme.font(.micro))
                         Text(modelName.count > 20 ? String(modelName.prefix(18)) + "..." : modelName)
                             .font(.caption)
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, AppTheme.Spacing.x2)
+                    .padding(.vertical, AppTheme.Spacing.half)
                     .background(
                         Capsule()
                             .fill(AppTheme.Surface.control)
@@ -410,14 +410,14 @@ struct ConfigurationRow: View {
                 }
 
                 if config.outputMode != .paste {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Image(systemName: config.outputMode.iconName)
-                            .font(.system(size: 10))
+                            .font(AppTheme.font(.micro))
                         Text(config.outputMode.displayName)
                             .font(.caption)
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, AppTheme.Spacing.x2)
+                    .padding(.vertical, AppTheme.Spacing.half)
                     .background(
                         Capsule()
                             .fill(AppTheme.Surface.control)
@@ -429,9 +429,9 @@ struct ConfigurationRow: View {
                 }
 
                 if config.isAIEnhancementEnabled {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Image(systemName: "sparkles")
-                            .font(.system(size: 10))
+                            .font(AppTheme.font(.micro))
                         Text(
                             config.selectedAIProvider == AIProvider.voiceInkRefine.rawValue
                                 ? VoiceInkRefineService.providerName
@@ -439,8 +439,8 @@ struct ConfigurationRow: View {
                         )
                             .font(.caption)
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, AppTheme.Spacing.x2)
+                    .padding(.vertical, AppTheme.Spacing.half)
                     .background(
                         Capsule()
                             .fill(AppTheme.Surface.control)
@@ -464,13 +464,13 @@ struct ConfigurationRow: View {
             .onTapGesture {
                 onEditConfig(config)
             }
-            .padding(.vertical, 6)
-            .padding(.horizontal, 16)
+            .padding(.vertical, AppTheme.Spacing.x2)
+            .padding(.horizontal, AppTheme.Spacing.x4)
             .background(AppTheme.Surface.card)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.panel))
         .overlay {
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.panel)
                 .stroke(
                     AppMaterialCardBackground.border(for: isEditing),
                     lineWidth: AppMaterialCardBackground.lineWidth(for: isEditing)
@@ -524,7 +524,7 @@ struct ModeAppIcon: View {
                 .frame(width: 20, height: 20)
         } else {
             Image(systemName: "app.fill")
-                .font(.system(size: 14))
+                .font(AppTheme.font(.callout))
                 .foregroundColor(.secondary)
                 .frame(width: 20, height: 20)
         }
@@ -538,26 +538,26 @@ struct AppGridItem: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
+            VStack(spacing: AppTheme.Spacing.x2) {
                 Image(nsImage: app.icon)
                     .resizable()
                     .frame(width: 40, height: 40)
                     .cornerRadius(8)
                     .shadow(color: Color(NSColor.shadowColor).opacity(0.1), radius: 2, x: 0, y: 1)
                 Text(app.name)
-                    .font(.system(size: 10))
+                    .font(AppTheme.font(.micro))
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
                     .frame(height: 28)
             }
             .frame(width: 80, height: 80)
-            .padding(6)
+            .padding(AppTheme.Spacing.x2)
             .background(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                     .fill(isSelected ? AppTheme.Accent.fillSubtle : Color.clear)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                     .stroke(isSelected ? AppTheme.Accent.primary : Color.clear, lineWidth: 1)
             )
         }

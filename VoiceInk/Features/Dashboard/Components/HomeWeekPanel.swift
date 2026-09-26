@@ -64,10 +64,10 @@ struct HomeWeekPanelContent: View {
     let modeSummary: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
             header
 
-            HStack(alignment: .bottom, spacing: 24) {
+            HStack(alignment: .bottom, spacing: AppTheme.Spacing.x6) {
                 hero
                 Spacer(minLength: 0)
                 HomeWeekBars(dailyWords: stats.dailyWords, todayIndex: stats.todayIndex, weekStart: stats.weekStart)
@@ -75,7 +75,7 @@ struct HomeWeekPanelContent: View {
             }
 
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: 10) { tiles }
+                HStack(spacing: AppTheme.Spacing.x3) { tiles }
                 Grid(horizontalSpacing: 10, verticalSpacing: 10) {
                     let all = Array(tileModels.enumerated())
                     GridRow { ForEach(all.prefix(2), id: \.offset) { HomeStatTile(model: $0.element) } }
@@ -87,14 +87,14 @@ struct HomeWeekPanelContent: View {
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x3) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text(verbatim: "Yap")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(AppTheme.font(.display, .semibold))
                     .foregroundStyle(AppTheme.Text.primary)
                 if let modeSummary {
                     Text(verbatim: modeSummary)
-                        .font(.system(size: 13))
+                        .font(AppTheme.font(.body))
                         .foregroundStyle(AppTheme.Text.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -109,28 +109,28 @@ struct HomeWeekPanelContent: View {
                     (stats.weekStart..<stats.lastDayOfWeek).formatted(.interval.month(.abbreviated).day())
                 )
             )
-            .font(.system(size: 12, weight: .medium))
+            .font(AppTheme.font(.footnote, .medium))
             .foregroundStyle(AppTheme.Text.secondary)
             .lineLimit(1)
         }
     }
 
     private var hero: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
+            HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x2) {
                 Text(stats.words, format: .number)
-                    .font(.system(size: 44, weight: .semibold))
+                    .font(AppTheme.font(.display, .semibold))
                     .monospacedDigit()
                     .foregroundStyle(AppTheme.Text.primary)
                     .contentTransition(.numericText())
                 Text("words dictated")
-                    .font(.system(size: 13))
+                    .font(AppTheme.font(.body))
                     .foregroundStyle(AppTheme.Text.secondary)
             }
             .accessibilityElement(children: .combine)
 
             comparison
-                .font(.system(size: 12))
+                .font(AppTheme.font(.footnote))
                 .foregroundStyle(AppTheme.Text.secondary)
         }
     }
@@ -209,31 +209,31 @@ struct HomeStatTile: View {
     let model: Model
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             Text(model.title)
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .lineLimit(1)
 
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
+            HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x1) {
                 Text(verbatim: model.value)
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(AppTheme.font(.title, .semibold))
                     .monospacedDigit()
                     .foregroundStyle(AppTheme.Text.primary)
                 if let unit = model.unit {
                     Text(unit)
-                        .font(.system(size: 12))
+                        .font(AppTheme.font(.footnote))
                         .foregroundStyle(AppTheme.Text.secondary)
                 }
             }
             .lineLimit(1)
 
             Text(verbatim: model.note)
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundStyle(AppTheme.Text.muted)
                 .lineLimit(1)
         }
-        .padding(12)
+        .padding(AppTheme.Spacing.x3)
         .accessibilityElement(children: .combine)
         .frame(minWidth: 128, maxWidth: .infinity, alignment: .leading)
         .background(
@@ -257,8 +257,8 @@ struct HomeWeekBars: View {
     var body: some View {
         let calendar = DashboardPeriodWindows.dashboardCalendar()
 
-        VStack(spacing: 6) {
-            HStack(alignment: .bottom, spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.x2) {
+            HStack(alignment: .bottom, spacing: AppTheme.Spacing.x2) {
                 ForEach(0..<7, id: \.self) { index in
                     bar(index)
                         .frame(maxWidth: .infinity)
@@ -272,11 +272,11 @@ struct HomeWeekBars: View {
                 .fill(AppTheme.Border.card)
                 .frame(height: 1)
 
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 ForEach(0..<7, id: \.self) { index in
                     let day = calendar.date(byAdding: .day, value: index, to: weekStart) ?? weekStart
                     Text(day.formatted(.dateTime.weekday(.narrow)))
-                        .font(.system(size: 10, weight: index == todayIndex ? .semibold : .regular))
+                        .font(AppTheme.font(.micro, index == todayIndex ? .semibold : .regular))
                         .foregroundStyle(index == todayIndex ? AppTheme.Text.primary : AppTheme.Text.muted)
                         .frame(maxWidth: .infinity)
                 }
@@ -300,7 +300,7 @@ struct HomeWeekBars: View {
     @ViewBuilder
     private func bar(_ index: Int) -> some View {
         let words = dailyWords.indices.contains(index) ? dailyWords[index] : 0
-        let shape = RoundedRectangle(cornerRadius: 3, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: AppTheme.Radius.small, style: .continuous)
 
         if index > todayIndex {
             shape
@@ -337,6 +337,6 @@ extension WeekStats {
 
 #Preview("Week panel") {
     HomeWeekPanelContent(stats: .previewSample, modeSummary: "⌥ Space · Scribe · gpt-5-mini")
-        .padding(24)
+        .padding(AppTheme.Spacing.x6)
         .frame(width: 760)
 }

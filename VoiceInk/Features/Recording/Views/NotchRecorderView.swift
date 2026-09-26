@@ -171,7 +171,7 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
         ZStack {
             Color.clear
 
-            HStack(spacing: 14) {
+            HStack(spacing: AppTheme.Spacing.x4) {
                 if shouldShowCloseButton {
                     RecorderCloseButton(action: onCloseTapped)
                 } else {
@@ -219,7 +219,7 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
             if displayState == .liveText {
                 Divider().background(Color.white.opacity(0.15))
                 LiveTranscriptView(text: stateProvider.partialTranscript)
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, AppTheme.Spacing.x2)
             }
         }
         .frame(height: displayState == .liveText ? transcriptPanelHeight : 0)

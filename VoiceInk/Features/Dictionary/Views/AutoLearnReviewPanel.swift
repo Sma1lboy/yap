@@ -53,8 +53,8 @@ struct AutoLearnReviewPanel: View {
     }
 
     private var floatingHeader: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.x3) {
+            HStack(spacing: AppTheme.Spacing.x1) {
                 Text("Review Corrections")
                     .font(.headline)
                     .fontWeight(.semibold)
@@ -79,30 +79,30 @@ struct AutoLearnReviewPanel: View {
                 action: onClose
             )
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.headerHeight)
     }
 
     private var reviewList: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 10) {
+            LazyVStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
                 if isReviewing {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         ProgressView()
                             .controlSize(.small)
                         Text("Reviewing pending corrections…")
-                            .font(.system(size: 12))
+                            .font(AppTheme.font(.footnote))
                             .foregroundStyle(AppTheme.Text.secondary)
                     }
-                    .padding(.bottom, 2)
+                    .padding(.bottom, AppTheme.Spacing.half)
                 }
 
                 if let errorMessage {
                     Text(errorMessage)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(AppTheme.font(.caption, .medium))
                         .foregroundStyle(AppTheme.Status.error)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 2)
+                        .padding(.horizontal, AppTheme.Spacing.half)
                 }
 
                 ForEach(proposals) { proposal in
@@ -131,9 +131,9 @@ struct AutoLearnReviewPanel: View {
                     )
                 }
             }
-            .padding(16)
-            .padding(.top, 68)
-            .padding(.bottom, 58)
+            .padding(AppTheme.Spacing.x4)
+            .padding(.top, 68)  // design-exempt: layout offset, not spacing
+            .padding(.bottom, 58)  // design-exempt: layout offset, not spacing
         }
         .scrollIndicators(.never)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -145,15 +145,15 @@ struct AutoLearnReviewPanel: View {
         } description: {
             Text(errorMessage ?? "New manual-review suggestions will appear here.")
         }
-        .padding(.top, 68)
-        .padding(.bottom, 58)
+        .padding(.top, 68)  // design-exempt: layout offset, not spacing
+        .padding(.bottom, 58)  // design-exempt: layout offset, not spacing
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder
     private var footer: some View {
         if !proposals.isEmpty {
-            HStack(spacing: 10) {
+            HStack(spacing: AppTheme.Spacing.x3) {
                 AppActionButton("Dismiss All", kind: .destructive) {
                     dismiss(Set(proposals.map(\.id)))
                 }
@@ -167,7 +167,7 @@ struct AutoLearnReviewPanel: View {
                 .disabled(selectedProposalCount == 0 || hasInvalidSelection || isApplying || isReviewing)
                 .help(firstValidationIssue ?? "Apply the selected corrections")
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, AppTheme.Spacing.x5)
             .frame(height: QuickPanelMetrics.footerHeight)
         }
     }
@@ -364,7 +364,7 @@ private struct AutoLearnReviewProposalRow: View {
     @State private var valueBeforeEditing = ""
 
     var body: some View {
-        HStack(spacing: 9) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Toggle(
                 "Select correction",
                 isOn: Binding(
@@ -380,11 +380,11 @@ private struct AutoLearnReviewProposalRow: View {
 
             correctionText
                 .truncationMode(.tail)
-                .padding(.vertical, 2)
+                .padding(.vertical, AppTheme.Spacing.half)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .help(correctionSummary)
 
-            HStack(spacing: 5) {
+            HStack(spacing: AppTheme.Spacing.x1) {
                 if proposal.addsReplacement {
                     reviewButton(
                         "Word Replacement",
@@ -401,8 +401,8 @@ private struct AutoLearnReviewProposalRow: View {
                 }
             }
         }
-        .padding(10)
-        .background(ProviderSurface(cornerRadius: 10))
+        .padding(AppTheme.Spacing.x3)
+        .background(ProviderSurface(cornerRadius: AppTheme.Radius.control))
         .disabled(isDisabled)
         .onChange(of: focusedField) { previous, current in
             if current == nil, let previous {
@@ -417,7 +417,7 @@ private struct AutoLearnReviewProposalRow: View {
             let source = proposal.incorrectTextToReplace,
             let destination = proposal.correctedVocabularyTerm
         {
-            HStack(spacing: 7) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 editableValue(
                     text: $draft.incorrectText,
                     fallback: source,
@@ -425,7 +425,7 @@ private struct AutoLearnReviewProposalRow: View {
                     isEmphasized: false
                 )
                 Image(systemName: "arrow.right")
-                    .font(.system(size: 10, weight: .medium))
+                    .font(AppTheme.font(.micro, .medium))
                     .foregroundStyle(AppTheme.Text.muted)
                 editableValue(
                     text: $draft.correctedTerm,
@@ -434,7 +434,7 @@ private struct AutoLearnReviewProposalRow: View {
                     isEmphasized: true
                 )
             }
-            .font(.system(size: 13))
+            .font(AppTheme.font(.body))
         } else if let term = proposal.correctedVocabularyTerm {
             editableValue(
                 text: $draft.correctedTerm,
@@ -442,7 +442,7 @@ private struct AutoLearnReviewProposalRow: View {
                 field: .corrected,
                 isEmphasized: true
             )
-            .font(.system(size: 13))
+            .font(AppTheme.font(.body))
         }
     }
 
@@ -461,14 +461,14 @@ private struct AutoLearnReviewProposalRow: View {
                 .focused($focusedField, equals: field)
                 .onSubmit { commit(field) }
                 .onExitCommand { cancel(field, binding: text) }
-                .padding(.horizontal, 5)
-                .padding(.vertical, 3)
+                .padding(.horizontal, AppTheme.Spacing.x1)
+                .padding(.vertical, AppTheme.Spacing.x1)
                 .background(
-                    RoundedRectangle(cornerRadius: 5)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                         .fill(AppTheme.Surface.window)
                 )
                 .overlay {
-                    RoundedRectangle(cornerRadius: 5)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                         .stroke(
                             validationMessage == nil ? AppTheme.Border.subtle : AppTheme.Status.error,
                             lineWidth: 1
@@ -490,10 +490,10 @@ private struct AutoLearnReviewProposalRow: View {
                 .onHover { isHovering in
                     hoveredField = isHovering ? field : nil
                 }
-                .padding(.horizontal, 5)
-                .padding(.vertical, 3)
+                .padding(.horizontal, AppTheme.Spacing.x1)
+                .padding(.vertical, AppTheme.Spacing.x1)
                 .background {
-                    RoundedRectangle(cornerRadius: 5)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                         .fill(
                             hoveredField == field
                                 ? AppTheme.Surface.window.opacity(0.8)
@@ -565,7 +565,7 @@ private struct AutoLearnReviewProposalRow: View {
             onToggleComponent(component)
         } label: {
             Image(systemName: systemImage)
-                .font(.system(size: 11, weight: .semibold))
+                .font(AppTheme.font(.caption, .semibold))
                 .foregroundStyle(isSelected ? AppTheme.Text.primary : AppTheme.Text.muted)
                 .frame(width: 30, height: 26)
                 .background(QuickPanelButtonBackground(isSelected: isSelected))

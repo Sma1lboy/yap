@@ -546,7 +546,7 @@ struct DownloadProgressView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             HStack {
                 Text(downloadPhase)
                     .lineLimit(1)
@@ -556,22 +556,22 @@ struct DownloadProgressView: View {
                 Text(totalProgress, format: .percent.precision(.fractionLength(0)))
                     .fontDesign(.monospaced)
             }
-            .font(.system(size: 12, weight: .medium))
+            .font(AppTheme.font(.footnote, .medium))
             .foregroundColor(Color(.secondaryLabelColor))
 
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                         .fill(AppTheme.Border.control.opacity(0.3))
                         .frame(height: 6)
 
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                         .fill(AppTheme.Accent.primary)
                         .frame(width: max(0, min(geometry.size.width * totalProgress, geometry.size.width)), height: 6)
                 }
             }
             .frame(height: 6)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, AppTheme.Spacing.x1)
     }
 }

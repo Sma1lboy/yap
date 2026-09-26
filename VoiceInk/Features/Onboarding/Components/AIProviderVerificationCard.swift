@@ -28,7 +28,7 @@ struct AIProviderVerificationCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             providerSummary
 
             if shouldShowAPIKeyEntry {
@@ -38,8 +38,8 @@ struct AIProviderVerificationCard: View {
                 verifiedProviderSummary
             }
         }
-        .padding(16)
-        .background(AppMaterialCardBackground(cornerRadius: 10))
+        .padding(AppTheme.Spacing.x4)
+        .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.control))
         .onAppear { refreshVerificationState() }
         .onReceive(NotificationCenter.default.publisher(for: .aiProviderKeyChanged)) { _ in
             refreshVerificationState()
@@ -56,7 +56,7 @@ struct AIProviderVerificationCard: View {
     }
 
     private var providerSummary: some View {
-        HStack(alignment: .center, spacing: 10) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
             ProviderBrandIcon(
                 descriptor: providerDescriptor(for: selectedProvider),
                 fallbackSystemImage: "sparkles",
@@ -65,9 +65,9 @@ struct AIProviderVerificationCard: View {
                 iconSize: 15
             )
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                 Text(selectedProvider.displayName)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(AppTheme.font(.body, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
             }
 
@@ -77,15 +77,15 @@ struct AIProviderVerificationCard: View {
                 Button {
                     isSwitchingProvider.toggle()
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         Text("Switch AI provider")
                         Image(systemName: isSwitchingProvider ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(AppTheme.font(.micro, .semibold))
                     }
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(AppTheme.font(.caption, .semibold))
                     .foregroundColor(AppTheme.Text.secondary)
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 7)
+                    .padding(.horizontal, AppTheme.Spacing.x3)
+                    .padding(.vertical, AppTheme.Spacing.x2)
                     .background(Capsule().fill(AppTheme.Surface.controlActive))
                 }
                 .buttonStyle(.plain)
@@ -95,17 +95,17 @@ struct AIProviderVerificationCard: View {
                         selectedProvider: $selectedProvider
                     )
                     .frame(width: 430)
-                    .padding(10)
+                    .padding(AppTheme.Spacing.x3)
                 }
             }
         }
     }
 
     private var apiKeyField: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             HStack(alignment: .center) {
                 Text(String(format: String(localized: "%@ API Key"), selectedProvider.displayName))
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
 
                 Spacer()
@@ -114,12 +114,12 @@ struct AIProviderVerificationCard: View {
                     Button {
                         NSWorkspace.shared.open(apiKeyURL)
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: AppTheme.Spacing.x1) {
                             Text("Get API key")
                             Image(systemName: "arrow.up.right")
-                                .font(.system(size: 9, weight: .semibold))
+                                .font(AppTheme.font(.micro, .semibold))
                         }
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(AppTheme.font(.caption, .semibold))
                         .foregroundColor(AppTheme.Text.secondary)
                     }
                     .buttonStyle(.plain)
@@ -128,28 +128,28 @@ struct AIProviderVerificationCard: View {
 
             SecureField(apiKeyPlaceholder, text: $apiKey)
                 .textFieldStyle(.plain)
-                .font(.system(size: 13))
-                .padding(.horizontal, 12)
+                .font(AppTheme.font(.body))
+                .padding(.horizontal, AppTheme.Spacing.x3)
                 .frame(height: 38)
                 .background(
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                         .fill(AppTheme.Surface.control)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                         .stroke(AppTheme.Border.control.opacity(0.45), lineWidth: 1)
                 )
         }
     }
 
     private var verificationFooter: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
             statusLine
 
             Spacer(minLength: 12)
 
             Button(action: verifyAPIKey) {
-                HStack(spacing: 6) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     if isVerifying {
                         ProgressView()
                             .controlSize(.small)
@@ -157,10 +157,10 @@ struct AIProviderVerificationCard: View {
 
                     Text(isVerifying ? LocalizedStringKey("Testing...") : LocalizedStringKey("Test connection"))
                 }
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundColor(canVerify ? AppTheme.Action.primaryForeground : AppTheme.Action.disabledForeground)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
+                .padding(.horizontal, AppTheme.Spacing.x4)
+                .padding(.vertical, AppTheme.Spacing.x2)
                 .background(
                     Capsule()
                         .fill(canVerify ? AppTheme.Action.primaryFill : AppTheme.Action.disabledFill)
@@ -169,46 +169,46 @@ struct AIProviderVerificationCard: View {
             .buttonStyle(.plain)
             .disabled(!canVerify)
         }
-        .padding(.top, 2)
+        .padding(.top, AppTheme.Spacing.half)
     }
 
     private var verifiedProviderSummary: some View {
-        HStack(alignment: .center, spacing: 12) {
-            HStack(spacing: 9) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(AppTheme.font(.callout, .semibold))
                     .foregroundColor(AppTheme.Status.positive)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                     Text("Connection verified.")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(AppTheme.font(.footnote, .semibold))
                         .foregroundColor(AppTheme.Text.primary)
                 }
             }
 
             Spacer(minLength: 12)
         }
-        .padding(.top, 2)
+        .padding(.top, AppTheme.Spacing.half)
     }
 
     @ViewBuilder
     private var statusLine: some View {
         if let verificationMessage {
-            HStack(alignment: .top, spacing: 7) {
+            HStack(alignment: .top, spacing: AppTheme.Spacing.x2) {
                 Image(systemName: verificationSucceeded ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .foregroundColor(verificationSucceeded ? AppTheme.Status.positive : AppTheme.Status.error)
-                    .padding(.top, 1)
+                    .padding(.top, AppTheme.Spacing.half)
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                     Text(verificationMessage)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(AppTheme.font(.footnote, .medium))
                         .foregroundColor(verificationSucceeded ? AppTheme.Text.secondary : AppTheme.Status.error)
                         .fixedSize(horizontal: false, vertical: true)
 
                     if let verificationDetailMessage, !verificationSucceeded {
                         Text(verificationDetailMessage)
-                            .font(.system(size: 11))
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(AppTheme.Status.error.opacity(0.82))
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -216,7 +216,7 @@ struct AIProviderVerificationCard: View {
             }
         } else {
             Text("Test the connection to continue.")
-                .font(.system(size: 12))
+                .font(AppTheme.font(.footnote))
                 .foregroundColor(AppTheme.Text.secondary)
         }
     }
@@ -315,14 +315,14 @@ private struct AIProviderSelectionCard: View {
     @Binding var selectedProvider: AIProvider
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             LazyVGrid(
                 columns: [
-                    GridItem(.flexible(), spacing: 8),
-                    GridItem(.flexible(), spacing: 8),
+                    GridItem(.flexible(), spacing: AppTheme.Spacing.x2),
+                    GridItem(.flexible(), spacing: AppTheme.Spacing.x2),
                 ],
                 alignment: .leading,
-                spacing: 8
+                spacing: AppTheme.Spacing.x2
             ) {
                 ForEach(providerOptions, id: \.self) { provider in
                     ProviderChoiceButton(
@@ -335,8 +335,8 @@ private struct AIProviderSelectionCard: View {
                 }
             }
         }
-        .padding(16)
-        .background(ProviderSurface(cornerRadius: 12))
+        .padding(AppTheme.Spacing.x4)
+        .background(ProviderSurface(cornerRadius: AppTheme.Radius.card))
     }
 }
 
@@ -347,7 +347,7 @@ private struct ProviderChoiceButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 9) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 ProviderBrandIcon(
                     descriptor: providerDescriptor(for: provider),
                     fallbackSystemImage: "sparkles",
@@ -356,9 +356,9 @@ private struct ProviderChoiceButton: View {
                     iconSize: 15
                 )
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                     Text(provider.displayName)
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(AppTheme.font(.footnote, .semibold))
                         .foregroundColor(AppTheme.Text.primary)
                         .lineLimit(1)
 
@@ -368,14 +368,14 @@ private struct ProviderChoiceButton: View {
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(AppTheme.font(.body, .semibold))
                         .foregroundColor(AppTheme.Text.secondary)
                 }
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, AppTheme.Spacing.x3)
             .frame(height: 54)
-            .background(ProviderSurface(isActive: isSelected, cornerRadius: 10))
-            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .background(ProviderSurface(isActive: isSelected, cornerRadius: AppTheme.Radius.control))
+            .contentShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
         }
         .buttonStyle(.plain)
         .help(provider.rawValue)

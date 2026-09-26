@@ -8,7 +8,7 @@ struct DiagnosticsSettingsView: View {
 
     var body: some View {
         LabeledContent {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 if let url = exportedLogURL {
                     Button("Show in Finder") {
                         NSWorkspace.shared.activateFileViewerSelecting([url])
@@ -24,7 +24,7 @@ struct DiagnosticsSettingsView: View {
                 .disabled(isExportingLogs)
             }
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: AppTheme.Spacing.x1) {
                 if isExportingLogs {
                     ProgressView()
                         .controlSize(.small)

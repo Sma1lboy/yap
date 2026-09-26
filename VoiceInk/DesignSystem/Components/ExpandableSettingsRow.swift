@@ -70,7 +70,7 @@ struct ExpandableSettingsRow<Content: View>: View {
                 // A Button so the options are reachable with the keyboard and VoiceOver; clicking the row works too.
                 Button(action: toggleExpanded) {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(AppTheme.font(.footnote, .semibold))
                         .foregroundColor(.secondary)
                         .rotationEffect(.degrees(rowIsEnabled && isExpanded ? 90 : 0))
                         .opacity(rowIsEnabled ? 1 : 0.4)
@@ -83,11 +83,11 @@ struct ExpandableSettingsRow<Content: View>: View {
             .onTapGesture(perform: toggleExpanded)
 
             if rowIsEnabled && isExpanded {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                     content()
                 }
-                .padding(.top, 12)
-                .padding(.leading, 4)
+                .padding(.top, AppTheme.Spacing.x3)
+                .padding(.leading, AppTheme.Spacing.x1)
                 .transition(expandedContentTransition)
             }
         }
@@ -110,7 +110,7 @@ struct ExpandableSettingsRow<Content: View>: View {
     }
 
     private var labelView: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             Text(label)
             if let infoMessage = infoMessage {
                 if let infoURL = infoURL {

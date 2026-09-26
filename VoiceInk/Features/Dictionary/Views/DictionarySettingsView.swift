@@ -47,13 +47,13 @@ struct DictionarySettingsView: View {
             headerSection
 
             ScrollView(.vertical) {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
                     sectionSelector
                     selectedSectionForm
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 18)
-                .padding(.bottom, 28)
+                .padding(.horizontal, AppTheme.Spacing.x6)
+                .padding(.top, AppTheme.Spacing.x5)
+                .padding(.bottom, AppTheme.Spacing.x8)
                 .frame(maxWidth: .infinity, alignment: .topLeading)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -93,7 +93,7 @@ struct DictionarySettingsView: View {
             title: "Dictionary",
             infoMessage: dictionaryInfoMessage
         ) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 if hasAutoLearnFailure {
                     AppIconButton(
                         systemName: "exclamationmark.triangle.fill",
@@ -144,7 +144,7 @@ private struct DictionaryGroupedSection<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             content()
-                .padding(16)
+                .padding(AppTheme.Spacing.x4)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(sectionBackground)
@@ -153,12 +153,12 @@ private struct DictionaryGroupedSection<Content: View>: View {
     }
 
     private var sectionBackground: some View {
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
+        RoundedRectangle(cornerRadius: AppTheme.Radius.card, style: .continuous)
             .fill(AppTheme.Surface.card)
     }
 
     private var sectionBorder: some View {
-        RoundedRectangle(cornerRadius: 12, style: .continuous)
+        RoundedRectangle(cornerRadius: AppTheme.Radius.card, style: .continuous)
             .stroke(AppTheme.Border.control.opacity(0.16), lineWidth: 1)
     }
 }
@@ -167,7 +167,7 @@ private struct DictionarySectionSwitcher: View {
     @Binding var selection: DictionarySettingsView.DictionarySection
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             ForEach(DictionarySettingsView.DictionarySection.allCases, id: \.self) { section in
                 DictionarySectionButton(
                     section: section,
@@ -207,20 +207,20 @@ private struct DictionarySectionButtonLabel: View {
     let isSelected: Bool
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: icon)
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .symbolRenderingMode(.hierarchical)
 
             Text(title)
-                .font(.system(size: 14, weight: isSelected ? .semibold : .medium))
+                .font(AppTheme.font(.callout, isSelected ? .semibold : .medium))
         }
         .foregroundStyle(isSelected ? Color.primary : Color.secondary)
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
+        .padding(.horizontal, AppTheme.Spacing.x3)
+        .padding(.vertical, AppTheme.Spacing.x2)
         .background(
-            AppCardBackground(isSelected: isSelected, cornerRadius: 22)
+            AppCardBackground(isSelected: isSelected, cornerRadius: AppTheme.Radius.pill)
         )
         .contentShape(Rectangle())
     }

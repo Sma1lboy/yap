@@ -12,7 +12,7 @@ struct OnboardingExperienceCard: View {
     private let panelHeight: CGFloat = 184
 
     var body: some View {
-        VStack(spacing: 26) {
+        VStack(spacing: AppTheme.Spacing.x6) {
             if step.layout == .respond {
                 respondStage
             } else {
@@ -46,7 +46,7 @@ struct OnboardingExperienceCard: View {
     private var sayPanel: some View {
         panelShell(kicker: step.sampleLabel) {
             Text(LocalizedStringKey(step.sampleText))
-                .font(.system(size: 17, weight: .medium))
+                .font(AppTheme.font(.headline, .medium))
                 .foregroundColor(AppTheme.Text.primary)
                 .lineSpacing(5)
                 .fixedSize(horizontal: false, vertical: true)
@@ -66,9 +66,9 @@ struct OnboardingExperienceCard: View {
         .frame(maxWidth: .infinity)
         .frame(height: panelHeight)
         .background(AppTheme.Surface.window.opacity(0.86))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.panel, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.panel, style: .continuous)
                 .stroke(fieldBorderColor, lineWidth: 1)
         )
         .opacity(hasShortcut ? 1 : 0.5)
@@ -76,30 +76,30 @@ struct OnboardingExperienceCard: View {
     }
 
     private var notesToolbar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             trafficLights
 
             Image(systemName: "note.text")
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundColor(AppTheme.Text.secondary)
 
             Text("Notes")
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
 
             Spacer(minLength: 0)
 
             Image(systemName: "square.and.pencil")
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundColor(AppTheme.Text.muted)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, AppTheme.Spacing.x3)
         .frame(height: 32)
         .background(AppTheme.Surface.control.opacity(0.48))
     }
 
     private var trafficLights: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             Circle()
                 .fill(AppTheme.Status.error.opacity(0.78))
             Circle()
@@ -114,7 +114,7 @@ struct OnboardingExperienceCard: View {
         ZStack(alignment: .topLeading) {
             if text.isEmpty {
                 Text(LocalizedStringKey(step.fieldPlaceholder))
-                    .font(.system(size: 13))
+                    .font(AppTheme.font(.body))
                     .foregroundColor(AppTheme.Text.muted)
                     .padding(editorTextInset)
                     .allowsHitTesting(false)
@@ -122,14 +122,14 @@ struct OnboardingExperienceCard: View {
 
             editor
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, AppTheme.Spacing.x3)
+        .padding(.vertical, AppTheme.Spacing.x3)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private var transformArrow: some View {
         Image(systemName: "arrow.right")
-            .font(.system(size: 15, weight: .semibold))
+            .font(AppTheme.font(.headline, .semibold))
             .foregroundColor(AppTheme.Text.muted)
             .frame(width: 46)
     }
@@ -137,7 +137,7 @@ struct OnboardingExperienceCard: View {
     private var respondStage: some View {
         panelShell(kicker: step.sampleLabel, height: 150) {
             Text(LocalizedStringKey(step.sampleText))
-                .font(.system(size: 20, weight: .medium))
+                .font(AppTheme.font(.title, .medium))
                 .foregroundColor(AppTheme.Text.primary)
                 .lineSpacing(5)
                 .fixedSize(horizontal: false, vertical: true)
@@ -151,9 +151,9 @@ struct OnboardingExperienceCard: View {
         height: CGFloat? = nil,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             Text(LocalizedStringKey(kicker))
-                .font(.system(size: 11, weight: .semibold))
+                .font(AppTheme.font(.caption, .semibold))
                 .textCase(.uppercase)
                 .tracking(1.0)
                 .foregroundColor(AppTheme.Text.muted)
@@ -161,11 +161,11 @@ struct OnboardingExperienceCard: View {
             content()
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .padding(16)
+        .padding(AppTheme.Spacing.x4)
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .frame(height: height ?? panelHeight)
         .background(AppTheme.Surface.control.opacity(0.45))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.panel, style: .continuous))
     }
 
     @ViewBuilder
@@ -208,7 +208,7 @@ private struct OnboardingExperienceInstruction: View {
     }
 
     private var line: some View {
-        VStack(alignment: .center, spacing: 12) {
+        VStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
             instructionText(hasShortcut ? step.configuredInstruction : "Choose a shortcut to get started.")
             shortcutControl
         }
@@ -223,7 +223,7 @@ private struct OnboardingExperienceInstruction: View {
 
     private func instructionText(_ value: String) -> some View {
         Text(LocalizedStringKey(value))
-            .font(.system(size: 15, weight: .medium))
+            .font(AppTheme.font(.headline, .medium))
             .foregroundColor(AppTheme.Text.primary)
             .fixedSize(horizontal: false, vertical: true)
     }

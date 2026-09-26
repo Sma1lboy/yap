@@ -13,17 +13,17 @@ struct PermissionStepRow: View {
     let onQuit: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .center, spacing: 14) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
+            HStack(alignment: .center, spacing: AppTheme.Spacing.x4) {
                 stepNumberView
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                     Text(LocalizedStringKey(descriptor.title))
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(AppTheme.font(.callout, .semibold))
                         .foregroundColor(AppTheme.Text.primary)
 
                     Text(LocalizedStringKey(descriptor.subtitle))
-                        .font(.system(size: 12))
+                        .font(AppTheme.font(.footnote))
                         .foregroundColor(AppTheme.Text.muted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -39,18 +39,18 @@ struct PermissionStepRow: View {
 
             if isActive && !isLocked && showsRestartHint {
                 restartHint
-                    .padding(.leading, 44)
+                    .padding(.leading, AppTheme.Spacing.x12)
             }
         }
-        .padding(14)
+        .padding(AppTheme.Spacing.x4)
         .background(
             AppMaterialCardBackground(
                 isSelected: isActive && !isLocked,
-                cornerRadius: 10
+                cornerRadius: AppTheme.Radius.control
             )
         )
         .opacity(isLocked ? 0.55 : 1)
-        .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
         .onTapGesture {
             guard !isLocked else { return }
             onSelect()
@@ -59,16 +59,16 @@ struct PermissionStepRow: View {
 
     private var stepNumberView: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                 .fill(status.isGranted ? AppTheme.Selection.fill : AppTheme.Surface.controlActive)
 
             if status.isGranted {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
             } else {
                 Text("\(stepNumber)")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .foregroundColor(isActive && !isLocked ? AppTheme.Text.primary : AppTheme.Text.muted)
             }
         }
@@ -78,11 +78,11 @@ struct PermissionStepRow: View {
     private var actionButton: some View {
         Button(action: onAction) {
             Text(LocalizedStringKey(actionTitle))
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundColor(AppTheme.Action.primaryForeground)
                 .frame(minWidth: 94)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, AppTheme.Spacing.x3)
+                .padding(.vertical, AppTheme.Spacing.x2)
                 .background(
                     RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                         .fill(AppTheme.Action.primaryFill)
@@ -93,10 +93,10 @@ struct PermissionStepRow: View {
 
     private var statusBadge: some View {
         Text(isLocked ? LocalizedStringKey("Locked") : LocalizedStringKey(status.label))
-            .font(.system(size: 12, weight: .semibold))
+            .font(AppTheme.font(.footnote, .semibold))
             .foregroundColor(isLocked ? AppTheme.Text.muted : statusTone)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
+            .padding(.horizontal, AppTheme.Spacing.x3)
+            .padding(.vertical, AppTheme.Spacing.x2)
             .background(isLocked ? AppTheme.Surface.subtle : statusTone.opacity(0.12))
             .clipShape(Capsule())
     }
@@ -111,16 +111,16 @@ struct PermissionStepRow: View {
     }
 
     private var restartHint: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Text("Restart Yap after enabling Screen Recording.")
-                .font(.system(size: 12))
+                .font(AppTheme.font(.footnote))
                 .foregroundColor(AppTheme.Text.muted)
                 .fixedSize(horizontal: false, vertical: true)
 
             Button("Quit") {
                 onQuit()
             }
-            .font(.system(size: 12, weight: .semibold))
+            .font(AppTheme.font(.footnote, .semibold))
             .buttonStyle(.plain)
             .foregroundColor(AppTheme.Action.secondaryForeground)
         }

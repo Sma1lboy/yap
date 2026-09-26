@@ -30,7 +30,7 @@ struct ProviderDetailPanel: View {
     var body: some View {
         QuickPanelScaffold {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
                     apiKeySection
 
                     if descriptor.hasTranscription {
@@ -41,9 +41,9 @@ struct ProviderDetailPanel: View {
                         enhancementModelsSection
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 76)
-                .padding(.bottom, 20)
+                .padding(.horizontal, AppTheme.Spacing.x5)
+                .padding(.top, 76)  // design-exempt: layout offset, not spacing
+                .padding(.bottom, AppTheme.Spacing.x5)
             }
         } header: {
             header
@@ -55,7 +55,7 @@ struct ProviderDetailPanel: View {
     }
 
     private var header: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: AppTheme.Spacing.x4) {
             ProviderBrandIcon(
                 descriptor: descriptor,
                 fallbackSystemImage: iconName,
@@ -79,13 +79,13 @@ struct ProviderDetailPanel: View {
                 action: onClose
             )
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.headerHeight)
     }
 
     private var apiKeySection: some View {
         ProviderConfigurationGroup(title: "Connection") {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 if isConfigured {
                     verifiedAPIKeyRow
                 } else {
@@ -100,7 +100,7 @@ struct ProviderDetailPanel: View {
     @ViewBuilder
     private var verificationStatusMessage: some View {
         if let verificationMessage {
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text(verificationMessage)
                     .font(.caption)
                     .fontWeight(.medium)
@@ -118,17 +118,17 @@ struct ProviderDetailPanel: View {
     }
 
     private var verifiedAPIKeyRow: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             providerDetailIcon("checkmark.seal.fill")
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text("Key verified")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(AppTheme.font(.body, .semibold))
                     .foregroundStyle(.primary)
 
                 if let obfuscatedKey {
                     Text(obfuscatedKey)
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                        .font(AppTheme.font(.caption, .medium, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -140,7 +140,7 @@ struct ProviderDetailPanel: View {
                 isShowingRemoveAPIKeyConfirmation = true
             } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(AppTheme.font(.body, .semibold))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.secondary)
             }
@@ -149,8 +149,8 @@ struct ProviderDetailPanel: View {
             .help("Remove API key")
             .accessibilityLabel("Remove API key")
         }
-        .padding(12)
-        .background(ProviderSurface(cornerRadius: 8))
+        .padding(AppTheme.Spacing.x3)
+        .background(ProviderSurface(cornerRadius: AppTheme.Radius.control))
         .alert("Remove API Key?", isPresented: $isShowingRemoveAPIKeyConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Remove", role: .destructive) {
@@ -165,21 +165,21 @@ struct ProviderDetailPanel: View {
     }
 
     private var apiKeyInputRow: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
+            HStack(spacing: AppTheme.Spacing.x3) {
                 providerDetailIcon("key.fill")
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                     Text("API Key")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(AppTheme.font(.body, .semibold))
                         .foregroundStyle(.primary)
                 }
             }
 
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 SecureField("Paste API key", text: $apiKey)
                     .textFieldStyle(.roundedBorder)
-                    .font(.system(size: 12))
+                    .font(AppTheme.font(.footnote))
                     .disabled(isVerifying)
                     .onChange(of: apiKey) { _, newValue in
                         guard !newValue.isEmpty else { return }
@@ -190,7 +190,7 @@ struct ProviderDetailPanel: View {
                 Button {
                     verifyAndSaveAPIKey()
                 } label: {
-                    HStack(spacing: 5) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         if isVerifying {
                             ProgressView()
                                 .controlSize(.small)
@@ -199,7 +199,7 @@ struct ProviderDetailPanel: View {
                         }
                         Text(isVerifying ? LocalizedStringKey("Verifying") : LocalizedStringKey("Verify"))
                     }
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
@@ -209,51 +209,51 @@ struct ProviderDetailPanel: View {
 
             if let consoleURL = descriptor.apiConsoleURL {
                 Link(destination: consoleURL) {
-                    HStack(spacing: 7) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         Image(systemName: "link")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(AppTheme.font(.caption, .semibold))
 
                         Text(String(format: String(localized: "Get %@ API Key"), descriptor.displayName))
-                            .font(.system(size: 12, weight: .medium))
+                            .font(AppTheme.font(.footnote, .medium))
 
                         Image(systemName: "arrow.up.right.square")
-                            .font(.system(size: 11, weight: .medium))
+                            .font(AppTheme.font(.caption, .medium))
                             .foregroundStyle(.secondary)
                     }
                     .foregroundStyle(.primary)
                     .contentShape(Rectangle())
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, AppTheme.Spacing.x3)
+                    .padding(.vertical, AppTheme.Spacing.x2)
                     .background(neutralLinkButtonBackground)
                 }
                 .buttonStyle(.plain)
                 .help(String(format: String(localized: "Open %@ API key page"), descriptor.displayName))
             }
         }
-        .padding(12)
-        .background(ProviderSurface(cornerRadius: 8))
+        .padding(AppTheme.Spacing.x3)
+        .background(ProviderSurface(cornerRadius: AppTheme.Radius.control))
     }
 
     private func providerDetailIcon(_ systemName: String) -> some View {
         Image(systemName: systemName)
-            .font(.system(size: 14, weight: .semibold))
+            .font(AppTheme.font(.callout, .semibold))
             .foregroundStyle(.primary)
             .frame(width: 30, height: 30)
             .background(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                     .fill(AppTheme.Surface.control)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                             .stroke(AppTheme.Border.control.opacity(0.45), lineWidth: 1)
                     )
             )
     }
 
     private var neutralLinkButtonBackground: some View {
-        RoundedRectangle(cornerRadius: 7)
+        RoundedRectangle(cornerRadius: AppTheme.Radius.small)
             .fill(AppTheme.Surface.control)
             .overlay(
-                RoundedRectangle(cornerRadius: 7)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                     .stroke(AppTheme.Border.control.opacity(0.45), lineWidth: 1)
             )
     }
@@ -284,7 +284,7 @@ struct ProviderDetailPanel: View {
                 Text("+\(models.count - 8) more transcription models available")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, AppTheme.Spacing.x2)
             }
         }
     }
@@ -304,7 +304,7 @@ struct ProviderDetailPanel: View {
                     Text("No models listed.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, AppTheme.Spacing.x2)
                 } else {
                     ForEach(Array(models.prefix(previewCount).enumerated()), id: \.offset) { index, model in
                         modelRow(
@@ -324,7 +324,7 @@ struct ProviderDetailPanel: View {
                         Text("+\(models.count - previewCount) more enhancement models available")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, AppTheme.Spacing.x2)
                     }
                 }
 
@@ -341,9 +341,9 @@ struct ProviderDetailPanel: View {
     }
 
     private func openRouterCatalogStatus(modelCount: Int) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Text(openRouterModelAvailabilityText(for: modelCount))
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(modelCount == 0 ? .secondary : .primary)
 
             Spacer()
@@ -351,7 +351,7 @@ struct ProviderDetailPanel: View {
             Button {
                 refreshOpenRouterModels()
             } label: {
-                HStack(spacing: 5) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     if isRefreshingOpenRouterModels {
                         ProgressView()
                             .controlSize(.small)
@@ -360,22 +360,22 @@ struct ProviderDetailPanel: View {
                     }
                     Text(isRefreshingOpenRouterModels ? LocalizedStringKey("Refreshing") : LocalizedStringKey("Refresh"))
                 }
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
             .disabled(isRefreshingOpenRouterModels)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, AppTheme.Spacing.x2)
     }
 
     private func modelRow(title: String, subtitle: String?, trailing: String?, systemImage: String) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             modelTypeIcon(systemImage)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text(title)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
                     .lineLimit(1)
 
                 if let subtitle {
@@ -394,19 +394,19 @@ struct ProviderDetailPanel: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, AppTheme.Spacing.x2)
     }
 
     private func modelTypeIcon(_ systemName: String) -> some View {
         Image(systemName: systemName)
-            .font(.system(size: 11, weight: .semibold))
+            .font(AppTheme.font(.caption, .semibold))
             .foregroundStyle(.primary)
             .frame(width: 24, height: 24)
             .background(
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                     .fill(AppTheme.Surface.control)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                             .stroke(AppTheme.Border.control.opacity(0.45), lineWidth: 1)
                     )
             )

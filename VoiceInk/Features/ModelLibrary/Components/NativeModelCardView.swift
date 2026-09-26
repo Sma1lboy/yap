@@ -6,9 +6,9 @@ struct NativeAppleModelCardView: View {
     let model: NativeAppleModel
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.x4) {
             // Main Content
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 headerSection
                 metadataSection
                 descriptionSection
@@ -18,14 +18,14 @@ struct NativeAppleModelCardView: View {
             // Action Controls
             actionSection
         }
-        .padding(16)
+        .padding(AppTheme.Spacing.x4)
         .background(AppMaterialCardBackground())
     }
 
     private var headerSection: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(model.displayName)
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(Color(.labelColor))
 
             Spacer()
@@ -33,28 +33,28 @@ struct NativeAppleModelCardView: View {
     }
 
     private var metadataSection: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             // Native Apple
             Label("Native Apple", systemImage: "apple.logo")
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
 
             // Language
             Label(model.language, systemImage: "globe")
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
 
             // On-Device
             Label("On-Device", systemImage: "checkmark.shield")
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
 
             // Requires macOS 26+
             Label("macOS 26+", systemImage: "macbook")
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
         }
@@ -63,15 +63,15 @@ struct NativeAppleModelCardView: View {
 
     private var descriptionSection: some View {
         Text(model.description)
-            .font(.system(size: 11))
+            .font(AppTheme.font(.caption))
             .foregroundColor(Color(.secondaryLabelColor))
             .lineLimit(2)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.top, 4)
+            .padding(.top, AppTheme.Spacing.x1)
     }
 
     private var actionSection: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             modelStatusPill("Built in", systemImage: "checkmark.circle")
         }
     }

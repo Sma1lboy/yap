@@ -29,7 +29,7 @@ struct ModeTriggerSection: View {
                     cleanURL: cleanURL,
                     loadInstalledAppsIfNeeded: modeWarmupStore.refreshInstalledApps
                 )
-                .padding(.vertical, 2)
+                .padding(.vertical, AppTheme.Spacing.half)
             } else {
                 emptyTriggerState
             }
@@ -50,7 +50,7 @@ struct ModeTriggerSection: View {
 
     private var triggerHeader: some View {
         HStack {
-            HStack(spacing: 4) {
+            HStack(spacing: AppTheme.Spacing.x1) {
                 Text("Triggers")
                 InfoTip(
                     "Yap automatically switches to this mode based on the app or website you're using, or when you say a trigger word during recording."
@@ -82,17 +82,17 @@ struct ModeTriggerSection: View {
     }
 
     private var emptyTriggerState: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: "circle.dashed")
-                .font(.system(size: 13, weight: .medium))
+                .font(AppTheme.font(.body, .medium))
                 .foregroundStyle(.secondary)
 
             Text("No automatic triggers")
-                .font(.system(size: 13))
+                .font(AppTheme.font(.body))
                 .foregroundStyle(.secondary)
 
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, AppTheme.Spacing.x1)
     }
 }

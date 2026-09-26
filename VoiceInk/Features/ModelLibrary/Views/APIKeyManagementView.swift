@@ -89,7 +89,7 @@ struct APIKeyManagementView: View {
                 syncSelectedCustomModelIfNeeded()
             }
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
                 // Model Selection
                 if aiService.selectedProvider == .openRouter {
                     if aiService.availableModels.isEmpty {
@@ -187,7 +187,7 @@ struct APIKeyManagementView: View {
                     }
 
                 } else if aiService.selectedProvider == .localCLI {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                         HStack {
                             Text("Command")
                                 .font(.subheadline)
@@ -207,13 +207,13 @@ struct APIKeyManagementView: View {
                             .font(.system(.body, design: .monospaced))
                             .multilineTextAlignment(.leading)
                             .frame(minHeight: 100)
-                            .padding(4)
+                            .padding(AppTheme.Spacing.x1)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                                     .fill(Color(NSColor.textBackgroundColor))
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: AppTheme.Radius.control)
                                     .stroke(AppTheme.Border.subtle, lineWidth: 1)
                             )
                             .onChange(of: localCLICommandTemplate) { _, newValue in
@@ -277,8 +277,8 @@ struct APIKeyManagementView: View {
                                     }
                                     .font(.caption)
                                     .foregroundColor(AppTheme.Status.infoStrong)
-                                    .padding(.vertical, 4)
-                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, AppTheme.Spacing.x1)
+                                    .padding(.horizontal, AppTheme.Spacing.x2)
                                     .background(AppTheme.Status.infoStrong.opacity(0.10))
                                     .cornerRadius(6)
                                 }

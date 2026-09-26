@@ -12,14 +12,14 @@ struct CustomProviderManagementView: View {
     let onDeleteEnhancementModel: (CustomAIProviderConfig) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
             customTranscriptionSection
             customEnhancementSection
         }
     }
 
     private var customTranscriptionSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             sectionHeader(
                 title: "Custom Transcription Models",
                 subtitle: "Supports any provider that uses the same API format as OpenAI transcription.",
@@ -47,7 +47,7 @@ struct CustomProviderManagementView: View {
     }
 
     private var customEnhancementSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             sectionHeader(
                 title: "Custom Enhancement Models",
                 subtitle: "Supports any provider that uses the same API format as OpenAI chat completion.",
@@ -82,7 +82,7 @@ struct CustomProviderManagementView: View {
         addHelp: LocalizedStringResource,
         onAdd: @escaping () -> Void
     ) -> some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.x3) {
             ProviderSectionHeader(title: title, subtitle: subtitle)
 
             Spacer(minLength: 8)
@@ -98,9 +98,9 @@ private struct CustomProviderEmptyState: View {
     let title: LocalizedStringKey
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: AppTheme.Spacing.x3) {
             Image(systemName: systemImage)
-                .font(.system(size: 32))
+                .font(AppTheme.font(.display))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.secondary)
 
@@ -109,9 +109,9 @@ private struct CustomProviderEmptyState: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 22)
-        .padding(.horizontal, 20)
-        .background(ProviderSurface(cornerRadius: 10))
+        .padding(.vertical, AppTheme.Spacing.x6)
+        .padding(.horizontal, AppTheme.Spacing.x5)
+        .background(ProviderSurface(cornerRadius: AppTheme.Radius.control))
     }
 }
 
@@ -121,29 +121,29 @@ private struct CustomEnhancementModelRow: View {
     let onDelete: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Image(systemName: "sparkles")
-                .font(.system(size: 15, weight: .semibold))
+                .font(AppTheme.font(.headline, .semibold))
                 .foregroundStyle(.secondary)
                 .frame(width: 28, height: 28)
                 .background(
-                    RoundedRectangle(cornerRadius: 7)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                         .fill(AppTheme.Surface.control)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 7)
+                            RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                                 .stroke(AppTheme.Border.control.opacity(0.45), lineWidth: 1)
                         )
                 )
 
-            VStack(alignment: .leading, spacing: 5) {
-                HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     Text(provider.name)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(AppTheme.font(.body, .semibold))
                     // Definitions synced from another Mac arrive without their key (keys never leave a Mac).
                     if !CustomAIProviderManager.shared.hasAPIKeyForProvider(provider) {
                         Button(action: onEdit) {
                             Label("API key needed", systemImage: "key")
-                                .font(.system(size: 11, weight: .medium))
+                                .font(AppTheme.font(.caption, .medium))
                                 .foregroundColor(AppTheme.Status.warningStrong)
                         }
                         .buttonStyle(.plain)
@@ -171,7 +171,7 @@ private struct CustomEnhancementModelRow: View {
                 Button("Delete", role: .destructive, action: onDelete)
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .font(.system(size: 14))
+                    .font(AppTheme.font(.callout))
             }
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
@@ -179,8 +179,8 @@ private struct CustomEnhancementModelRow: View {
             .accessibilityLabel("More Actions")
             .frame(width: 22, height: 22)
         }
-        .padding(14)
-        .background(ProviderSurface(cornerRadius: 10))
+        .padding(AppTheme.Spacing.x4)
+        .background(ProviderSurface(cornerRadius: AppTheme.Radius.control))
     }
 }
 
@@ -239,9 +239,9 @@ struct CustomTranscriptionModelEditorPanel: View {
     var body: some View {
         QuickPanelScaffold {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
                     CustomModelEditorSection(title: "Details") {
-                        VStack(spacing: 10) {
+                        VStack(spacing: AppTheme.Spacing.x3) {
                             CustomModelTextField(
                                 label: "Display Name", placeholder: String(localized: "My Custom Model"),
                                 text: $displayName)
@@ -265,9 +265,9 @@ struct CustomTranscriptionModelEditorPanel: View {
                         CustomModelErrorBox(messages: validationErrors)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 76)
-                .padding(.bottom, 72)
+                .padding(.horizontal, AppTheme.Spacing.x5)
+                .padding(.top, 76)  // design-exempt: layout offset, not spacing
+                .padding(.bottom, 72)  // design-exempt: layout offset, not spacing
             }
         } header: {
             editorHeader(
@@ -446,9 +446,9 @@ struct CustomEnhancementModelEditorPanel: View {
     var body: some View {
         QuickPanelScaffold {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
                     CustomModelEditorSection(title: "Details") {
-                        VStack(spacing: 10) {
+                        VStack(spacing: AppTheme.Spacing.x3) {
                             CustomModelTextField(
                                 label: "Display Name", placeholder: String(localized: "My Enhancement Model"),
                                 text: $displayName)
@@ -470,9 +470,9 @@ struct CustomEnhancementModelEditorPanel: View {
                         CustomModelErrorBox(messages: [errorMessage])
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 76)
-                .padding(.bottom, 72)
+                .padding(.horizontal, AppTheme.Spacing.x5)
+                .padding(.top, 76)  // design-exempt: layout offset, not spacing
+                .padding(.bottom, 72)  // design-exempt: layout offset, not spacing
             }
         } header: {
             CustomModelEditorHeader(
@@ -602,16 +602,16 @@ private struct CustomModelEditorSection<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             Text(title)
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundStyle(.secondary)
 
             VStack(spacing: 0) {
                 content()
             }
-            .padding(12)
-            .background(ProviderSurface(cornerRadius: 10))
+            .padding(AppTheme.Spacing.x3)
+            .background(ProviderSurface(cornerRadius: AppTheme.Radius.control))
         }
     }
 }
@@ -623,9 +623,9 @@ private struct CustomModelTextField: View {
     var isSecure = false
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Text(label)
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .frame(width: CustomModelEditorMetrics.labelWidth, alignment: .leading)
@@ -638,7 +638,7 @@ private struct CustomModelTextField: View {
                 }
             }
             .textFieldStyle(.roundedBorder)
-            .font(.system(size: 12))
+            .font(AppTheme.font(.footnote))
             .frame(maxWidth: CustomModelEditorMetrics.fieldMaxWidth, alignment: .trailing)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -671,19 +671,19 @@ private struct ConnectionTestRow: View {
     let action: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Text("Connection")
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .frame(width: CustomModelEditorMetrics.labelWidth, alignment: .leading)
 
             Button(action: action) {
-                HStack(spacing: 5) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Image(systemName: "wifi")
-                        .font(.system(size: 11))
+                        .font(AppTheme.font(.caption))
                     Text("Test")
-                        .font(.system(size: 12))
+                        .font(AppTheme.font(.footnote))
                 }
             }
             .disabled(isDisabled || state.isTesting)
@@ -701,16 +701,16 @@ private struct ConnectionTestRow: View {
         case .idle, .failure:
             EmptyView()
         case .testing:
-            HStack(spacing: 6) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 ProgressView()
                     .controlSize(.small)
                 Text("Testing…")
             }
-            .font(.system(size: 12))
+            .font(AppTheme.font(.footnote))
             .foregroundStyle(AppTheme.Text.secondary)
         case .success:
             Label("Test successful", systemImage: "checkmark.circle")
-                .font(.system(size: 12))
+                .font(AppTheme.font(.footnote))
                 .foregroundStyle(AppTheme.Status.positive)
                 .lineLimit(1)
         }
@@ -736,9 +736,9 @@ private struct CustomModelToggleRow: View {
     @Binding var isOn: Bool
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Text(title)
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(.primary)
                 .frame(width: CustomModelEditorMetrics.labelWidth, alignment: .leading)
 
@@ -755,7 +755,7 @@ private struct CustomModelErrorBox: View {
     let messages: [String]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             ForEach(messages, id: \.self) { message in
                 Text(message)
                     .font(.caption)
@@ -764,8 +764,8 @@ private struct CustomModelErrorBox: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(ProviderSurface(cornerRadius: 10))
+        .padding(AppTheme.Spacing.x3)
+        .background(ProviderSurface(cornerRadius: AppTheme.Radius.control))
     }
 }
 
@@ -774,7 +774,7 @@ private struct CustomModelEditorHeader: View {
     let onClose: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Text(title)
                 .font(.headline)
                 .fontWeight(.semibold)
@@ -791,7 +791,7 @@ private struct CustomModelEditorHeader: View {
                 action: onClose
             )
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.headerHeight)
     }
 }
@@ -812,7 +812,7 @@ private struct CustomModelEditorFooter: View {
             AppActionButton(primaryTitle, kind: .primary, action: onPrimary)
                 .disabled(isPrimaryDisabled)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.footerHeight)
     }
 }
@@ -842,7 +842,7 @@ private struct CustomModelEditorFooter: View {
                 }
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
                         customSectionHeader(
                             title: "Custom Transcription Models",
                             subtitle: "Supports any provider that uses the same API format as OpenAI transcription.",
@@ -867,7 +867,7 @@ private struct CustomModelEditorFooter: View {
                             onDelete: {}
                         )
                     }
-                    .padding(24)
+                    .padding(AppTheme.Spacing.x6)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                 }
             }
@@ -903,7 +903,7 @@ private struct CustomModelEditorFooter: View {
         private func customSectionHeader(
             title: LocalizedStringKey, subtitle: LocalizedStringKey, action: @escaping () -> Void
         ) -> some View {
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: AppTheme.Spacing.x3) {
                 ProviderSectionHeader(title: title, subtitle: subtitle)
 
                 Spacer()

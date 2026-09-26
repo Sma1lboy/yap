@@ -7,23 +7,23 @@ struct CompactHeroSection: View {
     var maxDescriptionWidth: CGFloat? = nil
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppTheme.Spacing.x4) {
             Image(systemName: icon)
-                .font(.system(size: 28))
+                .font(AppTheme.font(.display))
                 .foregroundStyle(AppTheme.Status.infoStrong)
                 .symbolRenderingMode(.hierarchical)
 
-            VStack(spacing: 6) {
+            VStack(spacing: AppTheme.Spacing.x2) {
                 Text(title)
-                    .font(.system(size: 22, weight: .bold))
+                    .font(AppTheme.font(.title, .semibold))
                 Text(description)
-                    .font(.system(size: 14))
+                    .font(AppTheme.font(.callout))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: maxDescriptionWidth)
             }
         }
-        .padding(.vertical, 20)
+        .padding(.vertical, AppTheme.Spacing.x5)
         .frame(maxWidth: .infinity)
     }
 }

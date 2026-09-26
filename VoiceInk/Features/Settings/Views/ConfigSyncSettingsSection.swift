@@ -141,7 +141,7 @@ struct ConfigSyncSettingsSection: View {
         case .notFound:
             Text("No config file").settingsDescription()
         case .loaded(let date, let applied, let skipped):
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text(
                     String(
                         format: String(localized: "Loaded at %@"),
@@ -175,7 +175,7 @@ struct ConfigSyncSettingsSection: View {
             Text(String(format: String(localized: "Synced at %@"), date.formatted(date: .abbreviated, time: .shortened)))
                 .settingsDescription()
         case .conflict:
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 Text("This Mac and Yap Cloud both changed the config and couldn't be merged automatically.")
                     .foregroundColor(AppTheme.Status.warningStrong)
                     .fixedSize(horizontal: false, vertical: true)
@@ -189,7 +189,7 @@ struct ConfigSyncSettingsSection: View {
                 }
             }
         case .error(let message):
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 Text(String(format: String(localized: "Cloud sync failed: %@"), message))
                     .foregroundColor(AppTheme.Status.error)
                     .fixedSize(horizontal: false, vertical: true)

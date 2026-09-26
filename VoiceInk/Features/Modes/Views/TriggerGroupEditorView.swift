@@ -21,26 +21,26 @@ struct TriggerGroupEditorView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
             Text(group.name)
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppTheme.font(.callout, .semibold))
                 .foregroundStyle(.primary)
             Text("Edit the apps and websites in this group.")
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundStyle(.secondary)
         }
-        .padding(12)
+        .padding(AppTheme.Spacing.x3)
     }
 
     private var content: some View {
         ScrollView {
-            LazyVStack(spacing: 4) {
+            LazyVStack(spacing: AppTheme.Spacing.x1) {
                 if group.isEmpty {
                     Text("No triggers in this group")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(AppTheme.font(.footnote, .medium))
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 32)
+                        .padding(.vertical, AppTheme.Spacing.x8)
                 } else {
                     ForEach(group.appConfigs) { appConfig in
                         groupAppRow(appConfig)
@@ -51,67 +51,67 @@ struct TriggerGroupEditorView: View {
                     }
                 }
             }
-            .padding(6)
+            .padding(AppTheme.Spacing.x2)
         }
     }
 
     private var addTriggerField: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.x2) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
-                    .font(.system(size: 12))
+                    .font(AppTheme.font(.footnote))
 
                 TextField("Add app or website...", text: $searchText)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 13))
+                    .font(AppTheme.font(.body))
                     .onSubmit(addWebsiteIfPossible)
 
                 if !searchText.isEmpty {
                     Button(action: { searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
-                            .font(.system(size: 12))
+                            .font(AppTheme.font(.footnote))
                     }
                     .buttonStyle(.plain)
                     .help("Clear Search")
                     .accessibilityLabel("Clear Search")
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, AppTheme.Spacing.x3)
+            .padding(.vertical, AppTheme.Spacing.x2)
 
             if canOfferWebsite {
                 websiteSuggestionRow
-                    .padding(.horizontal, 6)
+                    .padding(.horizontal, AppTheme.Spacing.x2)
             }
 
             appSuggestions
         }
-        .padding(.bottom, 6)
+        .padding(.bottom, AppTheme.Spacing.x2)
     }
 
     @ViewBuilder
     private var appSuggestions: some View {
         let apps = filteredApps.prefix(4)
         if !apps.isEmpty {
-            VStack(spacing: 2) {
+            VStack(spacing: AppTheme.Spacing.half) {
                 ForEach(Array(apps), id: \.bundleId) { app in
                     Button {
                         addApp(app)
                     } label: {
-                        HStack(spacing: 8) {
+                        HStack(spacing: AppTheme.Spacing.x2) {
                             Image(nsImage: app.icon)
                                 .resizable()
                                 .frame(width: 22, height: 22)
                                 .cornerRadius(5)
                             Text(app.name)
-                                .font(.system(size: 12, weight: .medium))
+                                .font(AppTheme.font(.footnote, .medium))
                                 .foregroundStyle(.primary)
                             Spacer()
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 5)
+                        .padding(.horizontal, AppTheme.Spacing.x3)
+                        .padding(.vertical, AppTheme.Spacing.x1)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -122,27 +122,27 @@ struct TriggerGroupEditorView: View {
 
     private var websiteSuggestionRow: some View {
         Button(action: addWebsiteIfPossible) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 TriggerSymbol(systemName: "globe")
                 Text(String(format: String(localized: "Add %@"), websiteCandidate))
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 Spacer()
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
+            .padding(.horizontal, AppTheme.Spacing.x2)
+            .padding(.vertical, AppTheme.Spacing.x2)
             .contentShape(Rectangle())
-            .background(RoundedRectangle(cornerRadius: 8).fill(AppTheme.Surface.card))
+            .background(RoundedRectangle(cornerRadius: AppTheme.Radius.control).fill(AppTheme.Surface.card))
         }
         .buttonStyle(.plain)
     }
 
     private func groupAppRow(_ appConfig: AppConfig) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             TriggerAppIcon(bundleId: appConfig.bundleIdentifier, size: 24)
             Text(appConfig.appName)
-                .font(.system(size: 13, weight: .medium))
+                .font(AppTheme.font(.body, .medium))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
             Spacer()
@@ -150,15 +150,15 @@ struct TriggerGroupEditorView: View {
                 group.appConfigs.removeAll { $0.id == appConfig.id }
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
+        .padding(.horizontal, AppTheme.Spacing.x2)
+        .padding(.vertical, AppTheme.Spacing.x2)
     }
 
     private func groupWebsiteRow(_ urlConfig: URLConfig) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             TriggerSymbol(systemName: "globe")
             Text(urlConfig.url)
-                .font(.system(size: 13, weight: .medium))
+                .font(AppTheme.font(.body, .medium))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
             Spacer()
@@ -166,8 +166,8 @@ struct TriggerGroupEditorView: View {
                 group.urlConfigs.removeAll { $0.id == urlConfig.id }
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, AppTheme.Spacing.x2)
+        .padding(.vertical, AppTheme.Spacing.x1)
     }
 
     private var filteredApps: [InstalledAppInfo] {

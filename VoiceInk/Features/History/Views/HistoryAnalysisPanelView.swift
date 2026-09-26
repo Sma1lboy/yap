@@ -22,13 +22,13 @@ struct HistoryAnalysisPanelView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: AppTheme.Spacing.x3) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                 Text("Performance Analysis")
                     .font(.headline.weight(.semibold))
 
                 Text(String(localized: "\(analysis.totalTranscripts) selected transcripts"))
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppTheme.font(.caption, .medium))
                     .foregroundStyle(AppTheme.Text.secondary)
             }
 
@@ -43,7 +43,7 @@ struct HistoryAnalysisPanelView: View {
                 action: onClose
             )
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.headerHeight)
     }
 
@@ -53,7 +53,7 @@ struct HistoryAnalysisPanelView: View {
             emptyState
         } else {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x6) {
                     HistoryPerformanceSection(
                         title: "Transcription Models",
                         valueTitle: "Avg. latency",
@@ -70,17 +70,17 @@ struct HistoryAnalysisPanelView: View {
                         rows: analysis.enhancementRows
                     )
                 }
-                .padding(.horizontal, 18)
+                .padding(.horizontal, AppTheme.Spacing.x5)
                 .padding(.top, QuickPanelMetrics.topEdgeHeight + 4)
-                .padding(.bottom, 24)
+                .padding(.bottom, AppTheme.Spacing.x6)
             }
         }
     }
 
     private var emptyState: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: "chart.bar.xaxis")
-                .font(.system(size: 32, weight: .light))
+                .font(AppTheme.font(.display, .regular))
                 .foregroundStyle(AppTheme.Text.secondary)
 
             Text("No model performance in selection")
@@ -212,27 +212,27 @@ private struct HistoryPerformanceSection: View {
     let rows: [HistoryPerformanceRowData]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
+            HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x3) {
                 Text(title)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text(valueTitle)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(AppTheme.font(.caption, .semibold))
                     .foregroundStyle(AppTheme.Text.secondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
                     .frame(width: 96, alignment: .trailing)
-                    .padding(.trailing, 4)
+                    .padding(.trailing, AppTheme.Spacing.x1)
             }
-            .font(.system(size: 13, weight: .semibold))
+            .font(AppTheme.font(.body, .semibold))
             .foregroundStyle(AppTheme.Text.primary)
             .lineLimit(1)
 
             if rows.isEmpty {
                 HistoryPerformanceEmptyRow(title: emptyTitle, icon: emptyIcon)
             } else {
-                VStack(spacing: 8) {
+                VStack(spacing: AppTheme.Spacing.x2) {
                     ForEach(rows) { row in
                         HistoryPerformanceRow(row: row)
                     }
@@ -247,21 +247,21 @@ private struct HistoryPerformanceRow: View {
     let row: HistoryPerformanceRowData
 
     var body: some View {
-        HStack(alignment: .center, spacing: 10) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
             ModelProviderIcon(modelName: row.name, kind: row.kind.modelInsightKind, size: 24)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text(row.name)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .foregroundStyle(AppTheme.Text.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
                     .truncationMode(.tail)
 
                 if let detail = row.detail {
-                    HStack(spacing: 6) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         Text(detail)
-                            .font(.system(size: 10, weight: .medium))
+                            .font(AppTheme.font(.micro, .medium))
                             .foregroundStyle(AppTheme.Text.secondary)
                             .lineLimit(1)
                     }
@@ -270,15 +270,15 @@ private struct HistoryPerformanceRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             Text(row.averageLatencyText)
-                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .font(AppTheme.font(.body, .semibold, design: .monospaced))
                 .foregroundStyle(AppTheme.Text.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
                 .frame(width: 96, alignment: .trailing)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(AppCardBackground(cornerRadius: 10))
+        .padding(.horizontal, AppTheme.Spacing.x3)
+        .padding(.vertical, AppTheme.Spacing.x3)
+        .background(AppCardBackground(cornerRadius: AppTheme.Radius.control))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(row.name)
         .accessibilityValue(accessibilityValue)
@@ -298,13 +298,13 @@ private struct HistoryPerformanceEmptyRow: View {
     let icon: String
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: icon)
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundStyle(AppTheme.Text.secondary)
 
             Text(title)
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .lineLimit(1)
         }

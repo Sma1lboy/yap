@@ -24,7 +24,7 @@ struct InfoTip: View {
                 .imageScale(iconSize)
                 .foregroundColor(iconColor)
                 .fontWeight(.semibold)
-                .padding(5)
+                .padding(AppTheme.Spacing.x1)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -37,7 +37,7 @@ struct InfoTip: View {
                         .foregroundColor(.secondary)
                         + Text(" ")
                         + Text("Learn more")
-                        .foregroundColor(AppTheme.Accent.primary))
+                        .foregroundColor(AppTheme.Accent.text))
                         .font(.callout)
                 } else {
                     Text(message)
@@ -47,7 +47,7 @@ struct InfoTip: View {
             }
             .fixedSize(horizontal: false, vertical: true)
             .frame(width: width, alignment: .leading)
-            .padding(14)
+            .padding(AppTheme.Spacing.x4)
             .onTapGesture {
                 if let url = learnMoreLink {
                     NSWorkspace.shared.open(url)

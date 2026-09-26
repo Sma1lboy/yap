@@ -39,14 +39,14 @@ struct OnboardingMicrophoneScreen: View {
     }
 
     private var microphoneList: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             if devices.isEmpty {
                 emptyState
             } else {
                 listHeader
 
                 ScrollView {
-                    LazyVStack(spacing: 10) {
+                    LazyVStack(spacing: AppTheme.Spacing.x3) {
                         ForEach(devices, id: \.uid) { device in
                             microphoneRow(for: device)
                         }
@@ -61,14 +61,14 @@ struct OnboardingMicrophoneScreen: View {
     private var listHeader: some View {
         HStack {
             Text("Available Microphones")
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.secondary)
 
             Spacer()
 
             refreshButton
         }
-        .padding(.horizontal, 2)
+        .padding(.horizontal, AppTheme.Spacing.half)
     }
 
     private func microphoneRow(for device: MicrophoneDevice) -> some View {
@@ -77,49 +77,49 @@ struct OnboardingMicrophoneScreen: View {
         return Button {
             selectedDeviceUID = device.uid
         } label: {
-            HStack(spacing: 14) {
+            HStack(spacing: AppTheme.Spacing.x4) {
                 Image(systemName: isSelected ? "checkmark" : "mic")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(AppTheme.font(.body, .semibold))
                     .foregroundColor(isSelected ? AppTheme.Text.primary : AppTheme.Text.muted)
                     .frame(width: 30, height: 30)
                     .background(
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                             .fill(isSelected ? AppTheme.Selection.fill : AppTheme.Surface.controlActive)
                     )
 
                 Text(device.name)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(AppTheme.font(.callout, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
                     .lineLimit(1)
 
                 Spacer(minLength: 12)
             }
-            .padding(14)
+            .padding(AppTheme.Spacing.x4)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 AppMaterialCardBackground(
                     isSelected: isSelected,
-                    cornerRadius: 10
+                    cornerRadius: AppTheme.Radius.control
                 )
             )
-            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
         }
         .buttonStyle(.plain)
     }
 
     private var emptyState: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: AppTheme.Spacing.x4) {
             Image(systemName: "mic.slash")
-                .font(.system(size: 22, weight: .semibold))
+                .font(AppTheme.font(.title, .semibold))
                 .foregroundColor(AppTheme.Text.secondary)
 
-            VStack(spacing: 4) {
+            VStack(spacing: AppTheme.Spacing.x1) {
                 Text("No microphones found")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(AppTheme.font(.callout, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
 
                 Text("Connect a microphone or allow microphone access, then refresh.")
-                    .font(.system(size: 13))
+                    .font(AppTheme.font(.body))
                     .foregroundColor(AppTheme.Text.secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
@@ -127,9 +127,9 @@ struct OnboardingMicrophoneScreen: View {
 
             refreshButton
         }
-        .padding(22)
+        .padding(AppTheme.Spacing.x6)
         .frame(maxWidth: .infinity)
-        .background(AppMaterialCardBackground(cornerRadius: 10))
+        .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.control))
     }
 
     private var refreshButton: some View {
@@ -138,10 +138,10 @@ struct OnboardingMicrophoneScreen: View {
         } label: {
             Label {
                 Text("Refresh")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
             } icon: {
                 Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .rotationEffect(.degrees(refreshIconRotation))
             }
             .foregroundColor(AppTheme.Text.secondary)

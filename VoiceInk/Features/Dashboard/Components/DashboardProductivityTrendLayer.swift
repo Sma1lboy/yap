@@ -8,7 +8,7 @@ struct DashboardProductivityTrendLayer: View {
     let horizontalSlotCount: Int
     let hoveredPointID: Date?
 
-    private let lineTint = AppTheme.Accent.strong
+    private let lineTint = AppTheme.Accent.text
 
     private var hasVisibleData: Bool {
         points.contains { $0.words > 0 }

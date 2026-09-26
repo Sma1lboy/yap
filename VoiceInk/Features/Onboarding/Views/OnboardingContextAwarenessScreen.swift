@@ -32,19 +32,19 @@ struct OnboardingContextAwarenessScreen: View {
 private struct OnboardingContextAwarenessContent: View {
     var body: some View {
         ZStack {
-            VStack(spacing: 18) {
+            VStack(spacing: AppTheme.Spacing.x5) {
                 Image(systemName: "sparkles.square.fill.on.square")
-                    .font(.system(size: 24, weight: .semibold))
+                    .font(AppTheme.font(.title, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
                     .frame(width: 56, height: 56)
                     .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.panel, style: .continuous)
                             .fill(AppTheme.Surface.controlActive)
                     )
 
-                VStack(spacing: 10) {
+                VStack(spacing: AppTheme.Spacing.x3) {
                     Text("Yap is context-aware.")
-                        .font(.system(size: 32, weight: .bold))
+                        .font(AppTheme.font(.display, .semibold))
                         .foregroundColor(AppTheme.Text.primary)
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
@@ -53,7 +53,7 @@ private struct OnboardingContextAwarenessContent: View {
                     Text(
                         "Yap automatically understands what you are working with and selects your preferred setup. You can always configure this by editing or creating new modes."
                     )
-                    .font(.system(size: 15))
+                    .font(AppTheme.font(.headline))
                     .foregroundColor(AppTheme.Text.secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(4)
@@ -62,7 +62,7 @@ private struct OnboardingContextAwarenessContent: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .padding(.top, 52)
+            .padding(.top, 52)  // design-exempt: layout offset, not spacing
 
             ContextAwarenessCenterSlot()
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -72,13 +72,13 @@ private struct OnboardingContextAwarenessContent: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 .offset(y: 226)
         }
-        .padding(.horizontal, 28)
+        .padding(.horizontal, AppTheme.Spacing.x8)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var optionSwitchingText: some View {
         Text("Note: Press Option 1-9 during recording to switch modes manually.")
-            .font(.system(size: 13, weight: .medium))
+            .font(AppTheme.font(.body, .medium))
             .foregroundColor(AppTheme.Text.secondary)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
@@ -146,17 +146,17 @@ private struct ContextAwarenessModePill: View {
     let model: Model
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: model.systemImage)
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.secondary)
 
             Text(LocalizedStringKey(model.title))
-                .font(.system(size: 13, weight: .semibold))
+                .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .lineLimit(1)
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, AppTheme.Spacing.x4)
         .frame(height: 42)
         .background(
             Capsule()
@@ -171,18 +171,18 @@ private struct ContextAwarenessModePill: View {
 
 private struct ContextAwarenessModeHub: View {
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: "sparkles.square.fill.on.square")
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(AppTheme.Text.secondary)
                 .frame(width: 18)
 
             Text("Yap Modes")
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .lineLimit(1)
         }
-        .padding(.horizontal, 18)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: 46)
         .background(
             Capsule()

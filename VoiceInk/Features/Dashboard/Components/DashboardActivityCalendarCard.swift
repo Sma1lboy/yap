@@ -25,22 +25,22 @@ struct DashboardActivityCalendarCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x6) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Consistency, at a glance")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(AppTheme.font(.title, .semibold, design: .rounded))
                     .foregroundStyle(AppTheme.Text.primary)
 
                 Spacer()
 
-                HStack(spacing: 9) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     Text("Less")
                     legendSwatch(opacity: 0.12)
                     legendSwatch(opacity: 0.38)
                     legendSwatch(opacity: 0.76)
                     Text("More")
                 }
-                .font(.system(size: 10, weight: .semibold))
+                .font(AppTheme.font(.micro, .semibold))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .accessibilityHidden(true)
             }
@@ -62,22 +62,22 @@ struct DashboardActivityCalendarCard: View {
 
             Divider()
 
-            HStack(alignment: .top, spacing: 30) {
+            HStack(alignment: .top, spacing: AppTheme.Spacing.x8) {
                 metric(label: "Sessions", value: summary.hasData ? Formatters.formattedCompactNumber(summary.sessionCount) : "--", emphasized: true)
                 metric(label: "Average output", value: summary.hasData ? "\(Formatters.formattedCompactNumber(averageWordsPerSession)) words" : "--")
                 metric(label: "Best time", value: peakWindowText)
             }
         }
-        .padding(22)
+        .padding(AppTheme.Spacing.x6)
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(DashboardInsightCardBackground(cornerRadius: 16))
+        .background(DashboardInsightCardBackground(cornerRadius: AppTheme.Radius.panel))
         .accessibilityElement(children: .contain)
     }
 
     @ViewBuilder
     private var activityGrid: some View {
         if visiblePoints.isEmpty {
-            LazyVGrid(columns: gridColumns, spacing: 7) {
+            LazyVGrid(columns: gridColumns, spacing: AppTheme.Spacing.x2) {
                 ForEach(0..<21, id: \.self) { _ in
                     emptyActivityCell
                 }
@@ -85,7 +85,7 @@ struct DashboardActivityCalendarCard: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("No activity recorded for this period")
         } else if visiblePoints.count <= 35 {
-            LazyVGrid(columns: gridColumns, spacing: 9) {
+            LazyVGrid(columns: gridColumns, spacing: AppTheme.Spacing.x2) {
                 ForEach(calendarCells) { cell in
                     if let point = cell.point {
                         activityCell(point: point)
@@ -99,7 +99,7 @@ struct DashboardActivityCalendarCard: View {
         } else {
             ScrollViewReader { proxy in
                 ScrollView(.horizontal) {
-                    LazyHGrid(rows: calendarRows, spacing: 5) {
+                    LazyHGrid(rows: calendarRows, spacing: AppTheme.Spacing.x1) {
                         ForEach(calendarCells) { cell in
                             Group {
                                 if let point = cell.point {
@@ -113,7 +113,7 @@ struct DashboardActivityCalendarCard: View {
                             .id(cell.id)
                         }
                     }
-                    .padding(.vertical, 2)
+                    .padding(.vertical, AppTheme.Spacing.half)
                 }
                 .scrollIndicators(.visible)
                 .onAppear {
@@ -127,11 +127,11 @@ struct DashboardActivityCalendarCard: View {
     }
 
     private var gridColumns: [GridItem] {
-        Array(repeating: GridItem(.flexible(), spacing: 7), count: Self.columnCount)
+        Array(repeating: GridItem(.flexible(), spacing: AppTheme.Spacing.x2), count: Self.columnCount)
     }
 
     private var calendarRows: [GridItem] {
-        Array(repeating: GridItem(.fixed(14), spacing: 5), count: Self.columnCount)
+        Array(repeating: GridItem(.fixed(14), spacing: AppTheme.Spacing.x1), count: Self.columnCount)
     }
 
     private var calendarCells: [DashboardCalendarCell] {
@@ -156,26 +156,26 @@ struct DashboardActivityCalendarCard: View {
     }
 
     private func activityCell(point: DashboardProductivityPoint) -> some View {
-        RoundedRectangle(cornerRadius: 5, style: .continuous)
+        RoundedRectangle(cornerRadius: AppTheme.Radius.small, style: .continuous)
             .fill(activityColor(words: point.words))
             .aspectRatio(1, contentMode: .fit)
-            .contentShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: AppTheme.Radius.small, style: .continuous))
             .overlay { hoverTrackingLayer(for: point) }
             .accessibilityLabel("\(point.accessibilityLabel), \(point.words) words")
     }
 
     private var emptyActivityCell: some View {
-        RoundedRectangle(cornerRadius: 5, style: .continuous)
+        RoundedRectangle(cornerRadius: AppTheme.Radius.small, style: .continuous)
             .fill(activityColor(words: 0))
             .aspectRatio(1, contentMode: .fit)
             .accessibilityHidden(true)
     }
 
     private func compactActivityCell(point: DashboardProductivityPoint) -> some View {
-        RoundedRectangle(cornerRadius: 3, style: .continuous)
+        RoundedRectangle(cornerRadius: AppTheme.Radius.small, style: .continuous)
             .fill(activityColor(words: point.words))
             .frame(width: 14, height: 14)
-            .contentShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: AppTheme.Radius.small, style: .continuous))
             .overlay { hoverTrackingLayer(for: point) }
             .accessibilityLabel("\(point.accessibilityLabel), \(point.words) words")
     }
@@ -228,20 +228,20 @@ struct DashboardActivityCalendarCard: View {
     }
 
     private func legendSwatch(opacity: CGFloat) -> some View {
-        RoundedRectangle(cornerRadius: 3, style: .continuous)
+        RoundedRectangle(cornerRadius: AppTheme.Radius.small, style: .continuous)
             .fill(AppTheme.Accent.primary.opacity(opacity))
             .frame(width: 14, height: 14)
     }
 
     private func metric(label: LocalizedStringKey, value: String, emphasized: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
             Text(label)
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundStyle(AppTheme.Text.secondary)
 
             Text(value)
-                .font(.system(size: emphasized ? 28 : 18, weight: .bold, design: .rounded))
-                .foregroundStyle(emphasized ? AppTheme.Accent.strong : AppTheme.Text.primary)
+                .font(AppTheme.font(emphasized ? .display : .title3, .semibold, design: .rounded))
+                .foregroundStyle(emphasized ? AppTheme.Accent.text : AppTheme.Text.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
         }
@@ -272,22 +272,22 @@ private struct DashboardActivityCalendarTooltip: View {
     let point: DashboardProductivityPoint
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
             Text(point.accessibilityLabel)
-                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .font(AppTheme.font(.micro, .semibold, design: .rounded))
                 .foregroundStyle(AppTheme.Text.secondary)
 
             Text(wordsText)
-                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .font(AppTheme.font(.footnote, .semibold, design: .rounded))
                 .foregroundStyle(AppTheme.Text.primary)
                 .monospacedDigit()
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.horizontal, AppTheme.Spacing.x3)
+        .padding(.vertical, AppTheme.Spacing.x2)
         .frame(minWidth: 150, alignment: .leading)
         .background(
             Color(nsColor: .controlBackgroundColor),
-            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+            in: RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
         )
         .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
     }

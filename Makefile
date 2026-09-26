@@ -48,7 +48,7 @@ setup: whisper
 	@echo "Whisper framework is ready at $(FRAMEWORK_PATH)"
 	@echo "Please ensure your Xcode project references the framework from this new location."
 
-build: setup
+build: setup design-check
 	xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug CODE_SIGN_IDENTITY="" \
 		-skipPackagePluginValidation \
 		-skipMacroValidation \

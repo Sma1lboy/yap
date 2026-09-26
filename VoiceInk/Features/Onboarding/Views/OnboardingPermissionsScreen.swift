@@ -22,7 +22,7 @@ struct OnboardingPermissionsScreen: View {
             stage: .permissions,
             contentMaxWidth: contentMaxWidth
         ) {
-            VStack(spacing: 16) {
+            VStack(spacing: AppTheme.Spacing.x4) {
                 permissionList
                 OnboardingCloudRestoreHint(isRestored: isRestoredFromCloud, onRestore: onRestoreFromCloud)
             }
@@ -39,7 +39,7 @@ struct OnboardingPermissionsScreen: View {
     }
 
     private var permissionList: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: AppTheme.Spacing.x3) {
             ForEach(OnboardingPermissionKind.allCases) { permission in
                 PermissionStepRow(
                     stepNumber: stepNumber(permission),

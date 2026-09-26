@@ -40,7 +40,7 @@ struct ModelUsageCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
             ModelPreviewCardHeader(
                 title: "AI Model Usage",
                 infoTip: ModelUsageText.estimateInfo,
@@ -65,9 +65,9 @@ struct ModelUsageCard: View {
             )
         }
         .fixedSize(horizontal: false, vertical: true)
-        .padding(18)
+        .padding(AppTheme.Spacing.x5)
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(DashboardInsightCardBackground(cornerRadius: 16))
+        .background(DashboardInsightCardBackground(cornerRadius: AppTheme.Radius.panel))
     }
 }
 

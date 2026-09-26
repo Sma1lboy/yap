@@ -38,35 +38,35 @@ private struct ModelSettingsTabBar: View {
     @Binding var selection: ModelSettingsTab
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             ForEach(ModelSettingsTab.allCases) { tab in
                 Button {
                     withAnimation(.easeInOut(duration: 0.16)) {
                         selection = tab
                     }
                 } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         Image(systemName: tab.systemImage)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(AppTheme.font(.body, .semibold))
                             .symbolRenderingMode(.hierarchical)
 
                         Text(LocalizedStringKey(tab.rawValue))
-                            .font(.system(size: 14, weight: selection == tab ? .semibold : .medium))
+                            .font(AppTheme.font(.callout, selection == tab ? .semibold : .medium))
                     }
                     .foregroundStyle(selection == tab ? Color.primary : Color.secondary)
                     .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 9)
+                    .padding(.horizontal, AppTheme.Spacing.x3)
+                    .padding(.vertical, AppTheme.Spacing.x2)
                     .background(
-                        AppMaterialCardBackground(isSelected: selection == tab, cornerRadius: 22)
+                        AppMaterialCardBackground(isSelected: selection == tab, cornerRadius: AppTheme.Radius.pill)
                     )
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, AppTheme.Spacing.x5)
+        .padding(.vertical, AppTheme.Spacing.x3)
     }
 }
 
@@ -103,7 +103,7 @@ private struct WhisperPromptSettingsSection: View {
 
     var body: some View {
         Section {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
                 Picker("Language", selection: $promptLanguage) {
                     ForEach(sortedLanguages, id: \.key) { code, name in
                         Text(name).tag(code)
@@ -117,18 +117,18 @@ private struct WhisperPromptSettingsSection: View {
                 if promptLanguage != "auto", isEditing {
                     TextEditor(text: $draftPrompt)
                         .font(.body)
-                        .padding(6)
+                        .padding(AppTheme.Spacing.x2)
                         .frame(height: 72)
                         .scrollContentBackground(.hidden)
                         .background(AppTheme.Surface.control)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
                         .overlay {
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                                 .stroke(Color.secondary.opacity(0.18))
                         }
                         .accessibilityLabel("Whisper Prompt")
 
-                    HStack(spacing: 10) {
+                    HStack(spacing: AppTheme.Spacing.x3) {
                         Spacer()
 
                         Button("Cancel", role: .cancel) {
@@ -140,6 +140,7 @@ private struct WhisperPromptSettingsSection: View {
                             whisperPrompt.setCustomPrompt(draftPrompt, for: promptLanguage)
                             isEditing = false
                         }
+                        .buttonStyle(.appAction(.primary))
                         .keyboardShortcut(.defaultAction)
                     }
                     .controlSize(.small)
@@ -157,9 +158,9 @@ private struct WhisperPromptSettingsSection: View {
                     }
                 }
             }
-            .padding(.vertical, 2)
+            .padding(.vertical, AppTheme.Spacing.half)
         } header: {
-            HStack(spacing: 4) {
+            HStack(spacing: AppTheme.Spacing.x1) {
                 Text("Whisper Prompt")
                 InfoTip(
                     LocalizedStringKey(
@@ -240,7 +241,7 @@ private struct EnhancementModelSettingsView: View {
                 }
                 .pickerStyle(.menu)
             } header: {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Request Timeout")
                     InfoTip(
                         "Set how long to wait for the AI provider to respond. If no response is received within this duration, you can either fail immediately and paste the original transcription, or retry the request up to 3 attempts."
@@ -263,7 +264,7 @@ private struct AdvancedModelSettingsSection: View {
     var body: some View {
         Section {
             Toggle(isOn: $isVADEnabled) {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Voice Activity Detection (VAD)")
                     InfoTip("Detect speech segments and filter out silence to improve accuracy of local models.")
                 }
@@ -271,7 +272,7 @@ private struct AdvancedModelSettingsSection: View {
             .toggleStyle(.switch)
 
             Toggle(isOn: $prewarmModelOnWake) {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Prewarm model (Experimental)")
                     InfoTip(
                         "Turn this on if local transcriptions take longer than expected. It prepares the selected model in the background when the app launches or wakes."
@@ -290,7 +291,7 @@ private struct AdvancedModelSettingsSection: View {
                 Text("20 minutes").tag(1_200)
                 Text("30 minutes").tag(1_800)
             } label: {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Timeout")
                     InfoTip(
                         "Set how long to wait for batch cloud transcription to finish. This does not affect local or realtime transcription."

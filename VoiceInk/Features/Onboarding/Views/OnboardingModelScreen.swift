@@ -66,7 +66,7 @@ struct OnboardingModelScreen: View {
             stage: .model,
             contentMaxWidth: contentMaxWidth
         ) {
-            VStack(spacing: 14) {
+            VStack(spacing: AppTheme.Spacing.x4) {
                 OnboardingTranscriptionSetupCard(
                     localModel: localModel,
                     setupKind: setupKind,

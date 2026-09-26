@@ -18,12 +18,12 @@ struct LocalEnhancementServiceManagementView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             ProviderSectionHeader(
                 title: "Local Enhancement Services",
                 subtitle: "Connect Ollama or configure a CLI command for local enhancement."
             )
-            .padding(.top, 8)
+            .padding(.top, AppTheme.Spacing.x2)
 
             VStack(spacing: 0) {
                 LocalProviderDisclosureRow(
@@ -37,7 +37,7 @@ struct LocalEnhancementServiceManagementView: View {
                 }
 
                 Divider()
-                    .padding(.leading, 58)
+                    .padding(.leading, 58)  // design-exempt: layout offset, not spacing
 
                 LocalProviderDisclosureRow(
                     title: Text("CLI Provider"),
@@ -49,7 +49,7 @@ struct LocalEnhancementServiceManagementView: View {
                     localCLIConfiguration
                 }
             }
-            .background(AppMaterialCardBackground(cornerRadius: 11))
+            .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.control))
         }
         .onAppear {
             selectedOllamaModel = aiService.selectedModel(for: .ollama)
@@ -85,7 +85,7 @@ struct LocalEnhancementServiceManagementView: View {
     private var ollamaConfiguration: some View {
         LocalProviderExpandedContent {
             LocalProviderFormRow(title: "Server") {
-                HStack(spacing: 8) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     TextField("", text: $ollamaBaseURL, prompt: Text(verbatim: "http://localhost:11434"))
                         .textFieldStyle(.roundedBorder)
                         .frame(maxWidth: 320)
@@ -144,10 +144,10 @@ struct LocalEnhancementServiceManagementView: View {
 
     private var localCLIConfiguration: some View {
         LocalProviderExpandedContent {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 HStack(alignment: .firstTextBaseline) {
                     Text("Command")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(AppTheme.font(.footnote, .medium))
                         .foregroundStyle(.secondary)
 
                     Spacer()
@@ -161,7 +161,7 @@ struct LocalEnhancementServiceManagementView: View {
                         }
                     } label: {
                         Label("Template", systemImage: "doc.on.doc")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(AppTheme.font(.footnote, .medium))
                     }
                     .menuStyle(.button)
                     .buttonStyle(.bordered)
@@ -169,14 +169,14 @@ struct LocalEnhancementServiceManagementView: View {
                 }
 
                 TextEditor(text: $localCLICommandTemplate)
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(AppTheme.font(.footnote, .regular, design: .monospaced))
                     .frame(minHeight: 88)
                     .scrollContentBackground(.hidden)
-                    .padding(8)
+                    .padding(AppTheme.Spacing.x2)
                     .background(Color(NSColor.textBackgroundColor))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.small))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                             .stroke(AppTheme.Border.control.opacity(0.4), lineWidth: 1)
                     )
                     .onChange(of: localCLICommandTemplate) { _, newValue in
@@ -208,10 +208,10 @@ struct LocalEnhancementServiceManagementView: View {
             }
 
             Text("Variables: YAP_SYSTEM_PROMPT, YAP_USER_PROMPT, YAP_FULL_PROMPT")
-                .font(.system(size: 11, design: .monospaced))
+                .font(AppTheme.font(.caption, .regular, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 2)
+                .padding(.top, AppTheme.Spacing.half)
         }
     }
 
@@ -274,28 +274,28 @@ private struct LocalProviderDisclosureRow<Content: View>: View {
                     isExpanded.toggle()
                 }
             } label: {
-                HStack(spacing: 12) {
+                HStack(spacing: AppTheme.Spacing.x3) {
                     Image(systemName: systemImage)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(AppTheme.font(.callout, .medium))
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.secondary)
                         .frame(width: 30, height: 30)
                         .background(
-                            RoundedRectangle(cornerRadius: 7)
+                            RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                                 .fill(AppTheme.Surface.control)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 7)
+                                    RoundedRectangle(cornerRadius: AppTheme.Radius.small)
                                         .stroke(AppTheme.Border.control.opacity(0.3), lineWidth: 1)
                                 )
                         )
 
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                         title
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(AppTheme.font(.body, .semibold))
                             .foregroundStyle(.primary)
 
                         subtitle
-                            .font(.system(size: 11))
+                            .font(AppTheme.font(.caption))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
@@ -308,24 +308,24 @@ private struct LocalProviderDisclosureRow<Content: View>: View {
                         .lineLimit(1)
 
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(AppTheme.font(.caption, .semibold))
                         .foregroundStyle(.tertiary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
                 .contentShape(Rectangle())
-                .padding(.horizontal, 14)
-                .padding(.vertical, 11)
+                .padding(.horizontal, AppTheme.Spacing.x4)
+                .padding(.vertical, AppTheme.Spacing.x3)
             }
             .buttonStyle(.plain)
 
             if isExpanded {
                 Divider()
-                    .padding(.leading, 58)
+                    .padding(.leading, 58)  // design-exempt: layout offset, not spacing
 
                 content()
-                    .padding(.horizontal, 14)
-                    .padding(.top, 12)
-                    .padding(.bottom, 14)
+                    .padding(.horizontal, AppTheme.Spacing.x4)
+                    .padding(.top, AppTheme.Spacing.x3)
+                    .padding(.bottom, AppTheme.Spacing.x4)
                     .transition(.opacity)
             }
         }
@@ -340,7 +340,7 @@ private struct LocalProviderExpandedContent<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -357,9 +357,9 @@ private struct LocalProviderFormRow<Content: View>: View {
     }
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
+        HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x3) {
             Text(title)
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(.secondary)
                 .frame(width: LocalProviderMetrics.labelWidth, alignment: .leading)
 

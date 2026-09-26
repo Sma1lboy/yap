@@ -45,7 +45,7 @@ struct SettingsView: View {
 
             Section {
                 LabeledContent("Primary Shortcut") {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         Spacer()
                         shortcutModePicker(binding: $recordingShortcutManager.primaryRecordingShortcutMode)
                         ShortcutRecorder(action: .primaryRecording) {
@@ -58,7 +58,7 @@ struct SettingsView: View {
 
                 if recordingShortcutManager.secondaryRecordingShortcut != .none {
                     LabeledContent("Secondary Shortcut") {
-                        HStack(spacing: 8) {
+                        HStack(spacing: AppTheme.Spacing.x2) {
                             Spacer()
                             shortcutModePicker(binding: $recordingShortcutManager.secondaryRecordingShortcutMode)
                             ShortcutRecorder(action: .secondaryRecording) {
@@ -86,7 +86,7 @@ struct SettingsView: View {
                 }
 
             } header: {
-                HStack(spacing: 4) {
+                HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Shortcuts")
                     InfoTip("Supports keyboard combinations and mouse buttons.")
                 }
@@ -126,7 +126,7 @@ struct SettingsView: View {
                 }
 
                 LabeledContent {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         ShortcutRecorder(
                             action: .cancelRecorder,
                             defaultShortcut: Self.defaultCancelRecordingShortcut
@@ -146,7 +146,7 @@ struct SettingsView: View {
                         .accessibilityLabel("Reset to default")
                     }
                 } label: {
-                    HStack(spacing: 2) {
+                    HStack(spacing: AppTheme.Spacing.half) {
                         Text("Cancel Recording")
                         InfoTip(
                             "The assigned shortcut cancels the recording. Resetting restores the default double-Escape behavior."
@@ -158,7 +158,7 @@ struct SettingsView: View {
 
             Section("Pasting") {
                 Toggle(isOn: $appendTrailingSpace) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Text("Add Space After Paste")
                         InfoTip("Add a trailing space after pasted transcription output.")
                     }
@@ -169,7 +169,7 @@ struct SettingsView: View {
                         Text(key.displayName).tag(key.rawValue)
                     }
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Text("Auto Send")
                         InfoTip("Press Return while recording to stop and deliver the result. Yap will then paste the result and press the selected key to send it. Choose None to disable this feature.")
                     }
@@ -198,7 +198,7 @@ struct SettingsView: View {
                         Text(method.displayName).tag(method.rawValue)
                     }
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Text("Paste Method")
                         InfoTip(
                             "Default uses simulated Cmd+V key events. AppleScript can help when custom keyboard layouts do not paste correctly."
@@ -251,7 +251,7 @@ struct SettingsView: View {
                 .pickerStyle(.menu)
 
                 Toggle(isOn: $showLiveTranscript) {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
                         Text("Live Text Display")
                         InfoTip("Shows live text while recording with realtime models.")
                     }
@@ -354,6 +354,7 @@ struct SettingsView: View {
                     .disabled(!updaterViewModel.canCheckForUpdates)
 
                     Link("Report an Issue", destination: AppIdentity.issuesURL)
+                    .appLinkStyle()
                 }
 
                 YapCloudLegalLinks()
@@ -404,7 +405,7 @@ struct SettingsView: View {
 extension Text {
     func settingsDescription() -> some View {
         self
-            .font(.system(size: 12))
+            .font(AppTheme.font(.footnote))
             .foregroundColor(.secondary)
             .fixedSize(horizontal: false, vertical: true)
     }

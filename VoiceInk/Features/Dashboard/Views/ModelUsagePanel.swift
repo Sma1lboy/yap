@@ -16,7 +16,7 @@ struct ModelUsagePanel: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Text("AI Model Usage")
                 .font(.headline.weight(.semibold))
 
@@ -31,7 +31,7 @@ struct ModelUsagePanel: View {
                 action: onClose
             )
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.headerHeight)
     }
 }
@@ -52,7 +52,7 @@ struct RecommendedModelsFooter: View {
             .fixedSize(horizontal: true, vertical: true)
             .help(String(localized: "Open recommended AI models"))
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppTheme.Spacing.x5)
         .frame(height: QuickPanelMetrics.footerHeight)
     }
 }
@@ -63,7 +63,7 @@ private struct ModelUsagePanelContent: View {
     var body: some View {
         if summary.hasData {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x6) {
                     ModelUsageSection(
                         title: "Transcription Models",
                         valueTitle: "Est. duration",
@@ -96,9 +96,9 @@ private struct ModelUsagePanelContent: View {
                         }
                     )
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 76)
-                .padding(.bottom, 72)
+                .padding(.horizontal, AppTheme.Spacing.x5)
+                .padding(.top, 76)  // design-exempt: layout offset, not spacing
+                .padding(.bottom, 72)  // design-exempt: layout offset, not spacing
             }
         } else {
             emptyState
@@ -106,9 +106,9 @@ private struct ModelUsagePanelContent: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: "chart.bar.xaxis")
-                .font(.system(size: 32, weight: .light))
+                .font(AppTheme.font(.display, .regular))
                 .foregroundColor(.secondary)
 
             Text("No model usage for this period")
@@ -132,27 +132,27 @@ private struct ModelUsageSection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
+            HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x3) {
                 Text(title)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text(valueTitle)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(AppTheme.font(.caption, .semibold))
                     .foregroundStyle(AppTheme.Text.secondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
                     .frame(width: 74, alignment: .trailing)
-                    .padding(.trailing, 4)
+                    .padding(.trailing, AppTheme.Spacing.x1)
             }
-            .font(.system(size: 13, weight: .semibold))
+            .font(AppTheme.font(.body, .semibold))
             .foregroundStyle(AppTheme.Text.primary)
             .lineLimit(1)
 
             if rows.isEmpty {
                 InsightEmptyState(title: emptyTitle, icon: emptyIcon)
             } else {
-                VStack(spacing: 10) {
+                VStack(spacing: AppTheme.Spacing.x3) {
                     ForEach(rows) { row in
                         ModelUsageDistributionRow(
                             row: row,
@@ -181,13 +181,13 @@ private struct ModelUsageDistributionRow: View {
     let tint: Color
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.x3) {
             ModelProviderIcon(modelName: row.name, kind: row.kind, size: 24)
 
-            VStack(alignment: .leading, spacing: 7) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+                HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x2) {
                     Text(row.name)
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(AppTheme.font(.footnote, .semibold))
                         .foregroundStyle(AppTheme.Text.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
@@ -195,7 +195,7 @@ private struct ModelUsageDistributionRow: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     Text(share, format: .percent.precision(.fractionLength(0)))
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .font(AppTheme.font(.micro, .medium, design: .rounded))
                         .foregroundStyle(AppTheme.Text.muted)
                         .lineLimit(1)
                         .minimumScaleFactor(0.82)
@@ -208,15 +208,15 @@ private struct ModelUsageDistributionRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             Text(row.value)
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .font(AppTheme.font(.footnote, .semibold, design: .monospaced))
                 .foregroundStyle(AppTheme.Text.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.72)
                 .frame(width: 58, alignment: .trailing)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(AppCardBackground(cornerRadius: 10))
+        .padding(.horizontal, AppTheme.Spacing.x3)
+        .padding(.vertical, AppTheme.Spacing.x3)
+        .background(AppCardBackground(cornerRadius: AppTheme.Radius.control))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(row.name)
         .accessibilityValue(accessibilityValue)

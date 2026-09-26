@@ -99,10 +99,10 @@ struct ProcessingStatusDisplay: View {
     }
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: AppTheme.Spacing.x1) {
             Text(label)
                 .foregroundColor(color)
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTheme.font(.caption, .medium))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
 

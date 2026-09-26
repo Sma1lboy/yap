@@ -10,11 +10,11 @@ struct ModeIconView: View {
             switch icon.kind {
             case .symbol:
                 Image(systemName: icon.value)
-                    .font(.system(size: size, weight: .medium))
+                    .font(.system(size: size, weight: .medium))  // design-exempt: icon glyph sized to its container
                     .foregroundStyle(color)
             case .emoji:
                 Text(icon.value)
-                    .font(.system(size: size))
+                    .font(.system(size: size))  // design-exempt: icon glyph sized to its container
             }
         }
     }
@@ -24,11 +24,11 @@ struct ModeIconPickerView: View {
     @Binding var selectedIcon: ModeIcon
     @Binding var isPresented: Bool
 
-    private let columns = [GridItem(.adaptive(minimum: 44), spacing: 10)]
+    private let columns = [GridItem(.adaptive(minimum: 44), spacing: AppTheme.Spacing.x3)]
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            LazyVGrid(columns: columns, spacing: 10) {
+            LazyVGrid(columns: columns, spacing: AppTheme.Spacing.x3) {
                 ForEach(ModeIcon.defaultSymbols, id: \.self) { symbol in
                     ModeIconButton(
                         symbol: symbol,

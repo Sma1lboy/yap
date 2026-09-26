@@ -6,18 +6,18 @@ struct ModelDetailActionLabel: View {
     var icon: String = "chevron.right"
 
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: AppTheme.Spacing.x1) {
             Text(title)
                 .lineLimit(1)
 
             Image(systemName: icon)
-                .font(.system(size: 10, weight: .bold))
+                .font(AppTheme.font(.micro, .semibold))
         }
-        .font(.system(size: 12, weight: .semibold))
+        .font(AppTheme.font(.footnote, .semibold))
         .foregroundStyle(AppTheme.Text.secondary)
-        .padding(.horizontal, 8)
+        .padding(.horizontal, AppTheme.Spacing.x2)
         .frame(height: 28)
-        .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
     }
 }
 
@@ -38,39 +38,39 @@ struct InsightPeriodPicker: View {
                             Spacer()
 
                             Image(systemName: "checkmark")
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(AppTheme.font(.caption, .semibold))
                         }
                     }
                 }
             }
         } label: {
-            HStack(spacing: 7) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Image(systemName: "calendar")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
                     .foregroundStyle(AppTheme.Text.secondary.opacity(0.86))
 
                 Text(selection.pickerTitle)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .foregroundStyle(AppTheme.Text.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
 
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(AppTheme.font(.micro, .semibold))
                     .foregroundStyle(AppTheme.Text.secondary.opacity(0.70))
             }
-            .padding(.leading, 11)
-            .padding(.trailing, 10)
+            .padding(.leading, AppTheme.Spacing.x3)
+            .padding(.trailing, AppTheme.Spacing.x3)
             .frame(height: 34)
             .background(
-                RoundedRectangle(cornerRadius: 17, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.panel, style: .continuous)
                     .fill(AppTheme.Surface.subtle.opacity(0.82))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 17, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.panel, style: .continuous)
                             .stroke(AppTheme.Border.subtle.opacity(0.70), lineWidth: 1)
                     )
             )
-            .contentShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: AppTheme.Radius.panel, style: .continuous))
         }
         .buttonStyle(.plain)
         .fixedSize()
@@ -92,21 +92,21 @@ struct ModelActionLabel: View {
     let isPrimary: Bool
 
     var body: some View {
-        HStack(spacing: 7) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: icon)
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
 
             Text(title)
                 .lineLimit(1)
         }
-        .font(.system(size: 12, weight: .semibold))
+        .font(AppTheme.font(.footnote, .semibold))
         .foregroundStyle(isPrimary ? AppTheme.Text.onAccent : AppTheme.Text.primary)
         .padding(.horizontal, isPrimary ? 14 : 12)
         .frame(height: 34)
         .background(isPrimary ? AppTheme.Accent.primary : AppTheme.Surface.subtle)
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                 .stroke(
                     isPrimary ? AppTheme.Accent.border.opacity(0.45) : AppTheme.Border.subtle.opacity(0.65),
                     lineWidth: 1)
@@ -120,13 +120,13 @@ struct InsightEmptyState: View {
     let icon: String
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Image(systemName: icon)
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundStyle(AppTheme.Text.secondary)
 
             Text(title)
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .lineLimit(1)
         }
@@ -141,9 +141,9 @@ struct ModelPreviewCardHeader: View {
     let onViewMore: () -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: 8) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x2) {
             Text(title)
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(AppTheme.font(.title3, .semibold, design: .rounded))
                 .foregroundStyle(AppTheme.Text.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.84)
@@ -210,7 +210,7 @@ struct ModelPreviewColumnsRow: View {
         if leftRows.isEmpty && rightRows.isEmpty {
             InsightEmptyState(title: overallEmptyTitle, icon: overallEmptyIcon)
         } else {
-            HStack(alignment: .top, spacing: 18) {
+            HStack(alignment: .top, spacing: AppTheme.Spacing.x5) {
                 ModelPreviewColumn(
                     title: leftTitle,
                     valueTitle: leftValueTitle,
@@ -246,23 +246,23 @@ private struct ModelPreviewColumn: View {
     let valueColumnWidth: CGFloat
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+            HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x2) {
                 Text(title)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text(valueTitle)
                     .frame(width: valueColumnWidth, alignment: .trailing)
-                    .padding(.trailing, 4)
+                    .padding(.trailing, AppTheme.Spacing.x1)
             }
-            .font(.system(size: 11, weight: .semibold))
+            .font(AppTheme.font(.caption, .semibold))
             .foregroundStyle(AppTheme.Text.secondary)
             .lineLimit(1)
 
             if rows.isEmpty {
                 InsightEmptyState(title: emptyTitle, icon: emptyIcon)
             } else {
-                VStack(spacing: 8) {
+                VStack(spacing: AppTheme.Spacing.x2) {
                     ForEach(rows) { row in
                         ModelPreviewRowView(row: row, valueColumnWidth: valueColumnWidth)
                     }
@@ -278,11 +278,11 @@ private struct ModelPreviewRowView: View {
     let valueColumnWidth: CGFloat
 
     var body: some View {
-        HStack(alignment: .center, spacing: 10) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
             ModelProviderIcon(modelName: row.name, kind: row.kind, size: 22)
 
             Text(row.name)
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundStyle(AppTheme.Text.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.76)
@@ -290,15 +290,15 @@ private struct ModelPreviewRowView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Text(row.value)
-                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .font(AppTheme.font(.footnote, .semibold, design: .monospaced))
                 .foregroundStyle(AppTheme.Text.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.76)
                 .frame(width: valueColumnWidth, alignment: .trailing)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 10)
-        .background(AppCardBackground(cornerRadius: 10))
+        .padding(.horizontal, AppTheme.Spacing.x2)
+        .padding(.vertical, AppTheme.Spacing.x3)
+        .background(AppCardBackground(cornerRadius: AppTheme.Radius.control))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(row.name)
         .accessibilityValue(accessibilityValue)

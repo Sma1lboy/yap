@@ -28,17 +28,17 @@ struct PromptSelectionGrid: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             if prompts.isEmpty {
                 Text("No prompts available")
                     .foregroundColor(.secondary)
                     .font(.caption)
             } else {
                 let columns = [
-                    GridItem(.adaptive(minimum: 120, maximum: 180), spacing: 8)
+                    GridItem(.adaptive(minimum: 120, maximum: 180), spacing: AppTheme.Spacing.x2)
                 ]
 
-                LazyVGrid(columns: columns, spacing: 16) {
+                LazyVGrid(columns: columns, spacing: AppTheme.Spacing.x4) {
                     ForEach(prompts) { prompt in
                         prompt.promptIcon(
                             isSelected: selectedPromptId == prompt.id,
@@ -59,8 +59,8 @@ struct PromptSelectionGrid: View {
                         .help("Add new prompt")
                     }
                 }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 12)
+                .padding(.vertical, AppTheme.Spacing.x2)
+                .padding(.horizontal, AppTheme.Spacing.x3)
 
                 // Helpful tip for users
                 HStack {
@@ -72,8 +72,8 @@ struct PromptSelectionGrid: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                .padding(.top, 8)
-                .padding(.horizontal, 16)
+                .padding(.top, AppTheme.Spacing.x2)
+                .padding(.horizontal, AppTheme.Spacing.x4)
             }
         }
     }

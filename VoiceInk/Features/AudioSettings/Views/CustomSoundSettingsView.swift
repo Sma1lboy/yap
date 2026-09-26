@@ -37,7 +37,7 @@ struct CustomSoundSettingsView: View {
         let fileName = customSoundManager.getSoundDisplayName(for: type)
         let isEnabled = selection.isEnabled
 
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             Picker("Sound", selection: soundSelectionBinding(for: type)) {
                 Text("None").tag(SoundMenuSelection.none)
 

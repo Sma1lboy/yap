@@ -10,7 +10,7 @@ struct AddIconButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: "plus.circle.fill")
-                .font(.system(size: size))
+                .font(.system(size: size))  // design-exempt: icon glyph sized to its container
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(isDisabled ? .tertiary : .secondary)
         }

@@ -49,7 +49,7 @@ struct OnboardingTranscriptionSetupCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             setupSwitcher
 
             switch setupKind {
@@ -87,14 +87,14 @@ struct OnboardingTranscriptionSetupCard: View {
     }
 
     private var setupSwitcher: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppTheme.Spacing.x2) {
             setupChoice(.yapCloud, systemImage: "creditcard")
             setupChoice(.recommended, systemImage: "sparkles")
             setupChoice(.cloud, systemImage: "cloud.fill")
             setupChoice(.local, systemImage: "macbook")
         }
-        .padding(4)
-        .background(AppMaterialCardBackground(cornerRadius: 12))
+        .padding(AppTheme.Spacing.x1)
+        .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.card))
     }
 
     private func setupChoice(_ kind: OnboardingTranscriptionSetupKind, systemImage: String) -> some View {
@@ -103,21 +103,21 @@ struct OnboardingTranscriptionSetupCard: View {
         return Button {
             onSelectSetupKind(kind)
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
 
                 Text(kind.title)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
             }
             .foregroundColor(isSelected ? AppTheme.Text.primary : AppTheme.Text.secondary)
             .frame(maxWidth: .infinity)
             .frame(height: 36)
             .background(
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .fill(isSelected ? AppTheme.Surface.controlActive : AppTheme.Surface.clear)
             )
-            .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -127,41 +127,41 @@ struct OnboardingTranscriptionSetupCard: View {
     }
 
     private var recommendedSetup: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             Text("Uses your own OpenRouter key; you pay OpenRouter directly.")
-                .font(.system(size: 13, weight: .medium))
+                .font(AppTheme.font(.body, .medium))
                 .foregroundColor(AppTheme.Text.primary)
                 .fixedSize(horizontal: false, vertical: true)
             Text("OpenRouter · MAI-Transcribe-2 → DeepSeek V4.1 Flash · Chinese–English enhancement · about $0.13 per hour of speech")
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundColor(AppTheme.Text.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             if hasStoredOpenRouterKey && recommendedAPIKey.isEmpty && recommendedError == nil {
-                HStack(alignment: .center, spacing: 9) {
+                HStack(alignment: .center, spacing: AppTheme.Spacing.x2) {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(AppTheme.font(.callout, .semibold))
                         .foregroundColor(AppTheme.Status.positive)
                     Text("OpenRouter key found. Continue to use it.")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(AppTheme.font(.footnote, .semibold))
                         .foregroundColor(AppTheme.Text.primary)
                 }
             } else {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                     HStack(alignment: .center) {
                         Text(String(format: String(localized: "%@ API Key"), AIProvider.openRouter.rawValue))
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(AppTheme.font(.footnote, .semibold))
                             .foregroundColor(AppTheme.Text.primary)
                         Spacer()
                         Button {
                             NSWorkspace.shared.open(RecommendedSetup.apiKeyURL)
                         } label: {
-                            HStack(spacing: 4) {
+                            HStack(spacing: AppTheme.Spacing.x1) {
                                 Text("Get API key")
                                 Image(systemName: "arrow.up.right")
-                                    .font(.system(size: 9, weight: .semibold))
+                                    .font(AppTheme.font(.micro, .semibold))
                             }
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(AppTheme.font(.caption, .semibold))
                             .foregroundColor(AppTheme.Text.secondary)
                         }
                         .buttonStyle(.plain)
@@ -177,8 +177,8 @@ struct OnboardingTranscriptionSetupCard: View {
                 recommendedStatusLine
             }
         }
-        .padding(16)
-        .background(AppMaterialCardBackground(cornerRadius: 12))
+        .padding(AppTheme.Spacing.x4)
+        .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.card))
     }
 
     /// The price sentence only appears once the catalog says what paygate's markup is.
@@ -191,63 +191,67 @@ struct OnboardingTranscriptionSetupCard: View {
     }
 
     private var yapCloudSetup: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text("Use Yap Cloud (pay as you go)")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(AppTheme.font(.body, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
                 Text(yapCloudDescription)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
                     .foregroundColor(AppTheme.Text.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if yapCloud.isSignedIn {
-                HStack(alignment: .center, spacing: 9) {
+                HStack(alignment: .center, spacing: AppTheme.Spacing.x2) {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(AppTheme.font(.callout, .semibold))
                         .foregroundColor(AppTheme.Status.positive)
                     Text(yapCloudSignedInLine)
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(AppTheme.font(.footnote, .semibold))
                         .foregroundColor(AppTheme.Text.primary)
                 }
                 if let balance = yapCloud.balanceMicros, balance <= 0 {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                         Text("Add funds to start dictating. Your balance updates when you come back to Yap.")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(AppTheme.font(.footnote, .medium))
                             .foregroundColor(AppTheme.Status.warningStrong)
                             .fixedSize(horizontal: false, vertical: true)
                         YapCloudQuickTopUp()
                     }
                 }
                 if YapCloudProvider().models.isEmpty {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         Text("Yap Cloud has no transcription models available right now.")
                         Button("Retry") { Task { await yapCloud.refreshModels() } }
                     }
-                    .font(.system(size: 12))
+                    .font(AppTheme.font(.footnote))
                     .foregroundColor(AppTheme.Text.secondary)
                 }
             } else {
+                // A promotion, not a status: brand tag, not green (DESIGN.md).
                 YapCloudSignupCreditText()
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(AppTheme.Status.positive)
+                    .font(AppTheme.font(.footnote, .semibold))
+                    .foregroundColor(AppTheme.Text.primary)
+                    .padding(.horizontal, AppTheme.Spacing.x2)
+                    .padding(.vertical, AppTheme.Spacing.half)
+                    .background(Capsule().fill(AppTheme.Accent.fillSubtle))
                 YapCloudSignInForm()
             }
 
             if let recommendedError {
                 Text(recommendedError)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
                     .foregroundColor(AppTheme.Status.error)
             }
 
             YapCloudLegalText()
-                .font(.system(size: 11))
+                .font(AppTheme.font(.caption))
                 .foregroundColor(AppTheme.Text.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
-        .background(AppMaterialCardBackground(cornerRadius: 12))
+        .padding(AppTheme.Spacing.x4)
+        .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.card))
         .task(id: yapCloud.isSignedIn) {
             await yapCloud.refreshModels()
             await yapCloud.refreshAccount()
@@ -267,26 +271,26 @@ struct OnboardingTranscriptionSetupCard: View {
     @ViewBuilder
     private var recommendedStatusLine: some View {
         if isApplyingRecommended {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 ProgressView()
                     .controlSize(.small)
                 Text("Checking the key and applying the setup…")
             }
-            .font(.system(size: 12))
+            .font(AppTheme.font(.footnote))
             .foregroundColor(AppTheme.Text.secondary)
         } else if let recommendedError {
-            HStack(alignment: .top, spacing: 7) {
+            HStack(alignment: .top, spacing: AppTheme.Spacing.x2) {
                 Image(systemName: "exclamationmark.circle.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .padding(.top, 1)
+                    .font(AppTheme.font(.footnote, .semibold))
+                    .padding(.top, AppTheme.Spacing.half)
                 Text(recommendedError)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(AppTheme.font(.footnote, .medium))
                     .fixedSize(horizontal: false, vertical: true)
             }
             .foregroundColor(AppTheme.Status.error)
         } else {
             Text("Continue checks the key, then sets up transcription and enhancement with it.")
-                .font(.system(size: 12))
+                .font(AppTheme.font(.footnote))
                 .foregroundColor(AppTheme.Text.secondary)
         }
     }
@@ -294,15 +298,15 @@ struct OnboardingTranscriptionSetupCard: View {
     private func keyField(_ placeholder: String, text: Binding<String>) -> some View {
         SecureField(placeholder, text: text)
             .textFieldStyle(.plain)
-            .font(.system(size: 13))
-            .padding(.horizontal, 12)
+            .font(AppTheme.font(.body))
+            .padding(.horizontal, AppTheme.Spacing.x3)
             .frame(height: 38)
             .background(
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .fill(AppTheme.Surface.control)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .stroke(AppTheme.Border.control.opacity(0.45), lineWidth: 1)
             )
     }
@@ -329,23 +333,23 @@ struct OnboardingTranscriptionSetupCard: View {
     }
 
     private var missingModelPanel: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppTheme.Spacing.x3) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(AppTheme.Status.error)
 
             Text("Parakeet V3 is not available.")
-                .font(.system(size: 12, weight: .medium))
+                .font(AppTheme.font(.footnote, .medium))
                 .foregroundColor(AppTheme.Text.secondary)
 
             Spacer(minLength: 0)
         }
-        .padding(16)
-        .background(AppMaterialCardBackground(cornerRadius: 12))
+        .padding(AppTheme.Spacing.x4)
+        .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.card))
     }
 
     private var cloudSetup: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x4) {
             providerSummary
 
             if isSelectedProviderConnected {
@@ -353,7 +357,7 @@ struct OnboardingTranscriptionSetupCard: View {
                 if selectedProvider?.modelProvider == .openRouter,
                     selectedProvider?.models.isEmpty == true
                 {
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         if isLoadingOpenRouterModels {
                             ProgressView()
                                 .controlSize(.small)
@@ -366,7 +370,7 @@ struct OnboardingTranscriptionSetupCard: View {
                             .buttonStyle(.link)
                         }
                     }
-                    .font(.system(size: 12))
+                    .font(AppTheme.font(.footnote))
                     .foregroundColor(AppTheme.Text.secondary)
                 }
             } else {
@@ -374,12 +378,12 @@ struct OnboardingTranscriptionSetupCard: View {
                 verificationFooter
             }
         }
-        .padding(16)
-        .background(AppMaterialCardBackground(cornerRadius: 12))
+        .padding(AppTheme.Spacing.x4)
+        .background(AppMaterialCardBackground(cornerRadius: AppTheme.Radius.card))
     }
 
     private var providerSummary: some View {
-        HStack(alignment: .center, spacing: 10) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
             if let selectedProvider {
                 ProviderBrandIcon(
                     descriptor: descriptor(for: selectedProvider),
@@ -389,9 +393,9 @@ struct OnboardingTranscriptionSetupCard: View {
                     iconSize: 15
                 )
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
                     Text(selectedProvider.providerKey)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(AppTheme.font(.body, .semibold))
                         .foregroundColor(AppTheme.Text.primary)
                 }
             }
@@ -402,15 +406,15 @@ struct OnboardingTranscriptionSetupCard: View {
                 Button {
                     isSwitchingProvider.toggle()
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
                         Text("Switch provider")
                         Image(systemName: isSwitchingProvider ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(AppTheme.font(.micro, .semibold))
                     }
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(AppTheme.font(.caption, .semibold))
                     .foregroundColor(AppTheme.Text.secondary)
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 7)
+                    .padding(.horizontal, AppTheme.Spacing.x3)
+                    .padding(.vertical, AppTheme.Spacing.x2)
                     .background(Capsule().fill(AppTheme.Surface.controlActive))
                 }
                 .buttonStyle(.plain)
@@ -420,17 +424,17 @@ struct OnboardingTranscriptionSetupCard: View {
                         selectedProviderKey: $selectedProviderKey
                     )
                     .frame(width: 430)
-                    .padding(10)
+                    .padding(AppTheme.Spacing.x3)
                 }
             }
         }
     }
 
     private var apiKeyField: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             HStack(alignment: .center) {
                 Text(apiKeyLabel)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
 
                 Spacer()
@@ -439,12 +443,12 @@ struct OnboardingTranscriptionSetupCard: View {
                     Button {
                         NSWorkspace.shared.open(apiKeyURL)
                     } label: {
-                        HStack(spacing: 4) {
+                        HStack(spacing: AppTheme.Spacing.x1) {
                             Text("Get API key")
                             Image(systemName: "arrow.up.right")
-                                .font(.system(size: 9, weight: .semibold))
+                                .font(AppTheme.font(.micro, .semibold))
                         }
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(AppTheme.font(.caption, .semibold))
                         .foregroundColor(AppTheme.Text.secondary)
                     }
                     .buttonStyle(.plain)
@@ -456,13 +460,13 @@ struct OnboardingTranscriptionSetupCard: View {
     }
 
     private var verificationFooter: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
             statusLine
 
             Spacer(minLength: 12)
 
             Button(action: verifyAPIKey) {
-                HStack(spacing: 6) {
+                HStack(spacing: AppTheme.Spacing.x2) {
                     if isVerifying {
                         ProgressView()
                             .controlSize(.small)
@@ -470,10 +474,10 @@ struct OnboardingTranscriptionSetupCard: View {
 
                     Text(isVerifying ? LocalizedStringKey("Testing...") : LocalizedStringKey("Test connection"))
                 }
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundColor(canVerify ? AppTheme.Action.primaryForeground : AppTheme.Action.disabledForeground)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
+                .padding(.horizontal, AppTheme.Spacing.x4)
+                .padding(.vertical, AppTheme.Spacing.x2)
                 .background(
                     Capsule()
                         .fill(canVerify ? AppTheme.Action.primaryFill : AppTheme.Action.disabledFill)
@@ -482,42 +486,42 @@ struct OnboardingTranscriptionSetupCard: View {
             .buttonStyle(.plain)
             .disabled(!canVerify)
         }
-        .padding(.top, 2)
+        .padding(.top, AppTheme.Spacing.half)
     }
 
     private var verifiedProviderSummary: some View {
-        HStack(alignment: .center, spacing: 9) {
+        HStack(alignment: .center, spacing: AppTheme.Spacing.x2) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 14, weight: .semibold))
+                .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(AppTheme.Status.positive)
 
             Text("Connection verified.")
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTheme.font(.footnote, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
 
             Spacer(minLength: 0)
         }
-        .padding(.top, 2)
+        .padding(.top, AppTheme.Spacing.half)
     }
 
     @ViewBuilder
     private var statusLine: some View {
         if let verificationMessage {
-            HStack(alignment: .top, spacing: 7) {
+            HStack(alignment: .top, spacing: AppTheme.Spacing.x2) {
                 Image(systemName: verificationSucceeded ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(AppTheme.font(.footnote, .semibold))
                     .foregroundColor(verificationSucceeded ? AppTheme.Status.positive : AppTheme.Status.error)
-                    .padding(.top, 1)
+                    .padding(.top, AppTheme.Spacing.half)
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                     Text(verificationMessage)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(AppTheme.font(.footnote, .medium))
                         .foregroundColor(verificationSucceeded ? AppTheme.Text.secondary : AppTheme.Status.error)
                         .fixedSize(horizontal: false, vertical: true)
 
                     if let verificationDetailMessage, !verificationSucceeded {
                         Text(verificationDetailMessage)
-                            .font(.system(size: 11))
+                            .font(AppTheme.font(.caption))
                             .foregroundColor(AppTheme.Status.error.opacity(0.82))
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -525,7 +529,7 @@ struct OnboardingTranscriptionSetupCard: View {
             }
         } else {
             Text("Test the connection to continue.")
-                .font(.system(size: 12))
+                .font(AppTheme.font(.footnote))
                 .foregroundColor(AppTheme.Text.secondary)
         }
     }
@@ -650,11 +654,11 @@ private struct TranscriptionProviderSelectionCard: View {
     var body: some View {
         LazyVGrid(
             columns: [
-                GridItem(.flexible(), spacing: 8),
-                GridItem(.flexible(), spacing: 8),
+                GridItem(.flexible(), spacing: AppTheme.Spacing.x2),
+                GridItem(.flexible(), spacing: AppTheme.Spacing.x2),
             ],
             alignment: .leading,
-            spacing: 8
+            spacing: AppTheme.Spacing.x2
         ) {
             ForEach(providerOptions.map { $0.providerKey }, id: \.self) { providerKey in
                 if let provider = providerOptions.first(where: {
@@ -670,8 +674,8 @@ private struct TranscriptionProviderSelectionCard: View {
                 }
             }
         }
-        .padding(16)
-        .background(ProviderSurface(cornerRadius: 12))
+        .padding(AppTheme.Spacing.x4)
+        .background(ProviderSurface(cornerRadius: AppTheme.Radius.card))
     }
 }
 
@@ -682,7 +686,7 @@ private struct TranscriptionProviderChoiceButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 9) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 ProviderBrandIcon(
                     descriptor: descriptor,
                     fallbackSystemImage: "captions.bubble.fill",
@@ -691,9 +695,9 @@ private struct TranscriptionProviderChoiceButton: View {
                     iconSize: 15
                 )
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                     Text(provider.providerKey)
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(AppTheme.font(.footnote, .semibold))
                         .foregroundColor(AppTheme.Text.primary)
                         .lineLimit(1)
 
@@ -703,14 +707,14 @@ private struct TranscriptionProviderChoiceButton: View {
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(AppTheme.font(.body, .semibold))
                         .foregroundColor(AppTheme.Text.secondary)
                 }
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, AppTheme.Spacing.x3)
             .frame(height: 54)
-            .background(ProviderSurface(isActive: isSelected, cornerRadius: 10))
-            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .background(ProviderSurface(isActive: isSelected, cornerRadius: AppTheme.Radius.control))
+            .contentShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
         }
         .buttonStyle(.plain)
         .help(provider.providerKey)

@@ -15,9 +15,9 @@ struct EnhancementPromptPopover: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             // Enhancement Toggle at the top
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Toggle(
                     "AI Enhancement",
                     isOn: Binding(
@@ -40,13 +40,13 @@ struct EnhancementPromptPopover: View {
                 Spacer()
             }
             .padding(.horizontal)
-            .padding(.top, 8)
+            .padding(.top, AppTheme.Spacing.x2)
 
             Divider()
                 .background(AppTheme.Border.subtle)
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                     // Available Enhancement Prompts
                     ForEach(enhancementService.allPrompts) { prompt in
                         EnhancementPromptRow(
@@ -68,7 +68,7 @@ struct EnhancementPromptPopover: View {
         }
         .frame(width: 200)
         .frame(maxHeight: 340)
-        .padding(.vertical, 8)
+        .padding(.vertical, AppTheme.Spacing.x2)
         .background(AppTheme.Surface.window)
         .popoverAppAppearance()
         .onAppear {
@@ -97,22 +97,22 @@ struct EnhancementPromptRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppTheme.Spacing.x2) {
                 Text(prompt.title)
                     .foregroundColor(isDisabled ? AppTheme.Text.disabled : AppTheme.Text.primary)
-                    .font(.system(size: 13))
+                    .font(AppTheme.font(.body))
                     .lineLimit(1)
 
                 if isSelected {
                     Spacer()
                     Image(systemName: "checkmark")
                         .foregroundColor(isDisabled ? AppTheme.Status.positive.opacity(0.70) : AppTheme.Status.positive)
-                        .font(.system(size: 10))
+                        .font(AppTheme.font(.micro))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 4)
-            .padding(.horizontal, 8)
+            .padding(.vertical, AppTheme.Spacing.x1)
+            .padding(.horizontal, AppTheme.Spacing.x2)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
