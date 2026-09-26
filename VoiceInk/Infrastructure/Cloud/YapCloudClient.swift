@@ -206,8 +206,11 @@ final class YapCloud: ObservableObject {
         }
     }
 
+    /// Forgets the token and every account-derived state. Idempotent: callers that also see the same 401
+    /// don't post a second change notification.
     @MainActor
     private func clearSession() {
+        guard isSignedIn || token != nil else { return }
         keychain.delete(forKey: Self.tokenKey, syncable: false)
         defaults.removeObject(forKey: Self.emailKey)
         isSignedIn = false
@@ -492,6 +495,7 @@ final class YapCloud: ObservableObject {
         } catch {
             let classified = Self.classify(error)
             noteReachability(classified)
+            noteAuthFailure(classified)
             throw classified
         }
     }
@@ -644,6 +648,60 @@ final class YapCloud: ObservableObject {
             throw YapCloudError.server(status: 200, code: nil, message: "Unexpected chat response")
         }
         return text
+    }
+
+    // MARK: - Ledger export
+
+    /// Every ledger row, newest first, paging `GET /v1/ledger?limit=500&before=<nextBefore>` to the end.
+    func fetchAllLedger() async throws -> [YapCloudLedgerEntry] {
+        var rows: [YapCloudLedgerEntry] = []
+        var before: String?
+        repeat {
+            let path = "/v1/ledger?limit=500" + (before.map { "&before=" + $0 } ?? "")
+            let page = try Self.decode(YapCloudLedger.self, from: try await send("GET", path))
+            rows += page.entries
+            before = page.nextBefore?.string
+        } while before != nil
+        return rows
+    }
+
+    /// CSV of ledger rows (header + one line per row): date (ISO 8601 as paygate sent it), kind, amount in USD as an
+    /// exact 6-decimal string from micros, model, receipt URL. RFC 4180 quoting, CRLF line ends.
+    static func ledgerCSV(_ rows: [YapCloudLedgerEntry], header: [String]) -> String {
+        func field(_ value: String) -> String {
+            value.contains(where: { ",\"\r\n".contains($0) }) ? "\"" + value.replacingOccurrences(of: "\"", with: "\"\"") + "\"" : value
+        }
+        let lines = [header] + rows.map { row in
+            [row.createdAt, row.kind, decimalUSD(micros: row.amountMicros), row.model ?? "", row.receiptURL?.absoluteString ?? ""]
+        }
+        return lines.map { $0.map(field).joined(separator: ",") }.joined(separator: "\r\n") + "\r\n"
+    }
+
+    /// Micros as a plain 6-decimal USD string ("-0.000048", "10.000000"), integer math only.
+    static func decimalUSD(micros: Int64) -> String {
+        (micros < 0 ? "-" : "") + String(micros.magnitude / 1_000_000) + "."
+            + String(String(micros.magnitude % 1_000_000 + 1_000_000).dropFirst())
+    }
+
+    // MARK: - Account deletion
+
+    /// `DELETE /v1/me {confirm: <the account's email>}`, then signs this Mac out. paygate revokes every device's
+    /// token, deletes the synced config and its history, anonymizes the account; the ledger is kept and the
+    /// balance is not refunded. A mismatched email is 400 CONFIRMATION_MISMATCH (nothing deleted).
+    @MainActor
+    func deleteAccount(confirmEmail: String) async throws {
+        _ = try await send("DELETE", "/v1/me", json: Self.deleteAccountBody(confirmEmail: confirmEmail))
+        clearSession()
+    }
+
+    static func deleteAccountBody(confirmEmail: String) -> [String: Any] {
+        ["confirm": confirmEmail.trimmingCharacters(in: .whitespacesAndNewlines)]
+    }
+
+    /// The confirm field matches the signed-in email (case and surrounding spaces ignored; paygate checks too).
+    static func deletionConfirmed(typed: String, email: String?) -> Bool {
+        guard let email, !email.isEmpty else { return false }
+        return typed.trimmingCharacters(in: .whitespacesAndNewlines).caseInsensitiveCompare(email) == .orderedSame
     }
 
     // MARK: - Devices
@@ -874,8 +932,16 @@ final class YapCloud: ObservableObject {
         } catch {
             let classified = Self.classify(error)
             noteReachability(classified)
+            noteAuthFailure(classified)
             throw classified
         }
+    }
+
+    /// A rejected token (revoked on another Mac, account deleted, 90 days unused) signs this Mac out wherever the
+    /// 401 surfaced: account refresh, config sync, a dictation. Nothing retries with a token that's gone.
+    private func noteAuthFailure(_ error: Error) {
+        guard (error as? YapCloudError)?.isAuthFailure == true else { return }
+        Task { @MainActor in clearSession() }
     }
 
     /// Network failures and 502/503/504 all mean "Yap Cloud can't be reached right now" to the user.
@@ -1056,6 +1122,8 @@ enum YapCloudError: LocalizedError, Equatable {
             return String(localized: "This model isn't available on Yap Cloud. Choose another model.")
         case "STRIPE_NOT_CONFIGURED":
             return String(localized: "Adding funds isn't available yet.")
+        case "CONFIRMATION_MISMATCH":
+            return String(localized: "That isn't this account's email. Type it exactly to confirm.")
         case "CONFIG_TOO_LARGE":
             return String(localized: "The config is too large to sync (limit 256 KB).")
         case let code?:
@@ -1183,6 +1251,8 @@ struct YapCloudDevice: Decodable, Identifiable, Equatable {
 
 private struct YapCloudLedger: Decodable {
     let entries: [YapCloudLedgerEntry]
+    /// Cursor for the next (older) page; nil on the last page.
+    var nextBefore: YapCloudScalar?
 }
 
 private struct YapCloudCheckout: Decodable {
@@ -1455,6 +1525,34 @@ struct YapCloudConfigDocument: Equatable {
             assert(monthlyCapMicros(fromDollars: "") == nil && monthlyCapMicros(fromDollars: "abc") == nil)
             assert(formatExactUSD(micros: 100) == "$0.0001" && formatExactUSD(micros: 5_000_000) == "$5.00")
             assert(formatExactUSD(micros: 1_234_567) == "$1.234567" && formatExactUSD(micros: 0) == "$0.00")
+
+            // Ledger export
+            assert(decimalUSD(micros: -48) == "-0.000048" && decimalUSD(micros: 10_000_000) == "10.000000")
+            assert(decimalUSD(micros: 0) == "0.000000" && decimalUSD(micros: -999_904) == "-0.999904")
+            let exportRows = try! JSONDecoder().decode(
+                YapCloudLedger.self,
+                from: json(#"""
+                    {"entries":[
+                     {"id":"3","kind":"usage","amountMicros":-48,"model":"deepseek/deepseek-v4.1-flash","createdAt":"2026-09-25T23:33:00.183Z"},
+                     {"id":"2","kind":"topup","amountMicros":5000000,"createdAt":"2026-09-25T10:00:00Z","receiptUrl":"https://pay.stripe.com/r/1"},
+                     {"id":"1","kind":"adjust","amountMicros":1,"model":"a,\"b\"","createdAt":"2026-09-01T00:00:00Z"}],"nextBefore":null}
+                    """#))
+            assert(exportRows.nextBefore == nil)
+            assert(ledgerCSV(exportRows.entries, header: ["date", "type", "amount", "model", "receipt"]) == [
+                "date,type,amount,model,receipt",
+                "2026-09-25T23:33:00.183Z,usage,-0.000048,deepseek/deepseek-v4.1-flash,",
+                "2026-09-25T10:00:00Z,topup,5.000000,,https://pay.stripe.com/r/1",
+                "2026-09-01T00:00:00Z,adjust,0.000001,\"a,\"\"b\"\"\",",
+            ].joined(separator: "\r\n") + "\r\n")
+
+            // Account deletion (fake bodies; never run against a real account)
+            assert(String(data: try! JSONSerialization.data(withJSONObject: deleteAccountBody(confirmEmail: " a@b.c ")), encoding: .utf8)
+                == #"{"confirm":"a@b.c"}"#)
+            assert(deletionConfirmed(typed: " A@B.c ", email: "a@b.c") && !deletionConfirmed(typed: "a@b.co", email: "a@b.c"))
+            assert(!deletionConfirmed(typed: "", email: nil) && !deletionConfirmed(typed: "a@b.c", email: nil))
+            let mismatch = YapCloudError(
+                status: 400, body: json(#"{"error":{"code":"CONFIRMATION_MISMATCH","message":"x"}}"#), authenticated: true)
+            assert(!mismatch.isAuthFailure && mismatch.errorDescription?.contains("CONFIRMATION_MISMATCH") == false)
 
             // Top-up arrival
             assert(creditedMicros(before: 5, after: 10_000_005) == 10_000_000)
