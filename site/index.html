@@ -3,22 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Yap — dictation for Mac, in Chinese, English or both</title>
+<title>Yap — open-source dictation for Mac, in Chinese, English or both</title>
 <meta name="description" content="Hold a shortcut, talk in Chinese, English or both, and let go: Yap pastes clean text into any Mac app. Free and open source.">
 <meta name="color-scheme" content="light dark">
 <link rel="canonical" href="https://yap.sma1lboy.me/">
 <!-- Share previews. og.png is 1200×630: the app's Home (make ui-snapshots fake data) with the brand. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Yap">
-<meta property="og:title" content="Yap — dictation for Mac, in Chinese, English or both">
+<meta property="og:title" content="Yap — open-source dictation for Mac, in Chinese, English or both">
 <meta property="og:description" content="Hold a shortcut, talk, let go: Yap pastes clean text into any Mac app. Free and open source.">
 <meta property="og:url" content="https://yap.sma1lboy.me/">
 <meta property="og:image" content="https://yap.sma1lboy.me/assets/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Yap: Hold a key. Talk. Let go. Next to the app's Home screen.">
+<meta property="og:image:alt" content="Yap, free and open-source dictation for Mac: Hold a key. Talk. Let go. Next to the app's Home screen.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Yap — dictation for Mac, in Chinese, English or both">
+<meta name="twitter:title" content="Yap — open-source dictation for Mac, in Chinese, English or both">
 <meta name="twitter:description" content="Hold a shortcut, talk, let go: Yap pastes clean text into any Mac app. Free and open source.">
 <meta name="twitter:image" content="https://yap.sma1lboy.me/assets/og.png">
 <!-- Icons from design/logo.svg: rounded tile for tabs, full-bleed square where the OS masks it. -->
@@ -39,15 +39,16 @@
     <a class="brand" href="#top"><img src="assets/logo-96.png" alt="" width="28" height="28">Yap</a>
     <nav class="site-nav" aria-label="Sections">
       <a href="#demo"><span lang="en">How it works</span><span lang="zh-Hans">演示</span></a>
-      <a href="#pricing"><span lang="en">Pricing</span><span lang="zh-Hans">价格</span></a>
-      <a href="#sync"><span lang="en">Sync</span><span lang="zh-Hans">同步</span></a>
+      <a href="#models"><span lang="en">Models</span><span lang="zh-Hans">三种用法</span></a>
       <a href="#privacy"><span lang="en">Privacy</span><span lang="zh-Hans">隐私</span></a>
       <a href="#faq">FAQ</a>
     </nav>
     <div class="header-actions">
       <button class="btn btn--quiet" type="button" id="lang-toggle" aria-label="Switch language / 切换语言">中文</button>
-      <!-- The Yap Cloud account dashboard (paygate). On phones the header keeps Sign in; Download is in the hero. -->
-      <a class="btn btn--quiet" href="https://cloud.yap.sma1lboy.me/"><span lang="en">Sign in</span><span lang="zh-Hans">登录</span></a>
+      <a class="btn btn--quiet gh-link" href="https://github.com/Sma1lboy/yap" aria-label="Yap on GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub<span class="gh-stars" data-stars hidden></span>
+      </a>
       <a class="btn btn--secondary hide-narrow" href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip"><span lang="en">Download</span><span lang="zh-Hans">下载</span></a>
     </div>
   </div>
@@ -58,32 +59,65 @@
 <section class="hero" id="top">
   <div class="wrap hero-grid">
     <div>
+      <p class="eyebrow"><span lang="en">Open-source dictation for Mac</span><span lang="zh-Hans">开源的 Mac 听写 app</span></p>
       <h1><span lang="en">Hold a key. Talk. Let go.</span><span lang="zh-Hans">按住快捷键，说话，松开。</span></h1>
-      <p class="lede" lang="en">Yap is dictation for the Mac. Talk in English, Chinese or both in one sentence; when you let go, clean text is pasted into whatever app you're in.</p>
-      <p class="lede" lang="zh-Hans">Yap 是 Mac 上的听写工具。中英混着说也行；一松开，整理好的文字就粘贴进你正在用的 app。</p>
+      <p class="lede" lang="en">Talk in English, Chinese or both in one sentence; when you let go, clean text is pasted into whatever app you're in. Yap is free and open source under the GPL: read the code, build it yourself, run it on a local model.</p>
+      <p class="lede" lang="zh-Hans">中英混着说也行；一松开，整理好的文字就粘贴进你正在用的 app。Yap 免费开源（GPL）：代码可以看，可以自己编译，也可以只用本机的模型。</p>
       <div class="hero-actions">
         <a class="btn btn--primary btn--lg" href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0-3-3m3 3 3-3M3 13h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span lang="en">Download for Mac</span><span lang="zh-Hans">下载 Mac 版</span>
         </a>
-        <a class="btn btn--secondary btn--lg" href="#install"><span lang="en">Install with Homebrew</span><span lang="zh-Hans">用 Homebrew 安装</span></a>
+        <a class="btn btn--secondary btn--lg" href="https://github.com/Sma1lboy/yap">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.3l-3.8 2 .7-4.3-3.1-3 4.3-.6z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+          <span lang="en">Star on GitHub</span><span lang="zh-Hans">在 GitHub 上 Star</span><span class="gh-stars" data-stars hidden></span>
+        </a>
       </div>
-      <p class="hero-meta"><span lang="en">Free and open source (GPL-3.0) · macOS 15 or later</span><span lang="zh-Hans">免费开源（GPL-3.0）· 需要 macOS 15 或更高版本</span></p>
+      <p class="hero-meta"><span lang="en">GPL-3.0 · a fork of VoiceInk · macOS 15 or later</span><span lang="zh-Hans">GPL-3.0 · fork 自 VoiceInk · 需要 macOS 15 或更高版本</span></p>
     </div>
     <figure style="margin: 0">
       <div class="window">
         <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i></div>
         <picture lang="en">
           <source srcset="assets/home-dark.jpg" media="(prefers-color-scheme: dark)">
-          <img src="assets/home-light.jpg" width="1440" height="1200" alt="Yap's Home: Yap Cloud balance, this week's words dictated and time saved, and today's transcripts mixing English and Chinese.">
+          <img src="assets/home-light.jpg" width="1440" height="1200" alt="Yap's Home: this week's words dictated and time saved, and today's transcripts mixing English and Chinese.">
         </picture>
         <picture lang="zh-Hans">
           <source srcset="assets/home-zh-dark.jpg" media="(prefers-color-scheme: dark)">
-          <img src="assets/home-zh-light.jpg" width="1440" height="1200" alt="Yap 的主页：Yap Cloud 余额、本周听写的字数和节省的时间，以及今天中英混说的转写记录。">
+          <img src="assets/home-zh-light.jpg" width="1440" height="1200" alt="Yap 的主页：本周听写的字数和节省的时间，以及今天中英混说的转写记录。">
         </picture>
       </div>
       <figcaption class="shot-caption"><span lang="en">The app, with sample data.</span><span lang="zh-Hans">app 实际界面，数据是示例。</span></figcaption>
     </figure>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap split">
+    <div>
+      <p class="eyebrow"><span lang="en">Install, or build it yourself</span><span lang="zh-Hans">安装，或者自己编译</span></p>
+      <h2><span lang="en">Homebrew, a download, or the source.</span><span lang="zh-Hans">Homebrew、直接下载，或者从源码编译。</span></h2>
+      <p class="fine" lang="en">Homebrew installs Yap and keeps it updated; the app also updates itself. Building from source needs Xcode: <code>make local</code> puts <code>Yap.app</code> in your Downloads folder.</p>
+      <p class="fine" lang="zh-Hans">Homebrew 负责安装和更新，app 自己也会检查更新。从源码编译需要 Xcode：<code>make local</code> 会把 <code>Yap.app</code> 放进“下载”文件夹。</p>
+    </div>
+    <div class="stack">
+      <div>
+        <div class="code"><pre id="brew-cmd">brew tap sma1lboy/yap https://github.com/Sma1lboy/yap
+brew install --cask sma1lboy/yap/yap</pre></div>
+        <div class="code-actions">
+          <span class="fine" style="margin: 0"><span lang="en">Homebrew</span><span lang="zh-Hans">Homebrew</span></span>
+          <button class="btn btn--secondary" type="button" data-copy="brew-cmd"><span lang="en">Copy</span><span lang="zh-Hans">复制</span></button>
+        </div>
+      </div>
+      <div>
+        <div class="code"><pre id="build-cmd">git clone https://github.com/Sma1lboy/yap && cd yap
+make local</pre></div>
+        <div class="code-actions">
+          <span class="fine" style="margin: 0"><span lang="en">From source</span><span lang="zh-Hans">从源码编译</span></span>
+          <button class="btn btn--secondary" type="button" data-copy="build-cmd"><span lang="en">Copy</span><span lang="zh-Hans">复制</span></button>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -120,88 +154,43 @@
   </div>
 </section>
 
-<section id="pricing">
+<section id="models">
   <div class="wrap">
-    <p class="eyebrow"><span lang="en">Two ways to run it</span><span lang="zh-Hans">两种用法</span></p>
-    <h2><span lang="en">Same models either way. Pick how you pay.</span><span lang="zh-Hans">模型一样，选一种付费方式。</span></h2>
-    <p class="intro" lang="en">MAI-Transcribe-2 turns speech into text and DeepSeek V4.1 Flash cleans it up. Choose during setup and switch any time.</p>
-    <p class="intro" lang="zh-Hans">MAI-Transcribe-2 负责转写，DeepSeek V4.1 Flash 负责整理。首次设置时选一种，之后随时可以换。</p>
-    <div class="plans">
+    <p class="eyebrow"><span lang="en">Three ways to run it</span><span lang="zh-Hans">三种用法</span></p>
+    <h2><span lang="en">Pick where your voice goes.</span><span lang="zh-Hans">声音交给谁处理，你来选。</span></h2>
+    <p class="intro" lang="en">Choose during setup and switch any time, per mode if you like.</p>
+    <p class="intro" lang="zh-Hans">首次设置时选一种，之后随时可以换，也可以每个模式用不同的。</p>
+    <div class="plans plans--three">
       <article class="plan">
-        <h3>Yap Cloud <span class="tag"><span lang="en">Easiest</span><span lang="zh-Hans">最省事</span></span></h3>
-        <p class="tagline"><span lang="en">No API keys. Pay for what you use.</span><span lang="zh-Hans">不用 API key，用多少付多少。</span></p>
-        <!-- Numbers from paygate GET /v1/info (2026-09-25): signupCreditUsd 1, markup 0.1, minTopupUsd 5,
-             maxTopupUsd 500. Update here when they change; the app reads them live. -->
-        <div class="price">$1</div>
-        <p class="price-note"><span lang="en">free credit for new accounts</span><span lang="zh-Hans">新账户赠送额度</span></p>
+        <h3><span lang="en">Local model</span><span lang="zh-Hans">本地模型</span></h3>
+        <p class="tagline"><span lang="en">Fully offline. Nothing leaves your Mac.</span><span lang="zh-Hans">完全离线，什么都不离开这台 Mac。</span></p>
         <ul class="checks">
-          <li><span lang="en">Sign in with your email and a 6-digit code</span><span lang="zh-Hans">邮箱加 6 位验证码登录</span></li>
-          <li><span lang="en">Each request costs the model's price plus 10%</span><span lang="zh-Hans">每次调用按模型价格加 10% 计费</span></li>
-          <li><span lang="en">Top up $5 to $500 by card, through Stripe</span><span lang="zh-Hans">通过 Stripe 刷卡充值，每次 $5–$500</span></li>
-          <li><span lang="en">Balance, monthly cap and every charge in the app</span><span lang="zh-Hans">余额、月度上限和每一笔扣费都在 app 里看得到</span></li>
+          <li><span lang="en">NVIDIA Parakeet, Whisper and more, downloaded in Settings</span><span lang="zh-Hans">NVIDIA Parakeet、Whisper 等模型，在设置里下载</span></li>
+          <li><span lang="en">Works without an internet connection</span><span lang="zh-Hans">没有网络也能用</span></li>
+          <li><span lang="en">Cleanup can run locally too (Yap Refine, Ollama)</span><span lang="zh-Hans">整理也可以在本地做（Yap Refine、Ollama）</span></li>
         </ul>
       </article>
       <article class="plan">
-        <h3><span lang="en">Your OpenRouter key</span><span lang="zh-Hans">自带 OpenRouter key</span></h3>
-        <p class="tagline"><span lang="en">Pay OpenRouter directly.</span><span lang="zh-Hans">费用直接付给 OpenRouter。</span></p>
-        <div class="price">~$0.13</div>
-        <p class="price-note"><span lang="en">per hour of speech, at OpenRouter's prices</span><span lang="zh-Hans">每小时语音，按 OpenRouter 的价格</span></p>
+        <h3><span lang="en">Your own key</span><span lang="zh-Hans">自带 key</span></h3>
+        <p class="tagline"><span lang="en">OpenRouter or any provider you already use.</span><span lang="zh-Hans">OpenRouter，或者你已经在用的任何提供商。</span></p>
         <ul class="checks">
-          <li><span lang="en">Paste your key once; it stays in this Mac's Keychain</span><span lang="zh-Hans">粘贴一次 key，只存在这台 Mac 的钥匙串里</span></li>
-          <li><span lang="en">Requests go straight to OpenRouter, never through Yap</span><span lang="zh-Hans">请求直接发给 OpenRouter，不经过 Yap</span></li>
-          <li><span lang="en">Or use any other provider's key</span><span lang="zh-Hans">也可以用其他提供商的 key</span></li>
+          <li><span lang="en">Paste a key once; it stays in this Mac's Keychain</span><span lang="zh-Hans">粘贴一次 key，只存在这台 Mac 的钥匙串里</span></li>
+          <li><span lang="en">Requests go straight to the provider, never through Yap</span><span lang="zh-Hans">请求直接发给提供商，不经过 Yap</span></li>
+          <li><span lang="en">The default setup is tuned for mixed Chinese–English speech</span><span lang="zh-Hans">默认设置为中英混说调过</span></li>
+        </ul>
+      </article>
+      <article class="plan">
+        <h3>Yap Cloud</h3>
+        <p class="tagline"><span lang="en">If you'd rather not get a key: the same models, pay as you go.</span><span lang="zh-Hans">不想自己申请 key 的话：模型一样，按用量付费。</span></p>
+        <!-- The only place on the page that talks about money. Figures from paygate GET /v1/info (2026-09-25):
+             signupCreditUsd 1, markup 0.1, minTopupUsd 5, maxTopupUsd 500. -->
+        <ul class="checks">
+          <li><span lang="en">Sign in with your email; new accounts get $1 to try it</span><span lang="zh-Hans">用邮箱登录；新账户送 $1 试用</span></li>
+          <li><span lang="en">Each request costs the model's price plus 10%; top up $5 to $500 through Stripe</span><span lang="zh-Hans">每次调用按模型价格加 10% 计费；通过 Stripe 充值，每次 $5–$500</span></li>
+          <li><span lang="en">Optional: keep your settings in sync across Macs</span><span lang="zh-Hans">可选：在多台 Mac 之间同步设置</span></li>
         </ul>
       </article>
     </div>
-    <p class="plans-foot" lang="en">Prefer nothing leaving your Mac? Download NVIDIA's Parakeet model in Settings and dictate offline, for free. Yap Cloud figures are from its <code>/v1/info</code> endpoint (September 2026).</p>
-    <p class="plans-foot" lang="zh-Hans">不想让任何东西离开这台 Mac？在设置里下载 NVIDIA 的 Parakeet 模型，离线听写，不花钱。Yap Cloud 的数字来自它的 <code>/v1/info</code> 接口（2026 年 9 月）。</p>
-  </div>
-</section>
-
-<section id="install">
-  <div class="wrap split">
-    <div>
-      <p class="eyebrow"><span lang="en">Install</span><span lang="zh-Hans">安装</span></p>
-      <h2><span lang="en">Two commands, or one download.</span><span lang="zh-Hans">两行命令，或者直接下载。</span></h2>
-      <p class="fine" lang="en">Homebrew installs Yap and keeps it updated; the app also updates itself. Builds are signed with a stable self-signed certificate but not notarized; Homebrew clears the quarantine flag for you.</p>
-      <p class="fine" lang="zh-Hans">Homebrew 负责安装和更新，app 自己也会检查更新。每个版本都用同一张自签名证书签名，但没有经过 Apple 公证；用 Homebrew 安装会自动去掉隔离标记。</p>
-    </div>
-    <div>
-      <div class="code">
-        <pre id="brew-cmd">brew tap sma1lboy/yap https://github.com/Sma1lboy/yap
-brew install --cask sma1lboy/yap/yap</pre>
-      </div>
-      <div class="code-actions">
-        <a class="fine" style="margin: 0" href="https://github.com/Sma1lboy/yap/releases/latest"><span lang="en">All releases on GitHub</span><span lang="zh-Hans">GitHub 上的所有版本</span></a>
-        <button class="btn btn--secondary" type="button" data-copy="brew-cmd"><span lang="en">Copy commands</span><span lang="zh-Hans">复制命令</span></button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="sync">
-  <div class="wrap split">
-    <div>
-      <p class="eyebrow"><span lang="en">Across your Macs</span><span lang="zh-Hans">跨 Mac 同步</span></p>
-      <h2><span lang="en">The same setup on every Mac.</span><span lang="zh-Hans">每台 Mac 同一套设置。</span></h2>
-      <p class="intro" lang="en">Modes, prompts, dictionary and shortcuts live in one file, <code>~/.config/yap/config.json</code>. Turn on Sync via Yap Cloud and every Mac signed in to your account keeps it the same.</p>
-      <p class="intro" lang="zh-Hans">模式、提示词、词典和快捷键都在一个文件里：<code>~/.config/yap/config.json</code>。打开“通过 Yap Cloud 同步”，登录同一账户的每台 Mac 都保持一致。</p>
-      <ul class="points">
-        <li><h3><span lang="en">Edit anywhere</span><span lang="zh-Hans">哪里改都行</span></h3><p lang="en">In the app or in the file. Edits from different Macs are merged; what you delete stays deleted.</p><p lang="zh-Hans">在 app 里改或直接改文件。不同 Mac 的改动会合并，删掉的不会回来。</p></li>
-        <li><h3><span lang="en">New Mac in one step</span><span lang="zh-Hans">新 Mac 一步恢复</span></h3><p lang="en">The first setup screen signs in and restores everything.</p><p lang="zh-Hans">首次设置的第一屏就能登录，全部恢复。</p></li>
-        <li><h3><span lang="en">Version history</span><span lang="zh-Hans">版本历史</span></h3><p lang="en">Earlier versions are listed in Settings; restore any of them.</p><p lang="zh-Hans">设置里能看到之前的版本，可以恢复任意一个。</p></li>
-        <li><h3><span lang="en">Keys stay put</span><span lang="zh-Hans">key 不上传</span></h3><p lang="en">API keys are never uploaded; each Mac keeps its own.</p><p lang="zh-Hans">API key 永远不会上传，每台 Mac 各存各的。</p></li>
-      </ul>
-    </div>
-    <figure style="margin: 0">
-      <div class="window">
-        <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i></div>
-        <picture>
-          <source srcset="assets/version-history-dark.jpg" media="(prefers-color-scheme: dark)">
-          <img src="assets/version-history-light.jpg" width="1280" height="1040" loading="lazy" alt="Settings › Config & Sync › Version History: three earlier versions with the date and the Mac that wrote each.">
-        </picture>
-      </div>
-    </figure>
   </div>
 </section>
 
@@ -232,7 +221,7 @@ brew install --cask sma1lboy/yap/yap</pre>
     <p class="eyebrow">FAQ</p>
     <h2><span lang="en">Questions</span><span lang="zh-Hans">常见问题</span></h2>
     <div class="faq" lang="en">
-      <details><summary>Is Yap free?</summary><div>The app is free and open source. You pay only for cloud transcription: through Yap Cloud or your own OpenRouter key. Local models cost nothing.</div></details>
+      <details><summary>Is Yap free?</summary><div>Yes. The app is free and open source (GPL-3.0), and local models run on your Mac at no cost. Cloud models are billed by whoever runs them: your own provider, or Yap Cloud if you use it.</div></details>
       <details><summary>Which languages does it understand?</summary><div>English, Chinese, and both in the same sentence — that's what the default setup is tuned for. Other languages depend on the model you choose.</div></details>
       <details><summary>Does it work offline?</summary><div>Yes, with a local model such as NVIDIA's Parakeet, downloaded in Settings. Yap Cloud and API keys need a connection.</div></details>
       <details><summary>Why does macOS ask for Microphone and Accessibility?</summary><div>Microphone to hear you; Accessibility to paste into the app you're using. Screen Recording is optional: it lets Yap read what's on screen to spell names right.</div></details>
@@ -250,7 +239,7 @@ brew install --cask sma1lboy/yap/yap</pre>
       </div></details>
     </div>
     <div class="faq" lang="zh-Hans">
-      <details><summary>Yap 收费吗？</summary><div>app 免费开源。只有云端转写要花钱：通过 Yap Cloud，或者用你自己的 OpenRouter key。本地模型不花钱。</div></details>
+      <details><summary>Yap 收费吗？</summary><div>不收费。app 免费开源（GPL-3.0），本地模型在你的 Mac 上跑，不花钱。云端模型由提供方收费：你自己的提供商，或者你选用的 Yap Cloud。</div></details>
       <details><summary>支持哪些语言？</summary><div>英文、中文，以及一句话里中英混说，默认设置就是为这个调的。其他语言取决于你选的模型。</div></details>
       <details><summary>能离线用吗？</summary><div>能，用本地模型（例如在设置里下载 NVIDIA 的 Parakeet）。Yap Cloud 和 API key 需要联网。</div></details>
       <details><summary>为什么要麦克风和辅助功能权限？</summary><div>麦克风用来听你说话；辅助功能用来把文字粘贴进你正在用的 app。屏幕录制是可选的，用来读屏幕上的内容，把人名、术语拼对。</div></details>
@@ -283,8 +272,8 @@ brew install --cask sma1lboy/yap/yap</pre>
         <h4><span lang="en">Product</span><span lang="zh-Hans">产品</span></h4>
         <ul>
           <li><a href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip"><span lang="en">Download</span><span lang="zh-Hans">下载</span></a></li>
-          <li><a href="#pricing"><span lang="en">Pricing</span><span lang="zh-Hans">价格</span></a></li>
-          <li><a href="https://cloud.yap.sma1lboy.me/"><span lang="en">Yap Cloud account</span><span lang="zh-Hans">Yap Cloud 账户</span></a></li>
+          <li><a href="#models"><span lang="en">Three ways to run it</span><span lang="zh-Hans">三种用法</span></a></li>
+          <li><a href="https://github.com/Sma1lboy/yap"><span lang="en">Source code</span><span lang="zh-Hans">源代码</span></a></li>
           <li><a href="https://github.com/Sma1lboy/yap/releases"><span lang="en">Release notes</span><span lang="zh-Hans">更新说明</span></a></li>
         </ul>
       </div>
@@ -335,19 +324,31 @@ brew install --cask sma1lboy/yap/yap</pre>
 
   // ---- Copy ----
   document.querySelectorAll("[data-copy]").forEach(function (button) {
+    var labels = button.querySelectorAll("span");
+    var original = [labels[0].textContent, labels[1].textContent];
     button.addEventListener("click", function () {
       var text = document.getElementById(button.getAttribute("data-copy")).textContent;
-      var labels = button.querySelectorAll("span");
       function done(ok) {
         labels[0].textContent = ok ? "Copied" : "Select and copy";
         labels[1].textContent = ok ? "已复制" : "请手动复制";
-        setTimeout(function () { labels[0].textContent = "Copy commands"; labels[1].textContent = "复制命令"; }, 1600);
+        setTimeout(function () { labels[0].textContent = original[0]; labels[1].textContent = original[1]; }, 1600);
       }
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
       } else { done(false); }
     });
   });
+
+  // ---- GitHub stars (public API; the count stays hidden if the request fails, is rate-limited, or is under 10) ----
+  if (window.fetch) {
+    fetch("https://api.github.com/repos/Sma1lboy/yap").then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (repo) {
+        // Under 10 the number reads as "abandoned" more than as information; the link says enough.
+        if (!repo || typeof repo.stargazers_count !== "number" || repo.stargazers_count < 10) return;
+        var count = repo.stargazers_count >= 1000 ? (repo.stargazers_count / 1000).toFixed(1) + "k" : String(repo.stargazers_count);
+        document.querySelectorAll("[data-stars]").forEach(function (el) { el.textContent = count; el.hidden = false; });
+      }).catch(function () {});
+  }
 
   // ---- Demo: words appear as spoken, filler is struck out on release, then the clean text types in ----
   // Each word: [text, isFiller]. Same examples in both languages; only the labels change.
