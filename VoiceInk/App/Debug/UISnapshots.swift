@@ -34,6 +34,8 @@
             let full = inMemoryContainer()
             MockData.insertHistory(into: full.mainContext)
             MockData.insertDictionary(into: full.mainContext)
+            // Home loads its week stats through its own ModelContext, which only sees saved data.
+            try? full.mainContext.save()
             let practiced = inMemoryContainer()
             practiced.mainContext.insert(Transcription(text: "Standup moved to Friday.", duration: 3))
 
