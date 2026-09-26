@@ -1,6 +1,6 @@
 # 视觉审计（2026-09-25）
 
-对照 `docs/DESIGN.md` 扫的全 app 绕开 token 的地方。清单由 `scripts/design-tokens.py --check` 产出：这次改动之前是 1895 处，改完是 0 处。以后 `make build` 会先跑 `make design-check`，新写的硬编码会直接让构建失败，所以这份文件只记录这一轮找到了什么、怎么处理的，以及还剩哪些。
+对照 `docs/DESIGN.md` 扫的全 app 绕开 token 的地方。清单由 `scripts/design-tokens.py --check` 产出：这次改动之前是 1895 处，后来检查又加了两条规则（`.cornerRadius(n)` 写法 15 处、系统文字样式 `.font(.caption)` 等 139 处），合计 2049 处，改完是 0 处。以后 `make build` 会先跑 `make design-check`，新写的硬编码会直接让构建失败，所以这份文件只记录这一轮找到了什么、怎么处理的，以及还剩哪些。
 
 ## 按类别
 
@@ -9,6 +9,8 @@
 | 字号 `.system(size:)` | 566 | 映射到 9 档字号（`AppTheme.font(.caption, .medium)` 等）。8–10→micro，11→caption，12/12.5→footnote，13/13.5→body，14→callout，15–17→headline，18→title3，20–24→title，28→display；bold/heavy 统一成 semibold。10 处是图标字形按容器尺寸缩放（`size * 0.58`），标了 `design-exempt`。 |
 | 圆角 `cornerRadius:` | 175 | 2–7→small(6)，8–11→control(10)，12–14→card(12)，16–18→panel(16)，22→pill。`AppActionButton` 的 9/15 改为 control/pill。原来的 `Radius.control` 是 14，比卡片的 12 还大，现在是 10。 |
 | 间距 `.padding(n)` / `spacing: n` | 512 + 624 | 就近取 4 的倍数档（2、4、8、12、16、20、24、32、48），落在两档正中间时取大的：6→8，10→12，14→16。27 处 ≥50 的值是布局偏移（例如 onboarding 底部给按钮让出的 100），标了 `design-exempt`。 |
+| 系统文字样式 `.font(.caption)` 等 | 139 | 按 macOS 的实际字号映射：caption/subheadline/footnote→caption，caption2→micro，callout→footnote，headline→body semibold，title2/title3→headline。 |
+| `.cornerRadius(n)` | 15 | 同圆角规则。app 图标的 30pt 遮罩标了 `design-exempt`。 |
 | 直接写颜色 | 14 | 见下表。 |
 | `.borderedProminent` | 4 | 系统样式在黄底上画白字，改成 `AppActionButton(kind: .primary)`。按回车触发的默认按钮（6 个）加 `.buttonStyle(.appAction(.primary))`，因为系统强调色是“多彩”时 macOS 会用 app 的黄色画默认按钮，文字却是白色。 |
 
