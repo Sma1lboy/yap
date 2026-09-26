@@ -55,6 +55,9 @@ struct VoiceInkApp: App {
         OnboardingV2Migration.prepareIfNeeded()
         // After the migration (it wipes modes on fresh installs) and before services read settings at init.
         YapConfigLoader.shared.applyAtLaunch()
+        #if DEBUG
+            MockEnvironment.seedSettings()  // make mock only
+        #endif
 
         let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "Initialization")
         // Keep existing model order stable; append new models after synced entities.
@@ -99,6 +102,9 @@ struct VoiceInkApp: App {
         }
 
         container = resolvedContainer
+        #if DEBUG
+            MockEnvironment.seedStores(resolvedContainer)  // make mock only
+        #endif
         DictionaryService.removeExactDuplicateContent(context: resolvedContainer.mainContext, source: "launch")
 
         // Initialize services with proper sharing of instances
@@ -172,6 +178,9 @@ struct VoiceInkApp: App {
         menuBarManager.configure(engine: engine)
 
         CloudConfigSync.shared.store = YapCloud.shared
+        #if DEBUG
+            MockEnvironment.attachCloudStore()  // make mock only
+        #endif
         YapConfigLoader.shared.attach(
             aiService: aiService,
             enhancementService: enhancementService,

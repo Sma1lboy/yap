@@ -83,6 +83,10 @@ struct ModelManagementView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            #if DEBUG
+                // make ui-snapshots: open a tab or panel before the frame is captured.
+                Color.clear.frame(height: 0).onAppear(perform: applySnapshotOverrides)
+            #endif
             headerSection
 
             ScrollView {
@@ -419,3 +423,18 @@ struct ModelManagementView: View {
         }
     }
 }
+
+#if DEBUG
+    extension ModelManagementView {
+        enum SnapshotPanel { case customProviderEditor }
+        @MainActor static var snapshotFilter: ModelFilter?
+        @MainActor static var snapshotPanel: SnapshotPanel?
+
+        private func applySnapshotOverrides() {
+            if let filter = Self.snapshotFilter { selectedFilter = filter }
+            if Self.snapshotPanel == .customProviderEditor {
+                openCustomEnhancementModelPanel(customAIProviderManager.providers.first)
+            }
+        }
+    }
+#endif

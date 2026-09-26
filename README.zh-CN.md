@@ -131,6 +131,11 @@ API key 永远不会写进 config.json，也不会上传到 Yap Cloud。Yap 只�
 
 当前选择（2026 年 9 月，11 段中英混说音频 / 82 个关键词）：转写用 `microsoft/mai-transcribe-2`（82 个里对 80 个，$0.10/小时），润色用 `deepseek/deepseek-v4.1-flash`（9/9 个用例，约 0.5 秒）。引导流程里的「自带 OpenRouter Key」选项用你自己的 OpenRouter key 应用这套配置，费用直接付给 OpenRouter。修改 `VoiceInk/Resources/RecommendedPrompt.md` 后请重新跑 `setup/bench.py`。
 
+## 开发
+
+- `make mock`：用假数据启动 Debug 版（已登录 Yap Cloud、余额 $4.21、20 条转写记录、5 个模式、一个自定义 provider、词典条目）。不联网，设置写在单独的域 `me.sma1lboy.yap.mock` 里，不碰 dev 和正式版的设置；退出时清掉它创建的所有东西。
+- `make ui-snapshots`：不开窗口，把每个页面、Settings 分组、onboarding 每一屏和各个 sheet 按浅色、深色渲染到 `/tmp/yap-ui/snapshots`（主要页面另有中文版）。`make ui-review` 再把它们打包成 `/tmp/yap-ui/review.html`。
+
 ## 发布
 
 发布流程和 CI 的说明面向维护者，只有英文版：见 [README.md 的 Releasing 一节](README.md#releasing)。

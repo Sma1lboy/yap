@@ -96,6 +96,10 @@ struct ModeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            #if DEBUG
+                // make ui-snapshots: open a tab or panel before the frame is captured.
+                Color.clear.frame(height: 0).onAppear(perform: applySnapshotOverrides)
+            #endif
             AppScreenHeader(
                 title: "Modes",
                 infoMessage: "Modes help you set up Yap for different writing tasks, workflows, and scenarios."
@@ -207,3 +211,16 @@ struct SectionHeader: View {
             .padding(.bottom, 8)
     }
 }
+
+#if DEBUG
+    extension ModeView {
+        /// make ui-snapshots: opens the editor for the first mode.
+        @MainActor static var snapshotOpensEditor = false
+
+        private func applySnapshotOverrides() {
+            if Self.snapshotOpensEditor, let first = modeManager.configurations.first {
+                openPanel(mode: .edit(first))
+            }
+        }
+    }
+#endif

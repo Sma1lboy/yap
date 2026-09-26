@@ -3,10 +3,14 @@
     import SwiftData
     import SwiftUI
 
-    /// `make ui-snapshots`: renders key screens to PNGs with fake data and exits, without showing a window,
-    /// taking focus or touching the network. Views are hosted in a never-ordered-in offscreen window and drawn
-    /// with `cacheDisplay`, because `ImageRenderer` can't draw AppKit-backed controls (Form rows, toggles,
-    /// pickers, text fields).
+    /// `make ui-snapshots`: renders every page, Settings group, onboarding screen and sheet to PNGs with fake data
+    /// (MockData) and exits, without showing a window, taking focus or touching the network. Views are hosted in a
+    /// never-ordered-in offscreen window and drawn with `cacheDisplay`, because `ImageRenderer` can't draw
+    /// AppKit-backed controls (Form rows, toggles, pickers, text fields). Scrolling pages are captured whole: the
+    /// window is grown by however much the page's scroll view overflows.
+    ///
+    /// File names start with their group (page, account, settings, onboarding, sheet, recorder), which the review
+    /// page (scripts/ui-review.py) groups by. The Chinese run (-AppleLanguages (zh-Hans)) renders only `main` shots.
     @MainActor
     enum UISnapshots {
         static let argument = "--render-snapshots"
@@ -23,62 +27,149 @@
             // Rendering builds real managers that write UserDefaults (fake starter modes, shortcut migrations…).
             // Keep the dev app's own settings: save the whole domain now, put it back exactly before exiting.
             let defaultsGuard = DefaultsSnapshot()
-            // A second run with -AppleLanguages (zh-Hans) writes <name>-zh-<appearance>.png next to the English set.
-            let suffix = Bundle.main.preferredLocalizations.first?.hasPrefix("zh") == true ? "-zh" : ""
+            let isChinese = Bundle.main.preferredLocalizations.first?.hasPrefix("zh") == true
+            let suffix = isChinese ? "-zh" : ""
 
             let empty = inMemoryContainer()
-            let history = inMemoryContainer()
-            for (index, text) in fakeHistory.enumerated() {
-                let item = Transcription(text: text.original, duration: Double(8 + index * 5), enhancedText: text.enhanced)
-                item.timestamp = Date().addingTimeInterval(Double(-index) * 3_600 * 5)
-                history.mainContext.insert(item)
-            }
+            let full = inMemoryContainer()
+            MockData.insertHistory(into: full.mainContext)
+            MockData.insertDictionary(into: full.mainContext)
             let practiced = inMemoryContainer()
             practiced.mainContext.insert(Transcription(text: "Standup moved to Friday.", duration: 3))
 
-            let app = SnapshotApp(container: empty)
-            CloudConfigSync.shared.store = SnapshotConfigStore()
-            StarterModeFactory.install(kinds: StarterModeKind.allCases, provider: .yapCloud, modelName: nil)
+            // Before the managers: the Yap Cloud catalog decides which transcription models exist.
+            YapCloud.shared.applySnapshotState(.funded)
+            let app = SnapshotApp(container: full)
+            CloudConfigSync.shared.store = MockConfigStore()
+            MockData.installModes()
+            CustomAIProviderManager.shared.replaceProviders([MockData.customProvider])
 
             var written: [String] = []
-            func shot<V: View>(_ name: String, size: CGSize = size, @ViewBuilder _ content: () -> V) {
-                written += render(name + suffix, size: size) { app.environment(content()) }
+            func shot<V: View>(
+                _ name: String, size: CGSize = size, main: Bool = false, fullPage: Bool = false,
+                @ViewBuilder _ content: () -> V
+            ) {
+                guard main || !isChinese else { return }
+                written += render(name + suffix, size: size, fullPage: fullPage) { app.environment(content()) }
+            }
+            func page(_ name: String, _ view: ViewType, main: Bool = true) {
+                MainWindowNavigation.shared.selectedView = view
+                shot("page-\(name)", main: main, fullPage: true) { ContentView() }
             }
 
-            for state in YapCloud.SnapshotState.allCases {
+            // Sidebar pages, each whole.
+            page("home", .dashboard)
+            page("modes", .modes)
+            page("models-local", .models)
+            ModelManagementView.snapshotFilter = .cloud
+            page("models-cloud", .models)
+            ModelManagementView.snapshotFilter = .custom
+            page("models-custom", .models, main: false)
+            ModelManagementView.snapshotFilter = nil
+            page("transcribe-audio", .transcribeAudio)
+            page("audio", .audio)
+            page("dictionary", .dictionary)
+            page("settings", .settings)
+            page("account", .account)
+            shot("page-home-empty") { ContentView().modelContainer(empty) }
+
+            for state in YapCloud.SnapshotState.allCases where state != .funded {
                 YapCloud.shared.applySnapshotState(state)
-                shot("account-\(state.rawValue)") { AccountView() }
+                MainWindowNavigation.shared.selectedView = .account
+                shot("account-\(state.rawValue)", fullPage: true) { ContentView() }
             }
-
             YapCloud.shared.applySnapshotState(.funded)
-            shot("config-sync") {
+
+            // Settings groups on their own, whole (the Settings page above shows them in order).
+            shot("settings-config-sync", fullPage: true) {
                 Form { ConfigSyncSettingsSection() }
                     .formStyle(.grouped)
                     .scrollContentBackground(.hidden)
             }
-            shot("settings") { SettingsView() }
-            shot("models") { ModelManagementView() }
-            shot("modes") { ModeView() }
-            shot("history") { HistoryView { EmptyView() }.modelContainer(history) }
-            shot("home-empty") { HistoryView { EmptyView() } }
 
-            YapCloud.shared.applySnapshotState(.signedOut)
-            shot("onboarding-permissions", size: onboardingSize) { onboardingPermissions }
-            shot("onboarding-model-yapcloud", size: onboardingSize) { onboardingModel(.yapCloud) }
-            shot("onboarding-model-openrouter", size: onboardingSize) { onboardingModel(.recommended) }
-            shot("onboarding-dictation", size: onboardingSize) { onboardingDictation }
-            shot("onboarding-restore", size: CGSize(width: 440, height: 200)) {
+            // Panels that open inside a page.
+            ModeView.snapshotOpensEditor = true
+            MainWindowNavigation.shared.selectedView = .modes
+            shot("sheet-mode-editor", fullPage: true) { ContentView() }
+            ModeView.snapshotOpensEditor = false
+            ModelManagementView.snapshotFilter = .custom
+            ModelManagementView.snapshotPanel = .customProviderEditor
+            MainWindowNavigation.shared.selectedView = .models
+            shot("sheet-custom-provider-editor", fullPage: true) { ContentView() }
+            ModelManagementView.snapshotFilter = nil
+            ModelManagementView.snapshotPanel = nil
+
+            // Sheets, at the size they're presented at.
+            if let notes = ReleaseNotes.current {
+                shot("sheet-whats-new", size: CGSize(width: 560, height: 620)) { ReleaseNotesSheet(notes: notes) }
+            }
+            shot("sheet-version-history", size: CGSize(width: 640, height: 520)) { ConfigVersionHistorySheet() }
+            shot("sheet-history-settings", size: CGSize(width: 480, height: 560)) {
+                HistorySettingsPanel(onClose: {})
+            }
+            shot("sheet-yap-cloud-models", size: CGSize(width: 520, height: 520)) {
+                YapCloudModelBrowser(
+                    title: "All Yap Cloud Models",
+                    models: YapCloud.shared.models.map { ($0.id, $0.displayName, $0.id) },
+                    selectedID: YapCloud.shared.models.first?.id, onSelect: { _ in })
+            }
+            shot("sheet-restore-settings", size: CGSize(width: 440, height: 200)) {
                 OnboardingCloudRestoreSheet { _ in }
             }
-            shot("onboarding-final", size: onboardingSize) {
-                OnboardingTrustScreen(contentMaxWidth: 700, onBack: {}, onContinue: {})
+
+            // Recorder panels mid-dictation, on a dark desktop-like backdrop.
+            app.engine.recordingState = .recording
+            app.engine.partialTranscript = "so the standup 改到 Friday morning"
+            shot("recorder-mini", size: CGSize(width: 420, height: 160)) {
+                MiniRecorderView(
+                    stateProvider: app.engine, recorder: app.engine.recorder,
+                    assistantSession: app.engine.assistantSession,
+                    onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
             }
-            shot("onboarding-final-after-practice", size: onboardingSize) {
-                OnboardingTrustScreen(contentMaxWidth: 700, onBack: {}, onContinue: {})
-                    .modelContainer(practiced)
+            shot("recorder-notch", size: CGSize(width: 520, height: 160)) {
+                NotchRecorderView(
+                    stateProvider: app.engine, recorder: app.engine.recorder,
+                    assistantSession: app.engine.assistantSession,
+                    onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
             }
-            if let notes = ReleaseNotes.current {
-                shot("whats-new", size: CGSize(width: 560, height: 620)) { ReleaseNotesSheet(notes: notes) }
+            app.engine.recordingState = .idle
+            app.engine.partialTranscript = ""
+
+            // Onboarding, every screen in order.
+            YapCloud.shared.applySnapshotState(.signedOut)
+            shot("onboarding-1-permissions", size: onboardingSize, main: true) { onboardingPermissions }
+            shot("onboarding-2-microphone", size: onboardingSize, main: true) {
+                OnboardingMicrophoneScreen(contentMaxWidth: 620, onBack: {}, onContinue: {})
+            }
+            shot("onboarding-3-model-yapcloud", size: onboardingSize, main: true) { onboardingModel(.yapCloud) }
+            shot("onboarding-3-model-openrouter", size: onboardingSize, main: true) { onboardingModel(.recommended) }
+            shot("onboarding-3-model-api", size: onboardingSize) { onboardingModel(.cloud) }
+            shot("onboarding-3-model-local", size: onboardingSize) { onboardingModel(.local) }
+            shot("onboarding-4-api-key", size: onboardingSize, main: true) {
+                OnboardingAPIScreen(
+                    aiService: app.aiService, contentMaxWidth: 620, providerOptions: [.openRouter, .groq, .gemini],
+                    selectedProvider: .constant(.openRouter), isSelectedProviderVerified: false, canContinue: false,
+                    isShowingSkipWarning: .constant(false), onVerificationChanged: {}, onBack: {}, onContinue: {},
+                    onRequestSkip: {}, onConfirmSkip: {})
+            }
+            for (index, step) in OnboardingExperienceCatalog.steps.enumerated() {
+                if index > 0 {
+                    shot("onboarding-5-practice-\(index + 1)-intro", size: onboardingSize) {
+                        onboardingExperience(step, intro: true)
+                    }
+                }
+                shot("onboarding-5-practice-\(index + 1)", size: onboardingSize, main: index == 0) {
+                    onboardingExperience(step, intro: false)
+                }
+            }
+            shot("onboarding-6-context", size: onboardingSize, main: true) {
+                OnboardingContextAwarenessScreen(contentMaxWidth: 620, onBack: {}, onContinue: {})
+            }
+            shot("onboarding-7-final", size: onboardingSize, main: true) {
+                OnboardingTrustScreen(contentMaxWidth: 700, onBack: {}, onContinue: {}).modelContainer(empty)
+            }
+            shot("onboarding-7-final-after-practice", size: onboardingSize) {
+                OnboardingTrustScreen(contentMaxWidth: 700, onBack: {}, onContinue: {}).modelContainer(practiced)
             }
 
             defaultsGuard.restore()
@@ -89,18 +180,10 @@
         /// Onboarding's window is a fixed 950pt wide (AppWindowLayout.defaultWidth), 750pt at its shortest.
         private static let onboardingSize = CGSize(width: AppWindowLayout.defaultWidth, height: AppWindowLayout.minimumHeight)
 
-        private static let fakeHistory: [(original: String, enhanced: String?)] = [
-            ("um so the standup 改到 Friday morning and uh send Chris the onboarding review",
-             "Standup 改到 Friday morning. Send Chris the onboarding review."),
-            ("remind me to renew the domain before the end of the month", nil),
-            ("reply to Sam thanks for the notes I'll look at the pricing section tomorrow",
-             "Thanks for the notes, Sam. I'll look at the pricing section tomorrow."),
-            ("明天下午三点和设计组过一下 onboarding 的新流程", "明天下午三点和设计组过一下 onboarding 的新流程。"),
-            ("add milk eggs and coffee beans to the shopping list", nil),
-        ]
-
         private static func inMemoryContainer() -> ModelContainer {
-            try! ModelContainer(for: Transcription.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+            try! ModelContainer(
+                for: Transcription.self, VocabularyWord.self, WordReplacement.self, SessionMetric.self,
+                configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         }
 
         private static var onboardingPermissions: some View {
@@ -127,9 +210,9 @@
                 onRequestSkip: {}, onConfirmSkip: {})
         }
 
-        private static var onboardingDictation: some View {
+        private static func onboardingExperience(_ step: OnboardingExperienceStep, intro: Bool) -> some View {
             OnboardingExperienceScreen(
-                step: OnboardingExperienceCatalog.steps[0], isInIntroPhase: false,
+                step: step, isInIntroPhase: intro,
                 shortcutAction: .primaryRecording, hasShortcut: true, text: .constant(""),
                 isLastStep: false, isReady: true, isComplete: false,
                 onBackFromIntro: {}, onContinueIntro: {}, onBackFromPractice: {}, onAdvance: {},
@@ -137,24 +220,25 @@
         }
 
         private static func render<V: View>(
-            _ name: String, size: CGSize = size, @ViewBuilder _ content: () -> V
+            _ name: String, size: CGSize = size, fullPage: Bool, @ViewBuilder _ content: () -> V
         ) -> [String] {
             [NSAppearance.Name.aqua, .darkAqua].map { appearanceName in
                 let isDark = appearanceName == .darkAqua
-                let host = NSHostingView(
-                    rootView: content()
-                        .environment(\.colorScheme, isDark ? .dark : .light)
-                        .frame(width: size.width, height: size.height)
-                        .background(Color(nsColor: .windowBackgroundColor)))
-                host.frame = CGRect(origin: .zero, size: size)
-                let window = NSWindow(
-                    contentRect: host.frame, styleMask: [.borderless], backing: .buffered, defer: false)
-                window.appearance = NSAppearance(named: appearanceName)
-                window.contentView = host
-                host.layoutSubtreeIfNeeded()
-                // Forms and lists fill their rows on the next run-loop turns.
-                RunLoop.main.run(until: Date().addingTimeInterval(0.5))
-                host.layoutSubtreeIfNeeded()
+                var (host, window) = layOut(content(), size: size, appearanceName: appearanceName)
+                if fullPage {
+                    // Lazy stacks estimate their height, so re-measure after each resize (overflow can turn
+                    // negative) until it settles. ponytail: the largest scroll view is assumed to be the page.
+                    var height = size.height
+                    for _ in 0..<3 {
+                        let overflow = scrollOverflow(in: host)
+                        let next = min(max(size.height, height + overflow), 6_000)
+                        guard abs(next - height) > 1 else { break }
+                        height = next
+                        window.contentView = nil
+                        (host, window) = layOut(
+                            content(), size: CGSize(width: size.width, height: height), appearanceName: appearanceName)
+                    }
+                }
 
                 let url = outputDirectory.appendingPathComponent("\(name)-\(isDark ? "dark" : "light").png")
                 if let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) {
@@ -165,18 +249,40 @@
                 return url.path
             }
         }
-    }
 
-    /// A signed-in, in-memory store so Config & Sync renders its enabled state.
-    private final class SnapshotConfigStore: ConfigCloudStore {
-        struct Document: CloudConfigDocument {
-            let version: String
-            let config: Data
+        private static func layOut<V: View>(
+            _ content: V, size: CGSize, appearanceName: NSAppearance.Name
+        ) -> (NSView, NSWindow) {
+            let host = NSHostingView(
+                rootView: content
+                    .environment(\.colorScheme, appearanceName == .darkAqua ? .dark : .light)
+                    .frame(width: size.width, height: size.height)
+                    .background(Color(nsColor: .windowBackgroundColor)))
+            host.frame = CGRect(origin: .zero, size: size)
+            let window = NSWindow(contentRect: host.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+            window.appearance = NSAppearance(named: appearanceName)
+            window.contentView = host
+            host.layoutSubtreeIfNeeded()
+            // Forms and lists fill their rows (and panels finish opening) on the next run-loop turns.
+            RunLoop.main.run(until: Date().addingTimeInterval(0.6))
+            host.layoutSubtreeIfNeeded()
+            return (host, window)
         }
 
-        var isSignedIn: Bool { true }
-        func fetchConfig() async throws -> Document? { nil }
-        func putConfig(_ data: Data, ifMatch: String?) async throws -> String { "1" }
+        /// How much taller (or, negative, shorter) than its visible area the page's scroll view content is.
+        private static func scrollOverflow(in view: NSView) -> CGFloat {
+            var overflow = -CGFloat.infinity
+            func visit(_ view: NSView) {
+                if let scrollView = view as? NSScrollView, scrollView.frame.height > 200,
+                    let document = scrollView.documentView
+                {
+                    overflow = max(overflow, document.frame.height - scrollView.contentView.bounds.height)
+                }
+                view.subviews.forEach(visit)
+            }
+            visit(view)
+            return overflow.isFinite ? overflow : 0
+        }
     }
 
     /// The app's object graph for views that need it (Settings, Models, Modes), built the way VoiceInk.swift
