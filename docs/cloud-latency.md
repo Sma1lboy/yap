@@ -75,3 +75,23 @@ Prewarm: when a recording starts in a mode that uses Yap Cloud and the preflight
 | long | 40.4 s, 1267 KB | 633 / 706 | 1203 / 1712 | 615 / 648 | 620 / 796 | 1252 / 1292 |
 
 Transcription p50 is 100–150 ms lower than in §2 (436 → 290, 561 → 464, 766 → 633 ms), and a whole dictation 769 → 582, 1045 → 834, 1462 → 1252 ms p50. Enhancement through Yap Cloud is now level with direct.
+
+## 4. Before the upload: nothing to drop
+
+- `CoreAudioRecorder` converts to 16 kHz mono 16-bit PCM in its render callback while recording, so the WAV is final when recording stops. No resampling or re-encoding happens after that.
+- `CloudTranscriptionService` reads the file's bytes (`Data(contentsOf:)`), and `YapCloudProvider` base64-encodes them into paygate's JSON body. Base64 is the required format: paygate accepts only OpenRouter's JSON transcription body, not multipart.
+- The sleeps between stop and paste are on other paths: Yap Refine's 450 ms model-prep debounce, and the 150 ms before an auto-send key press after pasting.
+- What's left is the upload size. The long clip is 1.27 MB (1.7 MB in base64) and transcribes about 340 ms slower than the short one. Compressing before upload (FLAC is lossless, about half the size) could save part of that, but it adds encode time and needs checking that OpenRouter's transcription models accept the format. It's not done here, since the gain would be under ~200 ms on a 40 s dictation.
+
+## Summary
+
+The long clip (40 s), transcribe + enhance through Yap Cloud, p50 / p95 in ms:
+
+| stage | p50 | p95 |
+|---|---|---|
+| baseline | 8847 | 12114 |
+| reasoning off (§1) | 1274 | 1557 |
+| streamed (§2) | 1462 | 2617 |
+| pooled + prewarmed (§3) | 1252 | 1292 |
+
+The streamed row is noise on this link (see §2), not a regression. paygate is not the bottleneck: through Yap Cloud, transcription is faster than calling OpenRouter directly from this Mac, and enhancement matches direct once the connection is reused. The one paygate change that would help the client is passing OpenRouter's `supported_parameters` / `reasoning` for each model through `/v1/models`. The client could then choose reasoning settings up front instead of learning them from a 400.
