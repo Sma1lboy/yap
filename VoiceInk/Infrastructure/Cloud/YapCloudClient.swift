@@ -80,6 +80,9 @@ final class YapCloud: ObservableObject {
         }
         info = defaults.data(forKey: Self.infoKey).flatMap { try? JSONDecoder().decode(YapCloudInfo.self, from: $0) }
         Task { @MainActor in await refreshInfo() }
+        // Every launch, not only from Account: enhancement reads each model's reasoning metadata from the catalog,
+        // and a catalog persisted before paygate published it would leave reasoning at the model's default.
+        Task { @MainActor in await refreshModels() }
         startForegroundPolling()
         // Paying happens in the browser; coming back to Yap is when the new balance should show
         // (Account, the Home card and the menu bar all read `me`).
@@ -697,30 +700,35 @@ final class YapCloud: ObservableObject {
         return nil
     }
 
-    /// The chat request, shaped for dictation latency like the app's OpenRouter path (OpenRouterRequestPolicy):
-    /// reasoning off (DeepSeek V4.1 Flash otherwise reasons at effort "high": 15–25 s on a paragraph instead of
-    /// ~1 s), providers required to honour that, sorted by throughput with a p90 latency target. paygate's
-    /// /v1/models has no reasoning metadata, so models that can't disable reasoning are learned from their 400.
+    /// The chat request, shaped for dictation latency from the model's `/v1/models` metadata (paygate
+    /// client-guide §4), so switching the enhancement model never ends in a 400 or a slow reasoning call:
+    /// - `reasoning` nil (or the model unknown): no reasoning parameters.
+    /// - not mandatory: `effort: "none"` (DeepSeek V4.1 Flash otherwise reasons at "high": 8 s instead of
+    ///   0.5 s on a 40 s dictation, docs/cloud-latency.md).
+    /// - mandatory: the lowest effort it lists.
+    /// Only parameters in `supported_parameters` are sent (gpt-5-mini refuses `temperature`). Providers are
+    /// sorted by throughput with a p90 target, and must honour every parameter sent.
     static func chatBody(
-        model: String, messages: [[String: String]], temperature: Double, reasoningOff: Bool, stream: Bool = false
+        model: String, metadata: YapCloudModel?, messages: [[String: String]], temperature: Double, stream: Bool = false
     ) -> [String: Any] {
+        let supported = Set(metadata?.supportedParameters ?? [])
+        var body: [String: Any] = ["model": model, "messages": messages, "stream": stream]
         var provider: [String: Any] = ["sort": "throughput", "preferred_max_latency": ["p90": 2.5], "allow_fallbacks": true]
-        var body: [String: Any] = ["model": model, "messages": messages, "temperature": temperature, "stream": stream]
-        if reasoningOff {
-            body["reasoning"] = ["enabled": false, "exclude": true]
-            provider["require_parameters"] = true
+        if supported.contains("temperature") { body["temperature"] = temperature }
+        if let effort = latencyEffort(metadata?.reasoning), supported.contains("reasoning") {
+            body["reasoning"] = ["effort": effort, "exclude": true]
         }
+        if !supported.isEmpty { provider["require_parameters"] = true }
         body["provider"] = provider
         return body
     }
 
-    private static let reasoningRequiredKey = "yapCloudReasoningRequiredModels"
-    private func reasoningRequired(_ model: String) -> Bool {
-        (defaults.stringArray(forKey: Self.reasoningRequiredKey) ?? []).contains(model)
-    }
-    private func rememberReasoningRequired(_ model: String) {
-        let models = Set(defaults.stringArray(forKey: Self.reasoningRequiredKey) ?? []).union([model])
-        defaults.set(models.sorted(), forKey: Self.reasoningRequiredKey)
+    /// The lowest reasoning effort a model allows: "none" unless reasoning is mandatory; nil = send nothing.
+    static func latencyEffort(_ reasoning: YapCloudModel.Reasoning?) -> String? {
+        guard let reasoning else { return nil }
+        guard reasoning.mandatory == true else { return "none" }
+        let order = ["minimal", "low", "medium", "high", "xhigh", "max"]
+        return (reasoning.supportedEfforts ?? []).compactMap { order.firstIndex(of: $0) }.min().map { order[$0] }
     }
 
     /// Chat completion through paygate, streamed (paygate answers a stream without first awaiting its ledger
@@ -728,26 +736,11 @@ final class YapCloud: ObservableObject {
     func chatCompletion(model: String, messages: [[String: String]], temperature: Double, timeout: TimeInterval)
         async throws -> String
     {
-        let reasoningOff = !reasoningRequired(model)
-        let data: Data
-        do {
-            data = try await proxy(
-                "/v1/chat/completions",
-                body: Self.chatBody(
-                    model: model, messages: messages, temperature: temperature, reasoningOff: reasoningOff, stream: true),
-                timeout: timeout)
-        } catch YapCloudError.server(400, _, let message, _, _)
-            where reasoningOff && message.localizedCaseInsensitiveContains("reasoning")
-        {
-            // This model can't run without reasoning ("Reasoning is mandatory…"). A 400 from OpenRouter is passed
-            // through unbilled, so remember the model and send it again without the setting.
-            rememberReasoningRequired(model)
-            data = try await proxy(
-                "/v1/chat/completions",
-                body: Self.chatBody(
-                    model: model, messages: messages, temperature: temperature, reasoningOff: false, stream: true),
-                timeout: timeout)
-        }
+        let metadata = models.first { $0.id == model }
+        let data = try await proxy(
+            "/v1/chat/completions",
+            body: Self.chatBody(model: model, metadata: metadata, messages: messages, temperature: temperature, stream: true),
+            timeout: timeout)
         struct Response: Decodable {
             struct Choice: Decodable {
                 struct Message: Decodable { let content: String? }
@@ -1560,11 +1553,31 @@ struct YapCloudModel: Codable, Hashable {
         }
     }
 
+    /// OpenRouter's reasoning metadata; nil fields = not published.
+    struct Reasoning: Codable, Hashable {
+        let mandatory: Bool?
+        let supportedEfforts: [String]?
+
+        enum CodingKeys: String, CodingKey {
+            case mandatory
+            case supportedEfforts = "supported_efforts"
+        }
+    }
+
     let id: String
     let name: String?
     let architecture: Architecture?
     /// USD per token (`prompt`, `completion`), per audio unit (`audio`), per call (`request`), already marked up.
     let pricing: [String: YapCloudScalar]?
+    /// Request parameters the model accepts (`temperature`, `reasoning`, …); nil when OpenRouter published none.
+    let supportedParameters: [String]?
+    /// nil = the model has no reasoning metadata: send no reasoning parameters.
+    let reasoning: Reasoning?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, architecture, pricing, reasoning
+        case supportedParameters = "supported_parameters"
+    }
 
     var displayName: String { name ?? id }
     var isTranscription: Bool { architecture?.outputModalities?.contains("transcription") == true }
@@ -1855,13 +1868,25 @@ struct YapCloudConfigDocument: Equatable {
             $generationCollector.withValue(collector) { generationCollector?.add("gen-a") }
             assert(collector.last == "gen-a" && generationCollector == nil)
 
-            // Chat request shape: reasoning off unless the model requires it; throughput-sorted providers
-            let fast = chatBody(model: "m", messages: [["role": "user", "content": "x"]], temperature: 0.3, reasoningOff: true)
-            assert((fast["reasoning"] as? [String: Bool]) == ["enabled": false, "exclude": true])
+            // Chat request shape from /v1/models metadata: off when optional, lowest effort when mandatory,
+            // nothing when unpublished; only listed parameters
+            func model(_ json: String) -> YapCloudModel { try! JSONDecoder().decode(YapCloudModel.self, from: Data(json.utf8)) }
+            let optional = model(#"{"id":"deepseek/deepseek-v4.1-flash","supported_parameters":["reasoning","temperature"],"reasoning":{"mandatory":false,"supported_efforts":["max","high","low"],"default_effort":"high"}}"#)
+            let fast = chatBody(model: optional.id, metadata: optional, messages: [], temperature: 0.3)
+            assert(fast["reasoning"] as? [String: AnyHashable] == ["effort": "none", "exclude": true])
+            assert(fast["temperature"] as? Double == 0.3 && fast["stream"] as? Bool == false)
             assert((fast["provider"] as? [String: Any])?["sort"] as? String == "throughput")
-            assert((fast["provider"] as? [String: Any])?["require_parameters"] as? Bool == true && fast["stream"] as? Bool == false)
-            let reasoning = chatBody(model: "m", messages: [], temperature: 0.3, reasoningOff: false)
-            assert(reasoning["reasoning"] == nil && (reasoning["provider"] as? [String: Any])?["require_parameters"] == nil)
+            assert((fast["provider"] as? [String: Any])?["require_parameters"] as? Bool == true)
+            let mandatory = model(#"{"id":"openai/gpt-5-mini","supported_parameters":["reasoning","max_tokens"],"reasoning":{"mandatory":true,"supported_efforts":["high","medium","low","minimal"],"default_effort":"medium"}}"#)
+            let lowest = chatBody(model: mandatory.id, metadata: mandatory, messages: [], temperature: 0.3, stream: true)
+            assert(lowest["reasoning"] as? [String: AnyHashable] == ["effort": "minimal", "exclude": true])
+            assert(lowest["temperature"] == nil && lowest["stream"] as? Bool == true)
+            assert(latencyEffort(.init(mandatory: true, supportedEfforts: nil)) == nil)
+            let plain = model(#"{"id":"deepseek/deepseek-chat-v3-0324","supported_parameters":["temperature"],"reasoning":null}"#)
+            assert(chatBody(model: plain.id, metadata: plain, messages: [], temperature: 0.3)["reasoning"] == nil)
+            let unknown = chatBody(model: "x/unknown", metadata: nil, messages: [], temperature: 0.3)
+            assert(unknown["reasoning"] == nil && unknown["temperature"] == nil)
+            assert((unknown["provider"] as? [String: Any])?["require_parameters"] == nil)
 
             // Chat SSE → the non-streamed body (text, generation id); a mid-stream error chunk throws
             var sse = SSEChat()

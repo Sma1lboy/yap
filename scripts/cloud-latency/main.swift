@@ -107,6 +107,9 @@ Task { @MainActor in
         print("account: \(accountEmail)")
         guard try await cloud.fetchMe().balanceMicros == 0 else { throw Failed(description: "new account must start at $0") }
         try adjust(email: accountEmail, micros: 50_000, note: "cloud-latency: fund", in: paygateDir)
+        await cloud.refreshModels()
+        let metadata = cloud.models.first { $0.id == enhancementModel }
+        print("enhancement body: \(YapCloud.chatBody(model: enhancementModel, metadata: metadata, messages: [], temperature: 0.3))")
 
         print("# \(label): \(runs) runs per clip, p50 / p95 in ms\n")
         print("| clip | audio | STT via Yap Cloud | STT direct | enhance via Yap Cloud | enhance direct | STT+enhance via Yap Cloud |")
@@ -143,7 +146,9 @@ Task { @MainActor in
                     }
                     _ = await timed("\(name) enhance direct", &chatDirect, &chatDirectFailed) {
                         // The same body the client sends (paygate only adds usage accounting).
-                        var body = YapCloud.chatBody(model: enhancementModel, messages: messages, temperature: 0.3, reasoningOff: true)
+                        var body = YapCloud.chatBody(
+                            model: enhancementModel, metadata: cloud.models.first { $0.id == enhancementModel }, messages: messages,
+                            temperature: 0.3)
                         body["usage"] = ["include": true]
                         return try await direct("/chat/completions", body: body)
                     }
