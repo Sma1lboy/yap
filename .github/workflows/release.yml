@@ -140,11 +140,24 @@ jobs:
           echo "$SIGN"
           echo "SPARKLE_SIGN=$SIGN" >> "$GITHUB_ENV"
 
+      # 发版说明：docs/releases/$VERSION.md 存在时，GitHub Release 用它（末尾加自签名说明），
+      # 并用 GitHub 的 Markdown 接口渲染成 HTML，下一步写进 appcast 的 <description>，Sparkle 更新弹窗里就能看到。
+      # 渲染失败会让这一步失败，此时还什么都没发布。
       - name: Publish release
         if: env.RELEASE == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" Yap.zip --title "Yap $VERSION" --notes "Self-signed (not notarized) build of Yap, a fork of VoiceInk (GPL-3.0). Install with Homebrew (brew install --cask) or setup/install.sh; existing installs update in-app via Sparkle."
+        run: |
+          FOOTER="Self-signed (not notarized) build of Yap, a fork of VoiceInk (GPL-3.0). Install with Homebrew (brew install --cask) or setup/install.sh; existing installs update in-app via Sparkle."
+          NOTES_MD="docs/releases/$VERSION.md"
+          if [ -f "$NOTES_MD" ]; then
+            gh api markdown -f mode=gfm -f context="$GITHUB_REPOSITORY" -F text=@"$NOTES_MD" > "$RUNNER_TEMP/notes.html"
+            { cat "$NOTES_MD"; printf '\n---\n\n%s\n' "$FOOTER"; } > "$RUNNER_TEMP/notes.md"
+          else
+            echo "::warning::$NOTES_MD not found; the release and the update dialog get no notes"
+            printf '%s\n' "$FOOTER" > "$RUNNER_TEMP/notes.md"
+          fi
+          gh release create "$GITHUB_REF_NAME" Yap.zip --title "Yap $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
 
       # appcast 和 Homebrew cask 同一个提交指到这个版本：app 内 Sparkle 更新，brew upgrade 也能更新
       - name: Bump appcast and cask
@@ -152,7 +165,9 @@ jobs:
         run: |
           SHA=$(shasum -a 256 Yap.zip | cut -d' ' -f1)
           git fetch origin main && git checkout main
-          python3 scripts/appcast.py appcast.xml "$VERSION" "$BUILD" "$SPARKLE_SIGN"
+          NOTES_HTML=""
+          [ -s "$RUNNER_TEMP/notes.html" ] && NOTES_HTML="$RUNNER_TEMP/notes.html"
+          python3 scripts/appcast.py appcast.xml "$VERSION" "$BUILD" "$SPARKLE_SIGN" ${NOTES_HTML:+"$NOTES_HTML"}
           sed -i '' -e "s/^  version \".*\"/  version \"$VERSION\"/" -e "s/^  sha256 .*/  sha256 \"$SHA\"/" Casks/yap.rb
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
