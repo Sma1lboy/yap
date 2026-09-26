@@ -2,7 +2,8 @@ import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Yap Cloud account: sign in, balance, add funds, recent charges.
+/// The Yap Cloud provider page: sign in, balance, add funds, charges, cap, devices, delete. Opened from
+/// Models > Cloud (Yap Cloud is one provider among several) and from balance prompts; not a sidebar entry.
 struct AccountView: View {
     @ObservedObject private var cloud = YapCloud.shared
     @EnvironmentObject private var transcriptionModelManager: TranscriptionModelManager
@@ -22,8 +23,20 @@ struct AccountView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            AppScreenHeader(title: "Account")
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                ModelManagementView.initialFilter = .cloud
+                MainWindowNavigation.shared.navigate(to: .models)
+            } label: {
+                Label("Models", systemImage: "chevron.left")
+                    .font(AppTheme.font(.footnote, .medium))
+                    .foregroundStyle(AppTheme.Text.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Back to Models")
+            .padding(.horizontal, AppTheme.Spacing.x6)
+            .padding(.top, AppTheme.Spacing.x4)
+            AppScreenHeader(title: "Yap Cloud")
             ScrollView {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.x6) {
                     if cloud.isUnreachable {
@@ -36,7 +49,7 @@ struct AccountView: View {
                     if cloud.isSignedIn {
                         SignedInSections()
                     } else {
-                        AccountSection("Yap Cloud") {
+                        AccountSection("Sign In") {
                             Text("Pay as you go: one balance covers transcription and enhancement, no API keys to manage.")
                                 .foregroundStyle(AppTheme.Text.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -405,7 +418,7 @@ private struct SignedInSections: View {
         }
     }
 
-    /// "At this month's pace …" and when the balance was last updated.
+    /// "At this month's pace …" and, on the next line, when the balance was last updated.
     private var balanceNote: String? {
         var parts: [String] = []
         if let runway = balanceRunway {
@@ -425,7 +438,8 @@ private struct SignedInSections: View {
             parts.append(
                 String(format: String(localized: "Last updated %@"), updatedAt.formatted(date: .omitted, time: .shortened)))
         }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        // One line each: the runway is a sentence and ends in its own punctuation.
+        return parts.isEmpty ? nil : parts.joined(separator: "\n")
     }
 
     /// Sign-out (not destructive: nothing is lost) and account deletion, at the bottom.

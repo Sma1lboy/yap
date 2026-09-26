@@ -6097,7 +6097,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按本月用量(约每月 %1$@),余额大约还能用 %2$lld 天。"
+            "value" : "按本月用量（约每月 %1$@），余额大约还能用 %2$lld 天。"
           }
         }
       }
@@ -6119,7 +6119,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按本月用量(约每月 %@),余额不够用一天。"
+            "value" : "按本月用量（约每月 %@），余额不够用一天。"
           }
         }
       }
@@ -6141,7 +6141,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按本月用量(约每月 %@),余额够用一年以上。"
+            "value" : "按本月用量（约每月 %@），余额够用一年以上。"
           }
         }
       }
@@ -6821,6 +6821,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "返回"
+          }
+        }
+      }
+    },
+    "Back to Models" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurück zu Modellen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retour aux modèles"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回模型"
           }
         }
       }
@@ -20270,6 +20292,28 @@
         }
       }
     },
+    "Opens the Yap Cloud page" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnet die Yap-Cloud-Seite"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvre la page Yap Cloud"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开 Yap Cloud 页面"
+          }
+        }
+      }
+    },
     "Optimizing model for your device" : {
       "localizations" : {
         "de" : {
@@ -21718,6 +21762,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已超出速率限制。请稍后重试。"
+          }
+        }
+      }
+    },
+    "Rather not get an API key yourself?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keinen eigenen API-Schlüssel besorgen?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas envie d'obtenir votre propre clé API ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不想自己申请 API key？"
           }
         }
       }
@@ -23659,6 +23725,28 @@
         }
       }
     },
+    "Run NVIDIA's Parakeet model on this Mac, use your own OpenRouter or other provider key, or Yap Cloud if you'd rather not get a key." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Führe NVIDIAs Parakeet-Modell auf diesem Mac aus, nutze deinen eigenen OpenRouter- oder anderen Anbieter-Schlüssel, oder Yap Cloud, wenn du keinen Schlüssel besorgen möchtest."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exécutez le modèle Parakeet de NVIDIA sur ce Mac, utilisez votre propre clé OpenRouter ou d'un autre fournisseur, ou Yap Cloud si vous préférez ne pas obtenir de clé."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在这台 Mac 上运行 NVIDIA 的 Parakeet 模型，用你自己的 OpenRouter 或其他提供商的 key；不想申请 key 的话，也可以用 Yap Cloud。"
+          }
+        }
+      }
+    },
     "Runs locally with your user permissions. The final transcript is sent on stdin and exposed as YAP_TRANSCRIPT." : {
       "localizations" : {
         "de" : {
@@ -23677,28 +23765,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "以你的用户权限在本地运行。最终转写文本通过 stdin 传入，并以 YAP_TRANSCRIPT 形式提供。"
-          }
-        }
-      }
-    },
-    "Same models as Your OpenRouter Key, no API key: sign in with your email and pay from a balance." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dieselben Modelle wie bei „Eigener OpenRouter-Schlüssel“, ohne API-Schlüssel: Melde dich mit deiner E-Mail an und bezahle aus einem Guthaben."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Les mêmes modèles que « Votre clé OpenRouter », sans clé API : connectez-vous avec votre e-mail et payez depuis un solde."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "模型和「自带 OpenRouter Key」一样，但不需要 API key：用邮箱登录，从余额里扣费。"
           }
         }
       }
@@ -29645,6 +29711,28 @@
         }
       }
     },
+    "Transcription and enhancement with no API key; pay as you go" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkription und Verbesserung ohne API-Schlüssel, Abrechnung nach Verbrauch"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcription et amélioration sans clé API, paiement à l'usage"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写和润色，不需要 API key，按用量付费"
+          }
+        }
+      }
+    },
     "Transcription failed using SpeechAnalyzer." : {
       "localizations" : {
         "de" : {
@@ -30334,50 +30422,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "使用系统模板"
-          }
-        }
-      }
-    },
-    "Use Yap Cloud (pay as you go)" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap Cloud verwenden (nutzungsbasiert)"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Utiliser Yap Cloud (paiement à l'usage)"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "使用 Yap Cloud（按量付费）"
-          }
-        }
-      }
-    },
-    "Use Yap Cloud with no API key, your own OpenRouter key, another provider's key, or NVIDIA's Parakeet model on this Mac." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nutze Yap Cloud ohne API-Schlüssel, deinen eigenen OpenRouter-Schlüssel, den Schlüssel eines anderen Anbieters oder NVIDIAs Parakeet-Modell auf diesem Mac."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Utilisez Yap Cloud sans clé API, votre propre clé OpenRouter, la clé d’un autre fournisseur, ou le modèle Parakeet de NVIDIA sur ce Mac."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "使用无需 API 密钥的 Yap Cloud、你自己的 OpenRouter key、其他提供商的 key，或在这台 Mac 上运行 NVIDIA 的 Parakeet 模型。"
           }
         }
       }
@@ -31726,28 +31770,6 @@
         }
       }
     },
-    "Yap Cloud balance: %@" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap-Cloud-Guthaben: %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Solde Yap Cloud : %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yap Cloud 余额:%@"
-          }
-        }
-      }
-    },
     "Yap Cloud has no transcription models available right now." : {
       "localizations" : {
         "de" : {
@@ -31832,6 +31854,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap Cloud 暂时无法使用，请稍后再试。（%@）"
+          }
+        }
+      }
+    },
+    "Yap Cloud runs the same models without one: sign in with your email and pay as you go." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud nutzt dieselben Modelle ohne Schlüssel: Mit deiner E-Mail anmelden und nach Verbrauch zahlen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud utilise les mêmes modèles sans clé : connectez-vous avec votre e-mail et payez à l'usage."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以用 Yap Cloud，模型一样：用邮箱登录，按用量付费。"
           }
         }
       }

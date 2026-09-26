@@ -25,7 +25,7 @@ struct CloudProviderManagementView: View {
             )
         }
 
-        // Yap Cloud has no key to paste; it is managed from Account.
+        // Yap Cloud has no key to paste: its row (YapCloudProviderRow) opens its own page.
         for cloudProvider in CloudProviderRegistry.allProviders where cloudProvider.modelProvider != .yapCloud {
             let alreadyIncluded = descriptors.contains {
                 $0.providerKey.caseInsensitiveCompare(cloudProvider.providerKey) == .orderedSame
@@ -64,6 +64,8 @@ struct CloudProviderManagementView: View {
                     .foregroundStyle(.secondary)
                     .font(AppTheme.font(.caption))
             }
+
+            YapCloudProviderRow()
 
             ForEach(providerDescriptors) { descriptor in
                 ProviderListRow(
@@ -274,4 +276,56 @@ private struct ProviderListRow: View {
         .background(ProviderSurface(isActive: isSelected, cornerRadius: AppTheme.Radius.control))
     }
 
+}
+
+/// Yap Cloud in the provider list, next to the others. It has an account instead of a key, so the row opens the
+/// Yap Cloud page (sign in, add funds, charges, devices) instead of the key panel. No balance here: it shows on
+/// that page and in low-balance prompts only.
+private struct YapCloudProviderRow: View {
+    @ObservedObject private var cloud = YapCloud.shared
+
+    private var descriptor: ProviderDescriptor {
+        ProviderDescriptor(
+            displayName: "Yap Cloud",
+            providerKey: YapCloud.providerName,
+            aiProvider: .yapCloud,
+            cloudProvider: CloudProviderRegistry.allProviders.first { $0.modelProvider == .yapCloud }
+        )
+    }
+
+    var body: some View {
+        Button {
+            MainWindowNavigation.shared.navigate(to: .account)
+        } label: {
+            HStack(spacing: AppTheme.Spacing.x3) {
+                ProviderBrandIcon(
+                    descriptor: descriptor, fallbackSystemImage: "cloud.fill", isSelected: false, size: 28, iconSize: 15)
+
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
+                    Text(verbatim: "Yap Cloud")
+                        .font(AppTheme.font(.body, .semibold))
+                        .foregroundStyle(.primary)
+                    Text("Transcription and enhancement with no API key; pay as you go")
+                        .font(AppTheme.font(.caption))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                ProviderStatusBadge(
+                    title: cloud.isSignedIn ? "Connected" : "Not connected",
+                    color: cloud.isSignedIn ? AppTheme.Status.positive : .secondary)
+
+                Image(systemName: "chevron.right")
+                    .font(AppTheme.font(.footnote, .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .contentShape(Rectangle())
+            .padding(AppTheme.Spacing.x4)
+        }
+        .buttonStyle(.plain)
+        .background(ProviderSurface(isActive: false, cornerRadius: AppTheme.Radius.control))
+        .accessibilityHint("Opens the Yap Cloud page")
+    }
 }

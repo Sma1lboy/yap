@@ -36,6 +36,8 @@ GROUPS = [
     ("zh", "中文界面"),
     ("site", "官网"),
     ("web", "paygate 页面、邮件和 dashboard（design/web）"),
+    ("og", "分享预览（og:image，1200×630）"),
+    ("screenshot", "发版截图（design/screenshots）"),
 ]
 
 STYLE = """
@@ -76,7 +78,7 @@ def shots():
 
 def group_of(base):
     group = base.split("-")[0]
-    return "zh" if base.endswith("-zh") and group not in ("site", "web") else group
+    return "zh" if base.endswith("-zh") and group not in ("site", "web", "screenshot") else group
 
 
 def jpeg(path, tmp):

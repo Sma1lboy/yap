@@ -17,7 +17,7 @@ if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     exit 2
 fi
 cd "$(dirname "$0")/.."
-BASE="${YAP_CLOUD_SMOKE_URL:-https://paygate-production-2502.up.railway.app}"
+BASE="${YAP_CLOUD_SMOKE_URL:-https://cloud.yap.sma1lboy.me}"
 RAILWAY_PROJECT="${PAYGATE_RAILWAY_PROJECT:-8651e3c3-6d6c-4d56-a8e8-df9d89ed3f34}"  # paygate-yap
 SMOKE_EMAIL="smoke+yap@sma1lboy.me"
 LOGS="$(pwd)/.local-build/preflight-logs"
@@ -127,8 +127,10 @@ checks = [
     ("notes: monthly cap", f"$0 to ${cap:,}" in notes and f"$0 到 ${cap:,}" in notes, f"'$0 to ${cap:,}' (app limit)"),
     ("README: markup", f"plus {pct}" in readme and f"加 {pct}" in readme_zh, f"'plus {pct}' / '加 {pct}'"),
     ("README: sign-up credit", f"{credit} of credit" in readme and f"{credit} 的额度" in readme_zh, f"'{credit} of credit'"),
-    ("site: credit and markup", (not site) or (f">{credit} <small" in site and f"plus {pct}" in site and f"加 {pct}" in site),
-     f"{credit}, {pct}" if site else "no site/index.html"),
+    ("site: credit, markup, top-up", (not site) or (
+        re.search(r'class="price">' + re.escape(credit) + r'(\D|$)', site) is not None
+        and f"plus {pct}" in site and f"加 {pct}" in site and f"{lo} to {hi}" in site and f"{lo}–{hi}" in site),
+     f"price {credit}, 'plus {pct}', '{lo} to {hi}'" if site else "no site/index.html"),
 ]
 bad = [(n, want) for n, ok, want in checks if not ok]
 for n, ok, want in checks:

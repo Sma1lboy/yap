@@ -6,16 +6,19 @@
 
 <p align="center">按住快捷键说话，中英混着说也行，松开就是整理好的文字。</p>
 
-Yap is a fork of [VoiceInk](https://github.com/Beingpax/VoiceInk) by Prakash Joshi Pax, distributed under the same GPL-3.0 license. All credit for the app goes to the original author — if you want the official, notarized, auto-updating build, [buy VoiceInk](https://tryvoiceink.com/).
+<p align="center"><img src="design/screenshots/home-en.png" width="720" alt="Yap's Home: this week's dictation stats and today's transcripts, mixing English and Chinese"></p>
 
-What this fork changes:
+Yap is an open-source dictation app for macOS, released under the GPL-3.0. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up the filler and punctuation, and pastes the text into whatever app you're in. Modes pick a different prompt or model per app (email, code review, chat), and a dictionary keeps names and terms spelled your way.
 
-- Its own identity: app name, bundle ID `me.sma1lboy.yap`, Application Support folder and keychain namespace, so it installs next to VoiceInk without sharing data. Upstream announcements, GitHub-star prompts, the Pro/licensing screen and the upstream change log are gone.
-- A calmer UI: monochrome sidebar, a Home screen that shows the default mode and recent transcripts, SF Symbols instead of emoji.
-- Onboarding lets you skip the transcription and AI provider steps ("Set It Up Later") and configure everything from a JSON file instead.
-- Its own update channel: CI signs every release with a stable self-signed certificate, publishes it, and updates both the Sparkle appcast (in-app updates) and the Homebrew cask.
-- A duck icon (`design/logo.svg`).
-- `setup/`: a tuned setup for Chinese–English code-switched dictation through OpenRouter, plus the benchmark scripts used to pick the models.
+Yap is a fork of [VoiceInk](https://github.com/Beingpax/VoiceInk) by Prakash Joshi Pax. All credit for the app goes to the original author — if you want the official, notarized build, [buy VoiceInk](https://tryvoiceink.com/). Website: [yap.sma1lboy.me](https://yap.sma1lboy.me).
+
+## Choosing where your voice goes
+
+Pick one during setup and change it any time, per mode if you like:
+
+- **Local model**: NVIDIA's Parakeet, Whisper and others run on your Mac, fully offline. Cleanup can run locally too (Yap Refine, Ollama). Models → Local.
+- **Your own key**: OpenRouter or any other provider you already use; requests go straight to it, and the key stays in this Mac's keychain. The default OpenRouter setup is tuned for mixed Chinese–English speech (see `setup/`). Models → Cloud.
+- **Yap Cloud**: if you'd rather not get a key, sign in with your email and pay as you go. See [Yap Cloud](#yap-cloud).
 
 ## Install
 
@@ -28,20 +31,31 @@ The script installs the app with Homebrew (or downloads the latest release), cop
 
 Just the app: `brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew install --cask sma1lboy/yap/yap`. After that, Yap updates itself (Check for Updates… in the app menu) or with `brew upgrade --cask yap`.
 
+**Build it yourself.** With Xcode installed, `make local` in the cloned repository builds Yap and copies `Yap.app` to your Downloads folder. Releases are signed with a self-signed certificate and not notarized; the [site's FAQ](https://yap.sma1lboy.me/#faq) explains the one-time "can't verify the developer" step for a downloaded zip.
+
+## How Yap differs from VoiceInk
+
+- Its own identity: app name, bundle ID `me.sma1lboy.yap`, Application Support folder and keychain namespace, so it installs next to VoiceInk without sharing data. Upstream announcements, GitHub-star prompts, the Pro/licensing screen and the upstream change log are gone.
+- A calmer UI: monochrome sidebar, a Home screen that shows the default mode and recent transcripts, SF Symbols instead of emoji.
+- Onboarding lets you skip the transcription and AI provider steps ("Set It Up Later") and configure everything from a JSON file instead.
+- Its own update channel: CI signs every release with a stable self-signed certificate, publishes it, and updates both the Sparkle appcast (in-app updates) and the Homebrew cask.
+- A duck icon (`design/logo.svg`).
+- `setup/`: a tuned setup for Chinese–English code-switched dictation through OpenRouter, plus the benchmark scripts used to pick the models.
+
 ## Yap Cloud
 
-Yap Cloud is an optional account that pays for transcription and cleanup from a prepaid balance, so you don't need API keys from OpenRouter or other providers. It uses the same models as the "Your OpenRouter Key" setup.
+Yap Cloud is one of the three ways to run Yap: an optional account that pays for transcription and cleanup from a prepaid balance, for people who'd rather not get API keys from OpenRouter or other providers. It uses the same models as the "Your OpenRouter Key" setup. Everything below is on the Yap Cloud page: **Models → Cloud → Yap Cloud**.
 
-**Sign up / sign in.** Open **Account** in the sidebar, enter your email, then the 6-digit code sent to it. There is no password. A new account gets $1 of credit, listed under **Recent Activity** as "Sign-up bonus". During onboarding you can pick **Use Yap Cloud (pay as you go)** on the model step instead.
+**Sign up / sign in.** On the Yap Cloud page, enter your email, then the 6-digit code sent to it. There is no password. A new account gets $1 of credit, listed under **Recent Activity** as "Sign-up bonus". During onboarding you can pick the **Yap Cloud** tab on the model step instead.
 
 <!-- 10% = paygate MARKUP; update here, README.zh-CN.md and site/index.html when it changes. -->
-**What it costs.** Each transcription or cleanup request is charged the model provider's price plus 10%. **Account → Models & Pricing** lists the models; **This Month** shows what you spent this month and on which models, and **Recent Activity** lists every charge and top-up.
+**What it costs.** Each transcription or cleanup request is charged the model provider's price plus 10%. **Models & Pricing** lists the models; **This Month** shows what you spent this month and on which models, and **Recent Activity** lists every charge and top-up.
 
-**Adding funds.** In **Account → Add Funds**, pick $5, $10 or $20, or Custom (a whole-dollar amount from $5 to $500), and click **Add Funds…**. Checkout opens in your browser; the balance updates when you come back to Yap. Below $1 Yap shows a low-balance warning; when the balance runs out, Yap Cloud requests stop and a notification takes you to Account.
+**Adding funds.** In **Add Funds**, pick $5, $10 or $20, or Custom (a whole-dollar amount from $5 to $500), and click **Add Funds…**. Checkout opens in your browser; the balance updates when you come back to Yap. Below $1 Yap shows a low-balance warning; when the balance runs out, Yap Cloud requests stop and a notification takes you to the Yap Cloud page. The balance itself is only shown on that page and in these warnings.
 
-**Monthly cap.** **Account → Monthly Cap** limits spending per calendar month: pick $5, $10, $20, a custom amount up to $10,000, or No Cap. Once this month's spending reaches the cap, Yap Cloud stops charging until next month or until you raise the cap. A cap of $0 blocks all Yap Cloud calls.
+**Monthly cap.** **Monthly Cap** limits spending per calendar month: pick $5, $10, $20, a custom amount up to $10,000, or No Cap. Once this month's spending reaches the cap, Yap Cloud stops charging until next month or until you raise the cap. A cap of $0 blocks all Yap Cloud calls.
 
-**Devices.** Every Mac you sign in on gets its own token (kept in that Mac's keychain, never synced). **Account → Signed-in Devices** lists them with when each was last used; **Remove** signs that Mac out so it stops charging your balance. It can sign in again with your email. **Sign Out** on the Account page signs out this Mac; modes that use Yap Cloud stop working until you sign in again or switch them to another provider.
+**Devices.** Every Mac you sign in on gets its own token (kept in that Mac's keychain, never synced). **Signed-in Devices** lists them with when each was last used; **Sign Out** next to another Mac signs it out so it stops charging your balance. It can sign in again with your email. **Sign Out** under **Account** at the bottom of the page signs out this Mac; modes that use Yap Cloud stop working until you sign in again or switch them to another provider.
 
 ## Config & Sync
 
