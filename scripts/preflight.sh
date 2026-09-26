@@ -17,7 +17,7 @@ if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     exit 2
 fi
 cd "$(dirname "$0")/.."
-BASE="${YAP_CLOUD_SMOKE_URL:-https://paygate-production-2502.up.railway.app}"
+BASE="${YAP_CLOUD_SMOKE_URL:-https://cloud.yap.sma1lboy.me}"
 RAILWAY_PROJECT="${PAYGATE_RAILWAY_PROJECT:-8651e3c3-6d6c-4d56-a8e8-df9d89ed3f34}"  # paygate-yap
 SMOKE_EMAIL="smoke+yap@sma1lboy.me"
 LOGS="$(pwd)/.local-build/preflight-logs"
