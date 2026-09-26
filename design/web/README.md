@@ -19,3 +19,17 @@ Yap 网页和邮件的设计稿，都是可以直接用的静态 HTML/CSS。颜�
 - **占位符**用 `{{名字}}` 标出，每个文件开头的注释写了有哪些、从哪来。插进去的值照旧要 `escape()`。
 - **邮件**：现在 `mail.ts` 只发 `text`。改成同时发 `html` 和 `text`，现有的纯文本内容留作 text 部分。邮件里的十六进制颜色只能取 `docs/DESIGN.md` 浅色那一列，`make design-check` 会检查。
 - **改 token**：改 `docs/DESIGN.md`，跑 `make design-tokens`，再把新的 `tokens.css` 拷过去。不要在 paygate 里改颜色值。
+
+## Stripe 付款页的品牌设置
+
+Stripe 付款页（Checkout）上我们能改的只有下面几项，页面结构和深浅色由 Stripe 决定。
+
+| 设置 | 值 | 理由 |
+|---|---|---|
+| Icon | `design/web/stripe-icon.png`（512×512 PNG） | `design/logo.svg` 去掉圆角和阴影后铺满正方形：Stripe 会自己加圆角或裁成圆形，自带圆角的图再被裁一次会在四角露出底色。 |
+| Brand color | `#FFD84D` | `color.accent` 的浅色值（鸭子头）。Stripe 用它画付款按钮，这个按钮就是页面上唯一的主按钮，和 app、官网里黄色主按钮的用法一致。 |
+| Accent color | `#26262B` | `color.surface` 的深色值，和图标底座同一色系。Stripe 用它当商家信息那一栏的背景：深石墨底配黄色鸭子图标，和 app 图标一样。 |
+| Logo | 不设 | 没有横版 logo。Stripe 会显示 Icon 加商家名（“Yap Cloud”）。 |
+| Font / 圆角 | 保持默认 | 可选字体里没有 SF，选别的只会和 app 不一样；默认圆角最接近 DESIGN.md 的 6px 输入框圆角。 |
+
+用 API 设置时，上面对应 `Account.settings.branding`：`icon` 是上传 `stripe-icon.png` 后得到的 File id（上传时 `purpose=business_icon`），`primary_color` 是 Brand color，`secondary_color` 是 Accent color。设好后请在测试模式下打开一次付款页，确认付款按钮上的字是深色：Stripe 会根据按钮颜色自动选文字颜色，黄底应该配深色字。
