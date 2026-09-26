@@ -39,10 +39,10 @@ final class YapCloud: ObservableObject {
     @Published private(set) var me: YapCloudMe? {
         didSet {
             balanceUpdatedAt = me == nil ? nil : Date()
-            // Every /v1/me path lands here: a higher balance that isn't our own pending top-up may be a grant
-            // or adjustment made from paygate's side (admin dashboard, scripts/adjust.ts).
+            // Every /v1/me path lands here: a higher balance that isn't our own pending top-up may be an
+            // adjustment made on paygate's side (admin dashboard, scripts/adjust.ts).
             if let old = oldValue?.balanceMicros, let new = me?.balanceMicros, new > old, pendingTopUp == nil {
-                Task { @MainActor in await announceNewGrants() }
+                Task { @MainActor in await announceNewAdjustments() }
             }
         }
     }
@@ -377,7 +377,7 @@ final class YapCloud: ObservableObject {
             me = try await fetchMe()
             settlePendingTopUp()
             ledger = try await fetchLedger()
-            seedGrantMarkIfNeeded(from: ledger ?? [])
+            seedAdjustmentMarkIfNeeded(from: ledger ?? [])
             monthlySpend = try await fetchUsage()
             accountRefreshError = nil
             await evaluateTrialNudge()
@@ -661,7 +661,7 @@ final class YapCloud: ObservableObject {
 
     // MARK: - Balance changes from paygate's side
 
-    /// While Yap is frontmost and signed in, refetch /v1/me every 5 minutes so an admin grant or adjustment shows up
+    /// While Yap is frontmost and signed in, refetch /v1/me every 5 minutes so an admin adjustment shows up
     /// without a relaunch. Failures back off (doubling, at most 30 min) without any UI; success resets the pace.
     private func startForegroundPolling() {
         Task { @MainActor [weak self] in
@@ -683,43 +683,43 @@ final class YapCloud: ObservableObject {
         }
     }
 
-    private func grantMarkKey() -> String? { me.map { "yapCloudAnnouncedLedgerThrough." + $0.id.string } }
+    private func adjustmentMarkKey() -> String? { me.map { "yapCloudAnnouncedLedgerThrough." + $0.id.string } }
 
     /// The first ledger this Mac sees for an account only sets the mark: rows that already existed are not news.
     @MainActor
-    private func seedGrantMarkIfNeeded(from rows: [YapCloudLedgerEntry]) {
-        guard let key = grantMarkKey(), defaults.object(forKey: key) == nil else { return }
+    private func seedAdjustmentMarkIfNeeded(from rows: [YapCloudLedgerEntry]) {
+        guard let key = adjustmentMarkKey(), defaults.object(forKey: key) == nil else { return }
         defaults.set(rows.compactMap { Int64($0.id.string) }.max() ?? 0, forKey: key)
     }
 
-    /// Fetches the newest rows and announces each new positive grant/credit/adjust row once (ledger ids only grow,
+    /// Fetches the newest rows and announces each new positive adjust row once (ledger ids only grow,
     /// so a high-water mark per account dedupes across refreshes and launches).
     @MainActor
-    func announceNewGrants() async {
-        guard let key = grantMarkKey(), let rows = try? await fetchLedger(limit: 10) else { return }
+    func announceNewAdjustments() async {
+        guard let key = adjustmentMarkKey(), let rows = try? await fetchLedger(limit: 10) else { return }
         guard defaults.object(forKey: key) != nil else {
-            seedGrantMarkIfNeeded(from: rows)
+            seedAdjustmentMarkIfNeeded(from: rows)
             return
         }
         let mark = Int64(defaults.integer(forKey: key))
-        let fresh = Self.newGrants(in: rows, after: mark)
+        let fresh = Self.newAdjustments(in: rows, after: mark)
         defaults.set(max(mark, rows.compactMap { Int64($0.id.string) }.max() ?? mark), forKey: key)
-        for row in fresh { Self.showCredited(Self.grantMessage(row)) }
+        for row in fresh { Self.showCredited(Self.adjustmentMessage(row)) }
     }
 
-    /// Rows after `mark` that added money without a payment: grants, credits and positive adjustments, oldest first.
-    static func newGrants(in rows: [YapCloudLedgerEntry], after mark: Int64) -> [YapCloudLedgerEntry] {
+    /// Positive adjust rows after `mark` (money added on paygate's side), oldest first. The sign-up credit has its own toast.
+    static func newAdjustments(in rows: [YapCloudLedgerEntry], after mark: Int64) -> [YapCloudLedgerEntry] {
         rows.filter { row in
             guard let id = Int64(row.id.string), id > mark, row.amountMicros > 0 else { return false }
-            return ["grant", "credit", "adjust"].contains(row.kind)
+            return row.kind == "adjust"
         }
         .sorted { (Int64($0.id.string) ?? 0) < (Int64($1.id.string) ?? 0) }
     }
 
-    /// "Received $5.00 (Gift from Yap: welcome back)" / "Balance adjusted: +$5.00 (refund)".
-    static func grantMessage(_ row: YapCloudLedgerEntry) -> String {
+    /// "Received $5.00 (Balance adjustment: <reason>)".
+    static func adjustmentMessage(_ row: YapCloudLedgerEntry) -> String {
         let amount = formatUSD(micros: row.amountMicros)
-        let label = row.kind == "adjust" ? String(localized: "Balance adjustment") : String(localized: "Gift from Yap")
+        let label = String(localized: "Balance adjustment")
         let detail = row.reason.map { label + ": " + $0 } ?? label
         return String(format: String(localized: "Received %@ (%@)"), amount, detail)
     }
@@ -1300,7 +1300,7 @@ struct YapCloudLedgerEntry: Decodable, Identifiable {
         let note: String?
     }
 
-    /// The operator's reason on a grant/adjustment row, if any.
+    /// The operator's reason on an adjust row, if any.
     var reason: String? {
         [meta?.reason, meta?.note].compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }.first { !$0.isEmpty }
     }
@@ -1619,21 +1619,23 @@ struct YapCloudConfigDocument: Equatable {
             assert(formatExactUSD(micros: 100) == "$0.0001" && formatExactUSD(micros: 5_000_000) == "$5.00")
             assert(formatExactUSD(micros: 1_234_567) == "$1.234567" && formatExactUSD(micros: 0) == "$0.00")
 
-            // Grants/adjustments made on paygate's side: new positive rows after the mark, oldest first, once each
-            let grantRows = try! JSONDecoder().decode(
+            // Adjustments made on paygate's side: new positive adjust rows after the mark, oldest first, once each.
+            // Dashboard rows carry meta {by, githubId, githubLogin, reason}; scripts/adjust.ts writes {by, note}.
+            let adjustRows = try! JSONDecoder().decode(
                 YapCloudLedger.self,
                 from: json(#"""
                     {"entries":[
-                     {"id":"44","kind":"usage","amountMicros":-31,"createdAt":"2026-09-26T10:03:00Z","meta":{"cost":"0.00002"}},
-                     {"id":"43","kind":"adjust","amountMicros":10000,"createdAt":"2026-09-26T10:02:00Z","meta":{"note":"cloud-smoke grant check","by":"scripts/adjust.ts"}},
-                     {"id":"42","kind":"grant","amountMicros":5000000,"createdAt":"2026-09-26T10:01:00Z","meta":{"reason":"welcome back"}},
-                     {"id":"41","kind":"adjust","amountMicros":-5000,"createdAt":"2026-09-26T10:00:00Z","meta":{"note":"correction"}},
+                     {"id":"45","kind":"usage","amountMicros":-31,"createdAt":"2026-09-26T10:03:00Z","meta":{"cost":"0.00002"}},
+                     {"id":"44","kind":"adjust","amountMicros":10000,"createdAt":"2026-09-26T10:02:00Z","meta":{"note":"cloud-smoke check","by":"scripts/adjust.ts"}},
+                     {"id":"43","kind":"adjust","amountMicros":5000000,"createdAt":"2026-09-26T10:01:00Z","meta":{"by":"dashboard","githubId":1,"githubLogin":"sma1lboy","reason":"welcome back"}},
+                     {"id":"42","kind":"credit","amountMicros":1000000,"createdAt":"2026-09-26T10:00:30Z","meta":{"reason":"signup"}},
+                     {"id":"41","kind":"adjust","amountMicros":-5000,"createdAt":"2026-09-26T10:00:00Z","meta":{"by":"dashboard","reason":"correction"}},
                      {"id":"40","kind":"topup","amountMicros":5000000,"createdAt":"2026-09-26T09:00:00Z"}]}
                     """#)).entries
-            assert(newGrants(in: grantRows, after: 40).map(\.id.string) == ["42", "43"])
-            assert(newGrants(in: grantRows, after: 43).isEmpty && newGrants(in: grantRows, after: 42).map(\.id.string) == ["43"])
-            assert(grantRows[2].reason == "welcome back" && grantRows[1].reason == "cloud-smoke grant check" && grantRows[0].reason == nil)
-            assert(grantMessage(grantRows[2]).contains("$5.00") && grantMessage(grantRows[2]).contains("welcome back"))
+            assert(newAdjustments(in: adjustRows, after: 40).map(\.id.string) == ["43", "44"])  // not credit, topup, usage, or negative
+            assert(newAdjustments(in: adjustRows, after: 44).isEmpty && newAdjustments(in: adjustRows, after: 43).map(\.id.string) == ["44"])
+            assert(adjustRows[2].reason == "welcome back" && adjustRows[1].reason == "cloud-smoke check" && adjustRows[0].reason == nil)
+            assert(adjustmentMessage(adjustRows[2]).contains("$5.00") && adjustmentMessage(adjustRows[2]).contains("welcome back"))
 
             // Ledger export
             assert(decimalUSD(micros: -48) == "-0.000048" && decimalUSD(micros: 10_000_000) == "10.000000")
