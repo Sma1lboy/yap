@@ -29,7 +29,7 @@ enum AppNotificationView { enum NotificationType { case error, warning, info, su
     static let shared = NotificationManager()
     private(set) var lastTitle: String?
     private(set) var lastAction: String?
-    /// Every title shown, in order (the grant check counts them).
+    /// Every title shown, in order (the adjustment check counts them).
     private(set) var titles: [String] = []
     func showNotification(
         title: String, type: AppNotificationView.NotificationType, duration: TimeInterval = 3,

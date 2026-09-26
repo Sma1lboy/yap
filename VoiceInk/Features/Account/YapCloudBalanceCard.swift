@@ -6,7 +6,7 @@ struct YapCloudBalanceCard: View {
 
     var body: some View {
         card
-            // Opening Home refreshes the balance (debounced), so grants made elsewhere show up here too.
+            // Opening Home refreshes the balance (debounced), so admin adjustments show up here too.
             .task { cloud.scheduleBalanceRefresh() }
     }
 
