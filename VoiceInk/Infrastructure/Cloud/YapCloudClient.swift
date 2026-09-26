@@ -520,9 +520,7 @@ final class YapCloud: ObservableObject {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = payload
-        // Ephemeral session: avoids HTTP/3 uploads that stall behind some VPNs (same as custom endpoints).
-        let session = URLSession(configuration: .ephemeral)
-        defer { session.finishTasksAndInvalidate() }
+        let session = Self.session
         guard stream else {
             let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
@@ -1080,6 +1078,21 @@ final class YapCloud: ObservableObject {
 
     // MARK: - HTTP
 
+    /// Every paygate request goes through this one session, so a dictation's calls reuse a warm connection
+    /// (a new one costs ~40 ms of TCP + TLS, docs/cloud-latency.md). Ephemeral: nothing written to disk.
+    /// ponytail: custom endpoints use a session per call because a shared one learns Alt-Svc and moves uploads
+    /// to HTTP/3, which stalls behind some VPNs; paygate (Railway) sends no Alt-Svc, so this stays on HTTP/2.
+    /// If it ever advertises h3, go back to a session per upload.
+    private static let session = URLSession(configuration: .ephemeral)
+
+    /// Opens that connection while the user is still speaking, so the transcription upload doesn't wait for a
+    /// handshake. App activation needs no call of its own: it refreshes the account through the same session.
+    func prewarm() {
+        var request = URLRequest(url: URL(string: "/healthz", relativeTo: baseURL)!, timeoutInterval: 10)
+        request.httpMethod = "HEAD"
+        Task { _ = try? await Self.session.data(for: request) }
+    }
+
     private func send(
         _ method: String, _ path: String, json: [String: Any]? = nil, authenticated: Bool = true
     ) async throws -> Data {
@@ -1107,7 +1120,7 @@ final class YapCloud: ObservableObject {
         for (name, value) in headers { request.setValue(value, forHTTPHeaderField: name) }
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await Self.session.data(for: request)
             guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
             guard (200..<300).contains(http.statusCode) else {
                 throw YapCloudError(status: http.statusCode, body: data, authenticated: authenticated)
@@ -1163,7 +1176,7 @@ final class YapCloud: ObservableObject {
     func isHealthy() async -> Bool {
         var request = URLRequest(url: URL(string: "/healthz", relativeTo: baseURL)!, timeoutInterval: 10)
         request.cachePolicy = .reloadIgnoringLocalCacheData
-        guard let (_, response) = try? await URLSession.shared.data(for: request) else { return false }
+        guard let (_, response) = try? await Self.session.data(for: request) else { return false }
         return (response as? HTTPURLResponse)?.statusCode == 200
     }
 

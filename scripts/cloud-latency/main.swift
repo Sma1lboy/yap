@@ -115,6 +115,9 @@ Task { @MainActor in
             var sttCloud: [Double] = [], sttDirect: [Double] = [], chatCloud: [Double] = [], chatDirect: [Double] = [], total: [Double] = []
             var sttCloudFailed = 0, sttDirectFailed = 0, chatCloudFailed = 0, chatDirectFailed = 0, totalFailed = 0
             for _ in 0..<runs {
+                // As in the app: recording starts (prewarm), the user speaks for the clip's length, then the upload.
+                cloud.prewarm()
+                try await Task.sleep(for: .seconds(YapCloud.wavDuration(audio) ?? 0))
                 let text = await timed("\(name) STT via Yap Cloud", &sttCloud, &sttCloudFailed) {
                     try await YapCloudProvider().transcribe(
                         audioData: audio, fileName: "\(name).wav", apiKey: token, model: transcriptionModel, language: nil,

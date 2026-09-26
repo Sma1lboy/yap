@@ -61,3 +61,17 @@ Enhancement on the long clip: **8078 → 564 ms p50, 11260 → 590 ms p95**; a w
 | long | 40.4 s, 1267 KB | 766 / 1005 | 857 / 1136 | 695 / 1612 | 572 / 977 | 1462 / 2617 |
 
 No measurable gain: enhancement p50 is 330 / 496 / 695 ms against 298 / 459 / 564 ms non-streamed, which is within this link's run-to-run noise (the direct column moved by about as much, and `/healthz` itself was ~8 ms slower this run). With reasoning off, a dictation's enhancement is a few hundred tokens, so time to the last token is almost all of it and the ledger insert paygate no longer waits on is a few ms. It stays because it costs nothing and no call waits on paygate's DB after the model is done.
+
+## 3. One pooled connection, opened while the user speaks (2026-09-26)
+
+Every paygate request (proxy calls, account reads, `/healthz`) now goes through one long-lived ephemeral `URLSession`, so a dictation's transcription and enhancement share one connection instead of a new TCP + TLS handshake each. The per-call sessions were copied from custom endpoints, where a shared session learns `Alt-Svc` and moves uploads to HTTP/3 that stalls behind some VPNs; paygate on Railway sends no `Alt-Svc` (`curl -sI …/healthz`: HTTP/2, no header), so this stays on HTTP/2.
+
+Prewarm: when a recording starts in a mode that uses Yap Cloud and the preflight passes (signed in, balance and cap OK), the client sends `HEAD /healthz` on that session, so the connection is open before the user stops speaking. Most dictations start from a hotkey in another app, so recording start is the moment that precedes a call; app activation already refreshes the account through the same session and needs nothing extra. The harness now does the same per run: prewarm, wait the clip's length, then transcribe and enhance. The direct columns still open a new connection per call.
+
+| clip | audio | STT via Yap Cloud | STT direct | enhance via Yap Cloud | enhance direct | STT+enhance via Yap Cloud |
+|---|---|---|---|---|---|---|
+| short | 2.7 s, 90 KB | 290 / 412 | 648 / 1199 | 273 / 430 | 275 / 329 | 582 / 681 |
+| medium | 14.6 s, 459 KB | 464 / 917 | 1083 / 1342 | 350 / 377 | 348 / 439 | 834 / 1251 |
+| long | 40.4 s, 1267 KB | 633 / 706 | 1203 / 1712 | 615 / 648 | 620 / 796 | 1252 / 1292 |
+
+Transcription p50 is 100–150 ms lower than in §2 (436 → 290, 561 → 464, 766 → 633 ms), and a whole dictation 769 → 582, 1045 → 834, 1462 → 1252 ms p50. Enhancement through Yap Cloud is now level with direct.
