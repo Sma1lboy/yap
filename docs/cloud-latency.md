@@ -49,3 +49,15 @@ Findings:
 | long | 40.4 s, 1267 KB | 698 / 993 | 771 / 1355 | 564 / 590 | 552 / 649 | 1274 / 1557 |
 
 Enhancement on the long clip: **8078 → 564 ms p50, 11260 → 590 ms p95**; a whole long dictation (transcribe + enhance) 8847 → 1274 ms p50. Enhancement now costs about the same through Yap Cloud as direct (≈ +50–100 ms: paygate's DB checks and the awaited ledger insert on a small body). Output quality: the setup bench (`setup/bench.py`) scored this model 9/9 with reasoning off, which is how the app's OpenRouter path always ran it.
+
+## 2. Streamed enhancement (2026-09-26)
+
+`chatCompletion` sends `stream: true` and reads the SSE stream to the end before returning, so Yap still pastes one finished result. paygate answers a stream without first awaiting its ledger insert (it settles after the stream ends). Errors before the stream starts (402, 401, 429, a passed-through OpenRouter 4xx) are mapped from the status and body exactly as before (`make cloud-smoke` "402 chat" passes); an `{"error"}` chunk after the 200 throws and is not retried, since output had started and the call may be billed. The generation id comes from the chunks' `id`, so History's per-dictation cost still works (the harness now fails if any call returns no text or no id). The direct column still sends a non-streamed request.
+
+| clip | audio | STT via Yap Cloud | STT direct | enhance via Yap Cloud | enhance direct | STT+enhance via Yap Cloud |
+|---|---|---|---|---|---|---|
+| short | 2.7 s, 90 KB | 436 / 519 | 563 / 1094 | 330 / 460 | 307 / 635 | 769 / 837 |
+| medium | 14.6 s, 459 KB | 561 / 659 | 619 / 1187 | 496 / 808 | 358 / 732 | 1045 / 1309 |
+| long | 40.4 s, 1267 KB | 766 / 1005 | 857 / 1136 | 695 / 1612 | 572 / 977 | 1462 / 2617 |
+
+No measurable gain: enhancement p50 is 330 / 496 / 695 ms against 298 / 459 / 564 ms non-streamed, which is within this link's run-to-run noise (the direct column moved by about as much, and `/healthz` itself was ~8 ms slower this run). With reasoning off, a dictation's enhancement is a few hundred tokens, so time to the last token is almost all of it and the ledger insert paygate no longer waits on is a few ms. It stays because it costs nothing and no call waits on paygate's DB after the model is done.

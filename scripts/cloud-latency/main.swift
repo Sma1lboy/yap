@@ -121,8 +121,15 @@ Task { @MainActor in
                         customVocabulary: [], timeout: 120)
                 } ?? sentences[1]
                 let messages = [["role": "system", "content": prompt], ["role": "user", "content": "\n<TRANSCRIPT>\n\(text)\n</TRANSCRIPT>"]]
+                let ids = YapCloud.GenerationCollector()
                 let enhanced = await timed("\(name) enhance via Yap Cloud", &chatCloud, &chatCloudFailed) {
-                    try await cloud.chatCompletion(model: enhancementModel, messages: messages, temperature: 0.3, timeout: 30)
+                    try await YapCloud.$generationCollector.withValue(ids) {
+                        try await cloud.chatCompletion(model: enhancementModel, messages: messages, temperature: 0.3, timeout: 30)
+                    }
+                }
+                // The per-dictation cost in History needs the generation id and the text from every call.
+                if let enhanced, enhanced.isEmpty || ids.last == nil {
+                    throw Failed(description: "\(name): enhancement returned \(enhanced.count) chars, id \(ids.last ?? "none")")
                 }
                 if enhanced != nil, sttCloud.count > total.count { total.append(sttCloud.last! + chatCloud.last!) } else { totalFailed += 1 }
                 if openRouterKey != nil {
