@@ -5,6 +5,13 @@ struct YapCloudBalanceCard: View {
     @ObservedObject private var cloud = YapCloud.shared
 
     var body: some View {
+        card
+            // Opening Home refreshes the balance (debounced), so grants made elsewhere show up here too.
+            .task { cloud.scheduleBalanceRefresh() }
+    }
+
+    @ViewBuilder
+    private var card: some View {
         if cloud.isSignedIn, let balance = cloud.balanceMicros {
             HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
                 Image(systemName: cloud.isLowBalance ? "exclamationmark.triangle.fill" : "creditcard")
