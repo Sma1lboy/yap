@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke ui-snapshots sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke mock ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -141,15 +141,28 @@ sync-e2e:
 		VoiceInk/Features/Modes/Models/ModeIcon.swift
 	@scripts/sync-e2e/run.sh "$(SYNC_E2E_BIN)"
 
-# Render key screens in light and dark, in English and Chinese (-zh), with fake data to /tmp/yap-ui/snapshots.
-# Debug build, launched with --render-snapshots: saves the dev app's UserDefaults domain first and restores it
-# before exiting (fake modes etc. never stick). No window, no focus change, no network.
+# Run the Debug app with fake data (signed in, 20 transcripts, 5 modes…), offline, in its own settings domain
+# (me.sma1lboy.yap.mock). Everything it created is deleted on quit. See scripts/mock.sh.
+mock: build
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/mock.sh "$$APP_DIR"
+
+# Render every page, Settings group, onboarding screen and sheet in light and dark, plus the main ones in Chinese
+# (-zh), with fake data to /tmp/yap-ui/snapshots. Debug build, launched with --render-snapshots: saves the dev app's
+# UserDefaults domain first and restores it before exiting (fake modes etc. never stick). No window, no focus
+# change; the sandbox profile denies network access.
 ui-snapshots: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	rm -rf /tmp/yap-ui/snapshots; \
 	BIN="$$APP_DIR/VoiceInk Dev.app/Contents/MacOS/VoiceInk Dev"; \
-	"$$BIN" --render-snapshots && "$$BIN" --render-snapshots -AppleLanguages '(zh-Hans)'
+	sandbox-exec -f scripts/offline.sb "$$BIN" --render-snapshots && \
+	sandbox-exec -f scripts/offline.sb "$$BIN" --render-snapshots -AppleLanguages '(zh-Hans)'
+
+# Self-contained review page(s) of the snapshots: /tmp/yap-ui/review.html (review-N.html past 3.8 MB each).
+ui-review: ui-snapshots
+	@python3 scripts/ui-review.py
 
 # Run application
 run:

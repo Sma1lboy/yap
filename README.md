@@ -131,6 +131,11 @@ API keys are never written to config.json or sent to Yap Cloud. Yap only reads t
 
 Current picks (Sept 2026, 11 code-switched clips / 82 key terms): transcription `microsoft/mai-transcribe-2` (80/82, $0.10/h), cleanup `deepseek/deepseek-v4.1-flash` (9/9 cases, ~0.5 s). Onboarding's "Your OpenRouter Key" option applies exactly this setup with your own OpenRouter key; usage is billed by OpenRouter. Re-run `setup/bench.py` after editing `VoiceInk/Resources/RecommendedPrompt.md`.
 
+## Development
+
+- `make mock`: runs the Debug app with fake data (signed in to Yap Cloud with $4.21, 20 transcripts, 5 modes, a custom provider, dictionary entries), offline and in its own settings domain `me.sma1lboy.yap.mock`; your dev and release settings aren't touched, and quitting deletes everything it created.
+- `make ui-snapshots`: renders every page, Settings group, onboarding screen and sheet in light and dark (main pages also in Chinese) to `/tmp/yap-ui/snapshots`, without opening a window. `make ui-review` also packs them into `/tmp/yap-ui/review.html`.
+
 ## Releasing
 
 Before tagging, run `make cloud-smoke` (needs `YAP_CLOUD_SMOKE_TOKEN`; the command prints how to get one): it compiles the real Yap Cloud client against small stubs and checks it against live paygate — account, ledger paging, usage, models, config 409s, devices, the monthly cap (restored afterwards) and the 402s at a zero balance. It exits non-zero on any FAIL.

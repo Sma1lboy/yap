@@ -1,0 +1,4 @@
+; sandbox-exec profile for make mock and make ui-snapshots: everything allowed except IP network traffic.
+(version 1)
+(allow default)
+(deny network-outbound (remote ip))

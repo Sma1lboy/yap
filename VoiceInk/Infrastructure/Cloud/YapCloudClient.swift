@@ -98,6 +98,10 @@ final class YapCloud: ObservableObject {
 
     /// Bearer token of the signed-in device, or nil when signed out.
     var token: String? {
+        #if DEBUG
+            // Snapshots and make mock: the fake signed-in state has no keychain token; nothing is sent anyway.
+            if Self.isSnapshotMode { return isSignedIn ? "snapshot" : nil }
+        #endif
         guard let value = keychain.getString(forKey: Self.tokenKey, syncable: false), !value.isEmpty else { return nil }
         return value
     }
