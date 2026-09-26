@@ -331,6 +331,29 @@ Task { @MainActor in
         return "\(busy.count)/\(errors.count) got TOO_MANY_CONCURRENT_CALLS (retried once by the client), rest 402"
     }
 
+    // Optional, with PAYGATE_DIR: a grant made on paygate's side (scripts/adjust.ts, like the admin dashboard) must be
+    // announced once by the client's own balance-change path, then the balance goes back to exactly $0.
+    await check("grant detected") {
+        guard let paygateDir = env["PAYGATE_DIR"], !paygateDir.isEmpty else { return "SKIP: set PAYGATE_DIR" }
+        guard let email = me?.email, balance == 0 else { throw Failed(description: "needs the smoke account at exactly $0") }
+        await cloud.refreshAccount()  // loads me + ledger and seeds the announced-through mark
+        let note = "cloud-smoke grant check \(Int(Date().timeIntervalSince1970))"
+        try adjust(email: email, micros: 10_000, note: note, in: paygateDir)
+        var zeroed = false
+        defer { if !zeroed { try? zeroBalance(email: email, in: paygateDir) } }
+        let before = NotificationManager.shared.titles.count
+        await cloud.refreshAccount()  // balance 0 → 0.01: me's didSet runs the grant check
+        for _ in 0..<20 where NotificationManager.shared.titles.count == before { try await Task.sleep(for: .milliseconds(250)) }
+        let shown = NotificationManager.shared.titles.dropFirst(before)
+        try expect(shown.count == 1 && shown.first?.contains(note) == true, "toasts: \(Array(shown))")
+        await cloud.announceNewGrants()  // same rows again: nothing new
+        try expect(NotificationManager.shared.titles.count == before + 1, "announced twice")
+        try zeroBalance(email: email, in: paygateDir)
+        zeroed = true
+        try expect(try await cloud.fetchMe().balanceMicros == 0, "balance not back to 0")
+        return "\"\(shown.first!)\" once; balance back to 0"
+    }
+
     // Optional, costs ~1 cent of the operator's money: YAP_CLOUD_SMOKE_FUNDED=1 PAYGATE_DIR=<railway-linked paygate>
     // funds the smoke account with $0.01 (scripts/adjust.ts over railway ssh), makes one real transcription and
     // one real chat call through the client, checks the captured generation ids against the ledger, then adjusts
