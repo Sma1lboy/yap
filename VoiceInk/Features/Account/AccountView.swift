@@ -405,7 +405,7 @@ private struct SignedInSections: View {
         }
     }
 
-    /// "At this month's pace …" and when the balance was last updated.
+    /// "At this month's pace …" and, on the next line, when the balance was last updated.
     private var balanceNote: String? {
         var parts: [String] = []
         if let runway = balanceRunway {
@@ -425,7 +425,8 @@ private struct SignedInSections: View {
             parts.append(
                 String(format: String(localized: "Last updated %@"), updatedAt.formatted(date: .omitted, time: .shortened)))
         }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        // One line each: the runway is a sentence and ends in its own punctuation.
+        return parts.isEmpty ? nil : parts.joined(separator: "\n")
     }
 
     /// Sign-out (not destructive: nothing is lost) and account deletion, at the bottom.

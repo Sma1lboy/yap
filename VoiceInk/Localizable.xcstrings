@@ -6097,7 +6097,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按本月用量(约每月 %1$@),余额大约还能用 %2$lld 天。"
+            "value" : "按本月用量（约每月 %1$@），余额大约还能用 %2$lld 天。"
           }
         }
       }
@@ -6119,7 +6119,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按本月用量(约每月 %@),余额不够用一天。"
+            "value" : "按本月用量（约每月 %@），余额不够用一天。"
           }
         }
       }
@@ -6141,7 +6141,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按本月用量(约每月 %@),余额够用一年以上。"
+            "value" : "按本月用量（约每月 %@），余额够用一年以上。"
           }
         }
       }
