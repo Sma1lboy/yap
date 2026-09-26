@@ -143,7 +143,7 @@ API key 永远不会写进 config.json，也不会上传到 Yap Cloud。Yap 只�
 
 ### 推荐模型
 
-当前选择（2026 年 9 月，11 段中英混说音频 / 82 个关键词）：转写用 `microsoft/mai-transcribe-2`（82 个里对 80 个，$0.10/小时），润色用 `deepseek/deepseek-v4.1-flash`（9/9 个用例，约 0.5 秒）。引导流程里的「自带 OpenRouter Key」选项用你自己的 OpenRouter key 应用这套配置，费用直接付给 OpenRouter。修改 `VoiceInk/Resources/RecommendedPrompt.md` 后请重新跑 `setup/bench.py`。
+当前选择（2026 年 9 月）：转写用 `microsoft/mai-transcribe-2`（$0.10/小时；82 个关键词里对 80 个是旧 bench 的数字，那套录音没有保存，不能直接对比；`setup/asr/` 里重建的 bench 上是 73/82，见 [docs/dictation-accuracy.md](docs/dictation-accuracy.md)），润色用 `deepseek/deepseek-v4.1-flash`（9/9 个用例，约 0.5 秒）。引导流程里的「自带 OpenRouter Key」选项用你自己的 OpenRouter key 应用这套配置，费用直接付给 OpenRouter。修改 `VoiceInk/Resources/RecommendedPrompt.md` 后请重新跑 `setup/bench.py`。
 
 ## 开发
 

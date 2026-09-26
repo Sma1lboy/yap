@@ -118,8 +118,14 @@ def transcribe(engine, wav, prompt):
             "Authorization": f"Bearer {env_key('YAP_CLOUD_TOKEN')}", "Content-Type": "application/json"})
     else:
         sys.exit(f"unknown engine {engine}")
-    text = json.load(urllib.request.urlopen(request, timeout=60)).get("text") or ""
-    return text, time.time() - start
+    for attempt in range(3):
+        try:
+            text = json.load(urllib.request.urlopen(request, timeout=60)).get("text") or ""
+            return text, time.time() - start
+        except (OSError, ValueError) as error:  # timeouts, HTTP errors, bad JSON
+            print(f"  {engine}: {error} (attempt {attempt + 1})", file=sys.stderr)
+            start = time.time()
+    return "", 0.0
 
 
 def hit(spellings, text):
