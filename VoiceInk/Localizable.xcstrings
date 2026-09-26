@@ -30114,6 +30114,28 @@
         }
       }
     },
+    "Type \\n in the replacement for a line break, \\n\\n for a new paragraph." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib im Ersatztext \\n für einen Zeilenumbruch ein, \\n\\n für einen neuen Absatz."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tapez \\n dans le remplacement pour un saut de ligne, \\n\\n pour un nouveau paragraphe."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替换文本里输入 \\n 表示换行，\\n\\n 表示另起一段。"
+          }
+        }
+      }
+    },
     "Unavailable" : {
       "localizations" : {
         "de" : {
