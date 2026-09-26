@@ -223,7 +223,17 @@ brew install --cask sma1lboy/yap/yap</pre>
       <details><summary>Does it work offline?</summary><div>Yes, with a local model such as NVIDIA's Parakeet, downloaded in Settings. Yap Cloud and API keys need a connection.</div></details>
       <details><summary>Why does macOS ask for Microphone and Accessibility?</summary><div>Microphone to hear you; Accessibility to paste into the app you're using. Screen Recording is optional: it lets Yap read what's on screen to spell names right.</div></details>
       <details><summary>How is Yap different from VoiceInk?</summary><div>Yap is a fork of VoiceInk. It adds Yap Cloud, settings in a synced config file, and a setup tuned for mixed Chinese–English dictation. VoiceInk is the official, notarized app.</div></details>
-      <details><summary>Why isn't the app notarized?</summary><div>Releases are signed with the same self-signed certificate every time, so macOS keeps your permissions across updates, but they aren't notarized by Apple. Homebrew clears the quarantine flag; a downloaded zip needs a right-click › Open the first time.</div></details>
+      <details><summary>Why isn't the app notarized?</summary><div>Releases are signed with the same self-signed certificate every time, so macOS keeps your permissions across updates, but they aren't notarized by Apple (that needs a paid Apple Developer account). Installing with Homebrew avoids the warning below; a downloaded zip needs one extra step the first time.</div></details>
+      <!-- Since macOS 15, Control-click › Open no longer bypasses Gatekeeper (docs/notarization.md). -->
+      <details id="unverified-developer"><summary>macOS says it can't verify the developer. What do I do?</summary><div>
+        <p>That's because Yap isn't notarized (see above). It's a one-time step:</p>
+        <ol>
+          <li>Open Yap once and close the warning.</li>
+          <li>Open System Settings › Privacy &amp; Security and scroll down to Security.</li>
+          <li>Next to "Yap was blocked to protect your Mac", click <strong>Open Anyway</strong> and confirm with your password.</li>
+        </ol>
+        <p>Right-click › Open no longer skips this on macOS 15 and later. Installing with Homebrew (<a href="#install">above</a>) removes the quarantine flag, so the warning never appears.</p>
+      </div></details>
     </div>
     <div class="faq" lang="zh-Hans">
       <details><summary>Yap 收费吗？</summary><div>app 免费开源。只有云端转写要花钱：通过 Yap Cloud，或者用你自己的 OpenRouter key。本地模型不花钱。</div></details>
@@ -231,7 +241,16 @@ brew install --cask sma1lboy/yap/yap</pre>
       <details><summary>能离线用吗？</summary><div>能，用本地模型（例如在设置里下载 NVIDIA 的 Parakeet）。Yap Cloud 和 API key 需要联网。</div></details>
       <details><summary>为什么要麦克风和辅助功能权限？</summary><div>麦克风用来听你说话；辅助功能用来把文字粘贴进你正在用的 app。屏幕录制是可选的，用来读屏幕上的内容，把人名、术语拼对。</div></details>
       <details><summary>和 VoiceInk 有什么不同？</summary><div>Yap fork 自 VoiceInk，加了 Yap Cloud、可同步的配置文件，以及为中英混说调好的默认设置。VoiceInk 是官方的、经过 Apple 公证的版本。</div></details>
-      <details><summary>为什么没有经过 Apple 公证？</summary><div>每个版本都用同一张自签名证书签名，所以更新后 macOS 会保留你给的权限，但没有经过 Apple 公证。Homebrew 会自动去掉隔离标记；直接下载的 zip 第一次打开要右键 › 打开。</div></details>
+      <details><summary>为什么没有经过 Apple 公证？</summary><div>每个版本都用同一张自签名证书签名，所以更新后 macOS 会保留你给的权限，但没有经过 Apple 公证（公证需要付费的 Apple 开发者账号）。用 Homebrew 安装不会遇到下面的提示；直接下载的 zip 第一次打开要多一步。</div></details>
+      <details id="unverified-developer-zh"><summary>Mac 提示“无法验证开发者”怎么办？</summary><div>
+        <p>这是因为 Yap 没有经过 Apple 公证（见上一条）。只需要处理一次：</p>
+        <ol>
+          <li>先打开一次 Yap，把提示关掉。</li>
+          <li>打开“系统设置 › 隐私与安全性”，往下滚到“安全性”。</li>
+          <li>在“已阻止‘Yap’以保护你的 Mac”旁边点<strong>仍要打开</strong>，输入密码确认。</li>
+        </ol>
+        <p>macOS 15 起，右键 › 打开已经不能跳过这一步。用 Homebrew 安装（见<a href="#install">上面</a>）会自动去掉隔离标记，不会出现这个提示。</p>
+      </div></details>
     </div>
   </div>
 </section>
