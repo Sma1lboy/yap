@@ -74,8 +74,9 @@ final class CoreAudioRecorder: @unchecked Sendable {
     private var conversionBuffer: UnsafeMutablePointer<Int16>?
     private var conversionBufferSize: UInt32 = 0
     private let resampler = PCMResampler()
-    /// 16 kHz frames written to the current file; touched only on audioProcessingQueue.
+    /// 16 kHz frames written to the current file, and whether any was non-zero; audioProcessingQueue only.
     private var framesWritten: UInt64 = 0
+    private var wroteSignal = false
 
     // Audio metering. Store bit patterns so the render callback never locks.
     private let averagePowerBits = ManagedAtomic<UInt32>(Float32(-160.0).bitPattern)
@@ -196,6 +197,7 @@ final class CoreAudioRecorder: @unchecked Sendable {
             audioProcessingQueue.sync {
                 resampler.reset()
                 framesWritten = 0
+                wroteSignal = false
             }
 
             try startAudioUnit()
@@ -234,9 +236,9 @@ final class CoreAudioRecorder: @unchecked Sendable {
         }
 
         drainAudioProcessingQueue()
-        let frames = audioProcessingQueue.sync {
+        let (frames, capturedSound) = audioProcessingQueue.sync {
             flushResampler()
-            return framesWritten
+            return (framesWritten, wroteSignal)
         }
         logDroppedInputBufferCounters(context: "stop")
 
@@ -245,10 +247,13 @@ final class CoreAudioRecorder: @unchecked Sendable {
 
         resetMeters()
 
-        // Started but captured nothing: whatever broke this AUHAL (stale format, a route change it never
-        // heard about) would break the next recording too, and before this only an app relaunch fixed it.
-        if wasRecording && frames == 0 {
-            logger.error("🎙️ Recording captured no audio frames; discarding the prepared AUHAL")
+        // Started but captured no frames, or only digital zero (a live mic always has a noise floor):
+        // whatever broke this AUHAL (stale format, a route change it never heard about) would break the
+        // next recording too, and before this only an app relaunch fixed it.
+        if wasRecording && !capturedSound {
+            logger.error(
+                "🎙️ Recording captured no sound (frames=\(frames, privacy: .public), all zero); discarding the prepared AUHAL"
+            )
             teardownPreparedAudioUnit()
             currentDeviceID = 0
         }
@@ -1108,6 +1113,9 @@ final class CoreAudioRecorder: @unchecked Sendable {
             logger.error("🎙️ ExtAudioFileWrite failed with status: \(writeStatus, privacy: .public)")
         } else {
             framesWritten += UInt64(frameCount)
+            if !wroteSignal {
+                wroteSignal = UnsafeBufferPointer(start: samples, count: Int(frameCount)).contains { $0 != 0 }
+            }
         }
 
         // Send the same PCM data to the streaming callback if set.
