@@ -111,7 +111,7 @@ struct VoiceInkApp: App {
         #if DEBUG
             MockEnvironment.seedStores(resolvedContainer)  // make mock only
         #endif
-        DictionaryService.removeExactDuplicateContent(context: resolvedContainer.mainContext, source: "launch")
+        DictionaryService.cleanUpDictionaryContent(context: resolvedContainer.mainContext, source: "launch")
 
         // Initialize services with proper sharing of instances
         let aiService = AIService()
