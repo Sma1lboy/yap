@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那个GitHub Actions的Pipeline改一下,现在CI太慢了,Build cache好像没生效,我怀疑是Dockerfile里面Layer的顺序有问题。", "secs": 0.9452779293060303, "load": 0.0, "audio": 6.989187}
+{"id": "standup", "text": "昨天我跟开发组组了一下API的接口,他们开发区的resolver还差三个endpoint,预计都能很近完成。", "secs": 0.7196002006530762, "load": 0.0, "audio": 5.168}
+{"id": "bug", "text": "这个bug只在Safari上复现,iOS17的WebKit对IndexedDB的transaction处理不一样,Retry逻辑要改成Exponential Backoff。", "secs": 0.8655388355255127, "load": 0.0, "audio": 6.559625}
+{"id": "perf", "text": "我们把这个tch从3600降到2620以后,P92的life降到了120号了,QTS大概涨了40%。", "secs": 0.7647387981414795, "load": 0.0, "audio": 5.248}
+{"id": "meeting", "text": "下午三点和Kevin还有Priority TigerSync,讨论一下Q4的Roadmap,重点是onboarding和Retention这两个metric。", "secs": 0.9154031276702881, "load": 0.0, "audio": 5.4335}
+{"id": "ml", "text": "他的模型有提到了七年,但是在去上十小时,在1000上跑了大概八个小时,ros还在想。", "secs": 0.7440869808197021, "load": 0.0, "audio": 5.712}
+{"id": "frontend", "text": "React-Navbian把useEffect换成React Query之后,组件不用自己管loading状态了,Tailwind的class也顺便整理了一遍。", "secs": 0.7635858058929443, "load": 0.0, "audio": 5.572813}
+{"id": "infra", "text": "库德莱斯基新车在1.30以后有压个波底的插出到卡洛奇斯索斯瓦斯科夫,卡洛奇索斯瓦斯汤路行变了,横插跳从部来。", "secs": 0.9480149745941162, "load": 0.0, "audio": 5.855937}
+{"id": "product", "text": "这次release我们上了Dark Mode和一个新的paywall A/B test跑了两周,conversion rate提高了1.8个百分点。", "secs": 1.376537799835205, "load": 0.0, "audio": 5.178063}
+{"id": "email", "text": "然后我给Dsha回了邮件,说Figma的设计我看过了,下周一之前把Files包发到Slack的Design Channel里。", "secs": 0.8092069625854492, "load": 0.0, "audio": 5.055937}
+{"id": "security", "text": "OAuth的refresh token现在存在local storage里,有XSS风险,改成HttpOnly的cookie,再加上CSRF Token校验。", "secs": 0.7484688758850098, "load": 0.0, "audio": 8.324375}

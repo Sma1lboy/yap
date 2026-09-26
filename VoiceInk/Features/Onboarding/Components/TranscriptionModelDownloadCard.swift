@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct TranscriptionModelDownloadCard: View {
-    let model: FluidAudioModel
+    let model: WhisperModel
     let isDownloaded: Bool
     let isDownloading: Bool
     let status: FluidAudioDownloadStatus?
@@ -37,7 +37,7 @@ struct TranscriptionModelDownloadCard: View {
                         .font(AppTheme.font(.headline, .semibold))
                         .foregroundColor(AppTheme.Text.primary)
 
-                    Text("Fast multilingual transcription that runs locally on Mac.")
+                    Text("Chinese, English and mixed speech, transcribed on this Mac.")
                         .font(AppTheme.font(.footnote))
                         .foregroundColor(AppTheme.Text.secondary)
                         .lineLimit(1)
@@ -66,18 +66,20 @@ struct TranscriptionModelDownloadCard: View {
     }
 
     private var modelLogo: some View {
-        Image("nvidia-logo")
+        Image("provider-openai")
+            .renderingMode(.template)
             .resizable()
             .scaledToFit()
-            .frame(width: 34, height: 28)
+            .foregroundColor(AppTheme.Text.primary)
+            .frame(width: 28, height: 28)
             .frame(width: 38, height: 38)
-            .accessibilityLabel(Text(verbatim: "NVIDIA"))
+            .accessibilityLabel(Text(verbatim: "OpenAI Whisper"))
     }
 
     private var modelMetadata: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
             metadataPill(model.size)
-            localizedMetadataPill("25+ languages")
+            localizedMetadataPill("99 languages")
             localizedMetadataPill("Local")
         }
     }

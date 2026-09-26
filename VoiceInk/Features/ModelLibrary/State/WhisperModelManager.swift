@@ -95,6 +95,8 @@ private final class DownloadRequestState: @unchecked Sendable {
 class WhisperModelManager: ObservableObject {
     @Published var availableModels: [WhisperModelFile] = []
     @Published var downloadProgress: [String: Double] = [:]
+    /// Why the last download of a model failed, by model name; cleared when a new download starts.
+    @Published var downloadErrors: [String: String] = [:]
     @Published var whisperContext: WhisperContext?
     @Published var isModelLoaded = false
     @Published var loadedWhisperModel: WhisperModelFile?
@@ -254,6 +256,7 @@ class WhisperModelManager: ObservableObject {
     func startDownload(_ model: WhisperModel) {
         guard activeDownloadTasks[model.name] == nil else { return }
         downloadProgress[model.name + "_main"] = 0
+        downloadErrors[model.name] = nil
         activeDownloadTasks[model.name] = Task { [weak self] in
             guard let self else { return }
             await self.downloadModel(model)
@@ -396,6 +399,7 @@ class WhisperModelManager: ObservableObject {
     }
 
     private func handleModelDownloadError(_ model: WhisperModel, _ error: Error) {
+        if !(error is CancellationError) { downloadErrors[model.name] = error.localizedDescription }
         self.downloadProgress.removeValue(forKey: model.name + "_main")
         self.downloadProgress.removeValue(forKey: model.name + "_coreml")
     }

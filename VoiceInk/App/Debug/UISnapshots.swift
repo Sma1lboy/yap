@@ -75,12 +75,12 @@
             page("dictionary", .dictionary)
             page("settings", .settings)
             page("account", .account)
-            shot("page-home-empty") { ContentView().modelContainer(empty) }
+            shot("page-home-empty", titled: true) { ContentView().modelContainer(empty) }
 
             for state in YapCloud.SnapshotState.allCases where state != .funded {
                 YapCloud.shared.applySnapshotState(state)
                 MainWindowNavigation.shared.selectedView = .account
-                shot("account-\(state.rawValue)", fullPage: true) { ContentView() }
+                shot("account-\(state.rawValue)", fullPage: true, titled: true) { ContentView() }
             }
             YapCloud.shared.applySnapshotState(.funded)
 
@@ -94,12 +94,12 @@
             // Panels that open inside a page.
             ModeView.snapshotOpensEditor = true
             MainWindowNavigation.shared.selectedView = .modes
-            shot("sheet-mode-editor", fullPage: true) { ContentView() }
+            shot("sheet-mode-editor", fullPage: true, titled: true) { ContentView() }
             ModeView.snapshotOpensEditor = false
             ModelManagementView.snapshotFilter = .custom
             ModelManagementView.snapshotPanel = .customProviderEditor
             MainWindowNavigation.shared.selectedView = .models
-            shot("sheet-custom-provider-editor", fullPage: true) { ContentView() }
+            shot("sheet-custom-provider-editor", fullPage: true, titled: true) { ContentView() }
             ModelManagementView.snapshotFilter = nil
             ModelManagementView.snapshotPanel = nil
 
@@ -204,7 +204,7 @@
 
         private static func onboardingModel(_ kind: OnboardingTranscriptionSetupKind) -> some View {
             OnboardingModelScreen(
-                contentMaxWidth: 620, localModel: nil, setupKind: kind,
+                contentMaxWidth: 620, localModel: OnboardingCoordinator().requiredTranscriptionModel, setupKind: kind,
                 providerOptions: CloudProviderRegistry.allProviders, selectedProviderKey: .constant(""),
                 isLocalDownloaded: false, isLocalDownloading: false, localDownloadStatus: nil,
                 localDownloadError: nil, isSetupReady: false, isShowingSkipWarning: .constant(false),

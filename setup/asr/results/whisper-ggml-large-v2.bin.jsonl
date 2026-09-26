@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那个GitHub Actions的Pipeline改一下,现在CE太慢了。 Build cache好像没升小,我怀疑是the Curve file里面layer的顺序有问题。", "secs": 1.478132963180542, "load": 0.9851150512695312, "audio": 6.989187}
+{"id": "standup", "text": "昨天我跟Sara对了一下API的Stream,她那边的Cloud Service还差3个endpoint,预计周四能很简单展示。", "secs": 1.3300169706344604, "load": 0.9851150512695312, "audio": 5.168}
+{"id": "bug", "text": "这个bug只在Safari上复现,iOS17的WebKit对IndexedDB的Transaction处理不一样,Retray逻辑要改成Exponential Backup。", "secs": 1.398095965385437, "load": 0.9851150512695312, "audio": 6.559625}
+{"id": "perf", "text": "我们把Resist的TCA从300秒降到60秒以后,P99拉伸强到了120毫秒,又PS大概上了40%。", "secs": 1.1978949308395386, "load": 0.9851150512695312, "audio": 5.248}
+{"id": "meeting", "text": "下午三点和Kevin还有Priya开个sync, 讨论一下Q4的roadmap,重点是onboarding和retention这两个metric。", "secs": 1.1973730325698853, "load": 0.9851150512695312, "audio": 5.4335}
+{"id": "ml", "text": "这个模型用PTOG训练,把14寸射程32,620扎特尺3D互死,在100上跑了大概8个小时,Loss还在强。", "secs": 1.3298959732055664, "load": 0.9851150512695312, "audio": 5.712}
+{"id": "frontend", "text": "React那边把UseEffect换成ReactQuery之后,组件不用自己管loading状态了,JLwind的clause也顺便整理了一遍。", "secs": 1.3341820240020752, "load": 0.9851150512695312, "audio": 5.572813}
+{"id": "infra", "text": "Google的搜索群收到1.30以后,有两个波及时刷出了网络。看似是Sony 漫画在路径变了,很差要重复呗。", "secs": 1.3549009561538696, "load": 0.9851150512695312, "audio": 5.855937}
+{"id": "product", "text": "这次release我们上了dark mode和一个新的paywall,a,b,test跑了两周,conversion rate提高了1.8个点。", "secs": 1.1601779460906982, "load": 0.9851150512695312, "audio": 5.178063}
+{"id": "email", "text": "下周一之前把Falsebook发到Slidesk的这次与删了笔。", "secs": 0.9296019077301025, "load": 0.9851150512695312, "audio": 5.055937}
+{"id": "security", "text": "现在存在local storage里,有XSS风险,改成http only的cookie,再加上csrf token校验。", "secs": 1.2365310192108154, "load": 0.9851150512695312, "audio": 8.324375}

@@ -112,7 +112,7 @@ struct VoiceInkApp: App {
         #if DEBUG
             MockEnvironment.seedStores(resolvedContainer)  // make mock only
         #endif
-        DictionaryService.removeExactDuplicateContent(context: resolvedContainer.mainContext, source: "launch")
+        DictionaryService.cleanUpDictionaryContent(context: resolvedContainer.mainContext, source: "launch")
 
         // Initialize services with proper sharing of instances
         let aiService = AIService()
@@ -200,6 +200,9 @@ struct VoiceInkApp: App {
         Task { @MainActor in
             await YapConfigLoader.shared.finishLaunch()
         }
+        #if DEBUG
+            OfflineCheck.runIfRequested(engine: engine)  // make offline-check only
+        #endif
 
         let activeWindowService = ActiveWindowService.shared
         _activeWindowService = StateObject(wrappedValue: activeWindowService)
@@ -385,7 +388,7 @@ struct VoiceInkApp: App {
                 } else {
                     OnboardingView(hasCompletedOnboardingV2: $hasCompletedOnboardingV2)
                         .modelContainer(container)
-                        .environmentObject(fluidAudioModelManager)
+                        .environmentObject(whisperModelManager)
                         .environmentObject(transcriptionModelManager)
                         .environmentObject(aiService)
                         .environmentObject(enhancementService)

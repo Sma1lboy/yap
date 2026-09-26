@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那个Gtop Actions的Pipeline改一下,现在CI太慢了, BuildCash好像没生效,我怀疑是deckerfile里面layer的顺序有问题", "secs": 0.7160940170288086, "load": 0.2039799690246582, "audio": 6.989187}
+{"id": "standup", "text": "昨天我跟 Sarah对了一下API的词程码,他那边的 CloudTure Solver 还差三个 endpoint,预计周四能恒进南 branch, 。", "secs": 1.9618330001831055, "load": 0.2039799690246582, "audio": 5.168}
+{"id": "bug", "text": "这个 bugge在 Safari上复现, iOS 17的 WebKit对 IndexedDB的 transaction处理不一样, Retray逻辑要改成 exponential backoff", "secs": 0.6619681119918823, "load": 0.2039799690246582, "audio": 6.559625}
+{"id": "perf", "text": "我们把Redis的TTA从300秒降到60秒以后,PCO是旧LarCity降到了120毫秒,QPS大概上了40%", "secs": 0.6503690481185913, "load": 0.2039799690246582, "audio": 5.248}
+{"id": "meeting", "text": "下午三点和 Kevin还有 Priya开个 sync,讨论一下 Q4的 roadmap,重点是 onboarding和 retention这两个 metric", "secs": 0.6290340423583984, "load": 0.2039799690246582, "audio": 5.4335}
+{"id": "ml", "text": "这个模型用PTouch训练, 8.14, 射程32, LR20, 射程32, LR20, 射程32, 射程32, 在100上跑了大概8个小时, loss, 还在响", "secs": 1.0106450319290161, "load": 0.2039799690246582, "audio": 5.712}
+{"id": "frontend", "text": "React那边把useEffect换成react query之后,组件不用自己管loading状态了, Tailwind的 clause也顺便整理了一遍", "secs": 0.6588389873504639, "load": 0.2039799690246582, "audio": 5.572813}
+{"id": "infra", "text": "Coubernetos 集成 升到 1.30以后,有两个 波 继续, 转发 死后, 看 罗 式 送 费 帮 挂 在 路 径 变了, 哼 沙 跳 从 布 白, 。", "secs": 1.0312379598617554, "load": 0.2039799690246582, "audio": 5.855937}
+{"id": "product", "text": "这次release我们上了dark mode和一个新的paywall, A/B test好了两周, conversion rate提高了1.8个点,", "secs": 0.6347929239273071, "load": 0.2039799690246582, "audio": 5.178063}
+{"id": "email", "text": "帮我给bchat回个邮件,说 feedback的设计稿我看过了, 下周一之前把filesbuzz发到slice的desk刷了笔", "secs": 1.8836389780044556, "load": 0.2039799690246582, "audio": 5.055937}
+{"id": "security", "text": "OAuth的RefreshToken现在存在LocalStorage里,有XSS风险,改成HttpOnly的Cookie,再加上CSRF校验,", "secs": 0.6672319173812866, "load": 0.2039799690246582, "audio": 8.324375}

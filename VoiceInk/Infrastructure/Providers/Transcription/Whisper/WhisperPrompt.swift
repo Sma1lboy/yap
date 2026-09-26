@@ -128,7 +128,8 @@ class WhisperPrompt: ObservableObject {
 
     /// Appends dictionary words to the base prompt. Whisper spells what the prompt shows it, so words it
     /// otherwise mishears (useEffect, Kubernetes, names) come out right: on the code-switched bench,
-    /// every term in the prompt took base from 26 to 56 of 82 terms, small 53 → 72, turbo 65 → 73.
+    /// every term in the prompt took base from 16 to 37 of 82 terms, small 35 → 53, turbo q5_0 45 → 54
+    /// (setup/asr/results).
     /// Newest words go last and the oldest are dropped first when the list is too long.
     nonisolated static func withVocabulary(_ base: String, words: [(word: String, dateAdded: Date)]) -> String {
         var seen = Set<String>()

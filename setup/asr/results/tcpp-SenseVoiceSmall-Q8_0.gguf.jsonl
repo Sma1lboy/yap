@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那个giittop actions的 people line改一下，现在CRE太慢了，build cash好像没生效，我怀疑是dc file里面 layer的顺序有问题。", "secs": 0.2762249708175659, "load": 7.843987941741943, "audio": 7.1158125}
+{"id": "standup", "text": "昨天我跟s拉对了一下AP的尺码，他那边的serv还差3个gepoint，预计周四能可进。", "secs": 0.05375397205352783, "load": 7.843987941741943, "audio": 5.294625}
+{"id": "bug", "text": "这个b只在cifari上浮现IOS17的weki对 indexdex第B的transaction处理不一样，re逻辑要改成exential。", "secs": 0.345505952835083, "load": 7.843987941741943, "audio": 6.68625}
+{"id": "perf", "text": "我们把redTTA从300秒掉到60秒以后，啤919绕升器降到了120毫秒，就P调概涨了40%。", "secs": 0.2132319211959839, "load": 7.843987941741943, "audio": 5.374625}
+{"id": "meeting", "text": "下午3点，和Kvin还有bra要拍个 thing讨论一下Q4的ro map重点是onboarding和rehen这两个m。", "secs": 0.31951797008514404, "load": 7.843987941741943, "audio": 5.560125}
+{"id": "ml", "text": "小车模型运用体操训练84次跳程326208车131护事在100上跑留下来8个小时，还在降。", "secs": 0.14695394039154053, "load": 7.843987941741943, "audio": 5.838625}
+{"id": "frontend", "text": "react那边把use effect换成react query之后，组件不用自己管loading状态了，chairwin the class也顺便整理了一遍。", "secs": 0.06742203235626221, "load": 7.843987941741943, "audio": 5.6994375}
+{"id": "infra", "text": "测机群升到1.30米以后，有压个拖机人掐失了pos口，看标是双机马挂在路线变了，很char要求不买。", "secs": 0.07275307178497314, "load": 7.843987941741943, "audio": 5.9825625}
+{"id": "product", "text": "这次release我们上了drk mode和一个新的paAB chest跑了两周，converversiongen rate提高了1.8个点。", "secs": 0.06440496444702148, "load": 7.843987941741943, "audio": 5.3046875}
+{"id": "email", "text": "帮我在钉上有回个邮件，说黑 park的设计稿我看过了，下周一之前把fi发到的歌词上了笔。", "secs": 0.06277704238891602, "load": 7.843987941741943, "audio": 5.1825625}
+{"id": "security", "text": "allof the refresh token现在存在local storage里有SSS风险，改成httP only的 cookie，再加上CsRF token校验。", "secs": 0.08433401584625244, "load": 7.843987941741943, "audio": 8.451}

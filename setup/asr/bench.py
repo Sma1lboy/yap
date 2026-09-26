@@ -1,39 +1,40 @@
 #!/usr/bin/env python3
-"""Key-term accuracy of speech-to-text on Chinese–English code-switched dictation.
+"""Transcription bench: 11 Chinese–English code-switched clips, 82 key terms.
 
-    python3 setup/asr/bench.py [engine ...] [--vocab-prompt] [--json out.json]
+    python3 setup/asr/bench.py run whisper <ggml-*.bin> [--language auto] [--vocab]
+    python3 setup/asr/bench.py run tcpp <*.gguf> [--itn]
+    python3 setup/asr/bench.py run nemotron <model dir>
+    python3 setup/asr/bench.py run openrouter <model id>      OPENROUTER_API_KEY (env or ~/.env)
+    python3 setup/asr/bench.py run yapcloud <model id>        YAP_CLOUD_TOKEN, YAP_CLOUD_URL optional
+    python3 setup/asr/bench.py score                          summarises results/*.jsonl
 
-Engines (default: the OpenRouter pick plus every ggml model given with --models-dir):
-    whisper:<path/to/ggml-*.bin>   the app's own LibWhisper.swift, run by harness/ (built on first use)
-    openrouter:<model id>          same multipart request as the app (OPENROUTER_API_KEY, env or ~/.env)
-    yapcloud:<model id>            same JSON request as the app (YAP_CLOUD_TOKEN; YAP_CLOUD_URL optional)
+Engines make the app's own calls. whisper runs LibWhisper.swift and WhisperChunking.swift through
+harness/'s whisperbench (VAD on, like the app), tcpp and nemotron the TranscribeCpp and FluidAudio calls,
+openrouter and yapcloud the app's request bodies. Build the harness once: `swift build -c release` in
+harness/. Language is `zh` unless --language says otherwise (a code-switching user picks Chinese); whisper
+gets the app's zh prompt, plus every key term with --vocab (a dictionary holding all of them, the best case
+for the dictionary prompt).
 
-Audio:
-    clips.json            11 clips rendered with macOS `say` (Tingting and Meijia, rate 220; the Eloquence voices
-                          such as Eddy or Flo turn English words into noise), cached in
-                          .local-build/asr/. `say` is not a person: accents, fillers and noise are missing.
-    recordings/<name>.*   real recordings (m4a, wav, mp3, caf, aiff) next to <name>.txt holding what was said.
-                          Both clips.json and the .txt files mark key terms in brackets: [PR], [useEffect],
-                          and alternatives the scorer should also accept after a bar: [50|五十].
+Audio: clips/<id>.m4a, made from clips.json by make_clips.py with macOS `say` and committed, so every run
+hears the same audio. Key terms are marked in clips.json as [term] or [term|accepted alternative].
+Real recordings: recordings/<name>.m4a (or wav / mp3 / caf / aiff) next to <name>.txt with the same
+markup. They're transcribed with the clips and scored separately, since `say` has no accent or noise.
 
-A term counts as recognised when one of its spellings appears in the transcript, compared case-insensitively
-with whitespace removed ("user ID" matches "userID"). The score is recognised terms / all terms.
-
---vocab-prompt passes every key term, comma separated, to whisper as its initial prompt: the upper bound of
-what the dictionary-as-prompt feature can do. Results go in docs/dictation-accuracy.md.
+A key term counts when one spelling appears as whole words; case, spaces, hyphens, dots and a plural s
+don't matter. Results go to results/<engine>-<model>[-<variant>].jsonl, which docs/local-models.md and
+docs/dictation-accuracy.md quote.
 """
-import argparse, base64, glob, hashlib, json, os, re, statistics, subprocess, sys, time, urllib.request, uuid
+import argparse, base64, glob, json, os, re, subprocess, sys, tempfile, time, urllib.request, uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
-CACHE = os.path.join(REPO, ".local-build", "asr")
+HARNESS = os.path.join(HERE, "harness", ".build", "release")
 SILERO = os.path.join(REPO, "VoiceInk", "Resources", "models", "ggml-silero-v5.1.2.bin")
-WHISPER_FRAMEWORK = os.path.expanduser(
-    "~/VoiceInk-Dependencies/whisper.cpp/build-apple/whisper.xcframework/macos-arm64_x86_64")
+WHISPER_ZH_PROMPT = "你好，最近好吗？见到你很高兴。"  # WhisperPrompt.swift
 AUDIO_EXTENSIONS = ("m4a", "wav", "mp3", "caf", "aiff")
 
 
-def terms_of(text):
+def keywords(text):
     return [t.split("|") for t in re.findall(r"\[([^\]]+)\]", text)]
 
 
@@ -41,132 +42,161 @@ def spoken(text):
     return re.sub(r"\[([^\]|]+)[^\]]*\]", r"\1", text)
 
 
-def to_wav16k(source, target):
-    subprocess.run(["afconvert", "-f", "WAVE", "-d", "LEI16@16000", "-c", "1", source, target], check=True)
-
-
-def load_items():
-    os.makedirs(CACHE, exist_ok=True)
-    items = []
-    for clip in json.load(open(os.path.join(HERE, "clips.json"))):
-        key = hashlib.sha1((clip["voice"] + clip["text"]).encode()).hexdigest()[:10]
-        wav = os.path.join(CACHE, f"{clip['id']}-{key}.wav")
-        if not os.path.exists(wav):
-            aiff = wav[:-4] + ".aiff"
-            subprocess.run(["say", "-v", clip["voice"], "-r", "220", "-o", aiff, spoken(clip["text"])], check=True)
-            to_wav16k(aiff, wav)
-            os.remove(aiff)
-        items.append({"id": clip["id"], "wav": wav, "terms": terms_of(clip["text"])})
+def cases():
+    """Clips from clips.json, then recordings/; each {id, voice, keywords, audio}."""
+    rows = [{"id": c["id"], "voice": c["voice"], "keywords": keywords(c["text"]),
+             "audio": os.path.join(HERE, "clips", c["id"] + ".m4a")}
+            for c in json.load(open(os.path.join(HERE, "clips.json")))]
     for txt in sorted(glob.glob(os.path.join(HERE, "recordings", "*.txt"))):
         stem = txt[:-4]
         audio = next((f"{stem}.{e}" for e in AUDIO_EXTENSIONS if os.path.exists(f"{stem}.{e}")), None)
-        if not audio:
-            continue
-        wav = os.path.join(CACHE, "rec-" + os.path.basename(stem) + ".wav")
-        if not os.path.exists(wav) or os.path.getmtime(wav) < os.path.getmtime(audio):
-            to_wav16k(audio, wav)
-        items.append({"id": "rec:" + os.path.basename(stem), "wav": wav, "terms": terms_of(open(txt).read())})
-    return items
+        if audio:
+            rows.append({"id": "rec:" + os.path.basename(stem), "voice": "recording",
+                         "keywords": keywords(open(txt).read()), "audio": audio})
+    return rows
+
+
+def wavs(rows):
+    """16 kHz mono WAV of every case in a temp dir; returns [(case, path, seconds)]."""
+    out = tempfile.mkdtemp(prefix="yap-asr-")
+    clips = []
+    for c in rows:
+        dst = os.path.join(out, re.sub(r"\W", "_", c["id"]) + ".wav")
+        subprocess.run(["afconvert", "-f", "WAVE", "-d", "LEI16@16000", "-c", "1", c["audio"], dst], check=True)
+        info = subprocess.run(["afinfo", dst], capture_output=True, text=True).stdout
+        clips.append((c, dst, float(re.search(r"estimated duration: ([\d.]+)", info).group(1))))
+    return clips
+
+
+def run_json_lines(cmd, clips):
+    """Programs that load once, then print {file, text, secs} per clip; load time on stderr as 'load <secs>'."""
+    p = subprocess.run(cmd + [w for _, w, _ in clips], capture_output=True, text=True)
+    rows = {json.loads(l)["file"]: json.loads(l) for l in p.stdout.splitlines() if l.startswith("{")}
+    load = float(re.search(r"^load ([\d.]+)", p.stderr, re.M).group(1))
+    for c, wav, _ in clips:
+        yield c, rows[wav]["text"], rows[wav]["secs"], load
 
 
 def env_key(name):
     if os.environ.get(name):
         return os.environ[name]
-    try:
-        for line in open(os.path.expanduser("~/.env")):
-            if line.startswith(name + "="):
-                return line.split("=", 1)[1].strip().strip('"')
-    except FileNotFoundError:
-        pass
+    for line in open(os.path.expanduser("~/.env")):
+        if line.startswith(name + "="):
+            return line.split("=", 1)[1].strip().strip('"')
     sys.exit(f"{name} is not set (env or ~/.env)")
 
 
-def harness():
-    binary = os.path.join(CACHE, "asr-harness")
-    sources = [os.path.join(HERE, "harness", "main.swift"), os.path.join(HERE, "harness", "Stubs.swift")] + [
-        os.path.join(REPO, "VoiceInk", "Infrastructure", "Providers", "Transcription", "Whisper", f)
-        for f in ("LibWhisper.swift", "WhisperChunking.swift")]
-    if not os.path.exists(binary) or os.path.getmtime(binary) < max(map(os.path.getmtime, sources)):
-        subprocess.run(["xcrun", "swiftc", "-O", "-F", WHISPER_FRAMEWORK, "-framework", "whisper",
-                        "-Xlinker", "-rpath", "-Xlinker", WHISPER_FRAMEWORK, "-o", binary] + sources, check=True)
-    return binary
+def post(request):
+    for attempt in range(3):
+        try:
+            return json.load(urllib.request.urlopen(request, timeout=60)).get("text") or ""
+        except (OSError, ValueError) as error:  # timeouts, HTTP errors, bad JSON
+            print(f"  {error} (attempt {attempt + 1})", file=sys.stderr)
+    return ""
 
 
-def transcribe(engine, wav, prompt):
-    kind, _, target = engine.partition(":")
-    start = time.time()
-    if kind == "whisper":
-        args = [harness(), target, SILERO, wav] + ([f"prompt={prompt}"] if prompt else [])
-        out = subprocess.run(args, capture_output=True, text=True, check=True).stdout.strip().splitlines()[-1]
-        result = json.loads(out)
-        return result["text"], result["seconds"]
-    audio = open(wav, "rb").read()
-    if kind == "openrouter":
+def run_openrouter(model, clips):
+    """LLMkit's OpenRouterTranscriptionClient: multipart file + model."""
+    for c, wav, _ in clips:
         boundary = uuid.uuid4().hex
         body = b"".join([
             f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.wav"\r\n'
-            f"Content-Type: audio/wav\r\n\r\n".encode(), audio,
-            f'\r\n--{boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\n{target}'
+            f"Content-Type: audio/wav\r\n\r\n".encode(), open(wav, "rb").read(),
+            f'\r\n--{boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\n{model}'
             f"\r\n--{boundary}--\r\n".encode()])
         request = urllib.request.Request("https://openrouter.ai/api/v1/audio/transcriptions", body, {
             "Authorization": f"Bearer {env_key('OPENROUTER_API_KEY')}",
             "Content-Type": f"multipart/form-data; boundary={boundary}"})
-    elif kind == "yapcloud":
-        base = os.environ.get("YAP_CLOUD_URL", "https://cloud.yap.sma1lboy.me")
-        body = json.dumps({"model": target, "input_audio": {"data": base64.b64encode(audio).decode(), "format": "wav"}})
-        request = urllib.request.Request(base + "/v1/audio/transcriptions", body.encode(), {
+        t = time.time()
+        text = post(request)
+        yield c, text.strip(), time.time() - t, 0.0
+
+
+def run_yapcloud(model, clips):
+    """YapCloudProvider: JSON {model, input_audio} through paygate."""
+    base = os.environ.get("YAP_CLOUD_URL", "https://cloud.yap.sma1lboy.me")
+    for c, wav, _ in clips:
+        body = {"model": model, "input_audio": {"data": base64.b64encode(open(wav, "rb").read()).decode(), "format": "wav"}}
+        request = urllib.request.Request(base + "/v1/audio/transcriptions", json.dumps(body).encode(), {
             "Authorization": f"Bearer {env_key('YAP_CLOUD_TOKEN')}", "Content-Type": "application/json"})
-    else:
-        sys.exit(f"unknown engine {engine}")
-    for attempt in range(3):
-        try:
-            text = json.load(urllib.request.urlopen(request, timeout=60)).get("text") or ""
-            return text, time.time() - start
-        except (OSError, ValueError) as error:  # timeouts, HTTP errors, bad JSON
-            print(f"  {engine}: {error} (attempt {attempt + 1})", file=sys.stderr)
-            start = time.time()
-    return "", 0.0
+        t = time.time()
+        text = post(request)
+        yield c, text.strip(), time.time() - t, 0.0
 
 
-def hit(spellings, text):
-    squash = lambda s: re.sub(r"\s+", "", s).lower()
-    return any(squash(s) in squash(text) for s in spellings)
+def hits(case, text):
+    """A keyword counts when any spelling appears as whole words; case, spaces/hyphens/dots and a plural s don't matter."""
+    def pattern(alt):
+        chars = [re.escape(ch) for ch in re.sub(r"[\s\-_.]", "", alt.lower())]
+        return r"(?<![a-z0-9])" + r"[\s\-_.]?".join(chars) + r"s?(?![a-z0-9])"
+    t = text.lower()
+    return [any(re.search(pattern(alt), t) for alt in kw) for kw in case["keywords"]]
+
+
+def score():
+    by_id = {c["id"]: c for c in cases()}
+    voices = sorted({c["voice"] for c in by_id.values() if c["voice"] != "recording"})
+    print(f"{'result':48} {'hits':>6} " + " ".join(f"{v.split(' ')[0]:>9}" for v in voices)
+          + f" {'recordings':>10} {'RTF':>6} {'p50 s':>6} {'load s':>7}")
+    for f in sorted(glob.glob(os.path.join(HERE, "results", "*.jsonl"))):
+        rows = [r for r in map(json.loads, open(f)) if r["id"] in by_id]
+        def tally(pick):
+            picked = [r for r in rows if pick(by_id[r["id"]])]
+            return (sum(sum(hits(by_id[r["id"]], r["text"])) for r in picked),
+                    sum(len(by_id[r["id"]]["keywords"]) for r in picked))
+        n, total = tally(lambda c: c["voice"] != "recording")
+        per_voice = [tally(lambda c, v=v: c["voice"] == v) for v in voices]
+        rec = tally(lambda c: c["voice"] == "recording")
+        clips = [r for r in rows if by_id[r["id"]]["voice"] != "recording"]
+        rtf = sum(r["secs"] for r in clips) / sum(r["audio"] for r in clips)
+        p50 = sorted(r["secs"] for r in clips)[len(clips) // 2]
+        print(f"{os.path.basename(f)[:-6]:48} {n:>3}/{total:<2} " + " ".join(f"{a:>6}/{b:<2}" for a, b in per_voice)
+              + f" {(f'{rec[0]}/{rec[1]}' if rec[1] else '-'):>10} {rtf:>6.3f} {p50:>6.2f} {rows[0]['load']:>7.2f}")
 
 
 def main():
+    if sys.argv[1:2] == ["score"]:
+        return score()
     parser = argparse.ArgumentParser()
-    parser.add_argument("engines", nargs="*")
-    parser.add_argument("--models-dir", help="add whisper:<file> for every ggml-*.bin in this directory")
-    parser.add_argument("--vocab-prompt", action="store_true")
-    parser.add_argument("--json")
+    parser.add_argument("command", choices=["run"])
+    parser.add_argument("engine", choices=["whisper", "tcpp", "nemotron", "openrouter", "yapcloud"])
+    parser.add_argument("model")
+    parser.add_argument("--language", default="zh")
+    parser.add_argument("--vocab", action="store_true", help="whisper: every key term in the prompt")
+    parser.add_argument("--itn", action="store_true", help="tcpp: inverse text normalization")
     args = parser.parse_args()
-    engines = args.engines or ["openrouter:microsoft/mai-transcribe-2"]
-    if args.models_dir:
-        engines += [f"whisper:{p}" for p in sorted(glob.glob(os.path.join(args.models_dir, "ggml-*.bin")))
-                    if "silero" not in p]
 
-    items = load_items()
-    total = sum(len(i["terms"]) for i in items)
-    prompt = ", ".join(t[0] for i in items for t in i["terms"]) if args.vocab_prompt else None
-    report = {}
-    for engine in engines:
-        hits, seconds, misses, texts = 0, [], [], {}
-        for item in items:
-            text, secs = transcribe(engine, item["wav"], prompt)
-            seconds.append(secs)
-            texts[item["id"]] = text
-            for spellings in item["terms"]:
-                if hit(spellings, text):
-                    hits += 1
-                else:
-                    misses.append(f"{item['id']}:{spellings[0]}")
-        report[engine] = {"hits": hits, "total": total, "p50_seconds": statistics.median(seconds),
-                          "misses": misses, "texts": texts}
-        print(f"{engine}  {hits}/{total}  p50 {statistics.median(seconds):.2f}s  missed: {', '.join(misses)}",
-              flush=True)
-    if args.json:
-        json.dump(report, open(args.json, "w"), ensure_ascii=False, indent=1)
+    rows = cases()
+    clips = wavs(rows)
+    audio = {c["id"]: s for c, _, s in clips}
+    variant = ("-" + args.language if args.language != "zh" else "") + ("-vocab" if args.vocab else "")
+    if args.engine == "whisper":
+        prompt = WHISPER_ZH_PROMPT if args.language == "zh" else ""
+        if args.vocab:
+            prompt = " ".join(filter(None, [prompt, ", ".join(kw[0] for c in rows for kw in c["keywords"])]))
+        results = run_json_lines([os.path.join(HARNESS, "whisperbench"), args.model, SILERO, args.language, prompt], clips)
+    elif args.engine == "tcpp":
+        results = run_json_lines([os.path.join(HARNESS, "tcppbench"), args.model, args.language, "1" if args.itn else "0"], clips)
+    elif args.engine == "nemotron":
+        results = run_json_lines([os.path.join(HARNESS, "fluidbench"), args.model,
+                                  "zh-CN" if args.language == "zh" else args.language], clips)
+    elif args.engine == "openrouter":
+        results = run_openrouter(args.model, clips)
+    else:
+        results = run_yapcloud(args.model, clips)
+    name = ("nemotron-multilingual" if args.engine == "nemotron"
+            else f"{args.engine}-{os.path.basename(args.model.rstrip('/')).replace('/', '_')}") + variant
+    os.makedirs(os.path.join(HERE, "results"), exist_ok=True)
+    with open(os.path.join(HERE, "results", name + ".jsonl"), "w") as out:
+        for c, text, secs, load in results:
+            h = hits(c, text)
+            print(f"[{c['id']}] {sum(h)}/{len(h)} {secs:.2f}s  {text}")
+            out.write(json.dumps({"id": c["id"], "text": text, "secs": secs, "load": load, "audio": audio[c["id"]]},
+                                 ensure_ascii=False) + "\n")
 
 
 if __name__ == "__main__":
+    assert hits({"keywords": [["GitHub Actions"], ["CI"], ["layer"]]}, "改 github-actions 的 decision，layers 顺序") == [True, False, True]
+    assert keywords("预计[周四|星期四]能合进 [main]") == [["周四", "星期四"], ["main"]]
+    assert spoken("预计[周四|星期四]能合进 [main]") == "预计周四能合进 main"
     main()
