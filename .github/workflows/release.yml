@@ -157,7 +157,8 @@ jobs:
             echo "::warning::$NOTES_MD not found; the release and the update dialog get no notes"
             printf '%s\n' "$FOOTER" > "$RUNNER_TEMP/notes.md"
           fi
-          gh release create "$GITHUB_REF_NAME" Yap.zip --title "Yap $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+          # -R: in a fork, gh without a pinned repo can resolve to the upstream parent (CLAUDE.md iron rule)
+          gh release create "$GITHUB_REF_NAME" Yap.zip -R Sma1lboy/yap --title "Yap $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
 
       # appcast 和 Homebrew cask 同一个提交指到这个版本：app 内 Sparkle 更新，brew upgrade 也能更新
       - name: Bump appcast and cask
