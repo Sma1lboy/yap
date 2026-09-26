@@ -142,10 +142,7 @@ class CursorPaster {
             else {
                 return
             }
-            pasteboard.clearContents()
-            if !savedContents.isEmpty {
-                pasteboard.writeObjects(pasteboardItems(from: savedContents))
-            }
+            ClipboardManager.restoreClipboard(pasteboardItems(from: savedContents), on: pasteboard)
         }
     }
 
