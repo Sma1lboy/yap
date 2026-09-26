@@ -970,3 +970,23 @@ enum AudioFileMetadata {
         return seconds.isFinite ? seconds : 0
     }
 }
+
+#if DEBUG
+    extension VoiceInkEngine {
+        /// `make offline-check` (OfflineCheck): the steps `toggleRecord` runs once a recording stops, on a WAV file
+        /// instead of the microphone, so a dictation can run without a hotkey or microphone permission.
+        func dictateFile(_ file: URL) async -> Transcription {
+            let audioURL = recordingsDirectory.appendingPathComponent("\(UUID().uuidString).wav")
+            try? FileManager.default.copyItem(at: file, to: audioURL)
+            startRecordingContextCapture()
+            recordingState = .transcribing
+            let transcription = makeRecordingTranscription(
+                for: audioURL, text: "", duration: 0, transcriptionStatus: .pending)
+            modelContext.insert(transcription)
+            try? modelContext.save()
+            await runPipeline(
+                on: transcription, audioURL: audioURL, contextStore: activeRecordingContextStore, sendAfterPaste: false)
+            return transcription
+        }
+    }
+#endif

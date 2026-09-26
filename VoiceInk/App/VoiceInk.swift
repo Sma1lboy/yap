@@ -199,6 +199,9 @@ struct VoiceInkApp: App {
         Task { @MainActor in
             await YapConfigLoader.shared.finishLaunch()
         }
+        #if DEBUG
+            OfflineCheck.runIfRequested(engine: engine)  // make offline-check only
+        #endif
 
         let activeWindowService = ActiveWindowService.shared
         _activeWindowService = StateObject(wrappedValue: activeWindowService)

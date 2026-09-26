@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency design-tokens design-check mock ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency design-tokens design-check mock offline-check ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -164,6 +164,14 @@ mock: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/mock.sh "$$APP_DIR"
+
+# Does a local dictation (Whisper model MODEL, cleanup off) touch the network? Runs one dictation with the network
+# denied, then one with it allowed while logging the app's sockets. See scripts/offline-check.sh.
+offline-check: build
+	@test -n "$(MODEL)" || { echo "usage: make offline-check MODEL=/path/to/ggml-large-v3-turbo-q5_0.bin"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/offline-check.sh "$$APP_DIR" "$(MODEL)"
 
 # Render every page, Settings group, onboarding screen and sheet in light and dark, plus the main ones in Chinese
 # (-zh), with fake data to /tmp/yap-ui/snapshots. Debug build, launched with --render-snapshots: saves the dev app's
