@@ -650,6 +650,39 @@ final class YapCloud: ObservableObject {
         return text
     }
 
+    // MARK: - Ledger export
+
+    /// Every ledger row, newest first, paging `GET /v1/ledger?limit=500&before=<nextBefore>` to the end.
+    func fetchAllLedger() async throws -> [YapCloudLedgerEntry] {
+        var rows: [YapCloudLedgerEntry] = []
+        var before: String?
+        repeat {
+            let path = "/v1/ledger?limit=500" + (before.map { "&before=" + $0 } ?? "")
+            let page = try Self.decode(YapCloudLedger.self, from: try await send("GET", path))
+            rows += page.entries
+            before = page.nextBefore?.string
+        } while before != nil
+        return rows
+    }
+
+    /// CSV of ledger rows (header + one line per row): date (ISO 8601 as paygate sent it), kind, amount in USD as an
+    /// exact 6-decimal string from micros, model, receipt URL. RFC 4180 quoting, CRLF line ends.
+    static func ledgerCSV(_ rows: [YapCloudLedgerEntry], header: [String]) -> String {
+        func field(_ value: String) -> String {
+            value.contains(where: { ",\"\r\n".contains($0) }) ? "\"" + value.replacingOccurrences(of: "\"", with: "\"\"") + "\"" : value
+        }
+        let lines = [header] + rows.map { row in
+            [row.createdAt, row.kind, decimalUSD(micros: row.amountMicros), row.model ?? "", row.receiptURL?.absoluteString ?? ""]
+        }
+        return lines.map { $0.map(field).joined(separator: ",") }.joined(separator: "\r\n") + "\r\n"
+    }
+
+    /// Micros as a plain 6-decimal USD string ("-0.000048", "10.000000"), integer math only.
+    static func decimalUSD(micros: Int64) -> String {
+        (micros < 0 ? "-" : "") + String(micros.magnitude / 1_000_000) + "."
+            + String(String(micros.magnitude % 1_000_000 + 1_000_000).dropFirst())
+    }
+
     // MARK: - Account deletion
 
     /// `DELETE /v1/me {confirm: <the account's email>}`, then signs this Mac out. paygate revokes every device's
@@ -1218,6 +1251,8 @@ struct YapCloudDevice: Decodable, Identifiable, Equatable {
 
 private struct YapCloudLedger: Decodable {
     let entries: [YapCloudLedgerEntry]
+    /// Cursor for the next (older) page; nil on the last page.
+    var nextBefore: YapCloudScalar?
 }
 
 private struct YapCloudCheckout: Decodable {
@@ -1490,6 +1525,25 @@ struct YapCloudConfigDocument: Equatable {
             assert(monthlyCapMicros(fromDollars: "") == nil && monthlyCapMicros(fromDollars: "abc") == nil)
             assert(formatExactUSD(micros: 100) == "$0.0001" && formatExactUSD(micros: 5_000_000) == "$5.00")
             assert(formatExactUSD(micros: 1_234_567) == "$1.234567" && formatExactUSD(micros: 0) == "$0.00")
+
+            // Ledger export
+            assert(decimalUSD(micros: -48) == "-0.000048" && decimalUSD(micros: 10_000_000) == "10.000000")
+            assert(decimalUSD(micros: 0) == "0.000000" && decimalUSD(micros: -999_904) == "-0.999904")
+            let exportRows = try! JSONDecoder().decode(
+                YapCloudLedger.self,
+                from: json(#"""
+                    {"entries":[
+                     {"id":"3","kind":"usage","amountMicros":-48,"model":"deepseek/deepseek-v4.1-flash","createdAt":"2026-09-25T23:33:00.183Z"},
+                     {"id":"2","kind":"topup","amountMicros":5000000,"createdAt":"2026-09-25T10:00:00Z","receiptUrl":"https://pay.stripe.com/r/1"},
+                     {"id":"1","kind":"adjust","amountMicros":1,"model":"a,\"b\"","createdAt":"2026-09-01T00:00:00Z"}],"nextBefore":null}
+                    """#))
+            assert(exportRows.nextBefore == nil)
+            assert(ledgerCSV(exportRows.entries, header: ["date", "type", "amount", "model", "receipt"]) == [
+                "date,type,amount,model,receipt",
+                "2026-09-25T23:33:00.183Z,usage,-0.000048,deepseek/deepseek-v4.1-flash,",
+                "2026-09-25T10:00:00Z,topup,5.000000,,https://pay.stripe.com/r/1",
+                "2026-09-01T00:00:00Z,adjust,0.000001,\"a,\"\"b\"\"\",",
+            ].joined(separator: "\r\n") + "\r\n")
 
             // Account deletion (fake bodies; never run against a real account)
             assert(String(data: try! JSONSerialization.data(withJSONObject: deleteAccountBody(confirmEmail: " a@b.c ")), encoding: .utf8)

@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Yap Cloud account: sign in, balance, add funds, recent charges.
 struct AccountView: View {
@@ -94,6 +95,8 @@ private struct SignedInSections: View {
     @State private var isOpeningCheckout = false
     @State private var errorMessage: String?
     @State private var isConfirmingSignOut = false
+    @State private var isExporting = false
+    @State private var exportError: String?
 
     var body: some View {
         Section {
@@ -256,6 +259,17 @@ private struct SignedInSections: View {
                     ForEach(ledger, id: \.id.string) { entry in
                         LedgerRow(entry: entry)
                     }
+                    HStack {
+                        if let exportError {
+                            Text(exportError)
+                                .font(.caption)
+                                .foregroundStyle(AppTheme.Status.error)
+                        }
+                        Spacer()
+                        if isExporting { ProgressView().controlSize(.small) }
+                        Button("Export CSV…", action: exportCSV)
+                            .disabled(isExporting)
+                    }
                 }
             } else if cloud.isRefreshingAccount {
                 ProgressView().controlSize(.small)
@@ -292,6 +306,31 @@ private struct SignedInSections: View {
         return YapCloudMonthlySpend.runway(
             balanceMicros: balance, spentMicros: spend.totalMicros,
             elapsedSeconds: Int64(Date().timeIntervalSince(since)))
+    }
+
+    /// Every ledger row (all pages, not just the 20 shown) as CSV, saved where the user picks.
+    private func exportCSV() {
+        isExporting = true
+        exportError = nil
+        Task { @MainActor in
+            defer { isExporting = false }
+            do {
+                let rows = try await cloud.fetchAllLedger()
+                let header = [
+                    String(localized: "Date"), String(localized: "Type"), String(localized: "Amount (USD)"),
+                    String(localized: "Model"), String(localized: "Receipt"),
+                ]
+                // BOM so spreadsheet apps read the (possibly non-ASCII) header as UTF-8.
+                let csv = "\u{FEFF}" + YapCloud.ledgerCSV(rows, header: header)
+                let panel = NSSavePanel()
+                panel.allowedContentTypes = [.commaSeparatedText]
+                panel.nameFieldStringValue = "yap-cloud-ledger-\(Date().formatted(.iso8601.year().month().day())).csv"
+                guard panel.runModal() == .OK, let url = panel.url else { return }
+                try Data(csv.utf8).write(to: url, options: .atomic)
+            } catch {
+                exportError = error.localizedDescription
+            }
+        }
     }
 
     private func signOut() {
