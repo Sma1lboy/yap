@@ -282,6 +282,8 @@ private struct SignedInSections: View {
                 }
             }
         }
+
+        DeleteAccountSection()
     }
 
     /// nil until this month has 3+ days of usage (see YapCloudMonthlySpend.runway).
@@ -294,6 +296,13 @@ private struct SignedInSections: View {
 
     private func signOut() {
         cloud.signOut()
+        Self.warnAboutModesUsingYapCloud()
+    }
+
+    /// After signing out or deleting the account: modes that still transcribe or enhance through Yap Cloud
+    /// would fail, so name them and offer Modes.
+    @MainActor
+    static func warnAboutModesUsingYapCloud() {
         let modesUsingCloud = ModeManager.shared.configurations.filter { mode in
             mode.selectedTranscriptionModelName?.hasPrefix("YapCloud:") == true
                 || (mode.isAIEnhancementEnabled && mode.selectedAIProvider == AIProvider.yapCloud.rawValue)
@@ -790,5 +799,116 @@ struct YapCloudLegalText: View {
             if let range = text.range(of: name) { text[range].link = url }
         }
         return text
+    }
+}
+
+/// Danger zone at the bottom of Account: delete the Yap Cloud account after typing its email.
+private struct DeleteAccountSection: View {
+    @ObservedObject private var cloud = YapCloud.shared
+    @State private var isConfirming = false
+
+    var body: some View {
+        Section {
+            HStack {
+                Text("Deletes this account for every device. Your remaining balance is not refunded.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer()
+                Button("Delete Yap Cloud Account…", role: .destructive) { isConfirming = true }
+            }
+        } header: {
+            Text("Danger Zone")
+        }
+        .sheet(isPresented: $isConfirming) { DeleteAccountSheet() }
+    }
+}
+
+private struct DeleteAccountSheet: View {
+    @ObservedObject private var cloud = YapCloud.shared
+    @Environment(\.dismiss) private var dismiss
+    @State private var typedEmail = ""
+    @State private var isDeleting = false
+    @State private var errorMessage: String?
+
+    private var email: String? { cloud.me?.email ?? cloud.email }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Delete Yap Cloud Account")
+                .font(.headline)
+            // Mirrors paygate's /privacy and docs/api.md (DELETE /v1/me).
+            VStack(alignment: .leading, spacing: 8) {
+                bullet("Deleted: the sign-in on every device (all of them are signed out), your synced settings and their history, and the email address on the account.")
+                bullet("Kept: the ledger of top-ups and charges, no longer linked to your email. It is a financial record needed to reconcile payments with Stripe and model costs with OpenRouter.")
+                if let balance = cloud.balanceMicros, balance > 0 {
+                    bullet(String(format: String(localized: "Your remaining balance of %@ is not refunded and can't be recovered."), YapCloud.formatUSD(micros: balance)))
+                } else {
+                    bullet(String(localized: "Any remaining balance is not refunded and can't be recovered."))
+                }
+                bullet("Database backups keep your email until they expire, at most about 89 days.")
+                bullet("Signing in again with the same email creates a new, empty account without sign-up credit.")
+            }
+            .font(.callout)
+            if let email {
+                Text(String(format: String(localized: "Type %@ to confirm."), email))
+                    .font(.callout.weight(.semibold))
+                TextField("Email address", text: $typedEmail)
+                    .textFieldStyle(.roundedBorder)
+                    .disabled(isDeleting)
+            }
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(AppTheme.Status.error)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack {
+                Spacer()
+                if isDeleting { ProgressView().controlSize(.small) }
+                Button("Cancel") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                    .disabled(isDeleting)
+                Button("Delete Account", role: .destructive, action: delete)
+                    .disabled(isDeleting || !YapCloud.deletionConfirmed(typed: typedEmail, email: email))
+            }
+        }
+        .padding(20)
+        .frame(width: 460)
+    }
+
+    private func bullet(_ text: LocalizedStringKey) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(verbatim: "•")
+            Text(text).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func bullet(_ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(verbatim: "•")
+            Text(verbatim: text).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func delete() {
+        isDeleting = true
+        errorMessage = nil
+        Task { @MainActor in
+            defer { isDeleting = false }
+            do {
+                try await cloud.deleteAccount(confirmEmail: typedEmail)
+                // The synced config is gone with the account; stop syncing against it.
+                UserDefaults.standard.set(false, forKey: CloudConfigSync.enabledKey)
+                dismiss()
+                NotificationManager.shared.showNotification(
+                    title: String(localized: "Your Yap Cloud account was deleted."), type: .info, duration: 5)
+                SignedInSections.warnAboutModesUsingYapCloud()
+            } catch {
+                // A 401 already signed this Mac out (account gone elsewhere): nothing left to delete here.
+                if !cloud.isSignedIn { dismiss() }
+                errorMessage = error.localizedDescription
+            }
+        }
     }
 }

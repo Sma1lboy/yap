@@ -650,6 +650,27 @@ final class YapCloud: ObservableObject {
         return text
     }
 
+    // MARK: - Account deletion
+
+    /// `DELETE /v1/me {confirm: <the account's email>}`, then signs this Mac out. paygate revokes every device's
+    /// token, deletes the synced config and its history, anonymizes the account; the ledger is kept and the
+    /// balance is not refunded. A mismatched email is 400 CONFIRMATION_MISMATCH (nothing deleted).
+    @MainActor
+    func deleteAccount(confirmEmail: String) async throws {
+        _ = try await send("DELETE", "/v1/me", json: Self.deleteAccountBody(confirmEmail: confirmEmail))
+        clearSession()
+    }
+
+    static func deleteAccountBody(confirmEmail: String) -> [String: Any] {
+        ["confirm": confirmEmail.trimmingCharacters(in: .whitespacesAndNewlines)]
+    }
+
+    /// The confirm field matches the signed-in email (case and surrounding spaces ignored; paygate checks too).
+    static func deletionConfirmed(typed: String, email: String?) -> Bool {
+        guard let email, !email.isEmpty else { return false }
+        return typed.trimmingCharacters(in: .whitespacesAndNewlines).caseInsensitiveCompare(email) == .orderedSame
+    }
+
     // MARK: - Devices
 
     func fetchDevices() async throws -> [YapCloudDevice] {
@@ -1068,6 +1089,8 @@ enum YapCloudError: LocalizedError, Equatable {
             return String(localized: "This model isn't available on Yap Cloud. Choose another model.")
         case "STRIPE_NOT_CONFIGURED":
             return String(localized: "Adding funds isn't available yet.")
+        case "CONFIRMATION_MISMATCH":
+            return String(localized: "That isn't this account's email. Type it exactly to confirm.")
         case "CONFIG_TOO_LARGE":
             return String(localized: "The config is too large to sync (limit 256 KB).")
         case let code?:
@@ -1467,6 +1490,15 @@ struct YapCloudConfigDocument: Equatable {
             assert(monthlyCapMicros(fromDollars: "") == nil && monthlyCapMicros(fromDollars: "abc") == nil)
             assert(formatExactUSD(micros: 100) == "$0.0001" && formatExactUSD(micros: 5_000_000) == "$5.00")
             assert(formatExactUSD(micros: 1_234_567) == "$1.234567" && formatExactUSD(micros: 0) == "$0.00")
+
+            // Account deletion (fake bodies; never run against a real account)
+            assert(String(data: try! JSONSerialization.data(withJSONObject: deleteAccountBody(confirmEmail: " a@b.c ")), encoding: .utf8)
+                == #"{"confirm":"a@b.c"}"#)
+            assert(deletionConfirmed(typed: " A@B.c ", email: "a@b.c") && !deletionConfirmed(typed: "a@b.co", email: "a@b.c"))
+            assert(!deletionConfirmed(typed: "", email: nil) && !deletionConfirmed(typed: "a@b.c", email: nil))
+            let mismatch = YapCloudError(
+                status: 400, body: json(#"{"error":{"code":"CONFIRMATION_MISMATCH","message":"x"}}"#), authenticated: true)
+            assert(!mismatch.isAuthFailure && mismatch.errorDescription?.contains("CONFIRMATION_MISMATCH") == false)
 
             // Top-up arrival
             assert(creditedMicros(before: 5, after: 10_000_005) == 10_000_000)
