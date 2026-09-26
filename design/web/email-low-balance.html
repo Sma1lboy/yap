@@ -1,0 +1,40 @@
+<!doctype html>
+<!-- Balance-below-$1 email (paygate wallet.ts). Placeholders: {{productName}}, {{balance}} (e.g. "$0.84"),
+     {{addFundsHref}} (a page that opens Add Funds; drop the button row when there is none). Same rules as
+     email-sign-in-code.html. The button is a table cell, so it renders in Outlook too. -->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>{{productName}} 余额不足 $1</title>
+</head>
+<body style="margin:0;padding:0;background:#F3F3F5;">
+<div style="display:none;max-height:0;overflow:hidden;">余额还剩 {{balance}}，用完后录音会先提示充值。</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F3F3F5;">
+<tr><td align="center" style="padding:32px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#FFFFFF;border:1px solid #DCDCE1;border-radius:12px;">
+<tr><td style="padding:28px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Helvetica Neue',Arial,sans-serif;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td width="18" height="18" style="width:18px;height:18px;background:#FFD84D;border-radius:5px;font-size:0;line-height:0;">&nbsp;</td>
+    <td style="padding-left:8px;font-size:15px;font-weight:600;color:#1F1F23;">{{productName}} Cloud</td>
+  </tr></table>
+</td></tr>
+<tr><td style="padding:28px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:20px;color:#5E5E66;">余额</td></tr>
+<tr><td style="padding:2px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;font-size:32px;line-height:40px;font-weight:600;color:#1F1F23;">{{balance}}</td></tr>
+<tr><td style="padding:12px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Helvetica Neue',Arial,sans-serif;font-size:16px;line-height:24px;color:#1F1F23;">
+  余额不足 $1。用完后，{{productName}} 会在录音前提示你充值，不会扣到负数。
+</td></tr>
+<tr><td style="padding:20px 32px 28px 32px;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+    <td style="background:#FFD84D;border-radius:10px;"><a href="{{addFundsHref}}" style="display:inline-block;padding:12px 22px;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:600;color:#2A2320;text-decoration:none;">充值</a></td>
+  </tr></table>
+</td></tr>
+<tr><td style="padding:14px 32px;border-top:1px solid #DCDCE1;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Helvetica Neue',Arial,sans-serif;font-size:12px;line-height:18px;color:#6F6F77;">
+  {{productName}} Cloud · 这封邮件由系统自动发送，请勿回复
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,142 @@
+/* Yap web components: paygate pages (checkout result, legal) and the account dashboard.
+   Uses only the variables in tokens.css (generated from docs/DESIGN.md); no color, size or radius literals here
+   except 1px hairlines. Follows the system light/dark setting through tokens.css. */
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: var(--font-body) / 1.6 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--text-2); }
+.faint { color: var(--text-3); }
+
+/* ---------- Page shell ---------- */
+.shell { max-width: 960px; margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-16); }
+.shell--narrow { max-width: 640px; }
+.brand {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-weight: 600; font-size: var(--font-callout); color: var(--text); text-decoration: none;
+}
+.brand svg { width: 24px; height: 24px; flex: none; }
+.page-header { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-12); }
+.page-header nav { margin-left: auto; display: flex; gap: var(--space-4); font-size: var(--font-footnote); }
+.page-header nav a { color: var(--text-2); text-decoration: none; }
+.page-header nav a:hover { color: var(--text); }
+h1, .h1 { font-size: var(--font-title); line-height: 1.2; font-weight: 600; margin: 0 0 var(--space-2); letter-spacing: -0.01em; }
+h2, .h2 { font-size: var(--font-headline); line-height: 1.3; font-weight: 600; margin: var(--space-8) 0 var(--space-2); }
+h3, .h3 { font-size: var(--font-callout); font-weight: 600; margin: var(--space-6) 0 var(--space-1); }
+p { margin: 0 0 var(--space-3); }
+.lede { color: var(--text-2); max-width: 34em; }
+
+/* Long-form documents (privacy, terms) */
+.doc { max-width: 640px; }
+.doc ul { padding-left: var(--space-5); margin: 0 0 var(--space-3); }
+.doc li { margin: var(--space-1) 0; color: var(--text-2); }
+.doc li strong { color: var(--text); font-weight: 600; }
+.doc .meta { color: var(--text-3); font-size: var(--font-footnote); margin-bottom: var(--space-6); }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  font: 600 var(--font-footnote) / 1.2 var(--font);
+  padding: var(--space-2) var(--space-4);
+  min-height: 36px;
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+}
+.btn--lg { font-size: var(--font-callout); padding: var(--space-3) var(--space-5); min-height: 44px; }
+/* One per screen: yellow with ink text (white on yellow is 1.38:1). */
+.btn--primary { background: var(--accent); color: var(--on-accent); }
+.btn--primary:hover { background: var(--accent-press); }
+.btn--secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
+.btn--secondary:hover { background: var(--sunken); }
+/* Only for actions that lose data. Signing out isn't one. */
+.btn--danger { background: var(--danger-fill); color: var(--on-danger); }
+.btn:disabled, .btn[aria-disabled="true"] { background: var(--sunken); color: var(--text-3); border-color: transparent; cursor: default; }
+
+/* ---------- Cards ---------- */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: var(--space-4); }
+.card > :last-child { margin-bottom: 0; }
+.card__title { font-size: var(--font-callout); font-weight: 600; margin: 0 0 var(--space-1); }
+.card__note { font-size: var(--font-footnote); color: var(--text-2); margin: var(--space-2) 0 0; }
+.section-title { font-size: var(--font-footnote); font-weight: 600; color: var(--text-2); margin: var(--space-6) 0 var(--space-2); }
+.stack { display: grid; gap: var(--space-3); }
+.grid-2 { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+
+/* ---------- Forms ---------- */
+.field { display: grid; gap: var(--space-1); margin-bottom: var(--space-3); }
+.field label { font-size: var(--font-footnote); font-weight: 500; color: var(--text-2); }
+.input, select.input {
+  font: var(--font-callout) / 1.4 var(--font);
+  color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3); min-height: 38px; width: 100%;
+}
+.input:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
+.input[aria-invalid="true"] { border-color: var(--danger); }
+.field__error { font-size: var(--font-footnote); color: var(--danger); }
+.field__hint { font-size: var(--font-footnote); color: var(--text-3); }
+.input--code { font: 600 var(--font-title) / 1 var(--mono); letter-spacing: 0.3em; text-align: left; max-width: 12ch; }
+.segmented { display: inline-flex; background: var(--sunken); border-radius: var(--radius-pill); padding: var(--space-half); }
+.segmented label { position: relative; }
+.segmented input { position: absolute; opacity: 0; }
+.segmented span { display: block; padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); font-size: var(--font-footnote); font-weight: 500; color: var(--text-2); cursor: pointer; }
+.segmented input:checked + span { background: var(--surface); color: var(--text); box-shadow: 0 0 0 1px var(--border); }
+.segmented input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+/* ---------- Tables (ledger, devices) ---------- */
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: var(--font-footnote); }
+.table th { text-align: left; font-weight: 600; color: var(--text-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); white-space: nowrap; }
+.table td { padding: var(--space-3); border-bottom: 1px solid var(--border); vertical-align: top; }
+.table tr:last-child td { border-bottom: 0; }
+.table .amount { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.table .sub { display: block; color: var(--text-3); font-size: var(--font-caption); }
+
+/* ---------- Banners ---------- */
+.banner { display: flex; gap: var(--space-3); align-items: flex-start; border-radius: var(--radius-card); padding: var(--space-3) var(--space-4); font-size: var(--font-footnote); margin-bottom: var(--space-4); }
+.banner svg { width: 16px; height: 16px; flex: none; margin-top: 3px; }
+.banner strong { font-weight: 600; }
+.banner__action { margin-left: auto; white-space: nowrap; font-weight: 600; color: inherit; }
+/* Information needs no color of its own. */
+.banner--info { background: var(--sunken); color: var(--text); }
+.banner--info svg { color: var(--text-2); }
+.banner--warning { background: var(--warning-bg); color: var(--warning); }
+.banner--error { background: var(--danger-bg); color: var(--danger); }
+.banner--success { background: var(--success-bg); color: var(--success); }
+
+/* ---------- Status tags ---------- */
+.tag { display: inline-flex; align-items: center; gap: var(--space-1); font: 600 var(--font-caption) / 1.4 var(--font); padding: var(--space-half) var(--space-2); border-radius: var(--radius-pill); }
+.tag svg { width: 12px; height: 12px; }
+.tag--neutral { background: var(--sunken); color: var(--text-2); }
+.tag--brand { background: var(--accent-subtle); color: var(--text); }
+.tag--success { background: var(--success-bg); color: var(--success); }
+
+/* ---------- Money ---------- */
+/* Balances and top-ups: 2 decimals. Per-call charges: 4 decimals, "<$0.0001" below that. Minus is U+2212.
+   Money in and out both use the text color. */
+.money { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.money--hero { font-size: var(--font-display); font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; }
+.balance { display: grid; gap: var(--space-1); }
+.balance__label { font-size: var(--font-footnote); color: var(--text-2); font-weight: 500; }
+.balance__note { font-size: var(--font-footnote); color: var(--text-2); }
+
+/* ---------- Empty state ---------- */
+.empty { display: flex; gap: var(--space-4); align-items: flex-start; padding: var(--space-5); border: 1px dashed var(--border); border-radius: var(--radius-card); }
+.empty svg { width: 28px; height: 28px; color: var(--text-3); flex: none; }
+.empty h3 { margin: 0 0 var(--space-1); }
+.empty p { color: var(--text-2); font-size: var(--font-footnote); }
+
+/* ---------- Footer ---------- */
+.page-footer { margin-top: var(--space-16); padding-top: var(--space-4); border-top: 1px solid var(--border); font-size: var(--font-footnote); color: var(--text-3); display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+.page-footer a { color: var(--text-2); }
