@@ -73,6 +73,7 @@ final class CoreAudioRecorder: @unchecked Sendable {
     // Conversion buffer, used only on audioProcessingQueue.
     private var conversionBuffer: UnsafeMutablePointer<Int16>?
     private var conversionBufferSize: UInt32 = 0
+    private let resampler = PCMResampler()
 
     // Audio metering. Store bit patterns so the render callback never locks.
     private let averagePowerBits = ManagedAtomic<UInt32>(Float32(-160.0).bitPattern)
@@ -190,6 +191,7 @@ final class CoreAudioRecorder: @unchecked Sendable {
             // The output file is per recording; the AUHAL setup above is reused.
             try createOutputFile(at: url)
             resetAudioProcessingState()
+            audioProcessingQueue.sync { resampler.reset() }
 
             try startAudioUnit()
         } catch {
@@ -227,6 +229,7 @@ final class CoreAudioRecorder: @unchecked Sendable {
         }
 
         drainAudioProcessingQueue()
+        audioProcessingQueue.sync { flushResampler() }
         logDroppedInputBufferCounters(context: "stop")
 
         closeOutputFile()
@@ -1030,51 +1033,40 @@ final class CoreAudioRecorder: @unchecked Sendable {
                 let clipped = max(-32768.0, min(32767.0, scaled))
                 outputBuffer[i] = Int16(clipped)
             }
-        } else {
-            // Sample rate conversion needed - use linear interpolation
-            for i in 0..<Int(outputFrameCount) {
-                let inputIndex = Double(i) / ratio
-                let inputIndexInt = Int(inputIndex)
-                let frac = Float32(inputIndex - Double(inputIndexInt))
-
-                var sample: Float32 = 0
-                let idx1 = min(inputIndexInt, Int(frameCount) - 1)
-                let idx2 = min(inputIndexInt + 1, Int(frameCount) - 1)
-
-                // Mix channels and interpolate
-                for ch in 0..<Int(inputChannels) {
-                    let s1 = inputSamples[idx1 * Int(inputChannels) + ch]
-                    let s2 = inputSamples[idx2 * Int(inputChannels) + ch]
-                    sample += s1 + frac * (s2 - s1)
-                }
-                sample /= Float32(inputChannels)
-
-                // Convert to Int16
-                let scaled = sample * 32767.0
-                let clipped = max(-32768.0, min(32767.0, scaled))
-                outputBuffer[i] = Int16(clipped)
-            }
+            writeOutput(outputBuffer, frameCount: outputFrameCount, to: file)
+        } else if let converted = resampler.process(
+            inputSamples, frameCount: frameCount, channels: inputChannels, sampleRate: inputSampleRate),
+            let data = converted.int16ChannelData?[0]
+        {
+            writeOutput(data, frameCount: converted.frameLength, to: file)
         }
+    }
 
-        // Write to file
+    /// Writes the resampler's held-back tail; runs on the processing queue before the file closes.
+    private func flushResampler() {
+        guard let file = audioFile, let tail = resampler.flush(), let data = tail.int16ChannelData?[0] else { return }
+        writeOutput(data, frameCount: tail.frameLength, to: file)
+    }
+
+    private func writeOutput(_ samples: UnsafeMutablePointer<Int16>, frameCount: UInt32, to file: ExtAudioFileRef) {
         var outputBufferList = AudioBufferList(
             mNumberBuffers: 1,
             mBuffers: AudioBuffer(
                 mNumberChannels: 1,
-                mDataByteSize: outputFrameCount * 2,
-                mData: outputBuffer
+                mDataByteSize: frameCount * 2,
+                mData: samples
             )
         )
 
-        let writeStatus = ExtAudioFileWrite(file, outputFrameCount, &outputBufferList)
+        let writeStatus = ExtAudioFileWrite(file, frameCount, &outputBufferList)
         if writeStatus != noErr {
             logger.error("🎙️ ExtAudioFileWrite failed with status: \(writeStatus, privacy: .public)")
         }
 
         // Send the same PCM data to the streaming callback if set.
         if let audioChunk = onAudioChunk {
-            let byteCount = Int(outputFrameCount) * MemoryLayout<Int16>.size
-            let data = Data(bytes: outputBuffer, count: byteCount)
+            let byteCount = Int(frameCount) * MemoryLayout<Int16>.size
+            let data = Data(bytes: samples, count: byteCount)
             audioChunk(data)
         }
     }

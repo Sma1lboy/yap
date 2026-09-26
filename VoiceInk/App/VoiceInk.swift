@@ -50,6 +50,7 @@ struct VoiceInkApp: App {
         #if DEBUG
             ReleaseNotes.selfCheck()
             WhisperChunking.selfCheck()
+            PCMResampler.selfCheck()
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
