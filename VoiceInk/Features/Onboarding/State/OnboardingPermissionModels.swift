@@ -9,25 +9,6 @@ enum OnboardingStage: String, CaseIterable {
     case contextAwareness
     case trust
 
-    var stepNumber: Int {
-        switch self {
-        case .permissions:
-            return 1
-        case .microphone:
-            return 2
-        case .model:
-            return 3
-        case .api:
-            return 4
-        case .experience:
-            return 5
-        case .contextAwareness:
-            return 6
-        case .trust:
-            return 7
-        }
-    }
-
     var systemImage: String {
         switch self {
         case .permissions:
@@ -87,10 +68,6 @@ enum OnboardingStage: String, CaseIterable {
         case .trust:
             return String(localized: "Local models keep everything on this Mac. Cloud providers and Yap Cloud get only what you send them.")
         }
-    }
-
-    static var baseStepCount: Int {
-        4
     }
 }
 

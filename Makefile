@@ -141,14 +141,15 @@ sync-e2e:
 		VoiceInk/Features/Modes/Models/ModeIcon.swift
 	@scripts/sync-e2e/run.sh "$(SYNC_E2E_BIN)"
 
-# Render key screens (Account states, Config & Sync, onboarding's last screen, Home empty, What's New) in light
-# and dark with fake data to /tmp/yap-ui/snapshots. Debug build, launched with --render-snapshots: no window,
-# no focus change, no network; it exits when done.
+# Render key screens in light and dark, in English and Chinese (-zh), with fake data to /tmp/yap-ui/snapshots.
+# Debug build, launched with --render-snapshots: saves the dev app's UserDefaults domain first and restores it
+# before exiting (fake modes etc. never stick). No window, no focus change, no network.
 ui-snapshots: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	rm -rf /tmp/yap-ui/snapshots; \
-	"$$APP_DIR/VoiceInk Dev.app/Contents/MacOS/VoiceInk Dev" --render-snapshots
+	BIN="$$APP_DIR/VoiceInk Dev.app/Contents/MacOS/VoiceInk Dev"; \
+	"$$BIN" --render-snapshots && "$$BIN" --render-snapshots -AppleLanguages '(zh-Hans)'
 
 # Run application
 run:

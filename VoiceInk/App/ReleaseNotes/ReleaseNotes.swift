@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 
 /// In-app "What's New": the bundled docs/releases/<version>.md (folder resource `releases`).
+/// The whole folder is copied into the app, so it holds only <version>.md files; checklists and reports live in docs/.
 /// The file holds an English half then a Chinese half, each starting with a `# ` heading; the half matching
 /// the app's language is shown. No file for the running version means no sheet and no About button.
 struct ReleaseNotes: Equatable {
