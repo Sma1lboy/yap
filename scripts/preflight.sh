@@ -127,8 +127,10 @@ checks = [
     ("notes: monthly cap", f"$0 to ${cap:,}" in notes and f"$0 到 ${cap:,}" in notes, f"'$0 to ${cap:,}' (app limit)"),
     ("README: markup", f"plus {pct}" in readme and f"加 {pct}" in readme_zh, f"'plus {pct}' / '加 {pct}'"),
     ("README: sign-up credit", f"{credit} of credit" in readme and f"{credit} 的额度" in readme_zh, f"'{credit} of credit'"),
-    ("site: credit and markup", (not site) or (f">{credit} <small" in site and f"plus {pct}" in site and f"加 {pct}" in site),
-     f"{credit}, {pct}" if site else "no site/index.html"),
+    ("site: credit, markup, top-up", (not site) or (
+        re.search(r'class="price">' + re.escape(credit) + r'(\D|$)', site) is not None
+        and f"plus {pct}" in site and f"加 {pct}" in site and f"{lo} to {hi}" in site and f"{lo}–{hi}" in site),
+     f"price {credit}, 'plus {pct}', '{lo} to {hi}'" if site else "no site/index.html"),
 ]
 bad = [(n, want) for n, ok, want in checks if not ok]
 for n, ok, want in checks:
