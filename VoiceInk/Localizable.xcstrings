@@ -8097,6 +8097,28 @@
         }
       }
     },
+    "Collapsed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingeklappt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduit"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已收起"
+          }
+        }
+      }
+    },
     "Combines transcription with an LLM to create a polished version." : {
       "localizations" : {
         "de" : {
@@ -12710,6 +12732,28 @@
         }
       }
     },
+    "Expanded" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgeklappt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Développé"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已展开"
+          }
+        }
+      }
+    },
     "Experience Yap" : {
       "localizations" : {
         "de" : {
@@ -16172,24 +16216,24 @@
         }
       }
     },
-    "Local models keep everything on this Mac. With your own API key, audio and text go only to the provider you choose. With Yap Cloud, they pass through Yap's server on the way to the model provider; the server records the model and cost for billing. If you turn on Sync via Yap Cloud, your modes, prompts, dictionary, shortcuts and custom models are stored there too, never your API keys. Transcripts are stored on this Mac." : {
+    "Local models keep everything on this Mac. With your own API key, audio and text go only to the provider you choose. With Yap Cloud, they pass through Yap's server on the way to the model provider; the server records the model and cost for billing. If you turn on Sync via Yap Cloud, your modes, prompts, dictionary, shortcuts and custom models are stored there too, never your API keys." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lokale Modelle behalten alles auf diesem Mac. Mit deinem eigenen API-Schlüssel gehen Audio und Text nur an den Anbieter, den du wählst. Mit Yap Cloud laufen sie über den Yap-Server zum Modellanbieter; der Server speichert Modell und Kosten für die Abrechnung. Wenn du „Über Yap Cloud synchronisieren“ aktivierst, werden auch deine Modi, Prompts, dein Wörterbuch, Tastaturkürzel und eigenen Modelle dort gespeichert, niemals deine API-Schlüssel. Transkripte werden auf diesem Mac gespeichert."
+            "value" : "Lokale Modelle behalten alles auf diesem Mac. Mit deinem eigenen API-Schlüssel gehen Audio und Text nur an den Anbieter, den du wählst. Mit Yap Cloud laufen sie über den Yap-Server zum Modellanbieter; der Server speichert Modell und Kosten für die Abrechnung. Wenn du „Über Yap Cloud synchronisieren“ aktivierst, werden auch deine Modi, Prompts, dein Wörterbuch, Tastaturkürzel und eigenen Modelle dort gespeichert, niemals deine API-Schlüssel."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Les modèles locaux gardent tout sur ce Mac. Avec votre propre clé API, l’audio et le texte vont uniquement au fournisseur choisi. Avec Yap Cloud, ils passent par le serveur de Yap avant d’atteindre le fournisseur du modèle ; le serveur enregistre le modèle et le coût pour la facturation. Si vous activez « Synchroniser via Yap Cloud », vos modes, prompts, dictionnaire, raccourcis et modèles personnalisés y sont aussi stockés, jamais vos clés API. Les transcriptions sont stockées sur ce Mac."
+            "value" : "Les modèles locaux gardent tout sur ce Mac. Avec votre propre clé API, l’audio et le texte vont uniquement au fournisseur choisi. Avec Yap Cloud, ils passent par le serveur de Yap avant d’atteindre le fournisseur du modèle ; le serveur enregistre le modèle et le coût pour la facturation. Si vous activez « Synchroniser via Yap Cloud », vos modes, prompts, dictionnaire, raccourcis et modèles personnalisés y sont aussi stockés, jamais vos clés API."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "本地模型的所有数据都留在这台 Mac 上。使用你自己的 API 密钥时，音频和文字只会发送给你选择的提供商。使用 Yap Cloud 时，它们会经过 Yap 的服务器转发给模型提供商，服务器会记录所用模型和费用用于计费。如果开启「通过 Yap Cloud 同步」，你的模式、提示词、词典、快捷键和自定义模型也会保存在 Yap 的服务器上，API 密钥永远不会上传。转写记录保存在这台 Mac 上。"
+            "value" : "本地模型的所有数据都留在这台 Mac 上。使用你自己的 API 密钥时，音频和文字只会发送给你选择的提供商。使用 Yap Cloud 时，它们会经过 Yap 的服务器转发给模型提供商，服务器会记录所用模型和费用用于计费。如果开启「通过 Yap Cloud 同步」，你的模式、提示词、词典、快捷键和自定义模型也会保存在 Yap 的服务器上，API 密钥永远不会上传。"
           }
         }
       }
@@ -21209,6 +21253,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "隐私从这里开始"
+          }
+        }
+      }
+    },
+    "Privacy details" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datenschutz im Detail"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Détails sur la confidentialité"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "详细说明"
           }
         }
       }
@@ -31749,24 +31815,24 @@
         }
       }
     },
-    "Yap collects no analytics." : {
+    "Yap collects no usage data. Transcripts are stored only on this Mac." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap erfasst keine Analysedaten."
+            "value" : "Yap erfasst keine Nutzungsdaten. Transkripte bleiben nur auf diesem Mac."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap ne collecte aucune donnée d’analyse."
+            "value" : "Yap ne collecte aucune donnée d’utilisation. Les transcriptions restent uniquement sur ce Mac."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap 不收集任何分析数据。"
+            "value" : "Yap 不收集使用数据。转写记录只存在这台 Mac 上。"
           }
         }
       }

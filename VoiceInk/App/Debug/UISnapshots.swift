@@ -67,7 +67,7 @@
             shot("onboarding-model-yapcloud", size: onboardingSize) { onboardingModel(.yapCloud) }
             shot("onboarding-model-openrouter", size: onboardingSize) { onboardingModel(.recommended) }
             shot("onboarding-dictation", size: onboardingSize) { onboardingDictation }
-            shot("onboarding-restore", size: CGSize(width: 440, height: 480)) {
+            shot("onboarding-restore", size: CGSize(width: 440, height: 200)) {
                 OnboardingCloudRestoreSheet { _ in }
             }
             shot("onboarding-final", size: onboardingSize) {

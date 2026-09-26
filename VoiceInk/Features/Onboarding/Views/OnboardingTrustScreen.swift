@@ -78,6 +78,7 @@ private struct TrustBody: View {
     /// Only for someone who hasn't dictated yet (e.g. after "Set It Up Later"). The card takes the decorative
     /// map's place: squeezed smaller, the map draws past its frame into the headline and text.
     private var showsTrySaying: Bool { existingTranscriptions.isEmpty }
+    @State private var showsPrivacyDetails = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -88,17 +89,36 @@ private struct TrustBody: View {
             }
 
             VStack(spacing: 10) {
-                Text("Yap collects no analytics.")
+                Text("Yap collects no usage data. Transcripts are stored only on this Mac.")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(AppTheme.Text.primary)
                     .multilineTextAlignment(.center)
-
-                Text("Local models keep everything on this Mac. With your own API key, audio and text go only to the provider you choose. With Yap Cloud, they pass through Yap's server on the way to the model provider; the server records the model and cost for billing. If you turn on Sync via Yap Cloud, your modes, prompts, dictionary, shortcuts and custom models are stored there too, never your API keys. Transcripts are stored on this Mac.")
-                    .font(.system(size: 13))
-                    .foregroundColor(AppTheme.Text.secondary)
-                    .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: 610)
+
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { showsPrivacyDetails.toggle() }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("Privacy details")
+                        Image(systemName: "chevron.down")
+                            .rotationEffect(.degrees(showsPrivacyDetails ? 180 : 0))
+                    }
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(AppTheme.Text.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityValue(showsPrivacyDetails ? Text("Expanded") : Text("Collapsed"))
+
+                if showsPrivacyDetails {
+                    Text("Local models keep everything on this Mac. With your own API key, audio and text go only to the provider you choose. With Yap Cloud, they pass through Yap's server on the way to the model provider; the server records the model and cost for billing. If you turn on Sync via Yap Cloud, your modes, prompts, dictionary, shortcuts and custom models are stored there too, never your API keys.")
+                        .font(.system(size: 13))
+                        .foregroundColor(AppTheme.Text.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: 610)
+                        .transition(.opacity)
+                }
 
                 Text("Yap picks a mode for the app you're in. Press Option 1-9 while recording to switch, and edit modes anytime.")
                     .font(.system(size: 13))
