@@ -5,24 +5,6 @@ import Foundation
 setvbuf(stdout, nil, _IOLBF, 0)
 let env = ProcessInfo.processInfo.environment
 
-/// A one-time token from paygate's scripts/issue-token.ts (over railway ssh, from a linked checkout). It is signed
-/// out when the run ends, so smoke runs don't pile up devices on the account.
-func issueToken(email: String, in directory: String) -> String? {
-    let process = Process()
-    process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-    process.arguments = ["railway", "ssh", "-s", "paygate", "--", "bun", "run", "scripts/issue-token.ts", email,
-                         "--device-name", "cloud-smoke"]
-    process.currentDirectoryURL = URL(fileURLWithPath: directory)
-    let output = Pipe()
-    process.standardOutput = output
-    process.standardError = FileHandle.nullDevice
-    guard (try? process.run()) != nil else { return nil }
-    process.waitUntilExit()
-    let token = String(data: output.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
-        .trimmingCharacters(in: .whitespacesAndNewlines)
-    return process.terminationStatus == 0 && token?.isEmpty == false ? token : nil
-}
-
 let smokeEmail = env["YAP_CLOUD_SMOKE_EMAIL"].flatMap { $0.isEmpty ? nil : $0 } ?? "smoke+yap@sma1lboy.me"
 /// True when this run issued its own token (and must sign it out); a token passed in is never signed out.
 var isOneTimeToken = false
@@ -69,7 +51,6 @@ func check(_ name: String, _ body: () async throws -> String) async {
         report("FAIL", name, "\(error)")
     }
 }
-struct Failed: Error, CustomStringConvertible { let description: String }
 func expect(_ condition: Bool, _ message: @autoclosure () -> String) throws {
     if !condition { throw Failed(description: message()) }
 }
@@ -85,37 +66,6 @@ func raw(_ method: String, _ path: String, json: [String: Any]? = nil) async thr
     }
     let (data, response) = try await URLSession.shared.data(for: request)
     return ((response as! HTTPURLResponse).statusCode, data)
-}
-
-/// Ledger adjustment on the live deployment (paygate's scripts/adjust.ts over `railway ssh`, from a linked checkout).
-func adjust(email: String, micros: Int64, note: String, in directory: String) throws {
-    let sign = micros < 0 ? "-" : ""
-    let amount = sign + String(micros.magnitude / 1_000_000) + "." + String(String(micros.magnitude % 1_000_000 + 1_000_000).dropFirst())
-    let process = Process()
-    process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-    process.arguments = ["railway", "ssh", "-s", "paygate", "--", "bun", "run", "scripts/adjust.ts", email, amount, note]
-    process.currentDirectoryURL = URL(fileURLWithPath: directory)
-    let output = Pipe()
-    process.standardOutput = output
-    process.standardError = output
-    try process.run()
-    process.waitUntilExit()
-    let text = String(data: output.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-    print("     adjust \(amount) USD: \(text.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: "\n").last ?? "")")
-    if process.terminationStatus != 0 { throw Failed(description: "adjust.ts failed: \(text)") }
-}
-
-/// Brings the balance back to exactly 0 with one adjustment of the opposite sign.
-func zeroBalance(email: String, in directory: String) throws {
-    let semaphore = DispatchSemaphore(value: 0)
-    var balance: Int64?
-    Task.detached {
-        balance = try? await YapCloud.shared.fetchMe().balanceMicros
-        semaphore.signal()
-    }
-    semaphore.wait()
-    guard let balance else { throw Failed(description: "couldn't read the balance to zero it") }
-    if balance != 0 { try adjust(email: email, micros: -balance, note: "client id-capture check: back to 0", in: directory) }
 }
 
 /// One second of 16 kHz mono silence as WAV, for the transcription 402 check.

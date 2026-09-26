@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke design-tokens design-check mock ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency design-tokens design-check mock ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -114,9 +114,18 @@ CLOUD_SMOKE_BIN := $(CURDIR)/.local-build/cloud-smoke
 cloud-smoke:
 	@mkdir -p "$(dir $(CLOUD_SMOKE_BIN))"
 	@xcrun swiftc -DDEBUG -Onone -o "$(CLOUD_SMOKE_BIN)" \
-		scripts/cloud-smoke/Stubs.swift scripts/cloud-smoke/main.swift \
+		scripts/cloud-smoke/Stubs.swift scripts/cloud-smoke/Ops.swift scripts/cloud-smoke/main.swift \
 		VoiceInk/Infrastructure/Cloud/YapCloudClient.swift VoiceInk/Infrastructure/Cloud/YapCloudProvider.swift
 	@"$(CLOUD_SMOKE_BIN)"
+
+# Yap Cloud latency against the live deployment (real client code; PAYGATE_DIR required, funds $0.05 and zeroes it).
+CLOUD_LATENCY_BIN := $(CURDIR)/.local-build/cloud-latency
+cloud-latency:
+	@mkdir -p "$(dir $(CLOUD_LATENCY_BIN))"
+	@xcrun swiftc -DDEBUG -O -o "$(CLOUD_LATENCY_BIN)" \
+		scripts/cloud-smoke/Stubs.swift scripts/cloud-smoke/Ops.swift scripts/cloud-latency/main.swift \
+		VoiceInk/Infrastructure/Cloud/YapCloudClient.swift VoiceInk/Infrastructure/Cloud/YapCloudProvider.swift
+	@"$(CLOUD_LATENCY_BIN)"
 
 SYNC_E2E_BIN := $(CURDIR)/.local-build/sync-e2e
 sync-e2e:

@@ -489,12 +489,14 @@ final class YapCloud: ObservableObject {
     /// POSTs a JSON body to a billed proxy route (`/v1/chat/completions`, `/v1/audio/transcriptions`).
     /// Retries once after 0.5 s, only when the first attempt provably wasn't billed (see `isSafeToRetry`).
     /// Final network failures become `.unreachable`, so no outer retry loop re-sends a billed request.
+    /// A streamed chat call (`stream: true` in the body) comes back as the equivalent non-streamed body.
     func proxy(_ path: String, body: [String: Any], timeout: TimeInterval) async throws -> Data {
         defer { scheduleBalanceRefresh() }
         let payload = try JSONSerialization.data(withJSONObject: body)
+        let stream = body["stream"] as? Bool == true
         do {
             let (data, http) = try await Self.retryingOnce {
-                try await self.proxyOnce(path, payload: payload, timeout: timeout)
+                try await self.proxyOnce(path, payload: payload, stream: stream, timeout: timeout)
             }
             noteReachability(nil)
             if let id = Self.generationID(header: http.value(forHTTPHeaderField: "x-generation-id"), body: data) {
@@ -509,22 +511,79 @@ final class YapCloud: ObservableObject {
         }
     }
 
-    private func proxyOnce(_ path: String, payload: Data, timeout: TimeInterval) async throws -> (Data, HTTPURLResponse) {
+    private func proxyOnce(_ path: String, payload: Data, stream: Bool, timeout: TimeInterval)
+        async throws -> (Data, HTTPURLResponse)
+    {
         guard let token else { throw YapCloudError.notSignedIn }
         var request = URLRequest(url: URL(string: path, relativeTo: baseURL)!, timeoutInterval: timeout)
         request.httpMethod = "POST"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = payload
-        // Ephemeral session: avoids HTTP/3 uploads that stall behind some VPNs (same as custom endpoints).
-        let session = URLSession(configuration: .ephemeral)
-        defer { session.finishTasksAndInvalidate() }
-        let (data, response) = try await session.data(for: request)
+        let session = Self.session
+        guard stream else {
+            let (data, response) = try await session.data(for: request)
+            guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+            guard (200..<300).contains(http.statusCode) else {
+                throw YapCloudError(status: http.statusCode, body: data, authenticated: true)
+            }
+            return (data, http)
+        }
+        let deadline = Date().addingTimeInterval(timeout)
+        let (bytes, response) = try await session.bytes(for: request)
         guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
         guard (200..<300).contains(http.statusCode) else {
+            // Refused before any output (402, 401, 429, a passed-through OpenRouter 4xx): same mapping as JSON.
+            var data = Data()
+            for try await byte in bytes { data.append(byte) }
             throw YapCloudError(status: http.statusCode, body: data, authenticated: true)
         }
-        return (data, http)
+        var sse = SSEChat()
+        for try await line in bytes.lines {
+            // OpenRouter's ": OPENROUTER PROCESSING" keep-alives reset the idle timeout, so bound the whole call.
+            if Date() > deadline { throw URLError(.timedOut) }
+            if try sse.consume(line) { break }
+        }
+        return (try sse.completionBody(), http)
+    }
+
+    /// Accumulates an OpenRouter chat SSE stream (`data: {…}` chunks, `: …` comments, `data: [DONE]`) into the
+    /// text and generation id. An error sent after the 200 (`{"error":{…}}` chunk) throws; it isn't retried
+    /// because output had started and the call may be billed.
+    struct SSEChat {
+        private(set) var id: String?
+        private(set) var content = ""
+
+        /// Returns true at `[DONE]`.
+        mutating func consume(_ line: String) throws -> Bool {
+            guard line.hasPrefix("data:") else { return false }
+            let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
+            if payload == "[DONE]" { return true }
+            struct Chunk: Decodable {
+                struct Choice: Decodable {
+                    struct Delta: Decodable { let content: String? }
+                    let delta: Delta?
+                }
+                struct Failure: Decodable { let message: String? }
+                let id: String?
+                let choices: [Choice]?
+                let error: Failure?
+            }
+            guard let chunk = try? JSONDecoder().decode(Chunk.self, from: Data(payload.utf8)) else { return false }
+            if let error = chunk.error {
+                throw YapCloudError.server(status: 200, code: nil, message: error.message ?? "Stream error")
+            }
+            if id == nil, let chunkID = chunk.id, !chunkID.isEmpty { id = chunkID }
+            content += chunk.choices?.first?.delta?.content ?? ""
+            return false
+        }
+
+        /// The non-streamed response shape: `{id, choices:[{message:{content}}]}`.
+        func completionBody() throws -> Data {
+            var body: [String: Any] = ["choices": [["message": ["content": content]]]]
+            if let id { body["id"] = id }
+            return try JSONSerialization.data(withJSONObject: body)
+        }
     }
 
     // MARK: - Per-dictation cost
@@ -638,14 +697,57 @@ final class YapCloud: ObservableObject {
         return nil
     }
 
-    /// Non-streaming chat completion through paygate; returns the first choice's text.
+    /// The chat request, shaped for dictation latency like the app's OpenRouter path (OpenRouterRequestPolicy):
+    /// reasoning off (DeepSeek V4.1 Flash otherwise reasons at effort "high": 15–25 s on a paragraph instead of
+    /// ~1 s), providers required to honour that, sorted by throughput with a p90 latency target. paygate's
+    /// /v1/models has no reasoning metadata, so models that can't disable reasoning are learned from their 400.
+    static func chatBody(
+        model: String, messages: [[String: String]], temperature: Double, reasoningOff: Bool, stream: Bool = false
+    ) -> [String: Any] {
+        var provider: [String: Any] = ["sort": "throughput", "preferred_max_latency": ["p90": 2.5], "allow_fallbacks": true]
+        var body: [String: Any] = ["model": model, "messages": messages, "temperature": temperature, "stream": stream]
+        if reasoningOff {
+            body["reasoning"] = ["enabled": false, "exclude": true]
+            provider["require_parameters"] = true
+        }
+        body["provider"] = provider
+        return body
+    }
+
+    private static let reasoningRequiredKey = "yapCloudReasoningRequiredModels"
+    private func reasoningRequired(_ model: String) -> Bool {
+        (defaults.stringArray(forKey: Self.reasoningRequiredKey) ?? []).contains(model)
+    }
+    private func rememberReasoningRequired(_ model: String) {
+        let models = Set(defaults.stringArray(forKey: Self.reasoningRequiredKey) ?? []).union([model])
+        defaults.set(models.sorted(), forKey: Self.reasoningRequiredKey)
+    }
+
+    /// Chat completion through paygate, streamed (paygate answers a stream without first awaiting its ledger
+    /// insert); returns the whole text once the stream ends, so callers still paste one finished result.
     func chatCompletion(model: String, messages: [[String: String]], temperature: Double, timeout: TimeInterval)
         async throws -> String
     {
-        let data = try await proxy(
-            "/v1/chat/completions",
-            body: ["model": model, "messages": messages, "temperature": temperature, "stream": false],
-            timeout: timeout)
+        let reasoningOff = !reasoningRequired(model)
+        let data: Data
+        do {
+            data = try await proxy(
+                "/v1/chat/completions",
+                body: Self.chatBody(
+                    model: model, messages: messages, temperature: temperature, reasoningOff: reasoningOff, stream: true),
+                timeout: timeout)
+        } catch YapCloudError.server(400, _, let message, _, _)
+            where reasoningOff && message.localizedCaseInsensitiveContains("reasoning")
+        {
+            // This model can't run without reasoning ("Reasoning is mandatory…"). A 400 from OpenRouter is passed
+            // through unbilled, so remember the model and send it again without the setting.
+            rememberReasoningRequired(model)
+            data = try await proxy(
+                "/v1/chat/completions",
+                body: Self.chatBody(
+                    model: model, messages: messages, temperature: temperature, reasoningOff: false, stream: true),
+                timeout: timeout)
+        }
         struct Response: Decodable {
             struct Choice: Decodable {
                 struct Message: Decodable { let content: String? }
@@ -976,6 +1078,21 @@ final class YapCloud: ObservableObject {
 
     // MARK: - HTTP
 
+    /// Every paygate request goes through this one session, so a dictation's calls reuse a warm connection
+    /// (a new one costs ~40 ms of TCP + TLS, docs/cloud-latency.md). Ephemeral: nothing written to disk.
+    /// ponytail: custom endpoints use a session per call because a shared one learns Alt-Svc and moves uploads
+    /// to HTTP/3, which stalls behind some VPNs; paygate (Railway) sends no Alt-Svc, so this stays on HTTP/2.
+    /// If it ever advertises h3, go back to a session per upload.
+    private static let session = URLSession(configuration: .ephemeral)
+
+    /// Opens that connection while the user is still speaking, so the transcription upload doesn't wait for a
+    /// handshake. App activation needs no call of its own: it refreshes the account through the same session.
+    func prewarm() {
+        var request = URLRequest(url: URL(string: "/healthz", relativeTo: baseURL)!, timeoutInterval: 10)
+        request.httpMethod = "HEAD"
+        Task { _ = try? await Self.session.data(for: request) }
+    }
+
     private func send(
         _ method: String, _ path: String, json: [String: Any]? = nil, authenticated: Bool = true
     ) async throws -> Data {
@@ -1003,7 +1120,7 @@ final class YapCloud: ObservableObject {
         for (name, value) in headers { request.setValue(value, forHTTPHeaderField: name) }
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await Self.session.data(for: request)
             guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
             guard (200..<300).contains(http.statusCode) else {
                 throw YapCloudError(status: http.statusCode, body: data, authenticated: authenticated)
@@ -1059,7 +1176,7 @@ final class YapCloud: ObservableObject {
     func isHealthy() async -> Bool {
         var request = URLRequest(url: URL(string: "/healthz", relativeTo: baseURL)!, timeoutInterval: 10)
         request.cachePolicy = .reloadIgnoringLocalCacheData
-        guard let (_, response) = try? await URLSession.shared.data(for: request) else { return false }
+        guard let (_, response) = try? await Self.session.data(for: request) else { return false }
         return (response as? HTTPURLResponse)?.statusCode == 200
     }
 
@@ -1737,6 +1854,35 @@ struct YapCloudConfigDocument: Equatable {
             let collector = GenerationCollector()
             $generationCollector.withValue(collector) { generationCollector?.add("gen-a") }
             assert(collector.last == "gen-a" && generationCollector == nil)
+
+            // Chat request shape: reasoning off unless the model requires it; throughput-sorted providers
+            let fast = chatBody(model: "m", messages: [["role": "user", "content": "x"]], temperature: 0.3, reasoningOff: true)
+            assert((fast["reasoning"] as? [String: Bool]) == ["enabled": false, "exclude": true])
+            assert((fast["provider"] as? [String: Any])?["sort"] as? String == "throughput")
+            assert((fast["provider"] as? [String: Any])?["require_parameters"] as? Bool == true && fast["stream"] as? Bool == false)
+            let reasoning = chatBody(model: "m", messages: [], temperature: 0.3, reasoningOff: false)
+            assert(reasoning["reasoning"] == nil && (reasoning["provider"] as? [String: Any])?["require_parameters"] == nil)
+
+            // Chat SSE → the non-streamed body (text, generation id); a mid-stream error chunk throws
+            var sse = SSEChat()
+            for line in [
+                ": OPENROUTER PROCESSING", "",
+                #"data: {"id":"gen-s","choices":[{"delta":{"role":"assistant","content":"你好"}}]}"#,
+                #"data: {"id":"gen-s","choices":[{"delta":{"content":", world"}}]}"#,
+                #"data: {"id":"gen-s","choices":[{"delta":{}}],"usage":{"cost":0.0001}}"#,
+            ] { assert(try! sse.consume(line) == false) }
+            assert(try! sse.consume("data: [DONE]"))
+            let streamed = try! sse.completionBody()
+            assert(generationID(header: nil, body: streamed) == "gen-s")
+            assert(String(data: streamed, encoding: .utf8)!.contains("你好, world"))
+            var failing = SSEChat()
+            do {
+                _ = try failing.consume(#"data: {"error":{"code":502,"message":"Provider disconnected"},"choices":[]}"#)
+                assertionFailure("mid-stream error must throw")
+            } catch {
+                assert(error as? YapCloudError == .server(status: 200, code: nil, message: "Provider disconnected"))
+                assert(!isSafeToRetry(error))
+            }
 
             // Proxy retry policy: only provably-unbilled failures, once
             assert(isSafeToRetry(URLError(.cannotConnectToHost)) && isSafeToRetry(URLError(.notConnectedToInternet)))
