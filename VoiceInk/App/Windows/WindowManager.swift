@@ -7,6 +7,11 @@ enum AppWindowLayout {
     /// 220pt sidebar + 680pt of page content; the window can be widened freely.
     static let minimumWidth: CGFloat = 900
     static let minimumHeight: CGFloat = 750
+    /// The transparent title bar the traffic lights sit in (hidden title bar, full-size content). The sidebar starts
+    /// below it; page content runs up into it.
+    static let titlebarHeight: CGFloat = 28
+    /// Width the traffic lights need at the sidebar's top-left.
+    static let trafficLightsWidth: CGFloat = 70
 }
 
 enum AppWindowID {
