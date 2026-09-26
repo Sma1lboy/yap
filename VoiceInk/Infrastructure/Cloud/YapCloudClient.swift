@@ -638,14 +638,54 @@ final class YapCloud: ObservableObject {
         return nil
     }
 
+    /// The chat request, shaped for dictation latency like the app's OpenRouter path (OpenRouterRequestPolicy):
+    /// reasoning off (DeepSeek V4.1 Flash otherwise reasons at effort "high": 15–25 s on a paragraph instead of
+    /// ~1 s), providers required to honour that, sorted by throughput with a p90 latency target. paygate's
+    /// /v1/models has no reasoning metadata, so models that can't disable reasoning are learned from their 400.
+    static func chatBody(
+        model: String, messages: [[String: String]], temperature: Double, reasoningOff: Bool, stream: Bool = false
+    ) -> [String: Any] {
+        var provider: [String: Any] = ["sort": "throughput", "preferred_max_latency": ["p90": 2.5], "allow_fallbacks": true]
+        var body: [String: Any] = ["model": model, "messages": messages, "temperature": temperature, "stream": stream]
+        if reasoningOff {
+            body["reasoning"] = ["enabled": false, "exclude": true]
+            provider["require_parameters"] = true
+        }
+        body["provider"] = provider
+        return body
+    }
+
+    private static let reasoningRequiredKey = "yapCloudReasoningRequiredModels"
+    private func reasoningRequired(_ model: String) -> Bool {
+        (defaults.stringArray(forKey: Self.reasoningRequiredKey) ?? []).contains(model)
+    }
+    private func rememberReasoningRequired(_ model: String) {
+        let models = Set(defaults.stringArray(forKey: Self.reasoningRequiredKey) ?? []).union([model])
+        defaults.set(models.sorted(), forKey: Self.reasoningRequiredKey)
+    }
+
     /// Non-streaming chat completion through paygate; returns the first choice's text.
     func chatCompletion(model: String, messages: [[String: String]], temperature: Double, timeout: TimeInterval)
         async throws -> String
     {
-        let data = try await proxy(
-            "/v1/chat/completions",
-            body: ["model": model, "messages": messages, "temperature": temperature, "stream": false],
-            timeout: timeout)
+        let reasoningOff = !reasoningRequired(model)
+        let data: Data
+        do {
+            data = try await proxy(
+                "/v1/chat/completions",
+                body: Self.chatBody(model: model, messages: messages, temperature: temperature, reasoningOff: reasoningOff),
+                timeout: timeout)
+        } catch YapCloudError.server(400, _, let message, _, _)
+            where reasoningOff && message.localizedCaseInsensitiveContains("reasoning")
+        {
+            // This model can't run without reasoning ("Reasoning is mandatory…"). A 400 from OpenRouter is passed
+            // through unbilled, so remember the model and send it again without the setting.
+            rememberReasoningRequired(model)
+            data = try await proxy(
+                "/v1/chat/completions",
+                body: Self.chatBody(model: model, messages: messages, temperature: temperature, reasoningOff: false),
+                timeout: timeout)
+        }
         struct Response: Decodable {
             struct Choice: Decodable {
                 struct Message: Decodable { let content: String? }
@@ -1737,6 +1777,14 @@ struct YapCloudConfigDocument: Equatable {
             let collector = GenerationCollector()
             $generationCollector.withValue(collector) { generationCollector?.add("gen-a") }
             assert(collector.last == "gen-a" && generationCollector == nil)
+
+            // Chat request shape: reasoning off unless the model requires it; throughput-sorted providers
+            let fast = chatBody(model: "m", messages: [["role": "user", "content": "x"]], temperature: 0.3, reasoningOff: true)
+            assert((fast["reasoning"] as? [String: Bool]) == ["enabled": false, "exclude": true])
+            assert((fast["provider"] as? [String: Any])?["sort"] as? String == "throughput")
+            assert((fast["provider"] as? [String: Any])?["require_parameters"] as? Bool == true && fast["stream"] as? Bool == false)
+            let reasoning = chatBody(model: "m", messages: [], temperature: 0.3, reasoningOff: false)
+            assert(reasoning["reasoning"] == nil && (reasoning["provider"] as? [String: Any])?["require_parameters"] == nil)
 
             // Proxy retry policy: only provably-unbilled failures, once
             assert(isSafeToRetry(URLError(.cannotConnectToHost)) && isSafeToRetry(URLError(.notConnectedToInternet)))

@@ -132,10 +132,10 @@ Task { @MainActor in
                         ])
                     }
                     _ = await timed("\(name) enhance direct", &chatDirect, &chatDirectFailed) {
-                        try await direct("/chat/completions", body: [
-                            "model": enhancementModel, "messages": messages, "temperature": 0.3, "stream": false,
-                            "usage": ["include": true],
-                        ])
+                        // The same body the client sends (paygate only adds usage accounting).
+                        var body = YapCloud.chatBody(model: enhancementModel, messages: messages, temperature: 0.3, reasoningOff: true)
+                        body["usage"] = ["include": true]
+                        return try await direct("/chat/completions", body: body)
                     }
                 }
             }

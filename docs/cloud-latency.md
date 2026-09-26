@@ -37,3 +37,15 @@ Findings:
 - **paygate's hop is not the bottleneck.** Transcription through Yap Cloud is as fast as or faster than going to OpenRouter directly from this Mac (p50 346 vs 658 ms, 534 vs 985, 768 vs 804): paygate's server-side connection to OpenRouter is short and warm, and that outweighs buffering the body. Enhancement through Yap Cloud and direct are within noise of each other.
 - **Enhancement dominates, and it's the model's reasoning.** The client sent DeepSeek V4.1 Flash a plain request, so it reasons at its default effort ("high"; ledger rows show `reasoning_tokens`). That is 8 s at p50 on the long clip and up to 11 s, and it varies with the input: an earlier run with a 27 s clip took 23 s at p50 and hit the 30 s client timeout (still billed). The app's own OpenRouter path turns reasoning off (`OpenRouterRequestPolicy.lowLatency`); the Yap Cloud path didn't.
 - **A new connection costs ~40 ms** (115 vs 74 ms for `/healthz`), paid on every call today because each Yap Cloud call opens its own ephemeral `URLSession`.
+
+## 1. Enhancement without reasoning (2026-09-26)
+
+`YapCloud.chatCompletion` now sends the same low-latency shape as the app's OpenRouter path (`YapCloud.chatBody`): `reasoning: {enabled: false, exclude: true}`, providers required to honour it and sorted by throughput with a p90 target. paygate's `/v1/models` carries no reasoning metadata, so a model that can't disable reasoning answers 400 (unbilled) once, is remembered, and is sent again without the setting. The direct column uses the identical body.
+
+| clip | audio | STT via Yap Cloud | STT direct | enhance via Yap Cloud | enhance direct | STT+enhance via Yap Cloud |
+|---|---|---|---|---|---|---|
+| short | 2.7 s, 90 KB | 387 / 484 | 342 / 423 | 298 / 369 | 249 / 485 | 692 / 766 |
+| medium | 14.6 s, 459 KB | 578 / 600 | 833 / 1053 | 459 / 977 | 361 / 430 | 1024 / 1578 |
+| long | 40.4 s, 1267 KB | 698 / 993 | 771 / 1355 | 564 / 590 | 552 / 649 | 1274 / 1557 |
+
+Enhancement on the long clip: **8078 → 564 ms p50, 11260 → 590 ms p95**; a whole long dictation (transcribe + enhance) 8847 → 1274 ms p50. Enhancement now costs about the same through Yap Cloud as direct (≈ +50–100 ms: paygate's DB checks and the awaited ledger insert on a small body). Output quality: the setup bench (`setup/bench.py`) scored this model 9/9 with reasoning off, which is how the app's OpenRouter path always ran it.
