@@ -1,0 +1,125 @@
+<!doctype html>
+<!-- Account dashboard: every component in components.css in context, with sample data. A design reference for
+     the paygate dashboard, not a template: the numbers are fake. -->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>账户 · Yap Cloud</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+</head>
+<body>
+<main class="shell">
+  <header class="page-header">
+    <span class="brand"><svg class="logo" viewBox="100 100 824 824" aria-hidden="true"><defs>
+    <linearGradient id="yap-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34343A"/>
+      <stop offset="1" stop-color="#202024"/>
+    </linearGradient>
+    <clipPath id="yap-tile">
+      <rect x="100" y="100" width="824" height="824" rx="186"/>
+    </clipPath>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#yap-bg)"/>
+  <g clip-path="url(#yap-tile)">
+    <path d="M492 470 C470 400 506 342 566 350 C614 356 630 404 598 432 C582 446 558 442 552 424 C568 424 580 412 572 396 C560 376 524 382 520 418 C518 440 526 458 538 474 Z" fill="#F7C83A"/>
+    <circle cx="330" cy="870" r="440" fill="#FFD84D"/>
+    <rect x="-22" y="-60" width="44" height="120" rx="22" fill="#2A2320" transform="translate(438 640) rotate(18)"/>
+    <rect x="-22" y="-60" width="44" height="120" rx="22" fill="#2A2320" transform="translate(612 708) rotate(18)"/>
+    <ellipse cx="364" cy="730" rx="52" ry="34" fill="#FF9E9E" opacity="0.75"/>
+    <ellipse cx="690" cy="752" rx="40" ry="28" fill="#FF9E9E" opacity="0.75"/>
+    <path d="M470 812 C520 776 640 778 690 818 C708 834 698 852 676 852 C620 850 540 846 490 842 C464 838 454 824 470 812 Z" fill="#FF9A3C"/>
+    <path d="M496 850 C556 860 634 862 676 856 C662 888 608 902 558 894 C526 888 504 872 496 850 Z" fill="#E8772A"/>
+  </g></svg>Yap Cloud</span>
+    <nav aria-label="账户"><a href="#usage">用量</a><a href="#devices">设备</a><a href="#settings">设置</a><a href="#">退出登录</a></nav>
+  </header>
+
+  <div class="banner banner--warning" role="status"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8 15 14H1z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 6.2v3.6M8 11.8v.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span><strong>本月已用 90% 上限。</strong>到上限后 Yap Cloud 会停止扣费，直到下个月或你调高上限。</span><a class="banner__action" href="#settings">调整上限</a></div>
+
+  <section class="grid-2" aria-label="余额和充值">
+    <div class="card balance">
+      <span class="balance__label">余额</span>
+      <span class="money money--hero">$4.21</span>
+      <span class="balance__note">按本月用量约可用 59 天 · jamie@example.com</span>
+    </div>
+    <form class="card" onsubmit="return false">
+      <p class="card__title">充值</p>
+      <div class="segmented" role="radiogroup" aria-label="金额">
+        <label><input type="radio" name="amt" value="5"><span>$5</span></label>
+        <label><input type="radio" name="amt" value="10" checked><span>$10</span></label>
+        <label><input type="radio" name="amt" value="20"><span>$20</span></label>
+        <label><input type="radio" name="amt" value="custom"><span>其他</span></label>
+      </div>
+      <p style="margin-top: var(--space-3)"><button class="btn btn--primary">去付款</button></p>
+      <p class="card__note">在 Stripe 付款页完成付款，每次 $5–$500。</p>
+    </form>
+  </section>
+
+  <h2 id="usage">本月</h2>
+  <div class="card table-wrap">
+    <table class="table">
+      <thead><tr><th>模型</th><th>次数</th><th class="amount">花费</th></tr></thead>
+      <tbody>
+        <tr><td>MAI-Transcribe-2<span class="sub">转写</span></td><td class="num">212</td><td class="amount">$1.53</td></tr>
+        <tr><td>DeepSeek V4.1 Flash<span class="sub">整理</span></td><td class="num">198</td><td class="amount">$0.26</td></tr>
+        <tr><td>注册赠额抵扣</td><td></td><td class="amount">−$1.00</td></tr>
+        <tr><td><strong>合计</strong></td><td></td><td class="amount"><strong>$1.79</strong> <span class="faint">/ 上限 $20.00</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>最近记录</h2>
+  <div class="card table-wrap">
+    <table class="table">
+      <thead><tr><th>项目</th><th>时间</th><th class="amount">金额</th></tr></thead>
+      <tbody>
+        <tr><td>DeepSeek V4.1 Flash</td><td class="muted">今天 10:02</td><td class="amount">&lt;$0.0001</td></tr>
+        <tr><td>MAI-Transcribe-2</td><td class="muted">今天 10:01</td><td class="amount">−$0.0410</td></tr>
+        <tr><td>充值 · <a href="#">收据</a></td><td class="muted">9 月 20 日</td><td class="amount">+$5.00</td></tr>
+        <tr><td>注册赠额</td><td class="muted">9 月 19 日</td><td class="amount">+$1.00</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="devices">已登录的设备</h2>
+  <div class="card table-wrap">
+    <table class="table">
+      <thead><tr><th>设备</th><th>最近使用</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>Jamie's MacBook Pro <span class="tag tag--brand">这台</span></td><td class="muted">19 小时前</td><td class="amount"></td></tr>
+        <tr><td>Studio Mac mini</td><td class="muted">昨天</td><td class="amount"><button class="btn btn--secondary">退出登录</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="settings">月度上限</h2>
+  <form class="card" onsubmit="return false" style="max-width: 420px">
+    <div class="field">
+      <label for="cap">每月最多花费（美元）</label>
+      <input class="input num" id="cap" inputmode="decimal" value="20" aria-describedby="cap-hint">
+      <span class="field__hint" id="cap-hint">留空表示不设上限。</span>
+    </div>
+    <div class="field">
+      <label for="cap-bad">错误示例</label>
+      <input class="input num" id="cap-bad" value="-5" aria-invalid="true" aria-describedby="cap-err">
+      <span class="field__error" id="cap-err">上限要在 $0 到 $10,000 之间。</span>
+    </div>
+    <button class="btn btn--secondary">保存</button>
+  </form>
+
+  <h2>其他状态</h2>
+  <div class="stack">
+    <div class="banner banner--info"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7v4M8 4.6v.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>设置会在 Yap Cloud 上保存最近 20 个历史版本。</span></div>
+    <div class="banner banner--error" role="alert"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="m5.6 5.6 4.8 4.8m0-4.8-4.8 4.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span><strong>余额为 $0。</strong>录音会先提示充值，不会扣费。</span><a class="banner__action" href="#">充值</a></div>
+    <div class="banner banner--success" role="status"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 8.4 2.6 2.6L12 5.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>$10.00 已到账。</span></div>
+    <div class="empty"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M4 14h2M9 9v10M14 5v18M19 10v8M24 13v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><div><h3>还没有用量</h3><p>在 Yap 里按住右 Option 说一句话，调用记录会出现在这里。</p><a class="btn btn--secondary" href="#">下载 Yap</a></div></div>
+    <div class="row" style="display:flex; gap: var(--space-2); flex-wrap: wrap">
+      <button class="btn btn--primary">主按钮</button><button class="btn btn--secondary">次按钮</button><button class="btn btn--danger">删除账户</button><button class="btn" disabled>不可用</button>
+    </div>
+  </div>
+
+  <footer class="page-footer"><span>Yap Cloud</span><a href="/privacy">隐私政策</a><a href="/terms">服务条款</a></footer>
+</main>
+</body>
+</html>

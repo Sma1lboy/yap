@@ -2,7 +2,7 @@
 
 这份文件是 Yap 视觉 token 的唯一来源。app（SwiftUI）、网页（官网、paygate 页面、dashboard）、邮件和 Stripe 后台都用这里的值，不另写一套：
 
-- 下面 `tokens` 代码块里的值由 `scripts/design-tokens.py` 生成两份文件：`VoiceInk/DesignSystem/Theme/DesignTokens.generated.swift`（AppTheme 从它取值）和 `design/web/tokens.css`。这两份文件不手改。
+- 下面 `tokens` 代码块里的值由 `scripts/design-tokens.py` 生成两份文件：`VoiceInk/DesignSystem/Theme/DesignTokens.generated.swift`（AppTheme 从它取值）和 `design/web/tokens.css`（`site/tokens.css` 是同一份）。这些文件不手改。
 - 改 token：改这里 → `make design-tokens` → 提交三份文件。`make design-check` 会检查生成文件是否过期，以及 app 代码里有没有绕开 token 的写法。
 - 邮件只能用行内样式，没法引用 CSS 变量，所以直接写这里的十六进制值（浅色那一列），`design-check` 也会检查。
 

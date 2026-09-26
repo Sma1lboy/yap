@@ -1,0 +1,41 @@
+<!doctype html>
+<!-- paygate GET /checkout/success. Placeholders: {{productName}}, {{returnHref}} (APP_RETURN_URL with
+     ?session_id=…; drop the <a> when unset). In paygate, inline tokens.css + components.css into <style>:
+     the CSP allows inline styles only. -->
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>充值成功 · {{productName}}</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+</head>
+<body>
+<main class="shell shell--narrow">
+  <header class="page-header"><span class="brand"><svg class="logo" viewBox="100 100 824 824" aria-hidden="true"><defs>
+    <linearGradient id="yap-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34343A"/>
+      <stop offset="1" stop-color="#202024"/>
+    </linearGradient>
+    <clipPath id="yap-tile">
+      <rect x="100" y="100" width="824" height="824" rx="186"/>
+    </clipPath>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="186" fill="url(#yap-bg)"/>
+  <g clip-path="url(#yap-tile)">
+    <path d="M492 470 C470 400 506 342 566 350 C614 356 630 404 598 432 C582 446 558 442 552 424 C568 424 580 412 572 396 C560 376 524 382 520 418 C518 440 526 458 538 474 Z" fill="#F7C83A"/>
+    <circle cx="330" cy="870" r="440" fill="#FFD84D"/>
+    <rect x="-22" y="-60" width="44" height="120" rx="22" fill="#2A2320" transform="translate(438 640) rotate(18)"/>
+    <rect x="-22" y="-60" width="44" height="120" rx="22" fill="#2A2320" transform="translate(612 708) rotate(18)"/>
+    <ellipse cx="364" cy="730" rx="52" ry="34" fill="#FF9E9E" opacity="0.75"/>
+    <ellipse cx="690" cy="752" rx="40" ry="28" fill="#FF9E9E" opacity="0.75"/>
+    <path d="M470 812 C520 776 640 778 690 818 C708 834 698 852 676 852 C620 850 540 846 490 842 C464 838 454 824 470 812 Z" fill="#FF9A3C"/>
+    <path d="M496 850 C556 860 634 862 676 856 C662 888 608 902 558 894 C526 888 504 872 496 850 Z" fill="#E8772A"/>
+  </g></svg>{{productName}} Cloud</span></header>
+  <p><span class="tag tag--success"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 8.4 2.6 2.6L12 5.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>已付款</span></p>
+  <h1>充值成功</h1>
+  <p class="lede">可以回到 {{productName}} 了。余额到账可能需要几秒。</p>
+  <p><a class="btn btn--primary btn--lg" href="{{returnHref}}">返回 {{productName}}</a></p>
+</main>
+</body>
+</html>

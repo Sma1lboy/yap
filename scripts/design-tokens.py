@@ -2,7 +2,7 @@
 """Generates the app's and the web's design tokens from the `tokens` block in docs/DESIGN.md, and checks that
 nothing bypasses them.
 
-  scripts/design-tokens.py          write DesignTokens.generated.swift and design/web/tokens.css
+  scripts/design-tokens.py          write DesignTokens.generated.swift, design/web/tokens.css and site/tokens.css
   scripts/design-tokens.py --check  fail if those files are stale, or if app code / email templates hard-code
                                     a color, font size, corner radius or spacing value
 """
@@ -14,6 +14,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DESIGN = os.path.join(ROOT, "docs/DESIGN.md")
 SWIFT_OUT = os.path.join(ROOT, "VoiceInk/DesignSystem/Theme/DesignTokens.generated.swift")
 CSS_OUT = os.path.join(ROOT, "design/web/tokens.css")
+SITE_CSS_OUT = os.path.join(ROOT, "site/tokens.css")  # the same file, so the site deploys on its own
 APP_DIR = os.path.join(ROOT, "VoiceInk")
 THEME_DIR = os.path.join(APP_DIR, "DesignSystem/Theme")
 WEB_DIR = os.path.join(ROOT, "design/web")
@@ -172,9 +173,24 @@ def email_violations(tokens):
     return found
 
 
+# Web stylesheets use tokens.css variables only (the generated tokens.css files themselves are skipped).
+WEB_CSS = [os.path.join(ROOT, "site/site.css"), os.path.join(WEB_DIR, "components.css")]
+
+
+def css_violations():
+    found = []
+    for path in WEB_CSS:
+        if not os.path.exists(path):
+            continue
+        for number, line in enumerate(open(path, encoding="utf-8"), 1):
+            if re.search(r"#[0-9A-Fa-f]{3,8}\b", line):
+                found.append(f"{os.path.relpath(path, ROOT)}:{number}: color → var(--…) from tokens.css")
+    return found
+
+
 def main():
     tokens = parse()
-    generated = {SWIFT_OUT: swift(tokens), CSS_OUT: css(tokens)}
+    generated = {SWIFT_OUT: swift(tokens), CSS_OUT: css(tokens), SITE_CSS_OUT: css(tokens)}
     if "--check" not in sys.argv:
         for path, content in generated.items():
             os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -184,7 +200,7 @@ def main():
         return
     problems = [f"{os.path.relpath(p, ROOT)} is stale: run make design-tokens"
                 for p, c in generated.items() if not os.path.exists(p) or open(p, encoding="utf-8").read() != c]
-    problems += violations() + email_violations(tokens)
+    problems += violations() + email_violations(tokens) + css_violations()
     for problem in problems:
         print(problem)
     print(f"design-check: {len(problems)} problem(s)")

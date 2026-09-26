@@ -61,7 +61,25 @@
                     text: text.original, duration: Double(6 + (index * 7) % 40), enhancedText: text.enhanced)
                 item.timestamp = Date().addingTimeInterval(Double(-index) * 3_600 * 3)
                 context.insert(item)
+                context.insert(metric(for: item, words: (text.enhanced ?? text.original).split(separator: " ").count))
             }
+            // Earlier dictations this week, so Home's stats and week chart have something to show.
+            for day in 1..<7 {
+                for session in 0..<(3 + (day * 5) % 7) {
+                    let start = Calendar.current.startOfDay(for: Date().addingTimeInterval(Double(-day) * 86_400))
+                    let item = Transcription(text: "", duration: Double(12 + session * 9))
+                    item.timestamp = start.addingTimeInterval(Double(9 + session) * 3_600)
+                    context.insert(metric(for: item, words: 30 + (day * 17 + session * 23) % 90))
+                }
+            }
+        }
+
+        private static func metric(for item: Transcription, words: Int) -> SessionMetric {
+            SessionMetric(
+                transcriptionId: item.id, timestamp: item.timestamp, wordCount: max(words, 1),
+                audioDuration: item.duration, transcriptionModelName: "MAI-Transcribe-2",
+                transcriptionDuration: 0.9, speedFactor: item.duration / 0.9, modeName: "Dictation",
+                aiEnhancementModelName: "DeepSeek V4.1 Flash", enhancementDuration: 0.6)
         }
 
         static func insertDictionary(into context: ModelContext) {
