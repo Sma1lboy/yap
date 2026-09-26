@@ -5073,28 +5073,6 @@
         }
       }
     },
-    "Adjustment" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Korrektur"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajustement"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "调整"
-          }
-        }
-      }
-    },
     "Advanced" : {
       "localizations" : {
         "de" : {
@@ -6957,6 +6935,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "余额 %@"
+          }
+        }
+      }
+    },
+    "Balance adjustment" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guthabenkorrektur"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustement du solde"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "余额调整"
           }
         }
       }
@@ -14206,6 +14206,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "获取 API 密钥"
+          }
+        }
+      }
+    },
+    "Gift from Yap" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geschenk von Yap"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offert par Yap"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 赠送"
           }
         }
       }
@@ -21872,6 +21894,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "收据"
+          }
+        }
+      }
+    },
+    "Received %@ (%@)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ erhalten (%2$@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ reçus (%2$@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收到 %1$@（%2$@）"
           }
         }
       }

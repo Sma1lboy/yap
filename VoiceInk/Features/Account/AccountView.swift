@@ -405,12 +405,17 @@ private struct LedgerRow: View {
     private var title: String {
         switch entry.kind {
         case "topup": return String(localized: "Top-up")
-        case "credit": return String(localized: "Sign-up bonus")
         case "usage":
             guard let model = entry.model else { return String(localized: "Usage") }
             return YapCloud.shared.models.first { $0.id == model }?.displayName ?? model
-        default: return String(localized: "Adjustment")
+        case "credit" where entry.reason == nil || entry.reason == "signup": return String(localized: "Sign-up bonus")
+        case "grant", "credit": return withReason(String(localized: "Gift from Yap"))
+        default: return withReason(String(localized: "Balance adjustment"))
         }
+    }
+
+    private func withReason(_ label: String) -> String {
+        entry.reason.map { label + ": " + $0 } ?? label
     }
 }
 
