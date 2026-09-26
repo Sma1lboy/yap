@@ -1,0 +1,13 @@
+[
+ {"id": "deploy", "voice": "Tingting", "text": "那个我今天想把那个 [deploy] 的 [pipeline] 改一下，就是现在 [CI] 太慢了，然后 [build cache] 好像没生效，我怀疑是 [Docker] [layer] 的顺序有问题。"},
+ {"id": "meeting", "voice": "Meijia", "text": "我们明天的会要讨论三件事，第一是 [Q4] 的 [roadmap]，第二是那个 [onboarding] [flow] 要不要重做，第三就是 [hiring]，我们还缺一个 [senior] [frontend]。"},
+ {"id": "reply", "voice": "Tingting", "text": "[帮我回一下] [Kevin]，就说 [PR] 我看过了，整体 [LGTM]，但是那个 [useEffect] 里面的 [dependency array] 漏了一个 [userID|user ID]，改完就可以 [merge]。"},
+ {"id": "spec", "voice": "Meijia", "text": "这个 [feature] 的 [acceptance criteria] 大概是这样，用户可以上传 [PDF]，然后系统自动 [extract] 表格，再导出成 [CSV]，还有就是要支持 [batch]，一次最多 [50|五十] 个文件。"},
+ {"id": "correct", "voice": "Tingting", "text": "不对不对，我刚刚说错了，应该是 [周四] 下午 [三点|3点]，不是周三，然后地点改成 [Zoom]，[link] 我等下发群里。"},
+ {"id": "question", "voice": "Meijia", "text": "你觉得我们这个 [feature] 要不要先上 [beta]，拿 [feature flag] 控制，然后再 [full rollout] 啊？"},
+ {"id": "twotopics", "voice": "Tingting", "text": "先说一下那个 [API] 的事，就是 [rate limit] 我已经调到每分钟 [200|两百] 了，应该够用。然后另外一个事，下周三我请假，有事 [Slack] 找我就行，那个 [on-call|oncall] 我跟 [David] 换了。"},
+ {"id": "steps", "voice": "Meijia", "text": "你本地跑的话先 [clone] 下来，然后 [bun install]，然后要把那个 [env] 文件从 [example] 复制一份，填上 [OpenAI] 的 [key]，最后 [bun dev] 就行了，端口是 [3000|三千]，[README] 里有写。"},
+ {"id": "infra", "voice": "Tingting", "text": "昨天晚上 [Kubernetes] 的 [pod] 一直 [OOM]，我把 [memory limit] 从 [512Mi|512 Mi|512 MB] 调到了 [1Gi|1 Gi|1 GB]，然后加了一个 [readiness probe]，我在 [Grafana] 上看了一下，现在 [p99|P99] 延迟降到 [180|一百八十] 毫秒。"},
+ {"id": "names", "voice": "Meijia", "text": "下午跟 [Sarah] 和 [Tom] 对一下 [Figma] 的稿子，[Jira] 上那个 [ticket] 是 [1024|一零二四]，[Notion] 文档我已经更新了，记得在 [GitHub] 上找 [Alex] 帮忙 [review]。"},
+ {"id": "release", "voice": "Tingting", "text": "[帮我回一下] [Lisa]，[2.3] 版本的 [release] 推到下周二，因为 [TestFlight] 审核还没过，[crash rate] 现在是 [0.8%|百分之零点八]，等 [hotfix] 合进 [main] 再 [ship]，[changelog] 我今晚写好。"}
+]
