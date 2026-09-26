@@ -26,6 +26,31 @@ class CursorPaster {
     private static let pasteShortcutEventDelay: TimeInterval = 0.01
     private static let minimumClipboardRestoreDelay: TimeInterval = 0.25
 
+    /// Remote-desktop and VM windows copy the local clipboard to the other machine asynchronously.
+    /// With the usual 0.1 s / 0.25 s timing the remote side pastes before it has the new text, or the
+    /// restore lands first, so it pastes the previous dictation (upstream #928, Screen Sharing; the
+    /// reporter's working setting was a 5 s restore delay).
+    // ponytail: fixed bundle-ID list; add apps here as reports come in.
+    private static let clipboardSyncingApps: Set<String> = [
+        "com.apple.ScreenSharing",
+        "com.microsoft.rdc.macos",  // Windows App / Microsoft Remote Desktop
+        "com.parallels.desktop.console",
+        "com.vmware.fusion",
+        "com.utmapp.UTM",
+        "com.teamviewer.TeamViewer",
+        "com.philandro.anydesk",
+        "com.p5sys.jump.mac.viewer",
+        "com.citrix.receiver.icaviewer.mac",
+        "com.realvnc.vncviewer",
+    ]
+
+    static func pasteTiming(frontmostBundleID: String?) -> (prePaste: TimeInterval, minimumRestore: TimeInterval) {
+        guard let frontmostBundleID, clipboardSyncingApps.contains(frontmostBundleID) else {
+            return (prePasteDelay, minimumClipboardRestoreDelay)
+        }
+        return (0.5, 5)
+    }
+
     static func pasteAtCursor(_ text: String) {
         Task {
             let pasteTask = await MainActor.run {
@@ -61,6 +86,7 @@ class CursorPaster {
             return PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil)
         }
 
+        let timing = pasteTiming(frontmostBundleID: NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
         let shouldRestoreClipboard = UserDefaults.standard.bool(forKey: "restoreClipboardAfterPaste")
         let savedContents = shouldRestoreClipboard ? snapshotClipboard(from: pasteboard) : []
         let sessionID = UUID().uuidString
@@ -76,7 +102,7 @@ class CursorPaster {
             return PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil)
         }
 
-        await wait(prePasteDelay)
+        await wait(timing.prePaste)
 
         let pasteResult: PasteResult
         let autoLearnGeneration: UInt64?
@@ -98,6 +124,7 @@ class CursorPaster {
                 savedContents,
                 expectedText: text,
                 sessionID: sessionID,
+                minimumDelay: timing.minimumRestore,
                 on: pasteboard
             )
         }
@@ -129,12 +156,10 @@ class CursorPaster {
         _ savedContents: ClipboardSnapshot,
         expectedText: String,
         sessionID: String,
+        minimumDelay: TimeInterval,
         on pasteboard: NSPasteboard
     ) {
-        let delay = max(
-            UserDefaults.standard.double(forKey: "clipboardRestoreDelay"),
-            minimumClipboardRestoreDelay
-        )
+        let delay = max(UserDefaults.standard.double(forKey: "clipboardRestoreDelay"), minimumDelay)
 
         Task { @MainActor in
             await wait(delay)
