@@ -86,12 +86,36 @@ struct HomeWeekPanelContent: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// "1.2.0"; Debug builds add the build number, "1.2.0 (220)", to tell dev builds apart.
+    private static var versionText: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? ""
+        #if DEBUG
+            if let build = info?["CFBundleVersion"] as? String { return "\(version) (\(build))" }
+        #endif
+        return version
+    }
+
+    /// Brand header: the duck, "Yap" and the running version, then the default mode's models.
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x3) {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
-                Text(verbatim: "Yap")
-                    .font(AppTheme.font(.display, .semibold))
-                    .foregroundStyle(AppTheme.Text.primary)
+                HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
+                    Image(nsImage: NSApp.applicationIconImage)
+                        .resizable()
+                        .frame(width: 44, height: 44)  // design-exempt: app icon size, not spacing
+                        .accessibilityHidden(true)
+                    HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x2) {
+                        Text(verbatim: "Yap")
+                            .font(AppTheme.font(.display, .semibold))
+                            .foregroundStyle(AppTheme.Text.primary)
+                        Text(verbatim: Self.versionText)
+                            .font(AppTheme.font(.footnote, .medium))
+                            .monospacedDigit()
+                            .foregroundStyle(AppTheme.Text.secondary)
+                            .accessibilityLabel(String(format: String(localized: "Version %@"), Self.versionText))
+                    }
+                }
                 if let modeSummary {
                     Text(verbatim: modeSummary)
                         .font(AppTheme.font(.body))
