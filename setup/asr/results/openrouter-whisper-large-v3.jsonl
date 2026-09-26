@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那个JitHub Actions的feepline改一下,现在CE太慢了。Build Cache好像没生效,我怀疑是Docker File里面layer的顺序有问题。", "secs": 2.826511859893799, "load": 0.0, "audio": 6.989187}
+{"id": "standup", "text": "昨天我跟Sara对了一下API的此车码,它那边的Crop to Resolve还上三个Endpoint,预计周四能很近Nine Clash。", "secs": 1.2767560482025146, "load": 0.0, "audio": 5.168}
+{"id": "bug", "text": "这个bug只在safari上复现,iOS17的webkit对indexed,d,b,the transaction处理不一样,retry逻辑要改成exponential backoff。", "secs": 1.3816571235656738, "load": 0.0, "audio": 6.559625}
+{"id": "perf", "text": "我们把Redis的TCA从300秒降到60秒以后,P99拉伸器降到了120毫秒,QPS大概涨了40%。", "secs": 0.9359707832336426, "load": 0.0, "audio": 5.248}
+{"id": "meeting", "text": "下午三点和凯宾还有Prior开个sync,讨论一下Q4的roadmap,重点是onboarding和retention这两个metric。", "secs": 1.5945758819580078, "load": 0.0, "audio": 5.4335}
+{"id": "ml", "text": "这个模型用皮特律训练,84岁射程32,620张测试3D护士,在100上跑了大概8个小时,LOS还在想。", "secs": 1.0346169471740723, "load": 0.0, "audio": 5.712}
+{"id": "frontend", "text": "那边把use effect换成react query之后,组件不用自己管loading状态了,tailwind的close也顺便整理了一遍。", "secs": 0.8068239688873291, "load": 0.0, "audio": 5.572813}
+{"id": "infra", "text": "Huber的特斯基群生造1.30以后有两个波地质仅仅是欧巴斯科看乐视从这个广告在路径变了很shark要从不白", "secs": 1.7819042205810547, "load": 0.0, "audio": 5.855937}
+{"id": "product", "text": "这次release我们上了dark mode和一个新的paywall,A,B,test跑了两周,conversion rate提高了1.8个点。", "secs": 0.7454578876495361, "load": 0.0, "audio": 5.178063}
+{"id": "email", "text": "请帮我给丽莎回个邮件说Figma的设计到我看过了下周一之前把Fellask发到Slice的Zisk上了底", "secs": 1.526374101638794, "load": 0.0, "audio": 5.055937}
+{"id": "security", "text": "现在存在Local Storage里,有XSS风险,改成HTTP-only的cookie,再加上CSRF token校验。", "secs": 0.8910069465637207, "load": 0.0, "audio": 8.324375}

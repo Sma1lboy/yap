@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那個Gitthop Action-CePipulon改一下,現在再有一太慢了,Builtache好像沒生小,我懷疑是的跟File裡面內容的順序有問題。", "secs": 0.1960279941558838, "load": 0.09563601016998291, "audio": 6.989187}
+{"id": "standup", "text": "昨天我跟 Sarah, API, schema,她那邊的Glub2Song,StreetSong,StreetSong,StreetSong, endpoint, 預計都是我們可信單關訊的", "secs": 0.16404902935028076, "load": 0.09563601016998291, "audio": 5.168}
+{"id": "bug", "text": "這個 bug 值在 Safari 上附件, iOS 17  WebKit 對 IndexedDB, transaction 處理不一樣, Retray 邏輯要改成 exponential backoff.", "secs": 0.1546570062637329, "load": 0.09563601016998291, "audio": 6.559625}
+{"id": "perf", "text": "我们把RTX的TGA从300LW60以后, P99LW60 加到了120LW60,就PX大概到了140LW60", "secs": 0.43958592414855957, "load": 0.09563601016998291, "audio": 5.248}
+{"id": "meeting", "text": "下午3點和 Kevin,還有 Priya, API,個 sync,討論一下Q4 roadmap,重點是 onboarding, retention,這兩個 metric", "secs": 0.1378920078277588, "load": 0.09563601016998291, "audio": 5.4335}
+{"id": "ml", "text": "社交通用, PCOS 系列, 847, Shoshun 300, L20, 3D, 547, 在E00,上跑了大概8個小時, loss, 還在下", "secs": 0.4945359230041504, "load": 0.09563601016998291, "audio": 5.712}
+{"id": "frontend", "text": "React那邊把 useEffect換成 React Query之後,族件不用自己管 loading狀態了, Tailwind的 glossy也順便整理了一遍", "secs": 0.15532207489013672, "load": 0.09563601016998291, "audio": 5.572813}
+{"id": "infra", "text": "Google.com 使用了1.3.0,有1.4.4.0.5,KMG, Sony.com 刮在路線邊了,和 chart 要做2.0", "secs": 0.46009206771850586, "load": 0.09563601016998291, "audio": 5.855937}
+{"id": "product", "text": "這次 release 我們上了 dark mode 和一個新的 paywall, A/B test 跑了兩周, conversion rate 提高了 1.8個點", "secs": 0.13525307178497314, "load": 0.09563601016998291, "audio": 5.178063}
+{"id": "email", "text": "和帮我对地上回的有限,说VMA的设计到我看过的,下周一之前,把Failbox 发到SRX的则死上的地", "secs": 0.9786490201950073, "load": 0.09563601016998291, "audio": 5.055937}
+{"id": "security", "text": "of the refresh token現在存在lokestoregely,有sss風險改成http only的cuky,再加上csrf token教宴。", "secs": 1.167809009552002, "load": 0.09563601016998291, "audio": 8.324375}

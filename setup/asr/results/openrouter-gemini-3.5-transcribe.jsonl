@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那个 GitHub Actions 的 pipeline 改一下，现在 CI 太慢了，build cache 好像没生效，我怀疑是 Dockerfile 里面 layer 的顺序有问题。", "secs": 1.6865859031677246, "load": 0.0, "audio": 6.989187}
+{"id": "standup", "text": "首先我跟查了一下 API 的文档，查到它的 Cloud Storage 服务开放了三个 endpoint，其中就只能和进", "secs": 2.3932909965515137, "load": 0.0, "audio": 5.168}
+{"id": "bug", "text": "在 Safari 上复现 iOS 17 的 WebKit 对 indexedDB 的 transaction 处理不一样，retry 逻辑要改成 exponential backoff。", "secs": 1.5513808727264404, "load": 0.0, "audio": 6.559625}
+{"id": "perf", "text": "我们把电池从300循环以后，Q19拉成Q120号，QPS大概涨了40%。", "secs": 2.091243028640747, "load": 0.0, "audio": 5.248}
+{"id": "meeting", "text": "下午 3 点和 Kevin 还有 Priya 开个 sync，讨论一下 Q4 的 roadmap，重点是 onboarding 和 retention 这两个 metric。", "secs": 2.41140079498291, "load": 0.0, "audio": 5.4335}
+{"id": "ml", "text": "", "secs": 1.922295093536377, "load": 0.0, "audio": 5.712}
+{"id": "frontend", "text": "React Native 把 use effect 换成 react query 之后，逐渐不用自己管 loading 状态了，tailwind class 也顺便整理了一遍。", "secs": 2.7626850605010986, "load": 0.0, "audio": 5.572813}
+{"id": "infra", "text": "Kubernetes 集群的 idea 很好，有两个问题是特别突出的。", "secs": 2.562880039215088, "load": 0.0, "audio": 5.855937}
+{"id": "product", "text": "这次 release 我们上了 dark mode 和一个新的 payroll。A/B test 跑了两周，conversion rate 提高了 1.8 个点。", "secs": 2.5903258323669434, "load": 0.0, "audio": 5.178063}
+{"id": "email", "text": "帮我给 teacher 回个邮件，说 feedback 的设计到我看过了，下周一之前把 first draft 发到 slack 的 discussion channel 里。", "secs": 2.1073379516601562, "load": 0.0, "audio": 5.055937}
+{"id": "security", "text": "把所有 refresh token 现在存在 local storage 里有 XSS 风险改成 http only 的 cookie 再加上 CSRF token 校验。", "secs": 1.67696213722229, "load": 0.0, "audio": 8.324375}

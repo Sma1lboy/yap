@@ -32,10 +32,13 @@ enum WhisperChunking {
                 tiles.append(pos..<total)
                 break
             }
-            // No pause within reach (one long run of speech): cut at the quietest moment in the
-            // second half of the window, or at the window size when there are no probabilities.
-            let cut = cuts.last { $0 > pos && $0 <= limit }
-                ?? quietestPoint(probs, in: (pos + maxWindow / 2)..<limit) ?? limit
+            // Prefer the last pause, but only in the second half: every window costs a full encoder pass
+            // however short it is. Without such a pause, cut at the quietest moment of the second half, or
+            // at the window size when there are no probabilities.
+            let secondHalf = (pos + maxWindow / 2)..<limit
+            let pause = cuts.last { $0 > pos && $0 <= limit }
+            let cut = pause.flatMap { secondHalf.contains($0) ? $0 : nil }
+                ?? quietestPoint(probs, in: secondHalf) ?? pause ?? limit
             tiles.append(pos..<cut)
             pos = cut
         }
@@ -67,8 +70,28 @@ enum WhisperChunking {
         }
     }
 
+    /// Windows whose language decides whether a recording is single-language: first, middle, last.
+    static func canaries(_ windowCount: Int) -> [Int] {
+        windowCount > 0 ? Array(Set([0, windowCount / 2, windowCount - 1])).sorted() : []
+    }
+
+    /// The language every detection agrees on with at least `threshold`, or nil (mixed, unsure, or failed).
+    static func sharedLanguage(_ detections: [(language: String, probability: Float)?], threshold: Float) -> String? {
+        guard let first = detections.first ?? nil,
+            detections.allSatisfy({ $0.map { $0.language == first.language && $0.probability >= threshold } ?? false })
+        else { return nil }
+        return first.language
+    }
+
     #if DEBUG
         static func selfCheck() {
+            assert(canaries(0) == [] && canaries(1) == [0] && canaries(2) == [0, 1] && canaries(9) == [0, 4, 8])
+            assert(sharedLanguage([("en", 0.99), ("en", 0.97)], threshold: 0.95) == "en")
+            assert(sharedLanguage([("en", 0.99), ("zh", 0.99)], threshold: 0.95) == nil)
+            assert(sharedLanguage([("en", 0.99), ("en", 0.6)], threshold: 0.95) == nil)
+            assert(sharedLanguage([("en", 0.99), nil], threshold: 0.95) == nil)
+            assert(sharedLanguage([], threshold: 0.95) == nil)
+
             let s = 100  // 1 "second" = 100 samples keeps the numbers readable
             func w(_ speech: [Range<Int>], _ total: Int, keep: Bool, probs: [Float] = []) -> [Range<Int>] {
                 windows(speech: speech, probs: probs, total: total, maxWindow: 28 * s, pad: s / 5, keepSilence: keep)
@@ -91,6 +114,12 @@ enum WhisperChunking {
             for seg in speech {
                 assert(seg.allSatisfy { x in trimmed.filter { $0.contains(x) }.count == 1 })
             }
+            // An early pause is skipped when the second half has a quieter moment: no 5 s windows.
+            var early = [Float](repeating: 0.9, count: 70 * s / vadHop)
+            early[4] = 0.05  // sample 2048, second half of the first window
+            assert(w([0..<5 * s, 5 * s + 20..<70 * s], 70 * s, keep: true, probs: early).first == 0..<2048)
+            // Without probabilities the early pause is still better than a hard cut.
+            assert(w([0..<5 * s, 5 * s + 20..<70 * s], 70 * s, keep: true).first == 0..<510)
             // One unbroken 70 s run without probabilities: hard cuts, nothing lost.
             assert(w([0..<70 * s], 70 * s, keep: false) == [0..<28 * s, 28 * s..<56 * s, 56 * s..<70 * s])
             // With probabilities (hop 512): the cut moves to the quietest hop in the window's second half.

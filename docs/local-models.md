@@ -6,35 +6,35 @@ Every local transcription model Yap offers that can handle Chinese, run on the s
 
 | For | Model | Why |
 |---|---|---|
-| **Default** (onboarding's Local option) | Whisper **Large v3 Turbo (Quantized)** | 45/82 key terms, within 3 of the best local model; 547 MB download, 0.9 GB peak memory; about 1.5 s for a 6 s clip. |
+| **Default** (onboarding's Local option) | Whisper **Large v3 Turbo (Quantized)** | 45/82 key terms, within 2 of the best local model; 547 MB download, 0.9 GB peak memory; about 0.7 s for a 6 s clip. Add your terms to the dictionary: with them in the prompt it gets 54/82. |
 | **8 GB Macs** | the same model | 0.9 GB peak memory fits alongside other apps. Nothing smaller comes close: SenseVoice Small (0.4 GB) gets 26/82. |
-| **Most accurate** | Whisper **Large v2** (or Large v3) | 48/82, the best local score, but a 3.1 GB download, about 4.2 GB peak memory and 2.3× slower than the default. Only on 16 GB+ Macs, and only if the 3 extra key terms matter to you. |
+| **Most accurate** | Whisper **Large v3** (or Large v2) | 47/82, the best local score, but a 3.1 GB download, about 4.2 GB peak memory and 2× slower than the default. Only on 16 GB+ Macs, and only if the 2 extra key terms matter to you. |
 | **Cleanup** | off | Yap Refine (the only local cleanup model Yap ships) passed 6 of 9 cleanup cases; the cloud pick passes 9/9. Its two failure types change meaning, see below. |
 
 Onboarding's Local option used to download Parakeet V3, which has no Chinese; it now downloads Large v3 Turbo (Quantized), and starter modes fall back to it.
 
 ## Transcription results
 
-Language `zh` for every model (what a Chinese–English user picks); onboarding sets `auto`, which scored 44/82 on the default model, within one of `zh`. Whisper gets the app's `zh` prompt, temperature 0.2 and `min(8, cores − 2)` threads, like `LibWhisper.swift`.
+Language `zh` for every model (what a Chinese–English user picks); onboarding sets `auto`, which scored 44/82 on the default model, within one of `zh`. Whisper runs the app's own `LibWhisper.swift` (VAD on, the app's `zh` prompt, greedy decoding, temperature 0.2, `min(8, cores − 2)` threads) with an empty dictionary.
 
 | Model | Engine | Key terms (of 82) | Tingting voice (42) | Reed voice (40) | Real-time factor | Download | Peak memory | Load |
 |---|---|---|---|---|---|---|---|---|
-| Large v2 | whisper.cpp | **48** | 35 | 13 | 0.56 | 3.1 GB | ≈4.2 GB¹ | 1.3 s |
-| Large v3 | whisper.cpp | 47 | 33 | 14 | 0.62 | 3.1 GB | 4.2 GB | 1.4 s |
-| Large v3 Turbo | whisper.cpp | 46 | 32 | 14 | 0.23 | 1.6 GB | 1.9 GB | 1.3 s |
-| **Large v3 Turbo (Quantized)** | whisper.cpp | **45** | 32 | 13 | **0.24** | **547 MB** | **0.9 GB** | 0.3 s |
+| Large v3 | whisper.cpp | **47** | 33 | 14 | 0.22 | 3.1 GB | 4.2 GB | 1.0 s |
+| Large v2 | whisper.cpp | **47** | 34 | 13 | 0.21 | 3.1 GB | ≈4.2 GB¹ | 1.0 s |
+| Large v3 Turbo | whisper.cpp | 46 | 32 | 14 | 0.10 | 1.6 GB | 1.9 GB | 0.5 s |
+| **Large v3 Turbo (Quantized)** | whisper.cpp | **45** | 32 | 13 | **0.11** | **547 MB** | **0.9 GB** | 0.2 s |
 | Cohere Transcribe | transcribe.cpp | 37 | 30 | 7 | 0.10 | 1.56 GB | 1.8 GB | 2.6 s |
 | SenseVoice Small | transcribe.cpp | 26 | 18 | 8 | 0.03 | 241 MB | 0.4 GB | 7.8 s² |
-| Base | whisper.cpp | 16 | 13 | 3 | 0.03 | 142 MB | 0.4 GB | 0.1 s |
+| Base | whisper.cpp | 16 | 12 | 4 | 0.04 | 142 MB | 0.4 GB | 0.1 s |
 | Nemotron Multilingual | FluidAudio (Core ML) | 8 | 4 | 4 | 0.03 | 672 MB | – | 19.9 s² |
-| Tiny | whisper.cpp | 7 | 6 | 1 | 0.14 | 75 MB | – | 0.1 s |
-| *mai-transcribe-2 (cloud reference)* | *OpenRouter* | *60* | *40* | *20* | *0.12³* | – | – | – |
+| Tiny | whisper.cpp | 10 | 9 | 1 | 0.07 | 75 MB | – | 0.1 s |
+| *mai-transcribe-2 (cloud reference)* | *OpenRouter* | *59* | *39* | *20* | *0.14³* | – | – | – |
 
 ¹ Large v2 wasn't measured; it is the same size as v3. ² First load includes Metal shader or Core ML compilation. ³ Includes the network round trip.
 
-Real-time factor is processing time ÷ audio length: 0.24 means a 6 s clip takes 1.4 s. Load is the time from process start to model ready, with the file already in the disk cache.
+Real-time factor is processing time ÷ audio length: 0.11 means a 6 s clip takes 0.7 s. Load is the time from process start to model ready, with the file already in the disk cache.
 
-**How to read the scores.** These clips are harder than the README's set (mai-transcribe-2 gets 80/82 there and 60/82 here), so compare models within this table, not with the README. Almost all of the difference is the Reed voice: its TTS mispronounces English words inside Chinese sentences, and every model, cloud included, loses about half of those terms. The Tingting column is closer to how people actually talk: there the default gets 32/42 and the cloud 40/42.
+**How to read the scores.** These clips are harder than the README's set (mai-transcribe-2 gets 80/82 there and 59/82 here), so compare models within this table, not with the README. Almost all of the difference is the Reed voice: its TTS mispronounces English words inside Chinese sentences, and every model, cloud included, loses about half of those terms. The Tingting column is closer to how people actually talk: there the default gets 32/42 and the cloud 39/42.
 
 **What the local models get wrong.** Names and rarer terms: "GitHub Actions" came out as "Gtop Actions", "Kubernetes" as "Coubernetos", "build cache" as "BuildCash", "Dockerfile" as "Decre file". Common terms (API, CI, React Query, XSS, CSRF, OAuth, roadmap, onboarding) come through.
 
@@ -42,7 +42,7 @@ Real-time factor is processing time ÷ audio length: 0.24 means a 6 s clip takes
 - **Parakeet V2, V3, Unified and Nemotron Latin**: their language lists have no Chinese, so they can't transcribe the Chinese half of a sentence.
 - **Apple Speech**: needs Speech Recognition permission, which only a system dialog can grant; this run didn't use UI automation.
 
-Whisper here is `whisper-cli` on Metal, from the whisper.cpp revision the app builds. The app also downloads a Core ML encoder for the non-quantized models (not for q5_0), so Large v3 / v2 / Turbo may run somewhat faster in the app than the table shows.
+Whisper here is the app's `LibWhisper.swift` (setup/asr/harness `whisperbench`) on Metal, linked against the whisper.xcframework `make whisper` builds. An earlier version of this table used `whisper-cli`, which defaults to 5-beam search where the app decodes greedily: key terms matched within one on every model except tiny (7 vs 10), but it took about twice as long. The app also downloads a Core ML encoder for the non-quantized models (not for q5_0), so Large v3 / v2 / Turbo may run somewhat faster in the app than the table shows.
 
 ## Local cleanup
 
@@ -92,7 +92,7 @@ The last two weren't in the measured run (the check can't hold a real sign-in); 
 
 ## Reproduce
 
-- Clips: `python3 setup/asr/make_clips.py` (macOS `say`, voices Tingting and Reed (Chinese, mainland), rate 230).
-- Transcription: `python3 setup/asr/bench.py run whisper <ggml-*.bin>` with `WHISPER_CLI` set; `run tcpp <gguf> <itn 0|1>` / `run nemotron <model dir>` with the CLIs from `setup/asr/harness` (`swift build -c release`); `run openrouter microsoft/mai-transcribe-2`; then `python3 setup/asr/bench.py score`. Model files come from the URLs and revisions in `WhisperModelManager`, `TranscribeCppModelCatalog` and `FluidAudioModelManager`. Pass `fluidbench` a model directory you downloaded yourself, so the app's own model cache isn't touched.
+- Clips: `python3 setup/asr/make_clips.py` (macOS `say`, voices Tingting and Reed (Chinese, mainland), rate 230, from `setup/asr/clips.json`).
+- Transcription: build `setup/asr/harness` once (`swift build -c release`), then `python3 setup/asr/bench.py run whisper <ggml-*.bin>` / `run tcpp <gguf> [--itn]` / `run nemotron <model dir>` / `run openrouter microsoft/mai-transcribe-2`, and `python3 setup/asr/bench.py score`, which prints the table's columns. Model files come from the URLs and revisions in `WhisperModelManager`, `TranscribeCppModelCatalog` and `FluidAudioModelManager`. Pass `fluidbench` a model directory you downloaded yourself, so the app's own model cache isn't touched.
 - Cleanup: `uvx --with mlx-lm python setup/refine_bench.py`.
 - Offline: `make offline-check MODEL=…`.

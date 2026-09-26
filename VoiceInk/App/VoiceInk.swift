@@ -55,6 +55,8 @@ struct VoiceInkApp: App {
             ClipboardManager.selfCheck()
             OpenAICompatibleChat.selfCheck()
             ReplacementText.selfCheck()
+            WhisperPrompt.selfCheck()
+            WhisperTranscriptionService.selfCheck()
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()

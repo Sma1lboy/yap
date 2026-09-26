@@ -123,6 +123,57 @@ class WhisperPrompt: ObservableObject {
         return languagePrompts[language] ?? languagePrompts["default"] ?? ""
     }
 
+    /// whisper.cpp keeps at most 224 prompt tokens (the tail); stay under that with a rough estimate.
+    nonisolated static let vocabularyTokenBudget = 200
+
+    /// Appends dictionary words to the base prompt. Whisper spells what the prompt shows it, so words it
+    /// otherwise mishears (useEffect, Kubernetes, names) come out right: on the code-switched bench,
+    /// every term in the prompt took base from 16 to 37 of 82 terms, small 35 → 53, turbo q5_0 45 → 54
+    /// (setup/asr/results).
+    /// Newest words go last and the oldest are dropped first when the list is too long.
+    nonisolated static func withVocabulary(_ base: String, words: [(word: String, dateAdded: Date)]) -> String {
+        var seen = Set<String>()
+        let newestFirst = words.sorted { $0.dateAdded > $1.dateAdded }
+            .map { $0.word.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && seen.insert($0.lowercased()).inserted }
+
+        var budget = vocabularyTokenBudget - estimatedTokens(base)
+        var kept: [String] = []
+        for word in newestFirst {
+            let cost = estimatedTokens(word) + 1
+            guard cost <= budget else { break }
+            budget -= cost
+            kept.append(word)
+        }
+        let vocabulary = kept.reversed().joined(separator: ", ")
+        return [base, vocabulary].filter { !$0.isEmpty }.joined(separator: " ")
+    }
+
+    /// Whisper's tokenizer spends about one token per 3 Latin characters and up to two per CJK character.
+    nonisolated static func estimatedTokens(_ text: String) -> Int {
+        let cjk = text.unicodeScalars.filter { (0x3000...0x9FFF).contains($0.value) }.count
+        return cjk * 2 + (text.unicodeScalars.count - cjk + 2) / 3
+    }
+
+    #if DEBUG
+        nonisolated static func selfCheck() {
+            let now = Date()
+            let words: [(word: String, dateAdded: Date)] = [
+                ("Kubernetes", now.addingTimeInterval(-10)), ("useEffect", now), ("kubernetes", now.addingTimeInterval(-5)),
+                ("  ", now),
+            ]
+            // Deduped case-insensitively (newest spelling wins), newest last, blanks dropped.
+            assert(withVocabulary("", words: words) == "kubernetes, useEffect")
+            assert(withVocabulary("你好。", words: words) == "你好。 kubernetes, useEffect")
+            assert(withVocabulary("", words: []) == "")
+            // Over budget: the oldest words are the ones dropped.
+            let many = (0..<500).map { (word: "term\($0)", dateAdded: now.addingTimeInterval(Double($0))) }
+            let prompt = withVocabulary("", words: many)
+            assert(prompt.hasSuffix("term499") && !prompt.contains("term0,"))
+            assert(estimatedTokens(prompt) <= vocabularyTokenBudget)
+        }
+    #endif
+
     func setCustomPrompt(_ prompt: String, for language: String) {
         customPrompts[language] = prompt
         saveCustomPrompts()
