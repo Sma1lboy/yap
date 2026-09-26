@@ -74,6 +74,8 @@ final class CoreAudioRecorder: @unchecked Sendable {
     private var conversionBuffer: UnsafeMutablePointer<Int16>?
     private var conversionBufferSize: UInt32 = 0
     private let resampler = PCMResampler()
+    /// 16 kHz frames written to the current file; touched only on audioProcessingQueue.
+    private var framesWritten: UInt64 = 0
 
     // Audio metering. Store bit patterns so the render callback never locks.
     private let averagePowerBits = ManagedAtomic<UInt32>(Float32(-160.0).bitPattern)
@@ -191,7 +193,10 @@ final class CoreAudioRecorder: @unchecked Sendable {
             // The output file is per recording; the AUHAL setup above is reused.
             try createOutputFile(at: url)
             resetAudioProcessingState()
-            audioProcessingQueue.sync { resampler.reset() }
+            audioProcessingQueue.sync {
+                resampler.reset()
+                framesWritten = 0
+            }
 
             try startAudioUnit()
         } catch {
@@ -229,13 +234,24 @@ final class CoreAudioRecorder: @unchecked Sendable {
         }
 
         drainAudioProcessingQueue()
-        audioProcessingQueue.sync { flushResampler() }
+        let frames = audioProcessingQueue.sync {
+            flushResampler()
+            return framesWritten
+        }
         logDroppedInputBufferCounters(context: "stop")
 
         closeOutputFile()
         recordingURL = nil
 
         resetMeters()
+
+        // Started but captured nothing: whatever broke this AUHAL (stale format, a route change it never
+        // heard about) would break the next recording too, and before this only an app relaunch fixed it.
+        if wasRecording && frames == 0 {
+            logger.error("🎙️ Recording captured no audio frames; discarding the prepared AUHAL")
+            teardownPreparedAudioUnit()
+            currentDeviceID = 0
+        }
     }
 
     /// Releases the prepared AUHAL and buffers. Use for app shutdown or hard recovery.
@@ -700,7 +716,36 @@ final class CoreAudioRecorder: @unchecked Sendable {
     }
 
     private func isPrepared(for deviceID: AudioDeviceID) -> Bool {
-        audioUnit != nil && isAudioUnitInitialized && currentDeviceID == deviceID && isDeviceAvailable(deviceID)
+        guard let audioUnit, isAudioUnitInitialized, currentDeviceID == deviceID, isDeviceAvailable(deviceID)
+        else { return false }
+
+        // Another app (a DAW, a Bluetooth route change) can change the device's sample rate without
+        // changing its ID. AUHAL needs the client rate to match the device rate, so a unit prepared at the
+        // old rate starts fine and then records nothing.
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyNominalSampleRate,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var nominalRate: Float64 = 0
+        var size = UInt32(MemoryLayout<Float64>.size)
+        var unitFormat = AudioStreamBasicDescription()
+        var formatSize = UInt32(MemoryLayout<AudioStreamBasicDescription>.size)
+        guard AudioObjectGetPropertyData(deviceID, &address, 0, nil, &size, &nominalRate) == noErr,
+            AudioUnitGetProperty(
+                audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 1, &unitFormat, &formatSize
+            ) == noErr
+        else { return false }
+
+        let current = nominalRate == deviceFormat.mSampleRate
+            && unitFormat.mSampleRate == deviceFormat.mSampleRate
+            && unitFormat.mChannelsPerFrame == deviceFormat.mChannelsPerFrame
+        if !current {
+            logger.notice(
+                "🎙️ Device \(deviceID, privacy: .public) format changed (\(self.deviceFormat.mSampleRate, privacy: .public) Hz → \(nominalRate, privacy: .public) Hz); rebuilding AUHAL"
+            )
+        }
+        return current
     }
 
     private func validateDevice(_ deviceID: AudioDeviceID) throws {
@@ -1061,6 +1106,8 @@ final class CoreAudioRecorder: @unchecked Sendable {
         let writeStatus = ExtAudioFileWrite(file, frameCount, &outputBufferList)
         if writeStatus != noErr {
             logger.error("🎙️ ExtAudioFileWrite failed with status: \(writeStatus, privacy: .public)")
+        } else {
+            framesWritten += UInt64(frameCount)
         }
 
         // Send the same PCM data to the streaming callback if set.
