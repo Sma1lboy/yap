@@ -4,7 +4,7 @@
 # Needs the Railway CLI logged in. Tokens come from paygate's scripts/issue-token.ts over `railway ssh`
 # (no email, zero balance, no signup credit); if that fails, it signs in with a code read from paygate's log.
 set -euo pipefail
-BASE="${YAP_CLOUD_SMOKE_URL:-https://paygate-production-2502.up.railway.app}"
+BASE="${YAP_CLOUD_SMOKE_URL:-https://cloud.yap.sma1lboy.me}"
 RAILWAY_PROJECT="${PAYGATE_RAILWAY_PROJECT:-8651e3c3-6d6c-4d56-a8e8-df9d89ed3f34}"  # paygate-yap
 BIN="$1"
 EMAIL="sync-e2e+$(date +%s)@sma1lboy.me"
