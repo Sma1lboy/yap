@@ -2,7 +2,7 @@ import SwiftUI
 
 struct OnboardingModelScreen: View {
     let contentMaxWidth: CGFloat
-    let localModel: FluidAudioModel?
+    let localModel: WhisperModel?
     let setupKind: OnboardingTranscriptionSetupKind
     let providerOptions: [any CloudProvider]
     @Binding var selectedProviderKey: String
@@ -13,8 +13,8 @@ struct OnboardingModelScreen: View {
     let isSetupReady: Bool
     @Binding var isShowingSkipWarning: Bool
     let onSelectSetupKind: (OnboardingTranscriptionSetupKind) -> Void
-    let onDownload: (FluidAudioModel) -> Void
-    let onCancelDownload: (FluidAudioModel) -> Void
+    let onDownload: (WhisperModel) -> Void
+    let onCancelDownload: (WhisperModel) -> Void
     let onVerificationChanged: () -> Void
     let onBack: () -> Void
     let onContinue: () -> Void
