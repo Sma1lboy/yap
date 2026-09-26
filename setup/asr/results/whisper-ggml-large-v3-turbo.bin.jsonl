@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那个Gtop Actions的Pipeline改一下,现在CIE太慢了,BuildCash好像没生效,我怀疑是Decrfile里面Layer的顺序有问题。", "secs": 1.69241, "load": 1.32228, "audio": 7.1158125}
+{"id": "standup", "text": "昨天我跟Sara对了一下API的车码,他那边的ClubTure Solver还差三个Endpoint,预计周四能很近N-Branch。", "secs": 1.3685200000000002, "load": 0.84992, "audio": 5.294625}
+{"id": "bug", "text": "这个Bug只在Safari上复现,IOS17的WebKit对IndexD/B的Transaction处理不一样,Retray逻辑要改成Exponential Backoff。", "secs": 1.47227, "load": 0.47834, "audio": 6.68625}
+{"id": "perf", "text": "我们把Resist的PPA从300秒降到60秒以后,PCO是机有拉成器降到了120毫秒,QPS大概上了40%。", "secs": 1.07571, "load": 0.5565599999999999, "audio": 5.374625}
+{"id": "meeting", "text": "下午3点和Cavin还有Prior开个Sync,讨论一下Q4的roadmap,重点是onboarding和retention这两个metric。", "secs": 1.1274399999999998, "load": 0.50716, "audio": 5.560125}
+{"id": "ml", "text": "这波形用PTorch训练,814岁是成32,6208却13154,在100上跑了大概8个小时,Loss还在响。", "secs": 1.30617, "load": 0.49633, "audio": 5.838625}
+{"id": "frontend", "text": "React那边把UseEffect换成React Query之后,组件不用自己管loading状态了,Jewind的Closs也顺便整理了一遍。", "secs": 1.3992, "load": 0.49917, "audio": 5.6994375}
+{"id": "infra", "text": "Coubernetos急行升到1.30以后,有两个波及值30%把四口。看罗斯松子马挂在路径变了,Hungshart要从布白。", "secs": 1.8701999999999999, "load": 0.48947, "audio": 5.9825625}
+{"id": "product", "text": "这次release我们上了Dark Mode和一个新的Paywall,A,B,Test好了两周,Conversion Rate提高了1.8个点。", "secs": 2.001, "load": 0.48769999999999997, "audio": 5.3046875}
+{"id": "email", "text": "帮我给Dshare回个邮件,说Feedmart的设计稿我看过了,下周一日前把Filesbust发到Slics的Desk删了笔。", "secs": 0.9720300000000001, "load": 0.49968, "audio": 5.1825625}
+{"id": "security", "text": "OAuth的RefreshToken现在存在Local Storage里,有XSS风险,改成HTTP-only的Cookie,再加上CSRF校验。", "secs": 1.2107700000000001, "load": 0.48687, "audio": 8.451}
