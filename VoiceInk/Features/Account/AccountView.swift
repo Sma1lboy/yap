@@ -262,7 +262,7 @@ private struct SignedInSections: View {
                     HStack {
                         if let exportError {
                             Text(exportError)
-                                .font(.caption)
+                                .font(AppTheme.font(.caption))
                                 .foregroundStyle(AppTheme.Status.error)
                         }
                         Spacer()
@@ -857,7 +857,7 @@ private struct DeleteAccountSection: View {
         Section {
             HStack {
                 Text("Deletes this account for every device. Your remaining balance is not refunded.")
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer()
@@ -880,11 +880,11 @@ private struct DeleteAccountSheet: View {
     private var email: String? { cloud.me?.email ?? cloud.email }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             Text("Delete Yap Cloud Account")
-                .font(.headline)
+                .font(AppTheme.font(.headline))
             // Mirrors paygate's /privacy and docs/api.md (DELETE /v1/me).
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
                 bullet("Deleted: the sign-in on every device (all of them are signed out), your synced settings and their history, and the email address on the account.")
                 bullet("Kept: the ledger of top-ups and charges, no longer linked to your email. It is a financial record needed to reconcile payments with Stripe and model costs with OpenRouter.")
                 if let balance = cloud.balanceMicros, balance > 0 {
@@ -895,17 +895,17 @@ private struct DeleteAccountSheet: View {
                 bullet("Database backups keep your email until they expire, at most about 89 days.")
                 bullet("Signing in again with the same email creates a new, empty account without sign-up credit.")
             }
-            .font(.callout)
+            .font(AppTheme.font(.callout))
             if let email {
                 Text(String(format: String(localized: "Type %@ to confirm."), email))
-                    .font(.callout.weight(.semibold))
+                    .font(AppTheme.font(.callout, .semibold))
                 TextField("Email address", text: $typedEmail)
                     .textFieldStyle(.roundedBorder)
                     .disabled(isDeleting)
             }
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.caption)
+                    .font(AppTheme.font(.caption))
                     .foregroundStyle(AppTheme.Status.error)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -919,19 +919,19 @@ private struct DeleteAccountSheet: View {
                     .disabled(isDeleting || !YapCloud.deletionConfirmed(typed: typedEmail, email: email))
             }
         }
-        .padding(20)
+        .padding(AppTheme.Spacing.x5)
         .frame(width: 460)
     }
 
     private func bullet(_ text: LocalizedStringKey) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
+        HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x2) {
             Text(verbatim: "•")
             Text(text).fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private func bullet(_ text: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
+        HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x2) {
             Text(verbatim: "•")
             Text(verbatim: text).fixedSize(horizontal: false, vertical: true)
         }
