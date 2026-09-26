@@ -986,7 +986,9 @@ struct YapCloudLegalText: View {
 
     var body: some View {
         if let terms = cloud.info?.termsURL, let privacy = cloud.info?.privacyURL {
+            // Link runs take the tint, not the foreground style: ink in light mode, yellow in dark (DESIGN.md).
             Text(attributed(terms: terms, privacy: privacy))
+                .tint(AppTheme.Accent.text)
         }
     }
 
@@ -996,7 +998,10 @@ struct YapCloudLegalText: View {
         var text = AttributedString(
             String(format: String(localized: "By continuing, you agree to the %1$@ and %2$@."), terms, privacy))
         for (name, url) in [(terms, termsURL), (privacy, privacyURL)] {
-            if let range = text.range(of: name) { text[range].link = url }
+            if let range = text.range(of: name) {
+                text[range].link = url
+                text[range].underlineStyle = .single
+            }
         }
         return text
     }

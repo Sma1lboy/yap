@@ -211,7 +211,8 @@ extension AppScreenHeader where Trailing == EmptyView {
 
 extension View {
     /// Links per DESIGN.md: ink with an underline in light mode (yellow text is unreadable on white), yellow in dark.
+    /// `Link` takes its color from the tint on some macOS versions and from the foreground style on others: set both.
     func appLinkStyle() -> some View {
-        tint(AppTheme.Accent.text).underline()
+        tint(AppTheme.Accent.text).foregroundStyle(AppTheme.Accent.text).underline()
     }
 }
