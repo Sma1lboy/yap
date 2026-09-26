@@ -47,8 +47,29 @@ actor WhisperContext {
             "Decoding \(samples.count / WhisperChunking.sampleRate, privacy: .public)s in \(windows.count, privacy: .public) windows, VAD \(isVADEnabled, privacy: .public)"
         )
         let autoLanguage = (language ?? "auto") == "auto"
-        for window in windows {
-            let runs = autoLanguage ? WhisperChunking.mergeRuns(languagePieces(samples, window, probs)) : []
+        var detections: [Int: (language: String, probability: Float)?] = [:]
+        func detection(_ index: Int) -> (language: String, probability: Float)? {
+            if let known = detections[index] { return known }
+            let result = detectLanguage(samples[windows[index]])
+            detections[index] = result
+            return result
+        }
+        // Each detection costs a full encoder pass, as much as decoding the window. When the first, middle
+        // and last windows agree, decode every window in that language instead of detecting each one.
+        let recordingLanguage =
+            autoLanguage
+            ? WhisperChunking.sharedLanguage(
+                WhisperChunking.canaries(windows.count).map(detection), threshold: Self.singleLanguageThreshold)
+            : nil
+        for (index, window) in windows.enumerated() {
+            let runs: [(range: Range<Int>, language: String)]
+            if let recordingLanguage {
+                runs = [(window, recordingLanguage)]
+            } else if autoLanguage {
+                runs = WhisperChunking.mergeRuns(languagePieces(samples, window, probs, known: detection(index)))
+            } else {
+                runs = []
+            }
             if runs.count > 1 {
                 logger.notice("Mixed-language window: \(runs.map(\.language).joined(separator: ","), privacy: .public)")
             }
@@ -65,6 +86,8 @@ actor WhisperContext {
     /// Clean single-language windows detect at p > 0.99; a window holding an English stretch followed
     /// by a Chinese one measured p = 0.56.
     private static let mixedLanguageThreshold: Float = 0.8
+    /// Canary windows must all be this sure before the rest of the recording skips detection.
+    private static let singleLanguageThreshold: Float = 0.95
     private static let minLanguagePiece = 6 * WhisperChunking.sampleRate
 
     /// Whisper decodes a window in one language, so a window holding an English stretch and a Chinese
@@ -73,9 +96,10 @@ actor WhisperContext {
     /// window is decoded with the detected language rather than letting whisper_full detect it again.
     /// Empty when detection fails; the caller then decodes with the configured language.
     private func languagePieces(
-        _ samples: [Float], _ range: Range<Int>, _ probs: [Float]
+        _ samples: [Float], _ range: Range<Int>, _ probs: [Float],
+        known: (language: String, probability: Float)?? = nil
     ) -> [(range: Range<Int>, language: String)] {
-        guard let (language, probability) = detectLanguage(samples[range]) else { return [] }
+        guard let (language, probability) = known ?? detectLanguage(samples[range]) else { return [] }
         let quarter = range.count / 4
         guard probability < Self.mixedLanguageThreshold, range.count >= 2 * Self.minLanguagePiece,
             let middle = WhisperChunking.quietestPoint(
