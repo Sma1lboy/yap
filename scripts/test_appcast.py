@@ -33,4 +33,21 @@ with tempfile.TemporaryDirectory() as d:
     assert enc.get("length") == "111"
     assert items[-1].findtext("title") == "Yap 1.0.2"
     assert channel.findtext("title") == "Yap"
+    assert top.find("description") is None  # no notes file → no description
+
+    # Release notes: the HTML file becomes a CDATA <description>, even with "]]>" and "&" in it, and an earlier
+    # item's notes survive the next release as CDATA.
+    notes = os.path.join(d, "notes.html")
+    html = '<h1>Yap 2.0.0</h1>\n<ul><li>Faster &amp; smaller</li><li>odd ]]> text</li></ul>'
+    with open(notes, "w", encoding="utf-8") as f:
+        f.write(html + "\n")
+    subprocess.run([sys.executable, os.path.join(HERE, "appcast.py"), path, "2.0.0", "2000",
+                    'sparkle:edSignature="SIGN==" length="1"', notes], check=True)
+    subprocess.run([sys.executable, os.path.join(HERE, "appcast.py"), path, "2.0.1", "2001",
+                    'sparkle:edSignature="SIGN1==" length="2"'], check=True)
+    raw = open(path, encoding="utf-8").read()
+    assert raw.count("<![CDATA[") == 2, raw.count("<![CDATA[")  # the "]]>" split makes two sections
+    items = ET.parse(path).getroot().find("channel").findall("item")
+    assert items[0].findtext("title") == "Yap 2.0.1" and items[0].find("description") is None
+    assert items[1].findtext("title") == "Yap 2.0.0" and items[1].findtext("description") == html
 print("ok")
