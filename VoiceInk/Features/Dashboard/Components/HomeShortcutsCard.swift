@@ -52,10 +52,8 @@ struct HomeShortcutsCard: View {
                     .appLinkStyle()
             }
 
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .top, spacing: AppTheme.Spacing.x3) { cells }
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) { cells }
-            }
+            // Three columns fit down to the window's minimum width; the notes wrap.
+            HStack(alignment: .top, spacing: AppTheme.Spacing.x4) { cells }
         }
         .padding(AppTheme.Spacing.x4)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -80,7 +78,7 @@ struct HomeShortcutsCard: View {
                     .foregroundStyle(AppTheme.Text.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
         }
     }

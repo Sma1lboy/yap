@@ -14,7 +14,9 @@
     @MainActor
     enum UISnapshots {
         static let argument = "--render-snapshots"
-        static let outputDirectory = URL(fileURLWithPath: "/tmp/yap-ui/snapshots", isDirectory: true)
+        static let outputDirectory = URL(
+            fileURLWithPath: ProcessInfo.processInfo.environment["YAP_UI_SNAPSHOTS_OUT"] ?? "/tmp/yap-ui/snapshots",
+            isDirectory: true)
         /// The main window's minimum size.
         static let size = CGSize(width: AppWindowLayout.minimumWidth, height: AppWindowLayout.minimumHeight)
 
@@ -46,6 +48,15 @@
             // Before the managers: the Yap Cloud catalog decides which transcription models exist.
             YapCloud.shared.applySnapshotState(.funded)
             let app = SnapshotApp(container: full)
+            // Keys as after onboarding (Right Option) plus an undo key, in the snapshot app's own defaults;
+            // Rewrite stays unset so Home's Not set state is in the shot too.
+            func setSnapshotShortcuts() {
+                ShortcutStore.setShortcut(.modifierOnly(keyCode: 61, modifierFlags: [.option]), for: .primaryRecording)
+                ShortcutStore.setShortcut(.key(keyCode: 6, modifierFlags: [.control, .option]), for: .undoLastPaste)
+                ShortcutStore.setShortcut(nil, for: .rewriteLastPaste)
+                app.recordingShortcutManager.primaryRecordingShortcut = .custom
+            }
+            setSnapshotShortcuts()
             CloudConfigSync.shared.store = MockConfigStore()
             MockData.installModes()
             CustomAIProviderManager.shared.replaceProviders([MockData.customProvider])
@@ -82,6 +93,8 @@
             WordReplacementView.snapshotSelecting = false
             page("settings", .settings)
             page("account", .account)
+            // Something the pages above render (likely the mock config sync) resets them; set them again.
+            setSnapshotShortcuts()
             MainWindowNavigation.shared.selectedView = .dashboard
             shot("page-home-empty", titled: true) { ContentView().modelContainer(empty) }
 
