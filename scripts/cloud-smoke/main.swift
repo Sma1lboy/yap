@@ -97,6 +97,14 @@ Task { @MainActor in
         try expect(stt.allSatisfy { !$0.isChat }, "a model is both transcription and chat")
         return "\(stt.count) transcription, \(chat.count) chat"
     }
+    await check("picks on the allowlist") {
+        // /v1/models lists only paygate's MODEL_ALLOWLIST; every model shown up front must be callable.
+        let catalog = try await cloud.fetchModels()
+        let stt = Set(catalog.models.filter(\.isTranscription).map(\.id)), chat = Set(catalog.models.filter(\.isChat).map(\.id))
+        let missing = YapCloudPicks.transcription.filter { !stt.contains($0) } + YapCloudPicks.enhancement.filter { !chat.contains($0) }
+        try expect(missing.isEmpty, "not on the allowlist: \(missing.joined(separator: ", "))")
+        return "\(YapCloudPicks.transcription.count) transcription + \(YapCloudPicks.enhancement.count) enhancement picks listed"
+    }
 
     var info: YapCloudInfo?
     await check("info") {
@@ -231,6 +239,32 @@ Task { @MainActor in
         } catch YapCloudError.insufficientBalance {
             return "INSUFFICIENT_BALANCE (via YapCloud.chatCompletion)"
         }
+    }
+    await check("MODEL_NOT_ALLOWED retry") {
+        // paygate checks the allowlist before the balance, so at $0 an off-list model answers 400 and the client's
+        // one retry on the Recommended model answers 402: both unbilled.
+        guard let balance else { return "SKIP: /v1/me failed" }
+        guard balance <= 0 else { return "SKIP: balance > 0 (a real call would be billed)" }
+        let offList = "openai/whisper-1"
+        do {
+            _ = try await cloud.proxy(
+                "/v1/audio/transcriptions",
+                body: ["model": offList, "input_audio": ["data": silentWAV().base64EncodedString(), "format": "wav"]],
+                timeout: 60)
+            throw Failed(description: "\(offList) was accepted")
+        } catch where YapCloud.isModelNotAllowed(error) {}
+        do {
+            _ = try await YapCloudProvider().transcribe(
+                audioData: silentWAV(), fileName: "smoke.wav", apiKey: token, model: offList, language: nil,
+                customVocabulary: [], timeout: 60)
+            throw Failed(description: "transcription succeeded at a zero balance")
+        } catch YapCloudError.insufficientBalance {}
+        do {
+            _ = try await cloud.chatCompletion(
+                model: "x/not-on-the-list", messages: [["role": "user", "content": "hi"]], temperature: 0.3, timeout: 30)
+            throw Failed(description: "chat succeeded at a zero balance")
+        } catch YapCloudError.insufficientBalance {}
+        return "\(offList): 400 MODEL_NOT_ALLOWED, provider retried on the Recommended model (402); chat fell back (402)"
     }
     await check("402 transcription") {
         guard let balance else { return "SKIP: /v1/me failed" }
