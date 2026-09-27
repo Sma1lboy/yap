@@ -638,6 +638,11 @@
           "type": "boolean",
           "default": true,
           "description": "Wrap the text in Yap's standard cleanup instructions."
+        },
+        "followsRecommended": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use the recommended prompt bundled with this Yap instead of promptText, so it updates with Yap. promptText keeps a copy for Yap versions that don't know this field. Editing the prompt text in Yap turns it off."
         }
       }
     },

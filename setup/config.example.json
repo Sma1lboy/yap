@@ -11,7 +11,7 @@
     "enabled": true,
     "provider": "openrouter",
     "model": "deepseek/deepseek-v4.1-flash",
-    "prompt": "prompt.md"
+    "prompt": "recommended"
   },
   "defaultMode": {
     "screenContext": false,

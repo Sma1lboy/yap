@@ -27,7 +27,7 @@ git clone https://github.com/Sma1lboy/yap && cd yap
 ./setup/install.sh
 ```
 
-脚本会用 Homebrew 安装应用（或下载最新发布版），在文件不存在时把 `setup/config.example.json` 复制到 `~/.config/yap/config.json`、把推荐提示词（`VoiceInk/Resources/RecommendedPrompt.md`，应用里也自带一份）复制到 `~/.config/yap/prompt.md`，然后打开 Yap。授予麦克风和辅助功能权限、选一个快捷键；如果配置文件里已经有你的 key，就跳过服务商那几步。
+脚本会用 Homebrew 安装应用（或下载最新发布版），在文件不存在时把 `setup/config.example.json` 复制到 `~/.config/yap/config.json`，然后打开 Yap。示例里的 `"prompt": "recommended"` 用的是应用自带的推荐提示词（`VoiceInk/Resources/RecommendedPrompt.md`），Yap 更新时会跟着更新；想用自己的提示词，就写进一个文件（比如 `prompt.md`），再把 `enhancement.prompt` 指向它。授予麦克风和辅助功能权限、选一个快捷键；如果配置文件里已经有你的 key，就跳过服务商那几步。
 
 只装应用：`brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew install --cask sma1lboy/yap/yap`。之后 Yap 会自己更新（应用菜单里的「检查更新…」），也可以用 `brew upgrade --cask yap`。
 
@@ -73,7 +73,7 @@ Yap 每次启动都会读这个文件。文件里写了的字段会覆盖应用�
 {
   "keys": { "openrouter": "env:OPENROUTER_API_KEY" },
   "transcription": { "provider": "openrouter", "model": "microsoft/mai-transcribe-2" },
-  "enhancement": { "enabled": true, "provider": "openrouter", "model": "deepseek/deepseek-v4.1-flash", "prompt": "prompt.md" },
+  "enhancement": { "enabled": true, "provider": "openrouter", "model": "deepseek/deepseek-v4.1-flash", "prompt": "recommended" },
   "defaultMode": { "screenContext": false, "clipboardContext": false, "selectedTextContext": false }
 }
 ```
@@ -82,7 +82,7 @@ Yap 每次启动都会读这个文件。文件里写了的字段会覆盖应用�
 |---|---|
 | `keys.<provider>` | API key，存进钥匙串。`env:NAME` 先读环境变量，再读 `~/.env`（从 Dock 打开的应用拿不到 shell 的环境变量）。 |
 | `transcription` | 语音转文字的服务商和模型，应用到每个模式。 |
-| `enhancement` | 开了润色的模式所用的服务商和模型。`prompt` 可以是配置文件旁边的文件名（或绝对路径），也可以直接是提示词文本；`"recommended"` 表示用应用自带的推荐提示词。它会成为默认模式的提示词。 |
+| `enhancement` | 开了润色的模式所用的服务商和模型。`prompt` 可以是配置文件旁边的文件名（或绝对路径），也可以直接是提示词文本；`"recommended"` 表示用应用自带的推荐提示词，Yap 更新时跟着更新；和 Yap 发布过的某一版逐字相同的文本（比如旧版 `setup/install.sh` 复制的 `prompt.md`）也一样。它会成为默认模式的提示词。 |
 | `defaultMode` | 默认模式会把哪些额外上下文发给模型。全部关掉，听写又快又私密。 |
 
 Schema v2（`"version": 2`）可以描述全部设置。它和 **设置 → 备份 → 导出** 用同样的 JSON 结构，所以可以把导出文件里的段落直接贴进来。没有 `version` 的文件按 v1 读取，行为和以前一样。
