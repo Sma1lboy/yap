@@ -237,6 +237,28 @@
         }
       }
     },
+    "%@ is still downloading (%lld%%). Dictation works as soon as it finishes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ wird noch heruntergeladen (%2$lld %%). Diktieren geht, sobald der Download fertig ist."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ est encore en cours de téléchargement (%2$lld %%). La dictée fonctionnera dès qu’il sera terminé."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 还在下载（%2$lld%%），下载完就能听写。"
+          }
+        }
+      }
+    },
     "%@ of %@" : {
       "localizations" : {
         "de" : {
@@ -25426,6 +25448,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示程序坞图标"
+          }
+        }
+      }
+    },
+    "Show Download" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download anzeigen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Voir le téléchargement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看下载"
           }
         }
       }
