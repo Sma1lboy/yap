@@ -93,6 +93,34 @@ struct SettingsView: View {
                 }
             }
 
+            Section {
+                LabeledContent {
+                    ShortcutRecorder(action: .undoLastPaste)
+                        .controlSize(.small)
+                } label: {
+                    HStack(spacing: AppTheme.Spacing.x1) {
+                        Text("Undo Last Paste")
+                        InfoTip("Removes the text Yap pasted last, if it's still where Yap put it and unchanged. Saying only \"scratch that\" or \"删掉刚才那句\" does the same.")
+                    }
+                }
+
+                LabeledContent {
+                    ShortcutRecorder(action: .rewriteLastPaste)
+                        .controlSize(.small)
+                } label: {
+                    HStack(spacing: AppTheme.Spacing.x1) {
+                        Text("Rewrite Last Dictation")
+                        InfoTip("Press, say how to change the text Yap pasted last (\"make it more formal\", \"改正式一点\"), press again. It's rewritten in place with this mode's AI provider.")
+                    }
+                }
+            } header: {
+                Text("Voice Edits")
+            } footer: {
+                Text("Both act only on the text Yap pasted last, and only if it's still there unchanged.")
+                    .font(AppTheme.font(.footnote))
+                    .foregroundStyle(AppTheme.Text.secondary)
+            }
+
             Section("Additional Shortcuts") {
                 LabeledContent("Paste Last Transcription (Original)") {
                     ShortcutRecorder(action: .pasteLastTranscription) {
@@ -124,26 +152,6 @@ struct SettingsView: View {
                 LabeledContent("Quick Add to Dictionary") {
                     ShortcutRecorder(action: .quickAddToDictionary)
                         .controlSize(.small)
-                }
-
-                LabeledContent {
-                    ShortcutRecorder(action: .undoLastPaste)
-                        .controlSize(.small)
-                } label: {
-                    HStack(spacing: AppTheme.Spacing.x1) {
-                        Text("Undo Last Paste")
-                        InfoTip("Removes the text Yap pasted last, if it's still where Yap put it and unchanged. Saying only \"scratch that\" or \"删掉刚才那句\" does the same.")
-                    }
-                }
-
-                LabeledContent {
-                    ShortcutRecorder(action: .rewriteLastPaste)
-                        .controlSize(.small)
-                } label: {
-                    HStack(spacing: AppTheme.Spacing.x1) {
-                        Text("Rewrite Last Dictation")
-                        InfoTip("Press, say how to change the text Yap pasted last (\"make it more formal\", \"改正式一点\"), press again. It's rewritten in place with this mode's AI provider.")
-                    }
                 }
 
                 LabeledContent {
@@ -338,6 +346,15 @@ struct SettingsView: View {
             Section("History") {
                 LabeledContent("Auto-delete transcripts and audio") {
                     Button("History Settings…") { isShowingHistorySettings = true }
+                }
+            }
+
+            Section("Help") {
+                LabeledContent {
+                    Button("Start") { MainWindowNavigation.shared.isShowingFeatureTour = true }
+                } label: {
+                    Text("Explore Key Features")
+                    Text("A card for each feature, with its shortcut and where to set it up.")
                 }
             }
 

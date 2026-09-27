@@ -266,16 +266,27 @@ private struct ChineseCleanupSettingsSection: View {
 
     var body: some View {
         Section {
-            Toggle("Remove Chinese fillers (嗯, 呃, a leading 那个)", isOn: $removeFillers)
-            Toggle("Turn spoken \"换行\" and \"新段落\" into line breaks", isOn: $spokenLineBreaks)
-            Toggle("Convert Traditional Chinese to Simplified", isOn: $traditionalToSimplified)
-            Toggle("Add a space between Chinese and English", isOn: $spaceBetweenChineseAndLatin)
+            // Same shape as the other switches in this panel: title-case label, examples in the InfoTip.
+            row("Remove Chinese Fillers", "Drops 嗯, 呃 and 额 anywhere; 啊, 哦 and 那个 only at the start of a clause, since mid-sentence they carry meaning (\"那个文件\").", $removeFillers)
+            row("Spoken Line Breaks", "Saying \"换行\" or \"下一行\" starts a new line; \"新段落\" or \"另起一段\" starts a new paragraph.", $spokenLineBreaks)
+            row("Traditional to Simplified", "Converts Traditional Chinese characters in the transcript to Simplified.", $traditionalToSimplified)
+            row("Space Between Chinese and English", "Adds a space between Chinese and Latin letters or digits: \"用Yap听写\" becomes \"用 Yap 听写\".", $spaceBetweenChineseAndLatin)
         } header: {
             HStack(spacing: AppTheme.Spacing.x1) {
                 Text("Chinese Cleanup")
                 InfoTip("Rules applied to every transcript on this Mac, before any AI enhancement, so they also work offline.")
             }
         }
+    }
+
+    private func row(_ title: LocalizedStringKey, _ info: LocalizedStringKey, _ isOn: Binding<Bool>) -> some View {
+        Toggle(isOn: isOn) {
+            HStack(spacing: AppTheme.Spacing.x1) {
+                Text(title)
+                InfoTip(info)
+            }
+        }
+        .toggleStyle(.switch)
     }
 }
 

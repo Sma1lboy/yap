@@ -23,6 +23,14 @@ enum SettingsNavigator {
     }
 }
 
+enum FeatureTourNavigator {
+    /// Help › Explore Key Features: brings the main window up and opens the tour over the current page.
+    static func open() {
+        MainWindowNavigator.open(destination: MainWindowNavigation.shared.selectedView)
+        MainWindowNavigation.shared.isShowingFeatureTour = true
+    }
+}
+
 private enum MainWindowNavigator {
     static func open(destination: ViewType) {
         MainWindowNavigation.shared.navigate(to: destination)

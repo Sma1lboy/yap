@@ -77,8 +77,12 @@
             page("transcribe-audio", .transcribeAudio)
             page("audio", .audio)
             page("dictionary", .dictionary)
+            WordReplacementView.snapshotSelecting = true
+            page("dictionary-select", .dictionary)
+            WordReplacementView.snapshotSelecting = false
             page("settings", .settings)
             page("account", .account)
+            MainWindowNavigation.shared.selectedView = .dashboard
             shot("page-home-empty", titled: true) { ContentView().modelContainer(empty) }
 
             for state in YapCloud.SnapshotState.allCases where state != .funded {
@@ -118,6 +122,7 @@
             if let notes = ReleaseNotes.current {
                 shot("sheet-whats-new", size: CGSize(width: 560, height: 620)) { ReleaseNotesSheet(notes: notes) }
             }
+            shot("sheet-feature-tour", size: CGSize(width: 560, height: 620), main: true) { FeatureTourSheet() }
             shot("sheet-version-history", size: CGSize(width: 640, height: 520)) { ConfigVersionHistorySheet() }
             shot("sheet-history-settings", size: CGSize(width: 480, height: 560)) {
                 HistorySettingsPanel(onClose: {})
