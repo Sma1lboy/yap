@@ -21,12 +21,16 @@
         /// Call first thing at launch; returns only when the argument isn't present.
         static func runIfRequested() {
             guard CommandLine.arguments.contains(argument) else { return }
+            // Rendering builds real managers that write UserDefaults (fake starter modes, a custom provider…), and
+            // CFFIXED_USER_HOME doesn't isolate UserDefaults. Only the copy scripts/ui-snapshots.sh re-identifies
+            // may run this, so those writes land in its own throwaway domain, never the dev app's.
+            guard Bundle.main.bundleIdentifier == AppIdentity.snapshotsIdentifier else {
+                print("--render-snapshots runs only as \(AppIdentity.snapshotsIdentifier); use make ui-snapshots")
+                exit(2)
+            }
             NSApplication.shared.setActivationPolicy(.prohibited)
             YapCloud.isSnapshotMode = true
             try? FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
-            // Rendering builds real managers that write UserDefaults (fake starter modes, shortcut migrations…).
-            // Keep the dev app's own settings: save the whole domain now, put it back exactly before exiting.
-            let defaultsGuard = DefaultsSnapshot()
             let isChinese = Bundle.main.preferredLocalizations.first?.hasPrefix("zh") == true
             let suffix = isChinese ? "-zh" : ""
 
@@ -179,7 +183,6 @@
                 OnboardingTrustScreen(contentMaxWidth: 700, onBack: {}, onContinue: {}).modelContainer(practiced)
             }
 
-            defaultsGuard.restore()
             print("Wrote \(written.count) snapshots to \(outputDirectory.path)")
             exit(0)
         }
@@ -363,36 +366,6 @@
                 .environmentObject(menuBarManager)
                 .environmentObject(updaterViewModel)
                 .environmentObject(MainWindowNavigation.shared)
-        }
-    }
-
-    /// Saves this app's UserDefaults domain before the snapshot run and restores it afterwards. The copy is
-    /// also written to disk first, so a run that crashed midway is undone at the start of the next one.
-    /// (CFFIXED_USER_HOME doesn't isolate UserDefaults: writes still reach the real domain through cfprefsd.)
-    @MainActor
-    private struct DefaultsSnapshot {
-        private static let backupURL = URL(fileURLWithPath: "/tmp/yap-ui/defaults-backup.plist")
-        private let domain = Bundle.main.bundleIdentifier ?? ""
-        private let saved: [String: Any]
-
-        init() {
-            let defaults = UserDefaults.standard
-            if let data = try? Data(contentsOf: Self.backupURL),
-                let previous = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
-            {
-                defaults.setPersistentDomain(previous, forName: domain)
-                defaults.synchronize()
-            }
-            saved = defaults.persistentDomain(forName: domain) ?? [:]
-            if let data = try? PropertyListSerialization.data(fromPropertyList: saved, format: .binary, options: 0) {
-                try? data.write(to: Self.backupURL, options: .atomic)
-            }
-        }
-
-        func restore() {
-            UserDefaults.standard.setPersistentDomain(saved, forName: domain)
-            UserDefaults.standard.synchronize()
-            try? FileManager.default.removeItem(at: Self.backupURL)
         }
     }
 #endif
