@@ -6,6 +6,7 @@ struct RecordingContextSnapshot {
     var selectedText: String?
     var clipboardText: String?
     var screenText: String?
+    var cursorContext: CursorContext?
 }
 
 @MainActor
@@ -22,6 +23,10 @@ final class RecordingContextSnapshotStore {
 
     func updateScreenText(_ text: String?) {
         snapshot.screenText = Self.normalized(text)
+    }
+
+    func updateCursorContext(_ context: CursorContext?) {
+        snapshot.cursorContext = context
     }
 
     private static func normalized(_ text: String?) -> String? {
@@ -43,6 +48,13 @@ enum RecordingContextCaptureService {
                 let selectedText = await SelectedTextService.fetchSelectedText()
                 guard !Task.isCancelled else { return }
                 store.updateSelectedText(selectedText)
+            },
+            Task { @MainActor in
+                // Read when recording starts, before anything is pasted; the mode decides later whether it's used.
+                let app = NSWorkspace.shared.frontmostApplication
+                let context = await Task.detached { CursorContextReader.read(app: app) }.value
+                guard !Task.isCancelled else { return }
+                store.updateCursorContext(context)
             },
             Task { @MainActor in
                 guard CGPreflightScreenCaptureAccess(), !Task.isCancelled else { return }

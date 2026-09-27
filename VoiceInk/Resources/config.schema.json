@@ -444,6 +444,11 @@
           "type": "boolean",
           "description": "Send visible screen text to the model."
         },
+        "useCursorContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Send the app name, window title and up to 3,000 characters around the cursor in the focused field to cleanup (never password fields). When the field can't be read, screen text is used instead if useScreenCapture is on."
+        },
         "selectedAIProvider": {
           "enum": [
             "Cerebras",

@@ -99,6 +99,11 @@
             ModeView.snapshotOpensEditor = true
             MainWindowNavigation.shared.selectedView = .modes
             shot("sheet-mode-editor", fullPage: true, titled: true) { ContentView() }
+            ModeView.snapshotEditsEnhancedMode = true
+            ModeConfigFormView.snapshotExpandsContext = true
+            shot("sheet-mode-editor-context", main: true, fullPage: true, titled: true) { ContentView() }
+            ModeView.snapshotEditsEnhancedMode = false
+            ModeConfigFormView.snapshotExpandsContext = false
             ModeView.snapshotOpensEditor = false
             ModelManagementView.snapshotFilter = .custom
             ModelManagementView.snapshotPanel = .customProviderEditor

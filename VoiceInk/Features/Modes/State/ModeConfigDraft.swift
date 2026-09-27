@@ -17,6 +17,7 @@ struct ModeConfigDraft {
     var useClipboardContext: Bool
     var useSelectedTextContext: Bool
     var useScreenCapture: Bool
+    var useCursorContext: Bool
     var selectedAIProvider: String?
     var selectedAIModel: String?
     var outputMode: ModeOutputMode
@@ -47,6 +48,7 @@ struct ModeConfigDraft {
             useClipboardContext = false
             useSelectedTextContext = false
             useScreenCapture = true
+            useCursorContext = true
             selectedAIProvider = inheritedConfig?.selectedAIProvider
             selectedAIModel = inheritedConfig?.selectedAIModel
             outputMode = .paste
@@ -73,6 +75,7 @@ struct ModeConfigDraft {
             useClipboardContext = latestConfig.useClipboardContext
             useSelectedTextContext = latestConfig.useSelectedTextContext
             useScreenCapture = latestConfig.useScreenCapture
+            useCursorContext = latestConfig.useCursorContext
             selectedAIProvider = latestConfig.selectedAIProvider
             selectedAIModel = latestConfig.selectedAIModel
             outputMode = latestConfig.outputMode
@@ -177,6 +180,7 @@ struct ModeConfigDraft {
                 useClipboardContext: useClipboardContext,
                 useSelectedTextContext: useSelectedTextContext,
                 useScreenCapture: useScreenCapture,
+                useCursorContext: useCursorContext,
                 isTextFormattingEnabled: isTextFormattingEnabled,
                 selectedAIProvider: selectedAIProvider,
                 selectedAIModel: selectedAIModel,
@@ -202,6 +206,7 @@ struct ModeConfigDraft {
             updatedConfig.useClipboardContext = useClipboardContext
             updatedConfig.useSelectedTextContext = useSelectedTextContext
             updatedConfig.useScreenCapture = useScreenCapture
+            updatedConfig.useCursorContext = useCursorContext
             updatedConfig.selectedAIProvider = selectedAIProvider
             updatedConfig.selectedAIModel = selectedAIModel
             updatedConfig.outputMode = outputMode

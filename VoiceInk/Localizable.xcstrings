@@ -27523,6 +27523,28 @@
         }
       }
     },
+    "Text Around the Cursor" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text um den Cursor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte autour du curseur"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "光标附近的文字"
+          }
+        }
+      }
+    },
     "That code has expired. Send a new code." : {
       "localizations" : {
         "de" : {
@@ -30848,25 +30870,24 @@
         }
       }
     },
-    "Use captured on-screen text as context for this mode." : {
-      "extractionState" : "manual",
+    "Use captured on-screen text as context for this mode, when the text around the cursor can't be read." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erfassten Bildschirmtext als Kontext für diesen Modus verwenden."
+            "value" : "Erfassten Bildschirmtext als Kontext für diesen Modus verwenden, wenn der Text um den Cursor nicht lesbar ist."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Utilisez le texte capturé à l'écran comme contexte pour ce mode."
+            "value" : "Utiliser le texte capturé à l'écran comme contexte pour ce mode quand le texte autour du curseur ne peut pas être lu."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "将捕获的屏幕文本用作此模式的上下文。"
+            "value" : "光标附近的文字读不到时，把捕获的屏幕文本用作此模式的上下文。"
           }
         }
       }
@@ -30913,6 +30934,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将当前 App 中选中的文本用作此模式的上下文。"
+          }
+        }
+      }
+    },
+    "Use the app name, window title and up to 3,000 characters around the cursor in the field you're dictating into. Password fields are never read." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App-Name, Fenstertitel und bis zu 3.000 Zeichen um den Cursor im Feld verwenden, in das du diktierst. Passwortfelder werden nie gelesen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser le nom de l'app, le titre de la fenêtre et jusqu'à 3 000 caractères autour du curseur dans le champ où vous dictez. Les champs de mot de passe ne sont jamais lus."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用当前 App 名、窗口标题，以及你正在听写的输入框里光标前后最多 3,000 个字符。密码框永远不会读取。"
           }
         }
       }
