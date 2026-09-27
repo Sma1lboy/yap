@@ -29,6 +29,7 @@ Language `zh` for every model (what a Chinese–English user picks); onboarding 
 | Nemotron Multilingual | FluidAudio (Core ML) | 8 | 4 | 4 | 0.03 | 672 MB | – | 19.9 s² |
 | Tiny | whisper.cpp | 10 | 9 | 1 | 0.07 | 75 MB | – | 0.1 s |
 | *mai-transcribe-2 (cloud reference)* | *OpenRouter* | *59* | *39* | *20* | *0.14³* | – | – | – |
+| *mai-transcribe-2 (cloud reference)* | *Yap Cloud* | *59* | *39* | *20* | *0.10³* | – | – | – |
 
 ¹ Large v2 wasn't measured; it is the same size as v3. ² First load includes Metal shader or Core ML compilation. ³ Includes the network round trip.
 
@@ -93,6 +94,6 @@ The last two weren't in the measured run (the check can't hold a real sign-in); 
 ## Reproduce
 
 - Clips: `python3 setup/asr/make_clips.py` (macOS `say`, voices Tingting and Reed (Chinese, mainland), rate 230, from `setup/asr/clips.json`).
-- Transcription: build `setup/asr/harness` once (`swift build -c release`), then `python3 setup/asr/bench.py run whisper <ggml-*.bin>` / `run tcpp <gguf> [--itn]` / `run nemotron <model dir>` / `run openrouter microsoft/mai-transcribe-2`, and `python3 setup/asr/bench.py score`, which prints the table's columns. Model files come from the URLs and revisions in `WhisperModelManager`, `TranscribeCppModelCatalog` and `FluidAudioModelManager`. Pass `fluidbench` a model directory you downloaded yourself, so the app's own model cache isn't touched.
+- Transcription: build `setup/asr/harness` once (`swift build -c release`), then `python3 setup/asr/bench.py run whisper <ggml-*.bin>` / `run tcpp <gguf> [--itn]` / `run nemotron <model dir>` / `run openrouter microsoft/mai-transcribe-2` / `run yapcloud microsoft/mai-transcribe-2` (with `YAP_CLOUD_TOKEN`), and `python3 setup/asr/bench.py score`, which prints the table's columns. Model files come from the URLs and revisions in `WhisperModelManager`, `TranscribeCppModelCatalog` and `FluidAudioModelManager`. Pass `fluidbench` a model directory you downloaded yourself, so the app's own model cache isn't touched.
 - Cleanup: `uvx --with mlx-lm python setup/refine_bench.py`.
 - Offline: `make offline-check MODEL=…`.
