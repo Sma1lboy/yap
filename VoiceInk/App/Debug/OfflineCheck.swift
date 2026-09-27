@@ -10,7 +10,8 @@
         static let argument = "--dictate-file"
         /// `--first-run-check <model name>`, with `--dictate-file`: scripts/first-run-check.sh.
         static let firstRunArgument = "--first-run-check"
-        static var isRequested: Bool { CommandLine.arguments.contains(argument) }
+        /// Also true for `--meeting-files`: both run the mock identity as a fresh install (no fake data).
+        static var isRequested: Bool { CommandLine.arguments.contains(argument) || MeetingFilesCheck.isRequested }
 
         static func runIfRequested(engine: VoiceInkEngine) {
             let arguments = CommandLine.arguments

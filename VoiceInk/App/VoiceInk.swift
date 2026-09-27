@@ -212,6 +212,7 @@ struct VoiceInkApp: App {
         }
         #if DEBUG
             OfflineCheck.runIfRequested(engine: engine)  // make offline-check only
+            MeetingFilesCheck.runIfRequested()  // scripts/meeting-files-check.sh only
         #endif
 
         let activeWindowService = ActiveWindowService.shared

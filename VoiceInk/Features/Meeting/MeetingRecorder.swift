@@ -131,10 +131,18 @@ final class MeetingRecorder: ObservableObject {
     }
 
     func stop() async {
-        guard phase.isRecording, let session, let engine else { return }
+        guard phase.isRecording, let session else { return }
         self.session = nil
         phase = .finishing(String(localized: "Transcribing the last part…"))
         session.stopCapture()
+        await complete(session)
+    }
+
+    /// After capture: waits for the transcription, writes notes, saves the History entry, shows the result.
+    @discardableResult
+    private func complete(_ session: Session) async -> MeetingResult? {
+        guard let engine else { return nil }
+        phase = .finishing(String(localized: "Transcribing the last part…"))
         let (segments, failures) = await session.finish()
         if failures > 0 {
             logger.error("\(failures, privacy: .public) meeting pieces failed to transcribe")
@@ -164,12 +172,33 @@ final class MeetingRecorder: ObservableObject {
         let markdown = MeetingNotes.markdown(
             title: String(localized: "Meeting"), date: session.started, duration: session.duration,
             notes: summary.notes, transcript: transcript)
-        phase = .done(MeetingResult(
+        let result = MeetingResult(
             transcriptionID: transcription.id, notes: summary.notes, transcript: transcript,
-            notesProblem: summary.problem, markdown: markdown))
+            notesProblem: summary.problem, markdown: markdown)
+        phase = .done(result)
         MeetingPanelController.shared.show()
         logger.notice("Meeting saved: \(segments.count, privacy: .public) segments, notes \(summary.notes != nil, privacy: .public)")
+        return result
     }
+
+    #if DEBUG
+        /// `--meeting-files <mic.wav> <system.wav>` (MeetingFilesCheck): two 16 kHz mono PCM16 files go through the
+        /// same channels, chunking, transcription, notes and saving as a live recording, without capture.
+        func processFiles(microphone: URL, system: URL) async -> (MeetingResult, folder: URL)? {
+            guard let engine, let configuration = ModeRuntimeResolver.transcriptionConfiguration(
+                transcriptionModelManager: engine.transcriptionModelManager)
+            else { return nil }
+            let folder = engine.recordingsDirectory.appendingPathComponent("meetings/\(UUID().uuidString)", isDirectory: true)
+            try? FileManager.default.createDirectory(at: folder.appendingPathComponent("pieces"), withIntermediateDirectories: true)
+            guard let session = try? Session(
+                folder: folder, started: Date(), transcriber: Transcriber(engine: engine, configuration: configuration))
+            else { return nil }
+            phase = .recording(started: session.started)
+            session.feed(PCM16WAVWriter.samples(from: (try? Data(contentsOf: microphone)) ?? Data()), as: .me)
+            session.feed(PCM16WAVWriter.samples(from: (try? Data(contentsOf: system)) ?? Data()), as: .others)
+            return await complete(session).map { ($0, folder) }
+        }
+    #endif
 
     #if DEBUG
         /// make ui-snapshots: puts the panel in a given state without recording.
@@ -233,6 +262,24 @@ final class MeetingRecorder: ObservableObject {
                 for piece in pieces { transcriber.enqueue(piece, speaker: speaker, folder: folder) }
             }
         }
+
+        #if DEBUG
+            /// A whole recorded channel at once, in one-second blocks, without the wall clock.
+            func feed(_ samples: [Int16], as speaker: MeetingSegment.Speaker) {
+                queue.sync {
+                    guard let channel = channels[speaker] else { return }
+                    var index = 0
+                    while index < samples.count {
+                        let block = Array(samples[index..<min(index + 16_000, samples.count)])
+                        index += block.count
+                        let elapsed = TimeInterval(channel.writer.sampleCount + block.count) / MeetingChunker.sampleRate
+                        for piece in channel.append(block, elapsedAtEnd: elapsed) {
+                            transcriber.enqueue(piece, speaker: speaker, folder: folder)
+                        }
+                    }
+                }
+            }
+        #endif
 
         func stopCapture() {
             microphone.stopRecording()
@@ -365,12 +412,17 @@ struct MeetingSummarizer {
             return Summary(problem: Self.setupHint)
         }
         let base = ModeRuntimeResolver.currentEnhancementConfiguration(enhancementService: service, aiService: aiService)
-        guard let provider = base.provider, provider != .voiceInkRefine, service.isConfigured(for: base) else {
+        func withPrompt(_ prompt: String) -> EnhancementRuntimeConfiguration {
+            base.replacingPrompt(CustomPrompt(title: MeetingNotes.promptTitle, promptText: prompt, useSystemInstructions: false))
+        }
+        // Checked with the notes prompt in place: the mode's own prompt selection doesn't matter here.
+        guard let provider = base.provider, provider != .voiceInkRefine,
+            service.isConfigured(for: withPrompt(MeetingNotes.prompt))
+        else {
             return Summary(problem: Self.setupHint)
         }
         func ask(_ text: String, prompt: String) async throws -> String {
-            let configuration = base.replacingPrompt(
-                CustomPrompt(title: MeetingNotes.promptTitle, promptText: prompt, useSystemInstructions: false))
+            let configuration = withPrompt(prompt)
             let result = try await service.enhance(
                 text, configuration: configuration, timeout: MeetingNotes.timeout(forCharacters: text.count))
             return result.text.trimmingCharacters(in: .whitespacesAndNewlines)
