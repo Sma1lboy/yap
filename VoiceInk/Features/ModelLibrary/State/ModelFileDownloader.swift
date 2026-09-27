@@ -24,6 +24,20 @@ final class ModelFileDownloader: NSObject, URLSessionDownloadDelegate, @unchecke
         var bytesPerSecond: Double?
 
         var fraction: Double { total > 0 ? min(1, Double(received) / Double(total)) : 0 }
+
+        /// "120 MB of 547 MB · about 1 min left" (time left only once the rate is known).
+        var summary: String {
+            let bytes = String(
+                format: String(localized: "%@ of %@"),
+                ModelFileDownloader.bytes(received), ModelFileDownloader.bytes(total))
+            guard let secondsLeft else { return bytes }
+            let formatter = DateComponentsFormatter()
+            formatter.unitsStyle = .abbreviated
+            formatter.allowedUnits = secondsLeft >= 60 ? [.hour, .minute] : [.second]
+            formatter.maximumUnitCount = 2
+            let left = formatter.string(from: max(1, secondsLeft.rounded())) ?? ""
+            return String(format: String(localized: "%@ · about %@ left"), bytes, left)
+        }
         var secondsLeft: Double? {
             guard let bytesPerSecond, bytesPerSecond > 0, total > received else { return nil }
             return Double(total - received) / bytesPerSecond
@@ -40,8 +54,7 @@ final class ModelFileDownloader: NSObject, URLSessionDownloadDelegate, @unchecke
             case .notEnoughSpace(let needed, let available):
                 return String(
                     format: String(localized: "Not enough disk space: the model needs %@, and %@ is free. Free up some space and try again."),
-                    ByteCountFormatter.string(fromByteCount: needed, countStyle: .file),
-                    ByteCountFormatter.string(fromByteCount: available, countStyle: .file))
+                    ModelFileDownloader.bytes(needed), ModelFileDownloader.bytes(available))
             case .damaged:
                 return String(localized: "The downloaded file is damaged (its checksum doesn't match). Try the download again.")
             case .badResponse(let status):
@@ -58,6 +71,14 @@ final class ModelFileDownloader: NSObject, URLSessionDownloadDelegate, @unchecke
     }
 
     static let diskMargin: Int64 = 50_000_000
+
+    /// 1024-based and without decimals, like the model sizes in the catalog ("547 MB" for 574,041,195 bytes).
+    static func bytes(_ count: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .binary
+        formatter.isAdaptive = false
+        return formatter.string(fromByteCount: count)
+    }
 
     // MARK: - Pure helpers
 
@@ -271,6 +292,9 @@ final class ModelFileDownloader: NSObject, URLSessionDownloadDelegate, @unchecke
             let progress = Progress(received: 100, total: 1100, bytesPerSecond: 50)
             assert(progress.secondsLeft == 20 && abs(progress.fraction - 100.0 / 1100) < 1e-9)
             assert(Progress(received: 1, total: 2, bytesPerSecond: nil).secondsLeft == nil)
+            assert(bytes(574_041_195) == "547 MB")
+            assert(Progress(received: 0, total: 574_041_195, bytesPerSecond: nil).summary.contains("547 MB"))
+            assert(Progress(received: 0, total: 1_000_000, bytesPerSecond: 10_000).summary.contains("·"))
 
             let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
             defer { try? FileManager.default.removeItem(at: file) }

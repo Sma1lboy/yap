@@ -415,6 +415,7 @@ extension WhisperModelManager: WhisperModelProvider {}
 struct DownloadProgressView: View {
     let modelName: String
     let downloadProgress: [String: Double]
+    var downloadDetails: [String: ModelFileDownloader.Progress] = [:]
     var isOptimizing = false
 
     @Environment(\.colorScheme) private var colorScheme
@@ -450,11 +451,21 @@ struct DownloadProgressView: View {
         return String(format: String(localized: "Downloading %@ Model"), modelName)
     }
 
+    /// The transfer running now: Core ML once it has started, else the main model.
+    private var activeDetail: ModelFileDownloader.Progress? {
+        downloadDetails[modelName + "_coreml"] ?? downloadDetails[modelName + "_main"]
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             HStack {
                 Text(downloadPhase)
                     .lineLimit(1)
+
+                if !isOptimizing, let summary = activeDetail?.summary {
+                    Text(summary)
+                        .lineLimit(1)
+                }
 
                 Spacer()
 

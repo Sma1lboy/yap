@@ -149,6 +149,9 @@
             shot("onboarding-3-model-openrouter", size: onboardingSize, main: true) { onboardingModel(.recommended) }
             shot("onboarding-3-model-api", size: onboardingSize) { onboardingModel(.cloud) }
             shot("onboarding-3-model-local", size: onboardingSize) { onboardingModel(.local) }
+            shot("onboarding-3-model-local-downloading", size: onboardingSize) {
+                onboardingModel(.local, downloading: .init(received: 240_000_000, total: 574_041_195, bytesPerSecond: 4_500_000))
+            }
             shot("onboarding-4-api-key", size: onboardingSize, main: true) {
                 OnboardingAPIScreen(
                     aiService: app.aiService, contentMaxWidth: 620, providerOptions: [.openRouter, .groq, .gemini],
@@ -202,11 +205,14 @@
                 isRestoredFromCloud: false, onRestoreFromCloud: {})
         }
 
-        private static func onboardingModel(_ kind: OnboardingTranscriptionSetupKind) -> some View {
+        private static func onboardingModel(
+            _ kind: OnboardingTranscriptionSetupKind, downloading: ModelFileDownloader.Progress? = nil
+        ) -> some View {
             OnboardingModelScreen(
                 contentMaxWidth: 620, localModel: OnboardingCoordinator().requiredTranscriptionModel, setupKind: kind,
                 providerOptions: CloudProviderRegistry.allProviders, selectedProviderKey: .constant(""),
-                isLocalDownloaded: false, isLocalDownloading: false, localDownloadStatus: nil,
+                isLocalDownloaded: false, isLocalDownloading: downloading != nil,
+                localDownloadStatus: downloading.map { FluidAudioDownloadStatus(fractionCompleted: $0.fraction, message: $0.summary) },
                 localDownloadError: nil, isSetupReady: false, isShowingSkipWarning: .constant(false),
                 onSelectSetupKind: { _ in }, onDownload: { _ in }, onCancelDownload: { _ in },
                 onVerificationChanged: {}, onBack: {}, onContinue: {},
