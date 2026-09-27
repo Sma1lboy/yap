@@ -64,7 +64,7 @@ struct PromptEditorView: View {
             _useSystemInstructions = State(initialValue: true)
         case .edit(let prompt):
             _title = State(initialValue: prompt.title)
-            _promptText = State(initialValue: prompt.promptText)
+            _promptText = State(initialValue: prompt.text)
             _useSystemInstructions = State(initialValue: prompt.useSystemInstructions)
         }
     }
@@ -82,6 +82,7 @@ struct PromptEditorView: View {
                     }
 
                     instructionsEditor
+                    recommendedNote
                     systemTemplateToggle
                 }
                 .padding(.horizontal, AppTheme.Spacing.x5)
@@ -195,6 +196,21 @@ struct PromptEditorView: View {
         }
     }
 
+    /// Only for a prompt that follows the recommended one: it keeps following until its text is edited.
+    @ViewBuilder
+    private var recommendedNote: some View {
+        if let prompt = editingPrompt, prompt.followsRecommended {
+            Text(
+                promptText == prompt.text
+                    ? "This is the recommended prompt and updates with Yap. Editing the text makes it your own copy."
+                    : "Split off from the recommended prompt: once saved, it's your own copy and won't update with Yap."
+            )
+            .font(AppTheme.font(.caption))
+            .foregroundColor(AppTheme.Text.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private var footer: some View {
         HStack {
             if canDeletePrompt {
@@ -243,7 +259,8 @@ struct PromptEditorView: View {
                 id: prompt.id,
                 title: title,
                 promptText: promptText,
-                useSystemInstructions: useSystemInstructions
+                useSystemInstructions: useSystemInstructions,
+                followsRecommended: prompt.followsRecommended && promptText == prompt.text
             )
             enhancementService.updatePrompt(updatedPrompt)
             return updatedPrompt

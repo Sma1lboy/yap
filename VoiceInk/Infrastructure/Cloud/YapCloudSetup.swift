@@ -8,7 +8,7 @@ extension YapConfig {
             transcription: Transcription(provider: "yapcloud", model: transcriptionModel),
             enhancement: Enhancement(
                 enabled: true, provider: "yapcloud", model: RecommendedSetup.enhancementModel,
-                prompt: RecommendedSetup.prompt),
+                prompt: RecommendedSetup.promptKeyword),
             defaultMode: DefaultMode(screenContext: false, clipboardContext: false, selectedTextContext: false)
         )
     }

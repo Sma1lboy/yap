@@ -134,6 +134,7 @@ final class YapConfigLoader: ObservableObject {
             Self.selfCheck()
             Task { await CloudConfigSync.selfCheck() }
         #endif
+        migrateToRecommendedPromptOnce()
         guard let config = load() else { return }
         apply(config, source: .file, live: false, patchModes: defaults.bool(forKey: OnboardingSettings.completedV2Key))
     }
@@ -324,6 +325,7 @@ final class YapConfigLoader: ObservableObject {
 
     private func settingsDidChange() {
         guard defaults.bool(forKey: Self.keepInSyncKey) || CloudConfigSync.shared.isEnabled else { return }
+        migrateToRecommendedPromptOnce()  // a new Mac's first restore or pull
         pendingSync?.cancel()
         pendingSync = Task { [weak self] in
             try? await Task.sleep(for: .seconds(2))
@@ -480,9 +482,7 @@ final class YapConfigLoader: ObservableObject {
         // Prompt
         var promptId: String?
         if let raw = config.enhancement?.prompt, let text = promptText(raw) {
-            let prompt = CustomPrompt(
-                id: YapConfig.promptID, title: source == .file ? "config.json" : "Recommended", promptText: text,
-                useSystemInstructions: false)
+            let prompt = Self.configPrompt(raw: raw, text: text, title: source == .file ? "config.json" : "Recommended")
             if live, let enhancementService {
                 enhancementService.customPrompts = Self.upserting(prompt, into: enhancementService.customPrompts)
             } else {
@@ -578,6 +578,40 @@ final class YapConfigLoader: ObservableObject {
         return model
     }
 
+    static let recommendedPromptMigrationKey = "migratedToRecommendedPromptReference"
+
+    /// Once per Mac: untouched copies of a shipped recommended prompt start following the bundled one
+    /// (RecommendedSetup.followingRecommended), so they pick up new versions. Runs at launch, and after settings
+    /// change while syncing, but only once this Mac has prompts: a new Mac is migrated after its first restore.
+    /// With sync on, the change goes up as a new config version, and Version History's earlier version undoes it;
+    /// since this runs once, a restored or pulled copy isn't migrated again. Edited prompts are never touched.
+    private func migrateToRecommendedPromptOnce() {
+        guard !defaults.bool(forKey: Self.recommendedPromptMigrationKey) else { return }
+        let prompts = enhancementService?.customPrompts
+            ?? defaults.data(forKey: "customPrompts").flatMap { try? JSONDecoder().decode([CustomPrompt].self, from: $0) }
+            ?? []
+        guard !prompts.isEmpty else { return }
+        defaults.set(true, forKey: Self.recommendedPromptMigrationKey)
+        let migrated = RecommendedSetup.followingRecommended(prompts)
+        guard migrated != prompts else { return }
+        if let enhancementService {
+            enhancementService.customPrompts = migrated
+        } else if let data = try? JSONEncoder().encode(migrated) {
+            defaults.set(data, forKey: "customPrompts")
+        }
+        let titles = zip(prompts, migrated).filter { $0 != $1 }.map(\.1.title)
+        logger.notice("Prompts now following the recommended prompt: \(titles, privacy: .public)")
+    }
+
+    /// config.json's `enhancement.prompt` as a prompt. `"recommended"`, and text that is exactly a shipped recommended
+    /// prompt (the prompt.md older setup/install.sh copied), follow the bundled prompt instead of freezing a copy.
+    private static func configPrompt(raw: String, text: String, title: String) -> CustomPrompt {
+        CustomPrompt(
+            id: YapConfig.promptID, title: title, promptText: text, useSystemInstructions: false,
+            followsRecommended: raw.caseInsensitiveCompare(RecommendedSetup.promptKeyword) == .orderedSame
+                || RecommendedSetup.isShippedPrompt(text))
+    }
+
     private func promptText(_ raw: String) -> String? {
         raw.caseInsensitiveCompare(RecommendedSetup.promptKeyword) == .orderedSame
             ? RecommendedSetup.prompt
@@ -599,7 +633,12 @@ final class YapConfigLoader: ObservableObject {
             defaultMode: partial.defaultMode)
         if !YapConfig.sameContent(patch.apply(to: modes), modes) { return false }
         if let raw = partial.enhancement?.prompt {
-            return prompts.first { $0.id == YapConfig.promptID }?.promptText == promptText(raw)
+            guard let text = promptText(raw), let current = prompts.first(where: { $0.id == YapConfig.promptID })
+            else { return false }
+            let wanted = configPrompt(raw: raw, text: text, title: current.title)
+            // A prompt that follows the recommended one is the same whichever copy of the text it stores.
+            return current.followsRecommended == wanted.followsRecommended
+                && (wanted.followsRecommended || current.promptText == wanted.promptText)
         }
         return true
     }
@@ -668,6 +707,11 @@ final class YapConfigLoader: ObservableObject {
             assert(noOp(reread) && YapConfig.sameContent(YapConfig.mergedByID([current], reread.modes ?? []), [current]))
             assert(YapConfig.mergedByID(prompts, reread.prompts ?? []) == prompts)
             existing.enhancement?.prompt = "Changed in the file."
+            // "recommended", or a prompt.md that is an untouched shipped prompt, follows the bundled prompt.
+            let bundled = RecommendedSetup.prompt ?? ""
+            assert(Self.configPrompt(raw: "recommended", text: bundled, title: "R").followsRecommended)
+            assert(Self.configPrompt(raw: "prompt.md", text: bundled + "\n", title: "R").followsRecommended)
+            assert(!Self.configPrompt(raw: "prompt.md", text: bundled + " Also be brief.", title: "R").followsRecommended)
             assert(YapConfig.exported(from: backup, existing: existing, isNoOp: noOp).enhancement == nil)
             assert(
                 OpenRouterProvider.stableID(for: "microsoft/mai-transcribe-2").uuidString

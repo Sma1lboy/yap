@@ -26190,6 +26190,28 @@
         }
       }
     },
+    "Split off from the recommended prompt: once saved, it's your own copy and won't update with Yap." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vom empfohlenen Prompt abgetrennt: Nach dem Speichern ist es deine eigene Kopie und wird nicht mehr mit Yap aktualisiert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Séparé du prompt recommandé : une fois enregistré, c'est votre propre copie, qui ne sera plus mise à jour avec Yap."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已从推荐版本分出：保存后就是你自己的一份，不再随 Yap 更新。"
+          }
+        }
+      }
+    },
     "Standup 改到 Friday morning. Send Chris the onboarding review." : {
       "localizations" : {
         "de" : {
@@ -28826,6 +28848,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这是针对英语优化的模型，仅支持英语转写。"
+          }
+        }
+      }
+    },
+    "This is the recommended prompt and updates with Yap. Editing the text makes it your own copy." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das ist der empfohlene Prompt; er wird mit Yap aktualisiert. Wenn du den Text änderst, wird er zu deiner eigenen Kopie."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "C'est le prompt recommandé, mis à jour avec Yap. Si vous modifiez le texte, il devient votre propre copie."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这是推荐提示词，会随 Yap 更新。改动文字后会变成你自己的一份。"
           }
         }
       }
