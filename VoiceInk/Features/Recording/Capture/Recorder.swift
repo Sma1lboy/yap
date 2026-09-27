@@ -64,8 +64,11 @@ class Recorder: NSObject, ObservableObject {
         mediaController.beginRecordingSession(sessionID: playbackSessionID)
         audioRestorationTask?.cancel()
         audioRestorationTask = nil
-        pauseMedia(sessionID: playbackSessionID)
-        muteSystemAudio(sessionID: playbackSessionID)
+        // During a meeting recording the user has to keep hearing the call, and the call must not be paused.
+        if !MeetingRecorder.isRecordingMeeting {
+            pauseMedia(sessionID: playbackSessionID)
+            muteSystemAudio(sessionID: playbackSessionID)
+        }
 
         let coreAudioRecorder = recorder ?? CoreAudioRecorder()
         coreAudioRecorder.onAudioChunk = onAudioChunk

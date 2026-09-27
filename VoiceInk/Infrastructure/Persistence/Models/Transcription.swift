@@ -37,6 +37,11 @@ final class Transcription {
     @Attribute(originalName: "powerModeEmoji")
     var modeEmoji: String?
     var transcriptionStatus: String?
+    /// nil for a dictation; `meetingKind` for a meeting recording (MeetingRecorder): notes in `enhancedText`,
+    /// the timestamped transcript in `text`, the mix of both channels in `audioFileURL`.
+    var kind: String?
+    static let meetingKind = "meeting"
+    var isMeeting: Bool { kind == Self.meetingKind }
 
     init(
         text: String,
