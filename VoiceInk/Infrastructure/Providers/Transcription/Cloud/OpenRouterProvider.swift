@@ -85,13 +85,57 @@ struct OpenRouterProvider: CloudProvider {
         audioData: Data, fileName: String, apiKey: String, model: String, language: String?,
         customVocabulary: [String], timeout: TimeInterval
     ) async throws -> String {
-        try await OpenRouterTranscriptionClient.transcribe(
-            audioData: audioData,
-            fileName: fileName,
-            apiKey: apiKey,
-            model: model,
-            timeout: timeout
-        )
+        var hints: [String: Any] = [:]
+        TranscriptionHints.apply(to: &hints, model: model, language: language, vocabulary: customVocabulary)
+        guard !hints.isEmpty else {
+            return try await OpenRouterTranscriptionClient.transcribe(
+                audioData: audioData, fileName: fileName, apiKey: apiKey, model: model, timeout: timeout)
+        }
+        // LLMkit's client is multipart with only file + model; language and provider.options need the JSON body.
+        var body = hints
+        body["model"] = model
+        body["input_audio"] = ["data": audioData.base64EncodedString(), "format": YapCloudProvider.audioFormat(fileName)]
+        return try await Self.transcribeJSON(body: body, apiKey: apiKey, timeout: timeout)
+    }
+
+    /// POST JSON to OpenRouter's STT endpoint with LLMkit's behaviour: 2 retries (1 s, 2 s) on network errors and
+    /// 429/5xx, failures as `LLMKitError` so CloudTranscriptionService maps them the same way.
+    private static func transcribeJSON(body: [String: Any], apiKey: String, timeout: TimeInterval) async throws -> String {
+        guard !apiKey.isEmpty else { throw LLMKitError.missingAPIKey }
+        var request = URLRequest(url: URL(string: "https://openrouter.ai/api/v1/audio/transcriptions")!, timeoutInterval: timeout)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        var lastError: Error = LLMKitError.networkError("Request failed")
+        for attempt in 0...2 {
+            if attempt > 0 { try await Task.sleep(for: .seconds(attempt)) }
+            // Ephemeral per request, like LLMkit: a shared session learns Alt-Svc and moves uploads to HTTP/3.
+            let session = URLSession(configuration: .ephemeral)
+            defer { session.finishTasksAndInvalidate() }
+            let data: Data, response: URLResponse
+            do {
+                (data, response) = try await session.data(for: request)
+            } catch let error as URLError where error.code == .timedOut {
+                throw LLMKitError.timeout
+            } catch {
+                lastError = LLMKitError.networkError(error.localizedDescription)
+                continue
+            }
+            guard let http = response as? HTTPURLResponse else { throw LLMKitError.networkError("No HTTP response received.") }
+            guard (200..<300).contains(http.statusCode) else {
+                lastError = LLMKitError.httpError(
+                    statusCode: http.statusCode, message: String(data: data, encoding: .utf8) ?? "No error details")
+                if http.statusCode == 429 || http.statusCode >= 500 { continue }
+                throw lastError
+            }
+            struct Response: Decodable { let text: String? }
+            guard let text = (try? JSONDecoder().decode(Response.self, from: data))?.text, !text.isEmpty else {
+                throw LLMKitError.noResultReturned
+            }
+            return text
+        }
+        throw lastError
     }
 
     func makeStreamingProvider(modelContext: ModelContext) -> (any StreamingTranscriptionProvider)? { nil }

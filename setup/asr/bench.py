@@ -4,8 +4,8 @@
     python3 setup/asr/bench.py run whisper <ggml-*.bin> [--language auto] [--vocab]
     python3 setup/asr/bench.py run tcpp <*.gguf> [--itn]
     python3 setup/asr/bench.py run nemotron <model dir>
-    python3 setup/asr/bench.py run openrouter <model id>      OPENROUTER_API_KEY (env or ~/.env)
-    python3 setup/asr/bench.py run yapcloud <model id>        YAP_CLOUD_TOKEN, YAP_CLOUD_URL optional
+    python3 setup/asr/bench.py run openrouter <model id> [--language zh] [--vocab]   OPENROUTER_API_KEY (env or ~/.env)
+    python3 setup/asr/bench.py run yapcloud <model id> [--language zh] [--vocab]     YAP_CLOUD_TOKEN, YAP_CLOUD_URL optional
     python3 setup/asr/bench.py score                          summarises results/*.jsonl
 
 Engines make the app's own calls. whisper runs LibWhisper.swift and WhisperChunking.swift through
@@ -95,29 +95,57 @@ def post(request):
     return ""
 
 
-def run_openrouter(model, clips):
-    """LLMkit's OpenRouterTranscriptionClient: multipart file + model."""
+def provider_options(model, terms):
+    """TranscriptionHints.providerOptions: dictionary terms in the field each model's provider honours."""
+    prompt = ", ".join(terms)
+    if model == "microsoft/mai-transcribe-2":
+        return {"azure": {"phraseList": {"phrases": terms}}}
+    if model in ("openai/gpt-4o-transcribe", "openai/gpt-4o-mini-transcribe"):
+        return {"openai": {"prompt": prompt}}
+    if model == "openai/whisper-large-v3":
+        return {slug: {"prompt": prompt} for slug in ("groq", "deepinfra/us", "together")}
+    return None
+
+
+def json_body(model, wav, language, terms):
+    """The JSON body OpenRouterProvider (with hints) and YapCloudProvider send: TranscriptionHints.apply."""
+    body = {"model": model, "input_audio": {"data": base64.b64encode(open(wav, "rb").read()).decode(), "format": "wav"}}
+    if language:
+        body["language"] = language
+    options = provider_options(model, terms[:100]) if terms else None
+    if options:
+        body["provider"] = {"options": options}
+    return body
+
+
+def run_openrouter(model, clips, language, terms):
+    """OpenRouterProvider: LLMkit's multipart file + model, or the JSON body when there's a language or terms."""
     for c, wav, _ in clips:
-        boundary = uuid.uuid4().hex
-        body = b"".join([
-            f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.wav"\r\n'
-            f"Content-Type: audio/wav\r\n\r\n".encode(), open(wav, "rb").read(),
-            f'\r\n--{boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\n{model}'
-            f"\r\n--{boundary}--\r\n".encode()])
-        request = urllib.request.Request("https://openrouter.ai/api/v1/audio/transcriptions", body, {
-            "Authorization": f"Bearer {env_key('OPENROUTER_API_KEY')}",
-            "Content-Type": f"multipart/form-data; boundary={boundary}"})
+        if language or terms:
+            request = urllib.request.Request("https://openrouter.ai/api/v1/audio/transcriptions",
+                                             json.dumps(json_body(model, wav, language, terms)).encode(), {
+                "Authorization": f"Bearer {env_key('OPENROUTER_API_KEY')}", "Content-Type": "application/json"})
+        else:
+            boundary = uuid.uuid4().hex
+            body = b"".join([
+                f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.wav"\r\n'
+                f"Content-Type: audio/wav\r\n\r\n".encode(), open(wav, "rb").read(),
+                f'\r\n--{boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\n{model}'
+                f"\r\n--{boundary}--\r\n".encode()])
+            request = urllib.request.Request("https://openrouter.ai/api/v1/audio/transcriptions", body, {
+                "Authorization": f"Bearer {env_key('OPENROUTER_API_KEY')}",
+                "Content-Type": f"multipart/form-data; boundary={boundary}"})
         t = time.time()
         text = post(request)
         yield c, text.strip(), time.time() - t, 0.0
 
 
-def run_yapcloud(model, clips):
-    """YapCloudProvider: JSON {model, input_audio} through paygate."""
+def run_yapcloud(model, clips, language, terms):
+    """YapCloudProvider: the same JSON body through paygate, which forwards it unchanged."""
     base = os.environ.get("YAP_CLOUD_URL", "https://cloud.yap.sma1lboy.me")
     for c, wav, _ in clips:
-        body = {"model": model, "input_audio": {"data": base64.b64encode(open(wav, "rb").read()).decode(), "format": "wav"}}
-        request = urllib.request.Request(base + "/v1/audio/transcriptions", json.dumps(body).encode(), {
+        request = urllib.request.Request(base + "/v1/audio/transcriptions",
+                                         json.dumps(json_body(model, wav, language, terms)).encode(), {
             "Authorization": f"Bearer {env_key('YAP_CLOUD_TOKEN')}", "Content-Type": "application/json"})
         t = time.time()
         text = post(request)
@@ -161,19 +189,25 @@ def main():
     parser.add_argument("command", choices=["run"])
     parser.add_argument("engine", choices=["whisper", "tcpp", "nemotron", "openrouter", "yapcloud"])
     parser.add_argument("model")
-    parser.add_argument("--language", default="zh")
-    parser.add_argument("--vocab", action="store_true", help="whisper: every key term in the prompt")
+    parser.add_argument("--language", help="default zh for local engines; cloud engines send none unless given")
+    parser.add_argument("--vocab", action="store_true",
+                        help="every key term as the dictionary: whisper's prompt, cloud models' provider options")
     parser.add_argument("--itn", action="store_true", help="tcpp: inverse text normalization")
     args = parser.parse_args()
 
     rows = cases()
     clips = wavs(rows)
     audio = {c["id"]: s for c, _, s in clips}
-    variant = ("-" + args.language if args.language != "zh" else "") + ("-vocab" if args.vocab else "")
+    cloud = args.engine in ("openrouter", "yapcloud")
+    if not cloud:
+        args.language = args.language or "zh"
+    variant = ("-" + args.language if args.language and (cloud or args.language != "zh") else "") + (
+        "-vocab" if args.vocab else "")
+    terms = [kw[0] for c in rows for kw in c["keywords"]] if args.vocab else []
     if args.engine == "whisper":
         prompt = WHISPER_ZH_PROMPT if args.language == "zh" else ""
         if args.vocab:
-            prompt = " ".join(filter(None, [prompt, ", ".join(kw[0] for c in rows for kw in c["keywords"])]))
+            prompt = " ".join(filter(None, [prompt, ", ".join(terms)]))
         results = run_json_lines([os.path.join(HARNESS, "whisperbench"), args.model, SILERO, args.language, prompt], clips)
     elif args.engine == "tcpp":
         results = run_json_lines([os.path.join(HARNESS, "tcppbench"), args.model, args.language, "1" if args.itn else "0"], clips)
@@ -181,9 +215,9 @@ def main():
         results = run_json_lines([os.path.join(HARNESS, "fluidbench"), args.model,
                                   "zh-CN" if args.language == "zh" else args.language], clips)
     elif args.engine == "openrouter":
-        results = run_openrouter(args.model, clips)
+        results = run_openrouter(args.model, clips, args.language, terms)
     else:
-        results = run_yapcloud(args.model, clips)
+        results = run_yapcloud(args.model, clips, args.language, terms)
     name = ("nemotron-multilingual" if args.engine == "nemotron"
             else f"{args.engine}-{os.path.basename(args.model.rstrip('/')).replace('/', '_')}") + variant
     os.makedirs(os.path.join(HERE, "results"), exist_ok=True)

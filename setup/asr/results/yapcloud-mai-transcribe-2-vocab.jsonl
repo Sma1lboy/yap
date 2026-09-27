@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那个GitHub Actions的pipeline改一下，现在CI太慢了。build cache好像没生效，我怀疑是Dockerfile里面layer的顺序有问题。", "secs": 0.7792201042175293, "load": 0.0, "audio": 6.989187}
+{"id": "standup", "text": "昨天我跟 Sarah 对了一下 API 的 schema，它那边的 CrashResolver 还差三个 endpoint，预计周四能合进 main branch。", "secs": 0.5197010040283203, "load": 0.0, "audio": 5.168}
+{"id": "bug", "text": "这个bug只在Safari上复现，iOS 17的WebKit对IndexedDB的transaction处理不一样， retry逻辑要改成exponential backoff。", "secs": 0.5046229362487793, "load": 0.0, "audio": 6.559625}
+{"id": "perf", "text": "我们把Redis的TTA从300秒降到60秒以后，P99 latency降到了120毫秒，QPS大概降了40%。", "secs": 0.5084528923034668, "load": 0.0, "audio": 5.248}
+{"id": "meeting", "text": "下午3点和Kevin还有Priya开个sync，讨论一下Q4的roadmap，重点是onboarding和retention这两个metric。", "secs": 0.5332789421081543, "load": 0.0, "audio": 5.4335}
+{"id": "ml", "text": "这个模型用PyTorch训练，batch 4的生成32，layer0 batch 3e-4，在100上跑了大概8个小时，loss还在响。", "secs": 0.7605407238006592, "load": 0.0, "audio": 5.712}
+{"id": "frontend", "text": "React那边把useEffect换成ReactQuery之后，组件不用自己管loading状态了，Tailwind的 clause也顺便整理了一遍。", "secs": 0.5985569953918457, "load": 0.0, "audio": 5.572813}
+{"id": "infra", "text": "Kubernetes集群升到1.30以后，有两个Pod一直 SlashLockbackOff。看Lock是从Figma挂载路径变了，横序要从不败。", "secs": 0.7630021572113037, "load": 0.0, "audio": 5.855937}
+{"id": "product", "text": "这次 release我们上了 dark mode和一个新的 paywall。A/B test跑了两周，conversion rate提高了1.8个点。", "secs": 0.6658611297607422, "load": 0.0, "audio": 5.178063}
+{"id": "email", "text": "帮我给Richard回个邮件，说Figma的设计稿我看过了，下周一之前把firebox发到Slack的desc删了你。", "secs": 0.6663661003112793, "load": 0.0, "audio": 5.055937}
+{"id": "security", "text": "OAuth的 refresh token 现在存在 localStorage里，有XSS风险，改成HTTPOnly的cookie，再加上CSRF token校验。", "secs": 0.6609928607940674, "load": 0.0, "audio": 8.324375}
