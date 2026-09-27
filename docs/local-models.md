@@ -47,7 +47,7 @@ Whisper here is the app's `LibWhisper.swift` (setup/asr/harness `whisperbench`) 
 
 ## Local cleanup
 
-Yap has no Apple Intelligence path. Its local cleanup options are Yap Refine (a fine-tuned Qwen 3.5 run with MLX in `VoiceInkRefineXPC`, 1.06 GB download, needs 16 GB of memory), Ollama and a local CLI. Ollama and the local CLI run whatever model you install yourself, so they aren't benched here.
+On macOS 26, Apple Intelligence (Foundation Models) is an experimental cleanup option behind Models > Advanced, until it passes the bench in [cloud-models.md](cloud-models.md#on-device-2026-09-27). The other local cleanup options are Yap Refine (a fine-tuned Qwen 3.5 run with MLX in `VoiceInkRefineXPC`, 1.06 GB download, needs 16 GB of memory), Ollama and a local CLI. Ollama and the local CLI run whatever model you install yourself, so they aren't benched here.
 
 Yap Refine on `setup/cases.json`, with its own fixed system prompt (it ignores the mode's prompt), temperature 0.3 and thinking off:
 

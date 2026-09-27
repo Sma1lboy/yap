@@ -89,6 +89,10 @@ class AIEnhancementService: ObservableObject {
             return true
         }
 
+        if provider == .appleIntelligence {
+            return AppleIntelligenceService.isOffered
+        }
+
         if provider == .custom {
             guard let modelName = configuration.modelName else { return false }
             return CustomAIProviderManager.shared.requestConfiguration(forModel: modelName) != nil
@@ -233,7 +237,7 @@ class AIEnhancementService: ObservableObject {
             contextSnapshot: contextSnapshot
         )
 
-        if provider != .openRouter, provider != .ollama, provider != .localCLI {
+        if provider != .openRouter, provider != .ollama, provider != .localCLI, provider != .appleIntelligence {
             try await waitForRateLimit()
         }
 
