@@ -63,6 +63,7 @@ struct VoiceInkApp: App {
             WhisperPrompt.selfCheck()
             WhisperTranscriptionService.selfCheck()
             ChineseCleanup.selfCheck()
+            WhisperLivePreview.selfCheck()
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
