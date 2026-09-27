@@ -510,7 +510,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
     }
 
     @MainActor
-    private func recordingStartFailure(modeId: UUID?) -> (title: String, actionLabel: String, action: () -> Void)? {
+    func recordingStartFailure(modeId: UUID?) -> (title: String, actionLabel: String, action: () -> Void)? {
         let modeManager = ModeManager.shared
         if !modeManager.hasEnabledConfiguration {
             return (

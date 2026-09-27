@@ -194,9 +194,7 @@ class WhisperModelManager: ObservableObject {
 
             onModelsChanged?()
 
-            if shouldWarmup(model) {
-                WhisperModelWarmupCoordinator.shared.scheduleWarmup(for: model, whisperModelManager: self)
-            }
+            WhisperModelWarmupCoordinator.shared.scheduleWarmup(for: model, whisperModelManager: self)
         } catch is CancellationError {
             removePartialDownload(for: model, preserveMainModel: committedMainModel != nil)
             if let committedMainModel,
@@ -291,10 +289,6 @@ class WhisperModelManager: ObservableObject {
         self.downloadProgress.removeValue(forKey: progressKey)
 
         return model
-    }
-
-    private func shouldWarmup(_ model: WhisperModel) -> Bool {
-        !model.name.contains("q5") && !model.name.contains("q8")
     }
 
     private func handleModelDownloadError(_ model: WhisperModel, _ error: Error) {
