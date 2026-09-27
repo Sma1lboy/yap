@@ -72,6 +72,21 @@ enum DictionaryService {
         }
     }
 
+    /// Deletes several entries (Vocabulary words or Word Replacements) with a single save.
+    static func removeEntries<T: PersistentModel>(_ entries: [T], context: ModelContext) -> String? {
+        entries.forEach { context.delete($0) }
+        do {
+            try context.save()
+            return nil
+        } catch {
+            context.rollback()
+            return String(
+                format: String(localized: "Failed to delete entries: %@"),
+                error.localizedDescription
+            )
+        }
+    }
+
     // MARK: - Dictionary Cleanup
 
     /// Idempotent cleanup that merges older replacement rows with the same
