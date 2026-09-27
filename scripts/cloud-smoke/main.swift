@@ -16,10 +16,12 @@ if suppliedToken == nil, let paygateDir = env["PAYGATE_DIR"], !paygateDir.isEmpt
 }
 guard let token = suppliedToken else {
     print("""
-        No token. Either let the run issue (and afterwards sign out) a one-time token for \(smokeEmail) with paygate's
-        scripts/issue-token.ts, from a Railway-linked paygate checkout (no sign-up credit, so the account stays at $0):
+        No token. `make cloud-smoke` runs against a local paygate (scripts/paygate-local.sh) and issues its own.
+        Against production, either let the run issue (and afterwards sign out) a one-time token for \(smokeEmail)
+        with paygate's scripts/issue-token.ts, from a Railway-linked paygate checkout (no sign-up credit, so the
+        account stays at $0):
 
-          PAYGATE_DIR=<paygate checkout> make cloud-smoke
+          make cloud-smoke PAYGATE=prod PAYGATE_DIR=<paygate checkout>
 
         or pass a long-lived token yourself (never signed out by the run):
 
@@ -29,13 +31,10 @@ guard let token = suppliedToken else {
         Fallback while sign-in codes are still only logged (RESEND_API_KEY unset): POST /v1/auth/start, read
         "code for smoke+yap" from `railway logs -s paygate`, POST /v1/auth/verify, use the returned token.
 
-        Optional: YAP_CLOUD_SMOKE_URL=http://localhost:8787 to point at another paygate.
         """)
     exit(2)
 }
-if let url = env["YAP_CLOUD_SMOKE_URL"], !url.isEmpty {
-    UserDefaults.standard.set(url, forKey: YapCloud.baseURLDefaultsKey)
-}
+usePaygateURL(from: env)
 KeychainService.shared.save(token, forKey: "yapCloudToken", syncable: false)
 
 var failures = 0
@@ -113,7 +112,9 @@ Task { @MainActor in
         try expect(YapCloud.micros(fromDecimal: live.markup.string).map { $0 >= 0 } == true && cloud.markupPercentText != nil,
                    "markup \(live.markup.string)")
         try expect(live.signupCreditMicros >= 0 && live.maxConcurrentCalls > 0, "credit/concurrency")
-        try expect(live.privacyURL != nil && live.termsURL != nil, "legal URLs missing or not https")
+        // A local paygate serves them over http, which the client rightly drops.
+        try expect(cloud.baseURL.host == "localhost" || (live.privacyURL != nil && live.termsURL != nil),
+                   "legal URLs missing or not https")
         let minDollars = Int(live.minTopupMicros / 1_000_000), maxDollars = Int(live.maxTopupMicros / 1_000_000)
         try expect(cloud.isValidTopUp(minDollars) && cloud.isValidTopUp(maxDollars)
                    && !cloud.isValidTopUp(minDollars - 1) && !cloud.isValidTopUp(maxDollars + 1), "client range check")
@@ -304,8 +305,8 @@ Task { @MainActor in
         return "\"\(shown.first!)\" once; balance back to 0"
     }
 
-    // Optional, costs ~1 cent of the operator's money: YAP_CLOUD_SMOKE_FUNDED=1 PAYGATE_DIR=<railway-linked paygate>
-    // funds the smoke account with $0.01 (scripts/adjust.ts over railway ssh), makes one real transcription and
+    // Optional, costs ~1 cent of the operator's money: YAP_CLOUD_SMOKE_FUNDED=1 (with PAYGATE_DIR, set by the Makefile)
+    // funds the smoke account with $0.01 (scripts/adjust.ts), makes one real transcription and
     // one real chat call through the client, checks the captured generation ids against the ledger, then adjusts
     // the balance back to exactly 0 (the 402 checks above depend on it).
     await check("funded: real calls + ids") {

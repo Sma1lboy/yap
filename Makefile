@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency design-tokens design-check mock offline-check ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -106,29 +106,53 @@ local: check setup
 		exit 1; \
 	fi
 
-# Yap Cloud regression checks against a live paygate (needs YAP_CLOUD_SMOKE_TOKEN; prints how to get one).
-# Compiles the real client files with small stubs, no app launch; restores anything it changes.
-# YAP_CLOUD_SMOKE_FUNDED=1 PAYGATE_DIR=<railway-linked paygate checkout> adds one real billed transcription + chat
+# Which paygate cloud-smoke, cloud-latency and sync-e2e talk to. local (default): a throwaway paygate on this Mac
+# (scripts/paygate-local.sh, started on demand, same model allowlist as production); operator scripts run with
+# `bun run` there, so nothing is created on production. prod: https://cloud.yap.sma1lboy.me, operator scripts over
+# `railway ssh` from PAYGATE_DIR (a Railway-linked paygate checkout); must be asked for explicitly.
+PAYGATE ?= local
+PAYGATE_LOCAL_DIR := $(CURDIR)/.local-build/paygate-local/paygate
+ifeq ($(PAYGATE),local)
+PAYGATE_ENV := PAYGATE=local PAYGATE_DIR="$(PAYGATE_LOCAL_DIR)" YAP_CLOUD_SMOKE_URL=http://localhost:8787 YAP_CLOUD_SMOKE_TOKEN=
+PAYGATE_UP := paygate-local
+else ifeq ($(PAYGATE),prod)
+PAYGATE_ENV := PAYGATE=prod YAP_CLOUD_SMOKE_URL=
+PAYGATE_UP :=
+else
+$(error PAYGATE must be local or prod, not "$(PAYGATE)")
+endif
+
+# Start / stop the local paygate (Postgres on 55432, paygate on http://localhost:8787, source from ~/i/paygate).
+paygate-local:
+	@scripts/paygate-local.sh start
+
+paygate-local-stop:
+	@scripts/paygate-local.sh stop
+
+# Yap Cloud regression checks of the real client against paygate (PAYGATE above). On production it needs
+# YAP_CLOUD_SMOKE_TOKEN or PAYGATE_DIR (prints how to get one). Compiles the real client files with small stubs,
+# no app launch; restores anything it changes. YAP_CLOUD_SMOKE_FUNDED=1 adds one real billed transcription + chat
 # (funds $0.01 via scripts/adjust.ts, checks the captured generation ids against the ledger, adjusts back to $0).
 CLOUD_SMOKE_BIN := $(CURDIR)/.local-build/cloud-smoke
-cloud-smoke:
+cloud-smoke: $(PAYGATE_UP)
 	@mkdir -p "$(dir $(CLOUD_SMOKE_BIN))"
 	@xcrun swiftc -DDEBUG -Onone -o "$(CLOUD_SMOKE_BIN)" \
 		scripts/cloud-smoke/Stubs.swift scripts/cloud-smoke/Ops.swift scripts/cloud-smoke/main.swift \
 		VoiceInk/Infrastructure/Cloud/YapCloudClient.swift VoiceInk/Infrastructure/Cloud/YapCloudProvider.swift
-	@"$(CLOUD_SMOKE_BIN)"
+	@$(PAYGATE_ENV) "$(CLOUD_SMOKE_BIN)"
 
-# Yap Cloud latency against the live deployment (real client code; PAYGATE_DIR required, funds $0.05 and zeroes it).
+# Yap Cloud latency with the real client code (PAYGATE above; on production PAYGATE_DIR is required). Uses a
+# throwaway account funded $0.05, zeroed and deleted at the end.
 CLOUD_LATENCY_BIN := $(CURDIR)/.local-build/cloud-latency
-cloud-latency:
+cloud-latency: $(PAYGATE_UP)
 	@mkdir -p "$(dir $(CLOUD_LATENCY_BIN))"
 	@xcrun swiftc -DDEBUG -O -o "$(CLOUD_LATENCY_BIN)" \
 		scripts/cloud-smoke/Stubs.swift scripts/cloud-smoke/Ops.swift scripts/cloud-latency/main.swift \
 		VoiceInk/Infrastructure/Cloud/YapCloudClient.swift VoiceInk/Infrastructure/Cloud/YapCloudProvider.swift
-	@"$(CLOUD_LATENCY_BIN)"
+	@$(PAYGATE_ENV) "$(CLOUD_LATENCY_BIN)"
 
 SYNC_E2E_BIN := $(CURDIR)/.local-build/sync-e2e
-sync-e2e:
+sync-e2e: $(PAYGATE_UP)
 	@mkdir -p "$(dir $(SYNC_E2E_BIN))"
 	@xcrun swiftc -DDEBUG -Onone -o "$(SYNC_E2E_BIN)" \
 		scripts/cloud-smoke/Stubs.swift scripts/sync-e2e/LoaderStub.swift scripts/sync-e2e/main.swift \
@@ -148,7 +172,7 @@ sync-e2e:
 		VoiceInk/Features/ModelLibrary/Models/CustomAIProviderConfig.swift \
 		VoiceInk/Features/Modes/Models/ModeTriggerModels.swift \
 		VoiceInk/Features/Modes/Models/ModeIcon.swift
-	@scripts/sync-e2e/run.sh "$(SYNC_E2E_BIN)"
+	@$(PAYGATE_ENV) scripts/sync-e2e/run.sh "$(SYNC_E2E_BIN)"
 
 # docs/DESIGN.md is the only source of design tokens: generate the app's DesignTokens.generated.swift and
 # design/web/tokens.css from it, and check that nothing hard-codes colors, font sizes, radii or spacing.

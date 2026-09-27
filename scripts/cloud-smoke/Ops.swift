@@ -1,17 +1,25 @@
-// Shared by make cloud-smoke and make cloud-latency: live-deployment operations that need Railway access
-// (a paygate checkout linked with `railway link`). None of this exists over HTTP on purpose.
+// Shared by make cloud-smoke and make cloud-latency: paygate's operator scripts (issue-token.ts, adjust.ts), which
+// don't exist over HTTP on purpose. With PAYGATE=local (the Makefile default) they run with `bun run` in the local
+// paygate copy (scripts/paygate-local.sh); with PAYGATE=prod, over `railway ssh` from a Railway-linked checkout.
 import Foundation
 
 struct Failed: Error, CustomStringConvertible { let description: String }
 
-/// A one-time token from paygate's scripts/issue-token.ts (over railway ssh, from a linked checkout). It is signed
-/// out when the run ends, so smoke runs don't pile up devices on the account.
-func issueToken(email: String, in directory: String, deviceName: String = "cloud-smoke") -> String? {
+/// `bun run scripts/<script> <arguments…>` in `directory`, or the same over `railway ssh` when PAYGATE=prod.
+func paygateScript(_ script: String, _ arguments: [String], in directory: String) -> Process {
+    let command = ["bun", "run", "scripts/\(script)"] + arguments
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-    process.arguments = ["railway", "ssh", "-s", "paygate", "--", "bun", "run", "scripts/issue-token.ts", email,
-                         "--device-name", deviceName]
+    process.arguments = ProcessInfo.processInfo.environment["PAYGATE"] == "prod"
+        ? ["railway", "ssh", "-s", "paygate", "--"] + command : command
     process.currentDirectoryURL = URL(fileURLWithPath: directory)
+    return process
+}
+
+/// A one-time token from paygate's scripts/issue-token.ts. It is signed out when the run ends, so smoke runs don't
+/// pile up devices on the account.
+func issueToken(email: String, in directory: String, deviceName: String = "cloud-smoke") -> String? {
+    let process = paygateScript("issue-token.ts", [email, "--device-name", deviceName], in: directory)
     let output = Pipe()
     process.standardOutput = output
     process.standardError = FileHandle.nullDevice
@@ -22,14 +30,11 @@ func issueToken(email: String, in directory: String, deviceName: String = "cloud
     return process.terminationStatus == 0 && token?.isEmpty == false ? token : nil
 }
 
-/// Ledger adjustment on the live deployment (paygate's scripts/adjust.ts over `railway ssh`, from a linked checkout).
+/// Ledger adjustment with paygate's scripts/adjust.ts.
 func adjust(email: String, micros: Int64, note: String, in directory: String) throws {
     let sign = micros < 0 ? "-" : ""
     let amount = sign + String(micros.magnitude / 1_000_000) + "." + String(String(micros.magnitude % 1_000_000 + 1_000_000).dropFirst())
-    let process = Process()
-    process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-    process.arguments = ["railway", "ssh", "-s", "paygate", "--", "bun", "run", "scripts/adjust.ts", email, amount, note]
-    process.currentDirectoryURL = URL(fileURLWithPath: directory)
+    let process = paygateScript("adjust.ts", [email, amount, note], in: directory)
     let output = Pipe()
     process.standardOutput = output
     process.standardError = output

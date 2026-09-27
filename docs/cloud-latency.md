@@ -4,7 +4,7 @@ How long a dictation takes through Yap Cloud, where the time goes, and what each
 
 ## Method
 
-`make cloud-latency PAYGATE_DIR=<railway-linked paygate checkout>` (`scripts/cloud-latency/main.swift`):
+`make cloud-latency PAYGATE=prod PAYGATE_DIR=<railway-linked paygate checkout>` (`scripts/cloud-latency/main.swift`). Without `PAYGATE=prod` it runs against the local paygate (`make paygate-local`), which checks that the path works but doesn't measure production latency:
 
 - Compiles the real client files (`YapCloudClient.swift`, `YapCloudProvider.swift`) like `make cloud-smoke`, no app launch.
 - Creates its own throwaway account with paygate's `scripts/issue-token.ts` (`latency+<timestamp>@…`, no sign-up credit), funds it $0.05 with `scripts/adjust.ts`, and at the end waits until the balance stops moving (a call the client gave up on is still billed when it finishes), adjusts it back to exactly $0 and deletes the account. The shared smoke account is never used.

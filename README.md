@@ -155,11 +155,13 @@ Current picks (Sept 2026): transcription `microsoft/mai-transcribe-2` ($0.10/h; 
 Before tagging, run `scripts/preflight.sh X.Y.Z`. It runs every check and prints a PASS/FAIL table (exit code 1 if anything failed):
 
 - `make build` and a Release build with `MARKETING_VERSION=X.Y.Z`, checking that `docs/releases/X.Y.Z.md` is bundled (built in `.local-build/preflight`, not copied to `~/Downloads`);
-- `make cloud-smoke`: the real Yap Cloud client against live paygate (account, ledger, usage, models, config 409s and versions, devices, monthly cap, 401/402/413/429);
-- `make sync-e2e`: two simulated Macs syncing through a throwaway account (first write and restore, concurrent edits with a real 409, delete, edit after delete, version restore);
+- `make cloud-smoke PAYGATE=prod`: the real Yap Cloud client against live paygate (account, ledger, usage, models, config 409s and versions, devices, monthly cap, 401/402/413/429);
+- `make sync-e2e PAYGATE=prod`: two simulated Macs syncing through a throwaway account (first write and restore, concurrent edits with a real 409, delete, edit after delete, version restore);
 - `docs/releases/X.Y.Z.md` exists, and the numbers users read (sign-up credit, top-up range, markup, monthly cap in the release notes, both READMEs and `site/index.html`) match `/v1/info` and the app's constants.
 
-It needs the Railway CLI logged in (tokens come from paygate's `scripts/issue-token.ts`; `YAP_CLOUD_SMOKE_TOKEN` is used instead when set). Then go through the manual checks in `docs/release-checklist.md`. The release notes file is also what users see in the GitHub Release and in the in-app update dialog.
+It needs the Railway CLI logged in (tokens come from paygate's `scripts/issue-token.ts`; `YAP_CLOUD_SMOKE_TOKEN` is used instead when set). Then go through the manual checks in `docs/release-checklist.md`.
+
+During development, `make cloud-smoke`, `make sync-e2e` and `make cloud-latency` without `PAYGATE=prod` run against a throwaway paygate on this Mac (`make paygate-local`: Postgres plus paygate from `~/i/paygate`, with production's model allowlist from `docs/cloud-models.md`), so they create nothing on production. `make paygate-local-stop` stops it. The release notes file is also what users see in the GitHub Release and in the in-app update dialog.
 
 Push a tag `vX.Y.Z`. CI (`.github/workflows/release.yml`) builds on macOS 26, signs with the "Yap Self-Signed" certificate, publishes `Yap.zip` to GitHub Releases, then commits the new `appcast.xml` item (Sparkle EdDSA-signed) and the `Casks/yap.rb` version in one commit to `main`. Build numbers are `1000 + run number`. CI also builds every push to `main` and once a week, so caches stay warm in `main`'s scope: the whisper.cpp framework, the compiled Swift packages (mlx, FluidAudio, TranscribeCpp — the stable local-model modules), and Xcode 26's content-hashed compilation cache for the app's own sources (a fresh checkout doesn't force a full recompile). A release takes about 3–4 minutes; changing `Package.resolved` triggers one full rebuild (~14 minutes).
 

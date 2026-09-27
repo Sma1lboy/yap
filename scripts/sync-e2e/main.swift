@@ -10,9 +10,7 @@ else {
     print("Run through `make sync-e2e` (scripts/sync-e2e/run.sh creates the throwaway account).")
     exit(2)
 }
-if let url = env["YAP_CLOUD_SMOKE_URL"], !url.isEmpty {
-    UserDefaults.standard.set(url, forKey: YapCloud.baseURLDefaultsKey)
-}
+usePaygateURL(from: env)
 
 /// One Mac's sign-in, on top of the shared real client: the token is switched in before every call.
 final class DeviceStore: ConfigCloudStore, ConfigVersionHistoryStore {
