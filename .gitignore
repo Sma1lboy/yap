@@ -105,3 +105,6 @@ Temporary Items
 .apdisk
 .claude/
 __pycache__/
+
+# brand-studio scratch output
+.studio/

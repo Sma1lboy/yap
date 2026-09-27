@@ -1,0 +1,34 @@
+schema_version: "1.0"
+portfolio:
+  id: "yap"
+  name: "Yap"
+  version: "1.2.0"
+brand:
+  id: "yap"
+  name: "Yap"
+metadata_version: "1.0.0"
+product:
+  category: "macOS dictation app (open source, GPL-3.0, fork of Beingpax/VoiceInk)"
+  positioning: "Open-source dictation for Mac that handles Chinese and English in the same sentence, runs fully offline on a local model, and publishes the test clips behind its accuracy numbers."
+  audience:
+    - "bilingual Chinese-English developers and technical workers on macOS"
+    - "people who want dictation that works without sending audio to a vendor"
+  value_props:
+    - "mixed Chinese-English: 59/82 key terms (cloud), 54/82 (local + dictionary), reproducible from setup/asr"
+    - "offline you can check: make offline-check denies all IP traffic and still returns text"
+    - "corrections become dictionary rules you review before they apply"
+  source_of_truth:
+    tokens: "docs/DESIGN.md"
+    positioning: "marketing/positioning/positioning.md"
+    numbers: "docs/dictation-accuracy.md, docs/local-models.md"
+voice:
+  tone: ["plain", "specific", "numbers with their source", "bilingual"]
+  avoid: ["unverifiable superlatives", "AI glow", "price and balance as a selling point", "claims not in docs/ or code", "abstract metaphors (substrate, flywheel, north star)"]
+visual_direction:
+  accepted_styles:
+    - "real app screenshots from make ui-snapshots, light and dark"
+    - "duck yellow as a fill only; cool graphite neutrals"
+  rejected_styles:
+    - "warm beige + serif + terracotta"
+    - "purple-blue gradient hero"
+    - "microphone or sound-wave clip-art"
