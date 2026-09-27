@@ -26336,25 +26336,24 @@
         }
       }
     },
-    "Shows live text while recording with realtime models." : {
-      "extractionState" : "manual",
+    "Shows text while you speak. Realtime models stream it; local Whisper models show a preview that the final transcript replaces when you stop." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zeigt Live-Text während der Aufnahme mit Echtzeitmodellen an."
+            "value" : "Zeigt Text, während du sprichst. Echtzeitmodelle streamen ihn; lokale Whisper-Modelle zeigen eine Vorschau, die beim Stoppen durch das endgültige Transkript ersetzt wird."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Affiche le texte en direct pendant l'enregistrement avec des modèles en temps réel."
+            "value" : "Affiche le texte pendant que vous parlez. Les modèles en temps réel le diffusent ; les modèles Whisper locaux affichent un aperçu, remplacé par la transcription finale à l’arrêt."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "使用实时模型录音时显示实时文本。"
+            "value" : "说话时显示文字。实时模型会逐字输出；本地 Whisper 模型显示的是预览，停止录音后由最终结果替换。"
           }
         }
       }

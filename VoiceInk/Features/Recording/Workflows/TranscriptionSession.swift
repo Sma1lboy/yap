@@ -165,3 +165,68 @@ final class StreamingTranscriptionSession: TranscriptionSession {
         streamingService.cancel()
     }
 }
+
+// MARK: - Local Whisper Preview Session
+
+/// Local Whisper with text in the recorder while recording (WhisperLivePreview). The preview is display only:
+/// transcribe(audioURL:) stops it (aborting a decode in flight) and returns the normal whole-file result.
+@MainActor
+final class WhisperPreviewSession: TranscriptionSession {
+    private let service: TranscriptionService
+    private weak var modelProvider: (any WhisperModelProvider)?
+    private let onPartialTranscript: ((String) -> Void)?
+    private var model: (any TranscriptionModel)?
+    private var context: TranscriptionRequestContext = .currentDefaults
+    private var preview: WhisperLivePreview?
+    private var startTask: Task<Void, Never>?
+
+    init(
+        service: TranscriptionService, modelProvider: (any WhisperModelProvider)?,
+        onPartialTranscript: ((String) -> Void)?
+    ) {
+        self.service = service
+        self.modelProvider = modelProvider
+        self.onPartialTranscript = onPartialTranscript
+    }
+
+    func prepare(configuration: TranscriptionRuntimeConfiguration) async throws -> ((Data) -> Void)? {
+        model = configuration.model
+        context = configuration.requestContext.scoped(to: configuration.model)
+        let language = context.language.flatMap { $0 == "auto" || $0.isEmpty ? nil : $0 }
+        let modelName = configuration.model.name
+        let onPartial = onPartialTranscript
+        let preview = WhisperLivePreview(language: language) { text in
+            Task { @MainActor in onPartial?(text) }
+        }
+        self.preview = preview
+        // The engine loads the model into the shared context as recording starts; decode once it's there.
+        startTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let provider = self?.modelProvider else { return }
+                if provider.loadedWhisperModel?.name == modelName, let whisperContext = provider.whisperContext {
+                    preview.start(context: whisperContext)
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(200))
+            }
+        }
+        return { data in preview.append(pcm16: data) }
+    }
+
+    func transcribe(audioURL: URL) async throws -> String {
+        stopPreview()
+        guard let model else { throw VoiceInkEngineError.transcriptionFailed }
+        return try await service.transcribe(audioURL: audioURL, model: model, context: context)
+    }
+
+    func cancel() {
+        stopPreview()
+    }
+
+    private func stopPreview() {
+        startTask?.cancel()
+        startTask = nil
+        preview?.stop()
+        preview = nil
+    }
+}

@@ -284,7 +284,7 @@ struct SettingsView: View {
                 Toggle(isOn: $showLiveTranscript) {
                     HStack(spacing: AppTheme.Spacing.x1) {
                         Text("Live Text Display")
-                        InfoTip("Shows live text while recording with realtime models.")
+                        InfoTip("Shows text while you speak. Realtime models stream it; local Whisper models show a preview that the final transcript replaces when you stop.")
                     }
                 }
             }
