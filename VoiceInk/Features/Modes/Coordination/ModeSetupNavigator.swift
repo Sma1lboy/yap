@@ -23,6 +23,12 @@ enum SettingsNavigator {
     }
 }
 
+enum HistoryNavigator {
+    static func open() {
+        MainWindowNavigator.open(destination: .history)
+    }
+}
+
 private enum MainWindowNavigator {
     static func open(destination: ViewType) {
         MainWindowNavigation.shared.navigate(to: destination)

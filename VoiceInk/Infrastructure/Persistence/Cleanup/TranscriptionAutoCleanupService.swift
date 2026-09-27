@@ -74,7 +74,7 @@ final class TranscriptionAutoCleanupService {
             let url = URL(string: urlString)
         {
             do {
-                try FileManager.default.removeItem(at: url)
+                try Transcription.removeAudio(at: url)
             } catch {
                 logger.error("Failed to delete audio file: \(error, privacy: .public)")
             }
@@ -151,7 +151,7 @@ private actor TranscriptionCleanupWorker {
                 let url = URL(string: urlString),
                 FileManager.default.fileExists(atPath: url.path)
             {
-                try? FileManager.default.removeItem(at: url)
+                try? Transcription.removeAudio(at: url)
             }
             modelContext.delete(transcription)
         }
@@ -178,11 +178,13 @@ private actor TranscriptionCleanupWorker {
         guard FileManager.default.fileExists(atPath: recordingsDirectory.path) else { return 0 }
         let filesInDirectory = try FileManager.default.contentsOfDirectory(
             at: recordingsDirectory,
-            includingPropertiesForKeys: nil
+            includingPropertiesForKeys: [.isDirectoryKey]
         )
 
         var deletedCount = 0
         for fileURL in filesInDirectory where !referencedFiles.contains(fileURL.lastPathComponent) {
+            // Folders (meetings/) are never orphans here: a meeting's files go with its History entry.
+            if (try? fileURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true { continue }
             do {
                 try FileManager.default.removeItem(at: fileURL)
                 deletedCount += 1

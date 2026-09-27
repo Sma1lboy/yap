@@ -37,6 +37,11 @@ final class Transcription {
     @Attribute(originalName: "powerModeEmoji")
     var modeEmoji: String?
     var transcriptionStatus: String?
+    /// nil for a dictation; `meetingKind` for a meeting recording (MeetingRecorder): notes in `enhancedText`,
+    /// the timestamped transcript in `text`, the mix of both channels in `audioFileURL`.
+    var kind: String?
+    static let meetingKind = "meeting"
+    var isMeeting: Bool { kind == Self.meetingKind }
 
     init(
         text: String,
@@ -89,5 +94,15 @@ final class Transcription {
         transcriptionDuration = nil
         aiRequestSystemMessage = nil
         aiRequestUserMessage = nil
+    }
+}
+
+extension Transcription {
+    /// Deletes a recording. A meeting's `audioFileURL` is the mix in its own folder (Recordings/meetings/<id>/);
+    /// the whole folder goes, with both channels and the segments.
+    static func removeAudio(at url: URL) throws {
+        let folder = url.deletingLastPathComponent()
+        let isMeeting = folder.deletingLastPathComponent().lastPathComponent == "meetings"
+        try FileManager.default.removeItem(at: isMeeting ? folder : url)
     }
 }

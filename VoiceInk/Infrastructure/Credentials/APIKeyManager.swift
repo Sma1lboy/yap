@@ -46,6 +46,7 @@ final class APIKeyManager {
     /// Retrieves an API key for a provider. Yap Cloud's "key" is the signed-in device token.
     func getAPIKey(forProvider provider: String) -> String? {
         if isYapCloud(provider) { return YapCloud.shared.token }
+        if let key = Self.mockEnvironmentKey(forProvider: provider) { return key }
         let keyIdentifier = keychainIdentifier(forProvider: provider)
         return keychain.getString(forKey: keyIdentifier)
     }
@@ -64,8 +65,22 @@ final class APIKeyManager {
     /// Checks if an API key exists for a provider.
     func hasAPIKey(forProvider provider: String) -> Bool {
         if isYapCloud(provider) { return YapCloud.shared.token != nil }
+        if Self.mockEnvironmentKey(forProvider: provider) != nil { return true }
         let keyIdentifier = keychainIdentifier(forProvider: provider)
         return keychain.exists(forKey: keyIdentifier)
+    }
+
+    /// The mock identity only (make mock, scripts/meeting-files-check.sh): its re-signed copy can't write the
+    /// keychain, so a key can come from YAP_MOCK_API_KEY_<PROVIDER> (e.g. YAP_MOCK_API_KEY_OPENROUTER). Never
+    /// read by the dev or release app.
+    private static func mockEnvironmentKey(forProvider provider: String) -> String? {
+        #if DEBUG
+            guard AppIdentity.isMock else { return nil }
+            let name = "YAP_MOCK_API_KEY_" + provider.uppercased().filter { $0.isLetter || $0.isNumber }
+            return ProcessInfo.processInfo.environment[name].flatMap { $0.isEmpty ? nil : $0 }
+        #else
+            return nil
+        #endif
     }
 
     // MARK: - Custom Model API Keys
