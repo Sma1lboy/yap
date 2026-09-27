@@ -16,6 +16,7 @@ README's earlier "80/82" for mai-transcribe-2 came from a different, uncommitted
 | engine | key terms /82 | Tingting /42 | Reed /40 | real-time factor |
 |---|---|---|---|---|
 | OpenRouter `microsoft/mai-transcribe-2` (Recommended setup) | **59** | 39 | 20 | 0.14 |
+| Yap Cloud `microsoft/mai-transcribe-2` (the Yap Cloud setup) | **59** | 39 | 20 | 0.10 |
 | local Large v3 Turbo (Quantized) + dictionary | 54 | 37 | 17 | 0.16 |
 | local Small + dictionary | 53 | 34 | 19 | 0.08 |
 | OpenRouter `openai/gpt-4o-mini-transcribe` | 52 | 40 | 12 | 0.15 |
@@ -31,6 +32,7 @@ README's earlier "80/82" for mai-transcribe-2 came from a different, uncommitted
 
 What the numbers say:
 
+- **Yap Cloud is the same model, same result.** Through paygate mai-transcribe-2 scores the same 59 as through OpenRouter, with the same per-voice split. 10 of 11 transcripts are character-for-character identical; the eleventh (`infra`, which both get wrong) differs by a few words. Neither request sends a language (the app sends one only when a mode pins it) or a prompt, so there is nothing to explain. It was faster from this Mac: p50 0.53 s per clip against 0.84 s direct, as in [cloud-latency.md](cloud-latency.md). The run cost $0.0022 for 11 clips (65 s of audio), from the account's ledger: 11 entries, billed in whole seconds at $0.11/h (OpenRouter's $0.10/h plus the 10% markup).
 - **mai-transcribe-2 is still the pick.** It has the best total and the best score on Reed, the voice that garbles English. gpt-4o-mini-transcribe and Gemini match it on Tingting (40 and 39 of 42) and fall behind on Reed.
 - **For local whisper, the dictionary is worth more than a bigger model.** The default quantized Turbo gains 9 terms (45 → 54), more than the step up to Large v3 (47). Small gains 18 (35 → 53) and Base 21 (16 → 37). Turbo's gains are names and product words it otherwise misspells (Sarah, Kevin, Priya, IndexedDB, Redis, Tailwind) and it loses none. Small gains 20 and loses 2 ("pipeline", "refresh token").
 - **Local Small + dictionary sits with the cloud models** at 0.08 real-time factor. Without a dictionary it's 35.
