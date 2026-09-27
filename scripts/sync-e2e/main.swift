@@ -54,19 +54,23 @@ final class DeviceStore: ConfigCloudStore, ConfigVersionHistoryStore {
     }
 }
 
-/// A Mac's settings (modes only) with the app's export/apply steps: export stamps against the last written or
-/// applied config (YapConfigLoader.makeConfigData), apply merges by id and drops tombstoned modes
-/// (YapConfigLoader.applyConfigData → applySections).
+/// A Mac's settings (modes and prompts) with the app's export/apply steps: export stamps against the last written
+/// or applied config (YapConfigLoader.makeConfigData), apply merges by id and drops tombstoned entries
+/// (YapConfigLoader.applyConfigData → applySections). A `legacy` Mac is a Yap from before `followsRecommended`:
+/// like that version's CustomPrompt decoder, it ignores the key, so it keeps (and writes back) only the text.
 @MainActor final class Mac {
     let name: String
     var modes: [ModeConfig] = []
+    var prompts: [CustomPrompt] = []
     private var baseline: YapConfig?
     let store: DeviceStore
     private(set) var sync: CloudConfigSync!
     private let suite: String
+    private let legacy: Bool
 
-    init(name: String, token: String) {
+    init(name: String, token: String, legacy: Bool = false) {
         self.name = name
+        self.legacy = legacy
         store = DeviceStore(token: token)
         suite = "sync-e2e.\(name).\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
@@ -79,7 +83,7 @@ final class DeviceStore: ConfigCloudStore, ConfigVersionHistoryStore {
 
     func export() -> Data? {
         let backup = BackupFile(
-            version: "sync-e2e", customPrompts: [], modeConfigs: modes, modeShortcuts: nil, vocabularyWords: nil,
+            version: "sync-e2e", customPrompts: prompts, modeConfigs: modes, modeShortcuts: nil, vocabularyWords: nil,
             wordReplacements: nil, generalSettings: nil, customEmojis: nil, customCloudModels: nil)
         let config = YapConfig.exported(from: backup, existing: nil) { _ in true }
             .normalized().stamped(baseline: baseline, now: Date())
@@ -89,11 +93,20 @@ final class DeviceStore: ConfigCloudStore, ConfigVersionHistoryStore {
     }
 
     func apply(_ data: Data) throws {
-        let config = try YapConfig.decode(data)
+        let config = try YapConfig.decode(legacy ? withoutFollowsRecommended(data) : data)
         baseline = config
-        if let sections = config.backupSections(currentModes: modes, currentPrompts: [], currentModeShortcuts: [:]) {
+        if let sections = config.backupSections(currentModes: modes, currentPrompts: prompts, currentModeShortcuts: [:]) {
             modes = sections.file.modeConfigs
+            prompts = sections.file.customPrompts
         }
+    }
+
+    private func withoutFollowsRecommended(_ data: Data) throws -> Data {
+        guard var json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return data }
+        if let prompts = json["prompts"] as? [[String: Any]] {
+            json["prompts"] = prompts.map { $0.filter { $0.key != "followsRecommended" } }
+        }
+        return try JSONSerialization.data(withJSONObject: json)
     }
 
     var names: [String] { modes.map(\.name).sorted() }
@@ -229,6 +242,59 @@ Task { @MainActor in
         try expect(cloud.modes?.contains { $0.id == code.id } == false, "Code is back in the cloud")
         try expect(cloud.deleted?.modes?[code.id.uuidString] != nil, "no tombstone for Code")
         return "restored v\(versionWithNotes); Code tombstoned, both \(expected)"
+    }
+
+    // The recommended prompt as a reference (CustomPrompt.followsRecommended): the one-time migration of an
+    // untouched copy syncs as its own version, restoring the version before it undoes it, and a Yap from before
+    // the field reads the full text.
+    let shipped = (try? String(contentsOfFile: "VoiceInk/Resources/RecommendedPrompt.md", encoding: .utf8)) ?? ""
+    let copy = CustomPrompt(title: "Cleanup", promptText: shipped)
+    var versionBeforeMigration: String?
+
+    await scenario("prompt migration syncs") {
+        try expect(RecommendedSetup.isShippedPrompt(shipped), "RecommendedPrompt.md isn't in shippedPromptHashes")
+        await tick()
+        a.prompts = [copy]
+        try await a.syncOK()
+        try await b.syncOK()
+        versionBeforeMigration = try await a.store.fetchConfig()?.version
+        await tick()
+        a.prompts = RecommendedSetup.followingRecommended(a.prompts)  // what YapConfigLoader runs once per Mac
+        try await a.syncOK()
+        try await b.syncOK()
+        let migratedVersion = try await a.store.fetchConfig()?.version
+        try expect(migratedVersion != versionBeforeMigration, "the migration didn't make a new version")
+        try expect(b.prompts.first?.followsRecommended == true, "B doesn't follow: \(b.prompts)")
+        try expect(b.prompts.first?.promptText == shipped, "B's stored copy changed")
+        return "copy → reference in v\(migratedVersion ?? "?"); B follows, stored copy kept"
+    }
+
+    await scenario("restore undoes the migration") {
+        guard let versionBeforeMigration else { throw Failed("no version from before the migration") }
+        await tick()
+        try await a.sync.restoreVersion(versionBeforeMigration)
+        try await b.syncOK()
+        try expect(a.prompts.first?.followsRecommended == false && a.prompts.first?.promptText == shipped, "A \(a.prompts)")
+        try expect(b.prompts == a.prompts, "B \(b.prompts) != A \(a.prompts)")
+        return "restored v\(versionBeforeMigration): both back to the plain copy"
+    }
+
+    await scenario("old Yap reads a reference") {
+        await tick()
+        a.prompts = RecommendedSetup.followingRecommended(a.prompts)
+        try await a.syncOK()
+        let old = Mac(name: "Old", token: tokenB, legacy: true)
+        guard let stored = try await old.sync.fetchStored() else { throw Failed("nothing stored") }
+        try await old.sync.restore(stored)
+        try expect(old.prompts.count == 1 && old.prompts[0].promptText == shipped, "old Mac got \(old.prompts)")
+        // The old Mac changes something else and syncs: it writes the prompt back without the field.
+        await tick()
+        old.rename(dictation.id, to: "Dictation (old Mac)")
+        try await old.syncOK()
+        try await a.syncOK()
+        try expect(a.names.contains("Dictation (old Mac)"), "A \(a.names)")
+        try expect(a.prompts.first?.promptText == shipped, "A's prompt text changed")
+        return "old Mac got the full text; after its write A follows=\(a.prompts.first?.followsRecommended ?? false), text intact"
     }
 
     await deleteAccount()
