@@ -22,7 +22,7 @@ Yap Cloud (paygate) serves only the models in its `MODEL_ALLOWLIST` env var on R
 2. Set the whole list (comma separated, exact OpenRouter ids) on the service; Railway redeploys on change:
    `railway variables -s paygate --set "MODEL_ALLOWLIST=<id>,<id>,…"` (run in the paygate repo).
 3. If the model should be shown up front, add it to `YapCloudPicks` in
-   `VoiceInk/Features/Account/YapCloudModelBrowser.swift`. Never drop the `RecommendedSetup` models from the list.
+   `VoiceInk/Infrastructure/Cloud/YapCloudClient.swift` (`make cloud-smoke` fails if a pick isn't on the live list). Never drop the `RecommendedSetup` models from the list: a choice outside it runs on them (the app falls back at call time and on a 400 `MODEL_NOT_ALLOWED`, and Yap Cloud's page lists which modes to change).
 
 ## Enhancement bench (2026-09-27)
 

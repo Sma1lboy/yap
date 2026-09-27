@@ -1,17 +1,5 @@
 import SwiftUI
 
-/// The few Yap Cloud models shown up front; everything else sits behind a searchable "All Models" list.
-/// First entry of each list is the Recommended setup's model.
-enum YapCloudPicks {
-    /// setup/ benchmark, Sept 2026: mai-transcribe-2 80/82 key terms on real code-switched clips; on a synthetic
-    /// 9-case check gpt-4o-transcribe 49/52 and qwen3-asr-flash 46/52 were the next best at ~1.5 s.
-    static let transcription = [
-        RecommendedSetup.transcriptionModel, "openai/gpt-4o-transcribe", "qwen/qwen3-asr-flash-2026-02-10",
-    ]
-    /// setup/bench.py, Sept 2026: deepseek-v4.1-flash 9/9 at 0.44 s p50; gpt-6-luna 8/9 at 0.86 s.
-    static let enhancement = [RecommendedSetup.enhancementModel, "openai/gpt-6-luna"]
-}
-
 /// Searchable list of model ids; picking one calls `onSelect`.
 struct YapCloudModelBrowser: View {
     let title: LocalizedStringKey

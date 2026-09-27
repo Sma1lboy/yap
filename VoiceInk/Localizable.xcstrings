@@ -559,6 +559,50 @@
         }
       }
     },
+    "%@: Yap Cloud no longer offers %@ for enhancement; using %@ for now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: Yap Cloud bietet %2$@ für die Überarbeitung nicht mehr an; vorerst wird %3$@ verwendet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : Yap Cloud ne propose plus %2$@ pour l'amélioration ; %3$@ est utilisé pour l'instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%1$@」模式的润色模型 %2$@ 已不在 Yap Cloud 提供范围内，暂时改用 %3$@。"
+          }
+        }
+      }
+    },
+    "%@: its Yap Cloud transcription model is no longer offered; using %@ for now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: Das gewählte Yap-Cloud-Transkriptionsmodell wird nicht mehr angeboten; vorerst wird %2$@ verwendet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : le modèle de transcription Yap Cloud choisi n'est plus proposé ; %2$@ est utilisé pour l'instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%1$@」模式选的 Yap Cloud 转写模型已不再提供，暂时改用 %2$@。"
+          }
+        }
+      }
+    },
     "%@× typing speed" : {
       "localizations" : {
         "de" : {
@@ -7533,6 +7577,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "去设置里修改"
+          }
+        }
+      }
+    },
+    "Change it in the mode's settings, or in config.json if it's set there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändere es in den Einstellungen des Modus oder in config.json, falls es dort festgelegt ist."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifiez-le dans les réglages du mode, ou dans config.json s'il y est défini."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在该模式的设置里重新选择；如果是 config.json 里写的，请去那里改。"
           }
         }
       }

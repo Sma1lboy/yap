@@ -7,6 +7,7 @@ import UniformTypeIdentifiers
 struct AccountView: View {
     @ObservedObject private var cloud = YapCloud.shared
     @EnvironmentObject private var transcriptionModelManager: TranscriptionModelManager
+    @ObservedObject private var modeManager = ModeManager.shared
     @State private var isShowingAllModels = false
     @State private var modelQuery = ""
 
@@ -42,6 +43,12 @@ struct AccountView: View {
                     if cloud.isUnreachable {
                         AccountBanner(
                             "Yap Cloud is temporarily unavailable. Try again shortly.", systemImage: "wifi.exclamationmark")
+                    }
+                    let notices = cloud.modelNotices(in: modeManager.configurations)
+                    if !notices.isEmpty {
+                        AccountBanner(
+                            "\((notices + [String(localized: "Change it in the mode's settings, or in config.json if it's set there.")]).joined(separator: "\n"))",
+                            systemImage: "exclamationmark.triangle")
                     }
                     if cloud.isSignedIn, cloud.trialNudge != nil {
                         YapCloudTrialNudgeBanner(isHomeCard: false)
@@ -200,6 +207,31 @@ private struct AccountRows<Item, ID: Hashable, Row: View>: View {
 }
 
 /// Warning banner: needs attention, so it carries the warning color (DESIGN.md).
+extension YapCloud {
+    /// One line per mode whose Yap Cloud choice isn't served, saying what runs instead; empty until a catalog loads.
+    func modelNotices(in modes: [ModeConfig]) -> [String] {
+        let chat = chatModels.map(\.id)
+        let transcriptionKeys = Set(transcriptionModels.map { "YapCloud:\(YapCloudProvider.stableID(for: $0.id).uuidString)" })
+        guard !chat.isEmpty, !transcriptionKeys.isEmpty else { return [] }
+        return modes.flatMap { mode -> [String] in
+            var lines: [String] = []
+            if let key = mode.selectedTranscriptionModelName, key.hasPrefix("YapCloud:"), !transcriptionKeys.contains(key) {
+                lines.append(String(
+                    format: String(localized: "%@: its Yap Cloud transcription model is no longer offered; using %@ for now."),
+                    mode.name, RecommendedSetup.transcriptionModel))
+            }
+            if mode.selectedAIProvider == AIProvider.yapCloud.rawValue, let model = mode.selectedAIModel, !model.isEmpty,
+                !chat.contains(model)
+            {
+                lines.append(String(
+                    format: String(localized: "%@: Yap Cloud no longer offers %@ for enhancement; using %@ for now."),
+                    mode.name, model, RecommendedSetup.enhancementModel))
+            }
+            return lines
+        }
+    }
+}
+
 private struct AccountBanner: View {
     let text: LocalizedStringKey
     let systemImage: String

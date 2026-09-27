@@ -82,11 +82,10 @@ enum ModeRuntimeResolver {
             return .noSelection(mode: mode)
         }
 
+        let models = transcriptionModelManager.allAvailableModels
         guard
-            let model = TranscriptionModelRegistry.model(
-                forSelectionKey: modelName,
-                in: transcriptionModelManager.allAvailableModels
-            )
+            let model = TranscriptionModelRegistry.model(forSelectionKey: modelName, in: models)
+                ?? yapCloudFallback(forSelectionKey: modelName, in: models)
         else {
             return .modelNotFound(mode: mode)
         }
@@ -98,6 +97,16 @@ enum ModeRuntimeResolver {
         }
 
         return .available(mode: mode, model: model)
+    }
+
+    /// A Yap Cloud selection the catalog no longer lists (paygate's allowlist) runs on the Recommended model; the
+    /// stored selection stays as the user or config.json set it, and Account lists it (`YapCloud.modelNotices`).
+    private static func yapCloudFallback(
+        forSelectionKey key: String, in models: [any TranscriptionModel]
+    ) -> (any TranscriptionModel)? {
+        guard key.hasPrefix("YapCloud:") else { return nil }
+        let recommended = "YapCloud:\(YapCloudProvider.stableID(for: RecommendedSetup.transcriptionModel).uuidString)"
+        return models.first { $0.selectionKey == recommended }
     }
 
     static func transcriptionConfiguration(
