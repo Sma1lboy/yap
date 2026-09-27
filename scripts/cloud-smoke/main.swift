@@ -146,8 +146,16 @@ Task { @MainActor in
         try expect(usage.totalMicros == usage.byModel.reduce(0) { $0 + $1.micros }, "total != sum(byModel)")
         try expect(usage.creditMicros + usage.paidMicros == usage.totalMicros,
                    "credit \(usage.creditMicros) + paid \(usage.paidMicros) != total \(usage.totalMicros)")
-        if let spent = me?.monthSpentMicros {
-            try expect(usage.totalMicros == spent, "usage \(usage.totalMicros) != me.monthSpentMicros \(spent)")
+        // Calls made elsewhere on the same account can land between the two reads: re-read both a few seconds
+        // later before calling it a mismatch.
+        var total = usage.totalMicros, spent = me?.monthSpentMicros
+        for _ in 0..<2 where spent != nil && spent != total {
+            try await Task.sleep(for: .seconds(3))
+            spent = try await cloud.fetchMe().monthSpentMicros
+            total = try await cloud.fetchUsage().totalMicros
+        }
+        if let spent {
+            try expect(total == spent, "usage \(total) != me.monthSpentMicros \(spent) (after two re-reads)")
         }
         return "\(usage.totalMicros) micros (credit \(usage.creditMicros) + paid \(usage.paidMicros)) over \(usage.byModel.count) models, matches monthSpent"
     }
