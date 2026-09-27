@@ -9,7 +9,7 @@ Every local transcription model Yap offers that can handle Chinese, run on the s
 | **Default** (onboarding's Local option) | Whisper **Large v3 Turbo (Quantized)** | 45/82 key terms, within 2 of the best local model; 547 MB download, 0.9 GB peak memory; about 0.7 s for a 6 s clip. Add your terms to the dictionary: with them in the prompt it gets 54/82. |
 | **8 GB Macs** | the same model | 0.9 GB peak memory fits alongside other apps. Nothing smaller comes close: SenseVoice Small (0.4 GB) gets 26/82. |
 | **Most accurate** | Whisper **Large v3** (or Large v2) | 47/82, the best local score, but a 3.1 GB download, about 4.2 GB peak memory and 2× slower than the default. Only on 16 GB+ Macs, and only if the 2 extra key terms matter to you. |
-| **Cleanup** | off | Yap Refine (the only local cleanup model Yap ships) passed 6 of 9 cleanup cases; the cloud pick passes 9/9. Its two failure types change meaning, see below. |
+| **Cleanup** | off | Yap Refine (the only local cleanup model Yap ships) passed 6 of 9 cleanup cases; the cloud pick passes 8 of those 9 in the automatic check (23–24 of 25 overall, docs/cloud-models.md). Its two failure types change meaning, see below. |
 
 Onboarding's Local option used to download Parakeet V3, which has no Chinese; it now downloads Large v3 Turbo (Quantized), and starter modes fall back to it.
 
@@ -58,7 +58,7 @@ Yap Refine on `setup/cases.json`, with its own fixed system prompt (it ignores t
 | Translates English terms | "roadmap" became "路线图", "senior front end" "高级前端", "extract" "提取" |
 | Keeps self-corrections | "不对，不对，我刚刚说错了，应该是周四…不是周三" stays in the output instead of becoming "周四" |
 
-The cloud cleanup pick (deepseek-v4.1-flash with `RecommendedPrompt.md`) passes 9/9. Translating the English terms is exactly what a code-switching user doesn't want, so the fully offline setup leaves cleanup off.
+The cloud cleanup pick (deepseek-v4.1-flash with `RecommendedPrompt.md`) passes 8 of those 9 in `setup/bench.py`'s automatic check (it keeps "不是周三" in the correction case) and 23–24 of 25 overall. Translating the English terms is exactly what a code-switching user doesn't want, so the fully offline setup leaves cleanup off.
 
 ## Is it really offline?
 
