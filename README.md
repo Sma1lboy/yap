@@ -143,7 +143,7 @@ API keys are never written to config.json or sent to Yap Cloud. Yap only reads t
 
 ### Recommended models
 
-Current picks (Sept 2026): transcription `microsoft/mai-transcribe-2` ($0.10/h; 80/82 key terms on an earlier, uncommitted bench, 59/82 on the harder set in `setup/asr/`, see [docs/dictation-accuracy.md](docs/dictation-accuracy.md)), cleanup `deepseek/deepseek-v4.1-flash` (9/9 cases, ~0.5 s). Onboarding's "Your OpenRouter Key" option applies exactly this setup with your own OpenRouter key; usage is billed by OpenRouter. Re-run `setup/bench.py` after editing `VoiceInk/Resources/RecommendedPrompt.md`.
+Current picks (Sept 2026): transcription `microsoft/mai-transcribe-2` ($0.10/h; 80/82 key terms on an earlier, uncommitted bench, 59/82 on the harder set in `setup/asr/`, see [docs/dictation-accuracy.md](docs/dictation-accuracy.md)), cleanup `deepseek/deepseek-v4.1-flash` (23–24 of 25 cases, ~0.5 s, see [docs/cloud-models.md](docs/cloud-models.md)). Onboarding's "Your OpenRouter Key" option applies exactly this setup with your own OpenRouter key; usage is billed by OpenRouter. Re-run `setup/bench.py` after editing `VoiceInk/Resources/RecommendedPrompt.md`.
 
 ## Development
 

@@ -1,0 +1,75 @@
+{"id": "deploy", "round": 1, "text": "我今天想把 deploy 的 pipeline 改一下，现在 CI 太慢了，build cache 好像没生效，我怀疑是 Docker Layer 的顺序有问题。", "secs": 1.198, "fails": [], "cost_micros": 124}
+{"id": "meeting", "round": 1, "text": "我们明天的会要讨论三件事：\n1. Q4 的 roadmap\n2. onboarding flow 要不要重做\n3. hiring：我们还缺一个 senior front end", "secs": 1.256, "fails": [], "cost_micros": 125}
+{"id": "reply", "round": 1, "text": "帮我回一下 Kevin，就说 PR 我看过了，整体 LGTM，但是那个 useEffect 里面的 dependency array 漏了一个 userId，改完就可以 merge。", "secs": 0.991, "fails": [], "cost_micros": 125}
+{"id": "spec", "round": 1, "text": "这个 feature 的 acceptance criteria 大概是这样：\n\n- 用户可以上传 PDF\n- 系统自动 extract 表格\n- 导出成 CSV\n- 支持 batch，一次最多 50 个文件", "secs": 1.094, "fails": [], "cost_micros": 127}
+{"id": "correct", "round": 1, "text": "周四下午三点，地点改成 Zoom，link 我等下发群里。", "secs": 1.008, "fails": [], "cost_micros": 115}
+{"id": "question", "round": 1, "text": "你觉得我们这个 feature 要不要先上 beta，然后再 full rollout？", "secs": 0.944, "fails": [], "cost_micros": 111}
+{"id": "short", "round": 1, "text": "好的，没问题。", "secs": 1.419, "fails": [], "cost_micros": 104}
+{"id": "twotopics", "round": 1, "text": "API 的 rate limit 我已经调到每分钟 200 了，应该够用。\n\n下周三我请假，有事 Slack 找我就行。on-call 我跟 David 换了。", "secs": 1.093, "fails": [], "cost_micros": 129}
+{"id": "steps", "round": 1, "text": "本地运行步骤：\n1. clone 下来\n2. bun install\n3. 把 env 文件从 example 复制一份，填上 OpenAI 的 key\n4. bun dev\n\n端口是 3000。", "secs": 1.325, "fails": [], "cost_micros": 132}
+{"id": "fix_number", "round": 1, "text": "把 timeout 设成 60 秒，然后 retry 次数改成三次。", "secs": 0.94, "fails": [], "cost_micros": 112}
+{"id": "fix_name", "round": 1, "text": "明天的 demo 让 Bob 讲，Alice 那天请假。", "secs": 1.129, "fails": [], "cost_micros": 112}
+{"id": "todo", "round": 1, "text": "这周要做的事情：\n- 修复 login 的 bug\n- 更新 README\n- 给 Stripe webhook 加上 retry\n- 清掉 code review", "secs": 0.974, "fails": [], "cost_micros": 121}
+{"id": "git_steps", "round": 1, "text": "1. `git checkout` 到 main\n2. pull 一下最新的\n3. 新开一个名为 fix login 的 branch\n4. push 上去开 PR", "secs": 1.032, "fails": [], "cost_micros": 123}
+{"id": "identifiers", "round": 1, "text": "把 getUserProfile 这个函数改成 async 的，返回值用 Promise 包一下，调用的地方记得加 await。", "secs": 1.037, "fails": [], "cost_micros": 118}
+{"id": "asr_errors", "round": 1, "text": "PR 我已经提了，你帮我看一下 useEffect 里面的 userId 是不是传错了？", "secs": 0.925, "fails": [], "cost_micros": 116}
+{"id": "no_translate", "round": 1, "text": "这个 dashboard 的 loading 太慢了，我觉得是 API 的 latency 问题，可能要加个 cache。", "secs": 0.986, "fails": [], "cost_micros": 115}
+{"id": "fillers", "round": 1, "text": "我觉得这个方案还行，就是成本有点高。", "secs": 0.935, "fails": [], "cost_micros": 109}
+{"id": "ask_not_answer", "round": 1, "text": "你能不能帮我写一个 Python 脚本把这个 CSV 转成 JSON？", "secs": 0.893, "fails": [], "cost_micros": 113}
+{"id": "email", "round": 1, "text": "帮我给 Sarah 写个邮件，说下周二的 kickoff meeting 改到周三上午十点，地点还是在三楼的会议室，然后让她把 slide 提前发给我。", "secs": 1.052, "fails": [], "cost_micros": 128}
+{"id": "percentages", "round": 1, "text": "这次 A/B test 的 conversion rate 从 3.2% 涨到了 4.5%，样本量大概 2 万。", "secs": 2.51, "fails": [], "cost_micros": 121}
+{"id": "ordinals", "round": 1, "text": "1. 把 staging 环境搭起来\n2. 把 CI 的 pipeline 跑通\n3. 做 load testing", "secs": 1.048, "fails": [], "cost_micros": 117}
+{"id": "short_en", "round": 1, "text": "OK, sounds good.", "secs": 1.049, "fails": [], "cost_micros": 104}
+{"id": "retro", "round": 1, "text": "关于 Q3 的复盘，我觉得最大的问题是 onboarding 的转化。另外一件事是招聘，frontend 那个岗位还没招到人。", "secs": 1.049, "fails": [], "cost_micros": 121}
+{"id": "fix_list", "round": 1, "text": "要买的东西有：\n- 鸡蛋\n- 面包\n- AirPods 的充电线", "secs": 1.084, "fails": [], "cost_micros": 116}
+{"id": "command", "round": 1, "text": "把 `docker compose up -d` 跑一下，然后看一下 logs。", "secs": 1.011, "fails": [], "cost_micros": 111}
+{"id": "deploy", "round": 2, "text": "我今天想把 deploy 的 pipeline 改一下，现在 CI 太慢了，build cache 好像没生效，我怀疑是 Docker Layer 的顺序有问题。", "secs": 1.047, "fails": [], "cost_micros": 124}
+{"id": "meeting", "round": 2, "text": "我们明天的会要讨论三件事：\n1. Q4 的 roadmap\n2. onboarding flow 要不要重做\n3. hiring：我们还缺一个 senior front end", "secs": 1.188, "fails": [], "cost_micros": 125}
+{"id": "reply", "round": 2, "text": "帮我回一下 Kevin，就说 PR 我看过了，整体 LGTM，但是那个 useEffect 里面的 dependency array 漏了一个 userID，改完就可以 merge。", "secs": 1.017, "fails": [], "cost_micros": 125}
+{"id": "spec", "round": 2, "text": "这个 feature 的 acceptance criteria 大概是这样：\n\n- 用户可以上传 PDF\n- 系统自动 extract 表格\n- 导出成 CSV\n- 支持 batch，一次最多 50 个文件", "secs": 1.139, "fails": [], "cost_micros": 127}
+{"id": "correct", "round": 2, "text": "周四下午三点，地点改成 Zoom，link 我等下发群里。", "secs": 1.049, "fails": [], "cost_micros": 115}
+{"id": "question", "round": 2, "text": "你觉得我们这个 feature 要不要先上 beta，然后再 full rollout？", "secs": 1.067, "fails": [], "cost_micros": 111}
+{"id": "short", "round": 2, "text": "好的，没问题。", "secs": 0.976, "fails": [], "cost_micros": 104}
+{"id": "twotopics", "round": 2, "text": "API 的 rate limit 我已经调到每分钟 200 了，应该够用。\n\n下周三我请假，有事 Slack 找我就行。on-call 我跟 David 换了。", "secs": 1.071, "fails": [], "cost_micros": 129}
+{"id": "steps", "round": 2, "text": "本地运行步骤：\n1. clone 下来\n2. bun install\n3. 把 env 文件从 example 复制一份，填上 OpenAI 的 key\n4. bun dev\n\n端口是 3000。", "secs": 2.152, "fails": [], "cost_micros": 132}
+{"id": "fix_number", "round": 2, "text": "把 timeout 设成 60 秒，然后 retry 次数改成三次。", "secs": 1.357, "fails": [], "cost_micros": 112}
+{"id": "fix_name", "round": 2, "text": "明天的 demo 让 Bob 讲，Alice 那天请假。", "secs": 0.941, "fails": [], "cost_micros": 112}
+{"id": "todo", "round": 2, "text": "这周要做的事情：\n- 修复 login 的 bug\n- 更新 README\n- 给 Stripe webhook 加个 retry\n- 清掉 code review", "secs": 1.12, "fails": [], "cost_micros": 121}
+{"id": "git_steps", "round": 2, "text": "1. git checkout 到 main\n2. pull 最新代码\n3. 新建一个名为 fix login 的 branch\n4. push 上去开 PR", "secs": 1.118, "fails": [], "cost_micros": 121}
+{"id": "identifiers", "round": 2, "text": "把 getUserProfile 这个函数改成 async 的，返回值用 Promise 包一下，调用的地方记得加 await。", "secs": 0.936, "fails": [], "cost_micros": 118}
+{"id": "asr_errors", "round": 2, "text": "那个 PR 我已经提了，你帮我看一下 useEffect 里面的 userId 是不是传错了？", "secs": 1.126, "fails": [], "cost_micros": 116}
+{"id": "no_translate", "round": 2, "text": "这个 dashboard 的 loading 太慢了，我觉得是 API 的 latency 问题，可能要加个 cache。", "secs": 1.307, "fails": [], "cost_micros": 115}
+{"id": "fillers", "round": 2, "text": "我觉得这个方案还行，成本有点高。", "secs": 0.943, "fails": [], "cost_micros": 109}
+{"id": "ask_not_answer", "round": 2, "text": "你能不能帮我写一个 Python 脚本，把这个 CSV 转成 JSON？", "secs": 0.874, "fails": [], "cost_micros": 113}
+{"id": "email", "round": 2, "text": "帮我给 Sarah 写个邮件，说下周二的 kickoff meeting 改到周三上午十点，地点还是在三楼的会议室，然后让她把 slide 提前发给我。", "secs": 1.016, "fails": [], "cost_micros": 128}
+{"id": "percentages", "round": 2, "text": "这次 A/B test 的 conversion rate 从 3.2% 涨到了 4.5%，样本量大概 2 万。", "secs": 1.206, "fails": [], "cost_micros": 121}
+{"id": "ordinals", "round": 2, "text": "1. 把 staging 环境搭起来\n2. 把 CI 的 pipeline 跑通\n3. 做 load testing", "secs": 1.072, "fails": [], "cost_micros": 118}
+{"id": "short_en", "round": 2, "text": "OK, sounds good.", "secs": 0.907, "fails": [], "cost_micros": 104}
+{"id": "retro", "round": 2, "text": "关于 Q3 的复盘，我觉得最大的问题是 onboarding 的转化，另外一件事是招聘，frontend 那个岗位还没招到人。", "secs": 1.055, "fails": [], "cost_micros": 122}
+{"id": "fix_list", "round": 2, "text": "要买的东西有鸡蛋、面包，还有 AirPods 的充电线。", "secs": 0.905, "fails": ["no list"], "cost_micros": 114}
+{"id": "command", "round": 2, "text": "把 `docker compose up -d` 跑一下，然后看一下 logs。", "secs": 0.958, "fails": [], "cost_micros": 111}
+{"id": "deploy", "round": 3, "text": "我今天想把 deploy 的 pipeline 改一下。现在 CI 太慢了，build cache 好像没生效，我怀疑是 Docker Layer 的顺序有问题。", "secs": 1.064, "fails": [], "cost_micros": 125}
+{"id": "meeting", "round": 3, "text": "我们明天的会要讨论三件事：\n1. Q4 的 roadmap\n2. onboarding flow 要不要重做\n3. hiring：我们还缺一个 senior front end", "secs": 1.082, "fails": [], "cost_micros": 125}
+{"id": "reply", "round": 3, "text": "帮我回一下 Kevin，就说 PR 我看过了，整体 LGTM，但是那个 useEffect 里面的 dependency array 漏了一个 userId，改完就可以 merge。", "secs": 1.04, "fails": [], "cost_micros": 125}
+{"id": "spec", "round": 3, "text": "这个 feature 的 acceptance criteria 大概是这样：\n\n- 用户可以上传 PDF\n- 系统自动 extract 表格\n- 可以导出成 CSV\n- 支持 batch，一次最多 50 个文件", "secs": 1.209, "fails": [], "cost_micros": 128}
+{"id": "correct", "round": 3, "text": "周四下午三点，地点改成 Zoom，link 我等下发群里。", "secs": 0.975, "fails": [], "cost_micros": 115}
+{"id": "question", "round": 3, "text": "你觉得我们这个 feature 要不要先上 beta，然后再 full rollout？", "secs": 1.519, "fails": [], "cost_micros": 111}
+{"id": "short", "round": 3, "text": "好的，没问题。", "secs": 0.893, "fails": [], "cost_micros": 104}
+{"id": "twotopics", "round": 3, "text": "API 的 rate limit 我已经调到每分钟 200 了，应该够用。\n\n下周三我请假，有事 Slack 找我就行。on-call 我跟 David 换了。", "secs": 1.047, "fails": [], "cost_micros": 129}
+{"id": "steps", "round": 3, "text": "本地运行步骤：\n1. clone 下来\n2. bun install\n3. 把 env 文件从 example 复制一份，填上 OpenAI 的 key\n4. bun dev\n\n端口是 3000。", "secs": 1.076, "fails": [], "cost_micros": 132}
+{"id": "fix_number", "round": 3, "text": "把 timeout 设成 60 秒，然后 retry 次数改成三次。", "secs": 0.895, "fails": [], "cost_micros": 112}
+{"id": "fix_name", "round": 3, "text": "明天的 demo 让 Bob 讲，Alice 那天请假。", "secs": 0.947, "fails": [], "cost_micros": 112}
+{"id": "todo", "round": 3, "text": "这周要做的事情：\n- 修复 login 的 bug\n- 更新 README\n- 给 Stripe webhook 加个 retry\n- 清掉 code review", "secs": 0.958, "fails": [], "cost_micros": 121}
+{"id": "git_steps", "round": 3, "text": "1. git checkout 到 main\n2. pull 最新代码\n3. 新建一个名为 fix-login 的 branch\n4. push 上去并开 PR", "secs": 1.125, "fails": [], "cost_micros": 122}
+{"id": "identifiers", "round": 3, "text": "把 getUserProfile 这个函数改成 async 的，返回值用 Promise 包一下，调用的地方记得加 await。", "secs": 0.984, "fails": [], "cost_micros": 118}
+{"id": "asr_errors", "round": 3, "text": "PR 我已经提了，你帮我看一下 useEffect 里面的 userId 是不是传错了？", "secs": 1.073, "fails": [], "cost_micros": 116}
+{"id": "no_translate", "round": 3, "text": "这个 dashboard 的 loading 太慢了，我觉得是 API 的 latency 问题，可能要加个 cache。", "secs": 0.973, "fails": [], "cost_micros": 115}
+{"id": "fillers", "round": 3, "text": "我觉得这个方案还行，就是成本有点高。", "secs": 0.951, "fails": [], "cost_micros": 109}
+{"id": "ask_not_answer", "round": 3, "text": "你能不能帮我写一个 Python 脚本，把这个 CSV 转成 JSON？", "secs": 0.972, "fails": [], "cost_micros": 113}
+{"id": "email", "round": 3, "text": "帮我给 Sarah 写个邮件，说下周二的 kickoff meeting 改到周三上午十点，地点还是在三楼的会议室，然后让她把 slide 提前发给我。", "secs": 1.055, "fails": [], "cost_micros": 128}
+{"id": "percentages", "round": 3, "text": "这次 A/B test 的 conversion rate 从 3.2% 涨到了 4.5%，样本量大概 2 万。", "secs": 1.023, "fails": [], "cost_micros": 121}
+{"id": "ordinals", "round": 3, "text": "1. 把 staging 环境搭起来\n2. 把 CI 的 pipeline 跑通\n3. 做 load testing", "secs": 1.188, "fails": [], "cost_micros": 117}
+{"id": "short_en", "round": 3, "text": "OK, sounds good.", "secs": 1.042, "fails": [], "cost_micros": 104}
+{"id": "retro", "round": 3, "text": "关于 Q3 的复盘，我觉得最大的问题是 onboarding 的转化，另外一件事是招聘，frontend 那个岗位还没招到人。", "secs": 1.074, "fails": [], "cost_micros": 122}
+{"id": "fix_list", "round": 3, "text": "要买的东西有：\n- 鸡蛋\n- 面包\n- AirPods 的充电线", "secs": 0.95, "fails": [], "cost_micros": 116}
+{"id": "command", "round": 3, "text": "把 `docker compose up -d` 跑一下，然后看一下 logs。", "secs": 0.997, "fails": [], "cost_micros": 111}

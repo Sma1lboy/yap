@@ -1,0 +1,18 @@
+[
+ {"id": "fix_number", "in": "把那个 timeout 设成三十秒，不对，六十秒，然后 retry 次数改成三次", "expect": {"has": ["timeout", "60", "retry", "三次|3 次|3次"], "not": ["30", "三十", "不对"], "list": false}},
+ {"id": "fix_name", "in": "明天的 demo 让 Alice 讲，哦不是，让 Bob 讲，Alice 那天请假", "expect": {"has": ["demo", "Bob", "Alice"], "not": ["让 Alice 讲", "让Alice讲", "哦不是"], "list": false}},
+ {"id": "todo", "in": "这周要做的事情有修那个 login 的 bug，还有把 README 更新一下，然后给 Stripe webhook 加个 retry，对了还有 code review 要清掉", "expect": {"has": ["login", "bug", "README", "Stripe", "webhook", "retry", "code review"], "list": true}},
+ {"id": "git_steps", "in": "你先 git checkout 到 main，然后 pull 一下最新的，再开一个新的 branch 叫 fix login，最后 push 上去开 PR", "expect": {"has": ["checkout", "main", "pull", "branch", "push", "PR"], "list": "numbered"}},
+ {"id": "identifiers", "in": "把 getUserProfile 这个函数改成 async 的，返回值用 Promise 包一下，调用的地方记得加 await", "expect": {"has": ["getUserProfile", "async", "Promise", "await"], "list": false}},
+ {"id": "asr_errors", "in": "那个 P 二我已经提了，你帮我看一下 use effect 里面的 user id 是不是传错了", "expect": {"has": ["PR", "useEffect", "userId|userID"], "not": ["P 二", "P二", "use effect"], "list": false}},
+ {"id": "no_translate", "in": "这个 dashboard 的 loading 太慢了，我觉得是 API 的 latency 问题，可能要加个 cache", "expect": {"has": ["dashboard", "loading", "API", "latency", "cache"], "not": ["仪表盘", "缓存", "延迟"], "list": false}},
+ {"id": "fillers", "in": "嗯那个就是，呃，我觉得这个方案，嗯，还行吧，就是那个成本有点高", "expect": {"has": ["方案", "成本"], "not": ["嗯", "呃"], "list": false, "max_len": 30}},
+ {"id": "ask_not_answer", "in": "你能不能帮我写一个 Python 脚本把这个 CSV 转成 JSON", "expect": {"has": ["Python", "CSV", "JSON"], "not": ["import", "def "], "list": false, "max_len": 50}},
+ {"id": "email", "in": "帮我给 Sarah 写个邮件，说下周二的 kickoff meeting 改到周三上午十点，地点还是在三楼的会议室，然后让她把 slide 提前发给我", "expect": {"has": ["Sarah", "邮件", "kickoff", "周三上午十点|周三上午 10 点|周三上午10点", "slide"], "not": ["Hi Sarah", "Dear", "你好，Sarah", "Sarah 你好", "Sarah，你好"]}},
+ {"id": "percentages", "in": "这次 A B test 的 conversion rate 从百分之三点二涨到了百分之四点五，样本量大概两万", "expect": {"has": ["A/B test|AB test|A/B 测试", "conversion rate", "3.2%|3.2 %", "4.5%|4.5 %", "两万|20000|20,000|2 万|2万"], "list": false}},
+ {"id": "ordinals", "in": "首先要把 staging 环境搭起来，其次把 CI 的 pipeline 跑通，最后再做 load testing", "expect": {"has": ["staging", "CI", "pipeline", "load testing"], "list": true}},
+ {"id": "short_en", "in": "OK sounds good", "expect": {"has": ["OK|Ok|ok", "sounds good|Sounds good"], "list": false, "max_len": 20}},
+ {"id": "retro", "in": "关于 Q3 的复盘，我觉得最大的问题是 onboarding 的转化，另外一件事是招聘，frontend 那个岗位还没招到人", "expect": {"has": ["Q3", "onboarding", "frontend", "招聘"], "not": ["前端"]}},
+ {"id": "fix_list", "in": "要买的东西有鸡蛋、面包，还有牛奶，哦牛奶不要了家里还有，再加一个 AirPods 的充电线", "expect": {"has": ["鸡蛋", "面包", "AirPods", "充电线"], "not": ["牛奶"], "list": true}},
+ {"id": "command", "in": "把 docker compose up 杠 d 跑一下，然后看一下 logs", "expect": {"has": ["docker compose up -d", "logs"], "not": ["杠"], "list": false}}
+]
