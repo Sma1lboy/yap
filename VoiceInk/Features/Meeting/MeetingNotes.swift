@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// One transcribed piece of a meeting: who (the microphone is "me", system audio is "others"), when, what.
@@ -130,6 +131,13 @@ enum MeetingNotes {
             assert(md.hasPrefix("# Weekly\n\n") && md.contains("· 01:05") && md.contains("- ok"))
             assert(md.contains("**[00:03] \(me)**: 先看一下 CI"))
             assert(!markdown(title: "T", date: Date(), duration: 1, notes: nil, transcript: "").contains("## \(String(localized: "Notes"))"))
+
+            // The default shortcut: right ⌘ + Space fires, left ⌘ + Space (Spotlight) doesn't.
+            let command = NSEvent.ModifierFlags.command.rawValue
+            let shortcut = Shortcut.rightCommandSpace
+            assert(shortcut.matchesKeyEvent(keyCode: 49, modifierFlags: NSEvent.ModifierFlags(rawValue: command | 0x10)))
+            assert(!shortcut.matchesKeyEvent(keyCode: 49, modifierFlags: NSEvent.ModifierFlags(rawValue: command | 0x08)))
+            assert(shortcut.displayTokens.first == "Right ⌘" && !Shortcut.key(keyCode: 0, modifierFlags: [.command]).isCommandSpace)
         }
     }
 #endif

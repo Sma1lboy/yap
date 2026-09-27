@@ -21869,6 +21869,28 @@
         }
       }
     },
+    "Press once to start recording a meeting (your microphone and other apps' sound), again to stop and get notes. ⌘ + Space here always means the right ⌘; the left one stays Spotlight's." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einmal drücken, um ein Meeting aufzunehmen (dein Mikrofon und der Ton anderer Apps), erneut drücken, um zu stoppen und Notizen zu erhalten. ⌘ + Leertaste bedeutet hier immer das rechte ⌘; das linke bleibt für Spotlight."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez une fois pour enregistrer une réunion (votre micro et le son des autres apps), à nouveau pour arrêter et obtenir les notes. Ici, ⌘ + Espace désigne toujours le ⌘ de droite ; celui de gauche reste pour Spotlight."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按一下开始录制会议（你的麦克风和其他 App 的声音），再按一下停止并生成纪要。这里的 ⌘ + Space 只认右边的 ⌘，左边的留给聚焦搜索。"
+          }
+        }
+      }
+    },
     "Press shortcut" : {
       "localizations" : {
         "de" : {

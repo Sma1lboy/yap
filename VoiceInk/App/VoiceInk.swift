@@ -170,6 +170,8 @@ struct VoiceInkApp: App {
         recorderUIManager.configure(engine: engine, recorder: engine.recorder)
         engine.recorderUIManager = recorderUIManager
         MeetingRecorder.shared.configure(engine: engine)
+        // Once; a shortcut the user cleared stays cleared.
+        ShortcutStore.seedShortcut(.rightCommandSpace, for: .meetingRecording)
 
         // 6. Initialize model state
         // Migration and refreshAllAvailableModels must run before loadCurrentTranscriptionModel so renamed keys are remapped and imported models are present when restoring the saved selection.

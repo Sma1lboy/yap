@@ -254,6 +254,8 @@ class RecordingShortcutManager: ObservableObject {
             QuickHistoryController.shared.show(modelContext: engine.modelContext, engine: engine)
         case .quickAddToDictionary:
             DictionaryQuickAddManager.shared.toggle(modelContainer: engine.modelContext.container)
+        case .meetingRecording:
+            MeetingRecorder.shared.toggle()
         case .undoLastPaste:
             await LastPasteEditor.shared.undoLastPaste()
         case .rewriteLastPaste:

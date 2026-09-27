@@ -127,6 +127,16 @@ struct SettingsView: View {
                 }
 
                 LabeledContent {
+                    ShortcutRecorder(action: .meetingRecording)
+                        .controlSize(.small)
+                } label: {
+                    HStack(spacing: AppTheme.Spacing.x1) {
+                        Text("Record Meeting")
+                        InfoTip("Press once to start recording a meeting (your microphone and other apps' sound), again to stop and get notes. ⌘ + Space here always means the right ⌘; the left one stays Spotlight's.")
+                    }
+                }
+
+                LabeledContent {
                     ShortcutRecorder(action: .undoLastPaste)
                         .controlSize(.small)
                 } label: {

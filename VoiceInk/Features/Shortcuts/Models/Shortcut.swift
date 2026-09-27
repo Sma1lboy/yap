@@ -31,6 +31,7 @@ struct Shortcut: Codable, Equatable {
     var displayTokens: [String] {
         switch kind {
         case .key:
+            if isCommandSpace { return ["Right ⌘", Self.keyName(for: keyCode)] }
             return modifierFlags.shortcutDisplayTokens + [Self.keyName(for: keyCode)]
         case .modifierOnly:
             if let sideSpecificName = Self.sideSpecificModifierName(for: keyCode, modifiers: modifierFlags) {
@@ -90,7 +91,20 @@ struct Shortcut: Codable, Equatable {
     {
         kind == .key && keyCode == eventKeyCode
             && modifierFlags == Self.normalizedModifierFlags(eventModifierFlags, forKeyCode: eventKeyCode)
+            && (!isCommandSpace || eventModifierFlags.rawValue & Self.rightCommandDeviceMask != 0)
     }
+
+    /// ⌘ + Space as a Yap shortcut means the right ⌘ only: left ⌘ + Space stays Spotlight's (macOS's own hotkey
+    /// fires for either side, so Yap has to tell them apart and leave the left one alone).
+    var isCommandSpace: Bool {
+        kind == .key && keyCode == UInt16(kVK_Space) && modifierFlags == [.command]
+    }
+
+    /// NX_DEVICERCMDKEYMASK: set in an event's flags while the right ⌘ is down.
+    static let rightCommandDeviceMask: UInt = 0x10
+
+    /// Right ⌘ + Space, the meeting recording shortcut's default.
+    static let rightCommandSpace = Self.key(keyCode: UInt16(kVK_Space), modifierFlags: [.command])
 
     func matchesMouseEvent(
         buttonNumber eventButtonNumber: UInt16,
