@@ -435,7 +435,7 @@ struct ModelManagementView: View {
 
 #if DEBUG
     extension ModelManagementView {
-        enum SnapshotPanel { case customProviderEditor }
+        enum SnapshotPanel { case customProviderEditor, settings }
         @MainActor static var snapshotFilter: ModelFilter?
         @MainActor static var snapshotPanel: SnapshotPanel?
 
@@ -444,6 +444,7 @@ struct ModelManagementView: View {
             if Self.snapshotPanel == .customProviderEditor {
                 openCustomEnhancementModelPanel(customAIProviderManager.providers.first)
             }
+            if Self.snapshotPanel == .settings { activePanel = .settings }
         }
     }
 #endif
