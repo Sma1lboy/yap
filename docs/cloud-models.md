@@ -81,9 +81,9 @@ correction example that ran on into a second topic taught v4-flash to stop split
 |---|---|---|
 | `deepseek/deepseek-v4.1-flash` | 23, 23, 24 | **25, 25, 25** |
 | `deepseek/deepseek-v4-flash` | 23, 23, 23 | 23, 25, 25 |
-| `openai/gpt-6-luna` | 25, 24, 25 | 24, 25, 24 |
+| `openai/gpt-6-luna` | 25, 24, 25, 25, 24, 25 (148/150) | 24, 25, 24, 25, 24, 25 (147/150) |
 
 v4.1-flash now passes every case in every round, in each of the three separate runs made on the final prompt's
-versions. gpt-6-luna is one pass lower over 3 rounds, with the misses in different cases each time (`retro`,
-`command`). Over 6 rounds the old prompt scored 148/150, so a difference of one is within what repeated runs
-of the same prompt show, but it isn't proven equal. The tables above (latency, cost) are from these final runs.
+versions. gpt-6-luna was run 6 rounds on each prompt: 148/150 before, 147/150 after, counted as even. Its misses
+after the change: `retro` in 2 rounds (drops "另外一件事是招聘" down to the frontend hire) and `command` once
+(a two-step command written as a list). Before: `fix_list` and `spec` once each. The tables above (latency, cost) are from these final runs.
