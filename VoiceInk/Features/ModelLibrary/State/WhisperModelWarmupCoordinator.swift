@@ -14,11 +14,10 @@ final class WhisperModelWarmupCoordinator: ObservableObject {
     }
 
     func scheduleWarmup(for model: WhisperModel, whisperModelManager: WhisperModelManager) {
-        guard shouldWarmup(modelName: model.name),
-            !warmingModels.contains(model.name)
-        else {
-            return
-        }
+        // Every model, quantized included: besides the Core ML encoder (non-quantized only), the first run of
+        // whisper.cpp compiles its Metal shaders, 16 s on an M4 Pro. Paid here, right after the download, instead of
+        // in the user's first dictation.
+        guard !warmingModels.contains(model.name) else { return }
 
         warmingModels.insert(model.name)
 
@@ -60,7 +59,4 @@ final class WhisperModelWarmupCoordinator: ObservableObject {
         return nil
     }
 
-    private func shouldWarmup(modelName: String) -> Bool {
-        !modelName.contains("q5") && !modelName.contains("q8")
-    }
 }

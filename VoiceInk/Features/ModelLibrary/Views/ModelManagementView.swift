@@ -285,6 +285,7 @@ struct ModelManagementView: View {
             model: model,
             isDownloaded: whisperModelManager.availableModels.contains { $0.name == model.name },
             downloadProgress: whisperModelManager.downloadProgress,
+            downloadDetails: whisperModelManager.downloadDetails,
             modelURL: whisperModelManager.availableModels.first { $0.name == model.name }?.url,
             isWarming: isWarming,
             deleteAction: {

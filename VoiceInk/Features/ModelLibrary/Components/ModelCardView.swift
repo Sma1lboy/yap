@@ -5,6 +5,7 @@ struct ModelCardView: View {
     let model: any TranscriptionModel
     let isDownloaded: Bool
     let downloadProgress: [String: Double]
+    var downloadDetails: [String: ModelFileDownloader.Progress] = [:]
     let modelURL: URL?
     let isWarming: Bool
 
@@ -21,6 +22,7 @@ struct ModelCardView: View {
                         model: whisperModel,
                         isDownloaded: isDownloaded,
                         downloadProgress: downloadProgress,
+                        downloadDetails: downloadDetails,
                         modelURL: modelURL,
                         isWarming: isWarming,
                         deleteAction: deleteAction,
