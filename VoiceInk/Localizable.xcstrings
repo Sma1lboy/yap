@@ -4451,6 +4451,28 @@
         }
       }
     },
+    "Add a space between Chinese and English" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leerzeichen zwischen Chinesisch und Englisch einfügen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter une espace entre chinois et anglais"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中英文之间加空格"
+          }
+        }
+      }
+    },
     "Add a trailing space after pasted transcription output." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7539,6 +7561,28 @@
         }
       }
     },
+    "Chinese Cleanup" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chinesische Bereinigung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nettoyage du chinois"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中文清理"
+          }
+        }
+      }
+    },
     "Chinese, English and mixed speech, transcribed on this Mac." : {
       "localizations" : {
         "de" : {
@@ -8649,6 +8693,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "继续使用 Yap 以解锁高峰时段。"
+          }
+        }
+      }
+    },
+    "Convert Traditional Chinese to Simplified" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traditionelles Chinesisch in vereinfachtes umwandeln"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convertir le chinois traditionnel en simplifié"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "繁体转简体"
           }
         }
       }
@@ -22517,6 +22583,28 @@
         }
       }
     },
+    "Remove Chinese fillers (嗯, 呃, a leading 那个)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chinesische Füllwörter entfernen (嗯, 呃, 那个 am Satzanfang)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprimer les mots de remplissage chinois (嗯, 呃, 那个 en début de phrase)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "去掉中文语气词（嗯、呃、句首的那个）"
+          }
+        }
+      }
+    },
     "Remove Filler Words" : {
       "localizations" : {
         "de" : {
@@ -23745,6 +23833,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "改写"
+          }
+        }
+      }
+    },
+    "Rules applied to every transcript on this Mac, before any AI enhancement, so they also work offline." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regeln, die auf diesem Mac auf jede Transkription angewendet werden, vor jeder KI-Verbesserung – sie funktionieren also auch offline."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Règles appliquées à chaque transcription sur ce Mac, avant toute amélioration par IA : elles fonctionnent donc aussi hors ligne."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在本机对每条转写结果执行、在 AI 润色之前生效，所以离线也能用。"
           }
         }
       }
@@ -30134,6 +30244,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "开启"
+          }
+        }
+      }
+    },
+    "Turn spoken \"换行\" and \"新段落\" into line breaks" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesprochenes „换行“ und „新段落“ in Zeilenumbrüche umwandeln"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transformer « 换行 » et « 新段落 » dictés en retours à la ligne"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把口述的“换行”“新段落”变成换行"
           }
         }
       }

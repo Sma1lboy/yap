@@ -101,6 +101,8 @@
             MainWindowNavigation.shared.selectedView = .models
             shot("sheet-custom-provider-editor", fullPage: true, titled: true) { ContentView() }
             ModelManagementView.snapshotFilter = nil
+            ModelManagementView.snapshotPanel = .settings
+            shot("sheet-model-settings", fullPage: true, titled: true) { ContentView() }
             ModelManagementView.snapshotPanel = nil
 
             // Sheets, at the size they're presented at.
