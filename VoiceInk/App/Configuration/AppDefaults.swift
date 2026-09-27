@@ -123,6 +123,7 @@ enum OnboardingSettings {
 
 enum AppDefaults {
     static func registerDefaults() {
+        UserDefaults.standard.register(defaults: ChineseCleanup.defaults())
         UserDefaults.standard.register(defaults: [
             // Onboarding & General
             OnboardingSettings.completedV2Key: false,

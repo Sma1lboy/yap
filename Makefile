@@ -187,7 +187,7 @@ design-check:
 mock: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
-	scripts/mock.sh "$$APP_DIR"
+	scripts/dev-defaults-guard.sh scripts/mock.sh "$$APP_DIR"
 
 # Does a local dictation (Whisper model MODEL, cleanup off) touch the network? Runs one dictation with the network
 # denied, then one with it allowed while logging the app's sockets. See scripts/offline-check.sh.
@@ -195,26 +195,24 @@ offline-check: build
 	@test -n "$(MODEL)" || { echo "usage: make offline-check MODEL=/path/to/ggml-large-v3-turbo-q5_0.bin"; exit 2; }
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
-	scripts/offline-check.sh "$$APP_DIR" "$(MODEL)"
+	scripts/dev-defaults-guard.sh scripts/offline-check.sh "$$APP_DIR" "$(MODEL)"
 
 # A new user's first local dictation: fresh mock install, download the default model, preflight mid-download, cold and
 # warm dictation times (scripts/first-run-check.sh). Needs the network; never touches the dev or release app's data.
 first-run-check: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
-	scripts/first-run-check.sh "$$APP_DIR" $(MODEL)
+	scripts/dev-defaults-guard.sh scripts/first-run-check.sh "$$APP_DIR" $(MODEL)
 
 # Render every page, Settings group, onboarding screen and sheet in light and dark, plus the main ones in Chinese
-# (-zh), with fake data to /tmp/yap-ui/snapshots. Debug build, launched with --render-snapshots: saves the dev app's
-# UserDefaults domain first and restores it before exiting (fake modes etc. never stick). No window, no focus
-# change; the sandbox profile denies network access.
+# (-zh), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots
+# (scripts/ui-snapshots.sh), so its fake modes and providers go to a throwaway defaults domain, never the dev app's;
+# dev-defaults-guard.sh fails the run if the dev app's settings changed anyway. No window, no focus change; the
+# sandbox profile denies network access.
 ui-snapshots: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
-	rm -rf /tmp/yap-ui/snapshots; \
-	BIN="$$APP_DIR/VoiceInk Dev.app/Contents/MacOS/VoiceInk Dev"; \
-	sandbox-exec -f scripts/offline.sb "$$BIN" --render-snapshots && \
-	sandbox-exec -f scripts/offline.sb "$$BIN" --render-snapshots -AppleLanguages '(zh-Hans)'
+	scripts/dev-defaults-guard.sh scripts/ui-snapshots.sh "$$APP_DIR"
 
 # Self-contained review page(s) of the snapshots: /tmp/yap-ui/review.html (review-N.html past 3.8 MB each).
 ui-review: ui-snapshots
