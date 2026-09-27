@@ -127,6 +127,26 @@ struct SettingsView: View {
                 }
 
                 LabeledContent {
+                    ShortcutRecorder(action: .undoLastPaste)
+                        .controlSize(.small)
+                } label: {
+                    HStack(spacing: AppTheme.Spacing.x1) {
+                        Text("Undo Last Paste")
+                        InfoTip("Removes the text Yap pasted last, if it's still where Yap put it and unchanged. Saying only \"scratch that\" or \"删掉刚才那句\" does the same.")
+                    }
+                }
+
+                LabeledContent {
+                    ShortcutRecorder(action: .rewriteLastPaste)
+                        .controlSize(.small)
+                } label: {
+                    HStack(spacing: AppTheme.Spacing.x1) {
+                        Text("Rewrite Last Dictation")
+                        InfoTip("Press, say how to change the text Yap pasted last (\"make it more formal\", \"改正式一点\"), press again. It's rewritten in place with this mode's AI provider.")
+                    }
+                }
+
+                LabeledContent {
                     HStack(spacing: AppTheme.Spacing.x2) {
                         ShortcutRecorder(
                             action: .cancelRecorder,

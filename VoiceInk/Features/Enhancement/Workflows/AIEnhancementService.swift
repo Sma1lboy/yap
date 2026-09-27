@@ -143,8 +143,10 @@ class AIEnhancementService: ObservableObject {
                 ""
             }
 
+        let cursorContext = configuration.useCursorContext ? contextSnapshot?.cursorContext : nil
+        // The screen's text is the fallback for when the field itself couldn't be read.
         let screenCaptureContext =
-            if useScreenCapture,
+            if useScreenCapture, cursorContext?.hasText != true,
                 let capturedText = screenCaptureService.lastCapturedText,
                 !capturedText.isEmpty
             {
@@ -168,7 +170,7 @@ class AIEnhancementService: ObservableObject {
                 ""
             }
 
-        let contextBlocks = [selectedTextContext, clipboardContext, screenCaptureContext]
+        let contextBlocks = [cursorContext?.promptBlock ?? "", selectedTextContext, clipboardContext, screenCaptureContext]
             .filter { !$0.isEmpty }
 
         let contextSection =

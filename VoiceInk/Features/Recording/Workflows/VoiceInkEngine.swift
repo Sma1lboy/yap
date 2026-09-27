@@ -86,9 +86,16 @@ class VoiceInkEngine: NSObject, ObservableObject {
     private enum RecordingUseCase {
         case newSession
         case assistantFollowUp
+        /// A spoken instruction for rewriting the last paste (LastPasteEditor), not text to paste.
+        case editLastPaste
 
         var isAssistantFollowUp: Bool {
             self == .assistantFollowUp
+        }
+
+        /// Transcribed without trigger words or cleanup, and handed over instead of pasted.
+        var handsOffTranscript: Bool {
+            self != .newSession
         }
     }
 
@@ -176,7 +183,9 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
     // MARK: - Toggle Record
 
-    func toggleRecord(modeId: UUID? = nil, isAssistantFollowUp: Bool = false, sendAfterPaste: Bool = false) async {
+    func toggleRecord(
+        modeId: UUID? = nil, isAssistantFollowUp: Bool = false, editsLastPaste: Bool = false, sendAfterPaste: Bool = false
+    ) async {
         if recordingState == .starting {
             await cancelRecording()
             return
@@ -221,7 +230,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
             }
         } else {
             let canContinueAssistantSession = isAssistantFollowUp && assistantSession.canSendFollowUp
-            let recordingUseCase: RecordingUseCase = canContinueAssistantSession ? .assistantFollowUp : .newSession
+            let recordingUseCase: RecordingUseCase =
+                editsLastPaste ? .editLastPaste : canContinueAssistantSession ? .assistantFollowUp : .newSession
 
             activePipelineTranscriptionID = nil
             shouldCancelRecording = false
@@ -683,10 +693,17 @@ class VoiceInkEngine: NSObject, ObservableObject {
                 await self.recorderUIManager?.dismissRecorderPanel()
             },
             assistant: TranscriptionPipeline.AssistantHooks(
-                isFollowUp: activePipelineUseCase.isAssistantFollowUp,
-                sendFollowUp: { [weak self] text, transcription in
+                isFollowUp: activePipelineUseCase.handsOffTranscript,
+                sendFollowUp: { [weak self, useCase = activePipelineUseCase] text, transcription in
                     guard let self, self.activePipelineTranscriptionID == transcriptionID else { return }
-                    await self.sendAssistantFollowUp(text, transcription: transcription)
+                    guard useCase == .editLastPaste else {
+                        await self.sendAssistantFollowUp(text, transcription: transcription)
+                        return
+                    }
+                    await self.recorderUIManager?.dismissRecorderPanel()
+                    await LastPasteEditor.shared.rewriteLastPaste(
+                        instruction: text, enhancementService: self.enhancementService,
+                        aiService: self.enhancementService?.getAIService())
                 },
                 startResponse: { [weak self] transcript, configuration in
                     guard let self, self.activePipelineTranscriptionID == transcriptionID else { return }

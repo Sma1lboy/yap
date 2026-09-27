@@ -53,6 +53,8 @@ struct VoiceInkApp: App {
             PCMResampler.selfCheck()
             RecordedAudioIssue.selfCheck()
             ClipboardManager.selfCheck()
+            LastPasteEditor.selfCheck()
+            CursorContextReader.selfCheck()
             OpenAICompatibleChat.selfCheck()
             ModelFileDownloader.selfCheck()
             ReplacementText.selfCheck()

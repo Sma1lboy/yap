@@ -106,8 +106,8 @@ class CursorPaster {
 
         let pasteResult: PasteResult
         let autoLearnGeneration: UInt64?
+        let targetProcessID = NSWorkspace.shared.frontmostApplication?.processIdentifier
         if AutoLearnSettings.isEnabled {
-            let targetProcessID = NSWorkspace.shared.frontmostApplication?.processIdentifier
             pasteResult = await postPasteCommand()
             autoLearnGeneration = await AutoLearnService.shared.pasteDidFinish(
                 text: text,
@@ -117,6 +117,9 @@ class CursorPaster {
         } else {
             pasteResult = await postPasteCommand()
             autoLearnGeneration = nil
+        }
+        if pasteResult.didPostPasteCommand {
+            LastPasteEditor.shared.pasteDidFinish(text: text, processID: targetProcessID)
         }
         // A paste that never reached the app must not take the text back off the clipboard.
         if shouldRestoreClipboard && pasteResult.didPostPasteCommand {
@@ -271,6 +274,14 @@ class CursorPaster {
     }
 
     // MARK: - Send Key
+
+    /// Deletes the current selection (LastPasteEditor's undo, after it selected the last paste).
+    static func performDeleteKey() {
+        guard AXIsProcessTrusted() else { return }
+        let source = CGEventSource(stateID: .privateState)
+        CGEvent(keyboardEventSource: source, virtualKey: 0x33, keyDown: true)?.post(tap: .cghidEventTap)
+        CGEvent(keyboardEventSource: source, virtualKey: 0x33, keyDown: false)?.post(tap: .cghidEventTap)
+    }
 
     static func performSendKey(_ key: FinishAndSendKey) {
         guard key.isEnabled else { return }

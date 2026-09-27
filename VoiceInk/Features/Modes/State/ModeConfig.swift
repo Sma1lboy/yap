@@ -56,6 +56,8 @@ struct ModeConfig: Codable, Identifiable, Equatable {
     var useClipboardContext: Bool
     var useSelectedTextContext: Bool
     var useScreenCapture: Bool
+    /// Text around the cursor in the focused field, plus the app and window title (CursorContextReader).
+    var useCursorContext: Bool = true
     var selectedAIProvider: String?
     var selectedAIModel: String?
     var outputMode: ModeOutputMode = .paste
@@ -66,7 +68,7 @@ struct ModeConfig: Codable, Identifiable, Equatable {
     enum CodingKeys: String, CodingKey {
         case id, name, icon, appConfigs, urlConfigs, triggerGroups, triggerWords, isAIEnhancementEnabled,
             selectedPrompt, isRealtimeTranscriptionEnabled, selectedLanguage, isTextFormattingEnabled,
-            useClipboardContext, useSelectedTextContext, useScreenCapture, selectedAIProvider, selectedAIModel,
+            useClipboardContext, useSelectedTextContext, useScreenCapture, useCursorContext, selectedAIProvider, selectedAIModel,
             outputMode, customCommand, isEnabled, isDefault
         case legacyEmoji = "emoji"
         case selectedWhisperModel
@@ -79,7 +81,7 @@ struct ModeConfig: Codable, Identifiable, Equatable {
         isAIEnhancementEnabled: Bool, selectedPrompt: String? = nil,
         selectedTranscriptionModelName: String? = nil, isRealtimeTranscriptionEnabled: Bool = true,
         selectedLanguage: String? = nil, useClipboardContext: Bool = false, useSelectedTextContext: Bool = true,
-        useScreenCapture: Bool = false,
+        useScreenCapture: Bool = false, useCursorContext: Bool = true,
         isTextFormattingEnabled: Bool = false, selectedAIProvider: String? = nil, selectedAIModel: String? = nil,
         outputMode: ModeOutputMode = .paste, customCommand: ModeCustomCommand? = nil,
         isEnabled: Bool = true, isDefault: Bool = false
@@ -96,6 +98,7 @@ struct ModeConfig: Codable, Identifiable, Equatable {
         self.useClipboardContext = useClipboardContext
         self.useSelectedTextContext = useSelectedTextContext
         self.useScreenCapture = useScreenCapture
+        self.useCursorContext = useCursorContext
         self.outputMode = outputMode
         self.customCommand = customCommand
         self.selectedAIProvider = selectedAIProvider
@@ -156,6 +159,7 @@ struct ModeConfig: Codable, Identifiable, Equatable {
         useScreenCapture =
             try container.decodeIfPresent(Bool.self, forKey: .useScreenCapture)
             ?? UserDefaults.standard.bool(forKey: "useScreenCaptureContext")
+        useCursorContext = try container.decodeIfPresent(Bool.self, forKey: .useCursorContext) ?? true
         selectedAIProvider = try container.decodeIfPresent(String.self, forKey: .selectedAIProvider)
         selectedAIModel = try container.decodeIfPresent(String.self, forKey: .selectedAIModel)
         outputMode = try container.decodeIfPresent(ModeOutputMode.self, forKey: .outputMode) ?? .paste
@@ -189,6 +193,7 @@ struct ModeConfig: Codable, Identifiable, Equatable {
         try container.encode(useClipboardContext, forKey: .useClipboardContext)
         try container.encode(useSelectedTextContext, forKey: .useSelectedTextContext)
         try container.encode(useScreenCapture, forKey: .useScreenCapture)
+        try container.encode(useCursorContext, forKey: .useCursorContext)
         try container.encodeIfPresent(selectedAIProvider, forKey: .selectedAIProvider)
         try container.encodeIfPresent(selectedAIModel, forKey: .selectedAIModel)
         try container.encode(outputMode, forKey: .outputMode)

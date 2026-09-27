@@ -254,6 +254,15 @@ class RecordingShortcutManager: ObservableObject {
             QuickHistoryController.shared.show(modelContext: engine.modelContext, engine: engine)
         case .quickAddToDictionary:
             DictionaryQuickAddManager.shared.toggle(modelContainer: engine.modelContext.container)
+        case .undoLastPaste:
+            await LastPasteEditor.shared.undoLastPaste()
+        case .rewriteLastPaste:
+            // First press selects the last paste and records the instruction; the next press stops recording.
+            if engine.recordingState == .recording || engine.recordingState == .starting {
+                await engine.toggleRecord()
+            } else if engine.recordingState == .idle, await LastPasteEditor.shared.prepareRewrite() {
+                await engine.toggleRecord(editsLastPaste: true)
+            }
         default:
             break
         }

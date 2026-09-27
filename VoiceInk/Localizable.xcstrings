@@ -559,6 +559,50 @@
         }
       }
     },
+    "%@: Yap Cloud no longer offers %@ for enhancement; using %@ for now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: Yap Cloud bietet %2$@ für die Überarbeitung nicht mehr an; vorerst wird %3$@ verwendet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : Yap Cloud ne propose plus %2$@ pour l'amélioration ; %3$@ est utilisé pour l'instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%1$@」模式的润色模型 %2$@ 已不在 Yap Cloud 提供范围内，暂时改用 %3$@。"
+          }
+        }
+      }
+    },
+    "%@: its Yap Cloud transcription model is no longer offered; using %@ for now." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: Das gewählte Yap-Cloud-Transkriptionsmodell wird nicht mehr angeboten; vorerst wird %2$@ verwendet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ : le modèle de transcription Yap Cloud choisi n'est plus proposé ; %2$@ est utilisé pour l'instant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%1$@」模式选的 Yap Cloud 转写模型已不再提供，暂时改用 %2$@。"
+          }
+        }
+      }
+    },
     "%@× typing speed" : {
       "localizations" : {
         "de" : {
@@ -7445,6 +7489,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "上限(美元)"
+          }
+        }
+      }
+    },
+    "Change it in the mode's settings, or in config.json if it's set there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändere es in den Einstellungen des Modus oder in config.json, falls es dort festgelegt ist."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifiez-le dans les réglages du mode, ou dans config.json s'il y est défini."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在该模式的设置里重新选择；如果是 config.json 里写的，请去那里改。"
           }
         }
       }
@@ -19164,6 +19230,28 @@
         }
       }
     },
+    "No recent dictation Yap can find to change." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap findet kein letztes Diktat, das es ändern könnte."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap ne trouve aucune dictée récente à modifier."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找不到最近一次可以修改的听写。"
+          }
+        }
+      }
+    },
     "No results found" : {
       "localizations" : {
         "de" : {
@@ -21585,6 +21673,28 @@
         }
       }
     },
+    "Press, say how to change the text Yap pasted last (\"make it more formal\", \"改正式一点\"), press again. It's rewritten in place with this mode's AI provider." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drücken, sagen, wie der zuletzt eingefügte Text geändert werden soll („formeller“, „改正式一点“), erneut drücken. Er wird mit dem KI-Anbieter dieses Modus an Ort und Stelle umgeschrieben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez, dites comment modifier le dernier texte collé par Yap (« plus formel », « 改正式一点 »), puis appuyez à nouveau. Il est réécrit sur place avec le fournisseur IA de ce mode."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按一下，说要怎么改 Yap 上一次粘贴的文字（比如“改正式一点”），再按一下。会用当前模式的 AI 服务商原地改写。"
+          }
+        }
+      }
+    },
     "Prewarm model (Experimental)" : {
       "localizations" : {
         "de" : {
@@ -22965,6 +23075,28 @@
         }
       }
     },
+    "Removes the text Yap pasted last, if it's still where Yap put it and unchanged. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entfernt den Text, den Yap zuletzt eingefügt hat, wenn er noch unverändert an seiner Stelle steht. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprime le texte que Yap a collé en dernier, s'il est toujours à sa place et inchangé. Dire seulement « scratch that » ou « 删掉刚才那句 » fait la même chose."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删掉 Yap 上一次粘贴的文字（前提是它还在原处、没被改过）。只说一句“删掉刚才那句”或“scratch that”也一样。"
+          }
+        }
+      }
+    },
     "Reorder Modes" : {
       "localizations" : {
         "de" : {
@@ -23987,6 +24119,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "改写"
+          }
+        }
+      }
+    },
+    "Rewrite Last Dictation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letztes Diktat umschreiben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réécrire la dernière dictée"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改写上一次听写"
           }
         }
       }
@@ -27611,6 +27765,28 @@
         }
       }
     },
+    "Text Around the Cursor" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text um den Cursor"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Texte autour du curseur"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "光标附近的文字"
+          }
+        }
+      }
+    },
     "That code has expired. Send a new code." : {
       "localizations" : {
         "de" : {
@@ -27881,6 +28057,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AI 返回了无效的词典自动学习审核响应。"
+          }
+        }
+      }
+    },
+    "The AI returned no text." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die KI hat keinen Text zurückgegeben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'IA n'a renvoyé aucun texte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 没有返回文字。"
           }
         }
       }
@@ -28354,6 +28552,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ 的下载大小为 %2$lld 字节，而不是 %3$lld 字节。"
+          }
+        }
+      }
+    },
+    "The field with your last dictation isn't focused anymore." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Feld mit deinem letzten Diktat ist nicht mehr ausgewählt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le champ contenant votre dernière dictée n'est plus actif."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一次听写所在的输入框已经不在焦点上了。"
           }
         }
       }
@@ -29049,6 +29269,28 @@
         }
       }
     },
+    "This app doesn't let Yap select your last dictation." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese App lässt Yap dein letztes Diktat nicht auswählen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette app ne permet pas à Yap de sélectionner votre dernière dictée."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个 App 不允许 Yap 选中你上一次的听写。"
+          }
+        }
+      }
+    },
     "This can happen due to an issue with the audio recording or insufficient system resources. Please try again, or restart the app." : {
       "localizations" : {
         "de" : {
@@ -29500,6 +29742,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "超时时长"
+          }
+        }
+      }
+    },
+    "To rewrite by voice, turn on AI enhancement with a provider in this mode." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um per Sprache umzuschreiben, schalte in diesem Modus die KI-Verbesserung mit einem Anbieter ein."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour réécrire à la voix, activez l'amélioration IA avec un fournisseur dans ce mode."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要用语音改写，请在这个模式里打开 AI 润色并选择服务商。"
           }
         }
       }
@@ -30648,6 +30912,28 @@
         }
       }
     },
+    "Undo Last Paste" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letztes Einfügen rückgängig"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler le dernier collage"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "撤销上次粘贴"
+          }
+        }
+      }
+    },
     "Unexpected response from the server" : {
       "comment" : "Error message when the URL session fails to create a response from the server.",
       "isCommentAutoGenerated" : true,
@@ -30936,25 +31222,24 @@
         }
       }
     },
-    "Use captured on-screen text as context for this mode." : {
-      "extractionState" : "manual",
+    "Use captured on-screen text as context for this mode, when the text around the cursor can't be read." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erfassten Bildschirmtext als Kontext für diesen Modus verwenden."
+            "value" : "Erfassten Bildschirmtext als Kontext für diesen Modus verwenden, wenn der Text um den Cursor nicht lesbar ist."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Utilisez le texte capturé à l'écran comme contexte pour ce mode."
+            "value" : "Utiliser le texte capturé à l'écran comme contexte pour ce mode quand le texte autour du curseur ne peut pas être lu."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "将捕获的屏幕文本用作此模式的上下文。"
+            "value" : "光标附近的文字读不到时，把捕获的屏幕文本用作此模式的上下文。"
           }
         }
       }
@@ -31001,6 +31286,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "将当前 App 中选中的文本用作此模式的上下文。"
+          }
+        }
+      }
+    },
+    "Use the app name, window title and up to 3,000 characters around the cursor in the field you're dictating into. Password fields are never read." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App-Name, Fenstertitel und bis zu 3.000 Zeichen um den Cursor im Feld verwenden, in das du diktierst. Passwortfelder werden nie gelesen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser le nom de l'app, le titre de la fenêtre et jusqu'à 3 000 caractères autour du curseur dans le champ où vous dictez. Les champs de mot de passe ne sont jamais lus."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用当前 App 名、窗口标题，以及你正在听写的输入框里光标前后最多 3,000 个字符。密码框永远不会读取。"
           }
         }
       }
@@ -33567,6 +33874,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "退出并重新打开 Yap 后，语言更改才会完全生效。"
+          }
+        }
+      }
+    },
+    "Your last dictation was edited since, so Yap left it alone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein letztes Diktat wurde inzwischen bearbeitet, daher hat Yap es nicht verändert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre dernière dictée a été modifiée depuis, Yap n'y a donc pas touché."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一次听写之后被改过了，Yap 没有动它。"
           }
         }
       }
