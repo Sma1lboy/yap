@@ -11,9 +11,9 @@ Yap Cloud (paygate) serves only the models in its `MODEL_ALLOWLIST` env var on R
 | Transcription | `openai/whisper-large-v3` | 48/82, cheapest per minute |
 | Transcription | `openai/gpt-4o-transcribe` | shown in YapCloudPicks; synthetic check 49/52 |
 | Transcription | `qwen/qwen3-asr-flash-2026-02-10` | shown in YapCloudPicks; synthetic check 46/52 |
-| Enhancement (default) | `deepseek/deepseek-v4.1-flash` | 23–24/25 cleanup cases, p50 0.53 s, $0.00019 per call (see below) |
-| Enhancement | `openai/gpt-6-luna` | 24–25/25, p50 1.05 s, $0.00012 per call |
-| Enhancement | `deepseek/deepseek-v4-flash` | 23/25, p50 1.24 s, $0.00004 per call |
+| Enhancement (default) | `deepseek/deepseek-v4.1-flash` | 25/25 cleanup cases in 3 of 3 rounds, p50 0.57 s, $0.00013 per call (see below) |
+| Enhancement | `openai/gpt-6-luna` | 24–25/25, p50 1.11 s, $0.00003 per call |
+| Enhancement | `deepseek/deepseek-v4-flash` | 23–25/25, p50 1.24 s, $0.00006 per call |
 
 ## Changing the list
 
@@ -33,7 +33,8 @@ step lists, code identifiers, recognition errors ("P 二", "use effect"), Englis
 requests that must not be answered, and short replies. Each case has automatic checks: required and forbidden
 text, list or no list, maximum length. Requests are the app's own Yap Cloud body (streamed, reasoning off,
 throughput routing), sent through production paygate with the bench account. Cost per call comes from the
-account ledger, markup included. Raw outputs: `setup/enhance-results/`.
+account ledger, markup included. The table below is the first run, on the prompt before the change described
+further down; `setup/enhance-results/` holds the runs on the current prompt.
 
 | model | passed per round (of 25) | original 9 | p50 | p95 | cost per call |
 |---|---|---|---|---|---|
@@ -61,6 +62,28 @@ $0.04 (v4). The whole bench (225 calls) cost $0.026.
 enhancement time is what the user waits for after they stop talking. Its two failure types leave text in a
 readable state (an extra "不是周三", prose instead of a list). gpt-6-luna is the most accurate and would be the
 pick if the default ever moves toward accuracy over speed; the 0.5 s it adds is the cost. v4-flash is the
-cheapest but the slowest, and fails more format cases, so it isn't a default candidate. Before switching
-anything, a cheaper fix is to see whether one sentence in `RecommendedPrompt.md` fixes v4.1's two failure types,
-rerunning this bench to check.
+cheapest but the slowest, and fails more format cases, so it isn't a default candidate. The prompt change
+below fixed v4.1's two failure types without switching models.
+
+### After the prompt change (2026-09-27)
+
+`RecommendedPrompt.md` gained three things aimed at v4.1-flash's two failure types:
+- Rule 4: a retracted part must not survive as "不是……".
+- Rule 6: "最后" joins the ordinal words, and a list is required even when the items are short.
+- Rule 5: "超时六十秒"→超时 60 秒, so durations of 10 or more use digits.
+- Two examples: a correction with a number, and an ordinal list whose items keep their English terms.
+
+Three example drafts made other models worse and were replaced. A correction example with a Chinese time led
+gpt-6-luna to write "六十秒". A list example with only Chinese items led it to translate "pull" as 拉取. A
+correction example that ran on into a second topic taught v4-flash to stop splitting topics into paragraphs.
+
+| model | before | after |
+|---|---|---|
+| `deepseek/deepseek-v4.1-flash` | 23, 23, 24 | **25, 25, 25** |
+| `deepseek/deepseek-v4-flash` | 23, 23, 23 | 23, 25, 25 |
+| `openai/gpt-6-luna` | 25, 24, 25 | 24, 25, 24 |
+
+v4.1-flash now passes every case in every round, in each of the three separate runs made on the final prompt's
+versions. gpt-6-luna is one pass lower over 3 rounds, with the misses in different cases each time (`retro`,
+`command`). Over 6 rounds the old prompt scored 148/150, so a difference of one is within what repeated runs
+of the same prompt show, but it isn't proven equal. The tables above (latency, cost) are from these final runs.
