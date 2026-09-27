@@ -9,6 +9,10 @@ enum ShortcutAction: Hashable {
     case cancelRecorder
     case openQuickHistory
     case quickAddToDictionary
+    /// Removes the last paste (LastPasteEditor).
+    case undoLastPaste
+    /// Press, speak an instruction, press again: the last paste is rewritten in place (LastPasteEditor).
+    case rewriteLastPaste
     case mode(UUID)
     case recorderPanelEscape
     case recorderPanelReturn
@@ -45,6 +49,10 @@ enum ShortcutAction: Hashable {
             return "openHistoryWindow"
         case .quickAddToDictionary:
             return "quickAddToDictionary"
+        case .undoLastPaste:
+            return "undoLastPaste"
+        case .rewriteLastPaste:
+            return "rewriteLastPaste"
         case .mode(let id):
             return "mode_\(id.uuidString)"
         case .recorderPanelEscape:
@@ -74,6 +82,10 @@ enum ShortcutAction: Hashable {
             return String(localized: "Open Quick History")
         case .quickAddToDictionary:
             return String(localized: "Quick Add to Dictionary")
+        case .undoLastPaste:
+            return String(localized: "Undo Last Paste")
+        case .rewriteLastPaste:
+            return String(localized: "Rewrite Last Dictation")
         case .mode(let id):
             if let config = ModeManager.shared.getConfiguration(with: id) {
                 return String(format: String(localized: "%@ Mode"), config.name)
@@ -99,6 +111,8 @@ enum ShortcutAction: Hashable {
         .retryLastTranscription,
         .openQuickHistory,
         .quickAddToDictionary,
+        .undoLastPaste,
+        .rewriteLastPaste,
     ]
 
     static let recorderPanelStoredActions: [Self] = [

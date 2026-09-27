@@ -19120,6 +19120,28 @@
         }
       }
     },
+    "No recent dictation Yap can find to change." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap findet kein letztes Diktat, das es ändern könnte."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap ne trouve aucune dictée récente à modifier."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找不到最近一次可以修改的听写。"
+          }
+        }
+      }
+    },
     "No results found" : {
       "localizations" : {
         "de" : {
@@ -21497,6 +21519,28 @@
         }
       }
     },
+    "Press, say how to change the text Yap pasted last (\"make it more formal\", \"改正式一点\"), press again. It's rewritten in place with this mode's AI provider." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drücken, sagen, wie der zuletzt eingefügte Text geändert werden soll („formeller“, „改正式一点“), erneut drücken. Er wird mit dem KI-Anbieter dieses Modus an Ort und Stelle umgeschrieben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez, dites comment modifier le dernier texte collé par Yap (« plus formel », « 改正式一点 »), puis appuyez à nouveau. Il est réécrit sur place avec le fournisseur IA de ce mode."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按一下，说要怎么改 Yap 上一次粘贴的文字（比如“改正式一点”），再按一下。会用当前模式的 AI 服务商原地改写。"
+          }
+        }
+      }
+    },
     "Prewarm model (Experimental)" : {
       "localizations" : {
         "de" : {
@@ -22877,6 +22921,28 @@
         }
       }
     },
+    "Removes the text Yap pasted last, if it's still where Yap put it and unchanged. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entfernt den Text, den Yap zuletzt eingefügt hat, wenn er noch unverändert an seiner Stelle steht. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supprime le texte que Yap a collé en dernier, s'il est toujours à sa place et inchangé. Dire seulement « scratch that » ou « 删掉刚才那句 » fait la même chose."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删掉 Yap 上一次粘贴的文字（前提是它还在原处、没被改过）。只说一句“删掉刚才那句”或“scratch that”也一样。"
+          }
+        }
+      }
+    },
     "Reorder Modes" : {
       "localizations" : {
         "de" : {
@@ -23899,6 +23965,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "改写"
+          }
+        }
+      }
+    },
+    "Rewrite Last Dictation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letztes Diktat umschreiben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réécrire la dernière dictée"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改写上一次听写"
           }
         }
       }
@@ -27819,6 +27907,28 @@
         }
       }
     },
+    "The AI returned no text." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die KI hat keinen Text zurückgegeben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'IA n'a renvoyé aucun texte."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 没有返回文字。"
+          }
+        }
+      }
+    },
     "The AI service is unreachable right now. Nothing was charged. Try again shortly." : {
       "localizations" : {
         "de" : {
@@ -28288,6 +28398,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ 的下载大小为 %2$lld 字节，而不是 %3$lld 字节。"
+          }
+        }
+      }
+    },
+    "The field with your last dictation isn't focused anymore." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Feld mit deinem letzten Diktat ist nicht mehr ausgewählt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le champ contenant votre dernière dictée n'est plus actif."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一次听写所在的输入框已经不在焦点上了。"
           }
         }
       }
@@ -28983,6 +29115,28 @@
         }
       }
     },
+    "This app doesn't let Yap select your last dictation." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese App lässt Yap dein letztes Diktat nicht auswählen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette app ne permet pas à Yap de sélectionner votre dernière dictée."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这个 App 不允许 Yap 选中你上一次的听写。"
+          }
+        }
+      }
+    },
     "This can happen due to an issue with the audio recording or insufficient system resources. Please try again, or restart the app." : {
       "localizations" : {
         "de" : {
@@ -29434,6 +29588,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "超时时长"
+          }
+        }
+      }
+    },
+    "To rewrite by voice, turn on AI enhancement with a provider in this mode." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um per Sprache umzuschreiben, schalte in diesem Modus die KI-Verbesserung mit einem Anbieter ein."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour réécrire à la voix, activez l'amélioration IA avec un fournisseur dans ce mode."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要用语音改写，请在这个模式里打开 AI 润色并选择服务商。"
           }
         }
       }
@@ -30578,6 +30754,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "撤销"
+          }
+        }
+      }
+    },
+    "Undo Last Paste" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letztes Einfügen rückgängig"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annuler le dernier collage"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "撤销上次粘贴"
           }
         }
       }
@@ -33522,6 +33720,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "退出并重新打开 Yap 后，语言更改才会完全生效。"
+          }
+        }
+      }
+    },
+    "Your last dictation was edited since, so Yap left it alone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein letztes Diktat wurde inzwischen bearbeitet, daher hat Yap es nicht verändert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre dernière dictée a été modifiée depuis, Yap n'y a donc pas touché."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一次听写之后被改过了，Yap 没有动它。"
           }
         }
       }
