@@ -22,6 +22,6 @@
 
 ## 注意
 
-- 第 3 镜粘贴的是润色关闭时的原始输出，包括末尾转错的"效应"（原话是"就行"类的词，模型转错了）。二选一：保留（最诚实，屏上标 "raw output, cleanup off"），或者只截到"改成 HTTP-only 的 Cookie"为止。不要手改成正确的字。
+- 第 3 镜粘贴的是润色关闭时的原始输出，包括末尾把"校验"转成了"效应"（原句见 `setup/asr/clips.json` 的 `security`）。二选一：保留（最诚实，屏上标 "raw output, cleanup off"），或者只截到"改成 HTTP-only 的 Cookie"为止。不要手改成正确的字。
 - 不出现价格、余额、Yap Cloud 充值界面。
 - 做法：`/hyperframes` → `product-launch-video` 路线，素材用 `/tmp/yap-ui/snapshots` 的图和上面的文字。
