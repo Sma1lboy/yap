@@ -139,6 +139,19 @@ enum MeetingNotes {
             assert(shortcut.matchesKeyEvent(keyCode: 49, modifierFlags: NSEvent.ModifierFlags(rawValue: command | 0x10)))
             assert(!shortcut.matchesKeyEvent(keyCode: 49, modifierFlags: NSEvent.ModifierFlags(rawValue: command | 0x08)))
             assert(shortcut.displayTokens.first == "Right ⌘" && !Shortcut.key(keyCode: 0, modifierFlags: [.command]).isCommandSpace)
+
+            // Deleting a meeting's recording takes its whole folder; a dictation's, just the file.
+            let root = FileManager.default.temporaryDirectory.appendingPathComponent("yap-selfcheck-\(UUID().uuidString)")
+            let meeting = root.appendingPathComponent("meetings/m1", isDirectory: true)
+            try? FileManager.default.createDirectory(at: meeting, withIntermediateDirectories: true)
+            for name in ["mix.wav", "mic.wav"] { FileManager.default.createFile(atPath: meeting.appendingPathComponent(name).path, contents: Data()) }
+            let dictation = root.appendingPathComponent("d.wav")
+            FileManager.default.createFile(atPath: dictation.path, contents: Data())
+            try? Transcription.removeAudio(at: meeting.appendingPathComponent("mix.wav"))
+            try? Transcription.removeAudio(at: dictation)
+            assert(!FileManager.default.fileExists(atPath: meeting.path) && !FileManager.default.fileExists(atPath: dictation.path))
+            assert(FileManager.default.fileExists(atPath: root.appendingPathComponent("meetings").path))
+            try? FileManager.default.removeItem(at: root)
         }
     }
 #endif

@@ -96,3 +96,13 @@ final class Transcription {
         aiRequestUserMessage = nil
     }
 }
+
+extension Transcription {
+    /// Deletes a recording. A meeting's `audioFileURL` is the mix in its own folder (Recordings/meetings/<id>/);
+    /// the whole folder goes, with both channels and the segments.
+    static func removeAudio(at url: URL) throws {
+        let folder = url.deletingLastPathComponent()
+        let isMeeting = folder.deletingLastPathComponent().lastPathComponent == "meetings"
+        try FileManager.default.removeItem(at: isMeeting ? folder : url)
+    }
+}
