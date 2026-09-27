@@ -19,7 +19,13 @@ struct ModeConfigFormView: View {
     @State private var isBrowsingYapCloudTranscriptionModels = false
     @State private var isShowingDeleteConfirmation = false
     @State private var isShowingDefaultModeDeleteAlert = false
-    @State private var isContextAwarenessExpanded = false
+    #if DEBUG
+        /// make ui-snapshots: opens Context Awareness.
+        @MainActor static var snapshotExpandsContext = false
+        @State private var isContextAwarenessExpanded = Self.snapshotExpandsContext
+    #else
+        @State private var isContextAwarenessExpanded = false
+    #endif
 
     private var isDeletingDefaultMode: Bool {
         modeManager.getConfiguration(with: draft.id)?.isDefault == true
@@ -588,6 +594,13 @@ struct ModeConfigFormView: View {
 
     private var contextToggles: some View {
         Group {
+            Toggle(isOn: $draft.useCursorContext) {
+                HStack(spacing: AppTheme.Spacing.x1) {
+                    Text("Text Around the Cursor")
+                    InfoTip("Use the app name, window title and up to 3,000 characters around the cursor in the field you're dictating into. Password fields are never read.")
+                }
+            }
+
             Toggle(isOn: $draft.useSelectedTextContext) {
                 HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Selected Text")
@@ -605,7 +618,7 @@ struct ModeConfigFormView: View {
             Toggle(isOn: $draft.useScreenCapture) {
                 HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Screen")
-                    InfoTip("Use captured on-screen text as context for this mode.")
+                    InfoTip("Use captured on-screen text as context for this mode, when the text around the cursor can't be read.")
                 }
             }
         }

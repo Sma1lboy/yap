@@ -214,12 +214,16 @@ struct SectionHeader: View {
 
 #if DEBUG
     extension ModeView {
-        /// make ui-snapshots: opens the editor for the first mode.
+        /// make ui-snapshots: opens the editor for the first mode (with `snapshotEditsEnhancedMode`, the first one
+        /// with AI enhancement on, whose editor shows Context Awareness).
         @MainActor static var snapshotOpensEditor = false
+        @MainActor static var snapshotEditsEnhancedMode = false
 
         private func applySnapshotOverrides() {
-            if Self.snapshotOpensEditor, let first = modeManager.configurations.first {
-                openPanel(mode: .edit(first))
+            let modes = modeManager.configurations
+            let enhanced = Self.snapshotEditsEnhancedMode ? modes.first { $0.isAIEnhancementEnabled } : nil
+            if Self.snapshotOpensEditor, let mode = enhanced ?? modes.first {
+                openPanel(mode: .edit(mode))
             }
         }
     }

@@ -53,6 +53,7 @@ struct VoiceInkApp: App {
             PCMResampler.selfCheck()
             RecordedAudioIssue.selfCheck()
             ClipboardManager.selfCheck()
+            CursorContextReader.selfCheck()
             OpenAICompatibleChat.selfCheck()
             ReplacementText.selfCheck()
             WhisperPrompt.selfCheck()
