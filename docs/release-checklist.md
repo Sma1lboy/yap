@@ -2,7 +2,7 @@
 
 Run before pushing a `vX.Y.Z` tag. One line per check; note failures in the release PR/issue.
 
-- [ ] `make cloud-smoke` passes against production paygate (`YAP_CLOUD_SMOKE_TOKEN` set; the script prints how to get one).
+- [ ] `make cloud-smoke PAYGATE=prod` passes against production paygate (`YAP_CLOUD_SMOKE_TOKEN` set; the script prints how to get one). Without `PAYGATE=prod` it runs against a local paygate.
 - [ ] `make local` builds, and `~/Downloads/Yap.app` launches on a clean macOS user account (a separate test user, so your own settings stay intact).
 - [ ] Onboarding, Yap Cloud path: new email, code sign-in, $1 credit shown, first practice dictation pastes text, 6 screens with one microphone.
 - [ ] Onboarding, Your OpenRouter Key path: paste a key, Continue verifies it, first practice dictation pastes text.

@@ -1,8 +1,10 @@
 #!/bin/bash
 # `make sync-e2e`: registers a throwaway Yap Cloud account with two devices (two tokens = two Macs), runs the
-# sync scenarios against live paygate, then deletes the account (the binary does it; the trap is the fallback).
-# Needs the Railway CLI logged in. Tokens come from paygate's scripts/issue-token.ts over `railway ssh`
-# (no email, zero balance, no signup credit); if that fails, it signs in with a code read from paygate's log.
+# sync scenarios against paygate, then deletes the account (the binary does it; the trap is the fallback).
+# Tokens come from paygate's scripts/issue-token.ts (no email, zero balance, no signup credit):
+# - PAYGATE=local (the Makefile default): `bun run` in the local copy (PAYGATE_DIR, scripts/paygate-local.sh);
+# - PAYGATE=prod: over `railway ssh` (Railway CLI logged in); if that fails, it signs in with a code read from
+#   paygate's log.
 set -euo pipefail
 BASE="${YAP_CLOUD_SMOKE_URL:-https://cloud.yap.sma1lboy.me}"
 RAILWAY_PROJECT="${PAYGATE_RAILWAY_PROJECT:-8651e3c3-6d6c-4d56-a8e8-df9d89ed3f34}"  # paygate-yap
@@ -36,8 +38,13 @@ sign_in() {  # $1 = device name, $2 = code to skip → prints "<code> <token>"
 }
 
 issue_token() {  # $1 = device name → prints a token, or nothing
-    railway ssh -p "$RAILWAY_PROJECT" -s paygate -e production -- \
-        bun run scripts/issue-token.ts "$EMAIL" --device-name "$1" 2>/dev/null | tr -d '[:space:]' || true
+    if [ "${PAYGATE:-}" = prod ]; then
+        railway ssh -p "$RAILWAY_PROJECT" -s paygate -e production -- \
+            bun run scripts/issue-token.ts "$EMAIL" --device-name "$1" 2>/dev/null | tr -d '[:space:]' || true
+    else
+        (cd "$PAYGATE_DIR" && bun run scripts/issue-token.ts "$EMAIL" --device-name "$1" 2>/dev/null) \
+            | tr -d '[:space:]' || true
+    fi
 }
 
 TOKEN_A=""
@@ -53,6 +60,9 @@ TOKEN_A=$(issue_token "sync-e2e Mac A")
 TOKEN_B=$([ -n "$TOKEN_A" ] && issue_token "sync-e2e Mac B" || true)
 if [ -n "$TOKEN_A" ] && [ -n "$TOKEN_B" ]; then
     echo "     tokens                      issued by paygate scripts/issue-token.ts"
+elif [ "${PAYGATE:-}" != prod ]; then
+    echo "issue-token.ts failed in $PAYGATE_DIR (is make paygate-local up?)" >&2
+    exit 1
 else
     echo "     tokens                      issue-token.ts unavailable, signing in with codes from paygate's log"
     # `read <<<"$(…)"` would swallow a failed sign-in, so each step is checked.

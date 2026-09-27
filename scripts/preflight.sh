@@ -2,9 +2,9 @@
 # Release preflight: run before pushing a vX.Y.Z tag.
 #   scripts/preflight.sh 1.2.0
 # Runs every check even when one fails, prints a PASS/FAIL table, exits 1 if anything failed.
-#   1. make build (Debug)                        4. make sync-e2e
+#   1. make build (Debug)                        4. make sync-e2e (PAYGATE=prod)
 #   2. Release build with MARKETING_VERSION      5. docs/releases/<version>.md exists
-#   3. make cloud-smoke                           6. /v1/info numbers vs release notes, READMEs, site, app code
+#   3. make cloud-smoke (PAYGATE=prod)            6. /v1/info numbers vs release notes, READMEs, site, app code
 # The Release build goes to .local-build/preflight (incremental after the first run) and is never copied to
 # ~/Downloads. cloud-smoke uses YAP_CLOUD_SMOKE_TOKEN when set; otherwise it issues a token for the smoke account
 # with paygate's scripts/issue-token.ts and signs that device out afterwards. Needs the Railway CLI logged in
@@ -81,13 +81,13 @@ print(next((str(x["id"]) for x in d if x.get("current")), ""))' 2>/dev/null)
 }
 trap sign_out_issued EXIT
 if [ -n "$SMOKE_TOKEN" ]; then
-    run_step "make cloud-smoke" "$LOGS/cloud-smoke.log" env YAP_CLOUD_SMOKE_TOKEN="$SMOKE_TOKEN" make cloud-smoke
+    run_step "make cloud-smoke" "$LOGS/cloud-smoke.log" env YAP_CLOUD_SMOKE_TOKEN="$SMOKE_TOKEN" make cloud-smoke PAYGATE=prod
 else
     record FAIL "make cloud-smoke" "no YAP_CLOUD_SMOKE_TOKEN and issue-token.ts gave none (railway login?)"
 fi
 
 # 4. sync-e2e
-run_step "make sync-e2e" "$LOGS/sync-e2e.log" make sync-e2e
+run_step "make sync-e2e" "$LOGS/sync-e2e.log" make sync-e2e PAYGATE=prod
 
 # 5. release notes
 NOTES="docs/releases/$VERSION.md"

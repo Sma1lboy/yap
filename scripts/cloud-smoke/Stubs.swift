@@ -3,6 +3,16 @@
 import Foundation
 import SwiftData
 
+/// Points the client at YAP_CLOUD_SMOKE_URL (the Makefile sets it for PAYGATE=local), or production when unset.
+/// Always written: the value is stored in the binary's defaults and would otherwise leak into the next run.
+func usePaygateURL(from env: [String: String]) {
+    if let url = env["YAP_CLOUD_SMOKE_URL"], !url.isEmpty {
+        UserDefaults.standard.set(url, forKey: YapCloud.baseURLDefaultsKey)
+    } else {
+        UserDefaults.standard.removeObject(forKey: YapCloud.baseURLDefaultsKey)
+    }
+}
+
 /// In-memory keychain seeded with YAP_CLOUD_SMOKE_TOKEN; nothing touches the real keychain.
 final class KeychainService {
     static let shared = KeychainService()

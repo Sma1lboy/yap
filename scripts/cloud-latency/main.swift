@@ -15,9 +15,10 @@ let enhancementModel = "deepseek/deepseek-v4.1-flash"  // RecommendedSetup.enhan
 let accountEmail = "latency+\(Int(Date().timeIntervalSince1970))@sma1lboy.me"
 
 guard let paygateDir = env["PAYGATE_DIR"], !paygateDir.isEmpty else {
-    print("Set PAYGATE_DIR to a Railway-linked paygate checkout (funding and the one-time token need railway ssh).")
+    print("Run through `make cloud-latency` (local paygate), or PAYGATE=prod with PAYGATE_DIR set to a Railway-linked checkout.")
     exit(2)
 }
+usePaygateURL(from: env)
 guard let token = issueToken(email: accountEmail, in: paygateDir, deviceName: "cloud-latency") else {
     print("issue-token.ts failed in \(paygateDir)")
     exit(2)
