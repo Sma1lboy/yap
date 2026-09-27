@@ -1,0 +1,11 @@
+{"id": "deploy", "text": "今天我想把那个GitHub Actions的pipeline改一下，现在CI太慢了。buildcache好像没生效，我怀疑是dapr file里面layer的顺序有问题。", "secs": 1.5871539115905762, "load": 0.0, "audio": 6.989187}
+{"id": "standup", "text": "昨天我跟Zara对了一下API的 schema，它那边的 proxy resolver还差三个endpoint，预计周四能合进N branch。", "secs": 0.9584319591522217, "load": 0.0, "audio": 5.168}
+{"id": "bug", "text": "这个 bug 只在 Safari 上复现，iOS 17 的 WebKit 对 IndexedDB 的 transaction 处理不一样， retry 逻辑要改成 exponential backoff。", "secs": 0.9034519195556641, "load": 0.0, "audio": 6.559625}
+{"id": "perf", "text": "我们把 redis 的 TTA 从 300 秒降到 60 秒以后，P99 latency 降到了 120 毫秒，QPS 大概降了 40%。", "secs": 0.6509718894958496, "load": 0.0, "audio": 5.248}
+{"id": "meeting", "text": "下午3点和Kevin还有Priya开个syn，讨论一下Q4的roadmap，重点是onboarding和retention这两个 metric。", "secs": 1.7897937297821045, "load": 0.0, "audio": 5.4335}
+{"id": "ml", "text": "这个模型用pitot训练，batch 4的射程32，layer0 batch31负4，在100上跑了大概8个小时，loss还在降。", "secs": 0.8293330669403076, "load": 0.0, "audio": 5.712}
+{"id": "frontend", "text": "React那边把useEffect换成ReactQuery之后，组件不用自己管loading状态了，Tailwind的 clause也顺便整理了一遍。", "secs": 0.9348797798156738, "load": 0.0, "audio": 5.572813}
+{"id": "infra", "text": "Q4net 7 选中到 1.30 以后，有两个破地址 slash log pass 口。看 log 7 送出马挂在路径边了，横串要从不白。", "secs": 1.0145599842071533, "load": 0.0, "audio": 5.855937}
+{"id": "product", "text": "这次 release 我们上了 dark mode 和一个新的 paywall AB test 跑了两周，conversion rate 提高了 1.8 个点。", "secs": 0.6736152172088623, "load": 0.0, "audio": 5.178063}
+{"id": "email", "text": "帮我给Nishar回个邮件，说feedback的设计稿我看过了，下周一之前把firebox发到slides的desk删了你。", "secs": 0.7121720314025879, "load": 0.0, "audio": 5.055937}
+{"id": "security", "text": "Of the refresh token 现在存在 local storage 里，有 XSS 风险，改成 http only 的 cookie，再加上 CSRF token 校验。", "secs": 0.5932760238647461, "load": 0.0, "audio": 8.324375}
