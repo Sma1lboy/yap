@@ -634,7 +634,7 @@ private enum HistoryPanelMode {
 
 // MARK: - History Card Row
 
-private struct HistoryCardRow: View {
+struct HistoryCardRow: View {
     let transcription: Transcription
     let wordCount: Int
     let isExpanded: Bool
@@ -856,6 +856,11 @@ private struct HistoryCardRow: View {
 
     // MARK: - Expanded Content
 
+    /// The imported file's name is gone by now (the audio is kept as a copy), so name the export by date.
+    private var subtitleBaseName: String {
+        "Yap " + transcription.timestamp.formatted(.iso8601.year().month().day().dateSeparator(.dash))
+    }
+
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             // Tabs
@@ -894,6 +899,8 @@ private struct HistoryCardRow: View {
             .hoverCopyButton(textToCopy: displayText)
 
             YapCloudCostRow(transcription: transcription)
+
+            SubtitleExportMenu(transcription: transcription, suggestedBaseName: subtitleBaseName)
 
             if hasAudioFile, let urlString = transcription.audioFileURL,
                 let url = URL(string: urlString)

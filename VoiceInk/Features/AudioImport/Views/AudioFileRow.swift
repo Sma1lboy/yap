@@ -169,6 +169,9 @@ struct AudioFileRow: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
+                SubtitleExportMenu(
+                    transcription: transcription,
+                    suggestedBaseName: item.url.deletingPathExtension().lastPathComponent)
             }
         }
     }

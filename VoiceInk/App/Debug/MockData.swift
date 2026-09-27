@@ -44,6 +44,12 @@
             ("OK 那就这么定了 我今晚把 changelog 更新好", "OK，那就这么定了，我今晚把 changelog 更新好。"),
         ]
 
+        /// Timed segments, as a file transcribed with local Whisper has them (shows Export Subtitles).
+        static let fileSegments = [
+            TimedSegment(start: 0.4, end: 3.1, text: "um so the standup 改到 Friday morning"),
+            TimedSegment(start: 3.6, end: 5.9, text: "and uh send Chris the onboarding review"),
+        ]
+
         static let vocabulary = ["Yap", "paygate", "OpenRouter", "Parakeet", "SwiftUI", "周报", "standup"]
         static let replacements = [("open router", "OpenRouter"), ("pay gate", "paygate"), ("why app", "Yap")]
 
@@ -60,6 +66,7 @@
                 let item = Transcription(
                     text: text.original, duration: Double(6 + (index * 7) % 40), enhancedText: text.enhanced)
                 item.timestamp = Date().addingTimeInterval(Double(-index) * 3_600 * 3)
+                if index == 0 { item.segmentsJSON = TimedSegments.encode(fileSegments) }
                 context.insert(item)
                 context.insert(metric(for: item, words: (text.enhanced ?? text.original).split(separator: " ").count))
             }
