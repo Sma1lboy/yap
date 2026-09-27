@@ -688,6 +688,14 @@
           "$ref": "#/$defs/shortcut",
           "description": "Add selection to dictionary."
         },
+        "undoLastPasteShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Remove the text Yap pasted last."
+        },
+        "rewriteLastPasteShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Press, say how to change the text Yap pasted last, press again: it is rewritten in place."
+        },
         "primaryRecordingShortcutRawValue": {
           "enum": [
             "none",

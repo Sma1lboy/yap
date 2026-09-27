@@ -46,6 +46,14 @@ final class TranscriptionDelivery {
             return
         }
 
+        // "Scratch that" / 删掉刚才那句 on its own takes back the last paste (checked before cleanup reworded it).
+        if LastPasteEditor.isScratchPhrase(request.transcription.text) || request.text.map(LastPasteEditor.isScratchPhrase) == true {
+            SoundManager.shared.playStopSound()
+            await actions.dismiss()
+            await LastPasteEditor.shared.undoLastPaste()
+            return
+        }
+
         if let text = request.text {
             await paste(text, sendAfterPaste: request.sendAfterPaste, actions: actions)
         } else {
