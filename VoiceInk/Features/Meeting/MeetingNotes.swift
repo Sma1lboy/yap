@@ -46,8 +46,9 @@ enum MeetingNotes {
         speech recognition, so expect misheard words; fix them only when the meaning is clear.
 
         Write the notes in the language most of the meeting was spoken in. Keep English terms, product names, code \
-        and numbers exactly as spoken; never translate them. Use these Markdown sections, with headings in the \
-        notes' language, and leave out a section only if the meeting has nothing for it:
+        and numbers exactly as spoken; never translate them. Use these Markdown sections, with the headings in the \
+        notes' language too (for Chinese notes: 摘要, 决定, 待办, 未决问题), and leave out a section only if the \
+        meeting has nothing for it:
         - Summary: 3–5 bullets with the conclusions.
         - Decisions: what was agreed.
         - Action items: "- [ ] task — owner — due date"; write "unassigned" / "未指定" when nobody or no date was named.

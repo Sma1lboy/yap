@@ -44,9 +44,16 @@ struct MeetingChunker {
         guard count > 0 else { return nil }
         let samples = Array(buffer.prefix(count))
         buffer.removeFirst(count)
-        let start = TimeInterval(consumed) / Self.sampleRate
+        let start = consumed
         consumed += count
-        return Self.rms(samples[...]) < Self.silenceRMS ? nil : Piece(start: start, samples: samples)
+        guard Self.rms(samples[...]) >= Self.silenceRMS else { return nil }
+        // Leading silence is left out, so the timestamp is where speech starts (the other side answering).
+        let window = Int(Self.windowSeconds * Self.sampleRate)
+        var speech = 0
+        while speech + window <= samples.count, Self.rms(samples[speech..<(speech + window)]) < Self.silenceRMS {
+            speech += window
+        }
+        return Piece(start: TimeInterval(start + speech) / Self.sampleRate, samples: Array(samples[speech...]))
     }
 
     /// Start of the quietest 100 ms window in `lower..<upper`, used as the cut point.
@@ -136,13 +143,14 @@ final class PCM16WAVWriter {
             assert(pieces.count == 1 && pieces[0].start == 0)
             assert(abs(pieces[0].end - 23) < 0.2, "cut at the pause, got \(pieces[0].end)")
             let rest = chunker.flush()
-            assert(rest != nil && abs(rest!.start - pieces[0].end) < 0.001 && abs(rest!.end - 33.5) < 0.001)
+            // The rest starts where speech resumes after the pause (leading silence is trimmed), ending at 33.5 s.
+            assert(rest != nil && abs(rest!.start - 23.5) < 0.15 && abs(rest!.end - 33.5) < 0.001)
 
             var quiet = MeetingChunker()
             assert(quiet.append(silence(30)).isEmpty, "silent pieces are dropped")
-            // The dropped silence still counts for the timeline: the next piece starts at 20 s, the rest at 40 s.
+            // The dropped silence still counts for the timeline: the next piece is 20–40 s, its speech starts at 30 s.
             let after = quiet.append(tone(29))
-            assert(after.count == 1 && after[0].start == 20 && after[0].end == 40)
+            assert(after.count == 1 && after[0].start == 30 && after[0].end == 40, "starts where the tone starts")
             assert(quiet.flush()?.start == 40)
             var empty = MeetingChunker()
             assert(empty.flush() == nil)

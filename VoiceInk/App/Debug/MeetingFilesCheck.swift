@@ -27,6 +27,7 @@
                 let files = (try? FileManager.default.contentsOfDirectory(atPath: folder.path))?.sorted() ?? []
                 print("meeting-check: files \(files.joined(separator: " "))")
                 print("meeting-check: notes-problem \(result.notesProblem ?? "none")")
+                print("meeting-check: notes-model \(result.notesModel ?? "none")")
                 print("meeting-check: transcript-begin\n\(result.transcript)\nmeeting-check: transcript-end")
                 print("meeting-check: notes-begin\n\(result.notes ?? "")\nmeeting-check: notes-end")
                 print("meeting-check: markdown-bytes \(result.markdown.utf8.count)")

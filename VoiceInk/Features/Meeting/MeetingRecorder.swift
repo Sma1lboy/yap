@@ -31,6 +31,8 @@ final class MeetingRecorder: ObservableObject {
         /// Why there are no notes (Yap Refine, no AI provider, the request failed); nil when there are.
         let notesProblem: String?
         let markdown: String
+        /// The AI model that wrote the notes.
+        let notesModel: String?
     }
 
     @Published private(set) var phase: Phase = .idle
@@ -174,7 +176,7 @@ final class MeetingRecorder: ObservableObject {
             notes: summary.notes, transcript: transcript)
         let result = MeetingResult(
             transcriptionID: transcription.id, notes: summary.notes, transcript: transcript,
-            notesProblem: summary.problem, markdown: markdown)
+            notesProblem: summary.problem, markdown: markdown, notesModel: summary.modelName)
         phase = .done(result)
         MeetingPanelController.shared.show()
         logger.notice("Meeting saved: \(segments.count, privacy: .public) segments, notes \(summary.notes != nil, privacy: .public)")
