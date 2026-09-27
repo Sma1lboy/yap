@@ -21,12 +21,16 @@
         /// Call first thing at launch; returns only when the argument isn't present.
         static func runIfRequested() {
             guard CommandLine.arguments.contains(argument) else { return }
+            // Rendering builds real managers that write UserDefaults (fake starter modes, a custom provider…), and
+            // CFFIXED_USER_HOME doesn't isolate UserDefaults. Only the copy scripts/ui-snapshots.sh re-identifies
+            // may run this, so those writes land in its own throwaway domain, never the dev app's.
+            guard Bundle.main.bundleIdentifier == AppIdentity.snapshotsIdentifier else {
+                print("--render-snapshots runs only as \(AppIdentity.snapshotsIdentifier); use make ui-snapshots")
+                exit(2)
+            }
             NSApplication.shared.setActivationPolicy(.prohibited)
             YapCloud.isSnapshotMode = true
             try? FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
-            // Rendering builds real managers that write UserDefaults (fake starter modes, shortcut migrations…).
-            // Keep the dev app's own settings: save the whole domain now, put it back exactly before exiting.
-            let defaultsGuard = DefaultsSnapshot()
             let isChinese = Bundle.main.preferredLocalizations.first?.hasPrefix("zh") == true
             let suffix = isChinese ? "-zh" : ""
 
@@ -101,6 +105,8 @@
             MainWindowNavigation.shared.selectedView = .models
             shot("sheet-custom-provider-editor", fullPage: true, titled: true) { ContentView() }
             ModelManagementView.snapshotFilter = nil
+            ModelManagementView.snapshotPanel = .settings
+            shot("sheet-model-settings", fullPage: true, titled: true) { ContentView() }
             ModelManagementView.snapshotPanel = nil
 
             // Sheets, at the size they're presented at.
@@ -158,6 +164,9 @@
             shot("onboarding-3-model-openrouter", size: onboardingSize, main: true) { onboardingModel(.recommended) }
             shot("onboarding-3-model-api", size: onboardingSize) { onboardingModel(.cloud) }
             shot("onboarding-3-model-local", size: onboardingSize) { onboardingModel(.local) }
+            shot("onboarding-3-model-local-downloading", size: onboardingSize) {
+                onboardingModel(.local, downloading: .init(received: 240_000_000, total: 574_041_195, bytesPerSecond: 4_500_000))
+            }
             shot("onboarding-4-api-key", size: onboardingSize, main: true) {
                 OnboardingAPIScreen(
                     aiService: app.aiService, contentMaxWidth: 620, providerOptions: [.openRouter, .groq, .gemini],
@@ -185,7 +194,6 @@
                 OnboardingTrustScreen(contentMaxWidth: 700, onBack: {}, onContinue: {}).modelContainer(practiced)
             }
 
-            defaultsGuard.restore()
             print("Wrote \(written.count) snapshots to \(outputDirectory.path)")
             exit(0)
         }
@@ -211,11 +219,14 @@
                 isRestoredFromCloud: false, onRestoreFromCloud: {})
         }
 
-        private static func onboardingModel(_ kind: OnboardingTranscriptionSetupKind) -> some View {
+        private static func onboardingModel(
+            _ kind: OnboardingTranscriptionSetupKind, downloading: ModelFileDownloader.Progress? = nil
+        ) -> some View {
             OnboardingModelScreen(
                 contentMaxWidth: 620, localModel: OnboardingCoordinator().requiredTranscriptionModel, setupKind: kind,
                 providerOptions: CloudProviderRegistry.allProviders, selectedProviderKey: .constant(""),
-                isLocalDownloaded: false, isLocalDownloading: false, localDownloadStatus: nil,
+                isLocalDownloaded: false, isLocalDownloading: downloading != nil,
+                localDownloadStatus: downloading.map { FluidAudioDownloadStatus(fractionCompleted: $0.fraction, message: $0.summary) },
                 localDownloadError: nil, isSetupReady: false, isShowingSkipWarning: .constant(false),
                 onSelectSetupKind: { _ in }, onDownload: { _ in }, onCancelDownload: { _ in },
                 onVerificationChanged: {}, onBack: {}, onContinue: {},
@@ -366,36 +377,6 @@
                 .environmentObject(menuBarManager)
                 .environmentObject(updaterViewModel)
                 .environmentObject(MainWindowNavigation.shared)
-        }
-    }
-
-    /// Saves this app's UserDefaults domain before the snapshot run and restores it afterwards. The copy is
-    /// also written to disk first, so a run that crashed midway is undone at the start of the next one.
-    /// (CFFIXED_USER_HOME doesn't isolate UserDefaults: writes still reach the real domain through cfprefsd.)
-    @MainActor
-    private struct DefaultsSnapshot {
-        private static let backupURL = URL(fileURLWithPath: "/tmp/yap-ui/defaults-backup.plist")
-        private let domain = Bundle.main.bundleIdentifier ?? ""
-        private let saved: [String: Any]
-
-        init() {
-            let defaults = UserDefaults.standard
-            if let data = try? Data(contentsOf: Self.backupURL),
-                let previous = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
-            {
-                defaults.setPersistentDomain(previous, forName: domain)
-                defaults.synchronize()
-            }
-            saved = defaults.persistentDomain(forName: domain) ?? [:]
-            if let data = try? PropertyListSerialization.data(fromPropertyList: saved, format: .binary, options: 0) {
-                try? data.write(to: Self.backupURL, options: .atomic)
-            }
-        }
-
-        func restore() {
-            UserDefaults.standard.setPersistentDomain(saved, forName: domain)
-            UserDefaults.standard.synchronize()
-            try? FileManager.default.removeItem(at: Self.backupURL)
         }
     }
 #endif

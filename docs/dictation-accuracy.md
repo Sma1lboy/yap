@@ -38,3 +38,20 @@ What the numbers say:
 - **Local Small + dictionary sits with the cloud models** at 0.08 real-time factor. Without a dictionary it's 35.
 
 Rerun after touching the local whisper path, the default models or the dictionary prompt, and add a dated section.
+
+## Dictionary as a prompt for cloud transcription (2026-09-27)
+
+`bench.py run openrouter|yapcloud <model> --vocab` sends every key term, comma separated, as a `prompt` field:
+a multipart field on OpenRouter, a JSON key on Yap Cloud. Neither rejects it.
+
+| engine | without prompt | with prompt | transcripts identical |
+|---|---|---|---|
+| OpenRouter `microsoft/mai-transcribe-2` | 59 | 59 | 9 of 11 |
+| Yap Cloud `microsoft/mai-transcribe-2` | 59 | 59 | 11 of 11 |
+| OpenRouter `openai/gpt-4o-mini-transcribe`, 3 runs each | 52, 45, 46 (mean 47.7) | 49, 50, 48 (mean 49.0) | 0 of 11 |
+
+mai-transcribe-2 ignores the prompt. The two OpenRouter transcripts that differ differ the same way two runs
+without a prompt do. gpt-4o-mini-transcribe does read it, but the gain is smaller than its run-to-run spread
+(45–52 without a prompt). So on the cloud path the dictionary is only worth sending to the cleanup model, where it
+already goes. Passing it to transcription isn't worth changing the client or paygate for the default model.
+Results committed: the first run of each (`*-vocab.jsonl`).

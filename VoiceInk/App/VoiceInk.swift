@@ -55,9 +55,11 @@ struct VoiceInkApp: App {
             RecordedAudioIssue.selfCheck()
             ClipboardManager.selfCheck()
             OpenAICompatibleChat.selfCheck()
+            ModelFileDownloader.selfCheck()
             ReplacementText.selfCheck()
             WhisperPrompt.selfCheck()
             WhisperTranscriptionService.selfCheck()
+            ChineseCleanup.selfCheck()
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()

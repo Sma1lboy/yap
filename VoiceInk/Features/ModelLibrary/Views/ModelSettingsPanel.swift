@@ -79,6 +79,8 @@ private struct TranscriptionModelSettingsView: View {
 
             FillerWordsSettingsSection()
 
+            ChineseCleanupSettingsSection()
+
             AdvancedModelSettingsSection()
         }
         .formStyle(.grouped)
@@ -252,6 +254,28 @@ private struct EnhancementModelSettingsView: View {
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// ChineseCleanup's switches: rules applied to every transcript before AI enhancement, so they also work offline.
+private struct ChineseCleanupSettingsSection: View {
+    @AppStorage(ChineseCleanup.Keys.removeFillers) private var removeFillers = true
+    @AppStorage(ChineseCleanup.Keys.spokenLineBreaks) private var spokenLineBreaks = true
+    @AppStorage(ChineseCleanup.Keys.traditionalToSimplified) private var traditionalToSimplified = true
+    @AppStorage(ChineseCleanup.Keys.spaceBetweenChineseAndLatin) private var spaceBetweenChineseAndLatin = false
+
+    var body: some View {
+        Section {
+            Toggle("Remove Chinese fillers (嗯, 呃, a leading 那个)", isOn: $removeFillers)
+            Toggle("Turn spoken \"换行\" and \"新段落\" into line breaks", isOn: $spokenLineBreaks)
+            Toggle("Convert Traditional Chinese to Simplified", isOn: $traditionalToSimplified)
+            Toggle("Add a space between Chinese and English", isOn: $spaceBetweenChineseAndLatin)
+        } header: {
+            HStack(spacing: AppTheme.Spacing.x1) {
+                Text("Chinese Cleanup")
+                InfoTip("Rules applied to every transcript on this Mac, before any AI enhancement, so they also work offline.")
+            }
+        }
     }
 }
 

@@ -71,8 +71,13 @@ struct OnboardingView: View {
                         selectedProviderKey: coordinator.selectedOnboardingTranscriptionProviderKeyBinding(),
                         isLocalDownloaded: isTranscriptionModelDownloaded,
                         isLocalDownloading: localDownloadProgress != nil,
-                        localDownloadStatus: localDownloadProgress.map {
-                            FluidAudioDownloadStatus(fractionCompleted: $0, message: String(localized: "Downloading..."))
+                        localDownloadStatus: localDownloadProgress.map { fraction in
+                            let detail = coordinator.requiredTranscriptionModel.flatMap {
+                                whisperModelManager.downloadDetails[$0.name + "_main"]
+                            }
+                            return FluidAudioDownloadStatus(
+                                fractionCompleted: fraction,
+                                message: detail?.summary ?? String(localized: "Downloading..."))
                         },
                         localDownloadError: coordinator.requiredTranscriptionModel.flatMap {
                             whisperModelManager.downloadErrors[$0.name]

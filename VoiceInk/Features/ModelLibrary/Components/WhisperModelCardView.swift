@@ -6,6 +6,7 @@ struct WhisperModelCardView: View {
     let model: WhisperModel
     let isDownloaded: Bool
     let downloadProgress: [String: Double]
+    var downloadDetails: [String: ModelFileDownloader.Progress] = [:]
     let modelURL: URL?
     let isWarming: Bool
 
@@ -97,6 +98,7 @@ struct WhisperModelCardView: View {
                 DownloadProgressView(
                     modelName: model.name,
                     downloadProgress: downloadProgress,
+                    downloadDetails: downloadDetails,
                     isOptimizing: isWarming && !isDownloading
                 )
                 .padding(.top, AppTheme.Spacing.x2)
