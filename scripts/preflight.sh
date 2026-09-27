@@ -4,7 +4,7 @@
 # Runs every check even when one fails, prints a PASS/FAIL table, exits 1 if anything failed.
 #   1. make build (Debug)                        4. make sync-e2e (PAYGATE=prod)
 #   2. Release build with MARKETING_VERSION      5. docs/releases/<version>.md exists
-#   3. make cloud-smoke (PAYGATE=prod)            6. /v1/info numbers vs release notes, READMEs, site, app code
+#   3. make cloud-smoke (PAYGATE=prod)            6. /v1/info numbers vs READMEs, site, app code; no prices in notes
 # The Release build goes to .local-build/preflight (incremental after the first run) and is never copied to
 # ~/Downloads. cloud-smoke uses YAP_CLOUD_SMOKE_TOKEN when set; otherwise it issues a token for the smoke account
 # with paygate's scripts/issue-token.ts and signs that device out afterwards. Needs the Railway CLI logged in
@@ -116,21 +116,20 @@ presets = [int(p) for p in re.search(r"checkoutPresets = \[([^\]]*)\]", client).
 cap = int(re.search(r"maximumMonthlyCapMicros: Int64 = ([\d_]+)", client).group(1).replace("_", "")) // 1_000_000
 
 checks = [
-    ("notes: sign-up credit", f"{credit} of free credit" in notes, f"'{credit} of free credit'"),
-    ("notes (中文): sign-up credit", f"赠送 {credit}" in notes, f"'赠送 {credit}'"),
-    ("notes: top-up maximum", f"up to {hi}" in notes, f"'up to {hi}'"),
-    ("notes (中文): top-up maximum", f"最高 {hi}" in notes, f"'最高 {hi}'"),
-    ("notes: smallest preset", f"({usd(presets[0])}," in notes and presets[0] == float(info["minTopupUsd"]),
-     f"presets {presets} start at the minimum {lo}"),
+    # Release notes are about the app; Yap Cloud gets one sentence there and no amounts (positioning, 2026-09-26).
+    # The numbers live in the READMEs' Yap Cloud section and on the site, and are checked there.
+    ("notes: no prices", re.search(r"\$\d", notes) is None, "no dollar amounts in the release notes"),
+    ("README: top-up range", f"from {lo} to {hi}" in readme and f"{lo} 到 {hi}" in readme_zh, f"'from {lo} to {hi}'"),
+    ("README: smallest preset", presets[0] == float(info["minTopupUsd"]), f"presets {presets} start at the minimum {lo}"),
     ("app: presets inside range", all(float(info["minTopupUsd"]) <= p <= float(info["maxTopupUsd"]) for p in presets),
      f"{presets} within {lo}–{hi}"),
-    ("notes: monthly cap", f"$0 to ${cap:,}" in notes and f"$0 到 ${cap:,}" in notes, f"'$0 to ${cap:,}' (app limit)"),
+    ("README: monthly cap", f"up to ${cap:,}" in readme and f"最多 ${cap:,}" in readme_zh, f"'up to ${cap:,}' (app limit)"),
     ("README: markup", f"plus {pct}" in readme and f"加 {pct}" in readme_zh, f"'plus {pct}' / '加 {pct}'"),
     ("README: sign-up credit", f"{credit} of credit" in readme and f"{credit} 的额度" in readme_zh, f"'{credit} of credit'"),
     ("site: credit, markup, top-up", (not site) or (
-        re.search(r'(class="price">|accounts get )' + re.escape(credit) + r'(\D|$)', site) is not None
+        f"get {credit} to try it" in site and f"送 {credit} 试用" in site
         and f"plus {pct}" in site and f"加 {pct}" in site and f"{lo} to {hi}" in site and f"{lo}–{hi}" in site),
-     f"price {credit}, 'plus {pct}', '{lo} to {hi}'" if site else "no site/index.html"),
+     f"'get {credit} to try it', 'plus {pct}', '{lo} to {hi}'" if site else "no site/index.html"),
 ]
 bad = [(n, want) for n, ok, want in checks if not ok]
 for n, ok, want in checks:
