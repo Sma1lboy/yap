@@ -40,7 +40,10 @@ struct YapCloudProvider: CloudProvider {
         let timeout = YapCloud.wavDuration(audioData).map(YapCloud.transcriptionTimeout) ?? timeout
         let data: Data
         do {
-            data = try await YapCloud.shared.proxy("/v1/audio/transcriptions", body: body, timeout: timeout)
+            data = try await YapCloud.shared.withAllowedModel(model, fallback: RecommendedSetup.transcriptionModel) { model in
+                body["model"] = model
+                return try await YapCloud.shared.proxy("/v1/audio/transcriptions", body: body, timeout: timeout)
+            }
         } catch YapCloudError.server(413, _, _, _, _) {
             throw YapCloudError.recordingTooLong
         }

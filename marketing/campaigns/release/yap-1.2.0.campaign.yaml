@@ -1,0 +1,20 @@
+name: "yap-1.2.0"
+brief: "Yap 1.2.0: mixed Chinese-English dictation that works on a local model offline; open source. Copy source: docs/releases/1.2.0.md and marketing/positioning/positioning.md. Nothing is published until Jackson approves; no tag."
+style: "launch-hero"
+content:
+  headline: "Yap 1.2.0"
+  subject: "the real Yap window (make ui-snapshots, light and dark) with a mixed Chinese-English transcript; release notes as the subject for the release card"
+copy:
+  github_release: "1.2.0/github-release.md"
+  x_thread: "1.2.0/x-thread.md"
+  jike: "1.2.0/jike.md"
+  v2ex: "1.2.0/v2ex.md"
+  xiaohongshu: "1.2.0/xiaohongshu.md"
+  show_hn: "1.2.0/show-hn.md"
+deliverables:
+  - id: "release-card"
+    size: [1200, 672]
+  - id: "x-card"
+    size: [1600, 896]
+  - id: "xhs-cover"
+    size: [1088, 1440]

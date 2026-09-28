@@ -86,9 +86,16 @@ class VoiceInkEngine: NSObject, ObservableObject {
     private enum RecordingUseCase {
         case newSession
         case assistantFollowUp
+        /// A spoken instruction for rewriting the last paste (LastPasteEditor), not text to paste.
+        case editLastPaste
 
         var isAssistantFollowUp: Bool {
             self == .assistantFollowUp
+        }
+
+        /// Transcribed without trigger words or cleanup, and handed over instead of pasted.
+        var handsOffTranscript: Bool {
+            self != .newSession
         }
     }
 
@@ -176,7 +183,9 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
     // MARK: - Toggle Record
 
-    func toggleRecord(modeId: UUID? = nil, isAssistantFollowUp: Bool = false, sendAfterPaste: Bool = false) async {
+    func toggleRecord(
+        modeId: UUID? = nil, isAssistantFollowUp: Bool = false, editsLastPaste: Bool = false, sendAfterPaste: Bool = false
+    ) async {
         if recordingState == .starting {
             await cancelRecording()
             return
@@ -221,7 +230,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
             }
         } else {
             let canContinueAssistantSession = isAssistantFollowUp && assistantSession.canSendFollowUp
-            let recordingUseCase: RecordingUseCase = canContinueAssistantSession ? .assistantFollowUp : .newSession
+            let recordingUseCase: RecordingUseCase =
+                editsLastPaste ? .editLastPaste : canContinueAssistantSession ? .assistantFollowUp : .newSession
 
             activePipelineTranscriptionID = nil
             shouldCancelRecording = false
@@ -465,6 +475,16 @@ class VoiceInkEngine: NSObject, ObservableObject {
                 String(localized: "Manage Modes"),
                 ModeSetupNavigator.openModesSettings
             )
+        case .unavailable(_, let model) where downloadFraction(of: model) != nil:
+            // First run: the local model is still downloading. Say so instead of "not available".
+            return (
+                String(
+                    format: String(localized: "%@ is still downloading (%lld%%). Dictation works as soon as it finishes."),
+                    model.displayName, Int64(((downloadFraction(of: model) ?? 0) * 100).rounded())
+                ),
+                String(localized: "Show Download"),
+                ModeSetupNavigator.openModelsSettings
+            )
         case .unavailable(let mode, let model), .available(let mode, let model):
             return (
                 String(
@@ -476,6 +496,12 @@ class VoiceInkEngine: NSObject, ObservableObject {
                 ModeSetupNavigator.openModelsSettings
             )
         }
+    }
+
+    /// Progress of a whisper model that is downloading right now, else nil.
+    private func downloadFraction(of model: any TranscriptionModel) -> Double? {
+        guard model.provider == .whisper else { return nil }
+        return whisperModelManager.downloadProgress[model.name + "_main"]
     }
 
     /// Runs before the start sound and recorder panel. Shows a toast and returns false when recording
@@ -494,7 +520,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
     }
 
     @MainActor
-    private func recordingStartFailure(modeId: UUID?) -> (title: String, actionLabel: String, action: () -> Void)? {
+    func recordingStartFailure(modeId: UUID?) -> (title: String, actionLabel: String, action: () -> Void)? {
         let modeManager = ModeManager.shared
         if !modeManager.hasEnabledConfiguration {
             return (
@@ -667,10 +693,17 @@ class VoiceInkEngine: NSObject, ObservableObject {
                 await self.recorderUIManager?.dismissRecorderPanel()
             },
             assistant: TranscriptionPipeline.AssistantHooks(
-                isFollowUp: activePipelineUseCase.isAssistantFollowUp,
-                sendFollowUp: { [weak self] text, transcription in
+                isFollowUp: activePipelineUseCase.handsOffTranscript,
+                sendFollowUp: { [weak self, useCase = activePipelineUseCase] text, transcription in
                     guard let self, self.activePipelineTranscriptionID == transcriptionID else { return }
-                    await self.sendAssistantFollowUp(text, transcription: transcription)
+                    guard useCase == .editLastPaste else {
+                        await self.sendAssistantFollowUp(text, transcription: transcription)
+                        return
+                    }
+                    await self.recorderUIManager?.dismissRecorderPanel()
+                    await LastPasteEditor.shared.rewriteLastPaste(
+                        instruction: text, enhancementService: self.enhancementService,
+                        aiService: self.enhancementService?.getAIService())
                 },
                 startResponse: { [weak self] transcript, configuration in
                     guard let self, self.activePipelineTranscriptionID == transcriptionID else { return }

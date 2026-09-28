@@ -1,0 +1,7 @@
+schema_version: "1.0"
+owner:
+  kind: repo
+  id: yap
+domain: promo
+revision: 0
+accepted: []

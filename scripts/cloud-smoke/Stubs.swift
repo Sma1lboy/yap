@@ -64,3 +64,12 @@ struct CloudModel {
 protocol StreamingTranscriptionProvider {}
 protocol CloudProvider {}
 enum CloudTranscriptionError: Error { case networkError(Error), noTranscriptionReturned }
+
+/// Mirrors VoiceInk/Infrastructure/Config/RecommendedSetup.swift (that file needs the app's config types).
+/// sync-e2e compiles the real file, so it builds with -DSYNC_E2E and skips this copy.
+#if !SYNC_E2E
+    enum RecommendedSetup {
+        static let transcriptionModel = "microsoft/mai-transcribe-2"
+        static let enhancementModel = "deepseek/deepseek-v4.1-flash"
+    }
+#endif

@@ -8,6 +8,8 @@ final class WordReplacement {
     var replacementText: String = ""
     var dateAdded: Date = Date()
     var isEnabled: Bool = true
+    /// Created by Auto Learn rather than typed in; drives the Dictionary's Auto-added / Manually added filter.
+    var isAutoLearned: Bool = false
 
     init(originalText: String, replacementText: String, dateAdded: Date = Date()) {
         self.originalText = originalText.precomposedStringWithCanonicalMapping

@@ -22,7 +22,7 @@ Yap Cloud (paygate) serves only the models in its `MODEL_ALLOWLIST` env var on R
 2. Set the whole list (comma separated, exact OpenRouter ids) on the service; Railway redeploys on change:
    `railway variables -s paygate --set "MODEL_ALLOWLIST=<id>,<id>,…"` (run in the paygate repo).
 3. If the model should be shown up front, add it to `YapCloudPicks` in
-   `VoiceInk/Features/Account/YapCloudModelBrowser.swift`. Never drop the `RecommendedSetup` models from the list.
+   `VoiceInk/Infrastructure/Cloud/YapCloudClient.swift` (`make cloud-smoke` fails if a pick isn't on the live list). Never drop the `RecommendedSetup` models from the list: a choice outside it runs on them (the app falls back at call time and on a 400 `MODEL_NOT_ALLOWED`, and Yap Cloud's page lists which modes to change).
 
 ## Enhancement bench (2026-09-27)
 
@@ -87,3 +87,24 @@ v4.1-flash now passes every case in every round, in each of the three separate r
 versions. gpt-6-luna was run 6 rounds on each prompt: 148/150 before, 147/150 after, counted as even. Its misses
 after the change: `retro` in 2 rounds (drops "另外一件事是招聘" down to the frontend hire) and `command` once
 (a two-step command written as a list). Before: `fix_list` and `spec` once each. The tables above (latency, cost) are from these final runs.
+
+### On-device (2026-09-27)
+
+The local cleanup options, scored by the same automatic checks. Yap Refine: `uvx --with mlx-lm python
+setup/refine_bench.py` (its own fixed prompt; it ignores the mode's). Apple Intelligence (Foundation Models,
+macOS 26): `swift setup/apple_bench.swift` on a Mac running macOS 26 with Apple Intelligence on. It sends
+`RecommendedPrompt.md` like the cloud models. Then `python3 setup/bench.py score`.
+
+| model | passed per round (of 25) | original 9 | p50 |
+|---|---|---|---|
+| Yap Refine (MLX, 1.06 GB) | 12, 10, 9 | 5, 3, 2 | 0.36 s |
+| Apple Intelligence | not run yet: needs macOS 26 | | |
+
+Yap Refine's most common failure is translating English terms: "deploy", "PR", "conversion rate",
+"useEffect", "userId" and "docker compose up -d" are missing in every round, and "extract", "demo" and
+"feature" in two. It also keeps retracted corrections.
+
+Apple Intelligence is offered in modes only if it scores at least Yap Refine, and doesn't translate English
+terms more often than Yap Refine does. Until then `AppleIntelligenceService.passesBench` is false, and the
+provider only appears after the Models > Advanced toggle "Apple Intelligence for AI enhancement
+(Experimental)". It never appears on a Mac that can't run it.

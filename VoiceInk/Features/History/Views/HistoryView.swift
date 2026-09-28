@@ -274,6 +274,19 @@ struct HistoryView<Header: View>: View {
             .buttonStyle(.plain)
             .foregroundColor(.secondary)
 
+            if selectedTranscriptions.count == 1, let meeting = selectedTranscriptions.first, meeting.isMeeting {
+                Button(action: {
+                    MeetingExport.saveMarkdown(MeetingNotes.markdown(
+                        title: String(localized: "Meeting"), date: meeting.timestamp, duration: meeting.duration,
+                        notes: meeting.enhancedText, transcript: meeting.text))
+                }) {
+                    Label("Export Markdown…", systemImage: "doc.text")
+                        .font(AppTheme.font(.footnote, .medium))
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(.secondary)
+            }
+
             Button(action: { showDeleteConfirmation = true }) {
                 Label("Delete", systemImage: "trash")
                     .font(AppTheme.font(.footnote, .medium))
@@ -560,7 +573,7 @@ struct HistoryView<Header: View>: View {
             FileManager.default.fileExists(atPath: url.path)
         {
             do {
-                try FileManager.default.removeItem(at: url)
+                try Transcription.removeAudio(at: url)
             } catch {
                 print("Error deleting audio file: \(error.localizedDescription)")
             }

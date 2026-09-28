@@ -200,6 +200,8 @@ struct DashboardContent: View {
 
             HomeWeekPanel(modeSummary: defaultModeSummary)
 
+            HomeShortcutsCard()
+
             footerLinks
         }
     }

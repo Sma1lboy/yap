@@ -60,3 +60,22 @@ On this bench, with every key term in the dictionary (`bench.py run openrouter|y
 | mai-transcribe-2 via Yap Cloud | 59 → 68 | 0.53 → 0.66 |
 
 paygate forwards `provider.options` unchanged, so Yap Cloud needs no paygate change. The other models' `--vocab` runs are still to do; a model that gains nothing there should be dropped from `TranscriptionHints.providerOptions`.
+
+## Dictionary as a prompt for cloud transcription (2026-09-27)
+
+`bench.py run openrouter|yapcloud <model> --vocab` sends every key term, comma separated, as a `prompt` field:
+a multipart field on OpenRouter, a JSON key on Yap Cloud. Neither rejects it.
+
+| engine | without prompt | with prompt | transcripts identical |
+|---|---|---|---|
+| OpenRouter `microsoft/mai-transcribe-2` | 59 | 59 | 9 of 11 |
+| Yap Cloud `microsoft/mai-transcribe-2` | 59 | 59 | 11 of 11 |
+| OpenRouter `openai/gpt-4o-mini-transcribe`, 3 runs each | 52, 45, 46 (mean 47.7) | 49, 50, 48 (mean 49.0) | 0 of 11 |
+
+mai-transcribe-2 ignores the prompt. The two OpenRouter transcripts that differ differ the same way two runs
+without a prompt do. gpt-4o-mini-transcribe does read it, but the gain is smaller than its run-to-run spread
+(45–52 without a prompt). So on the cloud path the dictionary is only worth sending to the cleanup model, where it
+already goes. Passing it to transcription isn't worth changing the client or paygate for the default model.
+Results committed: the first run of each (`*-vocab-prompt.jsonl`).
+
+Superseded by the section above: `prompt` is the wrong field for mai-transcribe-2 (Azure reads `azure.phraseList.phrases`), and with the right field it goes 59 → 68.

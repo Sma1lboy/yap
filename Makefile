@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check first-run-check ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -156,7 +156,7 @@ cloud-latency: $(PAYGATE_UP)
 SYNC_E2E_BIN := $(CURDIR)/.local-build/sync-e2e
 sync-e2e: $(PAYGATE_UP)
 	@mkdir -p "$(dir $(SYNC_E2E_BIN))"
-	@xcrun swiftc -DDEBUG -Onone -o "$(SYNC_E2E_BIN)" \
+	@xcrun swiftc -DDEBUG -DSYNC_E2E -Onone -o "$(SYNC_E2E_BIN)" \
 		scripts/cloud-smoke/Stubs.swift scripts/sync-e2e/LoaderStub.swift scripts/sync-e2e/main.swift \
 		VoiceInk/Infrastructure/Config/YapConfig.swift \
 		VoiceInk/Infrastructure/Config/CloudConfigSync.swift \
@@ -189,7 +189,7 @@ design-check:
 mock: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
-	scripts/mock.sh "$$APP_DIR"
+	scripts/dev-defaults-guard.sh scripts/mock.sh "$$APP_DIR"
 
 # Does a local dictation (Whisper model MODEL, cleanup off) touch the network? Runs one dictation with the network
 # denied, then one with it allowed while logging the app's sockets. See scripts/offline-check.sh.
@@ -197,19 +197,32 @@ offline-check: build
 	@test -n "$(MODEL)" || { echo "usage: make offline-check MODEL=/path/to/ggml-large-v3-turbo-q5_0.bin"; exit 2; }
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
-	scripts/offline-check.sh "$$APP_DIR" "$(MODEL)"
+	scripts/dev-defaults-guard.sh scripts/offline-check.sh "$$APP_DIR" "$(MODEL)"
+
+# A new user's first local dictation: fresh mock install, download the default model, preflight mid-download, cold and
+# warm dictation times (scripts/first-run-check.sh). Needs the network; never touches the dev or release app's data.
+first-run-check: build
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/first-run-check.sh "$$APP_DIR" $(MODEL)
+
+# Meeting recording from two local files, end to end (chunking, transcription with MODEL, notes with NOTES=1,
+# History entry), without microphone or system audio permission. See scripts/meeting-files-check.sh.
+meeting-files-check: build
+	@test -n "$(MODEL)" || { echo "usage: make meeting-files-check MODEL=/path/to/ggml-large-v3-turbo-q5_0.bin [NOTES=1]"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/meeting-files-check.sh "$$APP_DIR" "$(MODEL)" $(NOTES)
 
 # Render every page, Settings group, onboarding screen and sheet in light and dark, plus the main ones in Chinese
-# (-zh), with fake data to /tmp/yap-ui/snapshots. Debug build, launched with --render-snapshots: saves the dev app's
-# UserDefaults domain first and restores it before exiting (fake modes etc. never stick). No window, no focus
-# change; the sandbox profile denies network access.
+# (-zh), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots
+# (scripts/ui-snapshots.sh), so its fake modes and providers go to a throwaway defaults domain, never the dev app's;
+# dev-defaults-guard.sh fails the run if the dev app's settings changed anyway. No window, no focus change; the
+# sandbox profile denies network access.
 ui-snapshots: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
-	rm -rf /tmp/yap-ui/snapshots; \
-	BIN="$$APP_DIR/VoiceInk Dev.app/Contents/MacOS/VoiceInk Dev"; \
-	sandbox-exec -f scripts/offline.sb "$$BIN" --render-snapshots && \
-	sandbox-exec -f scripts/offline.sb "$$BIN" --render-snapshots -AppleLanguages '(zh-Hans)'
+	scripts/dev-defaults-guard.sh scripts/ui-snapshots.sh "$$APP_DIR"
 
 # Self-contained review page(s) of the snapshots: /tmp/yap-ui/review.html (review-N.html past 3.8 MB each).
 ui-review: ui-snapshots

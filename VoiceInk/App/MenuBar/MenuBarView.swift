@@ -15,6 +15,7 @@ struct MenuBarView: View {
     @ObservedObject private var modeManager = ModeManager.shared
     @ObservedObject var audioDeviceManager = AudioDeviceManager.shared
     @ObservedObject private var yapCloud = YapCloud.shared
+    @ObservedObject private var meetingRecorder = MeetingRecorder.shared
     @AppStorage(OnboardingSettings.completedV2Key) private var hasCompletedOnboardingV2 = false
 
     var body: some View {
@@ -49,6 +50,10 @@ struct MenuBarView: View {
 
             Button("Start/Stop Dictation") {
                 recorderUIManager.handleToggleRecorderPanelNotification()
+            }
+
+            Button(meetingRecorder.phase.isRecording ? "Stop Meeting Recording" : "Record Meeting") {
+                meetingRecorder.toggle()
             }
 
             Divider()

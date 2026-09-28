@@ -124,6 +124,7 @@ class TranscriptionPipeline {
                 transcription.yapCloudTranscriptionGenerationID = billed.last
             }
             text = TranscriptionOutputFilter.filter(text)
+            text = ChineseCleanup.apply(text, options: ChineseCleanup.currentOptions)
             let transcriptionDuration = Date().timeIntervalSince(transcriptionStart)
 
             if shouldCancel() {
