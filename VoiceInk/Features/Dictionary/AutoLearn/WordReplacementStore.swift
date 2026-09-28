@@ -84,6 +84,7 @@ actor WordReplacementStore {
                         vocabularyKeys.insert(vocabularyKey).inserted
                     {
                         let entry = VocabularyWord(word: vocabulary)
+                        entry.isAutoLearned = true
                         modelContext.insert(entry)
                         vocabularyCreationDate = entry.dateAdded
                         vocabularyCount += 1
@@ -212,6 +213,7 @@ actor WordReplacementStore {
                 originalText: WordReplacementVariants.serialize([source]),
                 replacementText: destination
             )
+            entry.isAutoLearned = true
             modelContext.insert(entry)
             entries.append(entry)
         }

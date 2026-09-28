@@ -89,6 +89,10 @@ class AIEnhancementService: ObservableObject {
             return true
         }
 
+        if provider == .appleIntelligence {
+            return AppleIntelligenceService.isOffered
+        }
+
         if provider == .custom {
             guard let modelName = configuration.modelName else { return false }
             return CustomAIProviderManager.shared.requestConfiguration(forModel: modelName) != nil
@@ -139,8 +143,10 @@ class AIEnhancementService: ObservableObject {
                 ""
             }
 
+        let cursorContext = configuration.useCursorContext ? contextSnapshot?.cursorContext : nil
+        // The screen's text is the fallback for when the field itself couldn't be read.
         let screenCaptureContext =
-            if useScreenCapture,
+            if useScreenCapture, cursorContext?.hasText != true,
                 let capturedText = screenCaptureService.lastCapturedText,
                 !capturedText.isEmpty
             {
@@ -164,7 +170,7 @@ class AIEnhancementService: ObservableObject {
                 ""
             }
 
-        let contextBlocks = [selectedTextContext, clipboardContext, screenCaptureContext]
+        let contextBlocks = [cursorContext?.promptBlock ?? "", selectedTextContext, clipboardContext, screenCaptureContext]
             .filter { !$0.isEmpty }
 
         let contextSection =
@@ -186,7 +192,8 @@ class AIEnhancementService: ObservableObject {
     private func makeRequest(
         text: String,
         configuration: EnhancementRuntimeConfiguration,
-        contextSnapshot: RecordingContextSnapshot?
+        contextSnapshot: RecordingContextSnapshot?,
+        timeout: TimeInterval? = nil
     ) async throws -> (text: String, systemMessage: String?, userMessage: String?) {
         guard isConfigured(for: configuration) else {
             throw EnhancementError.notConfigured
@@ -233,7 +240,7 @@ class AIEnhancementService: ObservableObject {
             contextSnapshot: contextSnapshot
         )
 
-        if provider != .openRouter, provider != .ollama, provider != .localCLI {
+        if provider != .openRouter, provider != .ollama, provider != .localCLI, provider != .appleIntelligence {
             try await waitForRateLimit()
         }
 
@@ -244,7 +251,7 @@ class AIEnhancementService: ObservableObject {
                 messages: [.user(formattedText)],
                 systemPrompt: systemMessage,
                 localUserPrompt: formattedText,
-                timeout: requestTimeout
+                timeout: timeout ?? requestTimeout
             )
             if let openRouterCompletion = completion.openRouterCompletion {
                 let routedProvider = openRouterCompletion.provider ?? "unknown"
@@ -321,7 +328,8 @@ class AIEnhancementService: ObservableObject {
         configuration: EnhancementRuntimeConfiguration,
         contextSnapshot: RecordingContextSnapshot?,
         maxAttempts: Int = EnhancementRequestSettings.maximumAttempts,
-        initialDelay: TimeInterval = 1.0
+        initialDelay: TimeInterval = 1.0,
+        timeout: TimeInterval? = nil
     ) async throws -> (text: String, systemMessage: String?, userMessage: String?) {
         var retries = 0
         var currentDelay = initialDelay
@@ -331,7 +339,8 @@ class AIEnhancementService: ObservableObject {
                 return try await makeRequest(
                     text: text,
                     configuration: configuration,
-                    contextSnapshot: contextSnapshot
+                    contextSnapshot: contextSnapshot,
+                    timeout: timeout
                 )
             } catch let error as EnhancementError {
                 switch error {
@@ -391,10 +400,12 @@ class AIEnhancementService: ObservableObject {
         throw EnhancementError.enhancementFailed
     }
 
+    /// `timeout` overrides the per-request timeout from settings (dictation's default is 7 s), e.g. for meeting notes.
     func enhance(
         _ text: String,
         configuration: EnhancementRuntimeConfiguration,
-        contextSnapshot: RecordingContextSnapshot? = nil
+        contextSnapshot: RecordingContextSnapshot? = nil,
+        timeout: TimeInterval? = nil
     ) async throws -> AIEnhancementResult {
         let startTime = Date()
         let promptName = configuration.prompt?.title
@@ -404,7 +415,8 @@ class AIEnhancementService: ObservableObject {
                 text: text,
                 configuration: configuration,
                 contextSnapshot: contextSnapshot,
-                maxAttempts: EnhancementRequestSettings.maximumAttempts
+                maxAttempts: EnhancementRequestSettings.maximumAttempts,
+                timeout: timeout
             )
             let endTime = Date()
             let duration = endTime.timeIntervalSince(startTime)

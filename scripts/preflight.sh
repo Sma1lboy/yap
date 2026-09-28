@@ -128,7 +128,7 @@ checks = [
     ("README: markup", f"plus {pct}" in readme and f"加 {pct}" in readme_zh, f"'plus {pct}' / '加 {pct}'"),
     ("README: sign-up credit", f"{credit} of credit" in readme and f"{credit} 的额度" in readme_zh, f"'{credit} of credit'"),
     ("site: credit, markup, top-up", (not site) or (
-        re.search(r'class="price">' + re.escape(credit) + r'(\D|$)', site) is not None
+        re.search(r'(class="price">|accounts get )' + re.escape(credit) + r'(\D|$)', site) is not None
         and f"plus {pct}" in site and f"加 {pct}" in site and f"{lo} to {hi}" in site and f"{lo}–{hi}" in site),
      f"price {credit}, 'plus {pct}', '{lo} to {hi}'" if site else "no site/index.html"),
 ]

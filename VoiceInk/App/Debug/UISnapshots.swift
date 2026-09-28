@@ -14,7 +14,9 @@
     @MainActor
     enum UISnapshots {
         static let argument = "--render-snapshots"
-        static let outputDirectory = URL(fileURLWithPath: "/tmp/yap-ui/snapshots", isDirectory: true)
+        static let outputDirectory = URL(
+            fileURLWithPath: ProcessInfo.processInfo.environment["YAP_UI_SNAPSHOTS_OUT"] ?? "/tmp/yap-ui/snapshots",
+            isDirectory: true)
         /// The main window's minimum size.
         static let size = CGSize(width: AppWindowLayout.minimumWidth, height: AppWindowLayout.minimumHeight)
 
@@ -46,6 +48,15 @@
             // Before the managers: the Yap Cloud catalog decides which transcription models exist.
             YapCloud.shared.applySnapshotState(.funded)
             let app = SnapshotApp(container: full)
+            // Keys as after onboarding (Right Option) plus an undo key, in the snapshot app's own defaults;
+            // Rewrite stays unset so Home's Not set state is in the shot too.
+            func setSnapshotShortcuts() {
+                ShortcutStore.setShortcut(.modifierOnly(keyCode: 61, modifierFlags: [.option]), for: .primaryRecording)
+                ShortcutStore.setShortcut(.key(keyCode: 6, modifierFlags: [.control, .option]), for: .undoLastPaste)
+                ShortcutStore.setShortcut(nil, for: .rewriteLastPaste)
+                app.recordingShortcutManager.primaryRecordingShortcut = .custom
+            }
+            setSnapshotShortcuts()
             CloudConfigSync.shared.store = MockConfigStore()
             MockData.installModes()
             CustomAIProviderManager.shared.replaceProviders([MockData.customProvider])
@@ -77,8 +88,14 @@
             page("transcribe-audio", .transcribeAudio)
             page("audio", .audio)
             page("dictionary", .dictionary)
+            WordReplacementView.snapshotSelecting = true
+            page("dictionary-select", .dictionary)
+            WordReplacementView.snapshotSelecting = false
             page("settings", .settings)
             page("account", .account)
+            // Something the pages above render (likely the mock config sync) resets them; set them again.
+            setSnapshotShortcuts()
+            MainWindowNavigation.shared.selectedView = .dashboard
             shot("page-home-empty", titled: true) { ContentView().modelContainer(empty) }
 
             for state in YapCloud.SnapshotState.allCases where state != .funded {
@@ -99,6 +116,11 @@
             ModeView.snapshotOpensEditor = true
             MainWindowNavigation.shared.selectedView = .modes
             shot("sheet-mode-editor", fullPage: true, titled: true) { ContentView() }
+            ModeView.snapshotEditsEnhancedMode = true
+            ModeConfigFormView.snapshotExpandsContext = true
+            shot("sheet-mode-editor-context", main: true, fullPage: true, titled: true) { ContentView() }
+            ModeView.snapshotEditsEnhancedMode = false
+            ModeConfigFormView.snapshotExpandsContext = false
             ModeView.snapshotOpensEditor = false
             ModelManagementView.snapshotFilter = .custom
             ModelManagementView.snapshotPanel = .customProviderEditor
@@ -113,6 +135,7 @@
             if let notes = ReleaseNotes.current {
                 shot("sheet-whats-new", size: CGSize(width: 560, height: 620)) { ReleaseNotesSheet(notes: notes) }
             }
+            shot("sheet-feature-tour", size: CGSize(width: 560, height: 620), main: true) { FeatureTourSheet() }
             shot("sheet-version-history", size: CGSize(width: 640, height: 520)) { ConfigVersionHistorySheet() }
             shot("sheet-history-settings", size: CGSize(width: 480, height: 560)) {
                 HistorySettingsPanel(onClose: {})
@@ -153,6 +176,38 @@
             }
             app.engine.recordingState = .idle
             app.engine.partialTranscript = ""
+
+            // Meeting recording panel, each state.
+            let meeting = MeetingRecorder.shared
+            let meetingNotes = """
+                ## 摘要
+                - CI 太慢，怀疑 Dockerfile 里 layer 的顺序让 build cache 失效。
+                - Safari 上的 IndexedDB transaction 问题：retry 改成 exponential backoff。
+
+                ## 待办
+                - [ ] 调整 Dockerfile layer 顺序 — 我 — 周五
+                - [ ] 补齐三个 endpoint — Sara — 周四
+                """
+            let meetingTranscript = "[00:00] \(MeetingSegment.Speaker.me.label): 今天我想把 GitHub Actions 的 pipeline 改一下\n"
+                + "[00:08] \(MeetingSegment.Speaker.others.label): API 那边还差三个 endpoint，周四能 land"
+            let meetingStates: [(String, MeetingRecorder.Phase, CGFloat, Bool)] = [
+                ("consent", .consent, 280, true),
+                ("recording", .recording(started: Date().addingTimeInterval(-754)), 110, true),
+                ("finishing", .finishing(String(localized: "Writing notes…")), 90, false),
+                ("notes", .done(.init(
+                    transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
+                    markdown: "", notesModel: nil)), 420, true),
+                ("transcript-only", .done(.init(
+                    transcriptionID: UUID(), notes: nil, transcript: meetingTranscript,
+                    notesProblem: MeetingSummarizer.setupHint, markdown: "", notesModel: nil)), 300, false),
+            ]
+            for (name, phase, height, main) in meetingStates {
+                meeting.setSnapshotPhase(phase)
+                shot("meeting-\(name)", size: CGSize(width: 420, height: height), main: main) {
+                    MeetingPanelView(recorder: meeting).padding(AppTheme.Spacing.x4)
+                }
+            }
+            meeting.setSnapshotPhase(.idle)
 
             // Onboarding, every screen in order.
             YapCloud.shared.applySnapshotState(.signedOut)

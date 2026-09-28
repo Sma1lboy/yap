@@ -1,0 +1,67 @@
+# brand-studio metadata for the yap repo (skill: github.com/Sma1lboy/brand-studio, skills/brand-studio).
+# Same layout as rove's: production scratch under .studio/ (gitignored); assets Jackson accepts settle into
+# public/assets/ and are recorded in public/assets/accepted.yaml.
+# Brand tokens: docs/DESIGN.md is the only source (colors from the duck logo, light + dark). marketing/theme.md
+# restates them for producers and must not drift; change DESIGN.md first, then theme.md.
+project:
+  id: yap
+  root: .
+  marketingRoot: marketing
+
+skillDistribution:
+  upstream: sma1lboy/brand-studio
+  scope: repo
+  ref: main
+
+theme:
+  path: marketing/theme.md
+  references: design
+
+campaigns:
+  release: marketing/campaigns/release
+  promo: marketing/campaigns/promo
+
+skills:
+  image: gpt-image
+  video: hyperframes
+
+backends:
+  text-to-image:
+    runner: custom
+    command: "uvx --from git+https://github.com/wuyoscar/gpt_image_2_skill gpt-image"
+    model: gpt-image-2
+
+artifacts:
+  scratch: .studio/out
+  approved: public/assets
+
+state:
+  plans: marketing/plans
+  assetIndex: marketing/asset-state.yaml
+  accepted: public/assets/accepted.yaml
+  directoryStateFile: asset-state.yaml
+
+portfolios:
+  release:
+    accepted: marketing/portfolios/release/accepted.yaml
+    assetState: marketing/portfolios/release/asset-state.yaml
+    patterns: marketing/portfolios/release/patterns.md
+  promo:
+    accepted: marketing/portfolios/promo/accepted.yaml
+    assetState: marketing/portfolios/promo/asset-state.yaml
+    patterns: marketing/portfolios/promo/patterns.md
+
+sources:
+  assetRoots:
+    - design
+    - site/assets
+    - public/assets
+  relatedRepos: []
+
+shareServer:
+  host: https://share.sma1lboy.me
+
+policy:
+  requireHumanApprovalBeforeRender: true
+  requireHumanApprovalBeforeStateUpdate: true
+  allowRootWorkspaceBootstrap: false

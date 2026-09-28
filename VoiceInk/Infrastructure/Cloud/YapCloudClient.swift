@@ -149,6 +149,37 @@ final class YapCloud: ObservableObject {
     var transcriptionModels: [YapCloudModel] { models.filter(\.isTranscription) }
     var chatModels: [YapCloudModel] { models.filter(\.isChat) }
 
+    // MARK: - Model allowlist
+
+    /// paygate serves only its MODEL_ALLOWLIST (docs/cloud-models.md), and `/v1/models` lists only those. A choice
+    /// outside it (config file, synced config, an older version) runs on the Recommended model at call time; the
+    /// stored choice is never rewritten, and Account says which to change (`modelNotices`).
+    func servedChatModel(_ model: String) -> String {
+        Self.served(model, in: chatModels.map(\.id), fallback: RecommendedSetup.enhancementModel)
+    }
+
+    /// `model` if the catalog lists it (or no catalog has loaded yet), else `fallback`.
+    static func served(_ model: String, in catalog: [String], fallback: String) -> String {
+        catalog.isEmpty || catalog.contains(model) ? model : fallback
+    }
+
+    static func isModelNotAllowed(_ error: Error) -> Bool {
+        if case YapCloudError.server(400, "MODEL_NOT_ALLOWED", _, _, _) = error { return true }
+        return false
+    }
+
+    /// Runs `call` with `model`; if paygate refuses it as outside the allowlist (unbilled 400, e.g. a catalog cached
+    /// before the list changed), refreshes the catalog and runs it once more with `fallback`, so a dictation's audio
+    /// or text isn't lost. A second failure goes to the caller's usual error handling.
+    func withAllowedModel<T>(_ model: String, fallback: String, _ call: (String) async throws -> T) async throws -> T {
+        do {
+            return try await call(model)
+        } catch where Self.isModelNotAllowed(error) && model != fallback {
+            Task { @MainActor in await self.refreshModels() }
+            return try await call(fallback)
+        }
+    }
+
     // MARK: - Auth
 
     func startSignIn(email: String) async throws {
@@ -736,11 +767,14 @@ final class YapCloud: ObservableObject {
     func chatCompletion(model: String, messages: [[String: String]], temperature: Double, timeout: TimeInterval)
         async throws -> String
     {
-        let metadata = models.first { $0.id == model }
-        let data = try await proxy(
-            "/v1/chat/completions",
-            body: Self.chatBody(model: model, metadata: metadata, messages: messages, temperature: temperature, stream: true),
-            timeout: timeout)
+        let data = try await withAllowedModel(servedChatModel(model), fallback: RecommendedSetup.enhancementModel) { model in
+            try await proxy(
+                "/v1/chat/completions",
+                body: Self.chatBody(
+                    model: model, metadata: models.first { $0.id == model }, messages: messages, temperature: temperature,
+                    stream: true),
+                timeout: timeout)
+        }
         struct Response: Decodable {
             struct Choice: Decodable {
                 struct Message: Decodable { let content: String? }
@@ -1618,6 +1652,19 @@ struct YapCloudConfigDocument: Equatable {
     }
 }
 
+/// The few Yap Cloud models shown up front; everything else sits behind a searchable "All Models" list.
+/// First entry of each list is the Recommended setup's model. Every entry must be on paygate's allowlist
+/// (docs/cloud-models.md); `make cloud-smoke` checks them against the live `/v1/models`.
+enum YapCloudPicks {
+    /// setup/ benchmark, Sept 2026: mai-transcribe-2 80/82 key terms on real code-switched clips; on a synthetic
+    /// 9-case check gpt-4o-transcribe 49/52 and qwen3-asr-flash 46/52 were the next best at ~1.5 s.
+    static let transcription = [
+        RecommendedSetup.transcriptionModel, "openai/gpt-4o-transcribe", "qwen/qwen3-asr-flash-2026-02-10",
+    ]
+    /// setup/bench.py, Sept 2026: deepseek-v4.1-flash 9/9 at 0.44 s p50; gpt-6-luna 8/9 at 0.86 s.
+    static let enhancement = [RecommendedSetup.enhancementModel, "openai/gpt-6-luna"]
+}
+
 // MARK: - Self-check
 
 #if DEBUG
@@ -1887,6 +1934,17 @@ struct YapCloudConfigDocument: Equatable {
             let unknown = chatBody(model: "x/unknown", metadata: nil, messages: [], temperature: 0.3)
             assert(unknown["reasoning"] == nil && unknown["temperature"] == nil)
             assert((unknown["provider"] as? [String: Any])?["require_parameters"] == nil)
+
+            // Allowlist: a model the catalog doesn't list runs on the fallback; no catalog yet → unchanged
+            assert(served("x/old", in: ["a/b"], fallback: "a/b") == "a/b" && served("x/old", in: [], fallback: "a/b") == "x/old")
+            assert(served("a/b", in: ["a/b", "c/d"], fallback: "c/d") == "a/b")
+            assert(isModelNotAllowed(YapCloudError(
+                status: 400, body: json(#"{"error":{"code":"MODEL_NOT_ALLOWED","message":"model x is not available"}}"#),
+                authenticated: true)))
+            assert(!isModelNotAllowed(YapCloudError.server(status: 400, code: nil, message: "MODEL_NOT_ALLOWED")))
+            assert(!isSafeToRetry(YapCloudError.server(status: 400, code: "MODEL_NOT_ALLOWED", message: "")))
+            assert(YapCloudPicks.transcription.first == RecommendedSetup.transcriptionModel)
+            assert(YapCloudPicks.enhancement.first == RecommendedSetup.enhancementModel)
 
             // Chat SSE → the non-streamed body (text, generation id); a mid-stream error chunk throws
             var sse = SSEChat()

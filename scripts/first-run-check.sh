@@ -5,6 +5,7 @@
 # (OfflineCheck.swift): it downloads the model through WhisperModelManager, prints what the shortcut's preflight
 # says mid-download, then dictates the clip twice (cold, then warm) and quits. Needs the network (Hugging Face).
 # WAIT=1: wait for the post-download warmup before dictating (what a user who waits a moment sees).
+# PREVIEW=1: dictate all 11 clips as one 65 s file, then run it through the live-preview session in real time.
 # The dev and release apps' settings are never read or written.
 set -euo pipefail
 
@@ -31,6 +32,17 @@ ditto "$APP_DIR/VoiceInk Dev.app" "$APP"
 /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "$APP/Contents/Info.plist" 2>/dev/null || true
 codesign --force --deep --sign - "$APP" >/dev/null 2>&1
 afconvert -f WAVE -d LEI16@16000 -c 1 "$ROOT/setup/asr/clips/security.m4a" "$WORK/clip.wav"
+if [ -n "${PREVIEW:-}" ]; then  # the live preview needs a long recording: all 11 clips, 65 s
+	for c in "$ROOT"/setup/asr/clips/*.m4a; do afconvert -f WAVE -d LEI16@16000 -c 1 "$c" "$WORK/$(basename "$c" .m4a).part.wav"; done
+	python3 - "$WORK" <<'PY'
+import glob, sys, wave
+parts = sorted(glob.glob(sys.argv[1] + "/*.part.wav"))
+with wave.open(sys.argv[1] + "/clip.wav", "wb") as out:
+    out.setparams(wave.open(parts[0]).getparams())
+    for p in parts:
+        out.writeframes(wave.open(p).readframes(10**9))
+PY
+fi
 
 cleanup
 mkdir -p "$SUPPORT/WhisperModels"
@@ -40,7 +52,7 @@ cat >"$WORK/config/yap/config.json" <<JSON
     "selectedTranscriptionModelName": "$MODEL_NAME", "selectedLanguage": "auto", "isAIEnhancementEnabled": false,
     "useClipboardContext": false, "useSelectedTextContext": false, "useScreenCapture": false } ] }
 JSON
-XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --first-run-check "$MODEL_NAME" ${WAIT:+--wait-for-warmup} \
+XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --first-run-check "$MODEL_NAME" ${WAIT:+--wait-for-warmup} ${PREVIEW:+--preview-check} \
 	--dictate-file "$WORK/clip.wav" >"$WORK/out.txt" 2>"$WORK/err.txt" || { echo "app exited with $?:"; tail -5 "$WORK/err.txt"; }
 sed -n 's/^first-run: //p' "$WORK/out.txt"
 ls "$SUPPORT/WhisperModels" | sed 's/^/models folder: /'

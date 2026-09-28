@@ -76,7 +76,7 @@ struct HomeWeekPanelContent: View {
 
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: AppTheme.Spacing.x3) { tiles }
-                Grid(horizontalSpacing: 10, verticalSpacing: 10) {
+                Grid(horizontalSpacing: AppTheme.Spacing.x3, verticalSpacing: AppTheme.Spacing.x3) {
                     let all = Array(tileModels.enumerated())
                     GridRow { ForEach(all.prefix(2), id: \.offset) { HomeStatTile(model: $0.element) } }
                     GridRow { ForEach(all.suffix(2), id: \.offset) { HomeStatTile(model: $0.element) } }
@@ -229,13 +229,11 @@ struct HomeStatTile: View {
                 .foregroundStyle(AppTheme.Text.muted)
                 .lineLimit(1)
         }
-        .padding(AppTheme.Spacing.x3)
+        .padding(AppTheme.Spacing.x4)
         .accessibilityElement(children: .combine)
         .frame(minWidth: 128, maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: AppTheme.Radius.card, style: .continuous)
-                .fill(AppTheme.Surface.subtle)
-        )
+        // A card like every other on Home (surface + 1px border, DESIGN.md), not a sunken well.
+        .background(AppCardBackground(cornerRadius: AppTheme.Radius.card))
     }
 }
 

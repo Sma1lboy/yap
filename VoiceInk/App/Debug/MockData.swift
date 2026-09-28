@@ -90,8 +90,17 @@
         }
 
         static func insertDictionary(into context: ModelContext) {
-            vocabulary.forEach { context.insert(VocabularyWord(word: $0)) }
-            replacements.forEach { context.insert(WordReplacement(originalText: $0.0, replacementText: $0.1)) }
+            // Every third entry as if Auto Learn added it, so the source filter has both kinds to show.
+            for (index, word) in vocabulary.enumerated() {
+                let entry = VocabularyWord(word: word)
+                entry.isAutoLearned = index % 3 == 1
+                context.insert(entry)
+            }
+            for (index, pair) in replacements.enumerated() {
+                let entry = WordReplacement(originalText: pair.0, replacementText: pair.1)
+                entry.isAutoLearned = index % 3 == 1
+                context.insert(entry)
+            }
         }
 
         /// Five starter modes on Yap Cloud (transcription and enhancement).

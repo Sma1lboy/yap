@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check first-run-check ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check first-run-check ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -154,7 +154,7 @@ cloud-latency: $(PAYGATE_UP)
 SYNC_E2E_BIN := $(CURDIR)/.local-build/sync-e2e
 sync-e2e: $(PAYGATE_UP)
 	@mkdir -p "$(dir $(SYNC_E2E_BIN))"
-	@xcrun swiftc -DDEBUG -Onone -o "$(SYNC_E2E_BIN)" \
+	@xcrun swiftc -DDEBUG -DSYNC_E2E -Onone -o "$(SYNC_E2E_BIN)" \
 		scripts/cloud-smoke/Stubs.swift scripts/sync-e2e/LoaderStub.swift scripts/sync-e2e/main.swift \
 		VoiceInk/Infrastructure/Config/YapConfig.swift \
 		VoiceInk/Infrastructure/Config/CloudConfigSync.swift \
@@ -203,6 +203,14 @@ first-run-check: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh scripts/first-run-check.sh "$$APP_DIR" $(MODEL)
+
+# Meeting recording from two local files, end to end (chunking, transcription with MODEL, notes with NOTES=1,
+# History entry), without microphone or system audio permission. See scripts/meeting-files-check.sh.
+meeting-files-check: build
+	@test -n "$(MODEL)" || { echo "usage: make meeting-files-check MODEL=/path/to/ggml-large-v3-turbo-q5_0.bin [NOTES=1]"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/meeting-files-check.sh "$$APP_DIR" "$(MODEL)" $(NOTES)
 
 # Render every page, Settings group, onboarding screen and sheet in light and dark, plus the main ones in Chinese
 # (-zh), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots

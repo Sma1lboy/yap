@@ -27,9 +27,10 @@
 <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="site.webmanifest">
-<!-- tokens.css is generated from docs/DESIGN.md (make design-tokens); site.css uses only its variables. -->
-<link rel="stylesheet" href="tokens.css">
-<link rel="stylesheet" href="site.css">
+<!-- tokens.css is generated from docs/DESIGN.md (make design-tokens); site.css uses only its variables. Pages caches
+     both for 10 minutes: change ?v= whenever either changes, or a new page renders with the old CSS. -->
+<link rel="stylesheet" href="tokens.css?v=aa65be6a">
+<link rel="stylesheet" href="site.css?v=aa65be6a">
 </head>
 <body>
 <a class="skip" href="#main"><span lang="en">Skip to content</span><span lang="zh-Hans">跳到正文</span></a>
@@ -57,37 +58,49 @@
 <main id="main">
 
 <section class="hero" id="top">
-  <div class="wrap hero-grid">
-    <div>
-      <p class="eyebrow"><span lang="en">Open-source dictation for Mac</span><span lang="zh-Hans">开源的 Mac 听写 app</span></p>
-      <h1><span lang="en">Hold a key. Talk. Let go.</span><span lang="zh-Hans">按住快捷键，说话，松开。</span></h1>
-      <p class="lede" lang="en">Talk in English, Chinese or both in one sentence; when you let go, clean text is pasted into whatever app you're in. Yap is free and open source under the GPL: read the code, build it yourself, run it on a local model.</p>
-      <p class="lede" lang="zh-Hans">中英混着说也行；一松开，整理好的文字就粘贴进你正在用的 app。Yap 免费开源（GPL）：代码可以看，可以自己编译，也可以只用本机的模型。</p>
-      <div class="hero-actions">
-        <a class="btn btn--primary btn--lg" href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0-3-3m3 3 3-3M3 13h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span lang="en">Download for Mac</span><span lang="zh-Hans">下载 Mac 版</span>
-        </a>
-        <a class="btn btn--secondary btn--lg" href="https://github.com/Sma1lboy/yap">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.3l-3.8 2 .7-4.3-3.1-3 4.3-.6z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-          <span lang="en">Star on GitHub</span><span lang="zh-Hans">在 GitHub 上 Star</span><span class="gh-stars" data-stars hidden></span>
-        </a>
-      </div>
-      <p class="hero-meta"><span lang="en">GPL-3.0 · a fork of VoiceInk · macOS 15 or later</span><span lang="zh-Hans">GPL-3.0 · fork 自 VoiceInk · 需要 macOS 15 或更高版本</span></p>
+  <div class="wrap hero-center">
+    <h1><span lang="en"><span class="messy">Say it <s>um,</s> messy.</span> Paste it clean.</span><span lang="zh-Hans"><span class="messy">随便说，<s>嗯，</s>乱点也行。</span>贴出来是干净的。</span></h1>
+    <p class="lede" lang="en">Open-source dictation for Mac. Talk the way you talk and switch languages mid-sentence; when you let go, Yap drops the filler, fixes punctuation and pastes into the app you're in. Free under the GPL: read the code, build it yourself, run it on a local model.</p>
+    <p class="lede" lang="zh-Hans">开源的 Mac 听写 app。怎么说话就怎么说，一句话里换语言也行；一松开，Yap 去掉口头禅、补好标点，粘贴进你正在用的 app。GPL 免费开源：代码可以看，可以自己编译，也可以只用本机的模型。</p>
+    <div class="hero-actions">
+      <a class="btn btn--primary btn--lg" href="#install">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0-3-3m3 3 3-3M3 13h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span lang="en">Install for Mac</span><span lang="zh-Hans">安装 Mac 版</span>
+      </a>
+      <a class="btn btn--secondary btn--lg" href="https://github.com/Sma1lboy/yap">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.3l-3.8 2 .7-4.3-3.1-3 4.3-.6z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <span lang="en">Star on GitHub</span><span lang="zh-Hans">在 GitHub 上 Star</span><span class="gh-stars" data-stars hidden></span>
+      </a>
     </div>
-    <figure style="margin: 0">
-      <div class="window">
-        <div class="window-bar" aria-hidden="true"><i></i><i></i><i></i></div>
-        <picture lang="en">
-          <source srcset="assets/home-dark.jpg" media="(prefers-color-scheme: dark)">
-          <img src="assets/home-light.jpg" width="1440" height="1200" alt="Yap's Home: this week's words dictated and time saved, and today's transcripts mixing English and Chinese.">
-        </picture>
-        <picture lang="zh-Hans">
-          <source srcset="assets/home-zh-dark.jpg" media="(prefers-color-scheme: dark)">
-          <img src="assets/home-zh-light.jpg" width="1440" height="1200" alt="Yap 的主页：本周听写的字数和节省的时间，以及今天中英混说的转写记录。">
-        </picture>
-      </div>
-      <figcaption class="shot-caption"><span lang="en">The app, with sample data.</span><span lang="zh-Hans">app 实际界面，数据是示例。</span></figcaption>
+    <p class="hero-meta"><span lang="en">GPL-3.0 · a fork of VoiceInk · macOS 15 or later · <a href="#unverified-developer">Downloaded zip blocked by macOS?</a></span><span lang="zh-Hans">GPL-3.0 · fork 自 VoiceInk · 需要 macOS 15 或更高版本 · <a href="#unverified-developer-zh">下载的 zip 被 macOS 拦住了？</a></span></p>
+  </div>
+  <!-- The ribbon: raw speech (filler struck out) flows in along one curve, the cleaned sentence leaves on a dark band.
+       Both are SVG textPaths whose startOffset advances each frame; the pill sits over the point where they meet.
+       The band starts level and inside the pill's footprint (x 690 fits under it at phone and desktop widths), so its cut end never shows. -->
+  <div class="ribbon" aria-hidden="true">
+    <svg viewBox="0 0 1440 320" preserveAspectRatio="xMidYMid slice">
+      <path id="ribbon-in" d="M -80 270 C 180 330, 380 30, 660 160" fill="none"/>
+      <path id="ribbon-out" class="ribbon-band" d="M 690 160 C 860 160, 960 250, 1140 170 S 1400 60, 1540 90"/>
+      <text class="ribbon-raw"><textPath href="#ribbon-in" id="ribbon-raw"></textPath></text>
+      <text class="ribbon-clean" dominant-baseline="central"><textPath href="#ribbon-out" id="ribbon-clean"></textPath></text>
+    </svg>
+    <div class="ribbon-pill"><img src="assets/logo-96.png" alt="" width="36" height="36"><span class="wave" id="ribbon-wave"></span></div>
+  </div>
+  <div class="wrap ribbon-legend">
+    <span lang="en">What you say</span><span lang="zh-Hans">你说的</span>
+    <span class="langs">English · 中文 · 日本語 · Español · Français · 한국어 · Deutsch</span>
+    <span lang="en">What gets pasted</span><span lang="zh-Hans">贴出来的</span>
+  </div>
+  <p class="wrap fine ribbon-note" lang="en">The offline Whisper model recognises about 100 languages; the default setup is tuned for English and Chinese.</p>
+  <p class="wrap fine ribbon-note" lang="zh-Hans">离线的 Whisper 模型能识别约 100 种语言；默认设置针对中文和英文调过。</p>
+</section>
+
+<section class="shot">
+  <div class="wrap">
+    <!-- The poster is the video's frame at 5.3 s. -->
+    <figure>
+      <video class="demo-video" src="assets/demo.mp4" poster="assets/demo-poster.jpg" width="1440" height="900" autoplay muted loop playsinline aria-label="Yap in use: hold Right Option and talk in English with Chinese, Japanese or Spanish mixed in; on release the cleaned sentence is pasted into the editor; each dictation then appears on Yap's Home."></video>
+      <figcaption class="shot-caption"><span lang="en">The app's own recorder and Home, rendered with sample dictations.</span><span lang="zh-Hans">app 自己的录音条和主页，用示例听写渲染出来。</span></figcaption>
     </figure>
   </div>
 </section>
@@ -97,8 +110,8 @@
     <div>
       <p class="eyebrow"><span lang="en">Install, or build it yourself</span><span lang="zh-Hans">安装，或者自己编译</span></p>
       <h2><span lang="en">Homebrew, a download, or the source.</span><span lang="zh-Hans">Homebrew、直接下载，或者从源码编译。</span></h2>
-      <p class="fine" lang="en">Homebrew installs Yap and keeps it updated; the app also updates itself. Building from source needs Xcode: <code>make local</code> puts <code>Yap.app</code> in your Downloads folder.</p>
-      <p class="fine" lang="zh-Hans">Homebrew 负责安装和更新，app 自己也会检查更新。从源码编译需要 Xcode：<code>make local</code> 会把 <code>Yap.app</code> 放进“下载”文件夹。</p>
+      <p class="fine" lang="en">Homebrew installs Yap and keeps it updated; the app also updates itself. Building from source needs Xcode: <code>make local</code> puts <code>Yap.app</code> in your Downloads folder. <a href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip">Downloading the zip</a> works too, but macOS blocks the first open until you <a href="#unverified-developer">allow it once</a>.</p>
+      <p class="fine" lang="zh-Hans">Homebrew 负责安装和更新，app 自己也会检查更新。从源码编译需要 Xcode：<code>make local</code> 会把 <code>Yap.app</code> 放进“下载”文件夹。也可以<a href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip">直接下载 zip</a>，但第一次打开会被 macOS 拦住，要<a href="#unverified-developer-zh">手动放行一次</a>。</p>
     </div>
     <div class="stack">
       <div>
@@ -126,7 +139,7 @@ make local</pre></div>
     <p class="eyebrow"><span lang="en">How it works</span><span lang="zh-Hans">演示</span></p>
     <h2><span lang="en">Talk the way you talk. Get the text you meant.</span><span lang="zh-Hans">怎么说都行，粘贴的是你想写的。</span></h2>
     <p class="intro" lang="en">Hold Right Option and speak — switch languages mid-sentence, say "um", restart a thought. Yap transcribes, drops the filler, fixes punctuation, and pastes.</p>
-    <p class="intro" lang="zh-Hans">按住右 Option 说话，中英随时切换，“嗯”“那个”都没关系。Yap 转写、去掉口头禅、补好标点，再粘贴进去。</p>
+    <p class="intro" lang="zh-Hans">按住右 Option 说话，随时换语言，“嗯”“那个”都没关系。Yap 转写、去掉口头禅、补好标点，再粘贴进去。</p>
 
     <div class="demo">
       <div class="demo-pane">
@@ -145,6 +158,8 @@ make local</pre></div>
         <button type="button" aria-pressed="true" data-example="0"><span lang="en">Standup</span><span lang="zh-Hans">站会</span></button>
         <button type="button" aria-pressed="false" data-example="1"><span lang="en">Code review</span><span lang="zh-Hans">代码评审</span></button>
         <button type="button" aria-pressed="false" data-example="2"><span lang="en">Email</span><span lang="zh-Hans">邮件</span></button>
+        <button type="button" aria-pressed="false" data-example="3">日本語</button>
+        <button type="button" aria-pressed="false" data-example="4">Español</button>
       </div>
       <button class="btn btn--quiet" type="button" id="demo-replay">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8a5 5 0 1 0 1.5-3.6M3 2.5v3h3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -235,6 +250,7 @@ make local</pre></div>
           <li>Open System Settings › Privacy &amp; Security and scroll down to Security.</li>
           <li>Next to "Yap was blocked to protect your Mac", click <strong>Open Anyway</strong> and confirm with your password.</li>
         </ol>
+        <p>Or, in Terminal: <code>xattr -dr com.apple.quarantine /Applications/Yap.app</code>, then open Yap normally.</p>
         <p>Right-click › Open no longer skips this on macOS 15 and later. Installing with Homebrew (<a href="#install">above</a>) removes the quarantine flag, so the warning never appears.</p>
       </div></details>
     </div>
@@ -252,6 +268,7 @@ make local</pre></div>
           <li>打开“系统设置 › 隐私与安全性”，往下滚到“安全性”。</li>
           <li>在“已阻止‘Yap’以保护你的 Mac”旁边点<strong>仍要打开</strong>，输入密码确认。</li>
         </ol>
+        <p>或者在终端里运行 <code>xattr -dr com.apple.quarantine /Applications/Yap.app</code>，再正常打开 Yap。</p>
         <p>macOS 15 起，右键 › 打开已经不能跳过这一步。用 Homebrew 安装（见<a href="#install">上面</a>）会自动去掉隔离标记，不会出现这个提示。</p>
       </div></details>
     </div>
@@ -358,8 +375,54 @@ make local</pre></div>
     { said: [["那个", 1], ["PR", 0], ["我看了", 0], ["嗯", 1], ["整体没问题", 0], ["就是", 1], ["error", 0], ["handling", 0], ["那块", 0], ["再补一下", 0], ["test", 0]],
       out: "PR 我看了，整体没问题，error handling 那块再补一下 test。" },
     { said: [["reply", 0], ["to", 0], ["Lisa", 0], ["uh", 1], ["说", 0], ["invoice", 0], ["已经发了", 0], ["嗯", 1], ["麻烦她", 0], ["confirm", 0], ["一下", 0]],
-      out: "Hi Lisa，invoice 已经发了，麻烦 confirm 一下。谢谢！" }
+      out: "Hi Lisa，invoice 已经发了，麻烦 confirm 一下。谢谢！" },
+    { said: [["えーと", 1], ["明日の", 0], ["meeting", 0], ["は", 0], ["あの", 1], ["3時に", 0], ["変更で", 0], ["お願いします", 0]],
+      out: "明日の meeting は3時に変更でお願いします。" },
+    { said: [["eh", 1], ["mándale", 0], ["a", 0], ["Carlos", 0], ["el", 0], ["pull", 0], ["request", 0], ["o", 1], ["sea", 1], ["antes", 0], ["del", 0], ["viernes", 0]],
+      out: "Mándale a Carlos el pull request antes del viernes." },
+    { said: [["euh", 1], ["on", 0], ["décale", 0], ["la", 0], ["démo", 0], ["à", 0], ["jeudi", 0], ["du", 1], ["coup", 1], ["et", 0], ["j'envoie", 0], ["le", 0], ["deck", 0]],
+      out: "On décale la démo à jeudi et j'envoie le deck." },
+    { said: [["음", 1], ["이번", 0], ["release", 0], ["notes", 0], ["는", 0], ["그", 1], ["내일", 0], ["아침까지", 0], ["정리할게요", 0]],
+      out: "이번 release notes는 내일 아침까지 정리할게요." },
+    { said: [["ähm", 1], ["kannst", 0], ["du", 0], ["das", 0], ["Budget", 0], ["Sheet", 0], ["also", 1], ["bis", 0], ["Montag", 0], ["freigeben", 0]],
+      out: "Kannst du das Budget-Sheet bis Montag freigeben?" }
   ];
+
+  // ---- Ribbon: every example, raw on the incoming curve and clean on the outgoing band ----
+  (function () {
+    var svgNS = "http://www.w3.org/2000/svg";
+    var raw = document.getElementById("ribbon-raw"), clean = document.getElementById("ribbon-clean");
+    var inPath = document.getElementById("ribbon-in"), outPath = document.getElementById("ribbon-out");
+    if (!raw || !raw.getComputedTextLength) return;
+    function fill(target, parts) {
+      // Two copies, so wrapping the offset by one copy's length is seamless.
+      for (var copy = 0; copy < 2; copy++) parts.forEach(function (p) {
+        var t = document.createElementNS(svgNS, "tspan"); t.textContent = p[0];
+        if (p[1]) t.setAttribute("class", "f");
+        target.appendChild(t);
+      });
+    }
+    var rawParts = [], cleanParts = [];
+    examples.forEach(function (ex) {
+      ex.said.forEach(function (w) { rawParts.push([w[0] + " ", w[1]]); });
+      rawParts.push(["·   ", 0]);
+      cleanParts.push([ex.out + "     ", 0]);
+    });
+    fill(raw, rawParts); fill(clean, cleanParts);
+    var wave = document.getElementById("ribbon-wave");
+    for (var i = 0; i < 14; i++) { var bar = document.createElement("i"); bar.style.animationDelay = (i * 0.07 % 0.9) + "s"; wave.appendChild(bar); }
+    // Raw text ends at the pill (end of its path); clean text starts at the pill.
+    var rawLoop = raw.getComputedTextLength() / 2, cleanLoop = clean.getComputedTextLength() / 2;
+    var rawEnd = inPath.getTotalLength(), speed = 0.06, t0 = null;
+    function frame(now) {
+      if (t0 === null) t0 = now;
+      var d = (now - t0) * speed;
+      raw.setAttribute("startOffset", rawEnd - 2 * rawLoop + (d % rawLoop));
+      clean.setAttribute("startOffset", (d % cleanLoop) - cleanLoop);
+      if (!reduceMotion) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
   var saidEl = document.getElementById("demo-said");
   var outEl = document.getElementById("demo-out");
   var statusEl = document.getElementById("demo-status");

@@ -131,7 +131,7 @@ final class AudioCleanupManager {
                         FileManager.default.fileExists(atPath: url.path)
                     {
                         do {
-                            try FileManager.default.removeItem(at: url)
+                            try Transcription.removeAudio(at: url)
                             transcription.audioFileURL = nil
                             deletedCount += 1
                         } catch {
@@ -178,7 +178,7 @@ final class AudioCleanupManager {
                 FileManager.default.fileExists(atPath: url.path)
             {
                 do {
-                    try FileManager.default.removeItem(at: url)
+                    try Transcription.removeAudio(at: url)
                     transcription.audioFileURL = nil
                     deletedCount += 1
                 } catch {

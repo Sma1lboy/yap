@@ -31,14 +31,14 @@ The script installs the app with Homebrew (or downloads the latest release), cop
 
 Just the app: `brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew install --cask sma1lboy/yap/yap`. After that, Yap updates itself (Check for Updates… in the app menu) or with `brew upgrade --cask yap`.
 
-**Build it yourself.** With Xcode installed, `make local` in the cloned repository builds Yap and copies `Yap.app` to your Downloads folder. Releases are signed with a self-signed certificate and not notarized; the [site's FAQ](https://yap.sma1lboy.me/#faq) explains the one-time "can't verify the developer" step for a downloaded zip.
+**Build it yourself.** With Xcode installed, `make local` in the cloned repository builds Yap and copies `Yap.app` to your Downloads folder. Releases are signed with a self-signed certificate and not notarized; the [site's FAQ](https://yap.sma1lboy.me/#faq) explains the one-time "can't verify the developer" step for a downloaded zip; `xattr -dr com.apple.quarantine /Applications/Yap.app` in Terminal does the same.
 
 ## How Yap differs from VoiceInk
 
 - Its own identity: app name, bundle ID `me.sma1lboy.yap`, Application Support folder and keychain namespace, so it installs next to VoiceInk without sharing data. Upstream announcements, GitHub-star prompts, the Pro/licensing screen and the upstream change log are gone.
 - A calmer UI: monochrome sidebar, a Home screen that shows the default mode and recent transcripts, SF Symbols instead of emoji.
 - Onboarding lets you skip the transcription and AI provider steps ("Set It Up Later") and configure everything from a JSON file instead.
-- Its own update channel: CI signs every release with a stable self-signed certificate, publishes it, and updates both the Sparkle appcast (in-app updates) and the Homebrew cask.
+- Its own update channel: CI signs every release with a Developer ID certificate and notarizes it, publishes it, and updates both the Sparkle appcast (in-app updates) and the Homebrew cask.
 - A duck icon (`design/logo.svg`).
 - `setup/`: a tuned setup for Chinese–English code-switched dictation through OpenRouter, plus the benchmark scripts used to pick the models.
 
@@ -163,9 +163,9 @@ It needs the Railway CLI logged in (tokens come from paygate's `scripts/issue-to
 
 During development, `make cloud-smoke`, `make sync-e2e` and `make cloud-latency` without `PAYGATE=prod` run against a throwaway paygate on this Mac (`make paygate-local`: Postgres plus paygate from `~/i/paygate`, with production's model allowlist from `docs/cloud-models.md`), so they create nothing on production. `make paygate-local-stop` stops it. The release notes file is also what users see in the GitHub Release and in the in-app update dialog.
 
-Push a tag `vX.Y.Z`. CI (`.github/workflows/release.yml`) builds on macOS 26, signs with the "Yap Self-Signed" certificate, publishes `Yap.zip` to GitHub Releases, then commits the new `appcast.xml` item (Sparkle EdDSA-signed) and the `Casks/yap.rb` version in one commit to `main`. Build numbers are `1000 + run number`. CI also builds every push to `main` and once a week, so caches stay warm in `main`'s scope: the whisper.cpp framework, the compiled Swift packages (mlx, FluidAudio, TranscribeCpp — the stable local-model modules), and Xcode 26's content-hashed compilation cache for the app's own sources (a fresh checkout doesn't force a full recompile). A release takes about 3–4 minutes; changing `Package.resolved` triggers one full rebuild (~14 minutes).
+Push a tag `vX.Y.Z`. CI (`.github/workflows/release.yml`) builds on macOS 26, signs with a Developer ID certificate (Allen Zhang, team `2G2H3TQ8J8`), notarizes and staples the app, publishes `Yap.zip` to GitHub Releases, then commits the new `appcast.xml` item (Sparkle EdDSA-signed) and the `Casks/yap.rb` version in one commit to `main`. Build numbers are `1000 + run number`. CI also builds every push to `main` and once a week, so caches stay warm in `main`'s scope: the whisper.cpp framework, the compiled Swift packages (mlx, FluidAudio, TranscribeCpp — the stable local-model modules), and Xcode 26's content-hashed compilation cache for the app's own sources (a fresh checkout doesn't force a full recompile). A release takes about 3–4 minutes; changing `Package.resolved` triggers one full rebuild (~14 minutes).
 
-Because every release is signed with the same certificate, macOS keeps the Microphone and Accessibility permissions across updates. The app is not notarized; Homebrew and the install script remove the quarantine flag.
+The designated requirement is tied to the Developer ID team, so macOS keeps the Microphone and Accessibility permissions across updates. Releases up to 1.2.0 were self-signed and not notarized; updating from those to the first notarized release asks for the permissions once more (`docs/notarization.md`).
 
 Secrets used by CI: `YAP_SIGNING_P12`, `YAP_SIGNING_PASSWORD`, `SPARKLE_ED_PRIVATE_KEY`.
 

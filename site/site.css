@@ -67,18 +67,40 @@ h3 { font-size: var(--font-headline); font-weight: 600; margin: 0 0 var(--space-
 p { margin: 0 0 var(--space-3); }
 
 /* ---------- Hero ---------- */
-.hero { padding-block: var(--space-16) var(--space-12); border-top: 0; }
-.hero-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-12); align-items: center; }
-@media (max-width: 960px) { .hero-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-8); } }
-.hero h1 { font-size: clamp(34px, 4.6vw, var(--font-display)); line-height: 1.08; font-weight: 700; letter-spacing: -0.025em; margin: 0 0 var(--space-4); text-wrap: balance; }
-.hero .lede { color: var(--text-2); font-size: var(--font-headline); line-height: 1.55; margin: 0 0 var(--space-6); max-width: 30em; }
-.hero-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-4); }
+.hero { padding-block: var(--space-12) var(--space-8); border-top: 0; }
+.hero-center { text-align: center; }
+.hero h1 { font-size: clamp(40px, 7.5vw, 92px); line-height: 1.02; font-weight: 800; letter-spacing: -0.04em; margin: 0 0 var(--space-5); text-wrap: balance; }
+/* CJK glyphs are wider and denser; the same size fills the line. */
+.hero h1 [lang="zh-Hans"] { font-size: 0.74em; letter-spacing: -0.01em; }
+.hero h1 .messy { display: block; color: var(--text-3); font-weight: 500; letter-spacing: -0.02em; }
+.hero .lede { color: var(--text-2); font-size: var(--font-headline); line-height: 1.55; margin: 0 auto var(--space-6); max-width: 36em; }
+.hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin-bottom: var(--space-4); }
 .hero-meta { font-size: var(--font-footnote); color: var(--text-3); margin: 0; }
 
-/* A Mac window around the real screenshot. */
-.window { border-radius: var(--radius-card); overflow: hidden; background: var(--surface); box-shadow: var(--shadow-pop); }
-.window-bar { display: flex; gap: var(--space-2); align-items: center; height: 28px; padding-inline: var(--space-3); background: var(--sunken); border-bottom: 1px solid var(--border); }
-.window-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+/* ---------- Ribbon ---------- */
+.ribbon { position: relative; margin-top: var(--space-4); }
+.ribbon svg { display: block; width: 100%; height: auto; overflow: visible; }
+.ribbon-band { fill: none; stroke: var(--text); stroke-width: 56; }
+.ribbon-raw { font-size: 24px; fill: var(--text-2); }
+.ribbon-raw .f { fill: var(--text-3); text-decoration: line-through; }
+.ribbon-clean { font-size: 24px; font-weight: 600; fill: var(--bg); }
+/* Centered on the point both curves meet: (720, 160) of the 1440×320 viewBox. */
+.ribbon-pill { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: var(--space-3);
+  height: 72px; padding-inline: var(--space-5); border-radius: var(--radius-pill); background: var(--surface); border: 2px solid var(--text); box-shadow: var(--shadow-pop); }
+.ribbon-pill img { width: 36px; height: 36px; border-radius: 9px; }
+.wave { display: flex; gap: 3px; align-items: center; height: 32px; }
+.wave i { width: 3px; border-radius: 2px; background: var(--text); animation: wave 0.9s ease-in-out infinite; }
+@keyframes wave { 0%, 100% { height: 6px; } 50% { height: 28px; } }
+.ribbon-legend { display: flex; justify-content: space-between; gap: var(--space-4); font-size: var(--font-footnote); color: var(--text-3); margin-top: var(--space-4); }
+.ribbon-legend .langs { color: var(--text-2); text-align: center; }
+.ribbon-note { text-align: center; margin-top: var(--space-2); }
+/* Narrow screens crop the ribbon (slice) rather than shrink its text to nothing. */
+@media (max-width: 760px) { .ribbon svg { height: 200px; } .ribbon-pill { height: 52px; padding-inline: var(--space-3); } .wave { display: none; } .ribbon-legend .langs { display: none; } }
+@media (prefers-reduced-motion: reduce) { .wave i { animation: none; height: 16px; } }
+
+.shot figure { max-width: 900px; margin: 0 auto; }
+
+.demo-video { display: block; width: 100%; height: auto; border-radius: var(--radius-card); box-shadow: var(--shadow-pop); }
 .shot-caption { font-size: var(--font-caption); color: var(--text-3); margin: var(--space-3) 0 0; }
 
 /* ---------- Demo ---------- */

@@ -9,6 +9,9 @@ struct VocabularyView: View {
     @State private var alertMessage = ""
     @State private var sortMode: VocabularySortMode = .wordAsc
     @State private var showInfoPopover = false
+    @State private var filter: DictionarySourceFilter = .all
+    @State private var isSelecting = false
+    @State private var selection = Set<PersistentIdentifier>()
     @FocusState private var isInputFocused: Bool
 
     init() {
@@ -16,7 +19,8 @@ struct VocabularyView: View {
     }
 
     private var sortedItems: [VocabularyWord] {
-        DictionarySortService.shared.sortVocabulary(vocabularyWords, by: sortMode)
+        DictionarySortService.shared.sortVocabulary(
+            vocabularyWords.filter { filter.includes(isAutoLearned: $0.isAutoLearned) }, by: sortMode)
     }
 
     private func toggleSort() {
@@ -72,6 +76,15 @@ struct VocabularyView: View {
 
             if !vocabularyWords.isEmpty {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
+                    DictionaryListToolbar(
+                        filter: $filter,
+                        isSelecting: $isSelecting,
+                        selectedCount: selection.count,
+                        visibleCount: sortedItems.count,
+                        onSelectAll: { selection = Set(sortedItems.map(\.persistentModelID)) },
+                        onDeleteSelected: deleteSelected
+                    )
+
                     Button(action: toggleSort) {
                         HStack(spacing: AppTheme.Spacing.x1) {
                             Text(String(localized: "Vocabulary Words (\(vocabularyWords.count))"))
@@ -86,10 +99,27 @@ struct VocabularyView: View {
                     .buttonStyle(.plain)
                     .help("Change sort order")
 
+                    if sortedItems.isEmpty { DictionaryFilterEmptyNote(filter: filter) }
+
                     FlowLayout(spacing: AppTheme.Spacing.x2) {
                         ForEach(sortedItems) { item in
-                            VocabularyWordView(item: item) {
-                                removeWord(item)
+                            if isSelecting {
+                                let isSelected = selection.contains(item.persistentModelID)
+                                Button {
+                                    selection.formSymmetricDifference([item.persistentModelID])
+                                } label: {
+                                    DictionaryPill(onRemove: nil, removeHelp: "Remove word") {
+                                        HStack(spacing: AppTheme.Spacing.x1) {
+                                            DictionarySelectionMark(isSelected: isSelected)
+                                            Text(item.word).lineLimit(1)
+                                        }
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                VocabularyWordView(item: item) {
+                                    removeWord(item)
+                                }
                             }
                         }
                     }
@@ -106,6 +136,8 @@ struct VocabularyView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .onChange(of: isSelecting) { selection.removeAll() }
+        .onChange(of: filter) { selection.removeAll() }
         .alert("Vocabulary", isPresented: $showAlert) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -124,6 +156,16 @@ struct VocabularyView: View {
             return
         }
         newWord = ""
+    }
+
+    private func deleteSelected() {
+        let doomed = vocabularyWords.filter { selection.contains($0.persistentModelID) }
+        if let error = DictionaryService.removeEntries(doomed, context: modelContext) {
+            alertMessage = error
+            showAlert = true
+            return
+        }
+        isSelecting = false
     }
 
     private func removeWord(_ word: VocabularyWord) {
