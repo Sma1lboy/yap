@@ -62,29 +62,26 @@ jobs:
           path: ~/VoiceInk-Dependencies
           key: whisper-${{ runner.os }}-xcode26.6-v1
 
-      # 自签证书：固定的 designated requirement 让 TCC 权限跨版本保留。
-      # 不受信任的自签证书 codesign 找不到，所以要装进 System keychain 并信任。
+      # Developer ID（Allen 的团队 2G2H3TQ8J8）：designated requirement 绑团队号，换证书续期也不重置 TCC 权限。
       - name: Import signing certificate
         env:
-          YAP_SIGNING_P12: ${{ secrets.YAP_SIGNING_P12 }}
-          YAP_SIGNING_PASSWORD: ${{ secrets.YAP_SIGNING_PASSWORD }}
+          DEVELOPER_ID_P12: ${{ secrets.DEVELOPER_ID_P12 }}
+          DEVELOPER_ID_PASSWORD: ${{ secrets.DEVELOPER_ID_PASSWORD }}
         run: |
           KEYCHAIN="$RUNNER_TEMP/yap-signing.keychain-db"
           KC_PASS=$(openssl rand -hex 16)
-          echo "$YAP_SIGNING_P12" | base64 --decode > "$RUNNER_TEMP/yap.p12"
+          echo "$DEVELOPER_ID_P12" | base64 --decode > "$RUNNER_TEMP/yap.p12"
           security create-keychain -p "$KC_PASS" "$KEYCHAIN"
           security set-keychain-settings -lut 21600 "$KEYCHAIN"
           security unlock-keychain -p "$KC_PASS" "$KEYCHAIN"
-          security import "$RUNNER_TEMP/yap.p12" -k "$KEYCHAIN" -P "$YAP_SIGNING_PASSWORD" -f pkcs12 -T /usr/bin/codesign
+          security import "$RUNNER_TEMP/yap.p12" -k "$KEYCHAIN" -P "$DEVELOPER_ID_PASSWORD" -f pkcs12 -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KC_PASS" "$KEYCHAIN"
           security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
-          security find-certificate -c "Yap Self-Signed" -p "$KEYCHAIN" > "$RUNNER_TEMP/yap-cert.pem"
-          sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain "$RUNNER_TEMP/yap-cert.pem"
           security find-identity -v -p codesigning | tee "$RUNNER_TEMP/identities.txt"
-          grep -q '"Yap Self-Signed"' "$RUNNER_TEMP/identities.txt"
+          grep -q '"Developer ID Application: Allen Zhang (2G2H3TQ8J8)"' "$RUNNER_TEMP/identities.txt"
 
-      # Xcode 遇到非 Apple 签发的证书会退回 "Sign to Run Locally"（ad-hoc），
-      # 所以先 ad-hoc 编译，再用自签证书整体重签；保留每个组件自己的 entitlements 和 hardened runtime
+      # 先 ad-hoc 编译，再用 Developer ID 整体重签：保留每个组件自己的 entitlements，加 hardened runtime 和时间戳（公证要求）。
+      # CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO：否则 ad-hoc 编译会注入 get-task-allow，公证直接拒
       # 本地模型相关的 Swift 包（mlx、FluidAudio、TranscribeCpp…）已经稳定，不必每次重编：
       # 缓存整个 DerivedData，依赖锁文件不变就只重编 App 自己的代码
       - name: Restore Xcode build cache
@@ -100,16 +97,17 @@ jobs:
       # 但 CI 每次 checkout 都会让所有源文件的 mtime/inode 变新，Xcode 会认为全改了；
       # 所以再开 Xcode 26 的编译缓存（按内容哈希，类似 sccache），CAS 放在 .local-build 里随缓存保存
       - name: Build (LOCAL_BUILD)
-        run: make local LOCAL_CLEAN=0 LOCAL_CODESIGN_IDENTITY=- EXTRA_BUILD_SETTINGS="MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD SWIFT_COMPILATION_MODE=incremental COMPILATION_CACHE_ENABLE_CACHING=YES COMPILATION_CACHE_CAS_PATH=$GITHUB_WORKSPACE/.local-build/CompilationCache"
+        run: make local LOCAL_CLEAN=0 LOCAL_CODESIGN_IDENTITY=- EXTRA_BUILD_SETTINGS="CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO MARKETING_VERSION=$VERSION CURRENT_PROJECT_VERSION=$BUILD SWIFT_COMPILATION_MODE=incremental COMPILATION_CACHE_ENABLE_CACHING=YES COMPILATION_CACHE_CAS_PATH=$GITHUB_WORKSPACE/.local-build/CompilationCache"
 
-      - name: Re-sign with Yap Self-Signed
-        run: codesign --force --deep --preserve-metadata=entitlements,runtime --sign "Yap Self-Signed" ~/Downloads/Yap.app
+      - name: Re-sign with Developer ID
+        run: |
+          codesign --force --deep --options runtime --timestamp --preserve-metadata=entitlements --sign "Developer ID Application: Allen Zhang (2G2H3TQ8J8)" ~/Downloads/Yap.app
 
       - name: Verify signature
         run: |
           codesign --verify --deep --strict ~/Downloads/Yap.app
           codesign -dr - ~/Downloads/Yap.app 2>&1 | tee "$RUNNER_TEMP/requirement.txt"
-          grep -qE 'certificate (leaf|root)' "$RUNNER_TEMP/requirement.txt" || { echo "::error::designated requirement is not certificate-based"; exit 1; }
+          grep -q 'certificate leaf\[subject.OU\] = "2G2H3TQ8J8"' "$RUNNER_TEMP/requirement.txt" || { echo "::error::designated requirement is not the Developer ID team"; exit 1; }
 
       # tag / PR 作用域的缓存别处读不到，所以发版和 PR 构建只恢复、不保存（省约 45 秒）
       - name: Save Xcode build cache
@@ -118,6 +116,20 @@ jobs:
         with:
           path: .local-build
           key: xcbuild-${{ runner.os }}-xcode26.6-${{ hashFiles('VoiceInk.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-${{ github.run_id }}
+
+      # 只在发版时公证（每次要等 Apple 几分钟）。notarytool 拒绝时 stapler 会失败，这一步就失败，什么都还没发布
+      - name: Notarize
+        if: env.RELEASE == 'true'
+        env:
+          NOTARY_KEY_P8: ${{ secrets.NOTARY_KEY_P8 }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          printf '%s' "$NOTARY_KEY_P8" > "$RUNNER_TEMP/notary.p8"
+          ditto -c -k --keepParent ~/Downloads/Yap.app "$RUNNER_TEMP/notarize.zip"
+          xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" --key "$RUNNER_TEMP/notary.p8" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" --wait
+          xcrun stapler staple ~/Downloads/Yap.app
+          spctl -a -vv -t exec ~/Downloads/Yap.app
 
       - name: Package
         run: ditto -c -k --keepParent ~/Downloads/Yap.app Yap.zip
@@ -140,7 +152,7 @@ jobs:
           echo "$SIGN"
           echo "SPARKLE_SIGN=$SIGN" >> "$GITHUB_ENV"
 
-      # 发版说明：docs/releases/$VERSION.md 存在时，GitHub Release 用它（末尾加自签名说明），
+      # 发版说明：docs/releases/$VERSION.md 存在时，GitHub Release 用它（末尾加签名说明），
       # 并用 GitHub 的 Markdown 接口渲染成 HTML，下一步写进 appcast 的 <description>，Sparkle 更新弹窗里就能看到。
       # 渲染失败会让这一步失败，此时还什么都没发布。
       - name: Publish release
@@ -148,7 +160,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          FOOTER="Self-signed (not notarized) build of Yap, a fork of VoiceInk (GPL-3.0). Install with Homebrew (brew install --cask) or setup/install.sh; existing installs update in-app via Sparkle."
+          FOOTER="Developer ID signed and notarized build of Yap, a fork of VoiceInk (GPL-3.0). Install with Homebrew (brew install --cask) or setup/install.sh; existing installs update in-app via Sparkle."
           NOTES_MD="docs/releases/$VERSION.md"
           if [ -f "$NOTES_MD" ]; then
             gh api markdown -f mode=gfm -f context="$GITHUB_REPOSITORY" -F text=@"$NOTES_MD" > "$RUNNER_TEMP/notes.html"
@@ -179,4 +191,4 @@ jobs:
         if: always()
         run: |
           security delete-keychain "$RUNNER_TEMP/yap-signing.keychain-db" || true
-          rm -f "$RUNNER_TEMP/yap.p12" "$RUNNER_TEMP/ed.key"
+          rm -f "$RUNNER_TEMP/yap.p12" "$RUNNER_TEMP/ed.key" "$RUNNER_TEMP/notary.p8"
