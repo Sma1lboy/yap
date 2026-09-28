@@ -31,7 +31,7 @@ git clone https://github.com/Sma1lboy/yap && cd yap
 
 只装应用：`brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew install --cask sma1lboy/yap/yap`。之后 Yap 会自己更新（应用菜单里的「检查更新…」），也可以用 `brew upgrade --cask yap`。
 
-**自己编译。** 装好 Xcode 后，在克隆下来的仓库里运行 `make local`，会编译 Yap 并把 `Yap.app` 复制到“下载”文件夹。发布版用自签名证书签名、没有经过 Apple 公证；直接下载 zip 第一次打开时提示“无法验证开发者”，处理方法见[官网 FAQ](https://yap.sma1lboy.me/#faq)。
+**自己编译。** 装好 Xcode 后，在克隆下来的仓库里运行 `make local`，会编译 Yap 并把 `Yap.app` 复制到“下载”文件夹。发布版用自签名证书签名、没有经过 Apple 公证；直接下载 zip 第一次打开时提示“无法验证开发者”，处理方法见[官网 FAQ](https://yap.sma1lboy.me/#faq)，或者在终端运行 `xattr -dr com.apple.quarantine /Applications/Yap.app`。
 
 ## 和 VoiceInk 有什么不同
 

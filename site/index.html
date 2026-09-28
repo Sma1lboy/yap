@@ -63,16 +63,16 @@
     <p class="lede" lang="en">Open-source dictation for Mac. Talk the way you talk and switch languages mid-sentence; when you let go, Yap drops the filler, fixes punctuation and pastes into the app you're in. Free under the GPL: read the code, build it yourself, run it on a local model.</p>
     <p class="lede" lang="zh-Hans">开源的 Mac 听写 app。怎么说话就怎么说，一句话里换语言也行；一松开，Yap 去掉口头禅、补好标点，粘贴进你正在用的 app。GPL 免费开源：代码可以看，可以自己编译，也可以只用本机的模型。</p>
     <div class="hero-actions">
-      <a class="btn btn--primary btn--lg" href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip">
+      <a class="btn btn--primary btn--lg" href="#install">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0-3-3m3 3 3-3M3 13h10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span lang="en">Download for Mac</span><span lang="zh-Hans">下载 Mac 版</span>
+        <span lang="en">Install for Mac</span><span lang="zh-Hans">安装 Mac 版</span>
       </a>
       <a class="btn btn--secondary btn--lg" href="https://github.com/Sma1lboy/yap">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.3l-3.8 2 .7-4.3-3.1-3 4.3-.6z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
         <span lang="en">Star on GitHub</span><span lang="zh-Hans">在 GitHub 上 Star</span><span class="gh-stars" data-stars hidden></span>
       </a>
     </div>
-    <p class="hero-meta"><span lang="en">GPL-3.0 · a fork of VoiceInk · macOS 15 or later</span><span lang="zh-Hans">GPL-3.0 · fork 自 VoiceInk · 需要 macOS 15 或更高版本</span></p>
+    <p class="hero-meta"><span lang="en">GPL-3.0 · a fork of VoiceInk · macOS 15 or later · <a href="#unverified-developer">Downloaded zip blocked by macOS?</a></span><span lang="zh-Hans">GPL-3.0 · fork 自 VoiceInk · 需要 macOS 15 或更高版本 · <a href="#unverified-developer-zh">下载的 zip 被 macOS 拦住了？</a></span></p>
   </div>
   <!-- The ribbon: raw speech (filler struck out) flows in along one curve, the cleaned sentence leaves on a dark band.
        Both are SVG textPaths whose startOffset advances each frame; the pill sits over the point where they meet.
@@ -110,8 +110,8 @@
     <div>
       <p class="eyebrow"><span lang="en">Install, or build it yourself</span><span lang="zh-Hans">安装，或者自己编译</span></p>
       <h2><span lang="en">Homebrew, a download, or the source.</span><span lang="zh-Hans">Homebrew、直接下载，或者从源码编译。</span></h2>
-      <p class="fine" lang="en">Homebrew installs Yap and keeps it updated; the app also updates itself. Building from source needs Xcode: <code>make local</code> puts <code>Yap.app</code> in your Downloads folder.</p>
-      <p class="fine" lang="zh-Hans">Homebrew 负责安装和更新，app 自己也会检查更新。从源码编译需要 Xcode：<code>make local</code> 会把 <code>Yap.app</code> 放进“下载”文件夹。</p>
+      <p class="fine" lang="en">Homebrew installs Yap and keeps it updated; the app also updates itself. Building from source needs Xcode: <code>make local</code> puts <code>Yap.app</code> in your Downloads folder. <a href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip">Downloading the zip</a> works too, but macOS blocks the first open until you <a href="#unverified-developer">allow it once</a>.</p>
+      <p class="fine" lang="zh-Hans">Homebrew 负责安装和更新，app 自己也会检查更新。从源码编译需要 Xcode：<code>make local</code> 会把 <code>Yap.app</code> 放进“下载”文件夹。也可以<a href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip">直接下载 zip</a>，但第一次打开会被 macOS 拦住，要<a href="#unverified-developer-zh">手动放行一次</a>。</p>
     </div>
     <div class="stack">
       <div>
@@ -250,6 +250,7 @@ make local</pre></div>
           <li>Open System Settings › Privacy &amp; Security and scroll down to Security.</li>
           <li>Next to "Yap was blocked to protect your Mac", click <strong>Open Anyway</strong> and confirm with your password.</li>
         </ol>
+        <p>Or, in Terminal: <code>xattr -dr com.apple.quarantine /Applications/Yap.app</code>, then open Yap normally.</p>
         <p>Right-click › Open no longer skips this on macOS 15 and later. Installing with Homebrew (<a href="#install">above</a>) removes the quarantine flag, so the warning never appears.</p>
       </div></details>
     </div>
@@ -267,6 +268,7 @@ make local</pre></div>
           <li>打开“系统设置 › 隐私与安全性”，往下滚到“安全性”。</li>
           <li>在“已阻止‘Yap’以保护你的 Mac”旁边点<strong>仍要打开</strong>，输入密码确认。</li>
         </ol>
+        <p>或者在终端里运行 <code>xattr -dr com.apple.quarantine /Applications/Yap.app</code>，再正常打开 Yap。</p>
         <p>macOS 15 起，右键 › 打开已经不能跳过这一步。用 Homebrew 安装（见<a href="#install">上面</a>）会自动去掉隔离标记，不会出现这个提示。</p>
       </div></details>
     </div>

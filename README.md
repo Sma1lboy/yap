@@ -31,7 +31,7 @@ The script installs the app with Homebrew (or downloads the latest release), cop
 
 Just the app: `brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew install --cask sma1lboy/yap/yap`. After that, Yap updates itself (Check for Updates… in the app menu) or with `brew upgrade --cask yap`.
 
-**Build it yourself.** With Xcode installed, `make local` in the cloned repository builds Yap and copies `Yap.app` to your Downloads folder. Releases are signed with a self-signed certificate and not notarized; the [site's FAQ](https://yap.sma1lboy.me/#faq) explains the one-time "can't verify the developer" step for a downloaded zip.
+**Build it yourself.** With Xcode installed, `make local` in the cloned repository builds Yap and copies `Yap.app` to your Downloads folder. Releases are signed with a self-signed certificate and not notarized; the [site's FAQ](https://yap.sma1lboy.me/#faq) explains the one-time "can't verify the developer" step for a downloaded zip; `xattr -dr com.apple.quarantine /Applications/Yap.app` in Terminal does the same.
 
 ## How Yap differs from VoiceInk
 
