@@ -1,0 +1,18 @@
+{
+  "title": "Yap 宣发 Round 1 评审板",
+  "goal": "1.2.0 宣发第一轮：定位和三个卖点、六个渠道的发布文案、官网改版草稿、截图清单和 30 秒分镜，外加一张 gpt-image low 档的发布卡排版草图。每项 keep / maybe / drop 加备注；keep 的文案进入定稿，改动意见带到 round 2。什么都还没发出去、没打 tag、没部署。",
+  "items": [
+    {"id": "positioning", "concept": "定位：一句话、三个卖点和证据、能用/不能用的说法", "doc": "marketing/positioning/positioning.md"},
+    {"id": "gh-release", "concept": "GitHub Release 正文（英文，末尾中文摘要）", "doc": "marketing/campaigns/release/1.2.0/github-release.md"},
+    {"id": "x-thread", "concept": "X thread，6 条（英文）", "doc": "marketing/campaigns/release/1.2.0/x-thread.md"},
+    {"id": "jike", "concept": "即刻", "doc": "marketing/campaigns/release/1.2.0/jike.md"},
+    {"id": "v2ex", "concept": "V2EX · 分享创造", "doc": "marketing/campaigns/release/1.2.0/v2ex.md"},
+    {"id": "xiaohongshu", "concept": "小红书", "doc": "marketing/campaigns/release/1.2.0/xiaohongshu.md"},
+    {"id": "show-hn", "concept": "Show HN 标题 + 首帖", "doc": "marketing/campaigns/release/1.2.0/show-hn.md"},
+    {"id": "site-draft", "concept": "官网改版草稿（跟随系统深浅色；右上角可切中英）", "site": "marketing/site-proposal/index.html"},
+    {"id": "site-proposal", "concept": "官网改版提案：参照、信息架构、对比表出处、待定项", "doc": "marketing/site-proposal/proposal.md"},
+    {"id": "shot-list", "concept": "截图和配图清单", "doc": "marketing/visuals/shot-list.md"},
+    {"id": "demo-30s", "concept": "30 秒演示分镜", "doc": "marketing/visuals/demo-30s.md"},
+    {"id": "release-card-sketch", "concept": "发布卡排版草图（gpt-image low；截图里的字被画花，只看排版）", "image": ".studio/out/yap-1.2.0/release-card-draft-1.png"}
+  ]
+}
