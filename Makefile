@@ -154,7 +154,7 @@ cloud-latency: $(PAYGATE_UP)
 SYNC_E2E_BIN := $(CURDIR)/.local-build/sync-e2e
 sync-e2e: $(PAYGATE_UP)
 	@mkdir -p "$(dir $(SYNC_E2E_BIN))"
-	@xcrun swiftc -DDEBUG -Onone -o "$(SYNC_E2E_BIN)" \
+	@xcrun swiftc -DDEBUG -DSYNC_E2E -Onone -o "$(SYNC_E2E_BIN)" \
 		scripts/cloud-smoke/Stubs.swift scripts/sync-e2e/LoaderStub.swift scripts/sync-e2e/main.swift \
 		VoiceInk/Infrastructure/Config/YapConfig.swift \
 		VoiceInk/Infrastructure/Config/CloudConfigSync.swift \
