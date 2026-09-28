@@ -428,6 +428,12 @@ struct VoiceInkApp: App {
             CommandGroup(after: .appInfo) {
                 CheckForUpdatesView(updaterViewModel: updaterViewModel)
             }
+
+            // No Help book ships, so the default "Yap Help" item only showed an error.
+            CommandGroup(replacing: .help) {
+                Button("Explore Key Features", action: FeatureTourNavigator.open)
+                Link("Report an Issue", destination: AppIdentity.issuesURL)
+            }
         }
 
         MenuBarExtra(isInserted: $showMenuBarIcon) {

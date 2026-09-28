@@ -16,14 +16,29 @@ struct WordReplacementView: View {
     @State private var originalWord = ""
     @State private var replacementWord = ""
     @State private var showInfoPopover = false
+    @State private var filter: DictionarySourceFilter = .all
+    @State private var isSelecting = false
+    @State private var selection = Set<PersistentIdentifier>()
     @FocusState private var isOriginalFocused: Bool
+
+    #if DEBUG
+    /// ui-snapshots: open in Select mode, filtered to Auto-added.
+    static var snapshotSelecting = false
+    #endif
 
     init() {
         _sortMode = State(initialValue: DictionarySortService.shared.savedWordReplacementMode())
+        #if DEBUG
+        if Self.snapshotSelecting {
+            _isSelecting = State(initialValue: true)
+            _filter = State(initialValue: .autoAdded)
+        }
+        #endif
     }
 
     private var sortedReplacements: [WordReplacement] {
-        DictionarySortService.shared.sortWordReplacements(wordReplacements, by: sortMode)
+        DictionarySortService.shared.sortWordReplacements(
+            wordReplacements.filter { filter.includes(isAutoLearned: $0.isAutoLearned) }, by: sortMode)
     }
 
     private func toggleSort(for column: WordReplacementSortColumn) {
@@ -115,6 +130,15 @@ struct WordReplacementView: View {
             .animation(.easeInOut(duration: 0.2), value: shouldShowAddButton)
 
             if !wordReplacements.isEmpty {
+                DictionaryListToolbar(
+                    filter: $filter,
+                    isSelecting: $isSelecting,
+                    selectedCount: selection.count,
+                    visibleCount: sortedReplacements.count,
+                    onSelectAll: { selection = Set(sortedReplacements.map(\.persistentModelID)) },
+                    onDeleteSelected: deleteSelected
+                )
+
                 VStack(spacing: 0) {
                     HStack(spacing: AppTheme.Spacing.x2) {
                         Button(action: { toggleSort(for: .original) }) {
@@ -169,17 +193,48 @@ struct WordReplacementView: View {
 
                     Divider()
 
+                    if sortedReplacements.isEmpty {
+                        DictionaryFilterEmptyNote(filter: filter)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
                     LazyVStack(spacing: 0) {
                         ForEach(sortedReplacements, id: \.persistentModelID) { replacement in
-                            ReplacementRow(
-                                original: replacement.originalText,
-                                replacement: replacement.replacementText,
-                                onDelete: { removeReplacement(replacement) },
-                                onEdit: { editingReplacement = replacement },
-                                onRemoveSource: { source in
-                                    removeSource(source, from: replacement)
+                            if isSelecting {
+                                Button {
+                                    selection.formSymmetricDifference([replacement.persistentModelID])
+                                } label: {
+                                    HStack(spacing: AppTheme.Spacing.x2) {
+                                        DictionarySelectionMark(
+                                            isSelected: selection.contains(replacement.persistentModelID))
+                                        Text(WordReplacementVariants.parse(replacement.originalText)
+                                            .joined(separator: ", "))
+                                            .lineLimit(1)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                        Image(systemName: "arrow.right")
+                                            .foregroundColor(.secondary)
+                                            .font(AppTheme.font(.micro))
+                                        Text(replacement.replacementText)
+                                            .lineLimit(1)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .font(AppTheme.font(.body))
+                                    .padding(.vertical, AppTheme.Spacing.x2)
+                                    .padding(.horizontal, AppTheme.Spacing.x1)
+                                    .contentShape(Rectangle())
                                 }
-                            )
+                                .buttonStyle(.plain)
+                            } else {
+                                ReplacementRow(
+                                    original: replacement.originalText,
+                                    replacement: replacement.replacementText,
+                                    onDelete: { removeReplacement(replacement) },
+                                    onEdit: { editingReplacement = replacement },
+                                    onRemoveSource: { source in
+                                        removeSource(source, from: replacement)
+                                    }
+                                )
+                            }
 
                             if replacement.persistentModelID != sortedReplacements.last?.persistentModelID {
                                 Divider()
@@ -198,6 +253,8 @@ struct WordReplacementView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .onChange(of: isSelecting) { selection.removeAll() }
+        .onChange(of: filter) { selection.removeAll() }
         .sheet(isPresented: isEditingReplacement) {
             if let editingReplacement {
                 EditReplacementSheet(replacement: editingReplacement, modelContext: modelContext)
@@ -224,6 +281,17 @@ struct WordReplacementView: View {
         }
         originalWord = ""
         replacementWord = ""
+    }
+
+    private func deleteSelected() {
+        let doomed = wordReplacements.filter { selection.contains($0.persistentModelID) }
+        if let error = DictionaryService.removeEntries(doomed, context: modelContext) {
+            alertMessage = error
+            showAlert = true
+            return
+        }
+        isSelecting = false
+        NotificationCenter.default.post(name: .wordReplacementsDidChange, object: nil)
     }
 
     private func removeReplacement(_ replacement: WordReplacement) {

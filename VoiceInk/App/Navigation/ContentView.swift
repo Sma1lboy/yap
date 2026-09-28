@@ -19,6 +19,7 @@ final class MainWindowNavigation: ObservableObject {
     static let shared = MainWindowNavigation()
 
     @Published var selectedView: ViewType = .dashboard
+    @Published var isShowingFeatureTour = false
 
     private init() {}
 
@@ -56,6 +57,7 @@ struct ContentView: View {
                 ReleaseNotesSheet(notes: notes)
             }
         }
+        .sheet(isPresented: $navigation.isShowingFeatureTour) { FeatureTourSheet() }
         .onAppear {
             // First launch after an update: show this version's notes once (nothing if none are bundled).
             guard releaseNotes.showsOnNextMainWindow else { return }
