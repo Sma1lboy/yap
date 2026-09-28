@@ -380,7 +380,7 @@ struct ModeConfigFormView: View {
                         }
                         if draft.selectedAIModel == nil,
                             let provider = configuredSelectedAIProvider,
-                            provider != .localCLI
+                            provider != .localCLI, provider != .appleIntelligence
                         {
                             draft.selectedAIModel = warmupSnapshot.selectedModel(for: provider)
                         }
@@ -423,7 +423,7 @@ struct ModeConfigFormView: View {
                     .onChange(of: draft.selectedAIProvider) { _, newValue in
                         if let provider = newValue.flatMap({ AIProvider(rawValue: $0) }) {
                             switch provider {
-                            case .localCLI:
+                            case .localCLI, .appleIntelligence:
                                 draft.selectedAIModel = nil
                             case .voiceInkRefine:
                                 applyVoiceInkRefineRules()
@@ -458,9 +458,9 @@ struct ModeConfigFormView: View {
 
     @ViewBuilder
     private func aiModelPicker(for provider: AIProvider) -> some View {
-        if provider == .localCLI {
+        if provider == .localCLI || provider == .appleIntelligence {
             LabeledContent("AI Model") {
-                Text("Default")
+                Text(provider == .appleIntelligence ? "On-device model" : "Default")
                     .foregroundColor(.secondary)
             }
             .onAppear {

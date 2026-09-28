@@ -19,6 +19,7 @@ enum AIProvider: String, CaseIterable {
     case voiceInkRefine = "VoiceInk Refine"
     case ollama = "Ollama"
     case localCLI = "Local CLI"
+    case appleIntelligence = "Apple Intelligence"
     case custom = "Custom"
 
     /// User-facing name. `rawValue` is persisted in settings and keychain keys, so it never changes.
@@ -28,6 +29,8 @@ enum AIProvider: String, CaseIterable {
             return VoiceInkRefineService.providerName
         case .localCLI:
             return String(localized: "Local CLI")
+        case .appleIntelligence:
+            return String(localized: "Apple Intelligence")
         case .custom:
             return String(localized: "Custom")
         default:
@@ -67,7 +70,7 @@ enum AIProvider: String, CaseIterable {
             return ""
         case .ollama:
             return UserDefaults.standard.string(forKey: "ollamaBaseURL") ?? "http://localhost:11434"
-        case .localCLI:
+        case .localCLI, .appleIntelligence:
             return ""
         case .custom:
             return UserDefaults.standard.string(forKey: "customProviderBaseURL") ?? ""
@@ -104,6 +107,8 @@ enum AIProvider: String, CaseIterable {
             return UserDefaults.standard.string(forKey: "ollamaSelectedModel") ?? "mistral"
         case .localCLI:
             return "local-cli"
+        case .appleIntelligence:
+            return "apple-on-device"
         case .custom:
             return CustomAIProviderManager.shared.defaultModelName
         case .openRouter:
@@ -175,7 +180,7 @@ enum AIProvider: String, CaseIterable {
             return [VoiceInkRefineService.modelName]
         case .ollama:
             return []
-        case .localCLI:
+        case .localCLI, .appleIntelligence:
             return []
         case .custom:
             return CustomAIProviderManager.shared.availableModelNames
@@ -186,7 +191,7 @@ enum AIProvider: String, CaseIterable {
 
     var requiresAPIKey: Bool {
         switch self {
-        case .voiceInkRefine, .ollama, .localCLI:
+        case .voiceInkRefine, .ollama, .localCLI, .appleIntelligence:
             return false
         default:
             return true
@@ -247,6 +252,8 @@ class AIService: ObservableObject {
                     self.isAPIKeyValid = localCLIService.isConfigured
                 } else if selectedProvider == .voiceInkRefine {
                     self.isAPIKeyValid = voiceInkRefineService.isAvailableInModes
+                } else if selectedProvider == .appleIntelligence {
+                    self.isAPIKeyValid = AppleIntelligenceService.isOffered
                 } else {
                     self.isAPIKeyValid = true
                 }
@@ -288,6 +295,8 @@ class AIService: ObservableObject {
                 return ollamaService.isConnected
             } else if provider == .localCLI {
                 return localCLIService.isConfigured
+            } else if provider == .appleIntelligence {
+                return AppleIntelligenceService.isOffered
             } else if provider.requiresAPIKey {
                 return APIKeyManager.shared.hasAPIKey(forProvider: provider.rawValue)
             }
@@ -383,6 +392,8 @@ class AIService: ObservableObject {
                 self.isAPIKeyValid = localCLIService.isConfigured
             } else if selectedProvider == .voiceInkRefine {
                 self.isAPIKeyValid = voiceInkRefineService.isAvailableInModes
+            } else if selectedProvider == .appleIntelligence {
+                self.isAPIKeyValid = AppleIntelligenceService.isOffered
             } else {
                 self.isAPIKeyValid = true
             }
@@ -473,6 +484,8 @@ class AIService: ObservableObject {
                 isAPIKeyValid = localCLIService.isConfigured
             } else if selectedProvider == .voiceInkRefine {
                 isAPIKeyValid = voiceInkRefineService.isAvailableInModes
+            } else if selectedProvider == .appleIntelligence {
+                isAPIKeyValid = AppleIntelligenceService.isOffered
             } else {
                 isAPIKeyValid = true
             }

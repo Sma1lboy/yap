@@ -5783,6 +5783,50 @@
         }
       }
     },
+    "Apple Intelligence" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligence"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligence"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple 智能"
+          }
+        }
+      }
+    },
+    "Apple Intelligence for AI enhancement (Experimental)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligence für KI-Überarbeitung (experimentell)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligence pour l'amélioration IA (expérimental)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 Apple 智能做 AI 润色(实验性)"
+          }
+        }
+      }
+    },
     "Apple Speech could not replace a language reservation automatically. Try again." : {
       "localizations" : {
         "de" : {
@@ -20896,6 +20940,28 @@
         }
       }
     },
+    "Offers the on-device model built into macOS as an AI enhancement provider in modes. It's off by default because it hasn't yet matched Yap Refine on Yap's cleanup tests." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bietet das in macOS integrierte Modell auf dem Gerät als Anbieter für KI-Überarbeitung in Modi an. Standardmäßig aus, weil es in Yaps Überarbeitungstests Yap Refine noch nicht erreicht hat."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Propose le modèle intégré à macOS, sur l'appareil, comme fournisseur d'amélioration IA dans les modes. Désactivé par défaut, car il n'a pas encore égalé Yap Refine aux tests de nettoyage de Yap."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在模式的 AI 润色里提供 macOS 自带的本机模型。默认关闭，因为它在 Yap 的润色测试里还没达到 Yap Refine 的水平。"
+          }
+        }
+      }
+    },
     "Ollama request timed out" : {
       "localizations" : {
         "de" : {
@@ -21002,6 +21068,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设备端"
+          }
+        }
+      }
+    },
+    "On-device model" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modell auf dem Gerät"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèle sur l'appareil"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本机模型"
           }
         }
       }

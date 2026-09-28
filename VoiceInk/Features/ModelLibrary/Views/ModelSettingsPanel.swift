@@ -295,6 +295,7 @@ private struct AdvancedModelSettingsSection: View {
     @AppStorage("PrewarmModelOnWake") private var prewarmModelOnWake = true
     @AppStorage(CloudTranscriptionSettings.timeoutKey) private var cloudTimeout =
         CloudTranscriptionSettings.defaultTimeout
+    @AppStorage(AppleIntelligenceService.enabledKey) private var isAppleIntelligenceEnabled = false
 
     var body: some View {
         Section {
@@ -334,6 +335,22 @@ private struct AdvancedModelSettingsSection: View {
                 }
             }
             .pickerStyle(.menu)
+
+            // Not shown where the system can't run it; not needed once it passes the bench (it's offered anyway).
+            if AppleIntelligenceService.isSupported, !AppleIntelligenceService.passesBench {
+                Toggle(isOn: $isAppleIntelligenceEnabled) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
+                        Text("Apple Intelligence for AI enhancement (Experimental)")
+                        InfoTip(
+                            "Offers the on-device model built into macOS as an AI enhancement provider in modes. It's off by default because it hasn't yet matched Yap Refine on Yap's cleanup tests."
+                        )
+                    }
+                }
+                .toggleStyle(.switch)
+                .onChange(of: isAppleIntelligenceEnabled) { _, _ in
+                    NotificationCenter.default.post(name: .AppSettingsDidChange, object: nil)
+                }
+            }
         } header: {
             Text("Advanced")
         }

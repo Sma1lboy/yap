@@ -102,6 +102,11 @@ extension AIService {
                 systemPrompt: systemPrompt ?? "",
                 userPrompt: localUserPrompt ?? chatPrompt(from: messages)
             )
+        case .appleIntelligence:
+            result = try await AppleIntelligenceService.enhance(
+                systemPrompt: systemPrompt ?? "",
+                userPrompt: localUserPrompt ?? chatPrompt(from: messages)
+            )
         default:
             guard let baseURL = URL(string: provider.baseURL) else {
                 throw EnhancementError.notConfigured

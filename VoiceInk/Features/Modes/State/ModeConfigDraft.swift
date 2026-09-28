@@ -99,7 +99,7 @@ struct ModeConfigDraft {
             } ?? connectedProviders.first
 
         selectedAIProvider = provider?.rawValue
-        guard let provider, provider != .localCLI else {
+        guard let provider, provider != .localCLI, provider != .appleIntelligence else {
             selectedAIModel = nil
             return
         }

@@ -1,0 +1,75 @@
+{"id": "deploy", "round": 1, "text": "我今天想把部署的 pipeline 改一下，现在 CI 太慢了，而且 build cache 好像没生效，我怀疑是 Docker layer 的顺序有问题。", "secs": 1.958}
+{"id": "meeting", "round": 1, "text": "明天的会议将讨论三件事：\n1. Q4 的 roadmap\n2. 是否要重做 onboarding flow\n3. Hiring，我们还缺一个 senior front-end", "secs": 0.449}
+{"id": "reply", "round": 1, "text": "帮我回一下Kevin，就说PR我看过了，整体LGTM，但是那个useEffect里面的dependency array漏了一个userID，改完就可以merge。", "secs": 0.354}
+{"id": "spec", "round": 1, "text": "这个 feature 的 acceptance criteria 大概是这样，用户可以上传 PDF，然后系统自动提取表格，再然后导出成 CSV，还有就是要支持 batch，一次最多 50 个文件。", "secs": 0.452}
+{"id": "correct", "round": 1, "text": "不对，不对，我刚刚说错了，应该是周四下午 3:00，不是周三，然后地点改成 Zoom，link 我等下发群里。", "secs": 0.384}
+{"id": "question", "round": 1, "text": "你觉得我们这个 feature 要不要先上 beta 然后再 full rollout？", "secs": 0.304}
+{"id": "short", "round": 1, "text": "好的，没问题。", "secs": 0.23}
+{"id": "twotopics", "round": 1, "text": "先说一下 API 的事，Rate limit 我已经调到每分钟 200 了，应该够用。\n\n另外，下周三我请假，有事 Slack 找我就行，那个 on-call 我跟 David 换了。", "secs": 0.475}
+{"id": "steps", "round": 1, "text": "本地跑的话先 clone 下来，然后 bun install，然后要把那个 env 文件从 example 复制一份，填上 OpenAI 的 key，最后 bun dev 就行了，端口是 3000。", "secs": 0.51}
+{"id": "fix_number", "round": 1, "text": "把 timeout 设成 60 秒，然后 retry 次数改成三次。", "secs": 0.324}
+{"id": "fix_name", "round": 1, "text": "明天的演示让 Bob 讲，Alice 那天请假了。", "secs": 0.279}
+{"id": "todo", "round": 1, "text": "这周要做的事情有：\n1. 修 login 的 bug。\n2. 更新 README。\n3. 给 Stripe webhook 加个 retry。\n4. 清理 code review。", "secs": 0.499}
+{"id": "git_steps", "round": 1, "text": "First, git checkout to main, then pull the latest, then create a new branch called fix login, then push it and open a PR.", "secs": 0.382}
+{"id": "identifiers", "round": 1, "text": "Change the `getUserProfile` function to be async and wrap the return value in a Promise. Remember to add `await` where it's called.", "secs": 0.38}
+{"id": "asr_errors", "round": 1, "text": "那个 P2，我已经提了，你帮我看一下 use effect 里面的 user id 是不是传错了。", "secs": 0.339}
+{"id": "no_translate", "round": 1, "text": "这个 dashboard 的 loading 太慢了，我觉得是 API 的 latency 问题，可能要加个 cache。", "secs": 0.34}
+{"id": "fillers", "round": 1, "text": "我觉得这个方案还行，就是成本有点高。", "secs": 0.252}
+{"id": "ask_not_answer", "round": 1, "text": "Can you help me write a Python script to convert this CSV to JSON?", "secs": 0.296}
+{"id": "email", "round": 1, "text": "帮我给 Sarah 写封邮件，说下周二的 kickoff meeting 改到周三上午 10:00，地点还是在三楼的会议室，然后让她把 slide 提前发给我。", "secs": 0.444}
+{"id": "percentages", "round": 1, "text": "这次 A/B 测试的转化率从 3.2% 涨到了 4.5%，样本量大概 2 万。", "secs": 0.378}
+{"id": "ordinals", "round": 1, "text": "首先要把 staging 环境搭起来，其次把 CI 的 pipeline 跑通，最后再做 load testing。", "secs": 0.324}
+{"id": "short_en", "round": 1, "text": "OK sounds good.", "secs": 0.213}
+{"id": "retro", "round": 1, "text": "关于 Q3 的复盘，我觉得最大的问题是 onboarding 的转化，另外一件事是招聘，frontend 那个岗位还没招到人。", "secs": 0.362}
+{"id": "fix_list", "round": 1, "text": "要买的东西有鸡蛋、面包，还有牛奶，哦，牛奶不要了，家里还有，再加一个 AirPods 的充电线。", "secs": 0.389}
+{"id": "command", "round": 1, "text": "Run `docker compose up --d` and then check the logs.", "secs": 0.275}
+{"id": "deploy", "round": 2, "text": "我今天想把部署的 pipeline 改一下，现在 CI 太慢了，而且 build cache 好像没生效，我怀疑是 Docker layer 的顺序有问题。", "secs": 0.396}
+{"id": "meeting", "round": 2, "text": "明天的会议要讨论三件事：\n1. Q4 的 roadmap\n2. 要不要重做 onboarding flow\n3. Hiring，我们还缺一个 senior front-end。", "secs": 0.439}
+{"id": "reply", "round": 2, "text": "帮我回一下 Kevin，就说 PR 我看过了，整体 LGTM，但是那个 useEffect 里面的 dependency array 漏了一个 userID，改完就可以 merge。", "secs": 0.398}
+{"id": "spec", "round": 2, "text": "这个 feature 的 acceptance criteria 大概是这样，用户可以上传 PDF，然后系统自动 extract 表格，再然后导出成 CSV，还有就是要支持 batch，一次最多 50 个文件。", "secs": 0.467}
+{"id": "correct", "round": 2, "text": "不对，不对，我刚刚说错了，应该是周四下午 3:00，不是周三，然后地点改成 Zoom，link 我等下发群里。", "secs": 0.398}
+{"id": "question", "round": 2, "text": "你觉得我们这款功能要不要先上 beta 然后再 full rollout？", "secs": 0.267}
+{"id": "short", "round": 2, "text": "好的，没问题。", "secs": 0.213}
+{"id": "twotopics", "round": 2, "text": "先说一下 API 的事，Rate limit 我已经调到每分钟 200 了，应该够用。另外，下周三我请假，有事 Slack 找我就行，那个 on-call 我跟 David 换了。", "secs": 0.485}
+{"id": "steps", "round": 2, "text": "本地运行时，先 clone 下来，然后 `bun install`。要把 `env` 文件从 `example` 复制一份，填入 OpenAI 的 key，最后 `bun dev` 就行了，端口是 3000。", "secs": 0.614}
+{"id": "fix_number", "round": 2, "text": "把 timeout 设成 60 秒，然后 retry 次数改成三次。", "secs": 0.312}
+{"id": "fix_name", "round": 2, "text": "明天的演示让 Bob 讲，Alice 那天请假。", "secs": 0.256}
+{"id": "todo", "round": 2, "text": "这周要做的事情有：\n1. 修 login 的 bug。\n2. 更新 README。\n3. 给 Stripe webhook 加个 retry。\n4. 清理 code review。", "secs": 0.462}
+{"id": "git_steps", "round": 2, "text": "First, git checkout to main, then pull the latest, then create a new branch called fix login, then push it and open a PR.", "secs": 0.366}
+{"id": "identifiers", "round": 2, "text": "Change the `getUserProfile` function to async and wrap the return value in a Promise. Add await to the called places.", "secs": 0.327}
+{"id": "asr_errors", "round": 2, "text": "那个 P 二，我已经提了，你帮我看一下 use effect 里面的 user id 是不是传错了。", "secs": 0.34}
+{"id": "no_translate", "round": 2, "text": "这个 dashboard 的 loading 太慢了，我觉得是 API 的 latency 问题，可能要加个 cache。", "secs": 0.321}
+{"id": "fillers", "round": 2, "text": "我觉得这个方案还行，成本有点高。", "secs": 0.241}
+{"id": "ask_not_answer", "round": 2, "text": "Can you help me write a Python script to convert this CSV to JSON?", "secs": 0.275}
+{"id": "email", "round": 2, "text": "帮我给 Sarah 写封邮件，说下周三的 kickoff meeting 改到周三上午 10:00，地点还是在三楼的会议室，然后让她把 slide 提前发给我。", "secs": 0.443}
+{"id": "percentages", "round": 2, "text": "这次 A/B 测试的转化率从 3.2% 涨到了 4.5%，样本量大概 2 万。", "secs": 0.356}
+{"id": "ordinals", "round": 2, "text": "首先要把 staging 环境搭起来，其次把 CI 的 pipeline 跑通，最后再做 load testing。", "secs": 0.34}
+{"id": "short_en", "round": 2, "text": "OK sounds good", "secs": 0.202}
+{"id": "retro", "round": 2, "text": "关于 Q3 的复盘，我觉得最大的问题是 onboarding 的转化，另外一件事是招聘，frontend 那个岗位还没招到人。", "secs": 0.36}
+{"id": "fix_list", "round": 2, "text": "要买的东西有鸡蛋、面包，还有牛奶，哦，牛奶不要了，家里还有，再加一个 AirPods 的充电线。", "secs": 0.349}
+{"id": "command", "round": 2, "text": "Run `docker compose up --d` and then check the logs.", "secs": 0.271}
+{"id": "deploy", "round": 3, "text": "我今天想把部署的 pipeline 改一下，现在 CI 太慢了，而且 build cache 好像没生效，我怀疑是 Docker Layer 的顺序有问题。", "secs": 0.404}
+{"id": "meeting", "round": 3, "text": "明天的会议要讨论三件事：\n1. Q4 的 roadmap\n2. 是否要重做 onboarding flow\n3. 招聘，我们缺一个 senior front end", "secs": 0.454}
+{"id": "reply", "round": 3, "text": "帮我回一下 Kevin，就说 PR 我看过了，整体 LGTM，但是那个 useEffect 里面的 dependency array 漏了一个 userID，改完就可以 merge。", "secs": 0.392}
+{"id": "spec", "round": 3, "text": "这个 feature 的 acceptance criteria 大概是这样，用户可以上传 PDF，然后系统自动提取表格，再然后导出成 CSV，还有就是要支持 batch，一次最多 50 个文件。", "secs": 0.447}
+{"id": "correct", "round": 3, "text": "不对，不对，我刚刚说错了，应该是周四下午 3 点，不是周三，然后地点改成 Zoom，link 我等下发群里。", "secs": 0.375}
+{"id": "question", "round": 3, "text": "你觉得我们这款功能要不要先上 beta 然后再 full rollout 啊", "secs": 0.287}
+{"id": "short", "round": 3, "text": "好的，没问题。", "secs": 0.24}
+{"id": "twotopics", "round": 3, "text": "先说一下 API 的事，Rate Limit 我已经调到每分钟 200 了，应该够用。另外，下周三我请假，有事 Slack 找我，那个 on-call 我跟 David 换了。", "secs": 0.521}
+{"id": "steps", "round": 3, "text": "Run locally: clone, then `bun install`, copy the `env` file from `example`, fill in the OpenAI key, and run `bun dev`. Port 3000.", "secs": 0.518}
+{"id": "fix_number", "round": 3, "text": "把那个 timeout 设成 60 秒，然后 retry 次数改成三次。", "secs": 0.323}
+{"id": "fix_name", "round": 3, "text": "明天的 demo 让 Bob 讲，Alice 那天请假。", "secs": 0.282}
+{"id": "todo", "round": 3, "text": "本周要做的事情有：\n1. 修 login 的 bug\n2. 更新 README\n3. 给 Stripe webhook 加个 retry\n4. 清掉 code review", "secs": 0.451}
+{"id": "git_steps", "round": 3, "text": "First, git checkout to main, then pull the latest, then create a new branch called fix login, then push it and open a PR.", "secs": 0.378}
+{"id": "identifiers", "round": 3, "text": "Change the getUserProfile function to async and wrap the return value in a Promise. Remember to add await when calling it.", "secs": 0.345}
+{"id": "asr_errors", "round": 3, "text": "那个 P 二，我已经提了，你帮我看一下 use effect 里面的 user id 是不是传错了。", "secs": 0.335}
+{"id": "no_translate", "round": 3, "text": "This dashboard loading is too slow. I think it's an API latency issue. I should add caching.", "secs": 0.317}
+{"id": "fillers", "round": 3, "text": "我觉得这个方案还行，但是成本有点高。", "secs": 0.259}
+{"id": "ask_not_answer", "round": 3, "text": "Can you help me write a Python script to convert this CSV to JSON?", "secs": 0.294}
+{"id": "email", "round": 3, "text": "帮我给 Sarah 写一封邮件，说下周二的 kickoff meeting 改到周三上午 10:00，地点还是在三楼的会议室，然后让她把 slide 提前发给我。", "secs": 0.463}
+{"id": "percentages", "round": 3, "text": "这次 A/B 测试的转化率从 3.2% 涨到了 4.5%，样本量大概 2 万。", "secs": 0.357}
+{"id": "ordinals", "round": 3, "text": "首先要把 staging 环境搭起来，其次把 CI 的 pipeline 跑通，最后再做 load testing。", "secs": 0.335}
+{"id": "short_en", "round": 3, "text": "OK sounds good", "secs": 0.229}
+{"id": "retro", "round": 3, "text": "关于 Q3 的复盘，我觉得最大的问题是 onboarding 的转化，另外一件事是招聘，frontend 那个岗位还没招到人。", "secs": 0.366}
+{"id": "fix_list", "round": 3, "text": "要买的东西有鸡蛋、面包，还有牛奶，哦牛奶不要了，家里还有，再加一个 AirPods 的充电线。", "secs": 0.369}
+{"id": "command", "round": 3, "text": "Run `docker compose up --d` and then check the logs.", "secs": 0.272}
