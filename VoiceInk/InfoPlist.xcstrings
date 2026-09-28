@@ -120,6 +120,36 @@
         }
       }
     },
+    "NSAudioCaptureUsageDescription" : {
+      "comment" : "Privacy - Audio Capture Usage Description",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap nimmt während einer Meeting-Aufnahme den Ton anderer Apps auf, damit die andere Seite des Calls im Transkript und in den Notizen steht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Yap records the sound from other apps during a meeting recording, so the other side of the call is in the transcript and notes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pendant l'enregistrement d'une réunion, Yap enregistre le son des autres apps pour que l'autre côté de l'appel figure dans la transcription et les notes."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录制会议时，Yap 会录下其他 App 的声音，让通话另一方的发言也进入转写和纪要。"
+          }
+        }
+      }
+    },
     "NSHumanReadableCopyright" : {
       "comment" : "Copyright (human-readable)",
       "extractionState" : "extracted_with_value",

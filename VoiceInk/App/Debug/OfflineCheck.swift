@@ -1,4 +1,5 @@
 #if DEBUG
+    import AVFoundation
     import AppKit
 
     /// `make offline-check` (scripts/offline-check.sh): launched with `--dictate-file <wav>`, the app waits for
@@ -10,7 +11,8 @@
         static let argument = "--dictate-file"
         /// `--first-run-check <model name>`, with `--dictate-file`: scripts/first-run-check.sh.
         static let firstRunArgument = "--first-run-check"
-        static var isRequested: Bool { CommandLine.arguments.contains(argument) }
+        /// Also true for `--meeting-files`: both run the mock identity as a fresh install (no fake data).
+        static var isRequested: Bool { CommandLine.arguments.contains(argument) || MeetingFilesCheck.isRequested }
 
         static func runIfRequested(engine: VoiceInkEngine) {
             let arguments = CommandLine.arguments
@@ -43,6 +45,45 @@
                 fflush(stdout)
                 exit(0)  // NSApp.terminate is turned into "hide to the menu bar"
             }
+        }
+
+        /// `--preview-check`: the recorder's path for local Whisper with the live transcript on. The registry's
+        /// session gets the file's PCM in real time through its chunk callback, as the recorder would send it; each
+        /// preview text is printed with its time, then the final transcription is timed.
+        private static func runLivePreview(engine: VoiceInkEngine, modelName: String, file: URL) async {
+            let manager = engine.whisperModelManager
+            if manager.whisperContext == nil, let model = manager.availableModels.first(where: { $0.name == modelName }) {
+                try? await manager.loadModel(model)
+            }
+            guard
+                let configuration = ModeRuntimeResolver.transcriptionConfiguration(
+                    transcriptionModelManager: engine.transcriptionModelManager),
+                let audio = try? AVAudioFile(forReading: file, commonFormat: .pcmFormatInt16, interleaved: true),
+                let buffer = AVAudioPCMBuffer(pcmFormat: audio.processingFormat, frameCapacity: AVAudioFrameCount(audio.length)),
+                (try? audio.read(into: buffer)) != nil, let int16 = buffer.int16ChannelData
+            else {
+                print("first-run: preview check could not start")
+                return
+            }
+            let pcm = Data(bytes: int16[0], count: Int(buffer.frameLength) * 2)
+            let recordingStart = Date()
+            let session = engine.serviceRegistry.createSession(for: configuration) { text in
+                print("first-run: preview at \(String(format: "%.1f", Date().timeIntervalSince(recordingStart))) s: \(text)")
+            }
+            print("first-run: preview session \(type(of: session))")
+            // Nil for a session without live text; the recording still takes its real time.
+            let feed = try? await session.prepare(configuration: configuration)
+            var offset = 0
+            while offset < pcm.count {
+                let next = min(pcm.count, offset + 3_200)  // 100 ms of 16 kHz Int16
+                feed?(pcm.subdata(in: offset..<next))
+                offset = next
+                let due = recordingStart.addingTimeInterval(Double(offset) / 32_000)
+                if due > Date() { try? await Task.sleep(for: .seconds(due.timeIntervalSinceNow)) }
+            }
+            let released = Date()
+            let text = (try? await session.transcribe(audioURL: file)) ?? "(failed)"
+            print("first-run: final with \(type(of: session)) \(Date().timeIntervalSince(released)) \(text)")
         }
 
         /// Fresh install without the model: download it through WhisperModelManager (as onboarding's Download
@@ -93,6 +134,16 @@
                     print("first-run: text \(transcription.text)")
                 }
                 print("first-run: total \(Date().timeIntervalSince(start))")
+                if CommandLine.arguments.contains("--preview-check") {
+                    // Off, on, off, on: the same real-time recording with and without the preview.
+                    for live in [false, true, false, true] {
+                        UserDefaults.standard.set(live, forKey: RecorderDisplaySettingsKeys.showLiveTranscript)
+                        await runLivePreview(engine: engine, modelName: modelName, file: file)
+                    }
+                    UserDefaults.standard.removeObject(forKey: RecorderDisplaySettingsKeys.showLiveTranscript)
+                }
+                // ggml asserts at exit() while any Metal buffer is still allocated.
+                await manager.cleanupResources()
                 pasteboard.clearContents()
                 pasteboard.writeObjects(saved.map { pairs in
                     let item = NSPasteboardItem()

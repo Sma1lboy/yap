@@ -45,6 +45,24 @@ Real-time factor is processing time ÷ audio length: 0.11 means a 6 s clip takes
 
 Whisper here is the app's `LibWhisper.swift` (setup/asr/harness `whisperbench`) on Metal, linked against the whisper.xcframework `make whisper` builds. An earlier version of this table used `whisper-cli`, which defaults to 5-beam search where the app decodes greedily: key terms matched within one on every model except tiny (7 vs 10), but it took about twice as long. The app also downloads a Core ML encoder for the non-quantized models (not for q5_0), so Large v3 / v2 / Turbo may run somewhat faster in the app than the table shows.
 
+## Live text while recording
+
+Whisper can't stream, so with "Live Text Display" on (Settings → Interface, on by default) a local Whisper model re-decodes the recording every 1.5 s once there's at least 1 s of new audio (`WhisperLivePreview`). The recorder shows that text. When you release the key, the preview stops and the whole recording goes through the normal path: windows, language detection and VAD. That final text is what gets pasted.
+
+Preview decodes use greedy search with no temperature fallback and one segment. They're capped at about 8 tokens per second of audio, run on their own `whisper_state` outside the `WhisperContext` actor, and get no initial prompt; the app's zh prompt made them repeat "好,好,好". With language on auto, the first decode waits for 3 s of audio and its detected language is reused. Past 20 s the text so far is kept and a new piece starts, so each decode fits in one 30 s window. Releasing the key aborts the decode in flight and frees its state.
+
+Large v3 Turbo q5_0, language auto, audio fed in real time:
+
+| | Preview off | Preview on |
+|---|---|---|
+| Final, 11 clips (sum of per-clip medians, 5 interleaved rounds, harness) | 21.61 s | 22.70 s (+5.0%) |
+| CPU / energy, 11 clips (51 s of audio) | 2.8 s / 8.0 J | 3.7 s / 9.0 J |
+| Final, 65 s recording (mean of 5, harness) | 5.51 s | 5.74 s (+4.2%) |
+| CPU / energy, 65 s recording | 2.3 s / 7 J | 4.8–5.2 s / 12.4–13.6 J |
+| Final, 65 s recording, in the app (mean of 4, off/on interleaved) | 10.55 s | 10.54 s |
+
+On the 65 s recording: 26–29 previews, none looping. The last preview's character error rate against the final is 0.25. The final text is identical with the preview on and off. In the app the final includes the session path around the decode, which is why it's slower than the harness. A 2.5 s interval saved little (3.3 s CPU, 8.4 J for the 11 clips) and showed text less often, so the interval stays at 1.5 s.
+
 ## Local cleanup
 
 On macOS 26, Apple Intelligence (Foundation Models) is an experimental cleanup option behind Models > Advanced, until it passes the bench in [cloud-models.md](cloud-models.md#on-device-2026-09-27). The other local cleanup options are Yap Refine (a fine-tuned Qwen 3.5 run with MLX in `VoiceInkRefineXPC`, 1.06 GB download, needs 16 GB of memory), Ollama and a local CLI. Ollama and the local CLI run whatever model you install yourself, so they aren't benched here.
@@ -95,5 +113,6 @@ The last two weren't in the measured run (the check can't hold a real sign-in); 
 
 - Clips: `python3 setup/asr/make_clips.py` (macOS `say`, voices Tingting and Reed (Chinese, mainland), rate 230, from `setup/asr/clips.json`).
 - Transcription: build `setup/asr/harness` once (`swift build -c release`), then `python3 setup/asr/bench.py run whisper <ggml-*.bin>` / `run tcpp <gguf> [--itn]` / `run nemotron <model dir>` / `run openrouter microsoft/mai-transcribe-2` / `run yapcloud microsoft/mai-transcribe-2` (with `YAP_CLOUD_TOKEN`), and `python3 setup/asr/bench.py score`, which prints the table's columns. Model files come from the URLs and revisions in `WhisperModelManager`, `TranscribeCppModelCatalog` and `FluidAudioModelManager`. Pass `fluidbench` a model directory you downloaded yourself, so the app's own model cache isn't touched.
+- Live text: `LIVE=0` / `LIVE=1` (optionally `LIVE_PRINT=1`, `LIVE_INTERVAL_MS`) in the environment of `setup/asr/harness/.build/release/whisperbench <model> <silero> auto "" <wavs…>` prints final time, CPU seconds and joules per file. In the app: `PREVIEW=1 WAIT=1 scripts/first-run-check.sh <app dir>`.
 - Cleanup: `uvx --with mlx-lm python setup/refine_bench.py`.
 - Offline: `make offline-check MODEL=…`.
