@@ -113,6 +113,9 @@ enum BackupImporter {
         if let dictionaryShortcut = general.quickAddToDictionaryShortcut {
             ShortcutStore.setShortcut(dictionaryShortcut.shortcut, for: .quickAddToDictionary)
         }
+        if let meetingShortcut = general.meetingRecordingShortcut {
+            ShortcutStore.setShortcut(meetingShortcut.shortcut, for: .meetingRecording)
+        }
         if let undoShortcut = general.undoLastPasteShortcut {
             ShortcutStore.setShortcut(undoShortcut.shortcut, for: .undoLastPaste)
         }

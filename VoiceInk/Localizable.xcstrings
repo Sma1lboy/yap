@@ -2268,6 +2268,28 @@
         }
       }
     },
+    "(Nothing was said in this meeting.)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(In diesem Meeting wurde nichts gesagt.)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(Rien n'a été dit pendant cette réunion.)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "（这场会议里没有识别到说话内容。）"
+          }
+        }
+      }
+    },
     "+" : {
       "localizations" : {
         "de" : {
@@ -8024,6 +8046,28 @@
         }
       }
     },
+    "Choose a transcription model in the mode before recording a meeting." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle im Modus ein Transkriptionsmodell, bevor du ein Meeting aufnimmst."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez un modèle de transcription dans le mode avant d'enregistrer une réunion."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录制会议前，请先在模式里选择转写模型。"
+          }
+        }
+      }
+    },
     "Choose what to import from this backup." : {
       "localizations" : {
         "de" : {
@@ -9096,6 +9140,72 @@
         }
       }
     },
+    "Copy Notes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizen kopieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier les notes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制纪要"
+          }
+        }
+      }
+    },
+    "Copy Notice" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinweis kopieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier l'avis"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制告知"
+          }
+        }
+      }
+    },
+    "Copy Recording Notice" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnahmehinweis kopieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier l'avis d'enregistrement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制录音告知文字"
+          }
+        }
+      }
+    },
     "Copy System Info" : {
       "localizations" : {
         "de" : {
@@ -9114,6 +9224,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拷贝系统信息"
+          }
+        }
+      }
+    },
+    "Copy Transcript" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkript kopieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier la transcription"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制转写"
+          }
+        }
+      }
+    },
+    "Copy a short note for the meeting chat saying you're recording." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einen kurzen Hinweis für den Meeting-Chat kopieren, dass du aufnimmst."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier un court message pour le chat de la réunion indiquant que vous enregistrez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制一段告知文字，贴到会议聊天里，说明你在录音。"
           }
         }
       }
@@ -13634,6 +13788,28 @@
         }
       }
     },
+    "Export Markdown…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als Markdown exportieren…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter en Markdown…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出 Markdown…"
+          }
+        }
+      }
+    },
     "Export Settings" : {
       "localizations" : {
         "de" : {
@@ -17342,6 +17518,138 @@
         }
       }
     },
+    "Me" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ich"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moi"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我"
+          }
+        }
+      }
+    },
+    "Meeting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meeting"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réunion"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会议"
+          }
+        }
+      }
+    },
+    "Meeting Notes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meeting-Notizen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes de réunion"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会议纪要"
+          }
+        }
+      }
+    },
+    "Meeting Transcript" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meeting-Transkript"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcription de la réunion"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会议转写"
+          }
+        }
+      }
+    },
+    "Meeting recording couldn't start: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Meeting-Aufnahme konnte nicht starten: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'enregistrement de la réunion n'a pas pu démarrer : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会议录制无法开始：%@"
+          }
+        }
+      }
+    },
+    "Meeting recording needs microphone access." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Meeting-Aufnahme braucht Zugriff auf das Mikrofon."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'enregistrement de réunion nécessite l'accès au micro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会议录制需要麦克风权限。"
+          }
+        }
+      }
+    },
     "Merge" : {
       "localizations" : {
         "de" : {
@@ -19234,6 +19542,28 @@
         }
       }
     },
+    "No microphone is available for the meeting recording." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für die Meeting-Aufnahme ist kein Mikrofon verfügbar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun micro n'est disponible pour l'enregistrement de la réunion."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有可用于会议录制的麦克风。"
+          }
+        }
+      }
+    },
     "No microphones found" : {
       "localizations" : {
         "de" : {
@@ -19604,6 +19934,28 @@
         }
       }
     },
+    "No notes: this mode has no AI provider for them (Yap Refine can't write notes). Choose one in the mode for your next meeting; the transcript is saved in History." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Notizen: Dieser Modus hat keinen KI-Anbieter dafür (Yap Refine kann keine Notizen schreiben). Wähle einen im Modus für dein nächstes Meeting; das Transkript ist im Verlauf gespeichert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de notes : ce mode n'a pas de fournisseur IA pour cela (Yap Refine ne peut pas rédiger de notes). Choisissez-en un dans le mode pour votre prochaine réunion ; la transcription est enregistrée dans l'historique."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有生成纪要：这个模式没有可用的 AI 服务商（Yap Refine 不能写纪要）。请在模式里选一个，下次会议就会生成；这次的转写已保存到历史记录。"
+          }
+        }
+      }
+    },
     "No prompts available" : {
       "localizations" : {
         "de" : {
@@ -19710,6 +20062,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未导入任何设置。"
+          }
+        }
+      }
+    },
+    "No sound from other apps yet. If the call is already talking, allow Yap under System Audio Recording." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch kein Ton von anderen Apps. Falls im Call schon gesprochen wird, erlaube Yap unter „Systemaudioaufnahme“."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun son des autres apps pour l'instant. Si l'appel a déjà commencé, autorisez Yap dans « Enregistrement audio du système »."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有收到其他 App 的声音。如果会议里已经有人在说话，请在“系统录音”里允许 Yap。"
           }
         }
       }
@@ -20764,6 +21138,28 @@
         }
       }
     },
+    "Open History" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlauf öffnen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir l'historique"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开历史记录"
+          }
+        }
+      }
+    },
     "Open Modes settings" : {
       "comment" : "A button that opens the Modes settings.",
       "isCommentAutoGenerated" : true,
@@ -21304,6 +21700,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "其他"
+          }
+        }
+      }
+    },
+    "Others" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Andere"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autres"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对方"
           }
         }
       }
@@ -22063,6 +22481,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "录音时按 Return 可停止录音并输出结果。Yap 随后会粘贴结果，并按下所选按键将其发送。选择“无”可禁用此功能。"
+          }
+        }
+      }
+    },
+    "Press once to start recording a meeting (your microphone and other apps' sound), again to stop and get notes. ⌘ + Space here always means the right ⌘; the left one stays Spotlight's." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einmal drücken, um ein Meeting aufzunehmen (dein Mikrofon und der Ton anderer Apps), erneut drücken, um zu stoppen und Notizen zu erhalten. ⌘ + Leertaste bedeutet hier immer das rechte ⌘; das linke bleibt für Spotlight."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez une fois pour enregistrer une réunion (votre micro et le son des autres apps), à nouveau pour arrêter et obtenir les notes. Ici, ⌘ + Espace désigne toujours le ⌘ de droite ; celui de gauche reste pour Spotlight."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按一下开始录制会议（你的麦克风和其他 App 的声音），再按一下停止并生成纪要。这里的 ⌘ + Space 只认右边的 ⌘，左边的留给聚焦搜索。"
           }
         }
       }
@@ -22933,6 +23373,28 @@
         }
       }
     },
+    "Record Meeting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meeting aufnehmen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer une réunion"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录制会议"
+          }
+        }
+      }
+    },
     "Record shortcut" : {
       "localizations" : {
         "de" : {
@@ -23065,6 +23527,28 @@
         }
       }
     },
+    "Recording a Meeting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Meeting aufnehmen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer une réunion"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录制会议"
+          }
+        }
+      }
+    },
     "Recording failed to start" : {
       "localizations" : {
         "de" : {
@@ -23083,6 +23567,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法开始录音"
+          }
+        }
+      }
+    },
+    "Recording meeting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meeting wird aufgenommen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réunion en cours d'enregistrement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会议录制中"
           }
         }
       }
@@ -26578,25 +27084,24 @@
         }
       }
     },
-    "Shows live text while recording with realtime models." : {
-      "extractionState" : "manual",
+    "Shows text while you speak. Realtime models stream it; local Whisper models show a preview that the final transcript replaces when you stop." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zeigt Live-Text während der Aufnahme mit Echtzeitmodellen an."
+            "value" : "Zeigt Text, während du sprichst. Echtzeitmodelle streamen ihn; lokale Whisper-Modelle zeigen eine Vorschau, die beim Stoppen durch das endgültige Transkript ersetzt wird."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Affiche le texte en direct pendant l'enregistrement avec des modèles en temps réel."
+            "value" : "Affiche le texte pendant que vous parlez. Les modèles en temps réel le diffusent ; les modèles Whisper locaux affichent un aperçu, remplacé par la transcription finale à l’arrêt."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "使用实时模型录音时显示实时文本。"
+            "value" : "说话时显示文字。实时模型会逐字输出；本地 Whisper 模型显示的是预览，停止录音后由最终结果替换。"
           }
         }
       }
@@ -27400,6 +27905,28 @@
         }
       }
     },
+    "Start Recording" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnahme starten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Démarrer l'enregistrement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始录制"
+          }
+        }
+      }
+    },
     "Start Sound" : {
       "localizations" : {
         "de" : {
@@ -27729,6 +28256,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "这些模式仍在使用 Yap Cloud：%@。请在「模式」中把它们切换到其他提供商。"
+          }
+        }
+      }
+    },
+    "Stop" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stopp"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止"
+          }
+        }
+      }
+    },
+    "Stop Meeting Recording" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meeting-Aufnahme beenden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrêter l'enregistrement de la réunion"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止会议录制"
           }
         }
       }
@@ -30918,6 +31489,28 @@
         }
       }
     },
+    "Transcribing the last part…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der letzte Teil wird transkribiert…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcription de la dernière partie…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在转写最后一段…"
+          }
+        }
+      }
+    },
     "Transcribing..." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -30937,6 +31530,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在转写…"
+          }
+        }
+      }
+    },
+    "Transcript" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkript"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcription"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写"
           }
         }
       }
@@ -33289,6 +33904,28 @@
         }
       }
     },
+    "Writing notes…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizen werden geschrieben…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rédaction des notes…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在整理纪要…"
+          }
+        }
+      }
+    },
     "Written at %@" : {
       "localizations" : {
         "de" : {
@@ -33842,6 +34479,28 @@
         }
       }
     },
+    "Yap can't record other apps' sound; only your microphone is recorded." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap kann den Ton anderer Apps nicht aufnehmen; nur dein Mikrofon wird aufgenommen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap ne peut pas enregistrer le son des autres apps ; seul votre micro est enregistré."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 无法录制其他 App 的声音，只录了你的麦克风。"
+          }
+        }
+      }
+    },
     "Yap collects no usage data. Transcripts are stored only on this Mac." : {
       "localizations" : {
         "de" : {
@@ -34176,6 +34835,28 @@
         }
       }
     },
+    "Yap records your microphone and the sound from other apps, transcribes it on the fly with this mode's model, and writes notes when you stop. Press the shortcut again to stop." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap nimmt dein Mikrofon und den Ton anderer Apps auf, transkribiert laufend mit dem Modell dieses Modus und schreibt Notizen, wenn du stoppst. Drücke das Kürzel erneut, um zu stoppen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap enregistre votre micro et le son des autres apps, transcrit au fur et à mesure avec le modèle de ce mode et rédige des notes quand vous arrêtez. Appuyez à nouveau sur le raccourci pour arrêter."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 会录下你的麦克风和其他 App 的声音，用当前模式的模型边录边转写，停止后整理成纪要。再按一次快捷键即可停止。"
+          }
+        }
+      }
+    },
     "Yap temporarily uses the clipboard to paste transcription. When enabled, it restores your previous clipboard content after the selected delay. When disabled, the pasted transcription stays on your clipboard." : {
       "localizations" : {
         "de" : {
@@ -34421,6 +35102,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下次启动 App 时，你会再次看到介绍页面。"
+          }
+        }
+      }
+    },
+    "You're responsible for telling everyone in the meeting and getting their consent. Recording people without it can be against the law (in China, the EU and many US states, among others) or your company's rules." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du bist dafür verantwortlich, alle im Meeting zu informieren und ihre Zustimmung einzuholen. Aufnahmen ohne Zustimmung können gegen Gesetze (u. a. in China, der EU und vielen US-Bundesstaaten) oder Firmenregeln verstoßen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous devez informer toutes les personnes présentes et obtenir leur consentement. Enregistrer sans consentement peut être illégal (notamment en Chine, dans l'UE et dans de nombreux États américains) ou contraire aux règles de votre entreprise."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你有责任告知所有参会人并取得同意。未经同意录音可能违反法律（包括中国、欧盟和美国多个州等）或公司规定。"
           }
         }
       }

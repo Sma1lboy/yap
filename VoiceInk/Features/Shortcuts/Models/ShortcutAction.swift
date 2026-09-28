@@ -9,6 +9,8 @@ enum ShortcutAction: Hashable {
     case cancelRecorder
     case openQuickHistory
     case quickAddToDictionary
+    /// Starts or stops a meeting recording (MeetingRecorder). Default: right ⌘ + Space.
+    case meetingRecording
     /// Removes the last paste (LastPasteEditor).
     case undoLastPaste
     /// Press, speak an instruction, press again: the last paste is rewritten in place (LastPasteEditor).
@@ -49,6 +51,8 @@ enum ShortcutAction: Hashable {
             return "openHistoryWindow"
         case .quickAddToDictionary:
             return "quickAddToDictionary"
+        case .meetingRecording:
+            return "meetingRecording"
         case .undoLastPaste:
             return "undoLastPaste"
         case .rewriteLastPaste:
@@ -82,6 +86,8 @@ enum ShortcutAction: Hashable {
             return String(localized: "Open Quick History")
         case .quickAddToDictionary:
             return String(localized: "Quick Add to Dictionary")
+        case .meetingRecording:
+            return String(localized: "Record Meeting")
         case .undoLastPaste:
             return String(localized: "Undo Last Paste")
         case .rewriteLastPaste:
@@ -113,6 +119,7 @@ enum ShortcutAction: Hashable {
         .quickAddToDictionary,
         .undoLastPaste,
         .rewriteLastPaste,
+        .meetingRecording,
     ]
 
     static let recorderPanelStoredActions: [Self] = [

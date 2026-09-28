@@ -66,6 +66,11 @@ class TranscriptionServiceRegistry {
     ) -> TranscriptionSession {
         let model = configuration.model
 
+        if usesWhisperLivePreview(for: configuration) {
+            return WhisperPreviewSession(
+                service: localTranscriptionService, modelProvider: modelProvider,
+                onPartialTranscript: onPartialTranscript)
+        }
         if shouldUseRealtimeTranscription(for: configuration) {
             let streamingService = StreamingTranscriptionService(
                 modelContext: modelContext,
@@ -81,7 +86,15 @@ class TranscriptionServiceRegistry {
 
     /// Whether the resolved transcription configuration should use real-time transcription.
     func shouldUseRealtimeTranscription(for configuration: TranscriptionRuntimeConfiguration) -> Bool {
-        configuration.isRealtimeEnabled
+        configuration.isRealtimeEnabled || usesWhisperLivePreview(for: configuration)
+    }
+
+    /// Local Whisper has no streaming mode; with "show live transcript" on it gets WhisperLivePreview's text instead.
+    /// About 2.5 CPU-seconds and 6 J more per minute of recording on an M4 Pro; final text unchanged, final time
+    /// within 5% (docs/local-models.md).
+    private func usesWhisperLivePreview(for configuration: TranscriptionRuntimeConfiguration) -> Bool {
+        configuration.model.provider == .whisper
+            && UserDefaults.standard.bool(forKey: RecorderDisplaySettingsKeys.showLiveTranscript)
     }
 
     func cleanup() async {

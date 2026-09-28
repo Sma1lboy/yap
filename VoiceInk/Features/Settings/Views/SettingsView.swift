@@ -155,6 +155,16 @@ struct SettingsView: View {
                 }
 
                 LabeledContent {
+                    ShortcutRecorder(action: .meetingRecording)
+                        .controlSize(.small)
+                } label: {
+                    HStack(spacing: AppTheme.Spacing.x1) {
+                        Text("Record Meeting")
+                        InfoTip("Press once to start recording a meeting (your microphone and other apps' sound), again to stop and get notes. ⌘ + Space here always means the right ⌘; the left one stays Spotlight's.")
+                    }
+                }
+
+                LabeledContent {
                     HStack(spacing: AppTheme.Spacing.x2) {
                         ShortcutRecorder(
                             action: .cancelRecorder,
@@ -282,7 +292,7 @@ struct SettingsView: View {
                 Toggle(isOn: $showLiveTranscript) {
                     HStack(spacing: AppTheme.Spacing.x1) {
                         Text("Live Text Display")
-                        InfoTip("Shows live text while recording with realtime models.")
+                        InfoTip("Shows text while you speak. Realtime models stream it; local Whisper models show a preview that the final transcript replaces when you stop.")
                     }
                 }
             }

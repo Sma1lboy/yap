@@ -21,9 +21,11 @@ actor WhisperContext {
 
     init(context: OpaquePointer) {
         self.context = context
+        preview.attach(context)
     }
 
     deinit {
+        preview.attach(nil)
         if let context = context {
             whisper_free(context)
         }
@@ -226,6 +228,110 @@ actor WhisperContext {
         return success
     }
 
+    // MARK: - Live preview (WhisperLivePreview)
+
+    /// Previews run outside the actor on their own whisper_state (states on one context are independent in
+    /// whisper.cpp), so the final transcription never queues behind one. The lock is held for a whole preview
+    /// decode; releasing the model raises the abort flag and takes the lock first, so the context is never freed
+    /// under a running preview.
+    final class PreviewSlot: @unchecked Sendable {
+        private let lock = NSLock()
+        private let abortFlag = AbortFlag()
+        private var context: OpaquePointer?
+        private var state: OpaquePointer?
+
+        /// `isSet` aborts the decode in flight. `closed` keeps new decodes from starting (and from clearing
+        /// `isSet`) once a recording has stopped; checked and cleared in one step so stop can't be undone by a
+        /// decode that was about to begin.
+        final class AbortFlag: @unchecked Sendable {
+            private let lock = NSLock()
+            private var value = false
+            private var closed = true
+            var isSet: Bool {
+                get { lock.withLock { value } }
+                set { lock.withLock { value = newValue } }
+            }
+            func begin() -> Bool { lock.withLock { if closed { return false }; value = false; return true } }
+            func setClosed(_ closed: Bool) { lock.withLock { self.closed = closed; if closed { value = true } } }
+        }
+
+        func attach(_ context: OpaquePointer?) {
+            abortFlag.isSet = true
+            lock.withLock {
+                if let state { whisper_free_state(state) }
+                state = nil
+                self.context = context
+            }
+        }
+
+        /// Lets decodes run (a recording started).
+        func open() {
+            abortFlag.setClosed(false)
+        }
+
+        /// Stops a decode in flight (whisper.cpp checks the flag between steps) and refuses new ones.
+        func close() {
+            abortFlag.setClosed(true)
+        }
+
+        /// Closes and frees the preview state. Waits for an aborted decode to return.
+        func releaseState() {
+            close()
+            lock.withLock {
+                if let state { whisper_free_state(state) }
+                state = nil
+            }
+        }
+
+        /// One quick decode for the recorder: greedy, no temperature fallback, no timestamps, one segment, a
+        /// token cap, abortable. `language` nil = detect; the detected language is returned so later previews
+        /// skip detection. No initial prompt: the app's zh prompt made previews repeat "好,好,好". Nil when
+        /// closed, aborted, failed or no model is attached.
+        func transcribe(_ samples: [Float], language: String?) -> (text: String, language: String)? {
+            guard !samples.isEmpty else { return nil }
+            return lock.withLock { () -> (text: String, language: String)? in
+                guard let context, abortFlag.begin() else { return nil }
+                if state == nil { state = whisper_init_state(context) }
+                guard let state else { return nil }
+
+                var params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY)
+                params.print_realtime = false
+                params.print_progress = false
+                params.print_timestamps = false
+                params.no_timestamps = true
+                params.no_context = true
+                params.single_segment = true
+                params.temperature = 0
+                params.temperature_inc = 0
+                // Speech runs at most ~6 tokens a second; the cap stops a repetition loop early.
+                params.max_tokens = Int32(samples.count * 8 / 16_000 + 16)
+                params.n_threads = Int32(max(1, min(8, cpuCount() - 2)))
+                params.abort_callback = { userData in
+                    guard let userData else { return false }
+                    return Unmanaged<AbortFlag>.fromOpaque(userData).takeUnretainedValue().isSet
+                }
+                params.abort_callback_user_data = Unmanaged.passUnretained(abortFlag).toOpaque()
+
+                let languageC = language.map { Array($0.utf8CString) }
+                let status = languageC.withOptionalBufferPointer { languagePointer in
+                    params.language = languagePointer
+                    return samples.withUnsafeBufferPointer {
+                        whisper_full_with_state(context, state, params, $0.baseAddress, Int32($0.count))
+                    }
+                }
+                guard status == 0, !abortFlag.isSet else { return nil }
+                let text = (0..<whisper_full_n_segments_from_state(state))
+                    .map { String(cString: whisper_full_get_segment_text_from_state(state, $0)) }
+                    .joined()
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                let detected = whisper_lang_str(whisper_full_lang_id_from_state(state)).map { String(cString: $0) }
+                return (text, language ?? detected ?? "auto")
+            }
+        }
+    }
+
+    nonisolated let preview = PreviewSlot()
+
     func getTranscription() -> String {
         transcription
     }
@@ -254,6 +360,7 @@ actor WhisperContext {
         let context = whisper_init_from_file_with_params(path, params)
         if let context {
             self.context = context
+            preview.attach(context)
         } else {
             logger.error("❌ Couldn't load model at \(path, privacy: .public)")
             throw VoiceInkEngineError.modelLoadFailed
@@ -268,6 +375,7 @@ actor WhisperContext {
     }
 
     func releaseResources() {
+        preview.attach(nil)
         if let context = context {
             whisper_free(context)
             self.context = nil
@@ -286,4 +394,14 @@ actor WhisperContext {
 
 fileprivate func cpuCount() -> Int {
     ProcessInfo.processInfo.processorCount
+}
+
+extension Optional where Wrapped == [CChar] {
+    /// Calls `body` with a pointer to the array's storage, or nil.
+    fileprivate func withOptionalBufferPointer<R>(_ body: (UnsafePointer<CChar>?) -> R) -> R {
+        switch self {
+        case .some(let array): return array.withUnsafeBufferPointer { body($0.baseAddress) }
+        case .none: return body(nil)
+        }
+    }
 }

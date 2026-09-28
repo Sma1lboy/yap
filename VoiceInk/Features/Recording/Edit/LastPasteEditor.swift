@@ -94,10 +94,12 @@ final class LastPasteEditor {
         guard let enhancementService, let aiService else { return notify(.aiNotConfigured) }
         let base = ModeRuntimeResolver.currentEnhancementConfiguration(
             enhancementService: enhancementService, aiService: aiService)
-        guard base.provider != nil, base.provider != .voiceInkRefine, enhancementService.isConfigured(for: base)
+        let prompt = CustomPrompt(title: "Rewrite Last Dictation", promptText: Self.rewritePrompt, useSystemInstructions: false)
+        // Checked with the rewrite prompt in place: the mode's own prompt selection doesn't matter here.
+        guard base.provider != nil, base.provider != .voiceInkRefine,
+            enhancementService.isConfigured(for: base.replacingPrompt(prompt))
         else { return notify(.aiNotConfigured) }
 
-        let prompt = CustomPrompt(title: "Rewrite Last Dictation", promptText: Self.rewritePrompt, useSystemInstructions: false)
         let rewritten: String
         do {
             let result = try await enhancementService.enhance(

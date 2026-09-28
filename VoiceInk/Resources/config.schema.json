@@ -696,6 +696,10 @@
           "$ref": "#/$defs/shortcut",
           "description": "Press, say how to change the text Yap pasted last, press again: it is rewritten in place."
         },
+        "meetingRecordingShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Start or stop a meeting recording. cmd+space means the right ⌘ only (the left one is Spotlight's)."
+        },
         "primaryRecordingShortcutRawValue": {
           "enum": [
             "none",

@@ -55,12 +55,15 @@ struct VoiceInkApp: App {
             ClipboardManager.selfCheck()
             LastPasteEditor.selfCheck()
             CursorContextReader.selfCheck()
+            MeetingChunker.selfCheck()
+            MeetingNotes.selfCheck()
             OpenAICompatibleChat.selfCheck()
             ModelFileDownloader.selfCheck()
             ReplacementText.selfCheck()
             WhisperPrompt.selfCheck()
             WhisperTranscriptionService.selfCheck()
             ChineseCleanup.selfCheck()
+            WhisperLivePreview.selfCheck()
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
@@ -167,6 +170,9 @@ struct VoiceInkApp: App {
         // 5. Configure circular deps
         recorderUIManager.configure(engine: engine, recorder: engine.recorder)
         engine.recorderUIManager = recorderUIManager
+        MeetingRecorder.shared.configure(engine: engine)
+        // Once; a shortcut the user cleared stays cleared.
+        ShortcutStore.seedShortcut(.rightCommandSpace, for: .meetingRecording)
 
         // 6. Initialize model state
         // Migration and refreshAllAvailableModels must run before loadCurrentTranscriptionModel so renamed keys are remapped and imported models are present when restoring the saved selection.
@@ -207,6 +213,7 @@ struct VoiceInkApp: App {
         }
         #if DEBUG
             OfflineCheck.runIfRequested(engine: engine)  // make offline-check only
+            MeetingFilesCheck.runIfRequested()  // scripts/meeting-files-check.sh only
         #endif
 
         let activeWindowService = ActiveWindowService.shared
@@ -450,8 +457,11 @@ struct VoiceInkApp: App {
                 return $0
             }(NSImage(named: "menuBarIcon")!)
 
-            Image(nsImage: image)
-                .background(MainWindowRequestBridge(menuBarManager: menuBarManager))
+            HStack(spacing: AppTheme.Spacing.x1) {
+                Image(nsImage: image)
+                MeetingMenuBarBadge()
+            }
+            .background(MainWindowRequestBridge(menuBarManager: menuBarManager))
         }
         .menuBarExtraStyle(.menu)
 
