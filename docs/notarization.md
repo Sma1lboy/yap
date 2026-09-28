@@ -1,6 +1,32 @@
 # Notarization: where Yap stands and what switching would take
 
-Research only; nothing here has been changed. The decision is Jackson's.
+**Decided 2026-09-28: the release after 1.2.0 and every one after it is signed with Allen Zhang's Developer ID (team `2G2H3TQ8J8`) and notarized in CI** (`.github/workflows/release.yml`; secrets `DEVELOPER_ID_P12` and `DEVELOPER_ID_PASSWORD` hold that one identity, the certificate expires 2027-02-01; `NOTARY_KEY_P8`, `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID` are the App Store Connect key quill uses). Checked by hand on a 1.2.0 build: `--deep --options runtime --timestamp` signing was accepted by notarytool and `spctl` reports "Notarized Developer ID", once the build stops Xcode injecting `get-task-allow` (`CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO`). The rest of this page is the research as written before the switch; "Today" describes 1.2.0 and earlier.
+
+**The first notarized release's notes (`docs/releases/X.Y.Z.md`) must open with this section**, since updating from a self-signed build resets permissions once:
+
+```markdown
+## Signed and notarized by Apple
+
+Yap is now signed with a Developer ID and notarized, so a zip downloaded in a browser opens with the usual "downloaded from the internet" prompt instead of being blocked. Because the signature changed, macOS asks for permissions once more after this update:
+
+- Microphone: allow it again on your next recording.
+- Accessibility: System Settings › Privacy & Security › Accessibility still shows Yap as on but it won't paste until you remove Yap from the list (−) and add it again, or toggle it off and on.
+- Keychain: macOS asks once whether Yap may use its saved API key or Yap Cloud sign-in; choose Always Allow.
+
+Later updates keep these permissions.
+
+## 经过 Apple 签名和公证
+
+Yap 现在用 Developer ID 签名并经过 Apple 公证，浏览器下载的 zip 打开时只会出现普通的“从互联网下载”确认，不会再被拦住。因为签名变了，这次更新后 macOS 会再要一次权限：
+
+- 麦克风：下一次录音时重新允许。
+- 辅助功能：“系统设置 › 隐私与安全性 › 辅助功能”里 Yap 看起来还开着，但粘贴不会生效，要先把 Yap 从列表里移除（−）再加回来，或者关掉再打开。
+- 钥匙串：macOS 会问一次 Yap 能否使用已保存的 API key 或 Yap Cloud 登录信息，选“始终允许”。
+
+之后的更新会保留这些权限。
+```
+
+After that release ships, the site FAQ and README entries about "not notarized" and the quarantine workaround, the cask's `postflight` quarantine removal and `setup/install.sh`'s comment can go.
 
 ## Today
 

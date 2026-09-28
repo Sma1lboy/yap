@@ -38,7 +38,7 @@ git clone https://github.com/Sma1lboy/yap && cd yap
 - 独立的身份：应用名、bundle ID `me.sma1lboy.yap`、Application Support 目录和钥匙串命名空间都是自己的，可以和 VoiceInk 并存、互不共享数据。去掉了上游的公告、GitHub 求星提示、Pro/授权页面和上游更新日志。
 - 更安静的界面：单色侧边栏、显示默认模式和最近转写的主页、用 SF Symbols 代替 emoji。
 - 引导流程可以跳过转写和 AI 服务商的设置（「稍后设置」），改用 JSON 配置文件配置。
-- 自己的更新通道：CI 用固定的自签名证书给每个版本签名并发布，同时更新 Sparkle appcast（应用内更新）和 Homebrew cask。
+- 自己的更新通道：CI 用 Developer ID 证书给每个版本签名、经过 Apple 公证后发布，同时更新 Sparkle appcast（应用内更新）和 Homebrew cask。
 - 鸭子图标（`design/logo.svg`）。
 - `setup/`：一套针对中英混说、通过 OpenRouter 调好的配置，以及挑选模型用的评测脚本。
 
