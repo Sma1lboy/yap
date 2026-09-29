@@ -104,6 +104,7 @@ struct GeneralBackup: Codable, Equatable {
     var meetingRecordingShortcut: ShortcutBackup? = nil
     var undoLastPasteShortcut: ShortcutBackup? = nil
     var rewriteLastPasteShortcut: ShortcutBackup? = nil
+    var copyLastTranscriptionShortcut: ShortcutBackup? = nil
     let primaryRecordingShortcutRawValue: String?
     let secondaryRecordingShortcutRawValue: String?
     let primaryRecordingShortcutModeRawValue: String?

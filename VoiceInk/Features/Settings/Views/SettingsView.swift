@@ -136,6 +136,11 @@ struct SettingsView: View {
                     .controlSize(.small)
                 }
 
+                LabeledContent("Copy Last Transcription") {
+                    ShortcutRecorder(action: .copyLastTranscription)
+                        .controlSize(.small)
+                }
+
                 LabeledContent("Retry Last Transcription") {
                     ShortcutRecorder(action: .retryLastTranscription) {
                         recordingShortcutManager.updateShortcutStatus()
