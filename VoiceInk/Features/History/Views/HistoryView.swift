@@ -3,11 +3,6 @@ import SwiftUI
 
 /// Transcription history list. `header` scrolls with the list (Home puts its week panel there).
 struct HistoryView<Header: View>: View {
-    private struct PaginationCursor {
-        let timestamp: Date
-        let id: UUID
-    }
-
     private struct DayGroup: Identifiable {
         let id: Date
         var items: [Transcription]
@@ -21,6 +16,9 @@ struct HistoryView<Header: View>: View {
 
     @Environment(\.modelContext) private var modelContext
     @State private var searchText = ""
+    @State private var filter = HistoryFilter()
+    @State private var filterApps: [(id: String, name: String)] = []
+    @State private var filterModes: [String] = []
     @State private var expandedId: UUID?
     @State private var selectedTranscriptions: Set<Transcription> = []
     @State private var showDeleteConfirmation = false
@@ -30,7 +28,7 @@ struct HistoryView<Header: View>: View {
     @State private var displayedTranscriptions: [Transcription] = []
     @State private var isLoading = false
     @State private var hasMoreContent = true
-    @State private var paginationCursor: PaginationCursor?
+    @State private var paginationCursor: HistoryQuery.Cursor?
     @State private var isViewCurrentlyVisible = false
     @State private var wordCounts: [UUID: Int] = [:]
     /// Keyboard cursor: ↑/↓ move it, Return expands, Space checks, ⌘C copies.
@@ -51,45 +49,16 @@ struct HistoryView<Header: View>: View {
         return descriptor
     }
 
-    private func cursorQueryDescriptor(after cursor: PaginationCursor? = nil) -> FetchDescriptor<Transcription> {
+    private func cursorQueryDescriptor(after cursor: HistoryQuery.Cursor? = nil) -> FetchDescriptor<Transcription> {
         var descriptor = FetchDescriptor<Transcription>(
+            predicate: HistoryQuery.predicate(search: searchText, filter: filter, after: cursor),
             sortBy: [
                 SortDescriptor(\Transcription.timestamp, order: .reverse),
                 SortDescriptor(\Transcription.id, order: .reverse),
             ]
         )
-
-        if !searchText.isEmpty {
-            let query = searchText
-            if let cursor {
-                let cursorTimestamp = cursor.timestamp
-                let cursorID = cursor.id
-                descriptor.predicate = #Predicate<Transcription> { transcription in
-                    (transcription.text.localizedStandardContains(query)
-                        || (transcription.enhancedText?.localizedStandardContains(query) ?? false))
-                        && (transcription.timestamp < cursorTimestamp
-                            || (transcription.timestamp == cursorTimestamp && transcription.id < cursorID))
-                }
-            } else {
-                descriptor.predicate = #Predicate<Transcription> { transcription in
-                    transcription.text.localizedStandardContains(query)
-                        || (transcription.enhancedText?.localizedStandardContains(query) ?? false)
-                }
-            }
-        } else {
-            if let cursor {
-                let cursorTimestamp = cursor.timestamp
-                let cursorID = cursor.id
-                descriptor.predicate = #Predicate<Transcription> { transcription in
-                    transcription.timestamp < cursorTimestamp
-                        || (transcription.timestamp == cursorTimestamp && transcription.id < cursorID)
-                }
-            }
-        }
-
         // Fetch one extra row so the UI can determine whether another page exists.
         descriptor.fetchLimit = pageSize + 1
-
         return descriptor
     }
 
@@ -123,6 +92,7 @@ struct HistoryView<Header: View>: View {
                             .padding(.bottom, AppTheme.Spacing.x6)
 
                         topBar
+                        activeFilterChips
 
                         if displayedTranscriptions.isEmpty && !isLoading {
                             emptyStateView
@@ -188,6 +158,7 @@ struct HistoryView<Header: View>: View {
         }
         .onAppear {
             isViewCurrentlyVisible = true
+            reloadFilterOptions()
             Task { await loadInitialContent() }
         }
         .onDisappear {
@@ -199,9 +170,16 @@ struct HistoryView<Header: View>: View {
                 await loadInitialContent()
             }
         }
+        .onChange(of: filter) { _, _ in
+            Task {
+                resetPagination()
+                await loadInitialContent()
+            }
+        }
         .onChange(of: latestTranscriptionIndicator.first?.id) { oldId, newId in
             guard isViewCurrentlyVisible else { return }
             if newId != oldId {
+                reloadFilterOptions()
                 Task {
                     resetPagination()
                     await loadInitialContent()
@@ -230,6 +208,8 @@ struct HistoryView<Header: View>: View {
             )
             .frame(maxWidth: .infinity)
 
+            filterMenu
+
             AppActionButton("Transcribe File…", isPill: true) {
                 MainWindowNavigation.shared.navigate(to: .transcribeAudio)
             }
@@ -246,6 +226,104 @@ struct HistoryView<Header: View>: View {
             }
         }
         .padding(.bottom, AppTheme.Spacing.x1)
+    }
+
+    // MARK: - Filter
+
+    private func reloadFilterOptions() {
+        let facets = HistoryQuery.facets(in: modelContext)
+        filterApps = facets.apps
+        filterModes = facets.modes
+    }
+
+    private var filterMenu: some View {
+        Menu {
+            Menu("App") {
+                Button("All Apps") { filter.appBundleID = nil; filter.appName = nil }
+                Divider()
+                ForEach(filterApps, id: \.id) { app in
+                    Toggle(
+                        app.name,
+                        isOn: Binding(
+                            get: { filter.appBundleID == app.id },
+                            set: { on in
+                                filter.appBundleID = on ? app.id : nil
+                                filter.appName = on ? app.name : nil
+                            }))
+                }
+            }
+            .disabled(filterApps.isEmpty)
+
+            Menu("Mode") {
+                Button("All Modes") { filter.modeName = nil }
+                Divider()
+                ForEach(filterModes, id: \.self) { mode in
+                    Toggle(
+                        mode,
+                        isOn: Binding(
+                            get: { filter.modeName == mode },
+                            set: { filter.modeName = $0 ? mode : nil }))
+                }
+            }
+            .disabled(filterModes.isEmpty)
+
+            Toggle("Meetings only", isOn: $filter.meetingsOnly)
+
+            if filter.isActive {
+                Divider()
+                Button("Clear Filter") { filter = HistoryFilter() }
+            }
+        } label: {
+            Image(systemName: "line.3.horizontal.decrease")
+                .font(AppTheme.font(.body, .medium))
+                .foregroundColor(filter.isActive ? AppTheme.Text.primary : .primary.opacity(0.7))
+                .frame(width: 30, height: 30)
+                .background(AppCardBackground(isSelected: filter.isActive, cornerRadius: AppTheme.Radius.pill))
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Filter history")
+        .accessibilityLabel("Filter history")
+    }
+
+    /// The active filters as removable chips under the search field.
+    @ViewBuilder
+    private var activeFilterChips: some View {
+        if filter.isActive {
+            HStack(spacing: AppTheme.Spacing.x2) {
+                if let appName = filter.appName {
+                    filterChip(appName) { filter.appBundleID = nil; filter.appName = nil }
+                }
+                if let modeName = filter.modeName {
+                    filterChip(modeName) { filter.modeName = nil }
+                }
+                if filter.meetingsOnly {
+                    filterChip(String(localized: "Meetings only")) { filter.meetingsOnly = false }
+                }
+                Spacer()
+            }
+            .padding(.top, AppTheme.Spacing.x2)
+        }
+    }
+
+    private func filterChip(_ title: String, remove: @escaping () -> Void) -> some View {
+        Button(action: remove) {
+            HStack(spacing: AppTheme.Spacing.x1) {
+                Text(verbatim: title)
+                Image(systemName: "xmark")
+            }
+            .font(AppTheme.font(.caption, .medium))
+            .foregroundStyle(AppTheme.Text.primary)
+            .padding(.horizontal, AppTheme.Spacing.x3)
+            .padding(.vertical, AppTheme.Spacing.x1)
+            .background(Capsule().fill(AppTheme.Surface.controlActive))
+        }
+        .buttonStyle(.plain)
+        .help("Clear Filter")
+        .accessibilityLabel(Text(verbatim: title))
+        .accessibilityHint("Clear Filter")
     }
 
     private var selectionBar: some View {
@@ -326,7 +404,7 @@ struct HistoryView<Header: View>: View {
     private var emptyStateView: some View {
         VStack(spacing: AppTheme.Spacing.x4) {
             HStack(spacing: AppTheme.Spacing.x2) {
-                Image(systemName: searchText.isEmpty ? "mic" : "magnifyingglass")
+                Image(systemName: isNarrowed ? (searchText.isEmpty ? "line.3.horizontal.decrease" : "magnifyingglass") : "mic")
                     .font(AppTheme.font(.body, .medium))
                 Text(verbatim: emptyStateMessage)
                     .font(AppTheme.font(.body))
@@ -334,7 +412,7 @@ struct HistoryView<Header: View>: View {
             .foregroundStyle(AppTheme.Text.secondary)
 
             // Empty without a search means nothing was ever dictated (or everything was deleted).
-            if searchText.isEmpty {
+            if !isNarrowed {
                 TrySayingCard()
             }
         }
@@ -342,7 +420,12 @@ struct HistoryView<Header: View>: View {
         .padding(.vertical, 56)  // design-exempt: layout offset, not spacing
     }
 
+    private var isNarrowed: Bool { !searchText.isEmpty || filter.isActive }
+
     private var emptyStateMessage: String {
+        guard !filter.isActive else {
+            return String(localized: "No transcriptions match this filter")
+        }
         guard searchText.isEmpty else {
             return String(localized: "No results found")
         }
@@ -502,7 +585,7 @@ struct HistoryView<Header: View>: View {
             let page = Array(items.prefix(pageSize))
             displayedTranscriptions = page
             countWords(in: page)
-            paginationCursor = page.last.map { PaginationCursor(timestamp: $0.timestamp, id: $0.id) }
+            paginationCursor = page.last.map { HistoryQuery.Cursor(timestamp: $0.timestamp, id: $0.id) }
             hasMoreContent = items.count > pageSize
         } catch {
             print("Error loading transcriptions: \(error)")
@@ -521,7 +604,7 @@ struct HistoryView<Header: View>: View {
             let page = Array(items.prefix(pageSize))
             displayedTranscriptions.append(contentsOf: page)
             countWords(in: page)
-            self.paginationCursor = page.last.map { PaginationCursor(timestamp: $0.timestamp, id: $0.id) }
+            self.paginationCursor = page.last.map { HistoryQuery.Cursor(timestamp: $0.timestamp, id: $0.id) }
             hasMoreContent = items.count > pageSize
         } catch {
             print("Error loading more transcriptions: \(error)")
@@ -611,14 +694,8 @@ struct HistoryView<Header: View>: View {
 
     private func selectAllTranscriptions() async {
         do {
-            var allDescriptor = FetchDescriptor<Transcription>()
-
-            if !searchText.isEmpty {
-                allDescriptor.predicate = #Predicate<Transcription> { transcription in
-                    transcription.text.localizedStandardContains(searchText)
-                        || (transcription.enhancedText?.localizedStandardContains(searchText) ?? false)
-                }
-            }
+            var allDescriptor = FetchDescriptor<Transcription>(
+                predicate: HistoryQuery.predicate(search: searchText, filter: filter))
 
             allDescriptor.propertiesToFetch = [\.id]
             let allTranscriptions = try modelContext.fetch(allDescriptor)
