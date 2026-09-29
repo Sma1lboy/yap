@@ -55,6 +55,7 @@ struct VoiceInkApp: App {
             RecordedAudioIssue.selfCheck()
             ClipboardManager.selfCheck()
             LastPasteEditor.selfCheck()
+            CursorPaster.selfCheck()
             CursorContextReader.selfCheck()
             MeetingChunker.selfCheck()
             MeetingNotes.selfCheck()
