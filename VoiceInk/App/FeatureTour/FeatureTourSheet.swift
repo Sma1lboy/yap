@@ -48,6 +48,10 @@ struct FeatureTourSheet: View {
             detail: "Removes fillers like 嗯 and 呃, turns spoken \"换行\" into line breaks and converts Traditional to Simplified, offline and before AI. It's under the gear on the Models page.",
             destination: .models),
         Feature(
+            id: "meeting", systemImage: "person.2.wave.2", title: "Record Meeting",
+            detail: "Records your microphone and the sound of other apps, then saves notes and a transcript in History. The first time, macOS asks for System Audio Recording.",
+            shortcut: .meetingRecording, destination: .settings),
+        Feature(
             id: "files", systemImage: "waveform", title: "Transcribe Audio Files",
             detail: "Drop in a recording or video and get its transcript in History.",
             destination: .transcribeAudio),
@@ -98,8 +102,14 @@ struct FeatureTourSheet: View {
                 HStack(spacing: AppTheme.Spacing.x2) {
                     Text(feature.title)
                         .font(AppTheme.font(.body, .semibold))
-                    if let action = feature.shortcut, let shortcut = ShortcutStore.shortcut(for: action) {
-                        ShortcutVisualization(shortcut: shortcut, isRecording: false, isCompact: true)
+                    if let action = feature.shortcut {
+                        if let shortcut = ShortcutStore.shortcut(for: action) {
+                            ShortcutVisualization(shortcut: shortcut, isRecording: false, isCompact: true)
+                        } else {
+                            Text("Not set")
+                                .font(AppTheme.font(.footnote))
+                                .foregroundStyle(AppTheme.Text.secondary)
+                        }
                     }
                 }
                 Text(feature.detail)
