@@ -36,6 +36,10 @@ struct FeatureTourSheet: View {
             detail: "Press, say how to change the text Yap pasted last (\"make it more formal\"), press again. It's replaced in place.",
             shortcut: .rewriteLastPaste, destination: .settings),
         Feature(
+            id: "edit", systemImage: "text.badge.checkmark", title: "Edit Selected Text",
+            detail: "Select text in any app, use the Rewrite mode's shortcut and say the change (\"make it shorter\"). The selection is replaced. Set the shortcut on the Rewrite mode.",
+            destination: .modes),
+        Feature(
             id: "dictionary", systemImage: "character.book.closed", title: "Dictionary and Auto-Learn",
             detail: "Add names and terms Yap should spell your way. Auto-Learn suggests entries from the corrections you make after a paste.",
             destination: .dictionary),

@@ -4516,6 +4516,28 @@
         }
       }
     },
+    "Add Rewrite Mode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rewrite-Modus hinzufügen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter le mode Rewrite"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加改写模式"
+          }
+        }
+      }
+    },
     "Add Second Shortcut" : {
       "localizations" : {
         "de" : {
@@ -12576,6 +12598,28 @@
         }
       }
     },
+    "Edit Selected Text" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markierten Text bearbeiten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le texte sélectionné"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑选中文字"
+          }
+        }
+      }
+    },
     "Edit Word Replacement" : {
       "localizations" : {
         "de" : {
@@ -18783,6 +18827,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "需要访问权限"
+          }
+        }
+      }
+    },
+    "Needs the Rewrite mode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Braucht den Rewrite-Modus"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nécessite le mode Rewrite"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要“改写”模式"
           }
         }
       }
@@ -26243,6 +26309,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择提示音"
+          }
+        }
+      }
+    },
+    "Select text in any app, use the Rewrite mode's shortcut and say the change (\"make it shorter\"). The selection is replaced. Set the shortcut on the Rewrite mode." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markiere in einer beliebigen App Text, nutze das Kürzel des Rewrite-Modus und sage die Änderung („kürzer machen“). Die Markierung wird ersetzt. Das Kürzel legst du im Rewrite-Modus fest."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez du texte dans n'importe quelle app, utilisez le raccourci du mode Rewrite et dites la modification (« raccourcis-le »). La sélection est remplacée. Le raccourci se définit dans le mode Rewrite."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在任意 App 里选中文字，用改写模式的快捷键，说出要怎么改（“改短一点”），选中的文字就会被替换。快捷键在改写模式里设置。"
+          }
+        }
+      }
+    },
+    "Select text, then say how to change it" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text markieren, dann sagen, wie er sich ändern soll"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez du texte, puis dites comment le modifier"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先选中文字，再说要怎么改"
           }
         }
       }

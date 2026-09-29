@@ -55,6 +55,29 @@ enum StarterModeFactory {
         }
     }
 
+    /// Adds one starter mode next to the existing ones (`install` replaces them all), with the speech model, language
+    /// and AI provider of the default mode; Yap Cloud when that mode has none. Returns it, or nil if already there.
+    @discardableResult
+    static func add(kind: StarterModeKind) -> ModeConfig? {
+        let manager = ModeManager.shared
+        guard let template = StarterModeCatalog.templates.first(where: { $0.kind == kind }),
+            manager.getConfiguration(with: template.id) == nil
+        else { return nil }
+        let base = manager.getDefaultConfiguration()
+        let provider = base?.selectedAIProvider.flatMap(AIProvider.init(rawValue:)) ?? .yapCloud
+        var config = makeConfig(
+            from: template,
+            provider: provider,
+            modelName: base?.selectedAIProvider == nil ? nil : base?.selectedAIModel,
+            transcriptionModelName: base?.selectedTranscriptionModelName ?? defaultTranscriptionModelName,
+            isRealtimeTranscriptionEnabled: base?.isRealtimeTranscriptionEnabled ?? true,
+            selectedLanguage: base?.selectedLanguage ?? "auto",
+            installedApps: [])
+        config.isDefault = false
+        manager.addConfiguration(config)
+        return config
+    }
+
     static func isInstalled(kind: StarterModeKind) -> Bool {
         guard let template = StarterModeCatalog.templates.first(where: { $0.kind == kind }) else {
             return false
