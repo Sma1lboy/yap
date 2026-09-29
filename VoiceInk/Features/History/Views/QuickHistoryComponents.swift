@@ -70,7 +70,7 @@ struct QuickHistoryDetailActionBar: View {
                     )
                     .frame(width: 16)
                 } else {
-                    Image(systemName: "square.grid.2x2")
+                    Image(yapIcon: "square.grid.2x2")
                 }
             }
         }
@@ -91,7 +91,7 @@ struct QuickHistoryDetailActionBar: View {
             isShowingPrompts.toggle()
         } label: {
             actionLabel(title: selectedPromptTitle) {
-                Image(systemName: "wand.and.stars")
+                Image(yapIcon: "wand.and.stars")
             }
         }
         .buttonStyle(.plain)
@@ -140,7 +140,7 @@ struct QuickHistoryDetailActionBar: View {
                     ProgressView()
                         .controlSize(.small)
                 } else {
-                    Image(systemName: "arrow.clockwise")
+                    Image(yapIcon: "arrow.clockwise")
                         .font(AppTheme.font(.footnote, .medium))
                 }
             }
@@ -162,7 +162,7 @@ struct QuickHistoryDetailActionBar: View {
                 inFileViewerRootedAtPath: audioURL.deletingLastPathComponent().path
             )
         } label: {
-            Image(systemName: "folder")
+            Image(yapIcon: "folder")
                 .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .frame(width: 34, height: 32)
@@ -176,7 +176,7 @@ struct QuickHistoryDetailActionBar: View {
 
     private var infoButton: some View {
         Button(action: onToggleInfo) {
-            Image(systemName: "info.circle")
+            Image(yapIcon: "info.circle")
                 .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .frame(width: 34, height: 32)
@@ -193,7 +193,7 @@ struct QuickHistoryDetailActionBar: View {
             Text(title)
                 .lineLimit(1)
                 .truncationMode(.tail)
-            Image(systemName: "chevron.down")
+            Image(yapIcon: "chevron.down")
                 .font(AppTheme.font(.micro, .semibold))
                 .foregroundStyle(AppTheme.Text.muted)
         }
@@ -412,7 +412,7 @@ struct QuickHistoryRow: View {
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: AppTheme.Spacing.x3) {
-                Image(systemName: "bubble.left")
+                Image(yapIcon: "bubble.left")
                     .font(AppTheme.font(.title3, .medium))
                     .foregroundStyle(AppTheme.Text.primary)
                     .frame(width: 26)

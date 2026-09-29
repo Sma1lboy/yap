@@ -29,7 +29,7 @@ struct AccountView: View {
                 ModelManagementView.initialFilter = .cloud
                 MainWindowNavigation.shared.navigate(to: .models)
             } label: {
-                Label("Models", systemImage: "chevron.left")
+                Label("Models", yapIcon: "chevron.left")
                     .font(AppTheme.font(.footnote, .medium))
                     .foregroundStyle(AppTheme.Text.secondary)
             }
@@ -242,7 +242,7 @@ private struct AccountBanner: View {
     }
 
     var body: some View {
-        Label(text, systemImage: systemImage)
+        Label(text, yapIcon: systemImage)
             .font(AppTheme.font(.footnote, .medium))
             .foregroundStyle(AppTheme.Status.warning)
             .padding(.horizontal, AppTheme.Spacing.x4)
@@ -1012,7 +1012,7 @@ struct YapCloudSupportRow: View {
                         .foregroundStyle(AppTheme.Text.secondary)
                         .textSelection(.enabled)
                     if let mailto = URL(string: "mailto:" + email) {
-                        Link(destination: mailto) { Image(systemName: "envelope") }
+                        Link(destination: mailto) { Image(yapIcon: "envelope") }
                             .appLinkStyle()
                             .help("Email support")
                             .accessibilityLabel("Email support")

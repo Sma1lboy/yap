@@ -91,7 +91,7 @@ struct OnboardingMicrophoneScreen: View {
             selectedDeviceUID = device.uid
         } label: {
             HStack(spacing: AppTheme.Spacing.x4) {
-                Image(systemName: isSelected ? "checkmark" : "mic")
+                Image(yapIcon: isSelected ? "checkmark" : "mic")
                     .font(AppTheme.font(.body, .semibold))
                     .foregroundColor(isSelected ? AppTheme.Text.primary : AppTheme.Text.muted)
                     .frame(width: 30, height: 30)
@@ -126,7 +126,7 @@ struct OnboardingMicrophoneScreen: View {
 
     private var emptyState: some View {
         VStack(spacing: AppTheme.Spacing.x4) {
-            Image(systemName: "mic.slash")
+            Image(yapIcon: "mic.slash")
                 .font(AppTheme.font(.title, .semibold))
                 .foregroundColor(AppTheme.Text.secondary)
 
@@ -157,7 +157,7 @@ struct OnboardingMicrophoneScreen: View {
                 Text("Refresh")
                     .font(AppTheme.font(.footnote, .semibold))
             } icon: {
-                Image(systemName: "arrow.clockwise")
+                Image(yapIcon: "arrow.clockwise")
                     .font(AppTheme.font(.footnote, .semibold))
                     .rotationEffect(.degrees(refreshIconRotation))
             }

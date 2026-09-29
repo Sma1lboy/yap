@@ -63,6 +63,7 @@ struct VoiceInkApp: App {
             StarterModeCatalog.selfCheck()
             TranscriptionLanguageSupport.selfCheck()
             CursorContextReader.selfCheck()
+            YapIconCheck.selfCheck()
             MeetingChunker.selfCheck()
             MeetingNotes.selfCheck()
             OpenAICompatibleChat.selfCheck()

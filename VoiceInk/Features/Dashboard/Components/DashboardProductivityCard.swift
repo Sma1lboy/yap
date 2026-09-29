@@ -128,7 +128,7 @@ private struct DashboardStatsRefreshButton: View {
                         .tint(AppTheme.Accent.primary)
                         .transition(.opacity)
                 } else {
-                    Image(systemName: "arrow.clockwise")
+                    Image(yapIcon: "arrow.clockwise")
                         .font(AppTheme.font(.footnote, .semibold))
                         .foregroundStyle(AppTheme.Text.primary.opacity(0.72))
                         .transition(.opacity)

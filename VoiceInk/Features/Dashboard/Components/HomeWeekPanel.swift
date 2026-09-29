@@ -141,7 +141,7 @@ struct HomeWeekPanelContent: View {
                         change.formatted(.percent.precision(.fractionLength(0)).sign(strategy: .always()))
                     ))
             } icon: {
-                Image(systemName: change >= 0 ? "arrow.up.right" : "arrow.down.right")
+                Image(yapIcon: change >= 0 ? "arrow.up.right" : "arrow.down.right")
             }
         } else if stats.words > 0 {
             Text("Nothing to compare with last week")

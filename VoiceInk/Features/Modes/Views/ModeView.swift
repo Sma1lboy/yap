@@ -117,7 +117,7 @@ struct ModeView: View {
                                         .frame(height: geometry.size.height * 0.2)
 
                                     VStack(spacing: AppTheme.Spacing.x4) {
-                                        Image(systemName: "square.grid.2x2.fill")
+                                        Image(yapIcon: "square.grid.2x2.fill")
                                             .font(AppTheme.font(.display, .regular))
                                             .foregroundColor(.secondary.opacity(0.6))
 

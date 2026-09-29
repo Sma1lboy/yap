@@ -13,7 +13,7 @@ struct FillerWordChip: View {
                 .foregroundColor(.primary)
 
             Button(action: onDelete) {
-                Image(systemName: "xmark.circle.fill")
+                Image(yapIcon: "xmark.circle.fill")
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(isHovered ? AppTheme.Status.error : .secondary)
                     .font(AppTheme.font(.micro))
