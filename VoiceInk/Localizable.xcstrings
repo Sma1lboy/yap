@@ -20482,6 +20482,28 @@
         }
       }
     },
+    "No settings match" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine passenden Einstellungen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun réglage ne correspond"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有匹配的设置"
+          }
+        }
+      }
+    },
     "No settings were imported." : {
       "localizations" : {
         "de" : {
@@ -23076,6 +23098,28 @@
         }
       }
     },
+    "Press Esc again to discard" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc erneut drücken, um die Aufnahme zu verwerfen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez à nouveau sur Echap pour abandonner l’enregistrement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再按一次 Esc 丢弃录音"
+          }
+        }
+      }
+    },
     "Press Return while recording to stop and deliver the result. Yap will then paste the result and press the selected key to send it. Choose None to disable this feature." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -23095,6 +23139,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "录音时按 Return 可停止录音并输出结果。Yap 随后会粘贴结果，并按下所选按键将其发送。选择“无”可禁用此功能。"
+          }
+        }
+      }
+    },
+    "Press again to discard this recording" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut drücken, um diese Aufnahme zu verwerfen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez à nouveau pour abandonner cet enregistrement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再按一次以丢弃这段录音"
           }
         }
       }
@@ -25251,6 +25317,50 @@
         }
       }
     },
+    "Restore Default Shortcuts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardkurzbefehle wiederherstellen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rétablir les raccourcis par défaut"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复默认快捷键"
+          }
+        }
+      }
+    },
+    "Restore Default Shortcuts…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardkurzbefehle wiederherstellen …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rétablir les raccourcis par défaut…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复默认快捷键…"
+          }
+        }
+      }
+    },
     "Restore Delay" : {
       "localizations" : {
         "de" : {
@@ -26232,6 +26342,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "横向滚动以查看所有短语。"
+          }
+        }
+      }
+    },
+    "Search Settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen durchsuchen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher dans les réglages"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索设置"
           }
         }
       }
@@ -27558,6 +27690,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "快捷键"
+          }
+        }
+      }
+    },
+    "Shortcuts for individual modes are not changed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurzbefehle einzelner Modi werden nicht geändert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les raccourcis propres à chaque mode ne sont pas modifiés."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "各个模式自己的快捷键不会改动。"
           }
         }
       }
@@ -36400,6 +36554,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的设置已成功导出到 %@。"
+          }
+        }
+      }
+    },
+    "Your shortcuts already match the defaults." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihre Kurzbefehle entsprechen bereits den Standardwerten."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos raccourcis correspondent déjà aux valeurs par défaut."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前快捷键已经是默认值。"
           }
         }
       }

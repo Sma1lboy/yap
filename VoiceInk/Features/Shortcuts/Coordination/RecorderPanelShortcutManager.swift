@@ -141,7 +141,16 @@ final class RecorderPanelShortcutManager: ObservableObject {
         switch action {
         case .cancelRecorder:
             guard ShortcutStore.shortcut(for: .cancelRecorder) != nil else { return }
-            await recorderUIManager.cancelRecording()
+            let decision = CancelConfirmation.decide(
+                isRecording: recorderUIManager.isLongRecording,
+                elapsed: CancelConfirmation.longRecordingSeconds,
+                sinceFirstPress: firstEscapePressTime.map { Date().timeIntervalSince($0) })
+            if decision == .askAgain {
+                armDiscardConfirmation(message: String(localized: "Press again to discard this recording"))
+            } else {
+                resetEscapeState()
+                await recorderUIManager.cancelRecording()
+            }
         case .recorderPanelEscape:
             await handleEscapeShortcut()
         case .recorderPanelReturn:
@@ -190,7 +199,37 @@ final class RecorderPanelShortcutManager: ObservableObject {
         }
     }
 
+    /// First press of a long-recording cancel: show `message` and wait for a second press.
+    private func armDiscardConfirmation(message: String) {
+        let id = UUID()
+        firstEscapePressTime = Date()
+        activeEscapePressID = id
+        isEscapeConfirmationHintVisible = true
+        NotificationManager.shared.showNotification(
+            title: message, type: .info, duration: CancelConfirmation.confirmWindow)
+        escapeTimeoutTask?.cancel()
+        escapeTimeoutTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(CancelConfirmation.confirmWindow * 1_000_000_000))
+            await MainActor.run {
+                guard let self, self.activeEscapePressID == id else { return }
+                self.firstEscapePressTime = nil
+                self.activeEscapePressID = nil
+                self.escapeTimeoutTask = nil
+                self.isEscapeConfirmationHintVisible = false
+            }
+        }
+    }
+
     private func showEscapeConfirmationHintIfNeeded() {
+        if recorderUIManager.isLongRecording {
+            NotificationManager.shared.showNotification(
+                title: String(localized: "Press Esc again to discard"),
+                type: .info,
+                duration: escapeDoublePressThreshold
+            )
+            isEscapeConfirmationHintVisible = true
+            return
+        }
         let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: Self.escapeConfirmationHintShownKey) else { return }
 
