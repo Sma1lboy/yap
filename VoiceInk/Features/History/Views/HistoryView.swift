@@ -17,6 +17,9 @@ struct HistoryView<Header: View>: View {
     @Environment(\.modelContext) private var modelContext
     @State private var searchText = ""
     @State private var filter = HistoryFilter()
+    @State private var sort = HistorySort.remembered
+    /// Every match in `sort` order, for the sorts the database can't page (all but Newest); nil for Newest.
+    @State private var sortedMatches: [Transcription]?
     @State private var filterApps: [(id: String, name: String)] = []
     @State private var filterModes: [String] = []
     @State private var expandedId: UUID?
@@ -170,6 +173,13 @@ struct HistoryView<Header: View>: View {
                 await loadInitialContent()
             }
         }
+        .onChange(of: sort) { _, newSort in
+            HistorySort.remembered = newSort
+            Task {
+                resetPagination()
+                await loadInitialContent()
+            }
+        }
         .onChange(of: filter) { _, _ in
             Task {
                 resetPagination()
@@ -209,6 +219,7 @@ struct HistoryView<Header: View>: View {
             .frame(maxWidth: .infinity)
 
             filterMenu
+            sortMenu
 
             AppActionButton("Transcribe File…", isPill: true) {
                 MainWindowNavigation.shared.navigate(to: .transcribeAudio)
@@ -286,6 +297,28 @@ struct HistoryView<Header: View>: View {
         .fixedSize()
         .help("Filter history")
         .accessibilityLabel("Filter history")
+    }
+
+    private var sortMenu: some View {
+        Menu {
+            Picker("Sort", selection: $sort) {
+                ForEach(HistorySort.allCases) { Text(verbatim: $0.title).tag($0) }
+            }
+            .pickerStyle(.inline)
+            .labelsHidden()
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+                .font(AppTheme.font(.body, .medium))
+                .foregroundColor(sort == .newest ? .primary.opacity(0.7) : AppTheme.Text.primary)
+                .frame(width: 30, height: 30)
+                .background(AppCardBackground(isSelected: sort != .newest, cornerRadius: AppTheme.Radius.pill))
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Sort history")
+        .accessibilityLabel("Sort history")
     }
 
     /// The active filters as removable chips under the search field.
@@ -437,8 +470,9 @@ struct HistoryView<Header: View>: View {
 
     // MARK: - Card List
 
-    /// Loaded items grouped by calendar day, newest first (items arrive sorted).
+    /// Loaded items grouped by calendar day in list order (items arrive sorted); one headerless group for the other sorts.
     private var dayGroups: [DayGroup] {
+        guard sort.groupsByDay else { return [DayGroup(id: .distantPast, items: displayedTranscriptions)] }
         var groups: [DayGroup] = []
         for transcription in displayedTranscriptions {
             let day = Calendar.current.startOfDay(for: transcription.timestamp)
@@ -456,7 +490,7 @@ struct HistoryView<Header: View>: View {
         let isSelecting = !selectedTranscriptions.isEmpty
 
         ForEach(dayGroups) { group in
-            dayHeader(group)
+            if sort.groupsByDay { dayHeader(group) }
 
             ForEach(Array(group.items.enumerated()), id: \.element.id) { index, transcription in
                 if index > 0 {
@@ -581,12 +615,24 @@ struct HistoryView<Header: View>: View {
 
         do {
             paginationCursor = nil
-            let items = try modelContext.fetch(cursorQueryDescriptor())
-            let page = Array(items.prefix(pageSize))
-            displayedTranscriptions = page
-            countWords(in: page)
-            paginationCursor = page.last.map { HistoryQuery.Cursor(timestamp: $0.timestamp, id: $0.id) }
-            hasMoreContent = items.count > pageSize
+            if sort == .newest {
+                sortedMatches = nil
+                let items = try modelContext.fetch(cursorQueryDescriptor())
+                let page = Array(items.prefix(pageSize))
+                displayedTranscriptions = page
+                countWords(in: page)
+                paginationCursor = page.last.map { HistoryQuery.Cursor(timestamp: $0.timestamp, id: $0.id) }
+                hasMoreContent = items.count > pageSize
+            } else {
+                let matches = try modelContext.fetch(
+                    FetchDescriptor<Transcription>(predicate: HistoryQuery.predicate(search: searchText, filter: filter)))
+                let ordered = HistoryQuery.sorted(matches, by: sort)
+                sortedMatches = ordered
+                let page = Array(ordered.prefix(pageSize))
+                displayedTranscriptions = page
+                countWords(in: page)
+                hasMoreContent = ordered.count > pageSize
+            }
         } catch {
             print("Error loading transcriptions: \(error)")
         }
@@ -594,7 +640,16 @@ struct HistoryView<Header: View>: View {
 
     @MainActor
     private func loadMoreContent() async {
-        guard !isLoading, hasMoreContent, let paginationCursor else { return }
+        guard !isLoading, hasMoreContent else { return }
+
+        if let sortedMatches {
+            let page = Array(sortedMatches.dropFirst(displayedTranscriptions.count).prefix(pageSize))
+            displayedTranscriptions.append(contentsOf: page)
+            countWords(in: page)
+            hasMoreContent = displayedTranscriptions.count < sortedMatches.count
+            return
+        }
+        guard let paginationCursor else { return }
 
         isLoading = true
         defer { isLoading = false }
@@ -621,6 +676,7 @@ struct HistoryView<Header: View>: View {
     private func resetPagination() {
         displayedTranscriptions = []
         paginationCursor = nil
+        sortedMatches = nil
         hasMoreContent = true
         isLoading = false
     }

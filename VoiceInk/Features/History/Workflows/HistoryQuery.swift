@@ -11,7 +11,47 @@ struct HistoryFilter: Equatable {
     var isActive: Bool { appBundleID != nil || modeName != nil || meetingsOnly }
 }
 
+enum HistorySort: CaseIterable, Identifiable {
+    case newest, oldest, longest, mostWords
+
+    /// The choice lasts until the app quits; HistoryView starts from it each time it appears.
+    static var remembered = HistorySort.newest
+
+    var id: Self { self }
+
+    /// Newest and oldest read as a timeline, so the list keeps its day headers; the others don't.
+    var groupsByDay: Bool { self == .newest || self == .oldest }
+
+    var title: String {
+        switch self {
+        case .newest: String(localized: "Newest")
+        case .oldest: String(localized: "Oldest")
+        case .longest: String(localized: "Longest")
+        case .mostWords: String(localized: "Most Words")
+        }
+    }
+}
+
 enum HistoryQuery {
+    /// Orders `items` for the non-default sorts (Newest pages straight from the database). Ties fall back to newest
+    /// first, then id, so a page boundary never repeats or skips a row.
+    static func sorted(
+        _ items: [Transcription], by sort: HistorySort,
+        wordCount: (Transcription) -> Int = { WordCounter.count(in: $0.enhancedText ?? $0.text) }
+    ) -> [Transcription] {
+        let keyed = items.map { (item: $0, words: sort == .mostWords ? wordCount($0) : 0) }
+        return keyed.sorted { a, b in
+            switch sort {
+            case .newest: break
+            case .oldest: if a.item.timestamp != b.item.timestamp { return a.item.timestamp < b.item.timestamp }
+            case .longest: if a.item.duration != b.item.duration { return a.item.duration > b.item.duration }
+            case .mostWords: if a.words != b.words { return a.words > b.words }
+            }
+            if a.item.timestamp != b.item.timestamp { return a.item.timestamp > b.item.timestamp }
+            return a.item.id.uuidString > b.item.id.uuidString
+        }.map(\.item)
+    }
+
     struct Cursor {
         let timestamp: Date
         let id: UUID
@@ -116,6 +156,26 @@ enum HistoryQuery {
             assert(facets.apps.map(\.id) == ["com.apple.mail", "com.apple.Notes"])
             assert(facets.modes == ["Email", "Meeting"])
             assert(!HistoryFilter().isActive && f.isActive)
+
+            let base = Date()
+            func item(_ text: String, seconds: TimeInterval, age: TimeInterval) -> Transcription {
+                let t = Transcription(text: text, duration: seconds)
+                t.timestamp = base.addingTimeInterval(-age)
+                return t
+            }
+            let a = item("one two", seconds: 30, age: 300)
+            let b = item("one two three four five", seconds: 10, age: 200)
+            let c = item("one", seconds: 20, age: 100)
+            let d = item("one", seconds: 20, age: 50)  // ties with c on duration; newer
+            let all = [a, b, c, d]
+            func order(_ sort: HistorySort) -> [String] { sorted(all, by: sort).map(\.text) }
+            assert(order(.newest) == ["one", "one", "one two three four five", "one two"])
+            assert(sorted(all, by: .newest).first === d && sorted(all, by: .oldest).first === a, "newest/oldest")
+            assert(sorted(all, by: .longest).map { $0.duration } == [30, 20, 20, 10], "longest")
+            assert(sorted(all, by: .longest)[1] === d, "duration tie: newer first")
+            assert(sorted(all, by: .mostWords).first === b && sorted(all, by: .mostWords)[1] === a, "most words")
+            assert(sorted(all, by: .mostWords)[2] === d, "word tie: newer first")
+            assert(sorted([], by: .longest).isEmpty)
         }
     }
 #endif
