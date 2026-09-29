@@ -172,6 +172,10 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
         super.init()
 
+        ModelResidency.shared.configure(
+            isBusy: { [weak self] in (self?.recordingState ?? .idle) != .idle },
+            release: { [weak self] in await self?.releaseModels() }
+        )
         setupNotifications()
         createRecordingsDirectoryIfNeeded()
     }
@@ -246,6 +250,10 @@ class VoiceInkEngine: NSObject, ObservableObject {
             if !recordingUseCase.isAssistantFollowUp {
                 assistantSession.reset()
             }
+
+            // Loading a released model takes seconds; start it now so it overlaps permission, preflight and the
+            // recording itself instead of waiting for the transcription.
+            preloadCurrentModel()
 
             requestRecordPermission { [self] granted in
                 if granted {
@@ -379,36 +387,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
                             self.scheduleVoiceInkRefinePreparation(for: startID)
 
-                            Task { @MainActor [weak self] in
-                                guard let self else { return }
-
-                                let currentModel = ModeRuntimeResolver.transcriptionConfiguration(
-                                    transcriptionModelManager: self.transcriptionModelManager
-                                )?.model
-
-                                if let model = currentModel,
-                                    model.provider == .whisper
-                                {
-                                    if let localWhisperModel = self.whisperModelManager.availableModels.first(where: {
-                                        $0.name == model.name
-                                    }),
-                                        self.whisperModelManager.whisperContext == nil
-                                    {
-                                        do {
-                                            try await self.whisperModelManager.loadModel(localWhisperModel)
-                                        } catch {
-                                            self.logger.error("❌ Model loading failed: \(error, privacy: .public)")
-                                        }
-                                    }
-                                } else if let fluidAudioModel = currentModel as? FluidAudioModel {
-                                    try? await self.serviceRegistry.fluidAudioTranscriptionService.loadModel(
-                                        for: fluidAudioModel)
-                                } else if let transcribeCppModel = currentModel as? TranscribeCppModel {
-                                    try? await self.serviceRegistry.transcribeCppTranscriptionService.loadModel(
-                                        for: transcribeCppModel)
-                                }
-
-                            }
+                            // The mode may have changed the model since the shortcut press started the preload.
+                            self.preloadCurrentModel()
 
                         } catch {
                             activeModeTask.cancel()
@@ -443,6 +423,38 @@ class VoiceInkEngine: NSObject, ObservableObject {
                 } else {
                     logger.error("Recording permission denied")
                 }
+            }
+        }
+    }
+
+    /// Loads the selected local model in the background (no-op when it is loaded or loading, or the model is cloud).
+    func preloadCurrentModel() {
+        ModelResidency.shared.touch()
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+
+            let currentModel = ModeRuntimeResolver.transcriptionConfiguration(
+                transcriptionModelManager: self.transcriptionModelManager
+            )?.model
+
+            if let model = currentModel,
+                model.provider == .whisper
+            {
+                if let localWhisperModel = self.whisperModelManager.availableModels.first(where: {
+                    $0.name == model.name
+                }),
+                    self.whisperModelManager.whisperContext == nil
+                {
+                    do {
+                        try await self.whisperModelManager.loadModel(localWhisperModel)
+                    } catch {
+                        self.logger.error("❌ Model loading failed: \(error, privacy: .public)")
+                    }
+                }
+            } else if let fluidAudioModel = currentModel as? FluidAudioModel {
+                try? await self.serviceRegistry.fluidAudioTranscriptionService.loadModel(for: fluidAudioModel)
+            } else if let transcribeCppModel = currentModel as? TranscribeCppModel {
+                try? await self.serviceRegistry.transcribeCppTranscriptionService.loadModel(for: transcribeCppModel)
             }
         }
     }
@@ -976,13 +988,20 @@ class VoiceInkEngine: NSObject, ObservableObject {
     }
 
     func cleanupResources() async {
-        logger.notice("cleanupResources: releasing model resources")
+        logger.notice("cleanupResources: finishing the session")
         activeRecordingStartID = nil
         activeRecordingUseCase = .newSession
         await finishRecorderSession()
-        await whisperModelManager.cleanupResources()
-        await serviceRegistry.cleanup()
+        // Models stay loaded for the "Keep model loaded" time (Models > Advanced); ModelResidency releases them.
+        await ModelResidency.shared.sessionEnded()
         logger.notice("cleanupResources: completed")
+    }
+
+    /// The idle or memory-pressure release: every local model out of memory.
+    func releaseModels() async {
+        logger.notice("releaseModels: releasing local models")
+        await whisperModelManager.cleanupResources()
+        await serviceRegistry.releaseAll()
     }
 
     // MARK: - Notification Handling

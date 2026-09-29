@@ -49,6 +49,7 @@ class WhisperModelManager: ObservableObject {
     @Published var loadedWhisperModel: WhisperModelFile?
     @Published var isModelLoading = false
     private var activeDownloadTasks: [String: Task<Void, Never>] = [:]
+    private var loadTask: Task<Void, Error>?
 
     let modelsDirectory: URL
     let whisperPrompt = WhisperPrompt()
@@ -94,9 +95,23 @@ class WhisperModelManager: ObservableObject {
 
     // MARK: - Model Loading
 
+    /// One load at a time: the shortcut-press preload and the load after the mode is applied share it, and a
+    /// transcription that starts mid-load waits for the rest of it (`finishPendingLoad`).
     func loadModel(_ model: WhisperModelFile) async throws {
+        if let loadTask { return try await loadTask.value }
         guard whisperContext == nil else { return }
 
+        let task = Task { try await self.createContext(for: model) }
+        loadTask = task
+        defer { loadTask = nil }
+        try await task.value
+    }
+
+    func finishPendingLoad() async {
+        try? await loadTask?.value
+    }
+
+    private func createContext(for model: WhisperModelFile) async throws {
         isModelLoading = true
         defer { isModelLoading = false }
 
@@ -321,14 +336,6 @@ class WhisperModelManager: ObservableObject {
         }
     }
 
-    func unloadModel() {
-        Task {
-            await whisperContext?.releaseResources()
-            whisperContext = nil
-            isModelLoaded = false
-        }
-    }
-
     func clearDownloadedModels() async {
         for model in availableModels {
             do {
@@ -346,6 +353,7 @@ class WhisperModelManager: ObservableObject {
     /// Does NOT call serviceRegistry.cleanup() — that is VoiceInkEngine's responsibility.
     func cleanupResources() async {
         logger.notice("WhisperModelManager.cleanupResources: releasing whisper context")
+        await finishPendingLoad()
         await whisperContext?.releaseResources()
         whisperContext = nil
         isModelLoaded = false

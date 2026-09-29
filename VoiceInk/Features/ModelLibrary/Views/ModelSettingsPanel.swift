@@ -293,6 +293,7 @@ private struct ChineseCleanupSettingsSection: View {
 private struct AdvancedModelSettingsSection: View {
     @AppStorage("IsVADEnabled") private var isVADEnabled = true
     @AppStorage("PrewarmModelOnWake") private var prewarmModelOnWake = true
+    @AppStorage(ModelResidency.keepSecondsKey) private var keepModelLoadedSeconds = ModelResidency.defaultKeepSeconds
     @AppStorage(CloudTranscriptionSettings.timeoutKey) private var cloudTimeout =
         CloudTranscriptionSettings.defaultTimeout
     @AppStorage(AppleIntelligenceService.enabledKey) private var isAppleIntelligenceEnabled = false
@@ -316,6 +317,22 @@ private struct AdvancedModelSettingsSection: View {
                 }
             }
             .toggleStyle(.switch)
+
+            Picker(selection: $keepModelLoadedSeconds) {
+                Text("After Each Dictation").tag(ModelResidency.keepAfterEach)
+                Text("5 minutes").tag(300)
+                Text("15 minutes").tag(900)
+                Text("1 hour").tag(3_600)
+                Text("Always").tag(ModelResidency.keepAlways)
+            } label: {
+                HStack(spacing: AppTheme.Spacing.x1) {
+                    Text("Keep model loaded")
+                    InfoTip(
+                        "How long a local model stays in memory after a dictation. Keeping the default Whisper model loaded holds about 0.7 GB, and in our test a released model reloaded while you spoke without a longer wait, so After Each Dictation is the default. Under memory pressure a model is released sooner."
+                    )
+                }
+            }
+            .pickerStyle(.menu)
 
             Picker(selection: $cloudTimeout) {
                 Text("10 seconds").tag(10)

@@ -80,6 +80,7 @@ struct VoiceInkApp: App {
             WhisperTranscriptionService.selfCheck()
             ChineseCleanup.selfCheck()
             WhisperLivePreview.selfCheck()
+            ModelResidency.selfCheck()
             YapCloud.modeNamesSelfCheck()
             RecordingContextSnapshot.selfCheck()
             HistoryQuery.selfCheck()
@@ -412,8 +413,6 @@ struct VoiceInkApp: App {
                             }
                         )
                         .onDisappear {
-                            whisperModelManager.unloadModel()
-
                             // Stop the automatic audio cleanup process
                             audioCleanupManager.stopAutomaticCleanup()
                         }

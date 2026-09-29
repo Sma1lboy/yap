@@ -11,6 +11,7 @@ class FluidAudioTranscriptionService: TranscriptionService {
     private var activeNemotronModelName: String?
     private var cachedModels: AsrModels?
     private var loadingTask: (version: AsrModelVersion, task: Task<AsrModels, Error>)?
+    private var managerLoad: (name: String, task: Task<Void, Error>)?
     private let audioConverter = AudioConverter()
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "FluidAudioTranscriptionService")
 
@@ -123,7 +124,20 @@ class FluidAudioTranscriptionService: TranscriptionService {
         }
     }
 
+    /// One manager load at a time per model: the shortcut-press preload and the load after the mode is applied
+    /// (and a transcription that starts mid-load) share it instead of each building a manager.
     func loadModel(for model: FluidAudioModel) async throws {
+        if let (name, task) = managerLoad {
+            if name == model.name { return try await task.value }
+            _ = try? await task.value
+        }
+        let task = Task { try await self.loadManagers(for: model) }
+        managerLoad = (model.name, task)
+        defer { if managerLoad?.name == model.name { managerLoad = nil } }
+        try await task.value
+    }
+
+    private func loadManagers(for model: FluidAudioModel) async throws {
         if FluidAudioModelManager.isNemotronModel(named: model.name) {
             // Realtime Nemotron uses a dedicated streaming manager; batch loads lazily in transcribe().
             return
@@ -140,6 +154,7 @@ class FluidAudioTranscriptionService: TranscriptionService {
     func transcribe(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext) async throws
         -> String
     {
+        _ = try? await managerLoad?.task.value  // a preload still running
         if FluidAudioModelManager.isParakeetUnifiedModel(named: model.name) {
             try await ensureUnifiedModelsLoaded()
             guard let unifiedAsrManager else {
@@ -284,6 +299,15 @@ class FluidAudioTranscriptionService: TranscriptionService {
     // Releases ASR/VAD resources but preserves cached models for reuse
     func cleanup() async {
         await cleanupLoadedManagers()
+    }
+
+    /// Also drops the loaded Core ML models (`cleanup()` keeps them): the idle release in ModelResidency.
+    func releaseAll() async {
+        _ = try? await managerLoad?.task.value
+        loadingTask?.task.cancel()
+        loadingTask = nil
+        await cleanupLoadedManagers()
+        cachedModels = nil
     }
 
 }

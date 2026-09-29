@@ -57,7 +57,9 @@ class TranscriptionServiceRegistry {
         logger.debug(
             "Transcribing with \(model.displayName, privacy: .public) using \(String(describing: type(of: service)), privacy: .public)"
         )
-        return try await service.transcribe(audioURL: audioURL, model: model, context: context.scoped(to: model))
+        return try await ModelResidency.shared.withUse {
+            try await service.transcribe(audioURL: audioURL, model: model, context: context.scoped(to: model))
+        }
     }
 
     /// Creates a streaming or file-based session for the resolved transcription configuration.
@@ -99,6 +101,12 @@ class TranscriptionServiceRegistry {
 
     func cleanup() async {
         await fluidAudioTranscriptionService.cleanup()
+        cachedTranscribeCppTranscriptionService?.cleanup()
+    }
+
+    /// `cleanup()` plus FluidAudio's cached Core ML models: the idle release.
+    func releaseAll() async {
+        await fluidAudioTranscriptionService.releaseAll()
         cachedTranscribeCppTranscriptionService?.cleanup()
     }
 }
