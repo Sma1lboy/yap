@@ -9,6 +9,7 @@ struct OnboardingMicrophoneScreen: View {
     @ObservedObject private var audioDeviceManager = AudioDeviceManager.shared
     @State private var selectedDeviceUID: String?
     @State private var refreshIconRotation = 0.0
+    @StateObject private var levelProbe = MicrophoneLevelProbe()
 
     private typealias MicrophoneDevice = (id: AudioDeviceID, uid: String, name: String)
 
@@ -32,6 +33,11 @@ struct OnboardingMicrophoneScreen: View {
         .onAppear {
             refreshMicrophones(selectingIfNeeded: true)
             initializeSelectionIfNeeded()
+            restartLevelProbe()
+        }
+        .onDisappear { levelProbe.stop() }
+        .onChange(of: selectedDeviceUID) { _, _ in
+            restartLevelProbe()
         }
         .onChange(of: audioDeviceManager.availableDevices.map(\.uid)) { _, _ in
             ensureSelectionIsAvailable()
@@ -54,6 +60,13 @@ struct OnboardingMicrophoneScreen: View {
                 }
                 .frame(maxHeight: 280)
                 .scrollIndicators(.automatic)
+
+                if levelProbe.isActive {
+                    Text("Speak — the bar next to the highlighted microphone should move.")
+                        .font(AppTheme.font(.footnote))
+                        .foregroundColor(AppTheme.Text.secondary)
+                        .padding(.horizontal, AppTheme.Spacing.half)
+                }
             }
         }
     }
@@ -93,6 +106,10 @@ struct OnboardingMicrophoneScreen: View {
                     .lineLimit(1)
 
                 Spacer(minLength: 12)
+
+                if isSelected && levelProbe.isActive {
+                    MicrophoneLevelBar(probe: levelProbe)
+                }
             }
             .padding(AppTheme.Spacing.x4)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -157,6 +174,14 @@ struct OnboardingMicrophoneScreen: View {
     private var selectedDevice: MicrophoneDevice? {
         guard let selectedDeviceUID else { return nil }
         return devices.first { $0.uid == selectedDeviceUID }
+    }
+
+    private func restartLevelProbe() {
+        guard let selectedDevice else {
+            levelProbe.stop()
+            return
+        }
+        levelProbe.start(deviceID: selectedDevice.id)
     }
 
     private func refreshMicrophones(selectingIfNeeded: Bool) {

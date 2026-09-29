@@ -45,7 +45,7 @@ struct OnboardingExperienceCard: View {
 
     private var sayPanel: some View {
         panelShell(kicker: step.sampleLabel) {
-            Text(LocalizedStringKey(step.sampleText))
+            Text(step.sampleText)
                 .font(AppTheme.font(.headline, .medium))
                 .foregroundColor(AppTheme.Text.primary)
                 .lineSpacing(5)
@@ -136,7 +136,7 @@ struct OnboardingExperienceCard: View {
 
     private var respondStage: some View {
         panelShell(kicker: step.sampleLabel, height: 150) {
-            Text(LocalizedStringKey(step.sampleText))
+            Text(step.sampleText)
                 .font(AppTheme.font(.title, .medium))
                 .foregroundColor(AppTheme.Text.primary)
                 .lineSpacing(5)

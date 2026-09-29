@@ -170,7 +170,8 @@ class AIEnhancementService: ObservableObject {
                 ""
             }
 
-        let contextBlocks = [cursorContext?.promptBlock ?? "", selectedTextContext, clipboardContext, screenCaptureContext]
+        let userContext = configuration.useCursorContext ? UserContext.promptBlock() : ""
+        let contextBlocks = [cursorContext?.promptBlock ?? "", userContext, selectedTextContext, clipboardContext, screenCaptureContext]
             .filter { !$0.isEmpty }
 
         let contextSection =

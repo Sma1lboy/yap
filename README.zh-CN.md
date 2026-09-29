@@ -10,7 +10,7 @@
 
 Yap 是 macOS 上的开源听写 app，以 GPL-3.0 发布。按住快捷键说话，中文、英文或者一句话里混着说都行，松开后 Yap 转写、去掉口头禅、补好标点，再粘贴进你正在用的 app。「模式」可以按 app 用不同的提示词或模型（邮件、代码评审、聊天），「词典」让人名和术语按你的写法拼。
 
-Yap 是 Prakash Joshi Pax 的 [VoiceInk](https://github.com/Beingpax/VoiceInk) 的一个分支。应用本身的功劳都属于原作者；如果你想要官方签名公证的版本，请[购买 VoiceInk](https://tryvoiceink.com/)。官网：[yap.sma1lboy.me](https://yap.sma1lboy.me)。图标：[Phosphor](https://phosphoricons.com)（MIT，许可证在 `VoiceInk/Resources/Licenses/`）。
+Yap 是 Prakash Joshi Pax 的 [VoiceInk](https://github.com/Beingpax/VoiceInk) 的一个分支。应用本身的功劳都属于原作者；如果你想要官方版本，请[购买 VoiceInk](https://tryvoiceink.com/)。官网：[yap.sma1lboy.me](https://yap.sma1lboy.me)。图标：[Phosphor](https://phosphoricons.com)（MIT，许可证在 `VoiceInk/Resources/Licenses/`）。
 
 ## 声音交给谁处理
 
@@ -31,7 +31,7 @@ git clone https://github.com/Sma1lboy/yap && cd yap
 
 只装应用：`brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew install --cask sma1lboy/yap/yap`。之后 Yap 会自己更新（应用菜单里的「检查更新…」），也可以用 `brew upgrade --cask yap`。
 
-**自己编译。** 装好 Xcode 后，在克隆下来的仓库里运行 `make local`，会编译 Yap 并把 `Yap.app` 复制到“下载”文件夹。发布版用自签名证书签名、没有经过 Apple 公证；直接下载 zip 第一次打开时提示“无法验证开发者”，处理方法见[官网 FAQ](https://yap.sma1lboy.me/#faq)，或者在终端运行 `xattr -dr com.apple.quarantine /Applications/Yap.app`。
+**自己编译。** 装好 Xcode 后，在克隆下来的仓库里运行 `make local`，会编译 Yap 并把 `Yap.app` 复制到“下载”文件夹。
 
 ## 和 VoiceInk 有什么不同
 
