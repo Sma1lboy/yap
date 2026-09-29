@@ -101,7 +101,8 @@ struct WordReplacementView: View {
                     .font(AppTheme.font(.micro))
                     .frame(width: 10)
 
-                TextField("", text: $replacementWord, prompt: Text("Replacement text"))
+                TextField("", text: $replacementWord, prompt: Text("Replacement text"), axis: .vertical)
+                    .lineLimit(1...4)
                     .textFieldStyle(.roundedBorder)
                     .font(AppTheme.font(.body))
                     .onSubmit { addReplacement() }
@@ -214,7 +215,7 @@ struct WordReplacementView: View {
                                         Image(systemName: "arrow.right")
                                             .foregroundColor(.secondary)
                                             .font(AppTheme.font(.micro))
-                                        Text(replacement.replacementText)
+                                        Text(ReplacementText.oneLine(replacement.replacementText))
                                             .lineLimit(1)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                     }
@@ -458,7 +459,7 @@ struct ReplacementRow: View {
 
             HStack(spacing: AppTheme.Spacing.x2) {
                 ScrollView(.horizontal) {
-                    Text(replacement)
+                    Text(ReplacementText.oneLine(replacement))
                         .font(AppTheme.font(.body))
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: false)

@@ -36626,6 +36626,50 @@
           }
         }
       }
+    },
+    "Copied to clipboard. No text field was focused, so Yap didn't paste. It's also in History." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In die Zwischenablage kopiert. Es war kein Textfeld aktiv, daher hat Yap nicht eingefügt. Der Text steht auch im Verlauf."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié dans le presse-papiers. Aucun champ de texte n’avait le focus, Yap n’a donc rien collé. Le texte est aussi dans l’historique."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已复制到剪贴板。当时没有聚焦的输入框，Yap 没有粘贴。历史记录里也有这条。"
+          }
+        }
+      }
+    },
+    "Translate to English" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ins Englische übersetzen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traduire en anglais"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻译成英文"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"
