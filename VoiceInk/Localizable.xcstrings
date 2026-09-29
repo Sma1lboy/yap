@@ -15146,6 +15146,28 @@
         }
       }
     },
+    "Hello Chris, could we move our meeting from Tuesday morning to Wednesday afternoon? Please confirm when you have a moment. Thanks, Jamie." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hallo Chris, könnten wir unser Meeting von Dienstagvormittag auf Mittwochnachmittag verschieben? Bitte bestätige, sobald du einen Moment Zeit hast. Danke, Jamie."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bonjour Chris, pourrions-nous déplacer notre réunion de mardi matin à mercredi après-midi ? Merci de confirmer dès que vous avez un moment. Merci, Jamie."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chris 你好，我们能把周二上午的会改到周三下午吗？方便时请回复确认。谢谢，Jamie。"
+          }
+        }
+      }
+    },
     "Help" : {
       "localizations" : {
         "de" : {
@@ -22522,6 +22544,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请重新启动 App。如果问题仍然存在，请联系支持人员。"
+          }
+        }
+      }
+    },
+    "Please share the meeting notes before lunch." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte teile die Besprechungsnotizen vor dem Mittagessen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merci de partager le compte rendu de la réunion avant le déjeuner."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在午饭前把会议纪要发给大家。"
           }
         }
       }
@@ -32399,6 +32443,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "替换文本里输入 \\n 表示换行，\\n\\n 表示另起一段。"
+          }
+        }
+      }
+    },
+    "Um, tell the team we will meet on Thursday. Actually, no, Friday morning works better." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Äh, sag dem Team, dass wir uns am Donnerstag treffen. Nein, eigentlich passt Freitagvormittag besser."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Euh, dis à l'équipe qu'on se retrouve jeudi. Non, en fait, vendredi matin est mieux."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "嗯……告诉团队我们周四开会。不对，周五上午更合适。"
           }
         }
       }
