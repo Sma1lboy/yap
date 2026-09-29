@@ -10,7 +10,7 @@
     /// window is grown by however much the page's scroll view overflows.
     ///
     /// File names start with their group (page, account, settings, onboarding, sheet, recorder), which the review
-    /// page (scripts/ui-review.py) groups by. The Chinese run (-AppleLanguages (zh-Hans)) renders only `main` shots.
+    /// page (scripts/ui-review.py) groups by. The Chinese runs (-AppleLanguages (zh-Hans) and (zh-Hant)) render only `main` shots.
     @MainActor
     enum UISnapshots {
         static let argument = "--render-snapshots"
@@ -33,8 +33,8 @@
             NSApplication.shared.setActivationPolicy(.prohibited)
             YapCloud.isSnapshotMode = true
             try? FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
-            let isChinese = Bundle.main.preferredLocalizations.first?.hasPrefix("zh") == true
-            let suffix = isChinese ? "-zh" : ""
+            let language = Bundle.main.preferredLocalizations.first ?? "en"
+            let suffix = language == "zh-Hant" ? "-zht" : language.hasPrefix("zh") ? "-zh" : ""
 
             let empty = inMemoryContainer()
             let full = inMemoryContainer()
@@ -66,7 +66,7 @@
                 _ name: String, size: CGSize = size, main: Bool = false, fullPage: Bool = false, titled: Bool = false,
                 @ViewBuilder _ content: () -> V
             ) {
-                guard main || !isChinese else { return }
+                guard main || suffix.isEmpty else { return }
                 written += render(name + suffix, size: size, fullPage: fullPage, titled: titled) {
                     app.environment(content())
                 }

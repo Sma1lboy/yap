@@ -42,3 +42,4 @@ export YAP_UI_SNAPSHOTS_OUT="$OUT"
 BIN="$APP/Contents/MacOS/VoiceInk Dev"
 sandbox-exec -f "$(dirname "$0")/offline.sb" "$BIN" --render-snapshots
 sandbox-exec -f "$(dirname "$0")/offline.sb" "$BIN" --render-snapshots -AppleLanguages '(zh-Hans)'
+sandbox-exec -f "$(dirname "$0")/offline.sb" "$BIN" --render-snapshots -AppleLanguages '(zh-Hant)'
