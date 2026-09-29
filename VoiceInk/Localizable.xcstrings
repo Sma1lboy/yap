@@ -14872,6 +14872,28 @@
         }
       }
     },
+    "Filtered" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gefiltert"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtré"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已过滤"
+          }
+        }
+      }
+    },
     "Finalizing model files…" : {
       "localizations" : {
         "de" : {
@@ -34584,6 +34606,50 @@
         }
       }
     },
+    "Yap barely heard anything from “%@”. Check your microphone in Audio Settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap hat von „%@“ kaum etwas gehört. Prüfe dein Mikrofon in den Audioeinstellungen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap n’a presque rien entendu depuis « %@ ». Vérifiez votre micro dans les réglages audio."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 几乎没从“%@”听到声音。请在音频设置里检查麦克风。"
+          }
+        }
+      }
+    },
+    "Yap barely heard anything. Check that the right microphone is selected in Audio Settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap hat kaum etwas gehört. Prüfe in den Audioeinstellungen, ob das richtige Mikrofon ausgewählt ist."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap n’a presque rien entendu. Vérifiez dans les réglages audio que le bon micro est sélectionné."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 几乎没听到声音。请在音频设置里确认选的是正确的麦克风。"
+          }
+        }
+      }
+    },
     "Yap can select the right mode from the app you are using and the rules you configure." : {
       "localizations" : {
         "de" : {
@@ -34712,6 +34778,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 无法访问其存储位置。你的转写记录将无法跨会话存储。"
+          }
+        }
+      }
+    },
+    "Yap didn't catch anything." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap hat nichts verstanden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap n’a rien saisi."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 没听清任何内容。"
           }
         }
       }

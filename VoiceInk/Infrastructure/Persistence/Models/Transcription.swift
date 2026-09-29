@@ -6,6 +6,8 @@ enum TranscriptionStatus: String, Codable {
     case completed
     case failed
     case canceled
+    /// The transcript was a known Whisper hallucination on near-silence; kept in History, never pasted.
+    case filtered
 }
 
 @Model
