@@ -7,6 +7,8 @@ struct AppNotificationView: View {
     let onClose: () -> Void
     let onTap: (() -> Void)?
     var actionButton: (label: String, action: () -> Void)? = nil
+    /// A second choice shown before `actionButton`, e.g. Discard next to Transcribe.
+    var secondaryButton: (label: String, action: () -> Void)? = nil
 
     @State private var progress: Double = 1.0
     @State private var timer: Timer?
@@ -55,12 +57,12 @@ struct AppNotificationView: View {
 
                 Spacer()
 
-                if let actionButton {
+                ForEach([secondaryButton, actionButton].compactMap { $0 }, id: \.label) { button in
                     Button(action: {
-                        actionButton.action()
+                        button.action()
                         onClose()
                     }) {
-                        Text(actionButton.label)
+                        Text(button.label)
                             .font(AppTheme.font(.caption, .semibold))
                             .foregroundColor(.white)  // design-exempt: HUD, always dark
                             .padding(.horizontal, AppTheme.Spacing.x2)

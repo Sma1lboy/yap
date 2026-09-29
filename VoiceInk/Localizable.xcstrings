@@ -11648,6 +11648,28 @@
         }
       }
     },
+    "Discard" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwerfen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "丢弃"
+          }
+        }
+      }
+    },
     "Disconnected" : {
       "localizations" : {
         "de" : {
@@ -14956,6 +14978,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "完成 Yap 设置…"
+          }
+        }
+      }
+    },
+    "Finish the current recording first, then transcribe the recovered one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beende zuerst die laufende Aufnahme und transkribiere dann die wiederhergestellte."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminez d’abord l’enregistrement en cours, puis transcrivez celui qui a été récupéré."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先结束当前录音，再转写找回的那段。"
           }
         }
       }
@@ -31553,6 +31597,28 @@
         }
       }
     },
+    "Transcribe" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkribieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcrire"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写"
+          }
+        }
+      }
+    },
     "Transcribe Audio Files" : {
       "localizations" : {
         "de" : {
@@ -34980,6 +35046,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 会根据你正在使用的 app 自动选择模式。录音时按 Option 1-9 可以切换，模式也可以随时编辑。"
+          }
+        }
+      }
+    },
+    "Yap quit while recording. Transcribe it?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap wurde während einer Aufnahme beendet. Aufnahme transkribieren?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap s’est arrêté pendant un enregistrement. Le transcrire ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 在录音时退出了。要转写这段录音吗？"
           }
         }
       }

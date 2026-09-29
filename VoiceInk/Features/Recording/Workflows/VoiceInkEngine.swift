@@ -1004,6 +1004,35 @@ enum AudioFileMetadata {
     }
 }
 
+extension VoiceInkEngine {
+    /// Runs a recording found after a crash (RecordingRecovery) through the normal pipeline with the current mode.
+    /// It creates the History entry the crashed session never got.
+    func transcribeRecoveredRecording(_ audioURL: URL) async {
+        guard recordingState == .idle else {
+            NotificationManager.shared.showNotification(
+                title: String(localized: "Finish the current recording first, then transcribe the recovered one."),
+                type: .warning)
+            return
+        }
+        await transcribeRecordedFile(audioURL)
+    }
+
+    /// The steps `toggleRecord` runs once a recording stops, on a file that is already in Recordings/.
+    @discardableResult
+    fileprivate func transcribeRecordedFile(_ audioURL: URL) async -> Transcription {
+        startRecordingContextCapture()
+        recordingState = .transcribing
+        let transcription = makeRecordingTranscription(
+            for: audioURL, text: "", duration: 0, transcriptionStatus: .pending)
+        modelContext.insert(transcription)
+        try? modelContext.save()
+        NotificationCenter.default.post(name: .transcriptionCreated, object: transcription)
+        await runPipeline(
+            on: transcription, audioURL: audioURL, contextStore: activeRecordingContextStore, sendAfterPaste: false)
+        return transcription
+    }
+}
+
 #if DEBUG
     extension VoiceInkEngine {
         /// `make offline-check` (OfflineCheck): the steps `toggleRecord` runs once a recording stops, on a WAV file
@@ -1011,15 +1040,7 @@ enum AudioFileMetadata {
         func dictateFile(_ file: URL) async -> Transcription {
             let audioURL = recordingsDirectory.appendingPathComponent("\(UUID().uuidString).wav")
             try? FileManager.default.copyItem(at: file, to: audioURL)
-            startRecordingContextCapture()
-            recordingState = .transcribing
-            let transcription = makeRecordingTranscription(
-                for: audioURL, text: "", duration: 0, transcriptionStatus: .pending)
-            modelContext.insert(transcription)
-            try? modelContext.save()
-            await runPipeline(
-                on: transcription, audioURL: audioURL, contextStore: activeRecordingContextStore, sendAfterPaste: false)
-            return transcription
+            return await transcribeRecordedFile(audioURL)
         }
     }
 #endif
