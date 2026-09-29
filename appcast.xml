@@ -4,6 +4,53 @@
         <title>Yap</title>
         <link>https://github.com/Sma1lboy/yap</link>
         <item>
+            <title>Yap 1.6.0</title>
+            <pubDate>Tue, 29 Sep 2026 18:24:52 GMT</pubDate>
+            <sparkle:version>1157</sparkle:version>
+            <sparkle:shortVersionString>1.6.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.6.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.6.0</h1>
+<p dir="auto">Changes since 1.5.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Language</h2>
+<ul dir="auto">
+<li>Yap's interface is now available in Traditional Chinese (繁體中文, with Taiwan terms), alongside English, German, French and Simplified Chinese. Pick it in the app language setting.</li>
+</ul>
+<h2 dir="auto">Accessibility</h2>
+<ul dir="auto">
+<li>With Reduce Motion on, the recorder shows steady level bars, with no spinner, dot chase or spring animation.</li>
+<li>With Increase Contrast on, borders, secondary text and selections get higher-contrast colors.</li>
+<li>With VoiceOver on, Yap announces the dictation state as it changes: Recording, Transcribing, Enhancing, Pasted, and the title of a failure.</li>
+</ul>
+<h2 dir="auto">Local models</h2>
+<ul dir="auto">
+<li>New Models › Advanced › Keep model loaded: After Each Dictation (default), 5 minutes, 15 minutes, 1 hour, or Always. A local model stays in memory for that long after a dictation.</li>
+<li>Under memory pressure a model is released sooner, but never during a recording or a transcription.</li>
+<li>Pressing the shortcut starts loading the model while you begin to speak.</li>
+</ul>
+<h1 dir="auto">Yap 1.6.0（中文）</h1>
+<p dir="auto">1.5.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">语言</h2>
+<ul dir="auto">
+<li>Yap 的界面现在有繁体中文（繁體中文，用台湾的用词），和英文、德文、法文、简体中文并列。在 app 语言设置里选择。</li>
+</ul>
+<h2 dir="auto">辅助功能</h2>
+<ul dir="auto">
+<li>开启“减少动态效果”时，录音条的音量条保持平稳，没有转圈、圆点追逐和弹簧动画。</li>
+<li>开启“提高对比度”时，边框、次要文字和选中状态使用对比度更高的颜色。</li>
+<li>开启旁白（VoiceOver）时，Yap 会在听写状态变化时播报：正在录音、正在转写、正在润色、已粘贴，以及失败的标题。</li>
+</ul>
+<h2 dir="auto">本地模型</h2>
+<ul dir="auto">
+<li>新增 模型 › 高级 › 保持模型载入：每次听写后（默认）、5 分钟、15 分钟、1 小时或始终。听写结束后，本地模型会在内存里保留这么久。</li>
+<li>内存吃紧时模型会更早释放，但录音和转写过程中不会释放。</li>
+<li>按下快捷键时就开始载入模型，和你开口说话同时进行。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.6.0/Yap.zip" sparkle:edSignature="fE0wrD1AlQ9dZIg+D/XOFXtg2Yt2ePgby3x1Ks61TB25PGUQ0Xvc5rIydWWOZMhbPcsdrw3zuWh96TsIwAyMDA==" length="47422500" type="application/octet-stream" />
+        </item>
+        <item>
             <title>Yap 1.5.0</title>
             <pubDate>Tue, 29 Sep 2026 13:43:00 GMT</pubDate>
             <sparkle:version>1149</sparkle:version>
