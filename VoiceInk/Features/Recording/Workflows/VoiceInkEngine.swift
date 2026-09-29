@@ -101,6 +101,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
     @Published var recordingState: RecordingState = .idle
     @Published var shouldCancelRecording = false
+    /// Set when the state becomes .recording; read only while recording.
+    private(set) var recordingStartedAt: Date?
     @Published var partialTranscript: String = ""
     var currentSession: TranscriptionSession?
     private var currentSessionTranscriptionConfiguration: TranscriptionRuntimeConfiguration?
@@ -288,6 +290,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
                             }
 
                             self.recordingState = .recording
+                            self.recordingStartedAt = Date()
 
                             // Only retire the previous paste session once recording
                             // has actually started. Preflight/permission failures
@@ -757,6 +760,12 @@ class VoiceInkEngine: NSObject, ObservableObject {
     }
 
     // MARK: - Cancellation
+
+    /// Seconds the current recording has run; 0 outside .recording.
+    var recordingElapsed: TimeInterval {
+        guard recordingState == .recording, let start = recordingStartedAt else { return 0 }
+        return Date().timeIntervalSince(start)
+    }
 
     func cancelRecording() async {
         let shouldFinishSessionImmediately: Bool

@@ -22592,6 +22592,28 @@
         }
       }
     },
+    "Press Esc again to discard" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esc erneut drücken, um die Aufnahme zu verwerfen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez à nouveau sur Echap pour abandonner l’enregistrement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再按一次 Esc 丢弃录音"
+          }
+        }
+      }
+    },
     "Press Return while recording to stop and deliver the result. Yap will then paste the result and press the selected key to send it. Choose None to disable this feature." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -22611,6 +22633,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "录音时按 Return 可停止录音并输出结果。Yap 随后会粘贴结果，并按下所选按键将其发送。选择“无”可禁用此功能。"
+          }
+        }
+      }
+    },
+    "Press again to discard this recording" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut drücken, um diese Aufnahme zu verwerfen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuyez à nouveau pour abandonner cet enregistrement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再按一次以丢弃这段录音"
           }
         }
       }
