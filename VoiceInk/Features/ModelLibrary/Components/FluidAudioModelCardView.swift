@@ -41,8 +41,8 @@ struct FluidAudioModelCardView: View {
 
     private var metadataSection: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
-            Label(model.language, systemImage: "globe")
-            Label(model.size, systemImage: "internaldrive")
+            Label(model.language, yapIcon: "globe")
+            Label(model.size, yapIcon: "internaldrive")
             HStack(spacing: AppTheme.Spacing.x1) {
                 Text("Speed")
                 progressDotsWithNumber(value: model.speed * 10)
@@ -113,7 +113,7 @@ struct FluidAudioModelCardView: View {
                 }) {
                     HStack(spacing: AppTheme.Spacing.x1) {
                         Text(LocalizedStringKey(isDownloading ? "Cancel" : "Download"))
-                        Image(systemName: isDownloading ? "xmark.circle" : "arrow.down.circle")
+                        Image(yapIcon: isDownloading ? "xmark.circle" : "arrow.down.circle")
                     }
                     .font(AppTheme.font(.footnote, .medium))
                     .foregroundColor(AppTheme.Text.primary)
@@ -132,17 +132,17 @@ struct FluidAudioModelCardView: View {
                     Button(action: {
                         fluidAudioModelManager.deleteFluidAudioModel(model)
                     }) {
-                        Label("Delete Model", systemImage: "trash")
+                        Label("Delete Model", yapIcon: "trash")
                     }
 
                     Button {
                         fluidAudioModelManager.showFluidAudioModelInFinder(model)
                     } label: {
-                        Label("Show in Finder", systemImage: "folder")
+                        Label("Show in Finder", yapIcon: "folder")
                     }
 
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Image(yapIcon: "ellipsis.circle")
                         .font(AppTheme.font(.callout))
                 }
                 .menuStyle(.borderlessButton)

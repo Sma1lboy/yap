@@ -44,7 +44,7 @@ struct YapCloudModelBrowser: View {
                             Text(average).font(AppTheme.font(.caption)).monospacedDigit().foregroundStyle(.secondary)
                         }
                         if model.id == selectedID {
-                            Image(systemName: "checkmark").accessibilityHidden(true)
+                            Image(yapIcon: "checkmark").accessibilityHidden(true)
                         }
                     }
                     .contentShape(Rectangle())

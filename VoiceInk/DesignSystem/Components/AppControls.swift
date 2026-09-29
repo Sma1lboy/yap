@@ -30,7 +30,7 @@ struct AppIconButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: systemName)
+            Image(yapIcon: systemName)
                 .font(.system(size: iconSize, weight: .medium))  // design-exempt: icon glyph sized to its container
                 .foregroundColor(isDisabled ? .secondary.opacity(0.45) : .primary.opacity(0.7))
                 .frame(width: size, height: size)

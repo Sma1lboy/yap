@@ -296,7 +296,7 @@ private struct CircleIconButton: View {
                 .fill(fill)
                 .frame(width: 32, height: 32)
                 .overlay(
-                    Image(systemName: icon)
+                    Image(yapIcon: icon)
                         .font(iconFont)
                         .foregroundStyle(.primary)
                 )
@@ -322,11 +322,11 @@ private struct AsyncCircleButton: View {
                             ProgressView()
                                 .controlSize(.small)
                         } else if showSuccess {
-                            Image(systemName: "checkmark")
+                            Image(yapIcon: "checkmark")
                                 .font(AppTheme.font(.callout, .semibold))
                                 .foregroundStyle(AppTheme.Status.positive)
                         } else {
-                            Image(systemName: defaultIcon)
+                            Image(yapIcon: defaultIcon)
                                 .font(AppTheme.font(.callout, .semibold))
                                 .foregroundStyle(.primary)
                         }
@@ -507,7 +507,7 @@ struct AudioPlayerView: View {
                     if let selectedMode {
                         ModeIconView(icon: selectedMode.icon, size: selectedMode.icon.kind == .emoji ? 14 : 12)
                     } else {
-                        Image(systemName: "square.grid.2x2")
+                        Image(yapIcon: "square.grid.2x2")
                             .font(AppTheme.font(.body, .semibold))
                             .foregroundStyle(.primary.opacity(0.6))
                     }

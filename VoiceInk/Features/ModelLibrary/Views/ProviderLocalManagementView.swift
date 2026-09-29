@@ -160,7 +160,7 @@ struct LocalEnhancementServiceManagementView: View {
                             }
                         }
                     } label: {
-                        Label("Template", systemImage: "doc.on.doc")
+                        Label("Template", yapIcon: "doc.on.doc")
                             .font(AppTheme.font(.footnote, .medium))
                     }
                     .menuStyle(.button)
@@ -275,7 +275,7 @@ private struct LocalProviderDisclosureRow<Content: View>: View {
                 }
             } label: {
                 HStack(spacing: AppTheme.Spacing.x3) {
-                    Image(systemName: systemImage)
+                    Image(yapIcon: systemImage)
                         .font(AppTheme.font(.callout, .medium))
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.secondary)
@@ -307,7 +307,7 @@ private struct LocalProviderDisclosureRow<Content: View>: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
 
-                    Image(systemName: "chevron.right")
+                    Image(yapIcon: "chevron.right")
                         .font(AppTheme.font(.caption, .semibold))
                         .foregroundStyle(.tertiary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))

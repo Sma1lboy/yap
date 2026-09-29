@@ -84,7 +84,7 @@ struct FeatureTourSheet: View {
 
     private func card(_ feature: Feature) -> some View {
         HStack(alignment: .top, spacing: AppTheme.Spacing.x3) {
-            Image(systemName: feature.systemImage)
+            Image(yapIcon: feature.systemImage)
                 .font(AppTheme.font(.body))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .frame(width: 20)

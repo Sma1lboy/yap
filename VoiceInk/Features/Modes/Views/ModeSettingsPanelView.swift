@@ -19,7 +19,7 @@ struct ModeSettingsPanelView: View {
                     .foregroundColor(.primary)
                 Spacer()
                 Button(action: onDismiss) {
-                    Image(systemName: "xmark")
+                    Image(yapIcon: "xmark")
                         .font(AppTheme.font(.callout, .medium))
                         .foregroundColor(.secondary)
                         .padding(AppTheme.Spacing.x2)
@@ -224,7 +224,7 @@ private struct ModeReorderMeta: View {
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x1) {
-            Image(systemName: icon)
+            Image(yapIcon: icon)
                 .font(AppTheme.font(.micro, .medium))
 
             Text(value)
@@ -242,7 +242,7 @@ private struct ModeReorderBadge: View {
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x1) {
             if let systemImage {
-                Image(systemName: systemImage)
+                Image(yapIcon: systemImage)
                     .font(AppTheme.font(.micro, .semibold))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.primary)

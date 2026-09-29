@@ -21,7 +21,7 @@ struct ModeSettingsQuickSwitchTip: View {
             Spacer(minLength: 8)
 
             Button(action: onDismiss) {
-                Image(systemName: "xmark")
+                Image(yapIcon: "xmark")
                     .font(AppTheme.font(.micro, .semibold))
                     .foregroundColor(AppTheme.Text.secondary)
                     .frame(width: 22, height: 22)

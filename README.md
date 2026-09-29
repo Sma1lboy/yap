@@ -10,7 +10,7 @@
 
 Yap is an open-source dictation app for macOS, released under the GPL-3.0. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up the filler and punctuation, and pastes the text into whatever app you're in. Modes pick a different prompt or model per app (email, code review, chat), and a dictionary keeps names and terms spelled your way.
 
-Yap is a fork of [VoiceInk](https://github.com/Beingpax/VoiceInk) by Prakash Joshi Pax. All credit for the app goes to the original author — if you want the official, notarized build, [buy VoiceInk](https://tryvoiceink.com/). Website: [yap.sma1lboy.me](https://yap.sma1lboy.me).
+Yap is a fork of [VoiceInk](https://github.com/Beingpax/VoiceInk) by Prakash Joshi Pax. All credit for the app goes to the original author — if you want the official, notarized build, [buy VoiceInk](https://tryvoiceink.com/). Website: [yap.sma1lboy.me](https://yap.sma1lboy.me). Icons: [Phosphor](https://phosphoricons.com) (MIT, license in `VoiceInk/Resources/Licenses/`).
 
 ## Choosing where your voice goes
 
