@@ -5360,6 +5360,28 @@
         }
       }
     },
+    "All Apps" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Apps"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les apps"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有应用"
+          }
+        }
+      }
+    },
     "All Models" : {
       "localizations" : {
         "de" : {
@@ -5400,6 +5422,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部模型…"
+          }
+        }
+      }
+    },
+    "All Modes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Modi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les modes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有模式"
           }
         }
       }
@@ -5757,6 +5801,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "剩余余额不退还，也无法恢复。"
+          }
+        }
+      }
+    },
+    "App" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Application"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应用"
           }
         }
       }
@@ -8291,6 +8357,28 @@
         }
       }
     },
+    "Clear Filter" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter zurücksetzen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer le filtre"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除筛选"
+          }
+        }
+      }
+    },
     "Clear Search" : {
       "localizations" : {
         "de" : {
@@ -9246,6 +9334,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "复制告知"
+          }
+        }
+      }
+    },
+    "Copy Original" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Original kopieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier l’original"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制原文"
           }
         }
       }
@@ -14916,6 +15026,28 @@
         }
       }
     },
+    "Filter history" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlauf filtern"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrer l’historique"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "筛选历史记录"
+          }
+        }
+      }
+    },
     "Finalizing model files…" : {
       "localizations" : {
         "de" : {
@@ -17494,6 +17626,28 @@
         }
       }
     },
+    "Longest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Längste zuerst"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus longues"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "时长最长"
+          }
+        }
+      }
+    },
     "Low Yap Cloud balance" : {
       "localizations" : {
         "de" : {
@@ -17844,6 +17998,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "会议录制需要麦克风权限。"
+          }
+        }
+      }
+    },
+    "Meetings only" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Meetings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réunions uniquement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅会议"
           }
         }
       }
@@ -18585,6 +18761,28 @@
         }
       }
     },
+    "Most Words" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meiste Wörter"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus de mots"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字数最多"
+          }
+        }
+      }
+    },
     "Mouse %d" : {
       "comment" : "A description of a mouse button. The argument is the button number.",
       "isCommentAutoGenerated" : true,
@@ -18985,6 +19183,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新的手动审核建议会显示在这里。"
+          }
+        }
+      }
+    },
+    "Newest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neueste zuerst"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus récentes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最新"
           }
         }
       }
@@ -20492,6 +20712,28 @@
         }
       }
     },
+    "No transcriptions match this filter" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Transkriptionen entsprechen diesem Filter"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune transcription ne correspond à ce filtre"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有符合此筛选的转写记录"
+          }
+        }
+      }
+    },
     "No transcriptions yet" : {
       "localizations" : {
         "de" : {
@@ -21132,6 +21374,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在模式的 AI 润色里提供 macOS 自带的本机模型。默认关闭，因为它在 Yap 的润色测试里还没达到 Yap Refine 的水平。"
+          }
+        }
+      }
+    },
+    "Oldest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Älteste zuerst"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus anciennes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最早"
           }
         }
       }
@@ -22116,6 +22380,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "粘贴 API 密钥"
+          }
+        }
+      }
+    },
+    "Paste Again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut einfügen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller à nouveau"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再次粘贴"
           }
         }
       }
@@ -25119,6 +25405,28 @@
         }
       }
     },
+    "Retranscribe" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neu transkribieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retranscrire"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新转写"
+          }
+        }
+      }
+    },
     "Retranscribe this audio" : {
       "localizations" : {
         "de" : {
@@ -27320,6 +27628,28 @@
         }
       }
     },
+    "Show Info" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Infos anzeigen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les infos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看详情"
+          }
+        }
+      }
+    },
     "Show Me" : {
       "localizations" : {
         "de" : {
@@ -27969,6 +28299,28 @@
         }
       }
     },
+    "Sort" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortierung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trier"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排序"
+          }
+        }
+      }
+    },
     "Sort by original" : {
       "localizations" : {
         "de" : {
@@ -28009,6 +28361,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按替换内容排序"
+          }
+        }
+      }
+    },
+    "Sort history" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlauf sortieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trier l’historique"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排序历史记录"
           }
         }
       }
