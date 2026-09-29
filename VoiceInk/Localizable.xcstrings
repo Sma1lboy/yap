@@ -18589,6 +18589,28 @@
         }
       }
     },
+    "Move Yap to Applications" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap in „Programme“ verschieben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer Yap dans Applications"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移动 Yap 到“应用程序”"
+          }
+        }
+      }
+    },
     "Move down" : {
       "localizations" : {
         "de" : {
@@ -20650,6 +20672,28 @@
         }
       }
     },
+    "Not Now" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht jetzt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以后再说"
+          }
+        }
+      }
+    },
     "Not Set" : {
       "localizations" : {
         "de" : {
@@ -21264,6 +21308,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开账户"
+          }
+        }
+      }
+    },
+    "Open Applications Folder" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordner „Programme“ öffnen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le dossier Applications"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开“应用程序”文件夹"
           }
         }
       }
@@ -34668,6 +34734,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 会自动识别你正在处理的内容，并选用你偏好的设置。你随时可以通过编辑或创建新模式来进行配置。"
+          }
+        }
+      }
+    },
+    "Yap can only update itself from the Applications folder. Drag Yap into it, then open Yap from there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap kann sich nur aus dem Ordner „Programme“ selbst aktualisieren. Ziehe Yap dorthin und öffne es von dort."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap ne peut se mettre à jour que depuis le dossier Applications. Faites-y glisser Yap, puis ouvrez-le depuis là."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 只有放在“应用程序”文件夹里才能自动更新。把 Yap 拖进去，再从那里打开。"
           }
         }
       }
