@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 cask "yap" do
-  version "1.2.0"
-  sha256 "d8b5d12e37f12f6f0ad9774b29c0f43fb75f46ee7e6ed249fcd0e5e903342bb2"
+  version "1.3.0"
+  sha256 "34c01d8697b2c5d5dbd33aa50bae24f110dad00f81fabf3821589e02913d3296"
 
   url "https://github.com/Sma1lboy/yap/releases/download/v#{version}/Yap.zip"
   name "Yap"
