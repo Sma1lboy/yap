@@ -42,6 +42,8 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            AccountSettingsSection()
+
             ConfigSyncSettingsSection()
 
             Section {

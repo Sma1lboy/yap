@@ -105,7 +105,7 @@ no network connection was opened during the dictation
 | Ollama availability probe | every launch (`AIService.refreshOllamaAvailabilityInBackground`) | `localhost:11434` only; never leaves the Mac |
 | Model download | once, when you download a model | Hugging Face |
 | Yap Cloud account refresh | at launch and when Yap becomes active, only if signed in | cloud.yap.sma1lboy.me |
-| Config sync pulls | on activation, on wake and periodically, only with Sync via Yap Cloud on | cloud.yap.sma1lboy.me |
+| Config sync pulls | on activation, on wake and periodically, only with Sync Settings Across Macs on | cloud.yap.sma1lboy.me |
 
 The last two weren't in the measured run (the check can't hold a real sign-in); they come from reading `AppDelegate` and `CloudConfigSync`. Neither is triggered by a dictation. A fully offline user who never signs in sends nothing but the update check.
 

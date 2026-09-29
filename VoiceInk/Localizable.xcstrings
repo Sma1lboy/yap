@@ -8757,24 +8757,24 @@
         }
       }
     },
-    "Config & Sync" : {
+    "Config File" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Konfiguration & Sync"
+            "value" : "Konfigurationsdatei"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Configuration et synchronisation"
+            "value" : "Fichier de configuration"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "配置与同步"
+            "value" : "配置文件"
           }
         }
       }
@@ -17780,6 +17780,28 @@
         }
       }
     },
+    "Manage Yap Cloud…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud verwalten…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gérer Yap Cloud…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "管理 Yap Cloud…"
+          }
+        }
+      }
+    },
     "Manage custom enhancement models in the Custom tab." : {
       "localizations" : {
         "de" : {
@@ -25317,24 +25339,24 @@
         }
       }
     },
-    "Restoring applies these settings on this Mac and turns on Sync via Yap Cloud. API keys aren't synced; add them on this Mac if a provider needs one." : {
+    "Restoring applies these settings on this Mac and turns on Sync Settings Across Macs. API keys aren't synced; add them on this Mac if a provider needs one." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Beim Wiederherstellen werden diese Einstellungen auf diesem Mac übernommen und „Über Yap Cloud synchronisieren“ wird eingeschaltet. API-Schlüssel werden nicht synchronisiert; füge sie auf diesem Mac hinzu, falls ein Anbieter einen braucht."
+            "value" : "Beim Wiederherstellen werden diese Einstellungen auf diesem Mac übernommen und „Einstellungen auf allen Macs synchronisieren“ wird eingeschaltet. API-Schlüssel werden nicht synchronisiert; füge sie auf diesem Mac hinzu, falls ein Anbieter einen braucht."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La restauration applique ces réglages sur ce Mac et active « Synchroniser via Yap Cloud ». Les clés d’API ne sont pas synchronisées ; ajoutez-les sur ce Mac si un fournisseur en a besoin."
+            "value" : "La restauration applique ces réglages sur ce Mac et active « Synchroniser les réglages entre vos Mac ». Les clés d’API ne sont pas synchronisées ; ajoutez-les sur ce Mac si un fournisseur en a besoin."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "恢复会把这些设置应用到这台 Mac，并打开“通过 Yap Cloud 同步”。API 密钥不会同步；如果某个服务商需要密钥，请在这台 Mac 上添加。"
+            "value" : "恢复会把这些设置应用到这台 Mac，并打开“在多台 Mac 间同步设置”。API 密钥不会同步；如果某个服务商需要密钥，请在这台 Mac 上添加。"
           }
         }
       }
@@ -27874,24 +27896,24 @@
         }
       }
     },
-    "Sign in to Yap Cloud to sync this config between Macs." : {
+    "Sign in to keep your modes, prompts, dictionary, shortcuts and custom models the same on every Mac. API keys are never uploaded. Yap Cloud models are optional and pay-as-you-go." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Melde dich bei Yap Cloud an, um diese Konfiguration zwischen Macs zu synchronisieren."
+            "value" : "Melde dich an, damit deine Modi, Prompts, dein Wörterbuch, Tastaturkürzel und eigenen Modelle auf jedem Mac gleich sind. API-Schlüssel werden nie hochgeladen. Yap-Cloud-Modelle sind optional und werden nach Verbrauch abgerechnet."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connectez-vous à Yap Cloud pour synchroniser cette configuration entre vos Mac."
+            "value" : "Connectez-vous pour retrouver les mêmes modes, prompts, dictionnaire, raccourcis et modèles personnalisés sur chaque Mac. Les clés d’API ne sont jamais envoyées. Les modèles Yap Cloud sont facultatifs et facturés à l’usage."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "登录 Yap Cloud 后可在多台 Mac 之间同步这份配置。"
+            "value" : "登录后，你的模式、提示词、词典、快捷键和自定义模型可以在多台 Mac 间保持一致。API 密钥永远不会上传。Yap Cloud 模型是可选的，按用量付费。"
           }
         }
       }
@@ -28024,6 +28046,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "注册赠送"
+          }
+        }
+      }
+    },
+    "Signed in as" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Angemeldet als"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecté en tant que"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前登录"
           }
         }
       }
@@ -29450,6 +29494,50 @@
         }
       }
     },
+    "Sync Now" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jetzt synchronisieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchroniser maintenant"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "立即同步"
+          }
+        }
+      }
+    },
+    "Sync Settings Across Macs" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen auf allen Macs synchronisieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchroniser les réglages entre vos Mac"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在多台 Mac 间同步设置"
+          }
+        }
+      }
+    },
     "Sync Settings Across Your Macs?" : {
       "localizations" : {
         "de" : {
@@ -29468,28 +29556,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在所有 Mac 间同步设置？"
-          }
-        }
-      }
-    },
-    "Sync via Yap Cloud" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Über Yap Cloud synchronisieren"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Synchroniser via Yap Cloud"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通过 Yap Cloud 同步"
           }
         }
       }
@@ -34446,24 +34512,24 @@
         }
       }
     },
-    "With Sync via Yap Cloud on (Settings > Config & Sync), your modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server. API keys stay on each Mac." : {
+    "With Sync Settings Across Macs on (Settings > Account), your modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server. API keys stay on each Mac." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wenn „Über Yap Cloud synchronisieren“ aktiv ist (Einstellungen > Konfiguration & Sync), werden deine Modi, Prompts, dein Wörterbuch, Tastaturkürzel und eigenen Modelle auf dem Yap-Server gespeichert. API-Schlüssel bleiben auf jedem Mac."
+            "value" : "Wenn „Einstellungen auf allen Macs synchronisieren“ aktiv ist (Einstellungen > Konto), werden deine Modi, Prompts, dein Wörterbuch, Tastaturkürzel und eigenen Modelle auf dem Yap-Server gespeichert. API-Schlüssel bleiben auf jedem Mac."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Quand « Synchroniser via Yap Cloud » est activé (Paramètres > Configuration et synchronisation), vos modes, prompts, dictionnaire, raccourcis et modèles personnalisés sont stockés sur le serveur de Yap. Les clés API restent sur chaque Mac."
+            "value" : "Quand « Synchroniser les réglages entre vos Mac » est activé (Paramètres > Compte), vos modes, prompts, dictionnaire, raccourcis et modèles personnalisés sont stockés sur le serveur de Yap. Les clés API restent sur chaque Mac."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "开启「通过 Yap Cloud 同步」（设置 > 配置与同步）后，你的模式、提示词、词典、快捷键和自定义模型会保存在 Yap 的服务器上。API 密钥只留在各自的 Mac 上。"
+            "value" : "开启「在多台 Mac 间同步设置」（设置 > 账户）后，你的模式、提示词、词典、快捷键和自定义模型会保存在 Yap 的服务器上。API 密钥只留在各自的 Mac 上。"
           }
         }
       }

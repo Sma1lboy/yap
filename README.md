@@ -59,7 +59,7 @@ Yap Cloud is one of the three ways to run Yap: an optional account that pays for
 
 ## Config & Sync
 
-All of Yap's settings can live in one file, `~/.config/yap/config.json` (or `$XDG_CONFIG_HOME/yap/config.json`), and can sync between your Macs through Yap Cloud. Everything below is under **Settings → Config & Sync**.
+All of Yap's settings can live in one file, `~/.config/yap/config.json` (or `$XDG_CONFIG_HOME/yap/config.json`), and can sync between your Macs through Yap Cloud. The config file buttons are under **Settings → Config File**; signing in and the sync switch are at the top of **Settings**, in **Account**.
 
 ### The config file
 
@@ -89,7 +89,7 @@ Schema v2 (`"version": 2`) describes all settings. It uses the same JSON shapes 
 
 | Field (v2) | Meaning |
 |---|---|
-| `version` | `2`. Omitted means v1. A higher number (file from a newer Yap) still loads; Settings → Config & Sync notes that unknown fields were ignored. |
+| `version` | `2`. Omitted means v1. A higher number (file from a newer Yap) still loads; Settings → Config File notes that unknown fields were ignored. |
 | `modes` | Array of modes, same objects as `modeConfigs` in an export. Merged by `id`: a mode in the file replaces the app's mode with the same id; modes only in the app stay. |
 | `modeShortcuts` | `{ "<mode id>": <shortcut> }`, same as the export's `modeShortcuts`. Ids not in `modes` are ignored. A shortcut (here and in `general`) can be written as `{ "shortcut": "cmd+shift+space" }`: modifiers `cmd` `shift` `opt` `ctrl` `fn`, keys by US-layout name (`a`, `5`, `/`, `space`, `return`, `f13`, `left`…), or one modifier key alone like `right-opt` or `fn`. Yap writes both this and the raw `kind`/`keyCode`/`modifierFlagsRawValue` fields; the raw fields win when both are present. Mouse buttons and keys without a name are written as raw fields only. |
 | `prompts` | Array of `{ id, title, promptText, useSystemInstructions }`. Merged by `id` like `modes`. |
@@ -113,17 +113,17 @@ Turn on **Keep Config File in Sync** (off by default) to do this automatically a
 
 ### Syncing between Macs
 
-1. Sign in to Yap Cloud on each Mac (see above).
-2. Turn on **Sync via Yap Cloud**. Yap also offers this once, right after you first sign in.
+1. Sign in on each Mac, in **Settings → Account** (or on the Yap Cloud page, see above).
+2. In the same **Account** section, turn on **Sync Settings Across Macs**. Yap also offers this once, right after you first sign in.
 
-From then on Yap pulls the synced settings at launch, when you switch back to Yap, when the Mac wakes from sleep and every 15 minutes, and pushes local changes a couple of seconds after you make them. A pull that finds nothing new changes nothing. If two Macs changed settings at the same time, Yap merges them by entry: each Mac keeps the modes, prompts, shortcuts and dictionary entries it changed. If they still can't be merged, the section shows the conflict with **Use Cloud Version** and **Keep This Mac's Settings**; nothing is overwritten until you choose. A network or server error shows its reason and **Retry** instead.
+From then on Yap pulls the synced settings at launch, when you switch back to Yap, when the Mac wakes from sleep and every 15 minutes, and pushes local changes a couple of seconds after you make them. A pull that finds nothing new changes nothing. **Sync Now** pulls and pushes immediately, and **Version History…** lists earlier versions. If two Macs changed settings at the same time, Yap merges them by entry: each Mac keeps the modes, prompts, shortcuts and dictionary entries it changed. If they still can't be merged, the Account section shows the conflict with **Use Cloud Version** and **Keep This Mac's Settings**; nothing is overwritten until you choose. A network or server error shows its reason and **Retry** instead.
 
 If your config's `enhancement.prompt` points to a file such as `prompt.md`, the cloud gets the file's text, because other Macs don't have that file. A Mac whose own config also points to a prompt file writes the text into that file (keeping the old one as `prompt.md.bak`); otherwise the text goes into its config.json.
 
 ### Setting up a new Mac
 
 1. On the first onboarding screen, click **Sign In and Restore Settings** and sign in with the same email.
-2. Check the summary (number of modes, prompts, dictionary entries and shortcuts) and click **Restore**. Yap applies the settings, writes config.json and turns on **Sync via Yap Cloud**.
+2. Check the summary (number of modes, prompts, dictionary entries and shortcuts) and click **Restore**. Yap applies the settings, writes config.json and turns on **Sync Settings Across Macs**.
 3. Grant the permissions and pick a microphone as usual. If the restored settings already choose a transcription model, onboarding skips the model and practice steps.
 4. If a provider in your settings needs an API key that this Mac doesn't have yet, the key step appears with that provider already selected. Paste the key to continue. Yap Cloud needs no key once you're signed in.
 
@@ -131,7 +131,7 @@ If the account hasn't synced any settings yet, the sheet says so and just leaves
 
 ### Moving from VoiceInk
 
-If VoiceInk has run on this Mac, **Import from VoiceInk…** in Config & Sync reads its modes, prompts, dictionary, shortcuts, general settings and custom model/provider definitions, shows how many of each it found, and imports them after you confirm. Entries with the same id replace Yap's; the rest of Yap's settings stay. API keys, the license, history and downloaded models are not copied; imported custom models and providers show **API key needed** until you add their keys. It only runs when you click it; on a Mac without VoiceInk the button is disabled.
+If VoiceInk has run on this Mac, **Import from VoiceInk…** in Settings → Config File reads its modes, prompts, dictionary, shortcuts, general settings and custom model/provider definitions, shows how many of each it found, and imports them after you confirm. Entries with the same id replace Yap's; the rest of Yap's settings stay. API keys, the license, history and downloaded models are not copied; imported custom models and providers show **API key needed** until you add their keys. It only runs when you click it; on a Mac without VoiceInk the button is disabled.
 
 ### Deleted items
 

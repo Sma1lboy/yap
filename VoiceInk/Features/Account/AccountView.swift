@@ -493,7 +493,7 @@ private struct SignedInSections: View {
             DeleteAccountRow()
         } footer: {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
-                Text("With Sync via Yap Cloud on (Settings > Config & Sync), your modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server. API keys stay on each Mac.")
+                Text("With Sync Settings Across Macs on (Settings > Account), your modes, prompts, dictionary, shortcuts and custom models are stored on Yap's server. API keys stay on each Mac.")
                 YapCloudLegalLinks()
             }
         }
@@ -533,27 +533,7 @@ private struct SignedInSections: View {
     }
 
     private func signOut() {
-        cloud.signOut()
-        Self.warnAboutModesUsingYapCloud()
-    }
-
-    /// After signing out or deleting the account: modes that still transcribe or enhance through Yap Cloud
-    /// would fail, so name them and offer Modes.
-    @MainActor
-    static func warnAboutModesUsingYapCloud() {
-        let modesUsingCloud = ModeManager.shared.configurations.filter { mode in
-            mode.selectedTranscriptionModelName?.hasPrefix("YapCloud:") == true
-                || (mode.isAIEnhancementEnabled && mode.selectedAIProvider == AIProvider.yapCloud.rawValue)
-        }
-        guard !modesUsingCloud.isEmpty else { return }
-        NotificationManager.shared.showNotification(
-            title: String(
-                format: String(localized: "Still using Yap Cloud: %@. Switch them to another provider in Modes."),
-                modesUsingCloud.map(\.name).joined(separator: ", ")),
-            type: .warning,
-            duration: 10,
-            actionButton: (String(localized: "Manage Modes"), ModeSetupNavigator.openModesSettings)
-        )
+        cloud.signOutWarningAboutModes()
     }
 
     private func openCheckout() {
@@ -1147,7 +1127,7 @@ private struct DeleteAccountSheet: View {
                 dismiss()
                 NotificationManager.shared.showNotification(
                     title: String(localized: "Your Yap Cloud account was deleted."), type: .info, duration: 5)
-                SignedInSections.warnAboutModesUsingYapCloud()
+                YapCloud.warnAboutModesUsingYapCloud()
             } catch {
                 // A 401 already signed this Mac out (account gone elsewhere): nothing left to delete here.
                 if !cloud.isSignedIn { dismiss() }

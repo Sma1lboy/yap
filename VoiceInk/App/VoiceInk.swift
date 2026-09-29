@@ -73,6 +73,7 @@ struct VoiceInkApp: App {
             WhisperTranscriptionService.selfCheck()
             ChineseCleanup.selfCheck()
             WhisperLivePreview.selfCheck()
+            YapCloud.modeNamesSelfCheck()
             RecordingContextSnapshot.selfCheck()
             HistoryQuery.selfCheck()
         #endif

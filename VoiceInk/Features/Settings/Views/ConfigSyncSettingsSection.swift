@@ -1,12 +1,9 @@
 import SwiftUI
 
-/// Settings → Config & Sync: config.json (path, status, write-back) and Yap Cloud sync.
+/// Settings → Config File: config.json (path, status, write-back) and the VoiceInk import.
 struct ConfigSyncSettingsSection: View {
     @ObservedObject private var configLoader = YapConfigLoader.shared
-    @ObservedObject private var cloudConfigSync = CloudConfigSync.shared
     @AppStorage(YapConfigLoader.keepInSyncKey) private var keepConfigFileInSync = false
-    @AppStorage(CloudConfigSync.enabledKey) private var syncConfigViaCloud = false
-    @State private var isShowingVersionHistory = false
     @State private var voiceInkImport: YapConfig?
     @State private var voiceInkImportResult: String?
     private let hasVoiceInk = VoiceInkImport.installedDefaults() != nil
@@ -60,26 +57,9 @@ struct ConfigSyncSettingsSection: View {
                 Text("Writes settings changes back to the file. The previous file is kept as config.json.bak.")
             }
 
-            Toggle(isOn: $syncConfigViaCloud) {
-                Text("Sync via Yap Cloud")
-                Text(
-                    cloudConfigSync.isAvailable
-                        ? String(localized: "Stores your modes, prompts, dictionary, shortcuts and custom models on Yap's server, never your API keys, so every Mac signed in to your account uses the same config.")
-                        : String(localized: "Sign in to Yap Cloud to sync this config between Macs."))
-            }
-            .disabled(!cloudConfigSync.isAvailable)
-            // A stale "Synced at" or conflict banner is misleading (and its buttons no-op) once sync is off.
-            if syncConfigViaCloud && cloudConfigSync.isAvailable {
-                cloudSyncStatus
-                if cloudConfigSync.supportsHistory {
-                    Button("Version History…") { isShowingVersionHistory = true }
-                        .sheet(isPresented: $isShowingVersionHistory) { ConfigVersionHistorySheet() }
-                }
-            }
-
             voiceInkImportRow
         } header: {
-            Text("Config & Sync")
+            Text("Config File")
         } footer: {
             Text("Fields set in this file are applied at launch and override the same settings changed in the app.")
         }
@@ -163,40 +143,6 @@ struct ConfigSyncSettingsSection: View {
             Text(String(format: String(localized: "Could not read config file: %@"), message))
                 .foregroundColor(AppTheme.Status.error)
                 .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    @ViewBuilder
-    private var cloudSyncStatus: some View {
-        switch cloudConfigSync.status {
-        case .idle:
-            EmptyView()
-        case .synced(let date):
-            Text(String(format: String(localized: "Synced at %@"), date.formatted(date: .abbreviated, time: .shortened)))
-                .settingsDescription()
-        case .conflict:
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
-                Text("This Mac and Yap Cloud both changed the config and couldn't be merged automatically.")
-                    .foregroundColor(AppTheme.Status.warningStrong)
-                    .fixedSize(horizontal: false, vertical: true)
-                HStack {
-                    Button("Use Cloud Version") {
-                        Task { await cloudConfigSync.resolveConflict(keepLocal: false) }
-                    }
-                    Button("Keep This Mac's Settings") {
-                        Task { await cloudConfigSync.resolveConflict(keepLocal: true) }
-                    }
-                }
-            }
-        case .error(let message):
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
-                Text(String(format: String(localized: "Cloud sync failed: %@"), message))
-                    .foregroundColor(AppTheme.Status.error)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button("Retry") {
-                    Task { await cloudConfigSync.sync() }
-                }
-            }
         }
     }
 }
