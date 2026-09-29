@@ -182,6 +182,7 @@ final class TranscriptionDelivery {
         let finishAndSendKey: FinishAndSendKey = sendAfterPaste ? selectedKey : .none
         Task { @MainActor in
             let pasteOutcome = await pasteTask.value
+            if pasteOutcome.result.didPostPasteCommand { DictationAnnouncer.pasted() }
 
             if finishAndSendKey.isEnabled && pasteOutcome.result.didPostPasteCommand {
                 try? await Task.sleep(nanoseconds: 150_000_000)

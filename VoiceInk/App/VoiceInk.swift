@@ -54,6 +54,7 @@ struct VoiceInkApp: App {
             PCMResampler.selfCheck()
             RecordedAudioIssue.selfCheck()
             VisualizerMotion.selfCheck()
+            DictationAnnouncer.selfCheck()
             ClipboardManager.selfCheck()
             LastPasteEditor.selfCheck()
             CursorContextReader.selfCheck()
