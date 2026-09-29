@@ -145,11 +145,17 @@ private struct SidebarItemButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: AppTheme.Spacing.x2) {
-                Image(systemName: viewType.icon)
-                    .font(AppTheme.font(.callout, .regular))
-                    .symbolRenderingMode(.monochrome)
-                    .foregroundStyle(AppTheme.Text.secondary)
-                    .frame(width: 20)
+                // Selected: the icon in text color over its duotone tint in duck yellow; otherwise secondary gray.
+                ZStack {
+                    if isSelected, let tint = Image.yapIconTint(viewType.icon) {
+                        tint.foregroundStyle(AppTheme.Accent.primary)
+                    }
+                    Image(yapIcon: viewType.icon)
+                        .symbolRenderingMode(.monochrome)
+                        .foregroundStyle(isSelected ? AppTheme.Text.primary : AppTheme.Text.secondary)
+                }
+                .font(AppTheme.font(.callout, .regular))
+                .frame(width: 20)
 
                 Text(viewType.title)
                     .font(AppTheme.font(.body, isSelected ? .semibold : .regular))
@@ -163,7 +169,7 @@ private struct SidebarItemButton: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
-                    .fill(isSelected ? AppTheme.Selection.fill : Color.clear)
+                    .fill(isSelected ? AppTheme.Accent.fillSubtle : Color.clear)
             )
             .contentShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
         }

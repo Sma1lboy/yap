@@ -243,6 +243,8 @@ class RecordingShortcutManager: ObservableObject {
             LastTranscriptionService.pasteLastTranscription(from: engine.modelContext)
         case .pasteLastEnhancement:
             LastTranscriptionService.pasteLastEnhancement(from: engine.modelContext)
+        case .copyLastTranscription:
+            LastTranscriptionService.copyLastTranscription(from: engine.modelContext)
         case .retryLastTranscription:
             LastTranscriptionService.retryLastTranscription(
                 from: engine.modelContext,

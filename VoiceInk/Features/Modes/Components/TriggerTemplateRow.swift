@@ -40,12 +40,12 @@ struct TriggerTemplateRow: View {
                 }
 
                 if isAdded {
-                    Image(systemName: "checkmark.circle.fill")
+                    Image(yapIcon: "checkmark.circle.fill")
                         .font(AppTheme.font(.headline, .medium))
                         .foregroundStyle(AppTheme.Accent.text)
                         .frame(width: 22, height: 22)
                 } else if !isDisabled {
-                    Image(systemName: "plus.circle.fill")
+                    Image(yapIcon: "plus.circle.fill")
                         .font(AppTheme.font(.callout, .medium))
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.secondary)
@@ -78,7 +78,7 @@ struct TriggerSymbol: View {
                 .fill(AppTheme.Surface.control)
                 .frame(width: 28, height: 28)
 
-            Image(systemName: systemName)
+            Image(yapIcon: systemName)
                 .font(AppTheme.font(.body, .medium))
                 .foregroundStyle(.primary)
         }

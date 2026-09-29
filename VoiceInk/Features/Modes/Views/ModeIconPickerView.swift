@@ -9,7 +9,7 @@ struct ModeIconView: View {
         Group {
             switch icon.kind {
             case .symbol:
-                Image(systemName: icon.value)
+                Image(yapIcon: icon.value)
                     .font(.system(size: size, weight: .medium))  // design-exempt: icon glyph sized to its container
                     .foregroundStyle(color)
             case .emoji:

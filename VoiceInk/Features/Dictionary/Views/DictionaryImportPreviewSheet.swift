@@ -188,7 +188,7 @@ struct DictionaryImportPreviewSheet: View {
 
                 if !hasImportableEntries {
                     Divider()
-                    Label("No valid entries are available to import.", systemImage: "exclamationmark.triangle.fill")
+                    Label("No valid entries are available to import.", yapIcon: "exclamationmark.triangle.fill")
                         .font(AppTheme.font(.footnote, .medium))
                         .foregroundStyle(AppTheme.Status.warningStrong)
                 }
@@ -214,7 +214,7 @@ struct DictionaryImportPreviewSheet: View {
     }
 
     private func errorSection(_ message: String) -> some View {
-        Label(message, systemImage: "exclamationmark.triangle.fill")
+        Label(message, yapIcon: "exclamationmark.triangle.fill")
             .font(AppTheme.font(.footnote))
             .foregroundStyle(AppTheme.Status.error)
             .frame(maxWidth: .infinity, alignment: .leading)

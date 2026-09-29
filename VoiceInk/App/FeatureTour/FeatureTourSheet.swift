@@ -29,12 +29,16 @@ struct FeatureTourSheet: View {
             destination: .modes),
         Feature(
             id: "undo", systemImage: "arrow.uturn.backward", title: "Undo Last Paste",
-            detail: "Takes back the text Yap pasted last. Saying only \"scratch that\" or \"删掉刚才那句\" does the same.",
+            detail: "Takes back the text Yap pasted last. If it replaced selected text, that text comes back. Saying only \"scratch that\" or \"删掉刚才那句\" does the same.",
             shortcut: .undoLastPaste, destination: .settings),
         Feature(
             id: "rewrite", systemImage: "wand.and.stars", title: "Rewrite Last Dictation",
             detail: "Press, say how to change the text Yap pasted last (\"make it more formal\"), press again. It's replaced in place.",
             shortcut: .rewriteLastPaste, destination: .settings),
+        Feature(
+            id: "edit", systemImage: "text.badge.checkmark", title: "Edit Selected Text",
+            detail: "Select text in any app, use the Rewrite mode's shortcut and say the change (\"make it shorter\"). The selection is replaced. Set the shortcut on the Rewrite mode.",
+            destination: .modes),
         Feature(
             id: "dictionary", systemImage: "character.book.closed", title: "Dictionary and Auto-Learn",
             detail: "Add names and terms Yap should spell your way. Auto-Learn suggests entries from the corrections you make after a paste.",
@@ -84,7 +88,7 @@ struct FeatureTourSheet: View {
 
     private func card(_ feature: Feature) -> some View {
         HStack(alignment: .top, spacing: AppTheme.Spacing.x3) {
-            Image(systemName: feature.systemImage)
+            Image(yapIcon: feature.systemImage)
                 .font(AppTheme.font(.body))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .frame(width: 20)

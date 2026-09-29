@@ -125,6 +125,7 @@ class TranscriptionPipeline {
             }
             text = TranscriptionOutputFilter.filter(text)
             text = ChineseCleanup.apply(text, options: ChineseCleanup.currentOptions)
+            if TranscriptionOutputFilter.isKnownHallucination(text) { throw RecordedAudioIssue.hallucinated(text) }
             let transcriptionDuration = Date().timeIntervalSince(transcriptionStart)
 
             if shouldCancel() {
@@ -228,6 +229,14 @@ class TranscriptionPipeline {
                         transcription.aiRequestSystemMessage = enhancementResult.systemMessage
                         transcription.aiRequestUserMessage = enhancementResult.userMessage
                         finalText = enhancementResult.text
+                        if PromptTemplates.isRewriteWithoutSource(
+                            promptId: resolvedEnhancementConfiguration.prompt?.id,
+                            selectedText: contextSnapshot?.selectedText, result: enhancementResult.text)
+                        {
+                            NotificationManager.shared.showNotification(
+                                title: String(localized: "Select the text to rewrite first, then use this mode again."),
+                                type: .warning, duration: 5)
+                        }
                     } catch {
                         let errorDescription = EnhancementFailureFormatter.description(for: error)
                         let failureMessage = EnhancementFailureFormatter.message(description: errorDescription)
@@ -260,18 +269,26 @@ class TranscriptionPipeline {
             if let issue = error as? RecordedAudioIssue {
                 // Nothing to retry: say what happened instead of showing a provider error.
                 NotificationManager.shared.showNotification(
-                    title: errorDescription,
+                    title: issue.notificationTitle,
                     type: .warning,
                     duration: 5,
-                    actionButton: issue == .noSound
+                    actionButton: issue.offersAudioSettings
                         ? (String(localized: "Audio Settings"), AudioSetupNavigator.openAudioSettings) : nil
                 )
             } else if !didNotifyAccount && !(error is CancellationError) && !isHiddenNativeAppleError {
                 transcriptionFailure = errorDescription
             }
 
-            transcription.text = String(format: String(localized: "Transcription Failed: %@"), errorDescription)
-            transcription.transcriptionStatus = TranscriptionStatus.failed.rawValue
+            if case .hallucinated(let phrase) = error as? RecordedAudioIssue {
+                // Kept in History (not pasted, not a failure) so a real "thanks for watching" isn't lost.
+                transcription.text = phrase
+                transcription.duration = await AudioFileMetadata.duration(for: audioURL)
+                transcription.transcriptionModelName = model.displayName
+                transcription.transcriptionStatus = TranscriptionStatus.filtered.rawValue
+            } else {
+                transcription.text = String(format: String(localized: "Transcription Failed: %@"), errorDescription)
+                transcription.transcriptionStatus = TranscriptionStatus.failed.rawValue
+            }
         }
 
         func saveTranscriptionAndPostCompletion() {

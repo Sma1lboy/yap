@@ -52,10 +52,25 @@ struct VoiceInkApp: App {
             WhisperChunking.selfCheck()
             TimedSegments.selfCheck()
             PCMResampler.selfCheck()
+            MicrophoneLevelProbe.selfCheck()
+            MoveToApplicationsPrompt.selfCheck()
             RecordedAudioIssue.selfCheck()
+            VisualizerMotion.selfCheck()
+            DictationAnnouncer.selfCheck()
+            RecordingRecovery.selfCheck()
+            TranscriptionOutputFilter.selfCheck()
+            CancelConfirmation.selfCheck()
+            DefaultShortcuts.selfCheck()
+            SettingsGroup.selfCheck()
             ClipboardManager.selfCheck()
             LastPasteEditor.selfCheck()
+            PromptTemplates.selfCheck()
+            HomeShortcutsCard.selfCheck()
+            CursorPaster.selfCheck()
+            StarterModeCatalog.selfCheck()
+            TranscriptionLanguageSupport.selfCheck()
             CursorContextReader.selfCheck()
+            YapIconCheck.selfCheck()
             MeetingChunker.selfCheck()
             MeetingNotes.selfCheck()
             OpenAICompatibleChat.selfCheck()
@@ -66,6 +81,9 @@ struct VoiceInkApp: App {
             ChineseCleanup.selfCheck()
             WhisperLivePreview.selfCheck()
             ModelResidency.selfCheck()
+            YapCloud.modeNamesSelfCheck()
+            RecordingContextSnapshot.selfCheck()
+            HistoryQuery.selfCheck()
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
@@ -243,6 +261,7 @@ struct VoiceInkApp: App {
         Task { @MainActor in
             await statsMigrationTask?.value
             TranscriptionAutoCleanupService.shared.startMonitoring(modelContext: mainContext)
+            RecordingRecovery.offerAtLaunch(modelContext: mainContext, engine: engine)
 
             let tokenBackfillTask = SessionMetricMigrationService.shared.runEnhancementTokenBackfillIfNeeded(
                 modelContainer: resolvedContainer)

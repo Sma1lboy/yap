@@ -6,6 +6,8 @@ enum TranscriptionStatus: String, Codable {
     case completed
     case failed
     case canceled
+    /// The transcript was a known Whisper hallucination on near-silence; kept in History, never pasted.
+    case filtered
 }
 
 @Model
@@ -37,6 +39,9 @@ final class Transcription {
     @Attribute(originalName: "powerModeEmoji")
     var modeEmoji: String?
     var transcriptionStatus: String?
+    /// The app that was frontmost when the dictation started (nil for older rows, meetings and imported files).
+    var sourceAppName: String?
+    var sourceAppBundleID: String?
     /// Timed segments of a transcribed file (JSON `[TimedSegment]`), for subtitle export. Only local Whisper
     /// transcriptions of imported files have them.
     var segmentsJSON: String?
@@ -81,6 +86,11 @@ final class Transcription {
         self.modeName = modeName
         self.modeEmoji = modeEmoji
         self.transcriptionStatus = transcriptionStatus.rawValue
+    }
+
+    func setSourceApp(from snapshot: RecordingContextSnapshot?) {
+        sourceAppName = snapshot?.appName
+        sourceAppBundleID = snapshot?.appBundleID
     }
 
     func markAsCanceledTranscription(

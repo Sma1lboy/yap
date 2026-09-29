@@ -184,6 +184,7 @@ design-tokens:
 
 design-check:
 	@python3 scripts/design-tokens.py --check
+	@python3 scripts/check-i18n.py
 
 # Run the Debug app with fake data (signed in, 20 transcripts, 5 modes…), offline, in its own settings domain
 # (me.sma1lboy.yap.mock). Everything it created is deleted on quit. See scripts/mock.sh.
@@ -224,7 +225,7 @@ meeting-files-check: build
 	scripts/dev-defaults-guard.sh scripts/meeting-files-check.sh "$$APP_DIR" "$(MODEL)" $(NOTES)
 
 # Render every page, Settings group, onboarding screen and sheet in light and dark, plus the main ones in Chinese
-# (-zh), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots
+# (-zh, and -zht for Traditional), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots
 # (scripts/ui-snapshots.sh), so its fake modes and providers go to a throwaway defaults domain, never the dev app's;
 # dev-defaults-guard.sh fails the run if the dev app's settings changed anyway. No window, no focus change; the
 # sandbox profile denies network access.

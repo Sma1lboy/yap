@@ -99,8 +99,12 @@ class VoiceInkEngine: NSObject, ObservableObject {
         }
     }
 
-    @Published var recordingState: RecordingState = .idle
+    @Published var recordingState: RecordingState = .idle {
+        didSet { DictationAnnouncer.stateChanged(from: oldValue, to: recordingState) }
+    }
     @Published var shouldCancelRecording = false
+    /// Set when the state becomes .recording; read only while recording.
+    private(set) var recordingStartedAt: Date?
     @Published var partialTranscript: String = ""
     var currentSession: TranscriptionSession?
     private var currentSessionTranscriptionConfiguration: TranscriptionRuntimeConfiguration?
@@ -296,6 +300,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
                             }
 
                             self.recordingState = .recording
+                            self.recordingStartedAt = Date()
 
                             // Only retire the previous paste session once recording
                             // has actually started. Preflight/permission failures
@@ -770,6 +775,12 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
     // MARK: - Cancellation
 
+    /// Seconds the current recording has run; 0 outside .recording.
+    var recordingElapsed: TimeInterval {
+        guard recordingState == .recording, let start = recordingStartedAt else { return 0 }
+        return Date().timeIntervalSince(start)
+    }
+
     func cancelRecording() async {
         let shouldFinishSessionImmediately: Bool
         switch recordingState {
@@ -865,7 +876,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
     ) -> Transcription {
         let modeMetadata = currentModeMetadata()
 
-        return Transcription(
+        let transcription = Transcription(
             text: text,
             duration: duration,
             audioFileURL: audioURL.absoluteString,
@@ -876,6 +887,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
             modeEmoji: modeMetadata.emoji,
             transcriptionStatus: transcriptionStatus
         )
+        transcription.setSourceApp(from: activeRecordingContextStore?.snapshot)
+        return transcription
     }
 
     private func currentModeMetadata() -> (name: String?, emoji: String?) {
@@ -1023,6 +1036,35 @@ enum AudioFileMetadata {
     }
 }
 
+extension VoiceInkEngine {
+    /// Runs a recording found after a crash (RecordingRecovery) through the normal pipeline with the current mode.
+    /// It creates the History entry the crashed session never got.
+    func transcribeRecoveredRecording(_ audioURL: URL) async {
+        guard recordingState == .idle else {
+            NotificationManager.shared.showNotification(
+                title: String(localized: "Finish the current recording first, then transcribe the recovered one."),
+                type: .warning)
+            return
+        }
+        await transcribeRecordedFile(audioURL)
+    }
+
+    /// The steps `toggleRecord` runs once a recording stops, on a file that is already in Recordings/.
+    @discardableResult
+    fileprivate func transcribeRecordedFile(_ audioURL: URL) async -> Transcription {
+        startRecordingContextCapture()
+        recordingState = .transcribing
+        let transcription = makeRecordingTranscription(
+            for: audioURL, text: "", duration: 0, transcriptionStatus: .pending)
+        modelContext.insert(transcription)
+        try? modelContext.save()
+        NotificationCenter.default.post(name: .transcriptionCreated, object: transcription)
+        await runPipeline(
+            on: transcription, audioURL: audioURL, contextStore: activeRecordingContextStore, sendAfterPaste: false)
+        return transcription
+    }
+}
+
 #if DEBUG
     extension VoiceInkEngine {
         /// `make offline-check` (OfflineCheck): the steps `toggleRecord` runs once a recording stops, on a WAV file
@@ -1030,15 +1072,7 @@ enum AudioFileMetadata {
         func dictateFile(_ file: URL) async -> Transcription {
             let audioURL = recordingsDirectory.appendingPathComponent("\(UUID().uuidString).wav")
             try? FileManager.default.copyItem(at: file, to: audioURL)
-            startRecordingContextCapture()
-            recordingState = .transcribing
-            let transcription = makeRecordingTranscription(
-                for: audioURL, text: "", duration: 0, transcriptionStatus: .pending)
-            modelContext.insert(transcription)
-            try? modelContext.save()
-            await runPipeline(
-                on: transcription, audioURL: audioURL, contextStore: activeRecordingContextStore, sendAfterPaste: false)
-            return transcription
+            return await transcribeRecordedFile(audioURL)
         }
     }
 #endif

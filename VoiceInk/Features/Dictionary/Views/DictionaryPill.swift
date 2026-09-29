@@ -42,7 +42,7 @@ struct DictionaryPill<Label: View>: View {
     private var removeButton: some View {
         if let onRemove {
             let button = Button(action: onRemove) {
-                Image(systemName: "xmark.circle.fill")
+                Image(yapIcon: "xmark.circle.fill")
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(AppTheme.Text.primary)
             }

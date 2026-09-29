@@ -58,7 +58,7 @@ struct TriggerGroupEditorView: View {
     private var addTriggerField: some View {
         VStack(spacing: AppTheme.Spacing.x2) {
             HStack(spacing: AppTheme.Spacing.x2) {
-                Image(systemName: "magnifyingglass")
+                Image(yapIcon: "magnifyingglass")
                     .foregroundStyle(.secondary)
                     .font(AppTheme.font(.footnote))
 
@@ -69,7 +69,7 @@ struct TriggerGroupEditorView: View {
 
                 if !searchText.isEmpty {
                     Button(action: { searchText = "" }) {
-                        Image(systemName: "xmark.circle.fill")
+                        Image(yapIcon: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
                             .font(AppTheme.font(.footnote))
                     }

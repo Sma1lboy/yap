@@ -19,8 +19,8 @@ struct TranscribeCppModelCardView: View {
                 }
 
                 HStack(spacing: AppTheme.Spacing.x3) {
-                    Label(model.language, systemImage: "globe")
-                    Label(model.size, systemImage: "internaldrive")
+                    Label(model.language, yapIcon: "globe")
+                    Label(model.size, yapIcon: "internaldrive")
                     HStack(spacing: AppTheme.Spacing.x1) {
                         Text("Speed")
                         progressDotsWithNumber(value: model.speed * 10)
@@ -92,16 +92,16 @@ struct TranscribeCppModelCardView: View {
                     Button(role: .destructive) {
                         modelManager.deleteModel(model)
                     } label: {
-                        Label("Delete Model", systemImage: "trash")
+                        Label("Delete Model", yapIcon: "trash")
                     }
 
                     Button {
                         modelManager.showModelInFinder(model)
                     } label: {
-                        Label("Show in Finder", systemImage: "folder")
+                        Label("Show in Finder", yapIcon: "folder")
                     }
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Image(yapIcon: "ellipsis.circle")
                         .font(AppTheme.font(.callout))
                 }
                 .menuStyle(.borderlessButton)
@@ -119,7 +119,7 @@ struct TranscribeCppModelCardView: View {
                 } label: {
                     HStack(spacing: AppTheme.Spacing.x1) {
                         Text(LocalizedStringKey(isDownloading ? "Cancel" : "Download"))
-                        Image(systemName: isDownloading ? "xmark.circle" : "arrow.down.circle")
+                        Image(yapIcon: isDownloading ? "xmark.circle" : "arrow.down.circle")
                     }
                     .font(AppTheme.font(.footnote, .medium))
                     .foregroundColor(AppTheme.Text.primary)

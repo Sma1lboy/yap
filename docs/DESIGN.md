@@ -100,6 +100,22 @@ space.12   48  大留白（onboarding、首屏）。
 space.16   64  页面顶部和底部的留白。
 ```
 
+## 增强对比度
+
+macOS「辅助功能 → 显示 → 增强对比度」开着时，下面 `contrast` 代码块里的颜色替换同名的 `tokens` 颜色。视图不用改，`AppTheme.*` 自动取到：app 里 `DesignTokens.Palette` 按窗口外观（`.accessibilityHighContrastAqua` / `DarkAqua`）选值，网页用 `@media (prefers-contrast: more)`。
+
+- 描边和分隔线：深浅两套都对白卡片 / 卡片底达到 4.5:1（普通值只有 1.3 左右）。
+- 说明文字、时间戳：对 `bg`、`surface`、`sunken`、增强后的 `accent-subtle` 都不低于 4.5:1（`make design-check` 会算，低了就失败）。
+- 选中行底 `accent-subtle`：比 `surface` 更明显，正文压在上面仍不低于 7:1。
+
+```contrast
+# 增强对比度下替换的颜色：名字 浅色 深色 理由
+color.border        #74747E  #8C8C96  描边和分隔线。对卡片底 4.5 以上，普通值 1.3 左右。
+color.text-2        #4A4A52  #C4C4CC  说明文字。对所有底不低于 5.3。
+color.text-3        #55555D  #B4B4BC  时间戳、单位。对所有底不低于 4.5。
+color.accent-subtle #FFE98A  #52461F  选中行底。比普通值更黄、更深，能和卡片底分开。
+```
+
 字重只用三档：400 regular、500 medium、600 semibold。700 只用于官网首屏标题。
 
 ## 其他规则
