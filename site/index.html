@@ -29,8 +29,8 @@
 <link rel="manifest" href="site.webmanifest">
 <!-- tokens.css is generated from docs/DESIGN.md (make design-tokens); site.css uses only its variables. Pages caches
      both for 10 minutes: change ?v= whenever either changes, or a new page renders with the old CSS. -->
-<link rel="stylesheet" href="tokens.css?v=aa65be6a">
-<link rel="stylesheet" href="site.css?v=aa65be6a">
+<link rel="stylesheet" href="tokens.css?v=51aba248">
+<link rel="stylesheet" href="site.css?v=51aba248">
 </head>
 <body>
 <a class="skip" href="#main"><span lang="en">Skip to content</span><span lang="zh-Hans">跳到正文</span></a>
@@ -40,6 +40,7 @@
     <a class="brand" href="#top"><img src="assets/logo-96.png" alt="" width="28" height="28">Yap</a>
     <nav class="site-nav" aria-label="Sections">
       <a href="#demo"><span lang="en">How it works</span><span lang="zh-Hans">演示</span></a>
+      <a href="#features"><span lang="en">Features</span><span lang="zh-Hans">功能</span></a>
       <a href="#models"><span lang="en">Models</span><span lang="zh-Hans">三种用法</span></a>
       <a href="#privacy"><span lang="en">Privacy</span><span lang="zh-Hans">隐私</span></a>
       <a href="#faq">FAQ</a>
@@ -167,6 +168,23 @@ make local</pre></div>
         <span lang="en">Replay</span><span lang="zh-Hans">重播</span>
       </button>
     </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <p class="eyebrow"><span lang="en">What else it does</span><span lang="zh-Hans">还能做什么</span></p>
+    <h2><span lang="en">More than a hotkey and a microphone.</span><span lang="zh-Hans">不只是一个快捷键加一个麦克风。</span></h2>
+    <ul class="points">
+      <li><h3><span lang="en">Meeting recording</span><span lang="zh-Hans">会议录制</span></h3><p lang="en">Records your microphone and the sound from other apps, transcribes as the meeting goes, then writes notes: summary, decisions, action items, open questions. Export Markdown from History.</p><p lang="zh-Hans">录下麦克风和其他 app 的声音，开会时边录边转写，结束后写出纪要：摘要、决定、待办、未决问题。在历史记录里导出 Markdown。</p></li>
+      <li><h3><span lang="en">Subtitles from audio files</span><span lang="zh-Hans">从音频文件导出字幕</span></h3><p lang="en">Transcribe an audio or video file with a local Whisper model, then export SRT, WebVTT or Markdown with timestamps.</p><p lang="zh-Hans">用本地 Whisper 模型转写音频或视频文件，导出带时间戳的 SRT、WebVTT 或 Markdown。</p></li>
+      <li><h3><span lang="en">Edit selected text, or your last paste</span><span lang="zh-Hans">编辑选中文字，或上一次粘贴</span></h3><p lang="en">Select text and say how to change it, using the Rewrite mode. Say “scratch that” to take back the last paste, or rewrite it: “make it more formal”.</p><p lang="zh-Hans">选中文字，说怎么改，用的是改写模式。说“删掉刚才那句”撤销上一次粘贴，或者改写它：“改正式一点”。</p></li>
+      <li><h3><span lang="en">Settings that follow you</span><span lang="zh-Hans">设置跟着你走</span></h3><p lang="en">Sign in to Yap Cloud in Settings › Account to sync modes, dictionary and shortcuts across Macs, with Version History to go back. API keys are never uploaded.</p><p lang="zh-Hans">在 设置 › 账户 登录 Yap Cloud，就能在多台 Mac 间同步模式、词典和快捷键，还有版本历史可以回退。API key 不会上传。</p></li>
+      <li><h3><span lang="en">History you can search and filter</span><span lang="zh-Hans">能搜索、能筛选的历史记录</span></h3><p lang="en">Each dictation records the app it went into. Filter by app, mode or meetings, search, sort, and right-click to paste again or retranscribe.</p><p lang="zh-Hans">每条听写会记下它输入到了哪个 app。可以按 app、模式或会议筛选，搜索、排序，右键再次粘贴或重新转写。</p></li>
+      <li><h3><span lang="en">Your dictionary reaches cloud transcription</span><span lang="zh-Hans">词典也用在云端转写上</span></h3><p lang="en">With OpenRouter or Yap Cloud, the words in your Dictionary are sent to the transcription model, not only to cleanup.</p><p lang="zh-Hans">用 OpenRouter 或 Yap Cloud 时，词典里的词会发给转写模型，而不只是给清理用。</p></li>
+      <li><h3><span lang="en">Interface languages</span><span lang="zh-Hans">界面语言</span></h3><p lang="en">The app is in English, Simplified Chinese, Traditional Chinese, German and French. Reduce Motion, Increase Contrast and VoiceOver are supported.</p><p lang="zh-Hans">界面有英文、简体中文、繁体中文、德文和法文。支持“减少动态效果”“提高对比度”和旁白。</p></li>
+    </ul>
+    <p class="plans-foot"><a href="changelog.html"><span lang="en">See every release</span><span lang="zh-Hans">查看每个版本的更新</span></a></p>
   </div>
 </section>
 
