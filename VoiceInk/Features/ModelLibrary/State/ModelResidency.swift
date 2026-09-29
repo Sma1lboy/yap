@@ -10,7 +10,11 @@ final class ModelResidency {
 
     nonisolated static let keepSecondsKey = "ModelKeepLoadedSeconds"
     nonisolated static let keepAlways = 0
-    nonisolated static let defaultKeepSeconds = 900
+    /// Released as soon as the dictation ends, as before this setting existed; reloading costs ~nothing measured.
+    nonisolated static let keepAfterEach = -1
+    nonisolated static let defaultKeepSeconds = keepAfterEach
+    /// "After each dictation" also frees a model that was preloaded by a shortcut press that never became one.
+    nonisolated static let afterEachGraceSeconds: TimeInterval = 30
 
     /// The one decision, kept pure so selfCheck can pin it down. `idleFor` is the time since the last use.
     nonisolated static func shouldRelease(
@@ -18,7 +22,8 @@ final class ModelResidency {
     ) -> Bool {
         if isBusy { return false }
         if memoryPressure { return true }
-        if keepSeconds <= keepAlways { return false }
+        if keepSeconds == keepAlways { return false }
+        if keepSeconds == keepAfterEach { return idleFor >= afterEachGraceSeconds }
         return idleFor >= TimeInterval(keepSeconds)
     }
 
@@ -62,6 +67,15 @@ final class ModelResidency {
         startTimer()
     }
 
+    /// The dictation is over. With "After each dictation" the models go now (the old behaviour); otherwise the
+    /// idle clock restarts.
+    func sessionEnded() async {
+        guard keepSeconds == Self.keepAfterEach, activeUses == 0 else { return touch() }
+        timer?.cancel()
+        timer = nil
+        await release?()
+    }
+
     /// Wraps work that needs a loaded model but isn't the engine's recording state (meeting chunks).
     func withUse<T>(_ body: () async throws -> T) async rethrows -> T {
         activeUses += 1
@@ -96,7 +110,7 @@ final class ModelResidency {
                     await self.release?()
                     return
                 }
-                if keep <= Self.keepAlways && !self.pressureWhileBusy {
+                if keep == Self.keepAlways && !self.pressureWhileBusy {
                     self.timer = nil
                     return
                 }
@@ -112,6 +126,11 @@ final class ModelResidency {
             let keep = 900
             precondition(!shouldRelease(keepSeconds: keep, idleFor: 899, isBusy: false, memoryPressure: false))
             precondition(shouldRelease(keepSeconds: keep, idleFor: 900, isBusy: false, memoryPressure: false))
+            // After each dictation: the session end releases directly; the timer only sweeps up a stray preload.
+            precondition(!shouldRelease(keepSeconds: keepAfterEach, idleFor: 1, isBusy: false, memoryPressure: false))
+            precondition(shouldRelease(keepSeconds: keepAfterEach, idleFor: 31, isBusy: false, memoryPressure: false))
+            precondition(!shouldRelease(keepSeconds: keepAfterEach, idleFor: 31, isBusy: true, memoryPressure: false))
+            precondition(defaultKeepSeconds == keepAfterEach)
             precondition(!shouldRelease(keepSeconds: keepAlways, idleFor: 86_400, isBusy: false, memoryPressure: false))
             // Memory pressure releases even with "Always", but never mid-recording or mid-transcription.
             precondition(shouldRelease(keepSeconds: keepAlways, idleFor: 0, isBusy: false, memoryPressure: true))

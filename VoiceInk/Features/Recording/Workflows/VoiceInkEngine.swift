@@ -980,7 +980,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
         activeRecordingUseCase = .newSession
         await finishRecorderSession()
         // Models stay loaded for the "Keep model loaded" time (Models > Advanced); ModelResidency releases them.
-        ModelResidency.shared.touch()
+        await ModelResidency.shared.sessionEnded()
         logger.notice("cleanupResources: completed")
     }
 

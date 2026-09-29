@@ -3606,6 +3606,28 @@
         }
       }
     },
+    "After Each Dictation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nach jedem Diktat"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Après chaque dictée"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每次听写后"
+          }
+        }
+      }
+    },
     "AI Enhancement" : {
       "localizations" : {
         "de" : {
@@ -15160,24 +15182,24 @@
         }
       }
     },
-    "How long a local model stays in memory after your last dictation. A released model loads again when you press the shortcut, while you speak. Under memory pressure it is released sooner." : {
+    "How long a local model stays in memory after a dictation. Keeping the default Whisper model loaded holds about 0.7 GB, and in our test a released model reloaded while you spoke without a longer wait, so After Each Dictation is the default. Under memory pressure a model is released sooner." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wie lange ein lokales Modell nach deinem letzten Diktat im Arbeitsspeicher bleibt. Ein freigegebenes Modell wird beim Drücken des Kürzels geladen, während du sprichst. Bei knappem Arbeitsspeicher wird es früher freigegeben."
+            "value" : "Wie lange ein lokales Modell nach einem Diktat im Arbeitsspeicher bleibt. Das geladene Standard-Whisper-Modell belegt etwa 0,7 GB; in unserem Test wurde ein freigegebenes Modell geladen, während du sprachst, ohne längere Wartezeit. Deshalb ist „Nach jedem Diktat“ die Vorgabe. Bei knappem Arbeitsspeicher wird ein Modell früher freigegeben."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Durée pendant laquelle un modèle local reste en mémoire après votre dernière dictée. Un modèle libéré se recharge quand vous appuyez sur le raccourci, pendant que vous parlez. Quand la mémoire est presque saturée, il est libéré plus tôt."
+            "value" : "Durée pendant laquelle un modèle local reste en mémoire après une dictée. Le modèle Whisper par défaut chargé occupe environ 0,7 Go ; lors de notre test, un modèle libéré se rechargeait pendant que vous parliez, sans attente supplémentaire, d’où « Après chaque dictée » par défaut. Quand la mémoire est presque saturée, un modèle est libéré plus tôt."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "本地模型在你上次听写后留在内存里的时间。已释放的模型会在你按下快捷键时重新加载，与你说话同时进行。内存紧张时会更早释放。"
+            "value" : "本地模型在一次听写后留在内存里的时间。默认的 Whisper 模型加载后约占 0.7 GB；在我们的测试里，已释放的模型会在你说话时重新加载，不会多等，所以默认是“每次听写后”。内存紧张时模型会更早释放。"
           }
         }
       }
