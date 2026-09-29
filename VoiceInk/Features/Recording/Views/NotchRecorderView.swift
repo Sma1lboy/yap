@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
+    @ReducedMotion private var reduceMotion
     @ObservedObject var stateProvider: S
     @ObservedObject var recorder: Recorder
     @ObservedObject var assistantSession: AssistantSession
@@ -129,8 +130,13 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
     private let expandAnimation = Animation.spring(response: 0.42, dampingFraction: 0.80)
     private let collapseAnimation = Animation.spring(response: 0.45, dampingFraction: 1.0)
 
-    private var pillAnimation: Animation {
-        displayState == .collapsed ? collapseAnimation : expandAnimation
+    // Reduce Motion: the pill changes size without springs; contents still fade in and out.
+    private var pillAnimation: Animation? {
+        reduceMotion ? nil : displayState == .collapsed ? collapseAnimation : expandAnimation
+    }
+
+    private var sideFadeAnimation: Animation? {
+        reduceMotion ? .easeOut(duration: 0.15) : displayState != .collapsed ? expandAnimation.delay(0.09) : collapseAnimation
     }
 
     // MARK: - Body
@@ -187,10 +193,7 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
             .frame(width: sideExpansion)
             .frame(maxWidth: .infinity, alignment: .leading)
             .opacity(displayState != .collapsed ? 1 : 0)
-            .animation(
-                displayState != .collapsed ? expandAnimation.delay(0.09) : collapseAnimation,
-                value: displayState
-            )
+            .animation(sideFadeAnimation, value: displayState)
 
             HStack(spacing: 0) {
                 Spacer(minLength: 0)
@@ -204,10 +207,7 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
             .frame(width: sideExpansion)
             .frame(maxWidth: .infinity, alignment: .trailing)
             .opacity(displayState != .collapsed ? 1 : 0)
-            .animation(
-                displayState != .collapsed ? expandAnimation.delay(0.09) : collapseAnimation,
-                value: displayState
-            )
+            .animation(sideFadeAnimation, value: displayState)
         }
         .frame(height: mainRowHeight)
     }

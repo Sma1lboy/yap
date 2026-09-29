@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MiniRecorderView<S: RecorderStateProvider & ObservableObject>: View {
+    @ReducedMotion private var reduceMotion
     @ObservedObject var stateProvider: S
     @ObservedObject var recorder: Recorder
     @ObservedObject var assistantSession: AssistantSession
@@ -100,8 +101,8 @@ struct MiniRecorderView<S: RecorderStateProvider & ObservableObject>: View {
                 cornerRadius: hasLiveTranscript || hasAssistantResponse ? expandedCornerRadius : compactCornerRadius,
                 style: .continuous)
         )
-        .animation(.easeInOut(duration: 0.3), value: hasLiveTranscript)
-        .animation(.easeInOut(duration: 0.3), value: hasAssistantResponse)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: hasLiveTranscript)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: hasAssistantResponse)
         .gesture(WindowDragGesture())
         .allowsWindowActivationEvents()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)

@@ -174,6 +174,21 @@
                     assistantSession: app.engine.assistantSession,
                     onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
             }
+            // The same two with Reduce Motion on: steady level bars, no springs.
+            shot("recorder-mini-reduce-motion", size: CGSize(width: 420, height: 160)) {
+                MiniRecorderView(
+                    stateProvider: app.engine, recorder: app.engine.recorder,
+                    assistantSession: app.engine.assistantSession,
+                    onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
+                .environment(\.reduceMotionOverride, true)
+            }
+            shot("recorder-notch-reduce-motion", size: CGSize(width: 520, height: 160)) {
+                NotchRecorderView(
+                    stateProvider: app.engine, recorder: app.engine.recorder,
+                    assistantSession: app.engine.assistantSession,
+                    onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
+                .environment(\.reduceMotionOverride, true)
+            }
             app.engine.recordingState = .idle
             app.engine.partialTranscript = ""
 
