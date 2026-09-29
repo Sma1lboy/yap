@@ -932,6 +932,7 @@ struct HistoryCardRow: View {
         switch transcription.transcriptionStatus {
         case TranscriptionStatus.failed.rawValue: parts.append(String(localized: "Failed"))
         case TranscriptionStatus.canceled.rawValue: parts.append(String(localized: "Canceled"))
+        case TranscriptionStatus.filtered.rawValue: parts.append(String(localized: "Filtered"))
         default: break
         }
         parts.append(String(preferredCopyText.prefix(300)))
@@ -1063,6 +1064,10 @@ struct HistoryCardRow: View {
                 .foregroundStyle(AppTheme.Status.error.opacity(0.85))
         case TranscriptionStatus.canceled.rawValue:
             Label("Canceled", yapIcon: "xmark.circle")
+                .font(AppTheme.font(.caption, .medium))
+                .foregroundStyle(AppTheme.Text.muted)
+        case TranscriptionStatus.filtered.rawValue:
+            Label("Filtered", systemImage: "line.3.horizontal.decrease.circle")
                 .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Text.muted)
         default:

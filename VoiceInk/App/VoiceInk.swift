@@ -55,6 +55,8 @@ struct VoiceInkApp: App {
             MicrophoneLevelProbe.selfCheck()
             MoveToApplicationsPrompt.selfCheck()
             RecordedAudioIssue.selfCheck()
+            RecordingRecovery.selfCheck()
+            TranscriptionOutputFilter.selfCheck()
             CancelConfirmation.selfCheck()
             DefaultShortcuts.selfCheck()
             SettingsGroup.selfCheck()
@@ -256,6 +258,7 @@ struct VoiceInkApp: App {
         Task { @MainActor in
             await statsMigrationTask?.value
             TranscriptionAutoCleanupService.shared.startMonitoring(modelContext: mainContext)
+            RecordingRecovery.offerAtLaunch(modelContext: mainContext, engine: engine)
 
             let tokenBackfillTask = SessionMetricMigrationService.shared.runEnhancementTokenBackfillIfNeeded(
                 modelContainer: resolvedContainer)

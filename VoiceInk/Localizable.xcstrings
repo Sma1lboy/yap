@@ -9226,6 +9226,28 @@
         }
       }
     },
+    "Copied to clipboard. No text field was focused, so Yap didn't paste. It's also in History." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In die Zwischenablage kopiert. Es war kein Textfeld aktiv, daher hat Yap nicht eingefügt. Der Text steht auch im Verlauf."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié dans le presse-papiers. Aucun champ de texte n’avait le focus, Yap n’a donc rien collé. Le texte est aussi dans l’historique."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已复制到剪贴板。当时没有聚焦的输入框，Yap 没有粘贴。历史记录里也有这条。"
+          }
+        }
+      }
+    },
     "Copied!" : {
       "localizations" : {
         "de" : {
@@ -11776,6 +11798,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已停用"
+          }
+        }
+      }
+    },
+    "Discard" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwerfen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "丢弃"
           }
         }
       }
@@ -15048,6 +15092,28 @@
         }
       }
     },
+    "Filtered" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gefiltert"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtré"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已过滤"
+          }
+        }
+      }
+    },
     "Finalizing model files…" : {
       "localizations" : {
         "de" : {
@@ -15110,6 +15176,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "完成 Yap 设置…"
+          }
+        }
+      }
+    },
+    "Finish the current recording first, then transcribe the recovered one." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beende zuerst die laufende Aufnahme und transkribiere dann die wiederhergestellte."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Terminez d’abord l’enregistrement en cours, puis transcrivez celui qui a été récupéré."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先结束当前录音，再转写找回的那段。"
           }
         }
       }
@@ -32389,6 +32477,28 @@
         }
       }
     },
+    "Transcribe" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkribieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcrire"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写"
+          }
+        }
+      }
+    },
     "Transcribe Audio Files" : {
       "localizations" : {
         "de" : {
@@ -32965,6 +33075,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "翻译"
+          }
+        }
+      }
+    },
+    "Translate to English" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ins Englische übersetzen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traduire en anglais"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻译成英文"
           }
         }
       }
@@ -35464,6 +35596,50 @@
         }
       }
     },
+    "Yap barely heard anything from “%@”. Check your microphone in Audio Settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap hat von „%@“ kaum etwas gehört. Prüfe dein Mikrofon in den Audioeinstellungen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap n’a presque rien entendu depuis « %@ ». Vérifiez votre micro dans les réglages audio."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 几乎没从“%@”听到声音。请在音频设置里检查麦克风。"
+          }
+        }
+      }
+    },
+    "Yap barely heard anything. Check that the right microphone is selected in Audio Settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap hat kaum etwas gehört. Prüfe in den Audioeinstellungen, ob das richtige Mikrofon ausgewählt ist."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap n’a presque rien entendu. Vérifiez dans les réglages audio que le bon micro est sélectionné."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 几乎没听到声音。请在音频设置里确认选的是正确的麦克风。"
+          }
+        }
+      }
+    },
     "Yap can only update itself from the Applications folder. Drag Yap into it, then open Yap from there." : {
       "localizations" : {
         "de" : {
@@ -35614,6 +35790,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 无法访问其存储位置。你的转写记录将无法跨会话存储。"
+          }
+        }
+      }
+    },
+    "Yap didn't catch anything." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap hat nichts verstanden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap n’a rien saisi."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 没听清任何内容。"
           }
         }
       }
@@ -35794,6 +35992,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 会根据你正在使用的 app 自动选择模式。录音时按 Option 1-9 可以切换，模式也可以随时编辑。"
+          }
+        }
+      }
+    },
+    "Yap quit while recording. Transcribe it?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap wurde während einer Aufnahme beendet. Aufnahme transkribieren?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap s’est arrêté pendant un enregistrement. Le transcrire ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 在录音时退出了。要转写这段录音吗？"
           }
         }
       }
@@ -37371,50 +37591,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "↵"
-          }
-        }
-      }
-    },
-    "Copied to clipboard. No text field was focused, so Yap didn't paste. It's also in History." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In die Zwischenablage kopiert. Es war kein Textfeld aktiv, daher hat Yap nicht eingefügt. Der Text steht auch im Verlauf."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Copié dans le presse-papiers. Aucun champ de texte n’avait le focus, Yap n’a donc rien collé. Le texte est aussi dans l’historique."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已复制到剪贴板。当时没有聚焦的输入框，Yap 没有粘贴。历史记录里也有这条。"
-          }
-        }
-      }
-    },
-    "Translate to English" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ins Englische übersetzen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Traduire en anglais"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "翻译成英文"
           }
         }
       }
