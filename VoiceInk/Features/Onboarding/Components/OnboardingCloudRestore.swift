@@ -111,7 +111,7 @@ struct OnboardingCloudRestoreSheet: View {
             .formStyle(.grouped)
             .scrollDisabled(true)
             .frame(height: 170)
-            Text("Restoring applies these settings on this Mac and turns on Sync via Yap Cloud. API keys aren't synced; add them on this Mac if a provider needs one.")
+            Text("Restoring applies these settings on this Mac and turns on Sync Settings Across Macs. API keys aren't synced; add them on this Mac if a provider needs one.")
                 .font(AppTheme.font(.caption))
                 .foregroundColor(AppTheme.Text.secondary)
                 .fixedSize(horizontal: false, vertical: true)

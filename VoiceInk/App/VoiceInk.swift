@@ -65,6 +65,7 @@ struct VoiceInkApp: App {
             WhisperTranscriptionService.selfCheck()
             ChineseCleanup.selfCheck()
             WhisperLivePreview.selfCheck()
+            YapCloud.modeNamesSelfCheck()
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
