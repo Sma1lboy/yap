@@ -65,7 +65,7 @@ struct MenuBarView: View {
                 } label: {
                     Label(
                         String(format: String(localized: "Low balance (%@) — Add Funds"), YapCloud.formatUSD(micros: balance)),
-                        systemImage: "exclamationmark.triangle.fill")
+                        yapIcon: "exclamationmark.triangle.fill")
                 }
 
                 Divider()
@@ -98,11 +98,11 @@ struct MenuBarView: View {
                 }
             } label: {
                 HStack {
-                    Image(systemName: "sparkles.square.fill.on.square")
+                    Image(yapIcon: "sparkles.square.fill.on.square")
                         .font(AppTheme.font(.caption, .medium))
                     let activeMode = modeManager.currentEffectiveConfiguration
                     Text(String(format: String(localized: "Mode: %@"), activeMode?.name ?? String(localized: "None")))
-                    Image(systemName: "chevron.up.chevron.down")
+                    Image(yapIcon: "chevron.up.chevron.down")
                         .font(AppTheme.font(.micro))
                 }
             }
@@ -124,10 +124,10 @@ struct MenuBarView: View {
                 }
             } label: {
                 HStack {
-                    Image(systemName: "mic.fill")
+                    Image(yapIcon: "mic.fill")
                         .font(AppTheme.font(.caption, .medium))
                     Text("Audio Input")
-                    Image(systemName: "chevron.up.chevron.down")
+                    Image(yapIcon: "chevron.up.chevron.down")
                         .font(AppTheme.font(.micro))
                 }
             }
@@ -208,10 +208,10 @@ struct MenuBarView: View {
                 }
             } label: {
                 HStack {
-                    Image(systemName: "globe")
+                    Image(yapIcon: "globe")
                         .font(AppTheme.font(.caption, .medium))
                     Text(String(format: String(localized: "Language: %@"), languages[current] ?? current))
-                    Image(systemName: "chevron.up.chevron.down")
+                    Image(yapIcon: "chevron.up.chevron.down")
                         .font(AppTheme.font(.micro))
                 }
             }

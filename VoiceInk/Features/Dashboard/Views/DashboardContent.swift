@@ -240,13 +240,13 @@ struct DashboardContent: View {
             Button {
                 isInsightsViewPresented = true
             } label: {
-                Label("Stats", systemImage: "chart.bar")
+                Label("Stats", yapIcon: "chart.bar")
             }
             .help("View dictation stats")
 
             if let count = dashboardReviewCorrectionCount {
                 Button(action: openAutoLearnReviewPanel) {
-                    Label("Review Corrections", systemImage: "text.book.closed")
+                    Label("Review Corrections", yapIcon: "text.book.closed")
                 }
                 .help(
                     String(format: String(localized: "Review %lld pending corrections"), Int64(count))
@@ -258,7 +258,7 @@ struct DashboardContent: View {
             Button(action: copySystemInfo) {
                 Label(
                     LocalizedStringKey(isSystemInfoCopied ? "Copied!" : "Copy System Info"),
-                    systemImage: isSystemInfoCopied ? "checkmark" : "doc.on.doc"
+                    yapIcon: isSystemInfoCopied ? "checkmark" : "doc.on.doc"
                 )
             }
         }
@@ -491,7 +491,7 @@ private struct DashboardAccessibilityReminder: View {
                 RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .fill(AppTheme.Accent.fill)
 
-                Image(systemName: "hand.raised")
+                Image(yapIcon: "hand.raised")
                     .font(AppTheme.font(.headline, .medium))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(AppTheme.Accent.text)
@@ -530,7 +530,7 @@ private struct DashboardNoModesReminder: View {
                 RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous)
                     .fill(AppTheme.Accent.fill)
 
-                Image(systemName: "square.grid.2x2")
+                Image(yapIcon: "square.grid.2x2")
                     .font(AppTheme.font(.headline, .medium))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(AppTheme.Accent.text)

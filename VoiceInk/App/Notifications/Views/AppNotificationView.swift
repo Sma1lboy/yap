@@ -40,7 +40,7 @@ struct AppNotificationView: View {
         ZStack {
             HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
                 // Type icon
-                Image(systemName: type.iconName)
+                Image(yapIcon: type.iconName)
                     .font(AppTheme.font(.headline, .medium))
                     .foregroundColor(type.iconColor)
                     .frame(width: 20, height: 20)
@@ -72,7 +72,7 @@ struct AppNotificationView: View {
                 }
 
                 Button(action: onClose) {
-                    Image(systemName: "xmark")
+                    Image(yapIcon: "xmark")
                         .font(AppTheme.font(.micro, .medium))
                         .foregroundColor(.white.opacity(0.6))
                 }

@@ -17,7 +17,7 @@ struct SubtitleExportMenu: View {
                     Button(Self.title(for: format)) { save(segments, as: format) }
                 }
             } label: {
-                Label("Export Subtitles", systemImage: "captions.bubble")
+                Label("Export Subtitles", yapIcon: "captions.bubble")
                     .font(AppTheme.font(.caption, .medium))
                     .foregroundStyle(AppTheme.Text.secondary)
             }

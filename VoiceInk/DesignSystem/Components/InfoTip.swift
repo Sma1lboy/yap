@@ -20,7 +20,7 @@ struct InfoTip: View {
         Button {
             isShowingTip.toggle()
         } label: {
-            Image(systemName: iconName)
+            Image(yapIcon: iconName)
                 .imageScale(iconSize)
                 .foregroundColor(iconColor)
                 .fontWeight(.semibold)

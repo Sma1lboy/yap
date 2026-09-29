@@ -10,7 +10,7 @@
 
 Yap 是 macOS 上的开源听写 app，以 GPL-3.0 发布。按住快捷键说话，中文、英文或者一句话里混着说都行，松开后 Yap 转写、去掉口头禅、补好标点，再粘贴进你正在用的 app。「模式」可以按 app 用不同的提示词或模型（邮件、代码评审、聊天），「词典」让人名和术语按你的写法拼。
 
-Yap 是 Prakash Joshi Pax 的 [VoiceInk](https://github.com/Beingpax/VoiceInk) 的一个分支。应用本身的功劳都属于原作者；如果你想要官方版本，请[购买 VoiceInk](https://tryvoiceink.com/)。官网：[yap.sma1lboy.me](https://yap.sma1lboy.me)。
+Yap 是 Prakash Joshi Pax 的 [VoiceInk](https://github.com/Beingpax/VoiceInk) 的一个分支。应用本身的功劳都属于原作者；如果你想要官方版本，请[购买 VoiceInk](https://tryvoiceink.com/)。官网：[yap.sma1lboy.me](https://yap.sma1lboy.me)。图标：[Phosphor](https://phosphoricons.com)（MIT，许可证在 `VoiceInk/Resources/Licenses/`）。
 
 ## 声音交给谁处理
 

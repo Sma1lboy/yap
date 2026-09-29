@@ -63,7 +63,7 @@ struct PermissionStepRow: View {
                 .fill(status.isGranted ? AppTheme.Selection.fill : AppTheme.Surface.controlActive)
 
             if status.isGranted {
-                Image(systemName: "checkmark")
+                Image(yapIcon: "checkmark")
                     .font(AppTheme.font(.footnote, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
             } else {

@@ -206,7 +206,7 @@ struct HistoryView<Header: View>: View {
     private var topBar: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
             HStack(spacing: AppTheme.Spacing.x2) {
-                Image(systemName: "magnifyingglass")
+                Image(yapIcon: "magnifyingglass")
                     .foregroundColor(.secondary)
                     .font(AppTheme.font(.footnote))
                 TextField("Search transcriptions...", text: $searchText)
@@ -373,7 +373,7 @@ struct HistoryView<Header: View>: View {
             Button(action: {
                 openPanel(mode: .analysis)
             }) {
-                Label("Analyze", systemImage: "chart.bar.xaxis")
+                Label("Analyze", yapIcon: "chart.bar.xaxis")
                     .font(AppTheme.font(.footnote, .medium))
             }
             .buttonStyle(.plain)
@@ -382,7 +382,7 @@ struct HistoryView<Header: View>: View {
             Button(action: {
                 exportService.exportTranscriptionsToCSV(transcriptions: Array(selectedTranscriptions))
             }) {
-                Label("Export", systemImage: "square.and.arrow.up")
+                Label("Export", yapIcon: "square.and.arrow.up")
                     .font(AppTheme.font(.footnote, .medium))
             }
             .buttonStyle(.plain)
@@ -394,7 +394,7 @@ struct HistoryView<Header: View>: View {
                         title: String(localized: "Meeting"), date: meeting.timestamp, duration: meeting.duration,
                         notes: meeting.enhancedText, transcript: meeting.text))
                 }) {
-                    Label("Export Markdown…", systemImage: "doc.text")
+                    Label("Export Markdown…", yapIcon: "doc.text")
                         .font(AppTheme.font(.footnote, .medium))
                 }
                 .buttonStyle(.plain)
@@ -402,7 +402,7 @@ struct HistoryView<Header: View>: View {
             }
 
             Button(action: { showDeleteConfirmation = true }) {
-                Label("Delete", systemImage: "trash")
+                Label("Delete", yapIcon: "trash")
                     .font(AppTheme.font(.footnote, .medium))
             }
             .buttonStyle(.plain)
@@ -440,7 +440,7 @@ struct HistoryView<Header: View>: View {
     private var emptyStateView: some View {
         VStack(spacing: AppTheme.Spacing.x4) {
             HStack(spacing: AppTheme.Spacing.x2) {
-                Image(systemName: isNarrowed ? (searchText.isEmpty ? "line.3.horizontal.decrease" : "magnifyingglass") : "mic")
+                Image(yapIcon: isNarrowed ? (searchText.isEmpty ? "line.3.horizontal.decrease" : "magnifyingglass") : "mic")
                     .font(AppTheme.font(.body, .medium))
                 Text(verbatim: emptyStateMessage)
                     .font(AppTheme.font(.body))
@@ -1058,11 +1058,11 @@ struct HistoryCardRow: View {
     private var statusBadge: some View {
         switch transcription.transcriptionStatus {
         case TranscriptionStatus.failed.rawValue:
-            Label("Failed", systemImage: "exclamationmark.triangle")
+            Label("Failed", yapIcon: "exclamationmark.triangle")
                 .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Status.error.opacity(0.85))
         case TranscriptionStatus.canceled.rawValue:
-            Label("Canceled", systemImage: "xmark.circle")
+            Label("Canceled", yapIcon: "xmark.circle")
                 .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Text.muted)
         default:
@@ -1074,7 +1074,7 @@ struct HistoryCardRow: View {
         systemName: String, help: LocalizedStringKey, action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Image(systemName: systemName)
+            Image(yapIcon: systemName)
                 .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .frame(width: 24, height: 22)
@@ -1151,7 +1151,7 @@ struct HistoryCardRow: View {
                 HStack {
                     Spacer()
                     Button(action: onShowInfo) {
-                        Image(systemName: "info.circle")
+                        Image(yapIcon: "info.circle")
                             .font(AppTheme.font(.callout, .medium))
                             .foregroundColor(.secondary)
                     }
@@ -1169,7 +1169,7 @@ struct CircularCheckboxStyle: ToggleStyle {
         Button(action: {
             configuration.isOn.toggle()
         }) {
-            Image(systemName: configuration.isOn ? "checkmark.circle.fill" : "circle")
+            Image(yapIcon: configuration.isOn ? "checkmark.circle.fill" : "circle")
                 .symbolRenderingMode(.hierarchical)
                 .foregroundColor(configuration.isOn ? AppTheme.Selection.foreground : .secondary)
                 .font(AppTheme.font(.headline))
