@@ -40,7 +40,41 @@ def parse():
             tokens[group].append((key, int(values[0]), int(values[1])))
         else:
             tokens[group].append((key, int(values[0])))
+    contrast = re.search(r"```contrast\n(.*?)```", text, re.S).group(1)
+    tokens["contrast"] = {}
+    for line in contrast.splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            name, light, dark, *_ = line.split()
+            tokens["contrast"][name.split(".", 1)[1]] = (light.upper(), dark.upper())
     return tokens
+
+
+def contrast_ratio(a, b):
+    def lum(hex_):
+        channels = [int(hex_[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+        r, g, b_ = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b_
+    hi, lo = sorted((lum(a), lum(b)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def contrast_problems(tokens):
+    """Increase Contrast values: secondary text stays >= 4.5:1 on every background; borders stay 4.5:1 on cards."""
+    colors = {key: (light, dark) for key, light, dark in tokens["color"]}
+    hc = {key: colors.get(key) and tokens["contrast"].get(key, colors[key]) for key in colors}
+    found = [f"contrast.{key} is not a color token" for key in tokens["contrast"] if key not in colors]
+    for scheme, name in enumerate(("light", "dark")):
+        backgrounds = [hc[k][scheme] for k in ("bg", "surface", "sunken", "accent-subtle")]
+        for key in ("text-2", "text-3"):
+            for background in backgrounds:
+                if contrast_ratio(hc[key][scheme], background) < 4.5:
+                    found.append(f"increased contrast {name}: {key} {hc[key][scheme]} on {background} is below 4.5:1")
+        if contrast_ratio(hc["border"][scheme], hc["surface"][scheme]) < 4.5:
+            found.append(f"increased contrast {name}: border on surface is below 4.5:1")
+        if contrast_ratio(hc["text"][scheme], hc["accent-subtle"][scheme]) < 7:
+            found.append(f"increased contrast {name}: text on accent-subtle is below 7:1")
+    return found
 
 
 def camel(key):
@@ -60,11 +94,16 @@ def swift(tokens):
         "import SwiftUI",
         "",
         "enum DesignTokens {",
-        "    /// Light and dark values switch with the window's appearance.",
+        "    /// Light and dark values switch with the window's appearance; colors with an HC pair also switch when macOS",
+        "    /// Increase Contrast is on (docs/DESIGN.md, \"增强对比度\").",
         "    enum Palette {",
     ]
     for key, light, dark in tokens["color"]:
-        out.append(f"        static let {camel(key)} = dynamic(light: 0x{light[1:]}, dark: 0x{dark[1:]})")
+        more = ""
+        if key in tokens["contrast"]:
+            hc_light, hc_dark = tokens["contrast"][key]
+            more = f", lightHC: 0x{hc_light[1:]}, darkHC: 0x{hc_dark[1:]}"
+        out.append(f"        static let {camel(key)} = dynamic(light: 0x{light[1:]}, dark: 0x{dark[1:]}{more})")
     out += ["    }", "", "    /// App font sizes in points.", "    enum FontSize {"]
     for key, app, _web in tokens["font"]:
         out.append(f"        static let {camel(key)}: CGFloat = {app}")
@@ -77,10 +116,20 @@ def swift(tokens):
     out += [
         "    }",
         "",
-        "    private static func dynamic(light: UInt32, dark: UInt32) -> Color {",
+        "    /// ui-snapshots sets this to render the Increase Contrast look without touching the system setting.",
+        "    static var forceIncreasedContrast = false",
+        "",
+        "    private static func dynamic(light: UInt32, dark: UInt32, lightHC: UInt32? = nil, darkHC: UInt32? = nil) -> Color {",
         "        Color(nsColor: NSColor(name: nil) { appearance in",
-        "            let isDark = appearance.bestMatch(from: [.darkAqua, .vibrantDark, .aqua, .vibrantLight])",
-        "            let hex = (isDark == .darkAqua || isDark == .vibrantDark) ? dark : light",
+        "            let match = appearance.bestMatch(from: [",
+        "                .accessibilityHighContrastDarkAqua, .accessibilityHighContrastAqua, .darkAqua, .vibrantDark, .aqua,",
+        "                .vibrantLight,",
+        "            ])",
+        "            let isDark = match == .darkAqua || match == .vibrantDark || match == .accessibilityHighContrastDarkAqua",
+        "            // SwiftUI doesn't always hand the provider a high-contrast appearance, so read the system setting too.",
+        "            let increased = match == .accessibilityHighContrastDarkAqua || match == .accessibilityHighContrastAqua",
+        "                || forceIncreasedContrast || NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast",
+        "            let hex = increased ? (isDark ? (darkHC ?? dark) : (lightHC ?? light)) : (isDark ? dark : light)",
         "            return NSColor(",
         "                srgbRed: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,",
         "                blue: CGFloat(hex & 0xFF) / 255, alpha: 1)",
@@ -99,6 +148,9 @@ def css(tokens):
     fonts = "\n".join(f"  --font-{key}: {web}px;" for key, _app, web in tokens["font"])
     radii = "\n".join(f"  --radius-{key}: {value}px;" for key, value in tokens["radius"])
     spaces = "\n".join(f"  --space-{key}: {value}px;" for key, value in tokens["space"])
+    def more(index):
+        return "\n".join(f"  --{key}: {values[index]};" for key, values in tokens["contrast"].items())
+
     return f"""/* Generated by scripts/design-tokens.py from docs/DESIGN.md. Don't edit: change DESIGN.md and run
    `make design-tokens`. Light by default, dark with the system (prefers-color-scheme) or data-theme="dark";
    data-theme="light" forces light. */
@@ -123,6 +175,22 @@ def css(tokens):
   color-scheme: dark;
 {palette(1)}
   --shadow-pop: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}}
+/* Increase Contrast (docs/DESIGN.md, "增强对比度"). */
+@media (prefers-contrast: more) {{
+  :root {{
+{re.sub(r"^", "  ", more(0), flags=re.M)}
+  }}
+}}
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {{
+  :root:not([data-theme="light"]) {{
+{re.sub(r"^", "  ", more(1), flags=re.M)}
+  }}
+}}
+@media (prefers-contrast: more) {{
+  :root[data-theme="dark"] {{
+{re.sub(r"^", "  ", more(1), flags=re.M)}
+  }}
 }}
 """
 
@@ -200,6 +268,7 @@ def main():
         return
     problems = [f"{os.path.relpath(p, ROOT)} is stale: run make design-tokens"
                 for p, c in generated.items() if not os.path.exists(p) or open(p, encoding="utf-8").read() != c]
+    problems += contrast_problems(tokens)
     problems += violations() + email_violations(tokens) + css_violations()
     for problem in problems:
         print(problem)
