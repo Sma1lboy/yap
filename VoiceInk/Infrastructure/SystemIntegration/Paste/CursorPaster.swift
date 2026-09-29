@@ -86,6 +86,19 @@ class CursorPaster {
             return PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil)
         }
 
+        // Nothing editable focused (desktop, Finder): ⌘V would go nowhere and the restore would then
+        // take the text back off the clipboard. Keep it there and say so.
+        if !focusedElementCanTakeText() {
+            logger.notice("No editable element focused; leaving text on the clipboard")
+            _ = ClipboardManager.setClipboard(text, transient: false, sessionID: nil)
+            NotificationManager.shared.showNotification(
+                title: String(localized: "Copied to clipboard. No text field was focused, so Yap didn't paste. It's also in History."),
+                type: .warning,
+                duration: 6
+            )
+            return PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil)
+        }
+
         let timing = pasteTiming(frontmostBundleID: NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
         let shouldRestoreClipboard = UserDefaults.standard.bool(forKey: "restoreClipboardAfterPaste")
         let savedContents = shouldRestoreClipboard ? snapshotClipboard(from: pasteboard) : []
@@ -102,11 +115,14 @@ class CursorPaster {
             return PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil)
         }
 
+        // Read while the prePaste delay runs; the text about to be replaced is what Undo Last Paste restores.
+        let targetProcessID = NSWorkspace.shared.frontmostApplication?.processIdentifier
+        let replacedTask = Task.detached { targetProcessID.map { LastPasteEditor.selectedText(processID: $0) } ?? "" }
         await wait(timing.prePaste)
+        let replaced = await replacedTask.value
 
         let pasteResult: PasteResult
         let autoLearnGeneration: UInt64?
-        let targetProcessID = NSWorkspace.shared.frontmostApplication?.processIdentifier
         if AutoLearnSettings.isEnabled {
             pasteResult = await postPasteCommand()
             autoLearnGeneration = await AutoLearnService.shared.pasteDidFinish(
@@ -119,7 +135,7 @@ class CursorPaster {
             autoLearnGeneration = nil
         }
         if pasteResult.didPostPasteCommand {
-            LastPasteEditor.shared.pasteDidFinish(text: text, processID: targetProcessID)
+            LastPasteEditor.shared.pasteDidFinish(text: text, processID: targetProcessID, replacing: replaced)
         }
         // A paste that never reached the app must not take the text back off the clipboard.
         if shouldRestoreClipboard && pasteResult.didPostPasteCommand {
@@ -134,6 +150,45 @@ class CursorPaster {
 
         return PasteOutcome(result: pasteResult, autoLearnGeneration: autoLearnGeneration)
     }
+
+    /// Roles that are never a text target. Anything else (including an unreadable element) counts as text.
+    private static let nonTextRoles: Set<String> = [
+        "AXApplication", "AXWindow", "AXButton", "AXImage", "AXList", "AXOutline", "AXTable", "AXGroup",
+    ]
+
+    /// `focusRole` is nil when the system-wide focused element is missing; `readFailed` means the
+    /// Accessibility query itself errored (the app doesn't expose it), which says nothing about the field.
+    static func canTakeText(focusRole: String?, focusMissing: Bool, readFailed: Bool) -> Bool {
+        if readFailed { return true }
+        if focusMissing { return false }
+        guard let focusRole else { return true }
+        return !nonTextRoles.contains(focusRole)
+    }
+
+    private static func focusedElementCanTakeText() -> Bool {
+        let system = AXUIElementCreateSystemWide()
+        AXUIElementSetMessagingTimeout(system, 0.3)
+        var focused: CFTypeRef?
+        let status = AXUIElementCopyAttributeValue(system, kAXFocusedUIElementAttribute as CFString, &focused)
+        guard status == .success, let focused, CFGetTypeID(focused) == AXUIElementGetTypeID() else {
+            return canTakeText(focusRole: nil, focusMissing: status == .noValue, readFailed: status != .noValue)
+        }
+        var role: CFTypeRef?
+        AXUIElementCopyAttributeValue(focused as! AXUIElement, kAXRoleAttribute as CFString, &role)
+        return canTakeText(focusRole: role as? String, focusMissing: false, readFailed: false)
+    }
+
+    #if DEBUG
+    static func selfCheck() {
+        assert(canTakeText(focusRole: "AXTextField", focusMissing: false, readFailed: false))
+        assert(canTakeText(focusRole: "AXTextArea", focusMissing: false, readFailed: false))
+        assert(canTakeText(focusRole: "AXWebArea", focusMissing: false, readFailed: false), "unsure keeps pasting")
+        assert(canTakeText(focusRole: nil, focusMissing: false, readFailed: false))
+        assert(!canTakeText(focusRole: nil, focusMissing: true, readFailed: false), "no focused element")
+        assert(!canTakeText(focusRole: "AXList", focusMissing: false, readFailed: false), "Finder list")
+        assert(canTakeText(focusRole: nil, focusMissing: false, readFailed: true), "AX unreadable keeps pasting")
+    }
+    #endif
 
     private static func snapshotClipboard(from pasteboard: NSPasteboard) -> ClipboardSnapshot {
         (pasteboard.pasteboardItems ?? []).map { item in
