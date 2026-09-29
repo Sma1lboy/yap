@@ -108,7 +108,7 @@ private struct ModelPerformancePanelContent: View {
 
     private var emptyState: some View {
         VStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: "chart.bar.xaxis")
+            Image(yapIcon: "chart.bar.xaxis")
                 .font(AppTheme.font(.display, .regular))
                 .foregroundColor(.secondary)
 

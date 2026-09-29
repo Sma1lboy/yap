@@ -4,18 +4,23 @@ import Foundation
 /// substring of its title or of one of its row titles, in the app's current language.
 /// ponytail: matches whole sections, not single rows; per-row filtering needs each row wrapped in its own check.
 enum SettingsGroup: CaseIterable {
-    case config, shortcuts, voiceEdits, additionalShortcuts, pasting, interface, general, backup, history, help,
+    case account, config, shortcuts, voiceEdits, additionalShortcuts, pasting, interface, general, backup, history, help,
         diagnostics, about
 
     /// Section title first, then its row titles. Keys are the ones the section's own views use.
     var terms: [String] {
         switch self {
+        case .account:
+            return [
+                String(localized: "Account"), String(localized: "Signed in as"),
+                String(localized: "Sync Settings Across Macs"), String(localized: "Sync Now"), String(localized: "Version History…"),
+                String(localized: "Manage Yap Cloud…"), String(localized: "Sign Out"),
+            ]
         case .config:
             return [
-                String(localized: "Config & Sync"), "config.json", String(localized: "Path"),
+                String(localized: "Config File"), "config.json", String(localized: "Path"),
                 String(localized: "Show in Finder"), String(localized: "Reload"),
                 String(localized: "Write Current Settings to Config"), String(localized: "Keep Config File in Sync"),
-                String(localized: "Sync via Yap Cloud"), String(localized: "Version History…"),
                 String(localized: "Import from VoiceInk…"),
             ]
         case .shortcuts:

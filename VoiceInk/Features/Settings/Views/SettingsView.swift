@@ -60,7 +60,7 @@ struct SettingsView: View {
 
     private var searchField: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: "magnifyingglass")
+            Image(yapIcon: "magnifyingglass")
                 .foregroundStyle(AppTheme.Text.secondary)
                 .font(AppTheme.font(.footnote))
             TextField("Search Settings", text: $searchText)
@@ -70,7 +70,7 @@ struct SettingsView: View {
                 Button {
                     searchText = ""
                 } label: {
-                    Image(systemName: "xmark.circle.fill")
+                    Image(yapIcon: "xmark.circle.fill")
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(AppTheme.Text.secondary)
@@ -90,6 +90,10 @@ struct SettingsView: View {
                 Text("No settings match")
                     .foregroundStyle(AppTheme.Text.secondary)
                     .frame(maxWidth: .infinity)
+            }
+
+            if visibleGroups.contains(.account) {
+                AccountSettingsSection()
             }
 
             if visibleGroups.contains(.config) {
@@ -123,7 +127,7 @@ struct SettingsView: View {
                                 Button {
                                     withAnimation { recordingShortcutManager.secondaryRecordingShortcut = .none }
                                 } label: {
-                                    Image(systemName: "minus.circle.fill")
+                                    Image(yapIcon: "minus.circle.fill")
                                         .foregroundColor(.secondary)
                                 }
                                 .buttonStyle(.plain)
@@ -160,7 +164,7 @@ struct SettingsView: View {
                     } label: {
                         HStack(spacing: AppTheme.Spacing.x1) {
                             Text("Undo Last Paste")
-                            InfoTip("Removes the text Yap pasted last, if it's still where Yap put it and unchanged. Saying only \"scratch that\" or \"删掉刚才那句\" does the same.")
+                            InfoTip("Takes back the text Yap pasted last, if it's still where Yap put it and unchanged. If it replaced selected text, that text comes back; otherwise it's removed. Saying only \"scratch that\" or \"删掉刚才那句\" does the same.")
                         }
                     }
 
@@ -245,7 +249,7 @@ struct SettingsView: View {
                                 ShortcutStore.setShortcut(nil, for: .cancelRecorder)
                                 cancelRecordingShortcutRecorderResetID += 1
                             } label: {
-                                Image(systemName: "arrow.counterclockwise")
+                                Image(yapIcon: "arrow.counterclockwise")
                             }
                             .buttonStyle(.plain)
                             .help("Reset to default")

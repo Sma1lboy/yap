@@ -3,11 +3,6 @@ import SwiftUI
 
 /// Transcription history list. `header` scrolls with the list (Home puts its week panel there).
 struct HistoryView<Header: View>: View {
-    private struct PaginationCursor {
-        let timestamp: Date
-        let id: UUID
-    }
-
     private struct DayGroup: Identifiable {
         let id: Date
         var items: [Transcription]
@@ -20,7 +15,14 @@ struct HistoryView<Header: View>: View {
     }
 
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var engine: VoiceInkEngine
     @State private var searchText = ""
+    @State private var filter = HistoryFilter()
+    @State private var sort = HistorySort.remembered
+    /// Every match in `sort` order, for the sorts the database can't page (all but Newest); nil for Newest.
+    @State private var sortedMatches: [Transcription]?
+    @State private var filterApps: [(id: String, name: String)] = []
+    @State private var filterModes: [String] = []
     @State private var expandedId: UUID?
     @State private var selectedTranscriptions: Set<Transcription> = []
     @State private var showDeleteConfirmation = false
@@ -30,7 +32,7 @@ struct HistoryView<Header: View>: View {
     @State private var displayedTranscriptions: [Transcription] = []
     @State private var isLoading = false
     @State private var hasMoreContent = true
-    @State private var paginationCursor: PaginationCursor?
+    @State private var paginationCursor: HistoryQuery.Cursor?
     @State private var isViewCurrentlyVisible = false
     @State private var wordCounts: [UUID: Int] = [:]
     /// Keyboard cursor: ↑/↓ move it, Return expands, Space checks, ⌘C copies.
@@ -51,45 +53,16 @@ struct HistoryView<Header: View>: View {
         return descriptor
     }
 
-    private func cursorQueryDescriptor(after cursor: PaginationCursor? = nil) -> FetchDescriptor<Transcription> {
+    private func cursorQueryDescriptor(after cursor: HistoryQuery.Cursor? = nil) -> FetchDescriptor<Transcription> {
         var descriptor = FetchDescriptor<Transcription>(
+            predicate: HistoryQuery.predicate(search: searchText, filter: filter, after: cursor),
             sortBy: [
                 SortDescriptor(\Transcription.timestamp, order: .reverse),
                 SortDescriptor(\Transcription.id, order: .reverse),
             ]
         )
-
-        if !searchText.isEmpty {
-            let query = searchText
-            if let cursor {
-                let cursorTimestamp = cursor.timestamp
-                let cursorID = cursor.id
-                descriptor.predicate = #Predicate<Transcription> { transcription in
-                    (transcription.text.localizedStandardContains(query)
-                        || (transcription.enhancedText?.localizedStandardContains(query) ?? false))
-                        && (transcription.timestamp < cursorTimestamp
-                            || (transcription.timestamp == cursorTimestamp && transcription.id < cursorID))
-                }
-            } else {
-                descriptor.predicate = #Predicate<Transcription> { transcription in
-                    transcription.text.localizedStandardContains(query)
-                        || (transcription.enhancedText?.localizedStandardContains(query) ?? false)
-                }
-            }
-        } else {
-            if let cursor {
-                let cursorTimestamp = cursor.timestamp
-                let cursorID = cursor.id
-                descriptor.predicate = #Predicate<Transcription> { transcription in
-                    transcription.timestamp < cursorTimestamp
-                        || (transcription.timestamp == cursorTimestamp && transcription.id < cursorID)
-                }
-            }
-        }
-
         // Fetch one extra row so the UI can determine whether another page exists.
         descriptor.fetchLimit = pageSize + 1
-
         return descriptor
     }
 
@@ -123,6 +96,7 @@ struct HistoryView<Header: View>: View {
                             .padding(.bottom, AppTheme.Spacing.x6)
 
                         topBar
+                        activeFilterChips
 
                         if displayedTranscriptions.isEmpty && !isLoading {
                             emptyStateView
@@ -144,6 +118,8 @@ struct HistoryView<Header: View>: View {
                     withAnimation(.easeInOut(duration: 0.2)) { expandedId = expandedId == id ? nil : id }
                     return .handled
                 }
+                .onKeyPress(.delete) { deleteKeyboardRow() }
+                .onKeyPress(.deleteForward) { deleteKeyboardRow() }
                 .onKeyPress(.space) {
                     guard let row = keyboardRow else { return .ignored }
                     toggleSelection(row)
@@ -188,6 +164,7 @@ struct HistoryView<Header: View>: View {
         }
         .onAppear {
             isViewCurrentlyVisible = true
+            reloadFilterOptions()
             Task { await loadInitialContent() }
         }
         .onDisappear {
@@ -199,9 +176,23 @@ struct HistoryView<Header: View>: View {
                 await loadInitialContent()
             }
         }
+        .onChange(of: sort) { _, newSort in
+            HistorySort.remembered = newSort
+            Task {
+                resetPagination()
+                await loadInitialContent()
+            }
+        }
+        .onChange(of: filter) { _, _ in
+            Task {
+                resetPagination()
+                await loadInitialContent()
+            }
+        }
         .onChange(of: latestTranscriptionIndicator.first?.id) { oldId, newId in
             guard isViewCurrentlyVisible else { return }
             if newId != oldId {
+                reloadFilterOptions()
                 Task {
                     resetPagination()
                     await loadInitialContent()
@@ -215,7 +206,7 @@ struct HistoryView<Header: View>: View {
     private var topBar: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
             HStack(spacing: AppTheme.Spacing.x2) {
-                Image(systemName: "magnifyingglass")
+                Image(yapIcon: "magnifyingglass")
                     .foregroundColor(.secondary)
                     .font(AppTheme.font(.footnote))
                 TextField("Search transcriptions...", text: $searchText)
@@ -229,6 +220,9 @@ struct HistoryView<Header: View>: View {
                     .fill(AppTheme.Surface.card)
             )
             .frame(maxWidth: .infinity)
+
+            filterMenu
+            sortMenu
 
             AppActionButton("Transcribe File…", isPill: true) {
                 MainWindowNavigation.shared.navigate(to: .transcribeAudio)
@@ -248,6 +242,126 @@ struct HistoryView<Header: View>: View {
         .padding(.bottom, AppTheme.Spacing.x1)
     }
 
+    // MARK: - Filter
+
+    private func reloadFilterOptions() {
+        let facets = HistoryQuery.facets(in: modelContext)
+        filterApps = facets.apps
+        filterModes = facets.modes
+    }
+
+    private var filterMenu: some View {
+        Menu {
+            Menu("App") {
+                Button("All Apps") { filter.appBundleID = nil; filter.appName = nil }
+                Divider()
+                ForEach(filterApps, id: \.id) { app in
+                    Toggle(
+                        app.name,
+                        isOn: Binding(
+                            get: { filter.appBundleID == app.id },
+                            set: { on in
+                                filter.appBundleID = on ? app.id : nil
+                                filter.appName = on ? app.name : nil
+                            }))
+                }
+            }
+            .disabled(filterApps.isEmpty)
+
+            Menu("Mode") {
+                Button("All Modes") { filter.modeName = nil }
+                Divider()
+                ForEach(filterModes, id: \.self) { mode in
+                    Toggle(
+                        mode,
+                        isOn: Binding(
+                            get: { filter.modeName == mode },
+                            set: { filter.modeName = $0 ? mode : nil }))
+                }
+            }
+            .disabled(filterModes.isEmpty)
+
+            Toggle("Meetings only", isOn: $filter.meetingsOnly)
+
+            if filter.isActive {
+                Divider()
+                Button("Clear Filter") { filter = HistoryFilter() }
+            }
+        } label: {
+            Image(systemName: "line.3.horizontal.decrease")
+                .font(AppTheme.font(.body, .medium))
+                .foregroundColor(filter.isActive ? AppTheme.Text.primary : .primary.opacity(0.7))
+                .frame(width: 30, height: 30)
+                .background(AppCardBackground(isSelected: filter.isActive, cornerRadius: AppTheme.Radius.pill))
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Filter history")
+        .accessibilityLabel("Filter history")
+    }
+
+    private var sortMenu: some View {
+        Menu {
+            Picker("Sort", selection: $sort) {
+                ForEach(HistorySort.allCases) { Text(verbatim: $0.title).tag($0) }
+            }
+            .pickerStyle(.inline)
+            .labelsHidden()
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+                .font(AppTheme.font(.body, .medium))
+                .foregroundColor(sort == .newest ? .primary.opacity(0.7) : AppTheme.Text.primary)
+                .frame(width: 30, height: 30)
+                .background(AppCardBackground(isSelected: sort != .newest, cornerRadius: AppTheme.Radius.pill))
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Sort history")
+        .accessibilityLabel("Sort history")
+    }
+
+    /// The active filters as removable chips under the search field.
+    @ViewBuilder
+    private var activeFilterChips: some View {
+        if filter.isActive {
+            HStack(spacing: AppTheme.Spacing.x2) {
+                if let appName = filter.appName {
+                    filterChip(appName) { filter.appBundleID = nil; filter.appName = nil }
+                }
+                if let modeName = filter.modeName {
+                    filterChip(modeName) { filter.modeName = nil }
+                }
+                if filter.meetingsOnly {
+                    filterChip(String(localized: "Meetings only")) { filter.meetingsOnly = false }
+                }
+                Spacer()
+            }
+            .padding(.top, AppTheme.Spacing.x2)
+        }
+    }
+
+    private func filterChip(_ title: String, remove: @escaping () -> Void) -> some View {
+        Button(action: remove) {
+            HStack(spacing: AppTheme.Spacing.x1) {
+                Text(verbatim: title)
+                Image(systemName: "xmark")
+            }
+            .font(AppTheme.font(.caption, .medium))
+            .foregroundStyle(AppTheme.Text.primary)
+            .padding(.horizontal, AppTheme.Spacing.x3)
+            .padding(.vertical, AppTheme.Spacing.x1)
+            .background(Capsule().fill(AppTheme.Surface.controlActive))
+        }
+        .buttonStyle(.plain)
+        .help("Clear Filter")
+        .accessibilityLabel(Text(verbatim: title))
+        .accessibilityHint("Clear Filter")
+    }
+
     private var selectionBar: some View {
         HStack(spacing: AppTheme.Spacing.x4) {
             Text(String(format: String(localized: "%lld selected"), Int64(selectedTranscriptions.count)))
@@ -259,7 +373,7 @@ struct HistoryView<Header: View>: View {
             Button(action: {
                 openPanel(mode: .analysis)
             }) {
-                Label("Analyze", systemImage: "chart.bar.xaxis")
+                Label("Analyze", yapIcon: "chart.bar.xaxis")
                     .font(AppTheme.font(.footnote, .medium))
             }
             .buttonStyle(.plain)
@@ -268,7 +382,7 @@ struct HistoryView<Header: View>: View {
             Button(action: {
                 exportService.exportTranscriptionsToCSV(transcriptions: Array(selectedTranscriptions))
             }) {
-                Label("Export", systemImage: "square.and.arrow.up")
+                Label("Export", yapIcon: "square.and.arrow.up")
                     .font(AppTheme.font(.footnote, .medium))
             }
             .buttonStyle(.plain)
@@ -280,7 +394,7 @@ struct HistoryView<Header: View>: View {
                         title: String(localized: "Meeting"), date: meeting.timestamp, duration: meeting.duration,
                         notes: meeting.enhancedText, transcript: meeting.text))
                 }) {
-                    Label("Export Markdown…", systemImage: "doc.text")
+                    Label("Export Markdown…", yapIcon: "doc.text")
                         .font(AppTheme.font(.footnote, .medium))
                 }
                 .buttonStyle(.plain)
@@ -288,7 +402,7 @@ struct HistoryView<Header: View>: View {
             }
 
             Button(action: { showDeleteConfirmation = true }) {
-                Label("Delete", systemImage: "trash")
+                Label("Delete", yapIcon: "trash")
                     .font(AppTheme.font(.footnote, .medium))
             }
             .buttonStyle(.plain)
@@ -326,7 +440,7 @@ struct HistoryView<Header: View>: View {
     private var emptyStateView: some View {
         VStack(spacing: AppTheme.Spacing.x4) {
             HStack(spacing: AppTheme.Spacing.x2) {
-                Image(systemName: searchText.isEmpty ? "mic" : "magnifyingglass")
+                Image(yapIcon: isNarrowed ? (searchText.isEmpty ? "line.3.horizontal.decrease" : "magnifyingglass") : "mic")
                     .font(AppTheme.font(.body, .medium))
                 Text(verbatim: emptyStateMessage)
                     .font(AppTheme.font(.body))
@@ -334,7 +448,7 @@ struct HistoryView<Header: View>: View {
             .foregroundStyle(AppTheme.Text.secondary)
 
             // Empty without a search means nothing was ever dictated (or everything was deleted).
-            if searchText.isEmpty {
+            if !isNarrowed {
                 TrySayingCard()
             }
         }
@@ -342,7 +456,12 @@ struct HistoryView<Header: View>: View {
         .padding(.vertical, 56)  // design-exempt: layout offset, not spacing
     }
 
+    private var isNarrowed: Bool { !searchText.isEmpty || filter.isActive }
+
     private var emptyStateMessage: String {
+        guard !filter.isActive else {
+            return String(localized: "No transcriptions match this filter")
+        }
         guard searchText.isEmpty else {
             return String(localized: "No results found")
         }
@@ -354,8 +473,9 @@ struct HistoryView<Header: View>: View {
 
     // MARK: - Card List
 
-    /// Loaded items grouped by calendar day, newest first (items arrive sorted).
+    /// Loaded items grouped by calendar day in list order (items arrive sorted); one headerless group for the other sorts.
     private var dayGroups: [DayGroup] {
+        guard sort.groupsByDay else { return [DayGroup(id: .distantPast, items: displayedTranscriptions)] }
         var groups: [DayGroup] = []
         for transcription in displayedTranscriptions {
             let day = Calendar.current.startOfDay(for: transcription.timestamp)
@@ -373,7 +493,7 @@ struct HistoryView<Header: View>: View {
         let isSelecting = !selectedTranscriptions.isEmpty
 
         ForEach(dayGroups) { group in
-            dayHeader(group)
+            if sort.groupsByDay { dayHeader(group) }
 
             ForEach(Array(group.items.enumerated()), id: \.element.id) { index, transcription in
                 if index > 0 {
@@ -401,6 +521,7 @@ struct HistoryView<Header: View>: View {
                     }
                 )
                 .id(transcription.id)
+                .contextMenu { rowMenu(for: transcription) }
             }
         }
 
@@ -498,12 +619,24 @@ struct HistoryView<Header: View>: View {
 
         do {
             paginationCursor = nil
-            let items = try modelContext.fetch(cursorQueryDescriptor())
-            let page = Array(items.prefix(pageSize))
-            displayedTranscriptions = page
-            countWords(in: page)
-            paginationCursor = page.last.map { PaginationCursor(timestamp: $0.timestamp, id: $0.id) }
-            hasMoreContent = items.count > pageSize
+            if sort == .newest {
+                sortedMatches = nil
+                let items = try modelContext.fetch(cursorQueryDescriptor())
+                let page = Array(items.prefix(pageSize))
+                displayedTranscriptions = page
+                countWords(in: page)
+                paginationCursor = page.last.map { HistoryQuery.Cursor(timestamp: $0.timestamp, id: $0.id) }
+                hasMoreContent = items.count > pageSize
+            } else {
+                let matches = try modelContext.fetch(
+                    FetchDescriptor<Transcription>(predicate: HistoryQuery.predicate(search: searchText, filter: filter)))
+                let ordered = HistoryQuery.sorted(matches, by: sort)
+                sortedMatches = ordered
+                let page = Array(ordered.prefix(pageSize))
+                displayedTranscriptions = page
+                countWords(in: page)
+                hasMoreContent = ordered.count > pageSize
+            }
         } catch {
             print("Error loading transcriptions: \(error)")
         }
@@ -511,7 +644,16 @@ struct HistoryView<Header: View>: View {
 
     @MainActor
     private func loadMoreContent() async {
-        guard !isLoading, hasMoreContent, let paginationCursor else { return }
+        guard !isLoading, hasMoreContent else { return }
+
+        if let sortedMatches {
+            let page = Array(sortedMatches.dropFirst(displayedTranscriptions.count).prefix(pageSize))
+            displayedTranscriptions.append(contentsOf: page)
+            countWords(in: page)
+            hasMoreContent = displayedTranscriptions.count < sortedMatches.count
+            return
+        }
+        guard let paginationCursor else { return }
 
         isLoading = true
         defer { isLoading = false }
@@ -521,7 +663,7 @@ struct HistoryView<Header: View>: View {
             let page = Array(items.prefix(pageSize))
             displayedTranscriptions.append(contentsOf: page)
             countWords(in: page)
-            self.paginationCursor = page.last.map { PaginationCursor(timestamp: $0.timestamp, id: $0.id) }
+            self.paginationCursor = page.last.map { HistoryQuery.Cursor(timestamp: $0.timestamp, id: $0.id) }
             hasMoreContent = items.count > pageSize
         } catch {
             print("Error loading more transcriptions: \(error)")
@@ -538,8 +680,96 @@ struct HistoryView<Header: View>: View {
     private func resetPagination() {
         displayedTranscriptions = []
         paginationCursor = nil
+        sortedMatches = nil
         hasMoreContent = true
         isLoading = false
+    }
+
+    // MARK: - Row Menu
+
+    @ViewBuilder
+    private func rowMenu(for transcription: Transcription) -> some View {
+        Button("Copy") { _ = ClipboardManager.copyToClipboard(transcription.preferredHistoryText) }
+        if let enhanced = transcription.enhancedText, !enhanced.isEmpty, enhanced != transcription.text {
+            Button("Copy Original") { _ = ClipboardManager.copyToClipboard(transcription.text) }
+        }
+        Button("Paste Again") { pasteAgain(transcription) }
+        Button("Retranscribe") { retranscribe(transcription) }
+        Button("Show Info") { openPanel(mode: .info, transcriptionID: transcription.id) }
+        Divider()
+        Button("Delete", role: .destructive) { requestDeletion(of: transcription) }
+    }
+
+    /// Goes back to the app the dictation was made in (or, for older rows, hides Yap so the previous app is
+    /// frontmost again), then pastes.
+    private func pasteAgain(_ transcription: Transcription) {
+        let text = transcription.preferredHistoryText
+        if let bundleID = transcription.sourceAppBundleID,
+            let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first
+        {
+            app.activate(options: [.activateIgnoringOtherApps])
+        } else {
+            NSApp.hide(nil)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            CursorPaster.pasteAtCursor(text)
+        }
+    }
+
+    /// The same action as the retranscribe button in the audio player: the current mode and its model.
+    private func retranscribe(_ transcription: Transcription) {
+        guard let urlString = transcription.audioFileURL, let url = URL(string: urlString),
+            FileManager.default.fileExists(atPath: url.path)
+        else {
+            NotificationManager.shared.showNotification(
+                title: String(localized: "Cannot retry: Audio file not found"), type: .error)
+            return
+        }
+        guard let mode = ModeManager.shared.currentEffectiveConfiguration else {
+            NotificationManager.shared.showNotification(title: String(localized: "No mode selected"), type: .error)
+            return
+        }
+        guard
+            let configuration = ModeRuntimeResolver.transcriptionConfiguration(
+                mode: mode, transcriptionModelManager: engine.transcriptionModelManager)
+        else {
+            NotificationManager.shared.showNotification(
+                title: String(localized: "No transcription model selected"), type: .error)
+            return
+        }
+        let service = AudioTranscriptionService(modelContext: modelContext, engine: engine)
+        Task { @MainActor in
+            do {
+                let result = try await service.retranscribeAudio(from: url, using: configuration.model, mode: mode)
+                if let failure = result.enhancementFailure {
+                    NotificationManager.shared.showNotification(
+                        title: EnhancementFailureFormatter.transcriptionSavedMessage(description: failure),
+                        type: .warning)
+                } else {
+                    NotificationManager.shared.showNotification(
+                        title: String(localized: "Retranscription successful"), type: .success)
+                }
+            } catch {
+                NotificationManager.shared.showNotification(
+                    title: error.localizedDescription.isEmpty
+                        ? String(localized: "Retranscription failed") : error.localizedDescription,
+                    type: .error)
+            }
+        }
+    }
+
+    /// Opens the usual delete confirmation. Right-clicking a row outside the selection targets just that row.
+    private func requestDeletion(of transcription: Transcription) {
+        if !selectedTranscriptions.contains(transcription) {
+            selectedTranscriptions = [transcription]
+        }
+        showDeleteConfirmation = true
+    }
+
+    private func deleteKeyboardRow() -> KeyPress.Result {
+        guard let row = keyboardRow else { return .ignored }
+        requestDeletion(of: row)
+        return .handled
     }
 
     // MARK: - Selection & Deletion
@@ -611,14 +841,8 @@ struct HistoryView<Header: View>: View {
 
     private func selectAllTranscriptions() async {
         do {
-            var allDescriptor = FetchDescriptor<Transcription>()
-
-            if !searchText.isEmpty {
-                allDescriptor.predicate = #Predicate<Transcription> { transcription in
-                    transcription.text.localizedStandardContains(searchText)
-                        || (transcription.enhancedText?.localizedStandardContains(searchText) ?? false)
-                }
-            }
+            var allDescriptor = FetchDescriptor<Transcription>(
+                predicate: HistoryQuery.predicate(search: searchText, filter: filter))
 
             allDescriptor.propertiesToFetch = [\.id]
             let allTranscriptions = try modelContext.fetch(allDescriptor)
@@ -690,6 +914,7 @@ struct HistoryCardRow: View {
 
     private var metaText: String {
         var parts: [String] = []
+        if let appName = transcription.sourceAppName, !appName.isEmpty { parts.append(appName) }
         if transcription.duration > 0 {
             parts.append(Duration.seconds(transcription.duration).formatted(.time(pattern: .minuteSecond)))
         }
@@ -703,6 +928,7 @@ struct HistoryCardRow: View {
     private var accessibilitySummary: String {
         var parts = [transcription.timestamp.formatted(date: .abbreviated, time: .shortened)]
         if let modeName = transcription.modeName, !modeName.isEmpty { parts.append(modeName) }
+        if let appName = transcription.sourceAppName, !appName.isEmpty { parts.append(appName) }
         switch transcription.transcriptionStatus {
         case TranscriptionStatus.failed.rawValue: parts.append(String(localized: "Failed"))
         case TranscriptionStatus.canceled.rawValue: parts.append(String(localized: "Canceled"))
@@ -832,11 +1058,11 @@ struct HistoryCardRow: View {
     private var statusBadge: some View {
         switch transcription.transcriptionStatus {
         case TranscriptionStatus.failed.rawValue:
-            Label("Failed", systemImage: "exclamationmark.triangle")
+            Label("Failed", yapIcon: "exclamationmark.triangle")
                 .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Status.error.opacity(0.85))
         case TranscriptionStatus.canceled.rawValue:
-            Label("Canceled", systemImage: "xmark.circle")
+            Label("Canceled", yapIcon: "xmark.circle")
                 .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Text.muted)
         default:
@@ -848,7 +1074,7 @@ struct HistoryCardRow: View {
         systemName: String, help: LocalizedStringKey, action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Image(systemName: systemName)
+            Image(yapIcon: systemName)
                 .font(AppTheme.font(.caption, .medium))
                 .foregroundStyle(AppTheme.Text.secondary)
                 .frame(width: 24, height: 22)
@@ -925,7 +1151,7 @@ struct HistoryCardRow: View {
                 HStack {
                     Spacer()
                     Button(action: onShowInfo) {
-                        Image(systemName: "info.circle")
+                        Image(yapIcon: "info.circle")
                             .font(AppTheme.font(.callout, .medium))
                             .foregroundColor(.secondary)
                     }
@@ -943,7 +1169,7 @@ struct CircularCheckboxStyle: ToggleStyle {
         Button(action: {
             configuration.isOn.toggle()
         }) {
-            Image(systemName: configuration.isOn ? "checkmark.circle.fill" : "circle")
+            Image(yapIcon: configuration.isOn ? "checkmark.circle.fill" : "circle")
                 .symbolRenderingMode(.hierarchical)
                 .foregroundColor(configuration.isOn ? AppTheme.Selection.foreground : .secondary)
                 .font(AppTheme.font(.headline))

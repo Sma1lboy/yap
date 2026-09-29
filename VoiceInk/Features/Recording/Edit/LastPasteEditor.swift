@@ -16,6 +16,8 @@ final class LastPasteEditor {
         let target: AXUIElement
         let range: NSRange
         let text: String
+        /// What the paste replaced (the selection at paste time). Empty when it only inserted.
+        let replaced: String
     }
 
     enum Failure: Error, Equatable {
@@ -44,7 +46,7 @@ final class LastPasteEditor {
     private var captureTask: Task<Void, Never>?
 
     /// CursorPaster, once ⌘V was posted. The field is read a moment later, when the paste has landed.
-    func pasteDidFinish(text: String, processID: pid_t?) {
+    func pasteDidFinish(text: String, processID: pid_t?, replacing replaced: String = "") {
         record = nil
         captureTask?.cancel()
         guard let processID, !text.isEmpty, AXIsProcessTrusted(),
@@ -53,7 +55,7 @@ final class LastPasteEditor {
         captureTask = Task {
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
-            let captured = await Task.detached { Self.capture(text: text, processID: processID) }.value
+            let captured = await Task.detached { Self.capture(text: text, processID: processID, replaced: replaced) }.value
             guard !Task.isCancelled else { return }
             record = captured
             if captured == nil { logger.notice("Last paste not located; undo and rewrite won't be offered for it") }
@@ -62,15 +64,22 @@ final class LastPasteEditor {
 
     // MARK: - Undo
 
-    /// Removes the last paste. Shortcut, or a dictation that is only a scratch phrase ("scratch that", 删掉刚才那句).
+    /// Takes the last paste back: puts the text it replaced there again, or just deletes it when it replaced nothing.
+    /// Shortcut, or a dictation that is only a scratch phrase ("scratch that", 删掉刚才那句).
     func undoLastPaste() async {
         switch await selectLastPaste() {
         case .failure(let failure):
             notify(failure)
         case .success(let record):
-            CursorPaster.performDeleteKey()
-            self.record = nil
-            logger.notice("Last paste removed (\(record.text.count, privacy: .public) characters)")
+            if record.replaced.isEmpty {
+                CursorPaster.performDeleteKey()
+                self.record = nil
+                logger.notice("Last paste removed (\(record.text.count, privacy: .public) characters)")
+            } else {
+                // Becomes the new last paste, so undoing again brings the rewrite back.
+                _ = await CursorPaster.startPasteAtCursor(record.replaced).value
+                logger.notice("Last paste replaced by the text it had replaced (\(record.replaced.count, privacy: .public) characters)")
+            }
         }
     }
 
@@ -182,7 +191,24 @@ final class LastPasteEditor {
         return .success(record)
     }
 
-    nonisolated private static func capture(text: String, processID: pid_t) -> Record? {
+    /// The selected text in the focused field of `processID`, read just before a paste replaces it.
+    nonisolated static func selectedText(processID: pid_t) -> String {
+        let reader = AutoLearnAXTextReader()
+        let appElement = AXUIElementCreateApplication(processID)
+        defer { reader.restoreWebAccessibility(processID: processID, appElement: appElement) }
+        for reading in reader.focusedReadings(processID: processID) {
+            if let selected = selectedText(in: reading.fieldText, selection: reading.selection) { return selected }
+        }
+        return ""
+    }
+
+    nonisolated static func selectedText(in field: String, selection: NSRange?) -> String? {
+        let field = field as NSString
+        guard let selection, selection.length > 0, NSMaxRange(selection) <= field.length else { return nil }
+        return field.substring(with: selection)
+    }
+
+    nonisolated private static func capture(text: String, processID: pid_t, replaced: String) -> Record? {
         let reader = AutoLearnAXTextReader()
         let appElement = AXUIElementCreateApplication(processID)
         defer { reader.restoreWebAccessibility(processID: processID, appElement: appElement) }
@@ -190,7 +216,7 @@ final class LastPasteEditor {
             if let range = pastedRange(of: text, selection: reading.selection, in: reading.fieldText) {
                 return Record(
                     processID: processID, appElement: reading.appElement, target: reading.targetElement, range: range,
-                    text: text)
+                    text: text, replaced: replaced)
             }
         }
         return nil
@@ -228,6 +254,9 @@ final class LastPasteEditor {
 
             assert(isScratchPhrase("Scratch that.") && isScratchPhrase("删掉刚才那句。") && isScratchPhrase(" delete that! "))
             assert(!isScratchPhrase("scratch that part about Friday") && !isScratchPhrase("删掉刚才那句里的错字"))
+            assert(selectedText(in: "Hi 你好 there", selection: NSRange(location: 3, length: 2)) == "你好")
+            assert(selectedText(in: "Hi", selection: NSRange(location: 1, length: 0)) == nil, "cursor only: nothing replaced")
+            assert(selectedText(in: "Hi", selection: NSRange(location: 1, length: 5)) == nil && selectedText(in: "Hi", selection: nil) == nil)
             assert(rewriteInput(text: "a", instruction: "b") == "<TEXT>\na\n</TEXT>\n<INSTRUCTION>\nb\n</INSTRUCTION>")
         }
     }

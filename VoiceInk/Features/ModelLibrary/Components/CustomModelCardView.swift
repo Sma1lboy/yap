@@ -36,7 +36,7 @@ struct CustomModelCardView: View {
                 Button {
                     editAction(model)
                 } label: {
-                    Label("API key needed", systemImage: "key")
+                    Label("API key needed", yapIcon: "key")
                         .font(AppTheme.font(.caption, .medium))
                         .foregroundColor(AppTheme.Status.warningStrong)
                 }
@@ -50,19 +50,19 @@ struct CustomModelCardView: View {
 
     private var metadataSection: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
-            Label(model.modelName, systemImage: "cube")
+            Label(model.modelName, yapIcon: "cube")
                 .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
 
             // Language
-            Label(model.language, systemImage: "globe")
+            Label(model.language, yapIcon: "globe")
                 .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
 
             // OpenAI Compatible
-            Label("OpenAI Compatible", systemImage: "checkmark.seal")
+            Label("OpenAI Compatible", yapIcon: "checkmark.seal")
                 .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
@@ -87,16 +87,16 @@ struct CustomModelCardView: View {
                 Button {
                     editAction(model)
                 } label: {
-                    Label("Edit Model", systemImage: "pencil")
+                    Label("Edit Model", yapIcon: "pencil")
                 }
 
                 Button(role: .destructive) {
                     deleteAction()
                 } label: {
-                    Label("Delete Model", systemImage: "trash")
+                    Label("Delete Model", yapIcon: "trash")
                 }
             } label: {
-                Image(systemName: "ellipsis.circle")
+                Image(yapIcon: "ellipsis.circle")
                     .font(AppTheme.font(.callout))
             }
             .menuStyle(.borderlessButton)

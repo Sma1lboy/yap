@@ -65,7 +65,7 @@ struct MenuBarView: View {
                 } label: {
                     Label(
                         String(format: String(localized: "Low balance (%@) — Add Funds"), YapCloud.formatUSD(micros: balance)),
-                        systemImage: "exclamationmark.triangle.fill")
+                        yapIcon: "exclamationmark.triangle.fill")
                 }
 
                 Divider()
@@ -98,11 +98,11 @@ struct MenuBarView: View {
                 }
             } label: {
                 HStack {
-                    Image(systemName: "sparkles.square.fill.on.square")
+                    Image(yapIcon: "sparkles.square.fill.on.square")
                         .font(AppTheme.font(.caption, .medium))
                     let activeMode = modeManager.currentEffectiveConfiguration
                     Text(String(format: String(localized: "Mode: %@"), activeMode?.name ?? String(localized: "None")))
-                    Image(systemName: "chevron.up.chevron.down")
+                    Image(yapIcon: "chevron.up.chevron.down")
                         .font(AppTheme.font(.micro))
                 }
             }
@@ -124,13 +124,15 @@ struct MenuBarView: View {
                 }
             } label: {
                 HStack {
-                    Image(systemName: "mic.fill")
+                    Image(yapIcon: "mic.fill")
                         .font(AppTheme.font(.caption, .medium))
                     Text("Audio Input")
-                    Image(systemName: "chevron.up.chevron.down")
+                    Image(yapIcon: "chevron.up.chevron.down")
                         .font(AppTheme.font(.micro))
                 }
             }
+
+            languageMenu
 
             Divider()
 
@@ -179,6 +181,48 @@ struct MenuBarView: View {
                 NSApplication.shared.terminate(nil)
             }
         }
+    }
+
+    /// Dictation reads its language from the active mode (`ModeRuntimeResolver`), so this edits that mode.
+    @ViewBuilder
+    private var languageMenu: some View {
+        let mode = modeManager.currentEffectiveConfiguration
+        let model = mode.flatMap {
+            TranscriptionModelRegistry.model(
+                forSelectionKey: $0.selectedTranscriptionModelName ?? "",
+                in: transcriptionModelManager.allAvailableModels)
+        }
+        if let mode, let model {
+            let languages = TranscriptionLanguageSupport.languages(for: model, realtimeEnabled: mode.isRealtimeTranscriptionEnabled)
+            let current = TranscriptionLanguageSupport.validLanguageOrFallback(
+                mode.selectedLanguage, for: model, realtimeEnabled: mode.isRealtimeTranscriptionEnabled)
+            Menu {
+                ForEach(TranscriptionLanguageSupport.sortedForMenu(languages), id: \.code) { language in
+                    Toggle(
+                        language.name,
+                        isOn: Binding(
+                            get: { current == language.code },
+                            set: { _ in setLanguage(language.code) }
+                        )
+                    )
+                }
+            } label: {
+                HStack {
+                    Image(yapIcon: "globe")
+                        .font(AppTheme.font(.caption, .medium))
+                    Text(String(format: String(localized: "Language: %@"), languages[current] ?? current))
+                    Image(yapIcon: "chevron.up.chevron.down")
+                        .font(AppTheme.font(.micro))
+                }
+            }
+            .disabled(languages.count < 2)
+        }
+    }
+
+    private func setLanguage(_ code: String) {
+        modeManager.updateCurrentEffectiveConfiguration { $0.selectedLanguage = code }
+        NotificationCenter.default.post(name: .languageDidChange, object: nil)
+        NotificationCenter.default.post(name: .AppSettingsDidChange, object: nil)
     }
 
     private func showMainWindow() {

@@ -862,7 +862,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
     ) -> Transcription {
         let modeMetadata = currentModeMetadata()
 
-        return Transcription(
+        let transcription = Transcription(
             text: text,
             duration: duration,
             audioFileURL: audioURL.absoluteString,
@@ -873,6 +873,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
             modeEmoji: modeMetadata.emoji,
             transcriptionStatus: transcriptionStatus
         )
+        transcription.setSourceApp(from: activeRecordingContextStore?.snapshot)
+        return transcription
     }
 
     private func currentModeMetadata() -> (name: String?, emoji: String?) {

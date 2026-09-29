@@ -69,7 +69,7 @@ struct ExpandableSettingsRow<Content: View>: View {
 
                 // A Button so the options are reachable with the keyboard and VoiceOver; clicking the row works too.
                 Button(action: toggleExpanded) {
-                    Image(systemName: "chevron.right")
+                    Image(yapIcon: "chevron.right")
                         .font(AppTheme.font(.footnote, .semibold))
                         .foregroundColor(.secondary)
                         .rotationEffect(.degrees(rowIsEnabled && isExpanded ? 90 : 0))

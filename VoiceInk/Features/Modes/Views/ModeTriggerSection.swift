@@ -83,7 +83,7 @@ struct ModeTriggerSection: View {
 
     private var emptyTriggerState: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: "circle.dashed")
+            Image(yapIcon: "circle.dashed")
                 .font(AppTheme.font(.body, .medium))
                 .foregroundStyle(.secondary)
 

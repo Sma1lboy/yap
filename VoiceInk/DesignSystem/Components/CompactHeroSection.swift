@@ -8,7 +8,7 @@ struct CompactHeroSection: View {
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.x4) {
-            Image(systemName: icon)
+            Image(yapIcon: icon)
                 .font(AppTheme.font(.display))
                 .foregroundStyle(AppTheme.Status.infoStrong)
                 .symbolRenderingMode(.hierarchical)

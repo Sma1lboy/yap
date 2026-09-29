@@ -74,7 +74,7 @@ struct DictionarySelectionMark: View {
     let isSelected: Bool
 
     var body: some View {
-        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+        Image(yapIcon: isSelected ? "checkmark.circle.fill" : "circle")
             .foregroundStyle(isSelected ? AppTheme.Accent.text : AppTheme.Text.muted)
             .accessibilityLabel(isSelected ? Text("Selected") : Text("Not selected"))
     }

@@ -7,7 +7,7 @@ struct DashboardIconGlyph: View {
     var frameSize: CGFloat = 20
 
     var body: some View {
-        Image(systemName: systemName)
+        Image(yapIcon: systemName)
             .font(.system(size: size, weight: .semibold))  // design-exempt: icon glyph sized to its container
             .symbolRenderingMode(.monochrome)
             .foregroundStyle(color)
