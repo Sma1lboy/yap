@@ -8,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         menuBarManager?.applyActivationPolicy()
         YapCloud.shared.scheduleBalanceRefresh()
+        DispatchQueue.main.async { MoveToApplicationsPrompt.showIfNeeded() }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

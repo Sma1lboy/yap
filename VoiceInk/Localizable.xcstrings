@@ -15146,6 +15146,28 @@
         }
       }
     },
+    "Hello Chris, could we move our meeting from Tuesday morning to Wednesday afternoon? Please confirm when you have a moment. Thanks, Jamie." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hallo Chris, könnten wir unser Meeting von Dienstagvormittag auf Mittwochnachmittag verschieben? Bitte bestätige, sobald du einen Moment Zeit hast. Danke, Jamie."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bonjour Chris, pourrions-nous déplacer notre réunion de mardi matin à mercredi après-midi ? Merci de confirmer dès que vous avez un moment. Merci, Jamie."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chris 你好，我们能把周二上午的会改到周三下午吗？方便时请回复确认。谢谢，Jamie。"
+          }
+        }
+      }
+    },
     "Help" : {
       "localizations" : {
         "de" : {
@@ -18567,6 +18589,28 @@
         }
       }
     },
+    "Move Yap to Applications" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap in „Programme“ verschieben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer Yap dans Applications"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移动 Yap 到“应用程序”"
+          }
+        }
+      }
+    },
     "Move down" : {
       "localizations" : {
         "de" : {
@@ -20628,6 +20672,28 @@
         }
       }
     },
+    "Not Now" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht jetzt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以后再说"
+          }
+        }
+      }
+    },
     "Not Set" : {
       "localizations" : {
         "de" : {
@@ -21242,6 +21308,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开账户"
+          }
+        }
+      }
+    },
+    "Open Applications Folder" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordner „Programme“ öffnen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le dossier Applications"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开“应用程序”文件夹"
           }
         }
       }
@@ -22522,6 +22610,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请重新启动 App。如果问题仍然存在，请联系支持人员。"
+          }
+        }
+      }
+    },
+    "Please share the meeting notes before lunch." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte teile die Besprechungsnotizen vor dem Mittagessen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merci de partager le compte rendu de la réunion avant le déjeuner."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在午饭前把会议纪要发给大家。"
           }
         }
       }
@@ -27881,6 +27991,28 @@
         }
       }
     },
+    "Speak — the bar next to the highlighted microphone should move." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprich einfach los – der Balken neben dem markierten Mikrofon sollte sich bewegen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parlez : la barre à côté du micro en surbrillance doit bouger."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "说句话试试，高亮麦克风旁边的条应该会动。"
+          }
+        }
+      }
+    },
     "Speaking pace" : {
       "localizations" : {
         "de" : {
@@ -32403,6 +32535,28 @@
         }
       }
     },
+    "Um, tell the team we will meet on Thursday. Actually, no, Friday morning works better." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Äh, sag dem Team, dass wir uns am Donnerstag treffen. Nein, eigentlich passt Freitagvormittag besser."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Euh, dis à l'équipe qu'on se retrouve jeudi. Non, en fait, vendredi matin est mieux."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "嗯……告诉团队我们周四开会。不对，周五上午更合适。"
+          }
+        }
+      }
+    },
     "Unavailable" : {
       "localizations" : {
         "de" : {
@@ -34580,6 +34734,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 会自动识别你正在处理的内容，并选用你偏好的设置。你随时可以通过编辑或创建新模式来进行配置。"
+          }
+        }
+      }
+    },
+    "Yap can only update itself from the Applications folder. Drag Yap into it, then open Yap from there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap kann sich nur aus dem Ordner „Programme“ selbst aktualisieren. Ziehe Yap dorthin und öffne es von dort."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap ne peut se mettre à jour que depuis le dossier Applications. Faites-y glisser Yap, puis ouvrez-le depuis là."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 只有放在“应用程序”文件夹里才能自动更新。把 Yap 拖进去，再从那里打开。"
           }
         }
       }
