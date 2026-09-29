@@ -74,7 +74,7 @@
         <span lang="en">Star on GitHub</span><span lang="zh-Hans">在 GitHub 上 Star</span><span class="gh-stars" data-stars hidden></span>
       </a>
     </div>
-    <p class="hero-meta"><span lang="en">GPL-3.0 · a fork of VoiceInk · macOS 15 or later</span><span lang="zh-Hans">GPL-3.0 · fork 自 VoiceInk · 需要 macOS 15 或更高版本</span></p>
+    <p class="hero-meta"><span lang="en">GPL-3.0 · a fork of VoiceInk · <span data-dl="en"></span>macOS 15 or later · Apple silicon</span><span lang="zh-Hans">GPL-3.0 · fork 自 VoiceInk · <span data-dl="zh"></span>需要 macOS 15 或更高版本 · Apple 芯片</span></p>
   </div>
   <!-- The ribbon: raw speech (filler struck out) flows in along one curve, the cleaned sentence leaves on a dark band.
        Both are SVG textPaths whose startOffset advances each frame; the pill sits over the point where they meet.
@@ -113,7 +113,9 @@
       <p class="eyebrow"><span lang="en">Install, or build it yourself</span><span lang="zh-Hans">安装，或者自己编译</span></p>
       <h2><span lang="en">Homebrew, a download, or the source.</span><span lang="zh-Hans">Homebrew、直接下载，或者从源码编译。</span></h2>
       <p class="fine" lang="en">Homebrew installs Yap and keeps it updated; the app also updates itself. Building from source needs Xcode: <code>make local</code> puts <code>Yap.app</code> in your Downloads folder. <a href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip">Downloading the zip</a> works too.</p>
+      <p class="fine" lang="en"><span data-dl="en"></span>macOS 15 or later · Apple silicon</p>
       <p class="fine" lang="zh-Hans">Homebrew 负责安装和更新，app 自己也会检查更新。从源码编译需要 Xcode：<code>make local</code> 会把 <code>Yap.app</code> 放进“下载”文件夹。也可以<a href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip">直接下载 zip</a>也行。</p>
+      <p class="fine" lang="zh-Hans"><span data-dl="zh"></span>需要 macOS 15 或更高版本 · Apple 芯片</p>
     </div>
     <div class="stack">
       <div>
@@ -381,6 +383,20 @@ make local</pre></div>
         if (!repo || typeof repo.stargazers_count !== "number" || repo.stargazers_count < 10) return;
         var count = repo.stargazers_count >= 1000 ? (repo.stargazers_count / 1000).toFixed(1) + "k" : String(repo.stargazers_count);
         document.querySelectorAll("[data-stars]").forEach(function (el) { el.textContent = count; el.hidden = false; });
+      }).catch(function () {});
+  }
+
+  // ---- Latest version and zip size (public API). Without an answer the static line keeps only the requirements, so no stale number is shown. ----
+  if (window.fetch) {
+    fetch("https://api.github.com/repos/Sma1lboy/yap/releases/latest").then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (release) {
+        var tag = release && /^v(\d+\.\d+\.\d+)$/.exec(release.tag_name || "");
+        var zip = release && (release.assets || []).filter(function (a) { return a.name === "Yap.zip"; })[0];
+        if (!tag || !zip || typeof zip.size !== "number") return;
+        var size = (zip.size / 1e6).toFixed(1) + " MB";
+        document.querySelectorAll("[data-dl]").forEach(function (el) {
+          el.textContent = (el.getAttribute("data-dl") === "zh" ? "版本 " : "Version ") + tag[1] + " · " + size + " · ";
+        });
       }).catch(function () {});
   }
 
