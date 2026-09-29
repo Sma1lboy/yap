@@ -9654,6 +9654,28 @@
         }
       }
     },
+    "Couldn't export subtitles" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untertitel konnten nicht exportiert werden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d'exporter les sous-titres"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法导出字幕"
+          }
+        }
+      }
+    },
     "Couldn't load devices: %@" : {
       "localizations" : {
         "de" : {
@@ -13876,6 +13898,28 @@
         }
       }
     },
+    "Export Subtitles" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untertitel exportieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter les sous-titres"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出字幕"
+          }
+        }
+      }
+    },
     "Export Successful" : {
       "localizations" : {
         "de" : {
@@ -13938,6 +13982,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "导出全部设置，或在导入备份时选择特定类别。"
+          }
+        }
+      }
+    },
+    "Export the transcript with timestamps" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkript mit Zeitstempeln exportieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporter la transcription avec les horodatages"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出带时间轴的转写"
           }
         }
       }
@@ -17558,6 +17624,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "手动添加"
+          }
+        }
+      }
+    },
+    "Markdown with Timestamps (.md)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown mit Zeitstempeln (.md)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown avec horodatages (.md)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "带时间戳的 Markdown（.md）"
           }
         }
       }
@@ -28568,6 +28656,28 @@
         }
       }
     },
+    "SubRip Subtitles (.srt)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SubRip-Untertitel (.srt)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sous-titres SubRip (.srt)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SubRip 字幕（.srt）"
+          }
+        }
+      }
+    },
     "Suggested" : {
       "localizations" : {
         "de" : {
@@ -33536,6 +33646,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "等待付款完成…"
+          }
+        }
+      }
+    },
+    "WebVTT Subtitles (.vtt)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WebVTT-Untertitel (.vtt)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sous-titres WebVTT (.vtt)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WebVTT 字幕（.vtt）"
           }
         }
       }

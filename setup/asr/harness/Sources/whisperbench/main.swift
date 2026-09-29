@@ -1,5 +1,5 @@
 // usage: whisperbench <ggml model> <silero vad model> <lang|auto> <prompt> <16k mono wav>...
-// -> JSON lines {file, text, secs}; load time on stderr. Runs the app's own LibWhisper.swift (VAD on, like the
+// -> JSON lines {file, text, secs, segments: [[start, end, text]]}; load time on stderr. Runs the app's own LibWhisper.swift (VAD on, like the
 // app's default), so windowing, language detection and prompt handling are the shipped code.
 import AVFoundation
 import Foundation
@@ -13,7 +13,8 @@ func samples(_ path: String) throws -> [Float] {
 }
 
 let a = CommandLine.arguments
-UserDefaults.standard.set(true, forKey: "IsVADEnabled")
+// WHISPERBENCH_VAD=0: the app with VAD off (windows tile the whole file, silence kept).
+UserDefaults.standard.set(ProcessInfo.processInfo.environment["WHISPERBENCH_VAD"] != "0", forKey: "IsVADEnabled")
 VADModelManager.shared.path = a[2]
 let t0 = Date()
 let context = try await WhisperContext.createContext(path: a[1])
@@ -72,7 +73,10 @@ for p in a[5...] {
     let t = Date()
     if live == nil { _ = await context.fullTranscribe(samples: pcm) }
     let text = await context.getTranscription().trimmingCharacters(in: .whitespacesAndNewlines)
-    let row: [String: Any] = ["file": p, "text": text, "secs": (extra["final"] as? Double) ?? Date().timeIntervalSince(t)]
+    // Timed segments (seconds in the whole file, window offsets added back), as subtitle export sees them.
+    let segments = TimedSegments.tidy(await context.getSegments()).map { [$0.start, $0.end, $0.text] as [Any] }
+    let row: [String: Any] = ["file": p, "text": text, "secs": (extra["final"] as? Double) ?? Date().timeIntervalSince(t),
+                              "segments": segments]
         .merging(extra) { a, _ in a }
     print(String(data: try JSONSerialization.data(withJSONObject: row), encoding: .utf8)!)
 }

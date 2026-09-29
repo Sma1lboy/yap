@@ -32,10 +32,14 @@ actor WhisperContext {
     }
 
     private var transcription = ""
+    /// This transcription's segments, in seconds from the start of the recording (windows and language
+    /// pieces are decoded separately; their offsets are added back).
+    private var segments: [TimedSegment] = []
 
     func fullTranscribe(samples: [Float]) -> Bool {
         guard let context = context else { return false }
         transcription = ""
+        segments = []
         whisper_reset_timings(context)
 
         let isVADEnabled = UserDefaults.standard.bool(forKey: "IsVADEnabled")
@@ -82,6 +86,7 @@ actor WhisperContext {
                 guard decode(samples[run.range], vad: false, language: run.language) else { return false }
             }
         }
+        segments = TimedSegments.snapToSpeech(segments, speech: speech)
         return true
     }
 
@@ -222,7 +227,14 @@ actor WhisperContext {
 
         if success {
             for i in 0..<whisper_full_n_segments(context) {
-                transcription += String(cString: whisper_full_get_segment_text(context, i))
+                let text = String(cString: whisper_full_get_segment_text(context, i))
+                transcription += text
+                // Slices keep the recording's indices, so startIndex is this slice's offset. With whisper's own
+                // VAD (the whole recording in one call) times are already mapped back to the original audio.
+                segments.append(
+                    TimedSegments.fromWhisper(
+                        t0: whisper_full_get_segment_t0(context, i), t1: whisper_full_get_segment_t1(context, i),
+                        text: text, offsetSamples: samples.startIndex, sliceSamples: samples.count))
             }
         }
         return success
@@ -334,6 +346,10 @@ actor WhisperContext {
 
     func getTranscription() -> String {
         transcription
+    }
+
+    func getSegments() -> [TimedSegment] {
+        segments
     }
 
     static func createContext(path: String) async throws -> WhisperContext {

@@ -177,6 +177,15 @@ class AudioTranscriptionManager: ObservableObject {
                 context: transcriptionConfiguration.requestContext
             )
             let transcriptionDuration = Date().timeIntervalSince(transcriptionStart)
+            // Local Whisper also gives timed segments; they get the same filter and dictionary replacements as
+            // the text (not paragraph formatting or AI cleanup, which can't keep the timing).
+            let segments =
+                currentModel.provider == .whisper
+                ? TimedSegments.tidy(serviceRegistry.localTranscriptionService.lastSegments) { segmentText in
+                    WordReplacementService.shared.applyReplacements(
+                        to: TranscriptionOutputFilter.filter(segmentText), using: modelContext)
+                }
+                : []
             text = TranscriptionOutputFilter.filter(text)
             text = text.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -262,6 +271,7 @@ class AudioTranscriptionManager: ObservableObject {
                 )
             }
 
+            transcription.segmentsJSON = TimedSegments.encode(segments)
             modelContext.insert(transcription)
             try modelContext.save()
             NotificationCenter.default.post(name: .transcriptionCreated, object: transcription)

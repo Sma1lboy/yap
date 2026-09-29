@@ -11,6 +11,8 @@ class WhisperTranscriptionService: TranscriptionService {
     private weak var modelProvider: (any WhisperModelProvider)?
     /// Source of dictionary words for the prompt; nil (warmup) means no dictionary.
     private let modelContext: ModelContext?
+    /// The last transcription's timed segments (seconds from the start of the audio), for subtitle export.
+    private(set) var lastSegments: [TimedSegment] = []
 
     init(modelsDirectory: URL, modelProvider: (any WhisperModelProvider)? = nil, modelContext: ModelContext? = nil) {
         self.modelsDirectory = modelsDirectory
@@ -21,6 +23,7 @@ class WhisperTranscriptionService: TranscriptionService {
     func transcribe(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext) async throws
         -> String
     {
+        lastSegments = []
         guard model.provider == .whisper else {
             throw VoiceInkEngineError.modelLoadFailed
         }
@@ -75,6 +78,7 @@ class WhisperTranscriptionService: TranscriptionService {
         }
 
         let text = await whisperContext.getTranscription()
+        lastSegments = await whisperContext.getSegments()
 
         logger.notice("Whisper transcription completed successfully.")
 

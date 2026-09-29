@@ -37,6 +37,12 @@ final class Transcription {
     @Attribute(originalName: "powerModeEmoji")
     var modeEmoji: String?
     var transcriptionStatus: String?
+    /// Timed segments of a transcribed file (JSON `[TimedSegment]`), for subtitle export. Only local Whisper
+    /// transcriptions of imported files have them.
+    var segmentsJSON: String?
+
+    var timedSegments: [TimedSegment] { TimedSegments.decode(segmentsJSON) }
+
     /// nil for a dictation; `meetingKind` for a meeting recording (MeetingRecorder): notes in `enhancedText`,
     /// the timestamped transcript in `text`, the mix of both channels in `audioFileURL`.
     var kind: String?

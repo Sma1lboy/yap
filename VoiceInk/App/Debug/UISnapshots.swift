@@ -146,6 +146,15 @@
                     models: YapCloud.shared.models.map { ($0.id, $0.displayName, $0.id) },
                     selectedID: YapCloud.shared.models.first?.id, onSelect: { _ in })
             }
+            shot("history-row-subtitles", size: CGSize(width: 680, height: 420)) {
+                let item = Transcription(text: MockData.history[0].original, duration: 6)
+                let _ = item.segmentsJSON = TimedSegments.encode(MockData.fileSegments)
+                HistoryCardRow(
+                    transcription: item, wordCount: 14, isExpanded: true, isChecked: false, isSelecting: false,
+                    onToggleExpand: {}, onToggleCheck: {}, onShowInfo: {}
+                )
+                .padding(AppTheme.Spacing.x4)
+            }
             shot("sheet-restore-settings", size: CGSize(width: 440, height: 200)) {
                 OnboardingCloudRestoreSheet { _ in }
             }

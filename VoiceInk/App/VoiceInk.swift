@@ -50,6 +50,7 @@ struct VoiceInkApp: App {
         #if DEBUG
             ReleaseNotes.selfCheck()
             WhisperChunking.selfCheck()
+            TimedSegments.selfCheck()
             PCMResampler.selfCheck()
             RecordedAudioIssue.selfCheck()
             ClipboardManager.selfCheck()
