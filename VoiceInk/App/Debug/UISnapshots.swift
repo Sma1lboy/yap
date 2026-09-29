@@ -10,7 +10,7 @@
     /// window is grown by however much the page's scroll view overflows.
     ///
     /// File names start with their group (page, account, settings, onboarding, sheet, recorder), which the review
-    /// page (scripts/ui-review.py) groups by. The Chinese run (-AppleLanguages (zh-Hans)) renders only `main` shots.
+    /// page (scripts/ui-review.py) groups by. The Chinese runs (-AppleLanguages (zh-Hans) and (zh-Hant)) render only `main` shots.
     @MainActor
     enum UISnapshots {
         static let argument = "--render-snapshots"
@@ -33,8 +33,8 @@
             NSApplication.shared.setActivationPolicy(.prohibited)
             YapCloud.isSnapshotMode = true
             try? FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
-            let isChinese = Bundle.main.preferredLocalizations.first?.hasPrefix("zh") == true
-            let suffix = isChinese ? "-zh" : ""
+            let language = Bundle.main.preferredLocalizations.first ?? "en"
+            let suffix = language == "zh-Hant" ? "-zht" : language.hasPrefix("zh") ? "-zh" : ""
 
             let empty = inMemoryContainer()
             let full = inMemoryContainer()
@@ -64,10 +64,12 @@
             var written: [String] = []
             func shot<V: View>(
                 _ name: String, size: CGSize = size, main: Bool = false, fullPage: Bool = false, titled: Bool = false,
-                @ViewBuilder _ content: () -> V
+                highContrast: Bool = false, @ViewBuilder _ content: () -> V
             ) {
-                guard main || !isChinese else { return }
-                written += render(name + suffix, size: size, fullPage: fullPage, titled: titled) {
+                guard main || suffix.isEmpty else { return }
+                written += render(
+                    name + suffix, size: size, fullPage: fullPage, titled: titled, highContrast: highContrast
+                ) {
                     app.environment(content())
                 }
             }
@@ -93,6 +95,19 @@
             WordReplacementView.snapshotSelecting = false
             page("settings", .settings)
             page("account", .account)
+
+            // Increase Contrast: the same pages under macOS's high-contrast appearances (borders, secondary text,
+            // selection fill). File names end in -contrast-light / -contrast-dark.
+            DesignTokens.forceIncreasedContrast = true
+            for (name, view) in [("home", ViewType.dashboard), ("settings", .settings), ("dictionary", .dictionary)] {
+                MainWindowNavigation.shared.selectedView = view
+                shot("page-\(name)-contrast", fullPage: true, titled: true, highContrast: true) { ContentView() }
+            }
+            WordReplacementView.snapshotSelecting = true
+            MainWindowNavigation.shared.selectedView = .dictionary
+            shot("page-dictionary-select-contrast", fullPage: true, titled: true, highContrast: true) { ContentView() }
+            WordReplacementView.snapshotSelecting = false
+            DesignTokens.forceIncreasedContrast = false
             // Something the pages above render (likely the mock config sync) resets them; set them again.
             setSnapshotShortcuts()
             MainWindowNavigation.shared.selectedView = .dashboard
@@ -196,6 +211,21 @@
                     stateProvider: app.engine, recorder: app.engine.recorder,
                     assistantSession: app.engine.assistantSession,
                     onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
+            }
+            // The same two with Reduce Motion on: steady level bars, no springs.
+            shot("recorder-mini-reduce-motion", size: CGSize(width: 420, height: 160)) {
+                MiniRecorderView(
+                    stateProvider: app.engine, recorder: app.engine.recorder,
+                    assistantSession: app.engine.assistantSession,
+                    onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
+                .environment(\.reduceMotionOverride, true)
+            }
+            shot("recorder-notch-reduce-motion", size: CGSize(width: 520, height: 160)) {
+                NotchRecorderView(
+                    stateProvider: app.engine, recorder: app.engine.recorder,
+                    assistantSession: app.engine.assistantSession,
+                    onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
+                .environment(\.reduceMotionOverride, true)
             }
             app.engine.recordingState = .idle
             app.engine.partialTranscript = ""
@@ -322,10 +352,13 @@
         }
 
         private static func render<V: View>(
-            _ name: String, size: CGSize = size, fullPage: Bool, titled: Bool = false, @ViewBuilder _ content: () -> V
+            _ name: String, size: CGSize = size, fullPage: Bool, titled: Bool = false, highContrast: Bool = false,
+            @ViewBuilder _ content: () -> V
         ) -> [String] {
-            [NSAppearance.Name.aqua, .darkAqua].map { appearanceName in
-                let isDark = appearanceName == .darkAqua
+            let names: [NSAppearance.Name] =
+                highContrast ? [.accessibilityHighContrastAqua, .accessibilityHighContrastDarkAqua] : [.aqua, .darkAqua]
+            return names.map { appearanceName in
+                let isDark = appearanceName == .darkAqua || appearanceName == .accessibilityHighContrastDarkAqua
                 var (host, window) = layOut(content(), size: size, appearanceName: appearanceName, titled: titled)
                 if fullPage {
                     // Lazy stacks estimate their height, so re-measure after each resize (overflow can turn
@@ -361,7 +394,7 @@
         ) -> (NSView, NSWindow) {
             let host = NSHostingView(
                 rootView: content
-                    .environment(\.colorScheme, appearanceName == .darkAqua ? .dark : .light)
+                    .environment(\.colorScheme, [.darkAqua, .accessibilityHighContrastDarkAqua].contains(appearanceName) ? .dark : .light)
                     .frame(width: size.width, height: size.height)
                     .background(Color(nsColor: .windowBackgroundColor)))
             host.frame = CGRect(origin: .zero, size: size)

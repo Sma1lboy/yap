@@ -55,6 +55,8 @@ struct VoiceInkApp: App {
             MicrophoneLevelProbe.selfCheck()
             MoveToApplicationsPrompt.selfCheck()
             RecordedAudioIssue.selfCheck()
+            VisualizerMotion.selfCheck()
+            DictationAnnouncer.selfCheck()
             RecordingRecovery.selfCheck()
             TranscriptionOutputFilter.selfCheck()
             CancelConfirmation.selfCheck()

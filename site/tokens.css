@@ -104,3 +104,28 @@
   --on-danger: #FFFFFF;
   --shadow-pop: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
+/* Increase Contrast (docs/DESIGN.md, "增强对比度"). */
+@media (prefers-contrast: more) {
+  :root {
+    --border: #74747E;
+    --text-2: #4A4A52;
+    --text-3: #55555D;
+    --accent-subtle: #FFE98A;
+  }
+}
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --border: #8C8C96;
+    --text-2: #C4C4CC;
+    --text-3: #B4B4BC;
+    --accent-subtle: #52461F;
+  }
+}
+@media (prefers-contrast: more) {
+  :root[data-theme="dark"] {
+    --border: #8C8C96;
+    --text-2: #C4C4CC;
+    --text-3: #B4B4BC;
+    --accent-subtle: #52461F;
+  }
+}

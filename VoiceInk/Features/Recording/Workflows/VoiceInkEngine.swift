@@ -99,7 +99,9 @@ class VoiceInkEngine: NSObject, ObservableObject {
         }
     }
 
-    @Published var recordingState: RecordingState = .idle
+    @Published var recordingState: RecordingState = .idle {
+        didSet { DictationAnnouncer.stateChanged(from: oldValue, to: recordingState) }
+    }
     @Published var shouldCancelRecording = false
     /// Set when the state becomes .recording; read only while recording.
     private(set) var recordingStartedAt: Date?

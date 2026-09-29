@@ -33,6 +33,9 @@ final class NotificationManager {
         if type == .error {
             SoundManager.shared.playEscSound()
         }
+        if type == .error || type == .warning {
+            DictationAnnouncer.announce(title)
+        }
 
         let notificationView = AppNotificationView(
             title: title,

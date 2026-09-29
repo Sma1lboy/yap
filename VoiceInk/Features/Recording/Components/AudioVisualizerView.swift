@@ -1,5 +1,37 @@
 import SwiftUI
 
+private struct ReduceMotionOverrideKey: EnvironmentKey { static let defaultValue = false }
+
+extension EnvironmentValues {
+    /// Forces the recorder into its Reduce Motion look (ui-snapshots renders it; the system setting is read-only).
+    var reduceMotionOverride: Bool {
+        get { self[ReduceMotionOverrideKey.self] }
+        set { self[ReduceMotionOverrideKey.self] = newValue }
+    }
+}
+
+/// `@ReducedMotion private var reduceMotion`: the system's Reduce Motion setting, or the override above.
+@propertyWrapper
+struct ReducedMotion: DynamicProperty {
+    @Environment(\.accessibilityReduceMotion) private var system
+    @Environment(\.reduceMotionOverride) private var forced
+    var wrappedValue: Bool { system || forced }
+}
+
+/// Bars follow the audio level; the sine wave is skipped when Reduce Motion is on, so the height depends on the level only.
+enum VisualizerMotion {
+    static func wave(time: Double, phase: Double, reduceMotion: Bool) -> Double {
+        reduceMotion ? 1.0 : sin(time * 8 + phase) * 0.5 + 0.5
+    }
+
+    #if DEBUG
+        static func selfCheck() {
+            assert(wave(time: 0, phase: 0, reduceMotion: true) == wave(time: 3.7, phase: 1.2, reduceMotion: true))
+            assert(wave(time: 0, phase: 0, reduceMotion: false) != wave(time: 0.3, phase: 0, reduceMotion: false))
+        }
+    #endif
+}
+
 struct AudioVisualizer: View {
     let audioMeterProvider: () -> AudioMeter
     let color: Color
@@ -11,6 +43,7 @@ struct AudioVisualizer: View {
     private let minHeight: CGFloat = 4
     private let maxHeight: CGFloat = 28
 
+    @ReducedMotion private var reduceMotion
     private let phases: [Double]
 
     init(audioMeterProvider: @escaping () -> AudioMeter, color: Color, isActive: Bool) {
@@ -21,7 +54,8 @@ struct AudioVisualizer: View {
     }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 0.016)) { context in
+        // Reduce Motion: no travelling wave, just the level, refreshed 4 times a second.
+        TimelineView(.animation(minimumInterval: reduceMotion ? 0.25 : 0.016)) { context in
             let audioMeter = audioMeterProvider()
 
             HStack(spacing: barSpacing) {
@@ -33,7 +67,8 @@ struct AudioVisualizer: View {
                             height: barHeight(
                                 for: index,
                                 at: context.date,
-                                audioMeter: audioMeter
+                                audioMeter: audioMeter,
+                                reduceMotion: reduceMotion
                             )
                         )
                 }
@@ -41,12 +76,12 @@ struct AudioVisualizer: View {
         }
     }
 
-    private func barHeight(for index: Int, at date: Date, audioMeter: AudioMeter) -> CGFloat {
+    private func barHeight(for index: Int, at date: Date, audioMeter: AudioMeter, reduceMotion: Bool) -> CGFloat {
         guard isActive else { return minHeight }
 
         let time = date.timeIntervalSince1970
         let amplitude = max(0, min(1, pow(audioMeter.averagePower, 0.7)))  // boosted for visibility
-        let wave = sin(time * 8 + phases[index]) * 0.5 + 0.5
+        let wave = VisualizerMotion.wave(time: time, phase: phases[index], reduceMotion: reduceMotion)
         let centerDistance = abs(Double(index) - Double(barCount) / 2) / Double(barCount / 2)
         let centerBoost = 1.0 - (centerDistance * 0.4)
 

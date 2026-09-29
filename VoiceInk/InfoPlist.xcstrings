@@ -28,6 +28,12 @@
             "state" : "translated",
             "value" : "Yap"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap"
+          }
         }
       }
     },
@@ -54,6 +60,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap"
@@ -87,6 +99,12 @@
             "state" : "translated",
             "value" : "Fichier audio/vidéo"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音訊/影片檔案"
+          }
         }
       }
     },
@@ -116,6 +134,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap doit interagir avec votre navigateur pour détecter le site Web actuel afin d'appliquer des configurations spécifiques au site Web."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 需要與瀏覽器交互以偵測目前網站，從而應用針對特定網站的設定。"
           }
         }
       }
@@ -147,6 +171,12 @@
             "state" : "translated",
             "value" : "录制会议时，Yap 会录下其他 App 的声音，让通话另一方的发言也进入转写和纪要。"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "錄製會議時，Yap 會錄下其他 App 的聲音，讓通話另一方的發言也進入轉錄和紀要。"
+          }
         }
       }
     },
@@ -173,6 +203,12 @@
           }
         },
         "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ""
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : ""
@@ -207,6 +243,12 @@
             "state" : "translated",
             "value" : "Yap a besoin d'accéder à votre microphone pour enregistrer l'audio à des fins de transcription."
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 需要存取麥克風以錄製音訊用於轉錄。"
+          }
         }
       }
     },
@@ -235,6 +277,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap a besoin d'un accès à l'enregistrement d'écran pour comprendre le contexte de votre écran afin d'améliorer la précision de la transcription."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 需要螢幕錄製權限以理解螢幕上的上下文，提高轉錄準確性。"
           }
         }
       }

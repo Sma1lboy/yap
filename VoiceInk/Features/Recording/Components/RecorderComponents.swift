@@ -38,6 +38,7 @@ struct RecorderToggleButton: View {
 // MARK: - Record Button
 
 struct RecorderRecordButton: View {
+    @ReducedMotion private var reduceMotion
     let recordingState: RecordingState
     let action: () -> Void
 
@@ -84,7 +85,7 @@ struct RecorderRecordButton: View {
         }
         .frame(width: 21, height: 21)
         .contentShape(Circle())
-        .animation(.easeOut(duration: 0.16), value: visualState)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: visualState)
     }
 
     private var colors: StateColors {
@@ -184,6 +185,7 @@ struct RecorderCloseButton: View {
 // MARK: - Processing Indicator
 
 struct ProcessingIndicator: View {
+    @ReducedMotion private var reduceMotion
     @State private var rotation: Double = 0
     let color: Color
 
@@ -194,6 +196,7 @@ struct ProcessingIndicator: View {
             .frame(width: 12, height: 12)
             .rotationEffect(.degrees(rotation))
             .onAppear {
+                guard !reduceMotion else { return }  // a still arc instead of a spinner
                 withAnimation(.linear(duration: 1).repeatForever(autoreverses: false)) {
                     rotation = 360
                 }
@@ -211,6 +214,7 @@ struct ProgressAnimation: View {
     private let dotSize: CGFloat = 3
     private let dotSpacing: CGFloat = 2
 
+    @ReducedMotion private var reduceMotion
     @State private var currentDot = 0
     @State private var timer: Timer?
 
@@ -223,7 +227,7 @@ struct ProgressAnimation: View {
         HStack(spacing: dotSpacing) {
             ForEach(0..<dotCount, id: \.self) { index in
                 RoundedRectangle(cornerRadius: dotSize / 2)
-                    .fill(color.opacity(index <= currentDot ? 0.85 : 0.25))
+                    .fill(color.opacity(reduceMotion || index <= currentDot ? 0.85 : 0.25))
                     .frame(width: dotSize, height: dotSize)
             }
         }
@@ -236,6 +240,7 @@ struct ProgressAnimation: View {
 
     private func startAnimation() {
         timer?.invalidate()
+        guard !reduceMotion else { return }  // all dots lit, no chase
         currentDot = 0
         timer = Timer.scheduledTimer(withTimeInterval: animationSpeed, repeats: true) { _ in
             currentDot = (currentDot + 1) % (dotCount + 2)
@@ -344,6 +349,7 @@ struct LiveTranscriptView: View {
 // MARK: - Recorder Status Display
 
 struct RecorderStatusDisplay: View {
+    @ReducedMotion private var reduceMotion
     let currentState: RecordingState
     let audioMeterProvider: () -> AudioMeter
     let menuBarHeight: CGFloat?
@@ -378,13 +384,14 @@ struct RecorderStatusDisplay: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: currentState)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: currentState)
     }
 }
 
 // MARK: - Assistant Response Panel
 
 struct AssistantPanelView: View {
+    @ReducedMotion private var reduceMotion
     @ObservedObject var session: AssistantSession
     let liveFollowUpText: String
     let onSend: (String) -> Void
@@ -530,7 +537,7 @@ struct AssistantPanelView: View {
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
         DispatchQueue.main.async {
-            withAnimation(.easeOut(duration: 0.18)) {
+            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.18)) {
                 if let last = session.messages.last {
                     proxy.scrollTo(last.id, anchor: .bottom)
                 } else {
