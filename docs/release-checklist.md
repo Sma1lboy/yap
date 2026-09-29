@@ -18,6 +18,7 @@ Run before pushing a `vX.Y.Z` tag. One line per check; note failures in the rele
 - [ ] Languages: switch the app to 简体中文, Deutsch and Français and skim onboarding, the Yap Cloud page and Settings for English leftovers or clipped text.
 - [ ] Update path: install the previous release, update in-app through Sparkle, settings and permissions survive.
 - [ ] Release notes: `docs/releases/X.Y.Z.md` is final and matches what ships.
+- [ ] Site changelog: run `scripts/site-changelog.py` after the notes are final and commit `site/changelog.html` (`--check` fails if it is stale). It deploys with the site on merge to main. Release workers do this on every release.
 
 ### Window chrome (1.2.0: traffic lights and brand header in the sidebar, no title bar)
 
