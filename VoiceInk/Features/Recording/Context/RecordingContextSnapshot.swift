@@ -7,6 +7,8 @@ struct RecordingContextSnapshot {
     var clipboardText: String?
     var screenText: String?
     var cursorContext: CursorContext?
+    var appName: String?
+    var appBundleID: String?
 }
 
 @MainActor
@@ -25,6 +27,11 @@ final class RecordingContextSnapshotStore {
         snapshot.screenText = Self.normalized(text)
     }
 
+    func updateFrontmostApp(_ app: NSRunningApplication?) {
+        snapshot.appName = app?.localizedName
+        snapshot.appBundleID = app?.bundleIdentifier
+    }
+
     func updateCursorContext(_ context: CursorContext?) {
         snapshot.cursorContext = context
     }
@@ -39,7 +46,8 @@ final class RecordingContextSnapshotStore {
 @MainActor
 enum RecordingContextCaptureService {
     static func startCapture(into store: RecordingContextSnapshotStore) -> [Task<Void, Never>] {
-        [
+        store.updateFrontmostApp(NSWorkspace.shared.frontmostApplication)
+        return [
             Task { @MainActor in
                 store.updateClipboardText(NSPasteboard.general.string(forType: .string))
             },
@@ -66,3 +74,20 @@ enum RecordingContextCaptureService {
         ]
     }
 }
+
+#if DEBUG
+    extension RecordingContextSnapshot {
+        static func selfCheck() {
+            var snapshot = RecordingContextSnapshot()
+            snapshot.appName = "Notes"
+            snapshot.appBundleID = "com.apple.Notes"
+            let saved = Transcription(text: "hi", duration: 1)
+            saved.setSourceApp(from: snapshot)
+            assert(saved.sourceAppName == "Notes" && saved.sourceAppBundleID == "com.apple.Notes")
+
+            let unknown = Transcription(text: "hi", duration: 1)
+            unknown.setSourceApp(from: nil)
+            assert(unknown.sourceAppName == nil && unknown.sourceAppBundleID == nil)
+        }
+    }
+#endif

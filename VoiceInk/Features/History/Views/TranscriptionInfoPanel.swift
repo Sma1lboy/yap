@@ -106,6 +106,14 @@ struct TranscriptionInfoPanel: View {
                 )
             }
 
+            if let appName = transcription.sourceAppName {
+                metadataRow(
+                    icon: "macwindow",
+                    label: "App",
+                    value: appName
+                )
+            }
+
             if let modeName = transcription.modeName {
                 metadataRow(
                     icon: "bolt.fill",
@@ -151,7 +159,7 @@ struct TranscriptionInfoPanel: View {
 
     private var aiRequestTokenEstimate: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: "number")
+            Image(yapIcon: "number")
                 .font(AppTheme.font(.caption, .medium))
                 .foregroundColor(.secondary)
 
@@ -209,7 +217,7 @@ struct TranscriptionMetadataRow: View {
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: icon)
+            Image(yapIcon: icon)
                 .font(AppTheme.font(.caption, .medium))
                 .foregroundColor(.secondary)
                 .frame(width: 20, height: 20)

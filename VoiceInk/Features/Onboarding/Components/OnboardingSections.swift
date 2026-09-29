@@ -24,7 +24,7 @@ struct OnboardingHeroHeader: View {
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.x4) {
-            Image(systemName: systemImage)
+            Image(yapIcon: systemImage)
                 .font(AppTheme.font(.title, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .accessibilityHidden(true)

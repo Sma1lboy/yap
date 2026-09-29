@@ -27,7 +27,7 @@ struct ModeEmptyStateView: View {
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.x4) {
-            Image(systemName: "bolt.circle.fill")
+            Image(yapIcon: "bolt.circle.fill")
                 .font(AppTheme.font(.display))
                 .foregroundColor(.secondary)
 
@@ -71,7 +71,7 @@ struct ModeConfigurationsGrid: View {
 struct DefaultModeIndicator: View {
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x1) {
-            Image(systemName: "checkmark.seal.fill")
+            Image(yapIcon: "checkmark.seal.fill")
                 .font(AppTheme.font(.caption, .semibold))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.primary)
@@ -284,7 +284,7 @@ struct ConfigurationRow: View {
                             HStack(spacing: AppTheme.Spacing.x3) {
                                 if appCount > 0 {
                                     HStack(spacing: AppTheme.Spacing.x1) {
-                                        Image(systemName: "app.fill")
+                                        Image(yapIcon: "app.fill")
                                             .font(AppTheme.font(.micro))
                                         Text(appText)
                                             .font(AppTheme.font(.micro))
@@ -293,7 +293,7 @@ struct ConfigurationRow: View {
 
                                 if websiteCount > 0 {
                                     HStack(spacing: AppTheme.Spacing.x1) {
-                                        Image(systemName: "globe")
+                                        Image(yapIcon: "globe")
                                             .font(AppTheme.font(.micro))
                                         Text(websiteText)
                                             .font(AppTheme.font(.micro))
@@ -344,7 +344,7 @@ struct ConfigurationRow: View {
             HStack(spacing: AppTheme.Spacing.x2) {
                 let modelMetadata = transcriptionModelMetadata
                 HStack(spacing: AppTheme.Spacing.x1) {
-                    Image(systemName: "waveform")
+                    Image(yapIcon: "waveform")
                         .font(AppTheme.font(.micro))
                     Text(modelMetadata.label)
                         .font(AppTheme.font(.caption))
@@ -369,7 +369,7 @@ struct ConfigurationRow: View {
 
                 if let language = selectedLanguage, language != "Default" {
                     HStack(spacing: AppTheme.Spacing.x1) {
-                        Image(systemName: "globe")
+                        Image(yapIcon: "globe")
                             .font(AppTheme.font(.micro))
                         Text(language)
                             .font(AppTheme.font(.caption))
@@ -393,7 +393,7 @@ struct ConfigurationRow: View {
                     !modelName.isEmpty
                 {
                     HStack(spacing: AppTheme.Spacing.x1) {
-                        Image(systemName: "cpu")
+                        Image(yapIcon: "cpu")
                             .font(AppTheme.font(.micro))
                         Text(modelName.count > 20 ? String(modelName.prefix(18)) + "..." : modelName)
                             .font(AppTheme.font(.caption))
@@ -412,7 +412,7 @@ struct ConfigurationRow: View {
 
                 if config.outputMode != .paste {
                     HStack(spacing: AppTheme.Spacing.x1) {
-                        Image(systemName: config.outputMode.iconName)
+                        Image(yapIcon: config.outputMode.iconName)
                             .font(AppTheme.font(.micro))
                         Text(config.outputMode.displayName)
                             .font(AppTheme.font(.caption))
@@ -431,7 +431,7 @@ struct ConfigurationRow: View {
 
                 if config.isAIEnhancementEnabled {
                     HStack(spacing: AppTheme.Spacing.x1) {
-                        Image(systemName: "sparkles")
+                        Image(yapIcon: "sparkles")
                             .font(AppTheme.font(.micro))
                         Text(
                             config.selectedAIProvider == AIProvider.voiceInkRefine.rawValue
@@ -524,7 +524,7 @@ struct ModeAppIcon: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 20, height: 20)
         } else {
-            Image(systemName: "app.fill")
+            Image(yapIcon: "app.fill")
                 .font(AppTheme.font(.callout))
                 .foregroundColor(.secondary)
                 .frame(width: 20, height: 20)

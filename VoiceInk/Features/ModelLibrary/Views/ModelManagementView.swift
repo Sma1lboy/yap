@@ -308,7 +308,7 @@ struct ModelManagementView: View {
         HStack(spacing: AppTheme.Spacing.x2) {
             Button(action: { presentImportPanel() }) {
                 HStack(spacing: AppTheme.Spacing.x2) {
-                    Image(systemName: "square.and.arrow.down")
+                    Image(yapIcon: "square.and.arrow.down")
                     Text("Import Local Model…")
                         .font(AppTheme.font(.footnote, .semibold))
                 }
@@ -326,7 +326,7 @@ struct ModelManagementView: View {
 
     private var intelMacWarningBanner: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
-            Image(systemName: "exclamationmark.triangle.fill")
+            Image(yapIcon: "exclamationmark.triangle.fill")
                 .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(AppTheme.Status.warningStrong)
 
@@ -344,7 +344,7 @@ struct ModelManagementView: View {
                 HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Use Cloud")
                         .font(AppTheme.font(.footnote, .semibold))
-                    Image(systemName: "arrow.right")
+                    Image(yapIcon: "arrow.right")
                         .font(AppTheme.font(.micro, .semibold))
                 }
                 .foregroundColor(AppTheme.Status.warningStrong)

@@ -229,6 +229,14 @@ class TranscriptionPipeline {
                         transcription.aiRequestSystemMessage = enhancementResult.systemMessage
                         transcription.aiRequestUserMessage = enhancementResult.userMessage
                         finalText = enhancementResult.text
+                        if PromptTemplates.isRewriteWithoutSource(
+                            promptId: resolvedEnhancementConfiguration.prompt?.id,
+                            selectedText: contextSnapshot?.selectedText, result: enhancementResult.text)
+                        {
+                            NotificationManager.shared.showNotification(
+                                title: String(localized: "Select the text to rewrite first, then use this mode again."),
+                                type: .warning, duration: 5)
+                        }
                     } catch {
                         let errorDescription = EnhancementFailureFormatter.description(for: error)
                         let failureMessage = EnhancementFailureFormatter.message(description: errorDescription)

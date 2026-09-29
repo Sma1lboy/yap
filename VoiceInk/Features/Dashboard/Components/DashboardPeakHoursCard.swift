@@ -51,7 +51,7 @@ struct DashboardPeakHoursCard: View {
             Spacer(minLength: 0)
 
             HStack(spacing: AppTheme.Spacing.x1) {
-                Image(systemName: "clock")
+                Image(yapIcon: "clock")
                     .font(AppTheme.font(.footnote, .semibold))
                     .foregroundStyle(AppTheme.Text.secondary.opacity(0.78))
 
@@ -82,7 +82,7 @@ struct DashboardPeakHoursCard: View {
 
     private var lockedOverlay: some View {
         VStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: "lock.fill")
+            Image(yapIcon: "lock.fill")
                 .font(AppTheme.font(.headline, .semibold))
                 .foregroundStyle(AppTheme.Accent.text)
                 .frame(width: 34, height: 34)

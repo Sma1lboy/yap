@@ -96,12 +96,13 @@ struct WordReplacementView: View {
                     .labelsHidden()
                     .focused($isOriginalFocused)
 
-                Image(systemName: "arrow.right")
+                Image(yapIcon: "arrow.right")
                     .foregroundColor(.secondary)
                     .font(AppTheme.font(.micro))
                     .frame(width: 10)
 
-                TextField("", text: $replacementWord, prompt: Text("Replacement text"))
+                TextField("", text: $replacementWord, prompt: Text("Replacement text"), axis: .vertical)
+                    .lineLimit(1...4)
                     .textFieldStyle(.roundedBorder)
                     .font(AppTheme.font(.body))
                     .onSubmit { addReplacement() }
@@ -118,7 +119,7 @@ struct WordReplacementView: View {
                 Button {
                     showInfoPopover.toggle()
                 } label: {
-                    Image(systemName: "info.circle")
+                    Image(yapIcon: "info.circle")
                 }
                 .buttonStyle(.borderless)
                 .help("Word replacement examples")
@@ -148,11 +149,11 @@ struct WordReplacementView: View {
                                     .foregroundColor(.secondary)
 
                                 if sortMode == .originalAsc || sortMode == .originalDesc {
-                                    Image(systemName: sortMode == .originalAsc ? "chevron.up" : "chevron.down")
+                                    Image(yapIcon: sortMode == .originalAsc ? "chevron.up" : "chevron.down")
                                         .font(AppTheme.font(.caption))
                                         .foregroundColor(.secondary)
                                 } else if let dateSortIconName {
-                                    Image(systemName: dateSortIconName)
+                                    Image(yapIcon: dateSortIconName)
                                         .font(AppTheme.font(.caption))
                                         .foregroundColor(.secondary)
                                 }
@@ -162,7 +163,7 @@ struct WordReplacementView: View {
                         .buttonStyle(.plain)
                         .help("Sort by original")
 
-                        Image(systemName: "arrow.right")
+                        Image(yapIcon: "arrow.right")
                             .foregroundColor(.secondary)
                             .font(AppTheme.font(.micro))
                             .frame(width: 10)
@@ -174,11 +175,11 @@ struct WordReplacementView: View {
                                     .foregroundColor(.secondary)
 
                                 if sortMode == .replacementAsc || sortMode == .replacementDesc {
-                                    Image(systemName: sortMode == .replacementAsc ? "chevron.up" : "chevron.down")
+                                    Image(yapIcon: sortMode == .replacementAsc ? "chevron.up" : "chevron.down")
                                         .font(AppTheme.font(.caption))
                                         .foregroundColor(.secondary)
                                 } else if let dateSortIconName {
-                                    Image(systemName: dateSortIconName)
+                                    Image(yapIcon: dateSortIconName)
                                         .font(AppTheme.font(.caption))
                                         .foregroundColor(.secondary)
                                 }
@@ -211,10 +212,10 @@ struct WordReplacementView: View {
                                             .joined(separator: ", "))
                                             .lineLimit(1)
                                             .frame(maxWidth: .infinity, alignment: .leading)
-                                        Image(systemName: "arrow.right")
+                                        Image(yapIcon: "arrow.right")
                                             .foregroundColor(.secondary)
                                             .font(AppTheme.font(.micro))
-                                        Text(replacement.replacementText)
+                                        Text(ReplacementText.oneLine(replacement.replacementText))
                                             .lineLimit(1)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                     }
@@ -373,7 +374,7 @@ struct WordReplacementInfoPopover: View {
                             .font(AppTheme.font(.footnote))
                     }
 
-                    Image(systemName: "arrow.right")
+                    Image(yapIcon: "arrow.right")
                         .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
 
@@ -399,7 +400,7 @@ struct WordReplacementInfoPopover: View {
                             .font(AppTheme.font(.footnote))
                     }
 
-                    Image(systemName: "arrow.right")
+                    Image(yapIcon: "arrow.right")
                         .font(AppTheme.font(.caption))
                         .foregroundColor(.secondary)
 
@@ -451,14 +452,14 @@ struct ReplacementRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .help(original)
 
-            Image(systemName: "arrow.right")
+            Image(yapIcon: "arrow.right")
                 .foregroundColor(.secondary)
                 .font(AppTheme.font(.micro))
                 .frame(width: 10)
 
             HStack(spacing: AppTheme.Spacing.x2) {
                 ScrollView(.horizontal) {
-                    Text(replacement)
+                    Text(ReplacementText.oneLine(replacement))
                         .font(AppTheme.font(.body))
                         .lineLimit(1)
                         .fixedSize(horizontal: true, vertical: false)
@@ -469,7 +470,7 @@ struct ReplacementRow: View {
 
                 HStack(spacing: AppTheme.Spacing.x2) {
                     Button(action: onEdit) {
-                        Image(systemName: "pencil.circle.fill")
+                        Image(yapIcon: "pencil.circle.fill")
                             .symbolRenderingMode(.hierarchical)
                             .foregroundStyle(AppTheme.Text.primary)
                             .contentTransition(.symbolEffect(.replace))
@@ -479,7 +480,7 @@ struct ReplacementRow: View {
                     .accessibilityLabel("Edit replacement")
 
                     Button(action: onDelete) {
-                        Image(systemName: "xmark.circle.fill")
+                        Image(yapIcon: "xmark.circle.fill")
                             .symbolRenderingMode(.hierarchical)
                             .foregroundStyle(AppTheme.Text.primary)
                             .contentTransition(.symbolEffect(.replace))
