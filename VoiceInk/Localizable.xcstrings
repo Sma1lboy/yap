@@ -27925,6 +27925,28 @@
         }
       }
     },
+    "Speak — the bar next to the highlighted microphone should move." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprich einfach los – der Balken neben dem markierten Mikrofon sollte sich bewegen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parlez : la barre à côté du micro en surbrillance doit bouger."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "说句话试试，高亮麦克风旁边的条应该会动。"
+          }
+        }
+      }
+    },
     "Speaking pace" : {
       "localizations" : {
         "de" : {

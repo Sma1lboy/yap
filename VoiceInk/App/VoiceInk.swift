@@ -52,6 +52,7 @@ struct VoiceInkApp: App {
             WhisperChunking.selfCheck()
             TimedSegments.selfCheck()
             PCMResampler.selfCheck()
+            MicrophoneLevelProbe.selfCheck()
             RecordedAudioIssue.selfCheck()
             ClipboardManager.selfCheck()
             LastPasteEditor.selfCheck()
