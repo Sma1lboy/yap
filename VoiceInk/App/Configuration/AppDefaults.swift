@@ -172,6 +172,7 @@ enum AppDefaults {
 
             // Model
             "PrewarmModelOnWake": true,
+            ModelResidency.keepSecondsKey: ModelResidency.defaultKeepSeconds,
 
         ])
 

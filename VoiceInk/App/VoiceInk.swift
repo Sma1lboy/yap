@@ -65,6 +65,7 @@ struct VoiceInkApp: App {
             WhisperTranscriptionService.selfCheck()
             ChineseCleanup.selfCheck()
             WhisperLivePreview.selfCheck()
+            ModelResidency.selfCheck()
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
@@ -393,8 +394,6 @@ struct VoiceInkApp: App {
                             }
                         )
                         .onDisappear {
-                            whisperModelManager.unloadModel()
-
                             // Stop the automatic audio cleanup process
                             audioCleanupManager.stopAutomaticCleanup()
                         }

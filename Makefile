@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check first-run-check ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check first-run-check model-residency-check ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -199,6 +199,14 @@ offline-check: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh scripts/offline-check.sh "$$APP_DIR" "$(MODEL)"
+
+# Yap's memory while a local Whisper model is loaded vs released, and how long the first dictation after the release
+# waits, without and with the shortcut-press preload (scripts/model-residency-check.sh). KEEP=<seconds> (default 5).
+model-residency-check: build
+	@test -n "$(MODEL)" || { echo "usage: make model-residency-check MODEL=/path/to/ggml-*.bin"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/model-residency-check.sh "$$APP_DIR" "$(MODEL)"
 
 # A new user's first local dictation: fresh mock install, download the default model, preflight mid-download, cold and
 # warm dictation times (scripts/first-run-check.sh). Needs the network; never touches the dev or release app's data.

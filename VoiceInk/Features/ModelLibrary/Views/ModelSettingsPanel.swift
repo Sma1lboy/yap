@@ -293,6 +293,7 @@ private struct ChineseCleanupSettingsSection: View {
 private struct AdvancedModelSettingsSection: View {
     @AppStorage("IsVADEnabled") private var isVADEnabled = true
     @AppStorage("PrewarmModelOnWake") private var prewarmModelOnWake = true
+    @AppStorage(ModelResidency.keepSecondsKey) private var keepModelLoadedSeconds = ModelResidency.defaultKeepSeconds
     @AppStorage(CloudTranscriptionSettings.timeoutKey) private var cloudTimeout =
         CloudTranscriptionSettings.defaultTimeout
     @AppStorage(AppleIntelligenceService.enabledKey) private var isAppleIntelligenceEnabled = false
@@ -316,6 +317,21 @@ private struct AdvancedModelSettingsSection: View {
                 }
             }
             .toggleStyle(.switch)
+
+            Picker(selection: $keepModelLoadedSeconds) {
+                Text("Always").tag(ModelResidency.keepAlways)
+                Text("5 minutes").tag(300)
+                Text("15 minutes").tag(ModelResidency.defaultKeepSeconds)
+                Text("1 hour").tag(3_600)
+            } label: {
+                HStack(spacing: AppTheme.Spacing.x1) {
+                    Text("Keep model loaded")
+                    InfoTip(
+                        "How long a local model stays in memory after your last dictation. A released model loads again when you press the shortcut, while you speak. Under memory pressure it is released sooner."
+                    )
+                }
+            }
+            .pickerStyle(.menu)
 
             Picker(selection: $cloudTimeout) {
                 Text("10 seconds").tag(10)

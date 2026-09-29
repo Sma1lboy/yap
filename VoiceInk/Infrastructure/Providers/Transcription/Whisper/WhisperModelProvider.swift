@@ -9,4 +9,6 @@ protocol WhisperModelProvider: AnyObject {
     var whisperContext: WhisperContext? { get }
     var loadedWhisperModel: WhisperModelFile? { get }
     var availableModels: [WhisperModelFile] { get }
+    /// Returns once a load that is already running has finished.
+    func finishPendingLoad() async
 }
