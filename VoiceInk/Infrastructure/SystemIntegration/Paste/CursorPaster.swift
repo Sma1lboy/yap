@@ -115,11 +115,14 @@ class CursorPaster {
             return PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil)
         }
 
+        // Read while the prePaste delay runs; the text about to be replaced is what Undo Last Paste restores.
+        let targetProcessID = NSWorkspace.shared.frontmostApplication?.processIdentifier
+        let replacedTask = Task.detached { targetProcessID.map { LastPasteEditor.selectedText(processID: $0) } ?? "" }
         await wait(timing.prePaste)
+        let replaced = await replacedTask.value
 
         let pasteResult: PasteResult
         let autoLearnGeneration: UInt64?
-        let targetProcessID = NSWorkspace.shared.frontmostApplication?.processIdentifier
         if AutoLearnSettings.isEnabled {
             pasteResult = await postPasteCommand()
             autoLearnGeneration = await AutoLearnService.shared.pasteDidFinish(
@@ -132,7 +135,7 @@ class CursorPaster {
             autoLearnGeneration = nil
         }
         if pasteResult.didPostPasteCommand {
-            LastPasteEditor.shared.pasteDidFinish(text: text, processID: targetProcessID)
+            LastPasteEditor.shared.pasteDidFinish(text: text, processID: targetProcessID, replacing: replaced)
         }
         // A paste that never reached the app must not take the text back off the clipboard.
         if shouldRestoreClipboard && pasteResult.didPostPasteCommand {

@@ -4516,6 +4516,28 @@
         }
       }
     },
+    "Add Rewrite Mode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rewrite-Modus hinzufügen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter le mode Rewrite"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加改写模式"
+          }
+        }
+      }
+    },
     "Add Second Shortcut" : {
       "localizations" : {
         "de" : {
@@ -12576,6 +12598,28 @@
         }
       }
     },
+    "Edit Selected Text" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markierten Text bearbeiten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le texte sélectionné"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑选中文字"
+          }
+        }
+      }
+    },
     "Edit Word Replacement" : {
       "localizations" : {
         "de" : {
@@ -18831,6 +18875,28 @@
         }
       }
     },
+    "Needs the Rewrite mode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Braucht den Rewrite-Modus"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nécessite le mode Rewrite"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要“改写”模式"
+          }
+        }
+      }
+    },
     "Network connection failed. Check your internet." : {
       "localizations" : {
         "de" : {
@@ -24393,28 +24459,6 @@
         }
       }
     },
-    "Removes the text Yap pasted last, if it's still where Yap put it and unchanged. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entfernt den Text, den Yap zuletzt eingefügt hat, wenn er noch unverändert an seiner Stelle steht. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supprime le texte que Yap a collé en dernier, s'il est toujours à sa place et inchangé. Dire seulement « scratch that » ou « 删掉刚才那句 » fait la même chose."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "删掉 Yap 上一次粘贴的文字（前提是它还在原处、没被改过）。只说一句“删掉刚才那句”或“scratch that”也一样。"
-          }
-        }
-      }
-    },
     "Reorder Modes" : {
       "localizations" : {
         "de" : {
@@ -26375,6 +26419,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "选择提示音"
+          }
+        }
+      }
+    },
+    "Select text in any app, use the Rewrite mode's shortcut and say the change (\"make it shorter\"). The selection is replaced. Set the shortcut on the Rewrite mode." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markiere in einer beliebigen App Text, nutze das Kürzel des Rewrite-Modus und sage die Änderung („kürzer machen“). Die Markierung wird ersetzt. Das Kürzel legst du im Rewrite-Modus fest."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez du texte dans n'importe quelle app, utilisez le raccourci du mode Rewrite et dites la modification (« raccourcis-le »). La sélection est remplacée. Le raccourci se définit dans le mode Rewrite."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在任意 App 里选中文字，用改写模式的快捷键，说出要怎么改（“改短一点”），选中的文字就会被替换。快捷键在改写模式里设置。"
+          }
+        }
+      }
+    },
+    "Select text, then say how to change it" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text markieren, dann sagen, wie er sich ändern soll"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez du texte, puis dites comment le modifier"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先选中文字，再说要怎么改"
+          }
+        }
+      }
+    },
+    "Select the text to rewrite first, then use this mode again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markiere zuerst den Text, der umgeschrieben werden soll, und nutze dann diesen Modus erneut."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez d'abord le texte à réécrire, puis réutilisez ce mode."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先选中要改写的文字，再使用这个模式。"
           }
         }
       }
@@ -29144,24 +29254,46 @@
         }
       }
     },
-    "Takes back the text Yap pasted last. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
+    "Takes back the text Yap pasted last, if it's still where Yap put it and unchanged. If it replaced selected text, that text comes back; otherwise it's removed. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nimmt den zuletzt von Yap eingefügten Text zurück. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
+            "value" : "Nimmt den zuletzt von Yap eingefügten Text zurück, wenn er noch unverändert an seiner Stelle steht. Hat er markierten Text ersetzt, kommt dieser zurück, sonst wird er entfernt. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Retire le dernier texte collé par Yap. Dire seulement « scratch that » ou « 删掉刚才那句 » fait de même."
+            "value" : "Annule le dernier texte collé par Yap, s'il est toujours à sa place et inchangé. S'il avait remplacé un texte sélectionné, ce texte revient ; sinon il est supprimé. Dire seulement « scratch that » ou « 删掉刚才那句 » fait de même."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "撤回 Yap 最近一次粘贴的文字。只说一句\"删掉刚才那句\"或\"scratch that\"也一样。"
+            "value" : "撤回 Yap 最近一次粘贴的文字（前提是它还在原处、没被改过）。如果这次粘贴替换了选中的文字，被替换的文字会回来；否则直接删掉。只说一句“删掉刚才那句”或“scratch that”也一样。"
+          }
+        }
+      }
+    },
+    "Takes back the text Yap pasted last. If it replaced selected text, that text comes back. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimmt den zuletzt von Yap eingefügten Text zurück. Hat er markierten Text ersetzt, kommt dieser zurück. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annule le dernier texte collé par Yap. S'il avait remplacé un texte sélectionné, ce texte revient. Dire seulement « scratch that » ou « 删掉刚才那句 » fait de même."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "撤回 Yap 最近一次粘贴的文字。如果它替换了选中的文字，被替换的文字会回来。只说一句“删掉刚才那句”或“scratch that”也一样。"
           }
         }
       }
@@ -32981,24 +33113,24 @@
         }
       }
     },
-    "Use the app name, window title and up to 3,000 characters around the cursor in the field you're dictating into. Password fields are never read." : {
+    "Use the app name, window title and up to 3,000 characters around the cursor in the field you're dictating into, plus today's date, the time and your macOS account name. Password fields are never read." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App-Name, Fenstertitel und bis zu 3.000 Zeichen um den Cursor im Feld verwenden, in das du diktierst. Passwortfelder werden nie gelesen."
+            "value" : "App-Name, Fenstertitel und bis zu 3.000 Zeichen um den Cursor im Feld verwenden, in das du diktierst, dazu das heutige Datum, die Uhrzeit und den Namen deines macOS-Kontos. Passwortfelder werden nie gelesen."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Utiliser le nom de l'app, le titre de la fenêtre et jusqu'à 3 000 caractères autour du curseur dans le champ où vous dictez. Les champs de mot de passe ne sont jamais lus."
+            "value" : "Utiliser le nom de l'app, le titre de la fenêtre et jusqu'à 3 000 caractères autour du curseur dans le champ où vous dictez, plus la date du jour, l'heure et le nom de votre compte macOS. Les champs de mot de passe ne sont jamais lus."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "使用当前 App 名、窗口标题，以及你正在听写的输入框里光标前后最多 3,000 个字符。密码框永远不会读取。"
+            "value" : "使用当前 App 名、窗口标题，以及你正在听写的输入框里光标前后最多 3,000 个字符，再加上今天的日期、当前时间和你的 macOS 账户名。密码框永远不会读取。"
           }
         }
       }

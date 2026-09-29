@@ -57,6 +57,8 @@ struct VoiceInkApp: App {
             RecordedAudioIssue.selfCheck()
             ClipboardManager.selfCheck()
             LastPasteEditor.selfCheck()
+            PromptTemplates.selfCheck()
+            HomeShortcutsCard.selfCheck()
             CursorPaster.selfCheck()
             StarterModeCatalog.selfCheck()
             TranscriptionLanguageSupport.selfCheck()
