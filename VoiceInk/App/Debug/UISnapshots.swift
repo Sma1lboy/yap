@@ -112,6 +112,14 @@
                     .scrollContentBackground(.hidden)
             }
 
+            // Settings search: a query that matches some sections, and one that matches none.
+            SettingsView.snapshotQuery = "paste"
+            MainWindowNavigation.shared.selectedView = .settings
+            shot("settings-search", fullPage: true, titled: true) { ContentView() }
+            SettingsView.snapshotQuery = "zzzz"
+            shot("settings-search-empty", fullPage: true, titled: true) { ContentView() }
+            SettingsView.snapshotQuery = ""
+
             // Panels that open inside a page.
             ModeView.snapshotOpensEditor = true
             MainWindowNavigation.shared.selectedView = .modes
