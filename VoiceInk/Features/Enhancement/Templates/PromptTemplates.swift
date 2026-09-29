@@ -27,6 +27,12 @@ enum PromptTemplates {
         createTemplatePrompts()
     }
 
+    /// The Rewrite prompt answered with nothing and no text was selected: there was nothing to rewrite.
+    static func isRewriteWithoutSource(promptId: UUID?, selectedText: String?, result: String) -> Bool {
+        promptId == rewritePromptId && (selectedText ?? "").isEmpty
+            && result.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     static var seedPrompts: [CustomPrompt] {
         all.map { $0.toCustomPrompt(id: $0.id) }
     }
@@ -160,3 +166,15 @@ enum PromptTemplates {
         ]
     }
 }
+
+
+#if DEBUG
+    extension PromptTemplates {
+        static func selfCheck() {
+            assert(isRewriteWithoutSource(promptId: rewritePromptId, selectedText: nil, result: " \n"))
+            assert(!isRewriteWithoutSource(promptId: rewritePromptId, selectedText: "hi", result: ""), "text was selected")
+            assert(!isRewriteWithoutSource(promptId: rewritePromptId, selectedText: nil, result: "Done."), "source in transcript")
+            assert(!isRewriteWithoutSource(promptId: defaultPromptId, selectedText: nil, result: ""), "other modes unchanged")
+        }
+    }
+#endif

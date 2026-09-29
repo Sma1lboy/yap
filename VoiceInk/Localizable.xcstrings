@@ -26247,6 +26247,28 @@
         }
       }
     },
+    "Select the text to rewrite first, then use this mode again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markiere zuerst den Text, der umgeschrieben werden soll, und nutze dann diesen Modus erneut."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez d'abord le texte à réécrire, puis réutilisez ce mode."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先选中要改写的文字，再使用这个模式。"
+          }
+        }
+      }
+    },
     "Select transcription" : {
       "localizations" : {
         "de" : {
