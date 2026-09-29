@@ -39,6 +39,28 @@ What the numbers say:
 
 Rerun after touching the local whisper path, the default models or the dictionary prompt, and add a dated section.
 
+## 2026-09-26: the dictionary on cloud transcription
+
+OpenRouter and Yap Cloud now send the dictionary and the language (`TranscriptionHints`). The language goes in OpenRouter's top-level `language` field, and only when the user picked one. Terms go in `provider.options`, under the field of the provider that serves the model. A probe clip with three invented words (Kwyntel, Zorvex, Brisquo) showed which fields work:
+
+| model (provider) | field | invented terms right, without → with |
+|---|---|---|
+| mai-transcribe-2 (Azure) | `azure.phraseList.phrases` | 0 → 3 (`azure.prompt` is ignored) |
+| gpt-4o-transcribe (OpenAI) | `openai.prompt` | 0 → 2 |
+| gpt-4o-mini-transcribe (OpenAI) | `openai.prompt` | 0 → 1 |
+| whisper-large-v3 (Groq / DeepInfra / Together) | `prompt` | 0 → 1 |
+| qwen3-asr-flash (Alibaba) | `context` | 0 → 0: no terms sent |
+| gemini-3.5-transcribe (Google AI Studio) | `prompt` | HTTP 400: no terms sent |
+
+On this bench, with every key term in the dictionary (`bench.py run openrouter|yapcloud <model> --vocab`):
+
+| engine | key terms (of 82) | p50 s |
+|---|---|---|
+| mai-transcribe-2 via OpenRouter | 59 → 68 | 0.84 → 0.97 |
+| mai-transcribe-2 via Yap Cloud | 59 → 68 | 0.53 → 0.66 |
+
+paygate forwards `provider.options` unchanged, so Yap Cloud needs no paygate change. The other models' `--vocab` runs are still to do; a model that gains nothing there should be dropped from `TranscriptionHints.providerOptions`.
+
 ## Dictionary as a prompt for cloud transcription (2026-09-27)
 
 `bench.py run openrouter|yapcloud <model> --vocab` sends every key term, comma separated, as a `prompt` field:
@@ -54,4 +76,6 @@ mai-transcribe-2 ignores the prompt. The two OpenRouter transcripts that differ 
 without a prompt do. gpt-4o-mini-transcribe does read it, but the gain is smaller than its run-to-run spread
 (45–52 without a prompt). So on the cloud path the dictionary is only worth sending to the cleanup model, where it
 already goes. Passing it to transcription isn't worth changing the client or paygate for the default model.
-Results committed: the first run of each (`*-vocab.jsonl`).
+Results committed: the first run of each (`*-vocab-prompt.jsonl`).
+
+Superseded by the section above: `prompt` is the wrong field for mai-transcribe-2 (Azure reads `azure.phraseList.phrases`), and with the right field it goes 59 → 68.

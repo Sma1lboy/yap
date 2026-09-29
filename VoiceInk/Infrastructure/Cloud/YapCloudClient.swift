@@ -1671,6 +1671,7 @@ enum YapCloudPicks {
     extension YapCloud {
         static func selfCheck() {
             func json(_ string: String) -> Data { Data(string.utf8) }
+            TranscriptionHints.selfCheck()
 
             // Error mapping
             assert(YapCloudError(status: 402, body: json(#"{"error":{"code":"INSUFFICIENT_BALANCE","message":"x"}}"#), authenticated: true) == .insufficientBalance)

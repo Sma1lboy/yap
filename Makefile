@@ -138,7 +138,8 @@ cloud-smoke: $(PAYGATE_UP)
 	@mkdir -p "$(dir $(CLOUD_SMOKE_BIN))"
 	@xcrun swiftc -DDEBUG -Onone -o "$(CLOUD_SMOKE_BIN)" \
 		scripts/cloud-smoke/Stubs.swift scripts/cloud-smoke/Ops.swift scripts/cloud-smoke/main.swift \
-		VoiceInk/Infrastructure/Cloud/YapCloudClient.swift VoiceInk/Infrastructure/Cloud/YapCloudProvider.swift
+		VoiceInk/Infrastructure/Cloud/YapCloudClient.swift VoiceInk/Infrastructure/Cloud/YapCloudProvider.swift \
+		VoiceInk/Infrastructure/Providers/Transcription/Cloud/TranscriptionHints.swift
 	@$(PAYGATE_ENV) "$(CLOUD_SMOKE_BIN)"
 
 # Yap Cloud latency with the real client code (PAYGATE above; on production PAYGATE_DIR is required). Uses a
@@ -148,7 +149,8 @@ cloud-latency: $(PAYGATE_UP)
 	@mkdir -p "$(dir $(CLOUD_LATENCY_BIN))"
 	@xcrun swiftc -DDEBUG -O -o "$(CLOUD_LATENCY_BIN)" \
 		scripts/cloud-smoke/Stubs.swift scripts/cloud-smoke/Ops.swift scripts/cloud-latency/main.swift \
-		VoiceInk/Infrastructure/Cloud/YapCloudClient.swift VoiceInk/Infrastructure/Cloud/YapCloudProvider.swift
+		VoiceInk/Infrastructure/Cloud/YapCloudClient.swift VoiceInk/Infrastructure/Cloud/YapCloudProvider.swift \
+		VoiceInk/Infrastructure/Providers/Transcription/Cloud/TranscriptionHints.swift
 	@$(PAYGATE_ENV) "$(CLOUD_LATENCY_BIN)"
 
 SYNC_E2E_BIN := $(CURDIR)/.local-build/sync-e2e

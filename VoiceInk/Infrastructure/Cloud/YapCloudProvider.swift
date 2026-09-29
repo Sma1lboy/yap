@@ -33,7 +33,7 @@ struct YapCloudProvider: CloudProvider {
             "model": model,
             "input_audio": ["data": audioData.base64EncodedString(), "format": Self.audioFormat(fileName)],
         ]
-        if let language, !language.isEmpty { body["language"] = language }
+        TranscriptionHints.apply(to: &body, model: model, language: language, vocabulary: customVocabulary)
 
         // paygate caps the body at 40 MB (413 PAYLOAD_TOO_LARGE); don't upload what it would refuse.
         guard YapCloud.transcriptionBodyFits(audioBytes: audioData.count) else { throw YapCloudError.recordingTooLong }
