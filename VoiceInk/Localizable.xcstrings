@@ -47660,6 +47660,90 @@
           }
         }
       }
+    },
+    "Records your microphone and the sound of other apps, then saves notes and a transcript in History. The first time, macOS asks for System Audio Recording." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimmt dein Mikrofon und den Ton anderer Apps auf und speichert Notizen und ein Transkript im Verlauf. Beim ersten Mal fragt macOS nach der Berechtigung für die Systemaudioaufnahme."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistre votre micro et le son des autres apps, puis range les notes et la transcription dans l’historique. La première fois, macOS demande l’autorisation d’enregistrer l’audio système."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录下你的麦克风和其他 App 的声音,然后把纪要和逐字稿存进历史记录。第一次使用时,macOS 会询问“系统音频录制”权限。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "錄下你的麥克風和其他 App 的聲音,然後把紀要和逐字稿存進歷史記錄。第一次使用時,macOS 會詢問「系統音訊錄製」權限。"
+          }
+        }
+      }
+    },
+    "Yap can also record meetings: press %@ to start and stop." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap kann auch Meetings aufnehmen: Mit %@ starten und stoppen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap peut aussi enregistrer vos réunions : appuyez sur %@ pour démarrer et arrêter."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 还能录制会议:按 %@ 开始和停止。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 也能錄製會議:按 %@ 開始和停止。"
+          }
+        }
+      }
+    },
+    "Yap can also record meetings. Set a shortcut for it in Settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap kann auch Meetings aufnehmen. Lege dafür in den Einstellungen ein Tastenkürzel fest."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap peut aussi enregistrer vos réunions. Définissez un raccourci dans les Réglages."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 还能录制会议。在设置里给它设一个快捷键。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 也能錄製會議。在設定裡給它設一個快速鍵。"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

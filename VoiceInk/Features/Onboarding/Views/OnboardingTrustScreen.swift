@@ -72,13 +72,27 @@ private struct TrustHeader: View {
     }
 }
 
-private struct TrustBody: View {
+struct TrustBody: View {
     @Query(TrySayingCard.anyTranscription) private var existingTranscriptions: [Transcription]
 
     /// Only for someone who hasn't dictated yet (e.g. after "Set It Up Later"). The card takes the decorative
     /// map's place: squeezed smaller, the map draws past its frame into the headline and text.
     private var showsTrySaying: Bool { existingTranscriptions.isEmpty }
     @State private var showsPrivacyDetails = false
+
+    static func meetingLine(shortcut: Shortcut?) -> String {
+        if let shortcut {
+            return String(localized: "Yap can also record meetings: press \(shortcut.displayString) to start and stop.")
+        }
+        return String(localized: "Yap can also record meetings. Set a shortcut for it in Settings.")
+    }
+
+    #if DEBUG
+        static func selfCheck() {
+            assert(meetingLine(shortcut: nil).contains("Settings"))
+            assert(meetingLine(shortcut: .rightCommandSpace).contains(Shortcut.rightCommandSpace.displayString))
+        }
+    #endif
 
     var body: some View {
         VStack(spacing: 0) {
@@ -121,6 +135,13 @@ private struct TrustBody: View {
                 }
 
                 Text("Yap picks a mode for the app you're in. Press Option 1-9 while recording to switch, and edit modes anytime.")
+                    .font(AppTheme.font(.body))
+                    .foregroundColor(AppTheme.Text.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 610)
+
+                Text(Self.meetingLine(shortcut: ShortcutStore.shortcut(for: .meetingRecording)))
                     .font(AppTheme.font(.body))
                     .foregroundColor(AppTheme.Text.secondary)
                     .multilineTextAlignment(.center)
