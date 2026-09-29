@@ -208,10 +208,10 @@ struct MenuBarView: View {
                 }
             } label: {
                 HStack {
-                    Image(systemName: "globe")
+                    Image(yapIcon: "globe")
                         .font(AppTheme.font(.caption, .medium))
                     Text(String(format: String(localized: "Language: %@"), languages[current] ?? current))
-                    Image(systemName: "chevron.up.chevron.down")
+                    Image(yapIcon: "chevron.up.chevron.down")
                         .font(AppTheme.font(.micro))
                 }
             }
