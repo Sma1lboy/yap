@@ -597,7 +597,7 @@ struct ModeConfigFormView: View {
             Toggle(isOn: $draft.useCursorContext) {
                 HStack(spacing: AppTheme.Spacing.x1) {
                     Text("Text Around the Cursor")
-                    InfoTip("Use the app name, window title and up to 3,000 characters around the cursor in the field you're dictating into. Password fields are never read.")
+                    InfoTip("Use the app name, window title and up to 3,000 characters around the cursor in the field you're dictating into, plus today's date, the time and your macOS account name. Password fields are never read.")
                 }
             }
 

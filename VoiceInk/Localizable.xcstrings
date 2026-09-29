@@ -32849,24 +32849,24 @@
         }
       }
     },
-    "Use the app name, window title and up to 3,000 characters around the cursor in the field you're dictating into. Password fields are never read." : {
+    "Use the app name, window title and up to 3,000 characters around the cursor in the field you're dictating into, plus today's date, the time and your macOS account name. Password fields are never read." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App-Name, Fenstertitel und bis zu 3.000 Zeichen um den Cursor im Feld verwenden, in das du diktierst. Passwortfelder werden nie gelesen."
+            "value" : "App-Name, Fenstertitel und bis zu 3.000 Zeichen um den Cursor im Feld verwenden, in das du diktierst, dazu das heutige Datum, die Uhrzeit und den Namen deines macOS-Kontos. Passwortfelder werden nie gelesen."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Utiliser le nom de l'app, le titre de la fenêtre et jusqu'à 3 000 caractères autour du curseur dans le champ où vous dictez. Les champs de mot de passe ne sont jamais lus."
+            "value" : "Utiliser le nom de l'app, le titre de la fenêtre et jusqu'à 3 000 caractères autour du curseur dans le champ où vous dictez, plus la date du jour, l'heure et le nom de votre compte macOS. Les champs de mot de passe ne sont jamais lus."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "使用当前 App 名、窗口标题，以及你正在听写的输入框里光标前后最多 3,000 个字符。密码框永远不会读取。"
+            "value" : "使用当前 App 名、窗口标题，以及你正在听写的输入框里光标前后最多 3,000 个字符，再加上今天的日期、当前时间和你的 macOS 账户名。密码框永远不会读取。"
           }
         }
       }
