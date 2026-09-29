@@ -15,7 +15,7 @@ struct SaveIconButton: View {
                 saveFile(as: .text, extension: "md")
             }
         } label: {
-            Image(systemName: saved ? "checkmark" : "square.and.arrow.down")
+            Image(yapIcon: saved ? "checkmark" : "square.and.arrow.down")
                 .font(AppTheme.font(.footnote, .semibold))
                 .foregroundColor(saved ? AppTheme.Status.positive : .secondary)
                 .frame(width: 28, height: 28)

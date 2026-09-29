@@ -45,7 +45,7 @@ extension CustomPrompt {
                     Button {
                         onEdit(self)
                     } label: {
-                        Label("Edit", systemImage: "pencil")
+                        Label("Edit", yapIcon: "pencil")
                     }
                 }
 
@@ -66,7 +66,7 @@ extension CustomPrompt {
                             onDelete(self)
                         }
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        Label("Delete", yapIcon: "trash")
                     }
                 }
             }
@@ -75,7 +75,7 @@ extension CustomPrompt {
 
     static func addNewButton(action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Label("Add New", systemImage: "plus.circle.fill")
+            Label("Add New", yapIcon: "plus.circle.fill")
                 .font(AppTheme.font(.footnote, .medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)

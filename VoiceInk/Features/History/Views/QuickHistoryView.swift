@@ -176,7 +176,7 @@ struct QuickHistoryView: View {
                     viewModel.isShowingDetail = false
                 }
             } label: {
-                Image(systemName: "chevron.left")
+                Image(yapIcon: "chevron.left")
                     .font(AppTheme.font(.callout, .semibold))
             }
             .buttonStyle(.plain)
@@ -270,7 +270,7 @@ struct QuickHistoryView: View {
     private var emptyState: some View {
         VStack(spacing: AppTheme.Spacing.x3) {
             Spacer()
-            Image(systemName: hasSearchQuery ? "magnifyingglass" : "text.bubble")
+            Image(yapIcon: hasSearchQuery ? "magnifyingglass" : "text.bubble")
                 .font(AppTheme.font(.display))
                 .foregroundStyle(AppTheme.Text.muted)
             Text(hasSearchQuery ? "No matching transcriptions" : "No transcriptions yet")
@@ -314,7 +314,7 @@ struct QuickHistoryView: View {
         Button(action: action) {
             HStack(spacing: AppTheme.Spacing.x2) {
                 if let systemImage {
-                    Image(systemName: systemImage)
+                    Image(yapIcon: systemImage)
                 }
                 Text(title)
                     .lineLimit(1)

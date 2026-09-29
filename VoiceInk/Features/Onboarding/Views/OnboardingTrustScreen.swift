@@ -53,7 +53,7 @@ private struct OnboardingTrustContent: View {
 private struct TrustHeader: View {
     var body: some View {
         VStack(spacing: AppTheme.Spacing.x4) {
-            Image(systemName: "lock.shield")
+            Image(yapIcon: "lock.shield")
                 .font(AppTheme.font(.title, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .frame(width: 56, height: 56)
@@ -101,7 +101,7 @@ private struct TrustBody: View {
                 } label: {
                     HStack(spacing: AppTheme.Spacing.x1) {
                         Text("Privacy details")
-                        Image(systemName: "chevron.down")
+                        Image(yapIcon: "chevron.down")
                             .rotationEffect(.degrees(showsPrivacyDetails ? 180 : 0))
                     }
                     .font(AppTheme.font(.footnote, .medium))
@@ -209,7 +209,7 @@ private struct TrustPill: View {
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: systemImage)
+            Image(yapIcon: systemImage)
                 .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.secondary)
 
@@ -234,7 +234,7 @@ private struct TrustPill: View {
 private struct TrustShield: View {
     var body: some View {
         ZStack {
-            Image(systemName: "shield.fill")
+            Image(yapIcon: "shield.fill")
                 .font(AppTheme.font(.display, .regular))
                 .foregroundStyle(
                     LinearGradient(
@@ -247,7 +247,7 @@ private struct TrustShield: View {
                     )
                 )
                 .overlay(
-                    Image(systemName: "shield")
+                    Image(yapIcon: "shield")
                         .font(AppTheme.font(.display, .regular))
                         .foregroundColor(AppTheme.Border.control)
                 )

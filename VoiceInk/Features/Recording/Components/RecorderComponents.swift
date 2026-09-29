@@ -25,7 +25,7 @@ struct RecorderToggleButton: View {
                 if isEmoji {
                     Text(icon).font(AppTheme.font(.callout))
                 } else {
-                    Image(systemName: icon).font(AppTheme.font(.body))
+                    Image(yapIcon: icon).font(AppTheme.font(.body))
                 }
             }
             .foregroundColor(disabled ? .white.opacity(0.3) : (isEnabled ? .white : .white.opacity(0.6)))
@@ -169,7 +169,7 @@ struct RecorderCloseButton: View {
                             .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.6)
                     )
 
-                Image(systemName: "xmark")
+                Image(yapIcon: "xmark")
                     .font(AppTheme.font(.micro, .semibold))
                     .foregroundColor(.white.opacity(0.86))
             }
@@ -498,7 +498,7 @@ struct AssistantPanelView: View {
             .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.control, style: .continuous))
 
             Button(action: sendDraftMessage) {
-                Image(systemName: "paperplane.fill")
+                Image(yapIcon: "paperplane.fill")
                     .font(AppTheme.font(.micro, .semibold))
                     .foregroundColor(canSendDraft ? .black : .white.opacity(0.35))
                     .frame(width: 24, height: 24)

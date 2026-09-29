@@ -79,7 +79,7 @@ struct AIProviderVerificationCard: View {
                 } label: {
                     HStack(spacing: AppTheme.Spacing.x2) {
                         Text("Switch AI provider")
-                        Image(systemName: isSwitchingProvider ? "chevron.up" : "chevron.down")
+                        Image(yapIcon: isSwitchingProvider ? "chevron.up" : "chevron.down")
                             .font(AppTheme.font(.micro, .semibold))
                     }
                     .font(AppTheme.font(.caption, .semibold))
@@ -116,7 +116,7 @@ struct AIProviderVerificationCard: View {
                     } label: {
                         HStack(spacing: AppTheme.Spacing.x1) {
                             Text("Get API key")
-                            Image(systemName: "arrow.up.right")
+                            Image(yapIcon: "arrow.up.right")
                                 .font(AppTheme.font(.micro, .semibold))
                         }
                         .font(AppTheme.font(.caption, .semibold))
@@ -175,7 +175,7 @@ struct AIProviderVerificationCard: View {
     private var verifiedProviderSummary: some View {
         HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
             HStack(spacing: AppTheme.Spacing.x2) {
-                Image(systemName: "checkmark.circle.fill")
+                Image(yapIcon: "checkmark.circle.fill")
                     .font(AppTheme.font(.callout, .semibold))
                     .foregroundColor(AppTheme.Status.positive)
 
@@ -195,7 +195,7 @@ struct AIProviderVerificationCard: View {
     private var statusLine: some View {
         if let verificationMessage {
             HStack(alignment: .top, spacing: AppTheme.Spacing.x2) {
-                Image(systemName: verificationSucceeded ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                Image(yapIcon: verificationSucceeded ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
                     .font(AppTheme.font(.footnote, .semibold))
                     .foregroundColor(verificationSucceeded ? AppTheme.Status.positive : AppTheme.Status.error)
                     .padding(.top, AppTheme.Spacing.half)
@@ -367,7 +367,7 @@ private struct ProviderChoiceButton: View {
                 Spacer(minLength: 0)
 
                 if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
+                    Image(yapIcon: "checkmark.circle.fill")
                         .font(AppTheme.font(.body, .semibold))
                         .foregroundColor(AppTheme.Text.secondary)
                 }

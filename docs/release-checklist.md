@@ -11,7 +11,7 @@ Run before pushing a `vX.Y.Z` tag. One line per check; note failures in the rele
 - [ ] Account top-up (only once the production Stripe keys are configured): Add Funds opens Checkout, paying returns to Yap, balance updates, receipt link opens.
 - [ ] Account: monthly cap save/clear, This Month card, Signed-in Devices list and remote sign-out, Sign Out confirmation.
 - [ ] Yap Cloud errors: at $0 recording is blocked with Add Funds; offline shows the unavailable banner and recovers when back online.
-- [ ] Config & Sync: edit a mode on Mac A, it appears on Mac B; delete one, it stays deleted; Version History lists and restores a version.
+- [ ] Settings > Account + Config File: edit a mode on Mac A, it appears on Mac B; delete one, it stays deleted; Version History lists and restores a version.
 - [ ] Permissions: revoke Microphone and Accessibility in System Settings; recording and pasting show the right message with Open Settings.
 - [ ] VoiceOver pass on a real Mac (#69): sidebar, Home, Modes, Dictionary, Models, Audio, Settings, the Yap Cloud page (Models › Cloud › Yap Cloud), onboarding.
 - [ ] Light and dark mode: Home, the Yap Cloud page, Settings, onboarding, recorder, notifications, menu bar icon.

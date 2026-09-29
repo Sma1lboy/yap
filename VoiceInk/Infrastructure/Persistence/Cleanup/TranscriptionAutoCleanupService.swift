@@ -178,13 +178,19 @@ private actor TranscriptionCleanupWorker {
         guard FileManager.default.fileExists(atPath: recordingsDirectory.path) else { return 0 }
         let filesInDirectory = try FileManager.default.contentsOfDirectory(
             at: recordingsDirectory,
-            includingPropertiesForKeys: [.isDirectoryKey]
+            includingPropertiesForKeys: [.isDirectoryKey, .contentModificationDateKey]
         )
 
         var deletedCount = 0
         for fileURL in filesInDirectory where !referencedFiles.contains(fileURL.lastPathComponent) {
             // Folders (meetings/) are never orphans here: a meeting's files go with its History entry.
-            if (try? fileURL.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true { continue }
+            let values = try? fileURL.resourceValues(forKeys: [.isDirectoryKey, .contentModificationDateKey])
+            if values?.isDirectory == true { continue }
+            // A recent one may be a recording the app quit in the middle of; RecordingRecovery offers it at launch.
+            if RecordingRecovery.isCandidate(
+                name: fileURL.lastPathComponent, isDirectory: false,
+                modified: values?.contentModificationDate ?? .distantPast, referenced: referencedFiles)
+            { continue }
             do {
                 try FileManager.default.removeItem(at: fileURL)
                 deletedCount += 1

@@ -10,7 +10,7 @@ struct ModelDetailActionLabel: View {
             Text(title)
                 .lineLimit(1)
 
-            Image(systemName: icon)
+            Image(yapIcon: icon)
                 .font(AppTheme.font(.micro, .semibold))
         }
         .font(AppTheme.font(.footnote, .semibold))
@@ -37,7 +37,7 @@ struct InsightPeriodPicker: View {
                         if period == selection {
                             Spacer()
 
-                            Image(systemName: "checkmark")
+                            Image(yapIcon: "checkmark")
                                 .font(AppTheme.font(.caption, .semibold))
                         }
                     }
@@ -45,7 +45,7 @@ struct InsightPeriodPicker: View {
             }
         } label: {
             HStack(spacing: AppTheme.Spacing.x2) {
-                Image(systemName: "calendar")
+                Image(yapIcon: "calendar")
                     .font(AppTheme.font(.footnote, .medium))
                     .foregroundStyle(AppTheme.Text.secondary.opacity(0.86))
 
@@ -55,7 +55,7 @@ struct InsightPeriodPicker: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
 
-                Image(systemName: "chevron.down")
+                Image(yapIcon: "chevron.down")
                     .font(AppTheme.font(.micro, .semibold))
                     .foregroundStyle(AppTheme.Text.secondary.opacity(0.70))
             }
@@ -93,7 +93,7 @@ struct ModelActionLabel: View {
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: icon)
+            Image(yapIcon: icon)
                 .font(AppTheme.font(.footnote, .semibold))
 
             Text(title)
@@ -121,7 +121,7 @@ struct InsightEmptyState: View {
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: icon)
+            Image(yapIcon: icon)
                 .font(AppTheme.font(.footnote, .semibold))
                 .foregroundStyle(AppTheme.Text.secondary)
 

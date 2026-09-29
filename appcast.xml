@@ -4,6 +4,128 @@
         <title>Yap</title>
         <link>https://github.com/Sma1lboy/yap</link>
         <item>
+            <title>Yap 1.5.0</title>
+            <pubDate>Tue, 29 Sep 2026 13:43:00 GMT</pubDate>
+            <sparkle:version>1149</sparkle:version>
+            <sparkle:shortVersionString>1.5.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.5.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.5.0</h1>
+<p dir="auto">Changes since 1.4.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Settings</h2>
+<ul dir="auto">
+<li>New Account section at the top of Settings. Signed out, it explains Yap Cloud and lets you sign in. Signed in, it shows your email, a switch to sync settings across Macs, sync status with Retry and Sync Now, Version History, Manage Yap Cloud, and Sign Out.</li>
+<li>Config &amp; Sync is now Config File and holds only the config-file rows and VoiceInk import.</li>
+<li>A search field at the top of Settings filters sections by title or row name, and says when nothing matches.</li>
+<li>Settings › Shortcuts has Restore Default Shortcuts…, which lists each change and asks before applying. Your modes are untouched.</li>
+</ul>
+<h2 dir="auto">Shortcuts and recording</h2>
+<ul dir="auto">
+<li>New Copy Last Transcription shortcut (unset by default) copies the cleaned-up text, or the original if there is none. It is included in settings backup and config.json.</li>
+<li>Cancelling a recording of 15 seconds or more asks first: press the cancel key again within 3 seconds to discard it. With Esc, long recordings show "Press Esc again to discard".</li>
+</ul>
+<h2 dir="auto">When something goes wrong</h2>
+<ul dir="auto">
+<li>A recording that is too quiet is no longer transcribed. The notification names the input device you are using and opens Audio Settings.</li>
+<li>If a transcript is only one of Whisper's made-up phrases (English or Chinese), it isn't pasted. History keeps the text with a Filtered status, and Yap tells you it didn't catch anything.</li>
+<li>If Yap quit in the middle of a recording, the audio (up to 3 days old) is kept, and the next launch offers to transcribe it with your current mode or discard it.</li>
+</ul>
+<h1 dir="auto">Yap 1.5.0（中文）</h1>
+<p dir="auto">1.4.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">设置</h2>
+<ul dir="auto">
+<li>设置顶部新增“账户”分区。未登录时说明 Yap Cloud 并可以直接登录；登录后显示邮箱、“跨 Mac 同步设置”开关、同步状态（可重试、立即同步）、版本历史、管理 Yap Cloud 和退出登录。</li>
+<li>“配置与同步”改名为“配置文件”，只保留配置文件相关的行和 VoiceInk 导入。</li>
+<li>设置顶部有搜索框，按分区标题或设置项名称过滤，没有匹配时会提示。</li>
+<li>设置 › 快捷键 新增“恢复默认快捷键…”，会先列出每一项改动再让你确认。模式不受影响。</li>
+</ul>
+<h2 dir="auto">快捷键和录音</h2>
+<ul dir="auto">
+<li>新增“复制上一次转写”快捷键（默认未设置），复制清理后的文字，没有的话复制原文。已包含在设置备份和 config.json 里。</li>
+<li>取消 15 秒或更长的录音时会先确认：3 秒内再按一次取消键才会丢弃。用 Esc 取消时，长录音会显示“再按一次 Esc 丢弃”。</li>
+</ul>
+<h2 dir="auto">出问题的时候</h2>
+<ul dir="auto">
+<li>太安静的录音不再转写。通知里会写出当前使用的输入设备，并可以打开音频设置。</li>
+<li>如果转写结果整句都是 Whisper 编造的常见短语（中文或英文），不会粘贴。历史记录里保留文字并标为“已过滤”，Yap 会告诉你没有听到内容。</li>
+<li>如果 Yap 在录音过程中退出了，3 天内的录音会保留，下次启动时可以选择用当前模式转写，或者丢弃。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.5.0/Yap.zip" sparkle:edSignature="U749lUE97nrwOXpDGRibh2MF+3WsJMouHISEtGCKO5jleghdmeWcdbVxR85AsnIaR/Zf+E/saCMcDxtwgxlkAA==" length="47345230" type="application/octet-stream" />
+        </item>
+        <item>
+            <title>Yap 1.4.0</title>
+            <pubDate>Tue, 29 Sep 2026 09:41:44 GMT</pubDate>
+            <sparkle:version>1140</sparkle:version>
+            <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.4.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.4.0</h1>
+<p dir="auto">Changes since 1.3.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">History</h2>
+<ul dir="auto">
+<li>Each dictation records the app it went into, shown in the list rows and the info panel.</li>
+<li>Filter by app, mode or meetings, combined with search.</li>
+<li>Sort by newest, oldest, longest or most words.</li>
+<li>Right-click a row: copy, copy original, paste again, retranscribe, info, delete.</li>
+</ul>
+<h2 dir="auto">Dictation</h2>
+<ul dir="auto">
+<li>If no text field is focused when you finish, the dictation stays on the clipboard and Yap tells you so, instead of pasting nowhere.</li>
+<li>Word replacements accept multi-line text, and list rows show the first line.</li>
+<li>New starter mode: Translate to English.</li>
+<li>The menu bar has a Language submenu that sets the active mode's dictation language.</li>
+<li>Cleanup also sees the date, time, time zone and your account name.</li>
+</ul>
+<h2 dir="auto">Editing and rewriting</h2>
+<ul dir="auto">
+<li>Undo Last Paste puts back the text the paste replaced, instead of just deleting.</li>
+<li>Rewrite mode with nothing selected tells you to select text first, instead of pasting nothing.</li>
+<li>Home and the feature tour list Edit Selected Text, which uses the Rewrite mode.</li>
+</ul>
+<h2 dir="auto">App polish</h2>
+<ul dir="auto">
+<li>Icons: the sidebar and the most used icons are now Phosphor, gray, with a duck-yellow selected item.</li>
+<li>Onboarding: the microphone step shows a live input level on the highlighted device, and the practice sentences are translated (中文, Deutsch, Français).</li>
+<li>Yap offers to move itself into Applications when a downloaded copy runs from another folder.</li>
+<li>The site and README no longer say Yap isn't notarized, and answer the permission reset after 1.3.0.</li>
+</ul>
+<h1 dir="auto">Yap 1.4.0（中文）</h1>
+<p dir="auto">1.3.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">历史记录</h2>
+<ul dir="auto">
+<li>每条听写会记下它输入到了哪个 app，列表行和详情面板里都能看到。</li>
+<li>可以按 app、模式或会议筛选，并且能和搜索一起用。</li>
+<li>可以按最新、最早、最长或字数最多排序。</li>
+<li>右键一行：复制、复制原文、再次粘贴、重新转写、详情、删除。</li>
+</ul>
+<h2 dir="auto">听写</h2>
+<ul dir="auto">
+<li>结束时如果没有聚焦的文本框，听写结果会留在剪贴板里，并提示你，而不是粘贴到空处。</li>
+<li>词语替换支持多行文本，列表里显示第一行。</li>
+<li>新增起步模式：翻译成英文。</li>
+<li>菜单栏新增“语言”子菜单，用来设置当前模式的听写语言。</li>
+<li>清理时还会参考日期、时间、时区和你的账户名。</li>
+</ul>
+<h2 dir="auto">编辑和改写</h2>
+<ul dir="auto">
+<li>撤销上次粘贴会把被这次粘贴替换掉的文字放回去，而不是只删除。</li>
+<li>没有选中文字时使用改写模式，会提示先选中文字，而不是粘贴一段空内容。</li>
+<li>主页和功能导览新增“编辑选中文字”，它用的是改写模式。</li>
+</ul>
+<h2 dir="auto">界面细节</h2>
+<ul dir="auto">
+<li>图标：侧边栏和最常用的图标换成了 Phosphor，灰色，选中项是鸭黄色。</li>
+<li>新手引导：麦克风一步会在高亮的设备上显示实时输入电平，练习句子有中文、德语、法语翻译。</li>
+<li>从其他文件夹运行下载的 Yap 时，会提示把它移到“应用程序”。</li>
+<li>网站和 README 不再写“未公证”，并补上了 1.3.0 之后权限需要重新授权的说明。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.4.0/Yap.zip" sparkle:edSignature="oYYQv5it4kpIIg7vSVC1HqCHJNgRF/9KYd6Yi8rKCeJLr6WQ6FtTsKPSIpBRE1dMOudxz0/35aWIy+bO35CrBg==" length="47259137" type="application/octet-stream" />
+        </item>
+        <item>
             <title>Yap 1.3.0</title>
             <pubDate>Tue, 29 Sep 2026 01:47:51 GMT</pubDate>
             <sparkle:version>1123</sparkle:version>

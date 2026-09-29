@@ -127,6 +127,29 @@
                     .scrollContentBackground(.hidden)
             }
 
+            // Settings search: a query that matches some sections, and one that matches none.
+            SettingsView.snapshotQuery = "paste"
+            MainWindowNavigation.shared.selectedView = .settings
+            shot("settings-search", fullPage: true, titled: true) { ContentView() }
+            SettingsView.snapshotQuery = "zzzz"
+            shot("settings-search-empty", fullPage: true, titled: true) { ContentView() }
+            SettingsView.snapshotQuery = ""
+
+            // Settings › Account: signed out (sign-in form), then signed in with sync on.
+            func accountGroup() -> some View {
+                Form { AccountSettingsSection() }
+                    .formStyle(.grouped)
+                    .scrollContentBackground(.hidden)
+            }
+            UserDefaults.standard.set(false, forKey: CloudConfigSync.enabledKey)
+            YapCloud.shared.applySnapshotState(.signedOut)
+            shot("settings-account-signed-out", main: true, fullPage: true) { accountGroup() }
+            YapCloud.shared.applySnapshotState(.funded)
+            UserDefaults.standard.set(true, forKey: CloudConfigSync.enabledKey)
+            CloudConfigSync.shared.applySnapshotSynced()
+            shot("settings-account-signed-in", main: true, fullPage: true) { accountGroup() }
+            UserDefaults.standard.set(false, forKey: CloudConfigSync.enabledKey)
+
             // Panels that open inside a page.
             ModeView.snapshotOpensEditor = true
             MainWindowNavigation.shared.selectedView = .modes
