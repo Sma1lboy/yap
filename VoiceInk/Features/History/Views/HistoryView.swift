@@ -690,6 +690,7 @@ struct HistoryCardRow: View {
 
     private var metaText: String {
         var parts: [String] = []
+        if let appName = transcription.sourceAppName, !appName.isEmpty { parts.append(appName) }
         if transcription.duration > 0 {
             parts.append(Duration.seconds(transcription.duration).formatted(.time(pattern: .minuteSecond)))
         }
@@ -703,6 +704,7 @@ struct HistoryCardRow: View {
     private var accessibilitySummary: String {
         var parts = [transcription.timestamp.formatted(date: .abbreviated, time: .shortened)]
         if let modeName = transcription.modeName, !modeName.isEmpty { parts.append(modeName) }
+        if let appName = transcription.sourceAppName, !appName.isEmpty { parts.append(appName) }
         switch transcription.transcriptionStatus {
         case TranscriptionStatus.failed.rawValue: parts.append(String(localized: "Failed"))
         case TranscriptionStatus.canceled.rawValue: parts.append(String(localized: "Canceled"))

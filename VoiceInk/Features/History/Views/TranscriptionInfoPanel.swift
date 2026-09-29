@@ -106,6 +106,14 @@ struct TranscriptionInfoPanel: View {
                 )
             }
 
+            if let appName = transcription.sourceAppName {
+                metadataRow(
+                    icon: "macwindow",
+                    label: "App",
+                    value: appName
+                )
+            }
+
             if let modeName = transcription.modeName {
                 metadataRow(
                     icon: "bolt.fill",
