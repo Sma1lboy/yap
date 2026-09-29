@@ -4,6 +4,43 @@
         <title>Yap</title>
         <link>https://github.com/Sma1lboy/yap</link>
         <item>
+            <title>Yap 1.6.1</title>
+            <pubDate>Tue, 29 Sep 2026 20:46:02 GMT</pubDate>
+            <sparkle:version>1164</sparkle:version>
+            <sparkle:shortVersionString>1.6.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.6.1</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.6.1</h1>
+<p dir="auto">Changes since 1.6.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Meetings</h2>
+<ul dir="auto">
+<li>The feature tour has a new Record Meeting card that shows the meeting shortcut.</li>
+<li>The last onboarding screen now mentions meeting recording. If you have set a meeting shortcut it shows the shortcut; otherwise it points you to Settings to set one.</li>
+</ul>
+<h2 dir="auto">Website</h2>
+<ul dir="auto">
+<li>New changelog page: <a href="https://yap.sma1lboy.me/changelog.html" rel="nofollow">https://yap.sma1lboy.me/changelog.html</a></li>
+<li>New troubleshooting page: <a href="https://yap.sma1lboy.me/help.html" rel="nofollow">https://yap.sma1lboy.me/help.html</a></li>
+<li>The download section shows the latest version, file size and system requirements.</li>
+</ul>
+<h1 dir="auto">Yap 1.6.1（中文）</h1>
+<p dir="auto">1.6.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">会议</h2>
+<ul dir="auto">
+<li>功能导览新增“录制会议”卡片，显示会议录制的快捷键。</li>
+<li>引导的最后一屏现在会介绍会议录制。如果你已经设置了会议快捷键，会显示该快捷键；没有的话，会提示你去设置里设一个。</li>
+</ul>
+<h2 dir="auto">官网</h2>
+<ul dir="auto">
+<li>新增更新日志页：<a href="https://yap.sma1lboy.me/changelog.html" rel="nofollow">https://yap.sma1lboy.me/changelog.html</a></li>
+<li>新增排障页：<a href="https://yap.sma1lboy.me/help.html" rel="nofollow">https://yap.sma1lboy.me/help.html</a></li>
+<li>下载区显示最新版本、文件大小和系统要求。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.6.1/Yap.zip" sparkle:edSignature="QSO8adIAByT1rqRkQ1y+aYmtoCzGrj0Fyehgf+Gcp9J+eWRjMyTB1zzwskPc5pFw/4EMquwyIs3wa7pcKXyIDg==" length="47427621" type="application/octet-stream" />
+        </item>
+        <item>
             <title>Yap 1.6.0</title>
             <pubDate>Tue, 29 Sep 2026 18:24:52 GMT</pubDate>
             <sparkle:version>1157</sparkle:version>
