@@ -163,6 +163,7 @@ sync-e2e: $(PAYGATE_UP)
 		VoiceInk/Infrastructure/Config/RecommendedSetup.swift \
 		VoiceInk/Infrastructure/Cloud/YapCloudClient.swift \
 		VoiceInk/Infrastructure/Cloud/YapCloudProvider.swift \
+		VoiceInk/Infrastructure/Providers/Transcription/Cloud/TranscriptionHints.swift \
 		VoiceInk/Infrastructure/Cloud/YapCloud+ConfigSync.swift \
 		VoiceInk/Infrastructure/SystemIntegration/Lifecycle/LifecycleObserver.swift \
 		VoiceInk/Features/Settings/Backup/BackupTypes.swift \
