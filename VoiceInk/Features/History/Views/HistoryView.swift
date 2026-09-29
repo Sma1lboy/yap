@@ -15,6 +15,7 @@ struct HistoryView<Header: View>: View {
     }
 
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var engine: VoiceInkEngine
     @State private var searchText = ""
     @State private var filter = HistoryFilter()
     @State private var sort = HistorySort.remembered
@@ -117,6 +118,8 @@ struct HistoryView<Header: View>: View {
                     withAnimation(.easeInOut(duration: 0.2)) { expandedId = expandedId == id ? nil : id }
                     return .handled
                 }
+                .onKeyPress(.delete) { deleteKeyboardRow() }
+                .onKeyPress(.deleteForward) { deleteKeyboardRow() }
                 .onKeyPress(.space) {
                     guard let row = keyboardRow else { return .ignored }
                     toggleSelection(row)
@@ -518,6 +521,7 @@ struct HistoryView<Header: View>: View {
                     }
                 )
                 .id(transcription.id)
+                .contextMenu { rowMenu(for: transcription) }
             }
         }
 
@@ -679,6 +683,93 @@ struct HistoryView<Header: View>: View {
         sortedMatches = nil
         hasMoreContent = true
         isLoading = false
+    }
+
+    // MARK: - Row Menu
+
+    @ViewBuilder
+    private func rowMenu(for transcription: Transcription) -> some View {
+        Button("Copy") { _ = ClipboardManager.copyToClipboard(transcription.preferredHistoryText) }
+        if let enhanced = transcription.enhancedText, !enhanced.isEmpty, enhanced != transcription.text {
+            Button("Copy Original") { _ = ClipboardManager.copyToClipboard(transcription.text) }
+        }
+        Button("Paste Again") { pasteAgain(transcription) }
+        Button("Retranscribe") { retranscribe(transcription) }
+        Button("Show Info") { openPanel(mode: .info, transcriptionID: transcription.id) }
+        Divider()
+        Button("Delete", role: .destructive) { requestDeletion(of: transcription) }
+    }
+
+    /// Goes back to the app the dictation was made in (or, for older rows, hides Yap so the previous app is
+    /// frontmost again), then pastes.
+    private func pasteAgain(_ transcription: Transcription) {
+        let text = transcription.preferredHistoryText
+        if let bundleID = transcription.sourceAppBundleID,
+            let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first
+        {
+            app.activate(options: [.activateIgnoringOtherApps])
+        } else {
+            NSApp.hide(nil)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            CursorPaster.pasteAtCursor(text)
+        }
+    }
+
+    /// The same action as the retranscribe button in the audio player: the current mode and its model.
+    private func retranscribe(_ transcription: Transcription) {
+        guard let urlString = transcription.audioFileURL, let url = URL(string: urlString),
+            FileManager.default.fileExists(atPath: url.path)
+        else {
+            NotificationManager.shared.showNotification(
+                title: String(localized: "Cannot retry: Audio file not found"), type: .error)
+            return
+        }
+        guard let mode = ModeManager.shared.currentEffectiveConfiguration else {
+            NotificationManager.shared.showNotification(title: String(localized: "No mode selected"), type: .error)
+            return
+        }
+        guard
+            let configuration = ModeRuntimeResolver.transcriptionConfiguration(
+                mode: mode, transcriptionModelManager: engine.transcriptionModelManager)
+        else {
+            NotificationManager.shared.showNotification(
+                title: String(localized: "No transcription model selected"), type: .error)
+            return
+        }
+        let service = AudioTranscriptionService(modelContext: modelContext, engine: engine)
+        Task { @MainActor in
+            do {
+                let result = try await service.retranscribeAudio(from: url, using: configuration.model, mode: mode)
+                if let failure = result.enhancementFailure {
+                    NotificationManager.shared.showNotification(
+                        title: EnhancementFailureFormatter.transcriptionSavedMessage(description: failure),
+                        type: .warning)
+                } else {
+                    NotificationManager.shared.showNotification(
+                        title: String(localized: "Retranscription successful"), type: .success)
+                }
+            } catch {
+                NotificationManager.shared.showNotification(
+                    title: error.localizedDescription.isEmpty
+                        ? String(localized: "Retranscription failed") : error.localizedDescription,
+                    type: .error)
+            }
+        }
+    }
+
+    /// Opens the usual delete confirmation. Right-clicking a row outside the selection targets just that row.
+    private func requestDeletion(of transcription: Transcription) {
+        if !selectedTranscriptions.contains(transcription) {
+            selectedTranscriptions = [transcription]
+        }
+        showDeleteConfirmation = true
+    }
+
+    private func deleteKeyboardRow() -> KeyPress.Result {
+        guard let row = keyboardRow else { return .ignored }
+        requestDeletion(of: row)
+        return .handled
     }
 
     // MARK: - Selection & Deletion

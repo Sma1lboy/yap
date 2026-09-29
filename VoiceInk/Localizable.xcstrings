@@ -9316,6 +9316,28 @@
         }
       }
     },
+    "Copy Original" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Original kopieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier l’original"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制原文"
+          }
+        }
+      }
+    },
     "Copy Recording Notice" : {
       "localizations" : {
         "de" : {
@@ -22208,6 +22230,28 @@
         }
       }
     },
+    "Paste Again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut einfügen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller à nouveau"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再次粘贴"
+          }
+        }
+      }
+    },
     "Paste Last Enhanced Transcription" : {
       "localizations" : {
         "de" : {
@@ -25207,6 +25251,28 @@
         }
       }
     },
+    "Retranscribe" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neu transkribieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retranscrire"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新转写"
+          }
+        }
+      }
+    },
     "Retranscribe this audio" : {
       "localizations" : {
         "de" : {
@@ -27338,6 +27404,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "查看下载"
+          }
+        }
+      }
+    },
+    "Show Info" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Infos anzeigen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les infos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看详情"
           }
         }
       }
