@@ -24283,28 +24283,6 @@
         }
       }
     },
-    "Removes the text Yap pasted last, if it's still where Yap put it and unchanged. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entfernt den Text, den Yap zuletzt eingefügt hat, wenn er noch unverändert an seiner Stelle steht. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supprime le texte que Yap a collé en dernier, s'il est toujours à sa place et inchangé. Dire seulement « scratch that » ou « 删掉刚才那句 » fait la même chose."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "删掉 Yap 上一次粘贴的文字（前提是它还在原处、没被改过）。只说一句“删掉刚才那句”或“scratch that”也一样。"
-          }
-        }
-      }
-    },
     "Reorder Modes" : {
       "localizations" : {
         "de" : {
@@ -29012,24 +28990,46 @@
         }
       }
     },
-    "Takes back the text Yap pasted last. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
+    "Takes back the text Yap pasted last, if it's still where Yap put it and unchanged. If it replaced selected text, that text comes back; otherwise it's removed. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nimmt den zuletzt von Yap eingefügten Text zurück. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
+            "value" : "Nimmt den zuletzt von Yap eingefügten Text zurück, wenn er noch unverändert an seiner Stelle steht. Hat er markierten Text ersetzt, kommt dieser zurück, sonst wird er entfernt. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Retire le dernier texte collé par Yap. Dire seulement « scratch that » ou « 删掉刚才那句 » fait de même."
+            "value" : "Annule le dernier texte collé par Yap, s'il est toujours à sa place et inchangé. S'il avait remplacé un texte sélectionné, ce texte revient ; sinon il est supprimé. Dire seulement « scratch that » ou « 删掉刚才那句 » fait de même."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "撤回 Yap 最近一次粘贴的文字。只说一句\"删掉刚才那句\"或\"scratch that\"也一样。"
+            "value" : "撤回 Yap 最近一次粘贴的文字（前提是它还在原处、没被改过）。如果这次粘贴替换了选中的文字，被替换的文字会回来；否则直接删掉。只说一句“删掉刚才那句”或“scratch that”也一样。"
+          }
+        }
+      }
+    },
+    "Takes back the text Yap pasted last. If it replaced selected text, that text comes back. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimmt den zuletzt von Yap eingefügten Text zurück. Hat er markierten Text ersetzt, kommt dieser zurück. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annule le dernier texte collé par Yap. S'il avait remplacé un texte sélectionné, ce texte revient. Dire seulement « scratch that » ou « 删掉刚才那句 » fait de même."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "撤回 Yap 最近一次粘贴的文字。如果它替换了选中的文字，被替换的文字会回来。只说一句“删掉刚才那句”或“scratch that”也一样。"
           }
         }
       }

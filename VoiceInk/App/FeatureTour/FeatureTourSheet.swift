@@ -29,7 +29,7 @@ struct FeatureTourSheet: View {
             destination: .modes),
         Feature(
             id: "undo", systemImage: "arrow.uturn.backward", title: "Undo Last Paste",
-            detail: "Takes back the text Yap pasted last. Saying only \"scratch that\" or \"删掉刚才那句\" does the same.",
+            detail: "Takes back the text Yap pasted last. If it replaced selected text, that text comes back. Saying only \"scratch that\" or \"删掉刚才那句\" does the same.",
             shortcut: .undoLastPaste, destination: .settings),
         Feature(
             id: "rewrite", systemImage: "wand.and.stars", title: "Rewrite Last Dictation",
