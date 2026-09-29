@@ -72,7 +72,7 @@ struct SettingsView: View {
                             Button {
                                 withAnimation { recordingShortcutManager.secondaryRecordingShortcut = .none }
                             } label: {
-                                Image(systemName: "minus.circle.fill")
+                                Image(yapIcon: "minus.circle.fill")
                                     .foregroundColor(.secondary)
                             }
                             .buttonStyle(.plain)
@@ -102,7 +102,7 @@ struct SettingsView: View {
                 } label: {
                     HStack(spacing: AppTheme.Spacing.x1) {
                         Text("Undo Last Paste")
-                        InfoTip("Removes the text Yap pasted last, if it's still where Yap put it and unchanged. Saying only \"scratch that\" or \"删掉刚才那句\" does the same.")
+                        InfoTip("Takes back the text Yap pasted last, if it's still where Yap put it and unchanged. If it replaced selected text, that text comes back; otherwise it's removed. Saying only \"scratch that\" or \"删掉刚才那句\" does the same.")
                     }
                 }
 
@@ -180,7 +180,7 @@ struct SettingsView: View {
                             ShortcutStore.setShortcut(nil, for: .cancelRecorder)
                             cancelRecordingShortcutRecorderResetID += 1
                         } label: {
-                            Image(systemName: "arrow.counterclockwise")
+                            Image(yapIcon: "arrow.counterclockwise")
                         }
                         .buttonStyle(.plain)
                         .help("Reset to default")

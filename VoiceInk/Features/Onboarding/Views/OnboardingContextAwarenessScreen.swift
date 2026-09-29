@@ -33,7 +33,7 @@ private struct OnboardingContextAwarenessContent: View {
     var body: some View {
         ZStack {
             VStack(spacing: AppTheme.Spacing.x5) {
-                Image(systemName: "sparkles.square.fill.on.square")
+                Image(yapIcon: "sparkles.square.fill.on.square")
                     .font(AppTheme.font(.title, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
                     .frame(width: 56, height: 56)
@@ -147,7 +147,7 @@ private struct ContextAwarenessModePill: View {
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: model.systemImage)
+            Image(yapIcon: model.systemImage)
                 .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.secondary)
 
@@ -172,7 +172,7 @@ private struct ContextAwarenessModePill: View {
 private struct ContextAwarenessModeHub: View {
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: "sparkles.square.fill.on.square")
+            Image(yapIcon: "sparkles.square.fill.on.square")
                 .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(AppTheme.Text.secondary)
                 .frame(width: 18)

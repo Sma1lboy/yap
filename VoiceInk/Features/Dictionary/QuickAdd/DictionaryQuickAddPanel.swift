@@ -168,7 +168,7 @@ struct DictionaryQuickAddView: View {
                     withAnimation(.easeInOut(duration: 0.15)) { mode = m }
                 } label: {
                     HStack(spacing: AppTheme.Spacing.x1) {
-                        Image(systemName: m.icon)
+                        Image(yapIcon: m.icon)
                             .font(AppTheme.font(.micro, .medium))
                         Text(m.label)
                             .font(AppTheme.font(.footnote, .medium))
@@ -207,7 +207,7 @@ struct DictionaryQuickAddView: View {
 
     private var vocabularyInput: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
-            Image(systemName: "character.book.closed.fill")
+            Image(yapIcon: "character.book.closed.fill")
                 .font(AppTheme.font(.callout))
                 .foregroundStyle(.secondary)
             TextField("", text: $wordInput, prompt: Text("e.g. Yap, OpenRouter").foregroundColor(.secondary))

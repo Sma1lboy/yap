@@ -141,7 +141,7 @@ struct AutoLearnReviewPanel: View {
 
     private var emptyState: some View {
         ContentUnavailableView {
-            Label("No Corrections to Review", systemImage: "checkmark.circle")
+            Label("No Corrections to Review", yapIcon: "checkmark.circle")
         } description: {
             Text(errorMessage ?? "New manual-review suggestions will appear here.")
         }
@@ -424,7 +424,7 @@ private struct AutoLearnReviewProposalRow: View {
                     field: .incorrect,
                     isEmphasized: false
                 )
-                Image(systemName: "arrow.right")
+                Image(yapIcon: "arrow.right")
                     .font(AppTheme.font(.micro, .medium))
                     .foregroundStyle(AppTheme.Text.muted)
                 editableValue(
@@ -564,7 +564,7 @@ private struct AutoLearnReviewProposalRow: View {
         return Button {
             onToggleComponent(component)
         } label: {
-            Image(systemName: systemImage)
+            Image(yapIcon: systemImage)
                 .font(AppTheme.font(.caption, .semibold))
                 .foregroundStyle(isSelected ? AppTheme.Text.primary : AppTheme.Text.muted)
                 .frame(width: 30, height: 26)

@@ -99,7 +99,7 @@ private struct CustomProviderEmptyState: View {
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.x3) {
-            Image(systemName: systemImage)
+            Image(yapIcon: systemImage)
                 .font(AppTheme.font(.display))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(.secondary)
@@ -122,7 +122,7 @@ private struct CustomEnhancementModelRow: View {
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
-            Image(systemName: "sparkles")
+            Image(yapIcon: "sparkles")
                 .font(AppTheme.font(.headline, .semibold))
                 .foregroundStyle(.secondary)
                 .frame(width: 28, height: 28)
@@ -142,7 +142,7 @@ private struct CustomEnhancementModelRow: View {
                     // Definitions synced from another Mac arrive without their key (keys never leave a Mac).
                     if !CustomAIProviderManager.shared.hasAPIKeyForProvider(provider) {
                         Button(action: onEdit) {
-                            Label("API key needed", systemImage: "key")
+                            Label("API key needed", yapIcon: "key")
                                 .font(AppTheme.font(.caption, .medium))
                                 .foregroundColor(AppTheme.Status.warningStrong)
                         }
@@ -170,7 +170,7 @@ private struct CustomEnhancementModelRow: View {
                 Button("Edit", action: onEdit)
                 Button("Delete", role: .destructive, action: onDelete)
             } label: {
-                Image(systemName: "ellipsis.circle")
+                Image(yapIcon: "ellipsis.circle")
                     .font(AppTheme.font(.callout))
             }
             .menuStyle(.borderlessButton)
@@ -680,7 +680,7 @@ private struct ConnectionTestRow: View {
 
             Button(action: action) {
                 HStack(spacing: AppTheme.Spacing.x1) {
-                    Image(systemName: "wifi")
+                    Image(yapIcon: "wifi")
                         .font(AppTheme.font(.caption))
                     Text("Test")
                         .font(AppTheme.font(.footnote))
@@ -709,7 +709,7 @@ private struct ConnectionTestRow: View {
             .font(AppTheme.font(.footnote))
             .foregroundStyle(AppTheme.Text.secondary)
         case .success:
-            Label("Test successful", systemImage: "checkmark.circle")
+            Label("Test successful", yapIcon: "checkmark.circle")
                 .font(AppTheme.font(.footnote))
                 .foregroundStyle(AppTheme.Status.positive)
                 .lineLimit(1)

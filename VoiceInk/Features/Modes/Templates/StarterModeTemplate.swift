@@ -6,6 +6,7 @@ enum StarterModeKind: String, CaseIterable, Identifiable {
     case email
     case rewrite
     case assistant
+    case translate
 
     var id: String { rawValue }
 }
@@ -87,10 +88,34 @@ enum StarterModeCatalog {
                 useScreenCapture: false,
                 isDefault: false
             ),
+            StarterModeTemplate(
+                kind: .translate,
+                id: UUID(uuidString: "10000000-0000-0000-0000-000000000006")!,
+                name: String(localized: "Translate to English"),
+                icon: .symbol("globe"),
+                promptId: PromptTemplates.translatePromptId,
+                outputMode: .paste,
+                usesAIEnhancement: true,
+                useSelectedTextContext: false,
+                useScreenCapture: false,
+                isDefault: false
+            ),
         ]
     }
 
     static var ids: Set<UUID> {
         Set(templates.map(\.id))
     }
+
+    #if DEBUG
+        static func selfCheck() {
+            assert(templates.count == StarterModeKind.allCases.count && ids.count == templates.count)
+            let seeded = Set(PromptTemplates.seedPrompts.map(\.id))
+            for template in templates {
+                assert(template.promptId.map(seeded.contains) ?? true, "\(template.kind) needs a seeded prompt")
+            }
+            let translate = templates.first { $0.kind == .translate }
+            assert(translate?.usesAIEnhancement == true && translate?.outputMode == .paste)
+        }
+    #endif
 }

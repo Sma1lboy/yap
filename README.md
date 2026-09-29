@@ -10,7 +10,7 @@
 
 Yap is an open-source dictation app for macOS, released under the GPL-3.0. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up the filler and punctuation, and pastes the text into whatever app you're in. Modes pick a different prompt or model per app (email, code review, chat), and a dictionary keeps names and terms spelled your way.
 
-Yap is a fork of [VoiceInk](https://github.com/Beingpax/VoiceInk) by Prakash Joshi Pax. All credit for the app goes to the original author — if you want the official, notarized build, [buy VoiceInk](https://tryvoiceink.com/). Website: [yap.sma1lboy.me](https://yap.sma1lboy.me).
+Yap is a fork of [VoiceInk](https://github.com/Beingpax/VoiceInk) by Prakash Joshi Pax. All credit for the app goes to the original author — if you want the official build, [buy VoiceInk](https://tryvoiceink.com/). Website: [yap.sma1lboy.me](https://yap.sma1lboy.me). Icons: [Phosphor](https://phosphoricons.com) (MIT, license in `VoiceInk/Resources/Licenses/`).
 
 ## Choosing where your voice goes
 
@@ -31,7 +31,7 @@ The script installs the app with Homebrew (or downloads the latest release), cop
 
 Just the app: `brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew install --cask sma1lboy/yap/yap`. After that, Yap updates itself (Check for Updates… in the app menu) or with `brew upgrade --cask yap`.
 
-**Build it yourself.** With Xcode installed, `make local` in the cloned repository builds Yap and copies `Yap.app` to your Downloads folder. Releases are signed with a self-signed certificate and not notarized; the [site's FAQ](https://yap.sma1lboy.me/#faq) explains the one-time "can't verify the developer" step for a downloaded zip; `xattr -dr com.apple.quarantine /Applications/Yap.app` in Terminal does the same.
+**Build it yourself.** With Xcode installed, `make local` in the cloned repository builds Yap and copies `Yap.app` to your Downloads folder.
 
 ## How Yap differs from VoiceInk
 

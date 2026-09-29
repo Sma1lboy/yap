@@ -23,7 +23,7 @@ struct AutoLearnFailurePanel: View {
                     Label {
                         Text(errorDescription)
                     } icon: {
-                        Image(systemName: "exclamationmark.triangle.fill")
+                        Image(yapIcon: "exclamationmark.triangle.fill")
                             .foregroundStyle(AppTheme.Status.warning)
                     }
                 }

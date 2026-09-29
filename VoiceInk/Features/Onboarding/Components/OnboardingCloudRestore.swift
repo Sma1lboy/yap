@@ -8,7 +8,7 @@ struct OnboardingCloudRestoreHint: View {
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
             if isRestored {
-                Image(systemName: "checkmark.circle.fill")
+                Image(yapIcon: "checkmark.circle.fill")
                     .foregroundColor(AppTheme.Status.positive)
                 Text("Settings restored from Yap Cloud")
                     .font(AppTheme.font(.caption))

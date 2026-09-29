@@ -361,7 +361,7 @@ private struct DashboardProductivityHoverTooltip: View {
 private struct DashboardProductivityEmptyHint: View {
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: "waveform.path.ecg")
+            Image(yapIcon: "waveform.path.ecg")
                 .font(AppTheme.font(.body, .semibold))
                 .foregroundStyle(AppTheme.Text.secondary.opacity(0.78))
 

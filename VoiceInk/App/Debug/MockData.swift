@@ -66,6 +66,8 @@
                 let item = Transcription(
                     text: text.original, duration: Double(6 + (index * 7) % 40), enhancedText: text.enhanced)
                 item.timestamp = Date().addingTimeInterval(Double(-index) * 3_600 * 3)
+                item.sourceAppName = ["Notes", "Mail", "Slack", "Xcode"][index % 4]
+                item.sourceAppBundleID = ["com.apple.Notes", "com.apple.mail", "com.tinyspeck.slackmacgap", "com.apple.dt.Xcode"][index % 4]
                 if index == 0 { item.segmentsJSON = TimedSegments.encode(fileSegments) }
                 context.insert(item)
                 context.insert(metric(for: item, words: (text.enhanced ?? text.original).split(separator: " ").count))

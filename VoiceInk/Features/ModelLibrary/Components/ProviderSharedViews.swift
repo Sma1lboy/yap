@@ -28,7 +28,7 @@ struct ProviderBrandIcon: View {
                     .scaledToFit()
                     .padding(size * 0.24)
             } else {
-                Image(systemName: fallbackSystemImage)
+                Image(yapIcon: fallbackSystemImage)
                     .font(.system(size: iconSize, weight: .semibold))  // design-exempt: icon glyph sized to its container
                     .foregroundStyle(isSelected ? AppTheme.Accent.text : AppTheme.Text.secondary)
             }

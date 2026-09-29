@@ -4516,6 +4516,28 @@
         }
       }
     },
+    "Add Rewrite Mode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rewrite-Modus hinzufügen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter le mode Rewrite"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加改写模式"
+          }
+        }
+      }
+    },
     "Add Second Shortcut" : {
       "localizations" : {
         "de" : {
@@ -5338,6 +5360,28 @@
         }
       }
     },
+    "All Apps" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Apps"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les apps"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有应用"
+          }
+        }
+      }
+    },
     "All Models" : {
       "localizations" : {
         "de" : {
@@ -5378,6 +5422,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部模型…"
+          }
+        }
+      }
+    },
+    "All Modes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Modi"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tous les modes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所有模式"
           }
         }
       }
@@ -5735,6 +5801,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "剩余余额不退还，也无法恢复。"
+          }
+        }
+      }
+    },
+    "App" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Application"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应用"
           }
         }
       }
@@ -8269,6 +8357,28 @@
         }
       }
     },
+    "Clear Filter" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter zurücksetzen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer le filtre"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除筛选"
+          }
+        }
+      }
+    },
     "Clear Search" : {
       "localizations" : {
         "de" : {
@@ -9224,6 +9334,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "复制告知"
+          }
+        }
+      }
+    },
+    "Copy Original" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Original kopieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier l’original"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制原文"
           }
         }
       }
@@ -12576,6 +12708,28 @@
         }
       }
     },
+    "Edit Selected Text" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markierten Text bearbeiten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier le texte sélectionné"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑选中文字"
+          }
+        }
+      }
+    },
     "Edit Word Replacement" : {
       "localizations" : {
         "de" : {
@@ -14872,6 +15026,28 @@
         }
       }
     },
+    "Filter history" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlauf filtern"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filtrer l’historique"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "筛选历史记录"
+          }
+        }
+      }
+    },
     "Finalizing model files…" : {
       "localizations" : {
         "de" : {
@@ -15142,6 +15318,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "HTTP %1$lld：%2$@"
+          }
+        }
+      }
+    },
+    "Hello Chris, could we move our meeting from Tuesday morning to Wednesday afternoon? Please confirm when you have a moment. Thanks, Jamie." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hallo Chris, könnten wir unser Meeting von Dienstagvormittag auf Mittwochnachmittag verschieben? Bitte bestätige, sobald du einen Moment Zeit hast. Danke, Jamie."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bonjour Chris, pourrions-nous déplacer notre réunion de mardi matin à mercredi après-midi ? Merci de confirmer dès que vous avez un moment. Merci, Jamie."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chris 你好，我们能把周二上午的会改到周三下午吗？方便时请回复确认。谢谢，Jamie。"
           }
         }
       }
@@ -17428,6 +17626,28 @@
         }
       }
     },
+    "Longest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Längste zuerst"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus longues"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "时长最长"
+          }
+        }
+      }
+    },
     "Low Yap Cloud balance" : {
       "localizations" : {
         "de" : {
@@ -17800,6 +18020,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "会议录制需要麦克风权限。"
+          }
+        }
+      }
+    },
+    "Meetings only" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Meetings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réunions uniquement"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅会议"
           }
         }
       }
@@ -18541,6 +18783,28 @@
         }
       }
     },
+    "Most Words" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meiste Wörter"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus de mots"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字数最多"
+          }
+        }
+      }
+    },
     "Mouse %d" : {
       "comment" : "A description of a mouse button. The argument is the button number.",
       "isCommentAutoGenerated" : true,
@@ -18585,6 +18849,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不允许使用鼠标快捷键：%@"
+          }
+        }
+      }
+    },
+    "Move Yap to Applications" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap in „Programme“ verschieben"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déplacer Yap dans Applications"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移动 Yap 到“应用程序”"
           }
         }
       }
@@ -18809,6 +19095,28 @@
         }
       }
     },
+    "Needs the Rewrite mode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Braucht den Rewrite-Modus"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nécessite le mode Rewrite"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要“改写”模式"
+          }
+        }
+      }
+    },
     "Network connection failed. Check your internet." : {
       "localizations" : {
         "de" : {
@@ -18897,6 +19205,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新的手动审核建议会显示在这里。"
+          }
+        }
+      }
+    },
+    "Newest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neueste zuerst"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus récentes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最新"
           }
         }
       }
@@ -20404,6 +20734,28 @@
         }
       }
     },
+    "No transcriptions match this filter" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Transkriptionen entsprechen diesem Filter"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune transcription ne correspond à ce filtre"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有符合此筛选的转写记录"
+          }
+        }
+      }
+    },
     "No transcriptions yet" : {
       "localizations" : {
         "de" : {
@@ -20646,6 +20998,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未授予"
+          }
+        }
+      }
+    },
+    "Not Now" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht jetzt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus tard"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以后再说"
           }
         }
       }
@@ -21026,6 +21400,28 @@
         }
       }
     },
+    "Oldest" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Älteste zuerst"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus anciennes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最早"
+          }
+        }
+      }
+    },
     "Ollama request timed out" : {
       "localizations" : {
         "de" : {
@@ -21264,6 +21660,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开账户"
+          }
+        }
+      }
+    },
+    "Open Applications Folder" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordner „Programme“ öffnen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir le dossier Applications"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开“应用程序”文件夹"
           }
         }
       }
@@ -21988,6 +22406,28 @@
         }
       }
     },
+    "Paste Again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut einfügen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coller à nouveau"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再次粘贴"
+          }
+        }
+      }
+    },
     "Paste Last Enhanced Transcription" : {
       "localizations" : {
         "de" : {
@@ -22544,6 +22984,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请重新启动 App。如果问题仍然存在，请联系支持人员。"
+          }
+        }
+      }
+    },
+    "Please share the meeting notes before lunch." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bitte teile die Besprechungsnotizen vor dem Mittagessen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merci de partager le compte rendu de la réunion avant le déjeuner."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在午饭前把会议纪要发给大家。"
           }
         }
       }
@@ -24305,28 +24767,6 @@
         }
       }
     },
-    "Removes the text Yap pasted last, if it's still where Yap put it and unchanged. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entfernt den Text, den Yap zuletzt eingefügt hat, wenn er noch unverändert an seiner Stelle steht. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supprime le texte que Yap a collé en dernier, s'il est toujours à sa place et inchangé. Dire seulement « scratch that » ou « 删掉刚才那句 » fait la même chose."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "删掉 Yap 上一次粘贴的文字（前提是它还在原处、没被改过）。只说一句“删掉刚才那句”或“scratch that”也一样。"
-          }
-        }
-      }
-    },
     "Reorder Modes" : {
       "localizations" : {
         "de" : {
@@ -24983,6 +25423,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "继续下载"
+          }
+        }
+      }
+    },
+    "Retranscribe" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neu transkribieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retranscrire"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新转写"
           }
         }
       }
@@ -26291,6 +26753,72 @@
         }
       }
     },
+    "Select text in any app, use the Rewrite mode's shortcut and say the change (\"make it shorter\"). The selection is replaced. Set the shortcut on the Rewrite mode." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markiere in einer beliebigen App Text, nutze das Kürzel des Rewrite-Modus und sage die Änderung („kürzer machen“). Die Markierung wird ersetzt. Das Kürzel legst du im Rewrite-Modus fest."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez du texte dans n'importe quelle app, utilisez le raccourci du mode Rewrite et dites la modification (« raccourcis-le »). La sélection est remplacée. Le raccourci se définit dans le mode Rewrite."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在任意 App 里选中文字，用改写模式的快捷键，说出要怎么改（“改短一点”），选中的文字就会被替换。快捷键在改写模式里设置。"
+          }
+        }
+      }
+    },
+    "Select text, then say how to change it" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text markieren, dann sagen, wie er sich ändern soll"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez du texte, puis dites comment le modifier"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先选中文字，再说要怎么改"
+          }
+        }
+      }
+    },
+    "Select the text to rewrite first, then use this mode again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markiere zuerst den Text, der umgeschrieben werden soll, und nutze dann diesen Modus erneut."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez d'abord le texte à réécrire, puis réutilisez ce mode."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先选中要改写的文字，再使用这个模式。"
+          }
+        }
+      }
+    },
     "Select transcription" : {
       "localizations" : {
         "de" : {
@@ -27122,6 +27650,28 @@
         }
       }
     },
+    "Show Info" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Infos anzeigen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les infos"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看详情"
+          }
+        }
+      }
+    },
     "Show Me" : {
       "localizations" : {
         "de" : {
@@ -27793,6 +28343,28 @@
         }
       }
     },
+    "Sort" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortierung"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trier"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排序"
+          }
+        }
+      }
+    },
     "Sort by original" : {
       "localizations" : {
         "de" : {
@@ -27833,6 +28405,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按替换内容排序"
+          }
+        }
+      }
+    },
+    "Sort history" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verlauf sortieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trier l’historique"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "排序历史记录"
           }
         }
       }
@@ -27921,6 +28515,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "中英文之间加空格"
+          }
+        }
+      }
+    },
+    "Speak — the bar next to the highlighted microphone should move." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprich einfach los – der Balken neben dem markierten Mikrofon sollte sich bewegen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Parlez : la barre à côté du micro en surbrillance doit bouger."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "说句话试试，高亮麦克风旁边的条应该会动。"
           }
         }
       }
@@ -29078,24 +29694,46 @@
         }
       }
     },
-    "Takes back the text Yap pasted last. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
+    "Takes back the text Yap pasted last, if it's still where Yap put it and unchanged. If it replaced selected text, that text comes back; otherwise it's removed. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nimmt den zuletzt von Yap eingefügten Text zurück. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
+            "value" : "Nimmt den zuletzt von Yap eingefügten Text zurück, wenn er noch unverändert an seiner Stelle steht. Hat er markierten Text ersetzt, kommt dieser zurück, sonst wird er entfernt. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Retire le dernier texte collé par Yap. Dire seulement « scratch that » ou « 删掉刚才那句 » fait de même."
+            "value" : "Annule le dernier texte collé par Yap, s'il est toujours à sa place et inchangé. S'il avait remplacé un texte sélectionné, ce texte revient ; sinon il est supprimé. Dire seulement « scratch that » ou « 删掉刚才那句 » fait de même."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "撤回 Yap 最近一次粘贴的文字。只说一句\"删掉刚才那句\"或\"scratch that\"也一样。"
+            "value" : "撤回 Yap 最近一次粘贴的文字（前提是它还在原处、没被改过）。如果这次粘贴替换了选中的文字，被替换的文字会回来；否则直接删掉。只说一句“删掉刚才那句”或“scratch that”也一样。"
+          }
+        }
+      }
+    },
+    "Takes back the text Yap pasted last. If it replaced selected text, that text comes back. Saying only \"scratch that\" or \"删掉刚才那句\" does the same." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimmt den zuletzt von Yap eingefügten Text zurück. Hat er markierten Text ersetzt, kommt dieser zurück. Nur „scratch that“ oder „删掉刚才那句“ zu sagen, bewirkt dasselbe."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annule le dernier texte collé par Yap. S'il avait remplacé un texte sélectionné, ce texte revient. Dire seulement « scratch that » ou « 删掉刚才那句 » fait de même."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "撤回 Yap 最近一次粘贴的文字。如果它替换了选中的文字，被替换的文字会回来。只说一句“删掉刚才那句”或“scratch that”也一样。"
           }
         }
       }
@@ -32469,6 +33107,28 @@
         }
       }
     },
+    "Um, tell the team we will meet on Thursday. Actually, no, Friday morning works better." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Äh, sag dem Team, dass wir uns am Donnerstag treffen. Nein, eigentlich passt Freitagvormittag besser."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Euh, dis à l'équipe qu'on se retrouve jeudi. Non, en fait, vendredi matin est mieux."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "嗯……告诉团队我们周四开会。不对，周五上午更合适。"
+          }
+        }
+      }
+    },
     "Unavailable" : {
       "localizations" : {
         "de" : {
@@ -32893,24 +33553,24 @@
         }
       }
     },
-    "Use the app name, window title and up to 3,000 characters around the cursor in the field you're dictating into. Password fields are never read." : {
+    "Use the app name, window title and up to 3,000 characters around the cursor in the field you're dictating into, plus today's date, the time and your macOS account name. Password fields are never read." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App-Name, Fenstertitel und bis zu 3.000 Zeichen um den Cursor im Feld verwenden, in das du diktierst. Passwortfelder werden nie gelesen."
+            "value" : "App-Name, Fenstertitel und bis zu 3.000 Zeichen um den Cursor im Feld verwenden, in das du diktierst, dazu das heutige Datum, die Uhrzeit und den Namen deines macOS-Kontos. Passwortfelder werden nie gelesen."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Utiliser le nom de l'app, le titre de la fenêtre et jusqu'à 3 000 caractères autour du curseur dans le champ où vous dictez. Les champs de mot de passe ne sont jamais lus."
+            "value" : "Utiliser le nom de l'app, le titre de la fenêtre et jusqu'à 3 000 caractères autour du curseur dans le champ où vous dictez, plus la date du jour, l'heure et le nom de votre compte macOS. Les champs de mot de passe ne sont jamais lus."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "使用当前 App 名、窗口标题，以及你正在听写的输入框里光标前后最多 3,000 个字符。密码框永远不会读取。"
+            "value" : "使用当前 App 名、窗口标题，以及你正在听写的输入框里光标前后最多 3,000 个字符，再加上今天的日期、当前时间和你的 macOS 账户名。密码框永远不会读取。"
           }
         }
       }
@@ -34646,6 +35306,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 会自动识别你正在处理的内容，并选用你偏好的设置。你随时可以通过编辑或创建新模式来进行配置。"
+          }
+        }
+      }
+    },
+    "Yap can only update itself from the Applications folder. Drag Yap into it, then open Yap from there." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap kann sich nur aus dem Ordner „Programme“ selbst aktualisieren. Ziehe Yap dorthin und öffne es von dort."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap ne peut se mettre à jour que depuis le dossier Applications. Faites-y glisser Yap, puis ouvrez-le depuis là."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 只有放在“应用程序”文件夹里才能自动更新。把 Yap 拖进去，再从那里打开。"
           }
         }
       }
@@ -36513,6 +37195,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "↵"
+          }
+        }
+      }
+    },
+    "Copied to clipboard. No text field was focused, so Yap didn't paste. It's also in History." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In die Zwischenablage kopiert. Es war kein Textfeld aktiv, daher hat Yap nicht eingefügt. Der Text steht auch im Verlauf."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copié dans le presse-papiers. Aucun champ de texte n’avait le focus, Yap n’a donc rien collé. Le texte est aussi dans l’historique."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已复制到剪贴板。当时没有聚焦的输入框，Yap 没有粘贴。历史记录里也有这条。"
+          }
+        }
+      }
+    },
+    "Translate to English" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ins Englische übersetzen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Traduire en anglais"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻译成英文"
           }
         }
       }

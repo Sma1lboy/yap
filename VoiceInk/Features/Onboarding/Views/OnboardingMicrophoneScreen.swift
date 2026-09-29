@@ -9,6 +9,7 @@ struct OnboardingMicrophoneScreen: View {
     @ObservedObject private var audioDeviceManager = AudioDeviceManager.shared
     @State private var selectedDeviceUID: String?
     @State private var refreshIconRotation = 0.0
+    @StateObject private var levelProbe = MicrophoneLevelProbe()
 
     private typealias MicrophoneDevice = (id: AudioDeviceID, uid: String, name: String)
 
@@ -32,6 +33,11 @@ struct OnboardingMicrophoneScreen: View {
         .onAppear {
             refreshMicrophones(selectingIfNeeded: true)
             initializeSelectionIfNeeded()
+            restartLevelProbe()
+        }
+        .onDisappear { levelProbe.stop() }
+        .onChange(of: selectedDeviceUID) { _, _ in
+            restartLevelProbe()
         }
         .onChange(of: audioDeviceManager.availableDevices.map(\.uid)) { _, _ in
             ensureSelectionIsAvailable()
@@ -54,6 +60,13 @@ struct OnboardingMicrophoneScreen: View {
                 }
                 .frame(maxHeight: 280)
                 .scrollIndicators(.automatic)
+
+                if levelProbe.isActive {
+                    Text("Speak — the bar next to the highlighted microphone should move.")
+                        .font(AppTheme.font(.footnote))
+                        .foregroundColor(AppTheme.Text.secondary)
+                        .padding(.horizontal, AppTheme.Spacing.half)
+                }
             }
         }
     }
@@ -78,7 +91,7 @@ struct OnboardingMicrophoneScreen: View {
             selectedDeviceUID = device.uid
         } label: {
             HStack(spacing: AppTheme.Spacing.x4) {
-                Image(systemName: isSelected ? "checkmark" : "mic")
+                Image(yapIcon: isSelected ? "checkmark" : "mic")
                     .font(AppTheme.font(.body, .semibold))
                     .foregroundColor(isSelected ? AppTheme.Text.primary : AppTheme.Text.muted)
                     .frame(width: 30, height: 30)
@@ -93,6 +106,10 @@ struct OnboardingMicrophoneScreen: View {
                     .lineLimit(1)
 
                 Spacer(minLength: 12)
+
+                if isSelected && levelProbe.isActive {
+                    MicrophoneLevelBar(probe: levelProbe)
+                }
             }
             .padding(AppTheme.Spacing.x4)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -109,7 +126,7 @@ struct OnboardingMicrophoneScreen: View {
 
     private var emptyState: some View {
         VStack(spacing: AppTheme.Spacing.x4) {
-            Image(systemName: "mic.slash")
+            Image(yapIcon: "mic.slash")
                 .font(AppTheme.font(.title, .semibold))
                 .foregroundColor(AppTheme.Text.secondary)
 
@@ -140,7 +157,7 @@ struct OnboardingMicrophoneScreen: View {
                 Text("Refresh")
                     .font(AppTheme.font(.footnote, .semibold))
             } icon: {
-                Image(systemName: "arrow.clockwise")
+                Image(yapIcon: "arrow.clockwise")
                     .font(AppTheme.font(.footnote, .semibold))
                     .rotationEffect(.degrees(refreshIconRotation))
             }
@@ -157,6 +174,14 @@ struct OnboardingMicrophoneScreen: View {
     private var selectedDevice: MicrophoneDevice? {
         guard let selectedDeviceUID else { return nil }
         return devices.first { $0.uid == selectedDeviceUID }
+    }
+
+    private func restartLevelProbe() {
+        guard let selectedDevice else {
+            levelProbe.stop()
+            return
+        }
+        levelProbe.start(deviceID: selectedDevice.id)
     }
 
     private func refreshMicrophones(selectingIfNeeded: Bool) {

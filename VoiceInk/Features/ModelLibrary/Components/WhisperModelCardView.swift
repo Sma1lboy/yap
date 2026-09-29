@@ -49,13 +49,13 @@ struct WhisperModelCardView: View {
     private var metadataSection: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
             // Language
-            Label(model.language, systemImage: "globe")
+            Label(model.language, yapIcon: "globe")
                 .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
 
             // Size
-            Label(model.size, systemImage: "internaldrive")
+            Label(model.size, yapIcon: "internaldrive")
                 .font(AppTheme.font(.caption))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
@@ -116,7 +116,7 @@ struct WhisperModelCardView: View {
                     HStack(spacing: AppTheme.Spacing.x1) {
                         Text(LocalizedStringKey(isDownloading ? "Cancel" : "Download"))
                             .font(AppTheme.font(.footnote, .medium))
-                        Image(systemName: isDownloading ? "xmark.circle" : "arrow.down.circle")
+                        Image(yapIcon: isDownloading ? "xmark.circle" : "arrow.down.circle")
                             .font(AppTheme.font(.footnote, .medium))
                     }
                     .foregroundColor(AppTheme.Text.primary)
@@ -134,7 +134,7 @@ struct WhisperModelCardView: View {
             if isDownloaded {
                 Menu {
                     Button(action: deleteAction) {
-                        Label("Delete Model", systemImage: "trash")
+                        Label("Delete Model", yapIcon: "trash")
                     }
 
                     Button {
@@ -142,10 +142,10 @@ struct WhisperModelCardView: View {
                             NSWorkspace.shared.selectFile(modelURL.path, inFileViewerRootedAtPath: "")
                         }
                     } label: {
-                        Label("Show in Finder", systemImage: "folder")
+                        Label("Show in Finder", yapIcon: "folder")
                     }
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Image(yapIcon: "ellipsis.circle")
                         .font(AppTheme.font(.callout))
                 }
                 .menuStyle(.borderlessButton)
@@ -193,17 +193,17 @@ struct ImportedWhisperModelCardView: View {
                 if isDownloaded {
                     Menu {
                         Button(action: deleteAction) {
-                            Label("Delete Model", systemImage: "trash")
+                            Label("Delete Model", yapIcon: "trash")
                         }
                         Button {
                             if let modelURL = modelURL {
                                 NSWorkspace.shared.selectFile(modelURL.path, inFileViewerRootedAtPath: "")
                             }
                         } label: {
-                            Label("Show in Finder", systemImage: "folder")
+                            Label("Show in Finder", yapIcon: "folder")
                         }
                     } label: {
-                        Image(systemName: "ellipsis.circle")
+                        Image(yapIcon: "ellipsis.circle")
                             .font(AppTheme.font(.callout))
                     }
                     .menuStyle(.borderlessButton)
@@ -250,7 +250,7 @@ func performanceColor(value: Double) -> Color {
 }
 
 func modelStatusPill(_ text: LocalizedStringKey, systemImage: String) -> some View {
-    Label(text, systemImage: systemImage)
+    Label(text, yapIcon: systemImage)
         .font(AppTheme.font(.caption, .medium))
         .foregroundColor(Color(.secondaryLabelColor))
         .padding(.horizontal, AppTheme.Spacing.x2)

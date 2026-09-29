@@ -31,6 +31,24 @@ enum TranscriptionLanguageSupport {
         }.first ?? "en"
     }
 
+    /// Picker order: Auto-detect first, then by name.
+    static func sortedForMenu(_ languages: [String: String]) -> [(code: String, name: String)] {
+        languages
+            .sorted {
+                if $0.key == "auto" { return true }
+                if $1.key == "auto" { return false }
+                return $0.value < $1.value
+            }
+            .map { (code: $0.key, name: $0.value) }
+    }
+
+    #if DEBUG
+        static func selfCheck() {
+            let menu = sortedForMenu(["fr": "French", "auto": "Auto-detect", "de": "German", "en": "English"])
+            assert(menu.first?.code == "auto")
+            assert(menu.dropFirst().map(\.name) == ["English", "French", "German"], "by name after Auto-detect")
+        }
+    #endif
 }
 
 enum LanguageDictionary {
