@@ -24833,6 +24833,50 @@
         }
       }
     },
+    "Restore Default Shortcuts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardkurzbefehle wiederherstellen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rétablir les raccourcis par défaut"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复默认快捷键"
+          }
+        }
+      }
+    },
+    "Restore Default Shortcuts…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardkurzbefehle wiederherstellen …"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rétablir les raccourcis par défaut…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复默认快捷键…"
+          }
+        }
+      }
+    },
     "Restore Delay" : {
       "localizations" : {
         "de" : {
@@ -27052,6 +27096,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "快捷键"
+          }
+        }
+      }
+    },
+    "Shortcuts for individual modes are not changed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurzbefehle einzelner Modi werden nicht geändert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les raccourcis propres à chaque mode ne sont pas modifiés."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "各个模式自己的快捷键不会改动。"
           }
         }
       }
@@ -35696,6 +35762,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你的设置已成功导出到 %@。"
+          }
+        }
+      }
+    },
+    "Your shortcuts already match the defaults." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihre Kurzbefehle entsprechen bereits den Standardwerten."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vos raccourcis correspondent déjà aux valeurs par défaut."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前快捷键已经是默认值。"
           }
         }
       }

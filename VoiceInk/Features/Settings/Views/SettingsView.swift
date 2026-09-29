@@ -29,6 +29,8 @@ struct SettingsView: View {
     @State private var showLanguageRestartAlert = false
     @State private var cancelRecordingShortcutRecorderResetID = 0
     @State private var isImportingSettings = false
+    @State private var pendingShortcutRestore: [DefaultShortcuts.Change] = []
+    @State private var showRestoreShortcutsAlert = false
 
     @State private var isRestoreClipboardExpanded = false
     @State private var isShowingHistorySettings = false
@@ -84,6 +86,11 @@ struct SettingsView: View {
                     Button("Add Second Shortcut") {
                         withAnimation { recordingShortcutManager.secondaryRecordingShortcut = .custom }
                     }
+                }
+
+                Button("Restore Default Shortcuts…") {
+                    pendingShortcutRestore = DefaultShortcuts.changes(current: { ShortcutStore.shortcut(for: $0) })
+                    showRestoreShortcutsAlert = true
                 }
 
             } header: {
@@ -421,6 +428,16 @@ struct SettingsView: View {
                 .frame(width: 480, height: 560)
                 .onExitCommand { isShowingHistorySettings = false }
         }
+        .alert("Restore Default Shortcuts", isPresented: $showRestoreShortcutsAlert) {
+            Button("Cancel", role: .cancel) {}
+            if !pendingShortcutRestore.isEmpty {
+                Button("Restore", role: .destructive) {
+                    DefaultShortcuts.apply(pendingShortcutRestore, recordingShortcutManager: recordingShortcutManager)
+                }
+            }
+        } message: {
+            Text(restoreShortcutsMessage)
+        }
         .alert("Reset Onboarding", isPresented: $showResetOnboardingAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Reset", role: .destructive) {
@@ -436,6 +453,17 @@ struct SettingsView: View {
         } message: {
             Text("Your language change will take full effect after you quit and reopen Yap.")
         }
+    }
+
+    private var restoreShortcutsMessage: String {
+        guard !pendingShortcutRestore.isEmpty else {
+            return String(localized: "Your shortcuts already match the defaults.")
+        }
+        let notSet = String(localized: "Not set")
+        let lines = pendingShortcutRestore.map {
+            "\($0.action.displayName): \($0.from?.displayString ?? notSet) → \($0.to?.displayString ?? notSet)"
+        }
+        return lines.joined(separator: "\n") + "\n\n" + String(localized: "Shortcuts for individual modes are not changed.")
     }
 
     private static let defaultCancelRecordingShortcut = Shortcut.key(
