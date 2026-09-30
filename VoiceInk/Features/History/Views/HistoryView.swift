@@ -887,8 +887,15 @@ struct HistoryCardRow: View {
     let onToggleCheck: () -> Void
     let onShowInfo: () -> Void
 
-    @State private var selectedTab: TranscriptionTab = .original
+    @State private var selectedTab: TranscriptionTab = Self.initialTab
     @State private var didCopyCollapsedText = false
+
+    #if DEBUG
+        /// make ui-snapshots: open expanded rows on the notes tab.
+        static var initialTab = TranscriptionTab.original
+    #else
+        static let initialTab = TranscriptionTab.original
+    #endif
     @State private var isHovering = false
 
     private var preferredCopyText: String {

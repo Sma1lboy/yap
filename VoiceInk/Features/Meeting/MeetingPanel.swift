@@ -196,15 +196,15 @@ struct MeetingPanelView: View {
                 .fixedSize()
                 Button("Export Markdown…") { recorder.exportMarkdown() }
                     .fixedSize()
+            }
+            .controlSize(.small)
+            HStack {
                 if result.canRegenerate {
                     Button("Regenerate Notes") { Task { await recorder.regenerateNotes() } }
                         .fixedSize()
                         .disabled(result.isRegenerating)
                         .help("Write the notes again with the meeting prompt and this mode's AI provider.")
                 }
-            }
-            .controlSize(.small)
-            HStack {
                 Spacer()
                 Button("Open History") {
                     HistoryNavigator.open()

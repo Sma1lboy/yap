@@ -22,7 +22,11 @@ struct MeetingRowTools: View {
     ) {
         self.transcription = transcription
         self.onNotesRegenerated = onNotesRegenerated
-        _speakers = State(initialValue: speakers)
+        #if DEBUG
+            _speakers = State(initialValue: speakers ?? Self.snapshotSpeakers)
+        #else
+            _speakers = State(initialValue: speakers)
+        #endif
         _isRegenerating = State(initialValue: isRegenerating)
         _problem = State(initialValue: problem)
         _renamed = State(initialValue: renamed)
@@ -76,6 +80,11 @@ struct MeetingRowTools: View {
             if speakers == nil { speakers = MeetingEdits.segments(of: transcription).map(MeetingEdits.speakers) }
         }
     }
+
+    #if DEBUG
+        /// make ui-snapshots: the speakers of a meeting that has no folder on disk.
+        static var snapshotSpeakers: [(key: String, label: String)]?
+    #endif
 
     private func regenerate() async {
         guard let engine = MeetingRecorder.shared.engine else { return }
