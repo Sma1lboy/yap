@@ -205,6 +205,21 @@
                 )
                 .padding(AppTheme.Spacing.x4)
             }
+            // A meeting whose speakers are being told apart after it was saved, and one where that failed.
+            for (name, status) in [("pending", SpeakerSplitSkip.pendingStatus), ("failed", SpeakerSplitSkip.timedOut.rawValue)] {
+                shot("history-row-meeting-speakers-\(name)", size: CGSize(width: 680, height: 120), main: true) {
+                    let item = Transcription(
+                        text: "[00:00] \(MeetingSegment.Speaker.me.label): 今天我想把 GitHub Actions 的 pipeline 改一下\n[00:08] "
+                            + "\(MeetingSegment.Speaker.others.label): API 那边还差三个 endpoint，周四能 land", duration: 3_754)
+                    let _ = item.kind = Transcription.meetingKind
+                    let _ = item.meetingSpeakerStatus = status
+                    HistoryCardRow(
+                        transcription: item, wordCount: 14, isExpanded: false, isChecked: false, isSelecting: false,
+                        onToggleExpand: {}, onToggleCheck: {}, onShowInfo: {}
+                    )
+                    .padding(AppTheme.Spacing.x4)
+                }
+            }
             // A meeting's History row on its notes tab (rendered Markdown), its tools in each state, the names editor.
             let meetingSpeakers = [
                 ("me", MeetingSegment.Speaker.me.label), ("others-1", String(format: String(localized: "Others %lld"), 1)),
@@ -382,6 +397,18 @@
                     transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
                     markdown: "", notesModel: nil,
                     regenerateProblem: EnhancementFailureFormatter.message(for: EnhancementError.timeout))), 480, true),
+                // Echo taken out of "Me"; then an hour-long meeting saved before its speakers were told apart, and
+                // the same once they arrived.
+                ("echo-removed", .done(.init(
+                    transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
+                    markdown: "", notesModel: nil, echoRemoved: 3)), 450, true),
+                ("speakers-pending", .done(.init(
+                    transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
+                    markdown: "", notesModel: nil, echoRemoved: 2,
+                    speakersPending: String(localized: "Telling speakers apart…"))), 500, true),
+                ("speakers-arrived", .done(.init(
+                    transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
+                    markdown: "", notesModel: nil, speakersLabeledLater: true)), 460, true),
             ]
             for (name, phase, height, main) in meetingStates {
                 meeting.setSnapshotPhase(phase)
