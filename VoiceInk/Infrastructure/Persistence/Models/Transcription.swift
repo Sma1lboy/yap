@@ -53,6 +53,8 @@ final class Transcription {
     var kind: String?
     static let meetingKind = "meeting"
     var isMeeting: Bool { kind == Self.meetingKind }
+    /// A meeting's pieces that couldn't be transcribed (each is a marked line in `text`); nil when none.
+    var meetingFailedPieces: Int?
 
     init(
         text: String,
@@ -117,8 +119,11 @@ extension Transcription {
     /// Deletes a recording. A meeting's `audioFileURL` is the mix in its own folder (Recordings/meetings/<id>/);
     /// the whole folder goes, with both channels and the segments.
     static func removeAudio(at url: URL) throws {
-        let folder = url.deletingLastPathComponent()
-        let isMeeting = folder.deletingLastPathComponent().lastPathComponent == "meetings"
-        try FileManager.default.removeItem(at: isMeeting ? folder : url)
+        try FileManager.default.removeItem(at: isMeetingAudio(url) ? url.deletingLastPathComponent() : url)
+    }
+
+    /// A file in a meeting's own folder (Recordings/meetings/<id>/).
+    static func isMeetingAudio(_ url: URL) -> Bool {
+        url.deletingLastPathComponent().deletingLastPathComponent().lastPathComponent == "meetings"
     }
 }

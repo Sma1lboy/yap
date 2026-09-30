@@ -138,11 +138,33 @@ struct MeetingPanelView: View {
     private func done(_ result: MeetingRecorder.MeetingResult) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             Text(result.notes == nil ? "Meeting Transcript" : "Meeting Notes").font(AppTheme.font(.headline, .semibold))
+            if let error = result.saveError {
+                note(String(format: String(localized: "This meeting couldn't be saved to History: %@ Its audio is kept, and Yap tries again the next time it starts."), error), color: AppTheme.Status.error)
+            }
+            if let error = result.exportError {
+                note(String(format: String(localized: "The Markdown file couldn't be written: %@"), error), color: AppTheme.Status.error)
+            }
+            if (result.saveError != nil || result.exportError != nil), let folder = result.folder {
+                HStack(spacing: AppTheme.Spacing.x2) {
+                    Text(String(format: String(localized: "Audio: %@"), (folder.path as NSString).abbreviatingWithTildeInPath))
+                        .font(AppTheme.font(.caption))
+                        .foregroundColor(AppTheme.Text.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .textSelection(.enabled)
+                    Spacer()
+                    Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([folder]) }
+                        .controlSize(.small)
+                }
+            }
+            if result.failedPieces > 0 {
+                note(String(localized: "\(Int64(result.failedPieces)) parts couldn't be transcribed; they're marked in the transcript."), color: AppTheme.Status.warning)
+            }
             if let problem = result.notesProblem {
-                Text(problem)
-                    .font(AppTheme.font(.caption))
-                    .foregroundColor(AppTheme.Status.warning)
-                    .fixedSize(horizontal: false, vertical: true)
+                note(problem, color: AppTheme.Status.warning)
+            }
+            if let skipped = result.speakersSkipped {
+                note(skipped.message, color: AppTheme.Text.secondary)
             }
             ScrollView {
                 Text(result.notes ?? result.transcript)
@@ -156,7 +178,7 @@ struct MeetingPanelView: View {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(result.notes ?? result.transcript, forType: .string)
                 }
-                Button("Export Markdown…") { MeetingExport.saveMarkdown(result.markdown) }
+                Button("Export Markdown…") { recorder.exportMarkdown() }
                 Spacer()
                 Button("Open History") {
                     HistoryNavigator.open()
@@ -167,18 +189,31 @@ struct MeetingPanelView: View {
             .controlSize(.small)
         }
     }
+
+    private func note(_ text: String, color: Color) -> some View {
+        Text(text)
+            .font(AppTheme.font(.caption))
+            .foregroundColor(color)
+            .fixedSize(horizontal: false, vertical: true)
+    }
 }
 
-/// Saves a meeting as Markdown where the user picks.
+/// Saves a meeting as Markdown where the user picks. Returns why writing the file failed; nil when it was
+/// written or the user cancelled.
 enum MeetingExport {
-    @MainActor static func saveMarkdown(_ markdown: String, suggestedName: String? = nil) {
+    @MainActor @discardableResult static func saveMarkdown(_ markdown: String, suggestedName: String? = nil) -> String? {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
         panel.nameFieldStringValue = suggestedName
             ?? "\(String(localized: "Meeting")) \(Date().formatted(.iso8601.year().month().day())).md"
         NSApp.activate(ignoringOtherApps: true)
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        try? markdown.write(to: url, atomically: true, encoding: .utf8)
+        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        do {
+            try markdown.write(to: url, atomically: true, encoding: .utf8)
+            return nil
+        } catch {
+            return error.localizedDescription
+        }
     }
 }
 

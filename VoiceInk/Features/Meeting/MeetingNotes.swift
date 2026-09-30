@@ -21,6 +21,10 @@ struct MeetingSegment: Codable, Equatable {
     let text: String
     /// Which remote person this is ("Others 2"), when the meeting's system audio was diarized and had several.
     var remote: Int? = nil
+    /// The piece couldn't be transcribed: `text` is empty and the transcript shows `MeetingNotes.failedMarker`.
+    var failed: Bool? = nil
+
+    var isFailed: Bool { failed == true }
 
     var label: String {
         guard speaker == .others, let remote else { return speaker.label }
@@ -36,12 +40,15 @@ enum MeetingNotes {
         return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%02d:%02d", m, s)
     }
 
-    /// `[00:12] Me: …` lines in time order (both channels interleaved).
+    /// `[00:12] Me: …` lines in time order (both channels interleaved). A piece that failed keeps its line, with
+    /// `failedMarker` in place of the text.
     static func transcript(_ segments: [MeetingSegment]) -> String {
         segments.sorted { ($0.start, $0.speaker.rawValue) < ($1.start, $1.speaker.rawValue) }
-            .map { "[\(timestamp($0.start))] \($0.label): \($0.text)" }
+            .map { "[\(timestamp($0.start))] \($0.label): \($0.isFailed ? failedMarker : $0.text)" }
             .joined(separator: "\n")
     }
+
+    static var failedMarker: String { String(localized: "(This part couldn't be transcribed.)") }
 
     // MARK: - Notes
 
@@ -133,6 +140,12 @@ enum MeetingNotes {
             SpeakerLabels.selfCheck()
             assert(text == "[00:03] \(me): 先看一下 CI\n[00:12] \(me): 可以\n[00:12] \(others): Can we ship Friday?")
 
+            // A failed piece keeps its line: time, speaker, the marker.
+            let failed = MeetingSegment(speaker: .others, start: 61, end: 80, text: "", failed: true)
+            assert(transcript(segments + [failed]).hasSuffix("\n[01:01] \(others): \(failedMarker)"))
+            let decoded = try? JSONDecoder().decode([MeetingSegment].self, from: JSONEncoder().encode([failed, segments[0]]))
+            assert(decoded?.map(\.isFailed) == [true, false])
+
             let named = [MeetingSegment(speaker: .others, start: 1, end: 5, text: "ok", remote: 2)]
             assert(transcript(named) == "[00:01] \(String(format: String(localized: "Others %lld"), 2)): ok")
 
@@ -160,6 +173,7 @@ enum MeetingNotes {
             for name in ["mix.wav", "mic.wav"] { FileManager.default.createFile(atPath: meeting.appendingPathComponent(name).path, contents: Data()) }
             let dictation = root.appendingPathComponent("d.wav")
             FileManager.default.createFile(atPath: dictation.path, contents: Data())
+            assert(Transcription.isMeetingAudio(meeting.appendingPathComponent("mix.wav")) && !Transcription.isMeetingAudio(dictation))
             try? Transcription.removeAudio(at: meeting.appendingPathComponent("mix.wav"))
             try? Transcription.removeAudio(at: dictation)
             assert(!FileManager.default.fileExists(atPath: meeting.path) && !FileManager.default.fileExists(atPath: dictation.path))

@@ -193,6 +193,18 @@
                 )
                 .padding(AppTheme.Spacing.x4)
             }
+            shot("history-row-meeting-failed-pieces", size: CGSize(width: 680, height: 120), main: true) {
+                let item = Transcription(
+                    text: "[00:00] \(MeetingSegment.Speaker.me.label): \(MeetingNotes.failedMarker)\n[00:08] "
+                        + "\(MeetingSegment.Speaker.others.label): API 那边还差三个 endpoint，周四能 land", duration: 754)
+                let _ = item.kind = Transcription.meetingKind
+                let _ = item.meetingFailedPieces = 2
+                HistoryCardRow(
+                    transcription: item, wordCount: 14, isExpanded: false, isChecked: false, isSelecting: false,
+                    onToggleExpand: {}, onToggleCheck: {}, onShowInfo: {}
+                )
+                .padding(AppTheme.Spacing.x4)
+            }
             shot("sheet-restore-settings", size: CGSize(width: 440, height: 200)) {
                 OnboardingCloudRestoreSheet { _ in }
             }
@@ -264,6 +276,8 @@
                 """
             let meetingTranscript = "[00:00] \(MeetingSegment.Speaker.me.label): 今天我想把 GitHub Actions 的 pipeline 改一下\n"
                 + "[00:08] \(MeetingSegment.Speaker.others.label): API 那边还差三个 endpoint，周四能 land"
+            let meetingFolder = URL(fileURLWithPath: NSHomeDirectory())
+                .appendingPathComponent("Library/Application Support/me.sma1lboy.yap/Recordings/meetings/9D1C6A0E-0B7F-4E43-A1B5-3F2C8E7D4A10")
             let meetingStates: [(String, MeetingRecorder.Phase, CGFloat, Bool)] = [
                 ("consent", .consent, 280, true),
                 ("recording", .recording(started: Date().addingTimeInterval(-754)), 110, true),
@@ -274,6 +288,19 @@
                 ("transcript-only", .done(.init(
                     transcriptionID: UUID(), notes: nil, transcript: meetingTranscript,
                     notesProblem: MeetingSummarizer.setupHint, markdown: "", notesModel: nil)), 300, false),
+                ("failed-pieces", .done(.init(
+                    transcriptionID: UUID(), notes: nil, transcript: meetingTranscript + "\n[00:31] "
+                        + MeetingSegment.Speaker.others.label + ": " + MeetingNotes.failedMarker,
+                    notesProblem: nil, markdown: "", notesModel: nil, failedPieces: 1, speakersSkipped: .oneSpeaker)), 300, true),
+                ("save-failed", .done(.init(
+                    transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
+                    markdown: "", notesModel: nil, folder: meetingFolder, speakersSkipped: .timedOut,
+                    saveError: CocoaError(.fileWriteOutOfSpace).localizedDescription)), 520, true),
+                ("export-failed", .done(.init(
+                    transcriptionID: UUID(), notes: nil, transcript: meetingTranscript,
+                    notesProblem: nil, markdown: "", notesModel: nil, folder: meetingFolder,
+                    speakersSkipped: .modelDownloadFailed,
+                    exportError: CocoaError(.fileWriteNoPermission).localizedDescription)), 320, true),
             ]
             for (name, phase, height, main) in meetingStates {
                 meeting.setSnapshotPhase(phase)

@@ -70,9 +70,10 @@ enum RecordingRecovery {
     }
 
     /// At launch: offers the newest recoverable recording, once. Older ones stay on disk until they age out.
+    /// Returns whether it showed the offer.
     // ponytail: one notification per launch; offering several would stack notifications, so add a picker if crashes repeat.
-    @MainActor
-    static func offerAtLaunch(modelContext: ModelContext, engine: VoiceInkEngine) {
+    @MainActor @discardableResult
+    static func offerAtLaunch(modelContext: ModelContext, engine: VoiceInkEngine) -> Bool {
         let referenced = Set(
             ((try? modelContext.fetch(FetchDescriptor<Transcription>())) ?? []).compactMap {
                 $0.audioFileURL.flatMap(URL.init(string:))?.lastPathComponent
@@ -80,7 +81,7 @@ enum RecordingRecovery {
         let offered = Set(UserDefaults.standard.stringArray(forKey: offeredKey) ?? [])
         let files = recoverableFiles(in: recordingsDirectory, referenced: referenced)
             .filter { !offered.contains($0.lastPathComponent) }
-        guard let newest = files.first else { return }
+        guard let newest = files.first else { return false }
         UserDefaults.standard.set(Array(offered.union(files.map(\.lastPathComponent))), forKey: offeredKey)
 
         NotificationManager.shared.showNotification(
@@ -95,6 +96,7 @@ enum RecordingRecovery {
                 String(localized: "Discard"), { try? FileManager.default.removeItem(at: newest) }
             )
         )
+        return true
     }
 
     #if DEBUG

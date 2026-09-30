@@ -8,6 +8,10 @@
 # NOTES=1 writes notes with OpenRouter (deepseek-v4.1-flash; OPENROUTER_API_KEY from the environment or ~/.env,
 # passed only to the mock app as YAP_MOCK_API_KEY_OPENROUTER); without it the mode has no AI provider and the run
 # checks the transcript-only path.
+# The run also fails its first piece (--meeting-fail-pieces 1) and the save of its History entry
+# (--meeting-fail-save): the transcript must keep one marked line for the piece. Then a meeting folder cut off by
+# a crash (no History entry, WAV headers never finished) is put next to it, and the app is launched twice with
+# --meeting-recovery-check: the first launch must recover both folders as meetings, the second nothing.
 set -euo pipefail
 
 APP_DIR="$1"
@@ -81,6 +85,7 @@ cat >"$WORK/config/yap/config.json" <<EOF
 EOF
 
 XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --meeting-files "$WORK/mic.wav" "$WORK/system.wav" \
+	--meeting-fail-pieces 1 --meeting-fail-save \
 	>"$WORK/out.txt" 2>"$WORK/err.txt" || { echo "app exited with $?"; grep -v '^\s*$' "$WORK/err.txt" | tail -5; exit 1; }
 sed -n '/^meeting-check: /,$p' "$WORK/out.txt" | grep -v '^\[.*\] *$' | grep -v "^ggml_\|^whisper_" | sed 's/^meeting-check: //'
 grep -q '^meeting-check: transcript-begin' "$WORK/out.txt" || { echo "FAIL: no result"; exit 1; }
@@ -99,7 +104,7 @@ truth = [(l.split()[0], float(l.split()[1]), float(l.split()[2])) for l in open(
 folder = next(l.split(" ", 2)[2].strip() for l in open(f"{work}/out.txt") if l.startswith("meeting-check: folder "))
 seen, bad = {}, 0
 for seg in json.load(open(f"{folder}/segments.json")):
-    if seg["speaker"] != "others": continue
+    if seg["speaker"] != "others" or seg.get("failed"): continue
     overlap = {}
     for who, s, e in truth:
         overlap[who] = overlap.get(who, 0) + max(0, min(e, seg["end"]) - max(s, seg["start"]))
@@ -111,3 +116,57 @@ ok = bad == 0 and sorted(seen.values()) == ["A", "B"]
 print("labels:", "OK" if ok else f"FAIL ({bad} pieces off, mapping {seen})")
 sys.exit(0 if ok else 1)
 PY
+
+# The failed piece: one marked line in the transcript, counted in the result; the save failed as asked.
+marker=$(sed -n 's/^meeting-check: failed-marker //p' "$WORK/out.txt")
+marked=$(sed -n '/^meeting-check: transcript-begin$/,/^meeting-check: transcript-end$/p' "$WORK/out.txt" | grep -cF -- "$marker" || true)
+echo "failed pieces: $(sed -n 's/^meeting-check: failed-pieces //p' "$WORK/out.txt"), marked lines: $marked"
+[ "$marked" = 1 ] && grep -q '^meeting-check: failed-pieces 1$' "$WORK/out.txt" || { echo "FAIL: failed piece not marked once"; exit 1; }
+grep -q '^meeting-check: save-error none$' "$WORK/out.txt" && { echo "FAIL: --meeting-fail-save didn't fail the save"; exit 1; }
+
+# Recovery. A crashed recording: both channels with the WAV sizes still 0, a leftover pieces folder, no entry.
+unsaved=$(sed -n 's/^meeting-check: folder //p' "$WORK/out.txt")
+crashed="$(dirname "$unsaved")/$(uuidgen)"
+mkdir -p "$crashed/pieces"
+python3 - "$WORK" "$crashed" <<'PY'
+import sys
+work, folder = sys.argv[1], sys.argv[2]
+for name in ["mic", "system"]:
+    data = bytearray(open(f"{work}/{name}.wav", "rb").read())
+    data[4:8] = data[40:44] = b"\0\0\0\0"
+    open(f"{folder}/{name}.wav", "wb").write(data)
+PY
+for run in 1 2; do
+	XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --meeting-recovery-check \
+		>"$WORK/recovery$run.txt" 2>>"$WORK/err.txt" || { echo "app exited with $?"; exit 1; }
+	sed -n '/^meeting-check: /,$p' "$WORK/recovery$run.txt" | grep -v '^\[.*\] *$' | grep -v "^ggml_\|^whisper_\| --> " \
+		| sed "s/^meeting-check: /recovery $run: /"
+done
+grep -q '^meeting-check: recovered 2$' "$WORK/recovery1.txt" || { echo "FAIL: expected 2 recovered meetings"; exit 1; }
+for folder in "$unsaved" "$crashed"; do
+	name=$(basename "$folder")
+	grep -q "^meeting-check: recovered-folder $name$" "$WORK/recovery1.txt" || { echo "FAIL: $name not recovered"; exit 1; }
+	ls "$folder" | tr '\n' ' ' | sed "s/^/recovered files $name: /"; echo
+	[ -f "$folder/mix.wav" ] && [ -f "$folder/segments.json" ] && [ ! -e "$folder/mic.wav.orig" ] && [ ! -e "$folder/pieces" ] \
+		|| { echo "FAIL: $name's folder isn't a finished meeting"; exit 1; }
+done
+[ "$(grep -c '^meeting-check: audio-only false save-error none failed-pieces 0$' "$WORK/recovery1.txt")" = 2 ] \
+	|| { echo "FAIL: recovered meetings weren't transcribed and saved"; exit 1; }
+[ "$(sed -n '/^meeting-check: transcript-begin$/,/^meeting-check: transcript-end$/p' "$WORK/recovery1.txt" | grep -c '^\[')" -ge 8 ] \
+	|| { echo "FAIL: recovered transcripts are empty"; exit 1; }
+grep -q '^meeting-check: recovered 0$' "$WORK/recovery2.txt" || { echo "FAIL: the second launch recovered again"; exit 1; }
+
+# A folder whose recovery was cut off last time (it's in the attempted list, its originals moved aside) is saved
+# with its audio only instead of being tried again.
+cut="$(dirname "$unsaved")/$(uuidgen)"
+mkdir -p "$cut"
+cp "$WORK/mic.wav" "$cut/mic.wav.orig"
+cp "$WORK/system.wav" "$cut/system.wav"
+defaults write "$ID" RecoveryAttemptedMeetings -array "$(basename "$cut")"
+XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --meeting-recovery-check \
+	>"$WORK/recovery3.txt" 2>>"$WORK/err.txt" || { echo "app exited with $?"; exit 1; }
+sed -n '/^meeting-check: /,$p' "$WORK/recovery3.txt" | grep -v "^ggml_\|^whisper_\| --> " | sed "s/^meeting-check: /recovery 3: /"
+grep -q '^meeting-check: recovered 1$' "$WORK/recovery3.txt" && grep -q '^meeting-check: audio-only true save-error none' "$WORK/recovery3.txt" \
+	&& [ -s "$cut/mix.wav" ] && [ -f "$cut/mic.wav" ] && [ ! -e "$cut/mic.wav.orig" ] \
+	|| { echo "FAIL: the cut-off recovery wasn't saved with its audio"; exit 1; }
+echo "recovery: OK"

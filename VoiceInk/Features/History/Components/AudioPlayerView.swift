@@ -441,15 +441,18 @@ struct AudioPlayerView: View {
                         }
                     }
 
-                    AsyncCircleButton(
-                        defaultIcon: "arrow.clockwise",
-                        isLoading: isRetranscribing,
-                        showSuccess: operationFeedback == .retranscribeSuccess,
-                        action: retranscribeAudio
-                    )
-                    .disabled(isOperationInProgress)
-                    .help("Retranscribe this audio")
-                    .accessibilityLabel("Retranscribe this audio")
+                    // Not for meetings: they'd come back as one dictation without speakers or notes.
+                    if transcription?.isMeeting != true {
+                        AsyncCircleButton(
+                            defaultIcon: "arrow.clockwise",
+                            isLoading: isRetranscribing,
+                            showSuccess: operationFeedback == .retranscribeSuccess,
+                            action: retranscribeAudio
+                        )
+                        .disabled(isOperationInProgress)
+                        .help("Retranscribe this audio")
+                        .accessibilityLabel("Retranscribe this audio")
+                    }
 
                     if transcription != nil {
                         AsyncCircleButton(

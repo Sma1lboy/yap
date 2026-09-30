@@ -76,6 +76,7 @@ struct VoiceInkApp: App {
             MeetingChunker.selfCheck()
             MeetingNotes.selfCheck()
             MeetingRecorder.shortcutSelfCheck()
+            MeetingRecorder.recoverySelfCheck()
             OpenAICompatibleChat.selfCheck()
             ModelFileDownloader.selfCheck()
             ReplacementText.selfCheck()
@@ -264,7 +265,15 @@ struct VoiceInkApp: App {
         Task { @MainActor in
             await statsMigrationTask?.value
             TranscriptionAutoCleanupService.shared.startMonitoring(modelContext: mainContext)
-            RecordingRecovery.offerAtLaunch(modelContext: mainContext, engine: engine)
+            let offeredDictation = RecordingRecovery.offerAtLaunch(modelContext: mainContext, engine: engine)
+            // In the background, so the rest of launch isn't held up by a long transcription. Its "recovering"
+            // note would replace dictation's offer, so it's left out then.
+            Task { @MainActor in
+                let recovered = await MeetingRecorder.shared.recoverInterruptedMeetings(announceStart: !offeredDictation)
+                #if DEBUG
+                    MeetingFilesCheck.reportRecovery(recovered)  // scripts/meeting-files-check.sh only
+                #endif
+            }
 
             let tokenBackfillTask = SessionMetricMigrationService.shared.runEnhancementTokenBackfillIfNeeded(
                 modelContainer: resolvedContainer)
