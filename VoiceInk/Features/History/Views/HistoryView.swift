@@ -1129,7 +1129,8 @@ struct HistoryCardRow: View {
 
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
-            if transcription.isMeeting {
+            // Not for a recovered meeting saved with its audio only: its text is the reason, not a transcript.
+            if transcription.isMeeting, transcription.transcriptionStatus != TranscriptionStatus.failed.rawValue {
                 MeetingRowTools(transcription: transcription) {
                     withAnimation(.easeInOut(duration: 0.15)) { selectedTab = .enhanced }
                 }
