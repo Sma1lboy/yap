@@ -1002,6 +1002,170 @@
         }
       }
     },
+    "%lld parts couldn't be transcribed; they're marked in the transcript." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld part couldn't be transcribed; it's marked in the transcript."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld parts couldn't be transcribed; they're marked in the transcript."
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Teil konnte nicht transkribiert werden; er ist im Transkript markiert."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Teile konnten nicht transkribiert werden; sie sind im Transkript markiert."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld partie n’a pas pu être transcrite ; elle est signalée dans la transcription."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld parties n’ont pas pu être transcrites ; elles sont signalées dans la transcription."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "有 %lld 段没有转写成功，已在转写里标出。"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "有 %lld 段沒有轉錄成功，已在轉錄裡標出。"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld parts not transcribed" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld part not transcribed"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld parts not transcribed"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Teil nicht transkribiert"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Teile nicht transkribiert"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld partie non transcrite"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld parties non transcrites"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 段没有转写成功"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 段沒有轉錄成功"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld Transcription models" : {
       "comment" : "Number of transcription models available for a provider.",
       "localizations" : {
@@ -2758,6 +2922,34 @@
         }
       }
     },
+    "(This part couldn't be transcribed.)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(Dieser Teil konnte nicht transkribiert werden.)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(Cette partie n’a pas pu être transcrite.)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "（这段没有转写成功。）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "（這段沒有轉錄成功。）"
+          }
+        }
+      }
+    },
     "+" : {
       "localizations" : {
         "de" : {
@@ -4206,6 +4398,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已存在使用此模型名稱的自定潤色模型"
+          }
+        }
+      }
+    },
+    "A meeting can't be retranscribed: its speakers and notes would be lost." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Meeting kann nicht neu transkribiert werden: Sprecher und Notizen gingen verloren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une réunion ne peut pas être retranscrite : ses interlocuteurs et ses notes seraient perdus."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会议不能重新转写：会丢掉说话人和纪要。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "會議不能重新轉錄：會丟掉說話人和紀要。"
           }
         }
       }
@@ -8475,6 +8695,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未找到音訊檔案"
+          }
+        }
+      }
+    },
+    "Audio: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufnahme: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录音：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "錄音：%@"
           }
         }
       }
@@ -21348,6 +21596,34 @@
         }
       }
     },
+    "Its folder couldn't be written to." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In seinen Ordner konnte nicht geschrieben werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son dossier n’est pas accessible en écriture."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的文件夹没法写入。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的資料夾沒辦法寫入。"
+          }
+        }
+      }
+    },
     "Keep Audio For" : {
       "localizations" : {
         "de" : {
@@ -25050,6 +25326,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不用"
+          }
+        }
+      }
+    },
+    "No transcription model is chosen in the mode." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Modus ist kein Transkriptionsmodell gewählt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun modèle de transcription n’est choisi dans le mode."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模式里没有选转写模型。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模式裡沒有選轉錄模型。"
           }
         }
       }
@@ -31241,6 +31545,34 @@
         }
       }
     },
+    "Recovering it stopped partway last time." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Wiederherstellung brach beim letzten Mal ab."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La récupération s’est interrompue la dernière fois."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次恢复到一半中断了。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上次復原到一半中斷了。"
+          }
+        }
+      }
+    },
     "Refresh" : {
       "localizations" : {
         "de" : {
@@ -35776,6 +36108,34 @@
         }
       }
     },
+    "Show Meeting Panel" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meeting-Fenster zeigen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le panneau de réunion"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示会议面板"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示會議面板"
+          }
+        }
+      }
+    },
     "Show Options" : {
       "localizations" : {
         "de" : {
@@ -37572,34 +37932,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "停止"
-          }
-        }
-      }
-    },
-    "Stop Meeting Recording" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Meeting-Aufnahme beenden"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Arrêter l'enregistrement de la réunion"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "停止会议录制"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "停止會議錄製"
           }
         }
       }
@@ -39707,6 +40039,34 @@
         }
       }
     },
+    "The interrupted meeting from %@ is recovered and in History." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das unterbrochene Meeting vom %@ ist wiederhergestellt und im Verlauf."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réunion interrompue du %@ est récupérée et dans l’historique."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 中断的会议已恢复，在历史记录里。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 中斷的會議已復原，在歷史記錄裡。"
+          }
+        }
+      }
+    },
     "The key worked, but Yap could not save it securely." : {
       "localizations" : {
         "de" : {
@@ -39731,6 +40091,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "金鑰有效，但 Yap 無法安全地儲存它。"
+          }
+        }
+      }
+    },
+    "The Markdown file couldn't be written: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Markdown-Datei konnte nicht geschrieben werden: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier Markdown n’a pas pu être écrit : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown 文件没能写入：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown 檔案沒能寫入：%@"
+          }
+        }
+      }
+    },
+    "The meeting from %@ couldn't be saved to History: %@ Its audio is still in its folder." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Meeting vom %1$@ konnte nicht im Verlauf gespeichert werden: %2$@ Die Aufnahme liegt weiter in seinem Ordner."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réunion du %1$@ n’a pas pu être enregistrée dans l’historique : %2$@ L’audio reste dans son dossier."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 的会议没能存进历史记录：%2$@录音还在它的文件夹里。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 的會議沒能存進歷史記錄：%2$@錄音還在它的資料夾裡。"
+          }
+        }
+      }
+    },
+    "The meeting from %@ is in History with its audio only; it couldn't be transcribed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Meeting vom %@ ist nur mit Aufnahme im Verlauf; es konnte nicht transkribiert werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réunion du %@ est dans l’historique avec son audio seulement ; elle n’a pas pu être transcrite."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 的会议已存进历史记录，只有录音，没能转写。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 的會議已存進歷史記錄，只有錄音，沒能轉錄。"
           }
         }
       }
@@ -39937,6 +40381,146 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "原始值不能為空。"
+          }
+        }
+      }
+    },
+    "The other side is labeled \"Others\": only one other person spoke." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Gegenseite heißt „Andere“: Nur eine andere Person hat gesprochen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’autre côté est noté « Autres » : une seule autre personne a parlé."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对方的发言都标为“对方”：对方只有一个人说话。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "對方的發言都標為「對方」：對方只有一個人說話。"
+          }
+        }
+      }
+    },
+    "The other side is labeled \"Others\": telling voices apart failed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Gegenseite heißt „Andere“: Das Unterscheiden der Stimmen ist fehlgeschlagen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’autre côté est noté « Autres » : la distinction des voix a échoué."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对方的发言都标为“对方”：区分说话人出错了。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "對方的發言都標為「對方」：區分說話人出錯了。"
+          }
+        }
+      }
+    },
+    "The other side is labeled \"Others\": telling voices apart took too long and was stopped." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Gegenseite heißt „Andere“: Das Unterscheiden der Stimmen dauerte zu lange und wurde abgebrochen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’autre côté est noté « Autres » : la distinction des voix prenait trop de temps et a été arrêtée."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对方的发言都标为“对方”：区分说话人超时，已停止。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "對方的發言都標為「對方」：區分說話人逾時，已停止。"
+          }
+        }
+      }
+    },
+    "The other side is labeled \"Others\": the meeting was too short to tell voices apart." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Gegenseite heißt „Andere“: Das Meeting war zu kurz, um Stimmen zu unterscheiden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’autre côté est noté « Autres » : la réunion était trop courte pour distinguer les voix."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对方的发言都标为“对方”：会议太短，没法区分不同的人。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "對方的發言都標為「對方」：會議太短，沒辦法區分不同的人。"
+          }
+        }
+      }
+    },
+    "The other side is labeled \"Others\": the speaker model couldn't be downloaded." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Gegenseite heißt „Andere“: Das Sprechermodell konnte nicht geladen werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’autre côté est noté « Autres » : le modèle de voix n’a pas pu être téléchargé."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "对方的发言都标为“对方”：说话人模型没能下载。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "對方的發言都標為「對方」：說話人模型沒能下載。"
           }
         }
       }
@@ -40345,6 +40929,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "這台 Mac 和 Yap Cloud 都改了設定，無法自動合併。"
+          }
+        }
+      }
+    },
+    "This meeting couldn't be saved to History: %@ Its audio is kept, and Yap tries again the next time it starts." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Meeting konnte nicht im Verlauf gespeichert werden: %@ Die Aufnahme bleibt erhalten, und Yap versucht es beim nächsten Start erneut."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette réunion n’a pas pu être enregistrée dans l’historique : %@ L’audio est conservé, et Yap réessaiera au prochain démarrage."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这场会议没能存进历史记录：%@录音还在，Yap 下次启动时会再试一次。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這場會議沒能存進歷史記錄：%@錄音還在，Yap 下次啟動時會再試一次。"
           }
         }
       }
@@ -45235,6 +45847,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 模式"
+          }
+        }
+      }
+    },
+    "Yap quit during a meeting. It's being recovered in the background and will be in History." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap wurde während eines Meetings beendet. Es wird im Hintergrund wiederhergestellt und erscheint im Verlauf."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap s’est arrêté pendant une réunion. Elle est récupérée en arrière-plan et apparaîtra dans l’historique."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 在会议录制中退出了。正在后台恢复这场会议，完成后会出现在历史记录里。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 在會議錄製中退出了。正在背景復原這場會議，完成後會出現在歷史記錄裡。"
+          }
+        }
+      }
+    },
+    "Yap quit during this meeting, and it couldn't be transcribed afterwards. %@ The audio is saved with this entry." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap wurde während dieses Meetings beendet, und es konnte danach nicht transkribiert werden. %@ Die Aufnahme ist bei diesem Eintrag gespeichert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap s’est arrêté pendant cette réunion, et elle n’a pas pu être transcrite ensuite. %@ L’audio est enregistré avec cette entrée."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 在这场会议录制中退出了，之后也没能转写。%@录音已随这条记录保存。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 在這場會議錄製中退出了，之後也沒能轉錄。%@錄音已隨這筆記錄儲存。"
           }
         }
       }

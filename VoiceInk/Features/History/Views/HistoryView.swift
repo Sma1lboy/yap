@@ -390,9 +390,14 @@ struct HistoryView<Header: View>: View {
 
             if selectedTranscriptions.count == 1, let meeting = selectedTranscriptions.first, meeting.isMeeting {
                 Button(action: {
-                    MeetingExport.saveMarkdown(MeetingNotes.markdown(
+                    if let error = MeetingExport.saveMarkdown(MeetingNotes.markdown(
                         title: String(localized: "Meeting"), date: meeting.timestamp, duration: meeting.duration,
                         notes: meeting.enhancedText, transcript: meeting.text))
+                    {
+                        NotificationManager.shared.showNotification(
+                            title: String(format: String(localized: "The Markdown file couldn't be written: %@"), error),
+                            type: .error)
+                    }
                 }) {
                     Label("Export Markdown…", yapIcon: "doc.text")
                         .font(AppTheme.font(.footnote, .medium))
@@ -935,6 +940,9 @@ struct HistoryCardRow: View {
         case TranscriptionStatus.filtered.rawValue: parts.append(String(localized: "Filtered"))
         default: break
         }
+        if let failed = transcription.meetingFailedPieces, failed > 0 {
+            parts.append(String(localized: "\(Int64(failed)) parts not transcribed"))
+        }
         parts.append(String(preferredCopyText.prefix(300)))
         return parts.joined(separator: ", ")
     }
@@ -1027,6 +1035,13 @@ struct HistoryCardRow: View {
             }
 
             statusBadge
+
+            if let failed = transcription.meetingFailedPieces, failed > 0 {
+                Label(String(localized: "\(Int64(failed)) parts not transcribed"), yapIcon: "exclamationmark.triangle")
+                    .font(AppTheme.font(.caption, .medium))
+                    .foregroundStyle(AppTheme.Status.warning)
+                    .lineLimit(1)
+            }
 
             Text(verbatim: metaText)
                 .font(AppTheme.font(.caption))

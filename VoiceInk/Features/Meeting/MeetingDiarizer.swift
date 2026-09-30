@@ -40,10 +40,47 @@ enum SpeakerLabels {
     }
 }
 
+/// Why a meeting's remote lines stay plain "Others": the panel says it in one sentence.
+enum SpeakerSplitSkip: Equatable {
+    case tooShort, oneSpeaker, timedOut, modelDownloadFailed, failed
+
+    init(error: Error) {
+        switch error as? MeetingDiarizer.Failure {
+        case .modelDownload: self = .modelDownloadFailed
+        case .timedOut: self = .timedOut
+        case nil: self = .failed
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .tooShort:
+            return String(localized: "The other side is labeled \"Others\": the meeting was too short to tell voices apart.")
+        case .oneSpeaker:
+            return String(localized: "The other side is labeled \"Others\": only one other person spoke.")
+        case .timedOut:
+            return String(localized: "The other side is labeled \"Others\": telling voices apart took too long and was stopped.")
+        case .modelDownloadFailed:
+            return String(localized: "The other side is labeled \"Others\": the speaker model couldn't be downloaded.")
+        case .failed:
+            return String(localized: "The other side is labeled \"Others\": telling voices apart failed.")
+        }
+    }
+}
+
 /// Offline speaker diarization (FluidAudio, VBx clustering) of a meeting's system audio, once, after it stops.
 enum MeetingDiarizer {
-    struct Failure: LocalizedError {
-        let errorDescription: String?
+    enum Failure: LocalizedError {
+        /// The models couldn't be loaded or downloaded (in time).
+        case modelDownload(String)
+        case timedOut(TimeInterval)
+
+        var errorDescription: String? {
+            switch self {
+            case .modelDownload(let reason): return "model download failed: \(reason)"
+            case .timedOut(let seconds): return "timed out after \(Int(seconds)) s"
+            }
+        }
     }
 
     /// Below this the clustering has too little to go on.
@@ -59,8 +96,13 @@ enum MeetingDiarizer {
         of system: URL, duration: TimeInterval, directory: URL, progress: @escaping @Sendable (Double) -> Void
     ) async throws -> [SpeakerTurn] {
         let manager = OfflineDiarizerManager()
-        let models = try await withTimeout(downloadTimeout) {
-            try await OfflineDiarizerModels.load(from: directory) { progress($0.fractionCompleted) }
+        let models: OfflineDiarizerModels
+        do {
+            models = try await withTimeout(downloadTimeout) {
+                try await OfflineDiarizerModels.load(from: directory) { progress($0.fractionCompleted) }
+            }
+        } catch {
+            throw Failure.modelDownload(error.localizedDescription)
         }
         manager.initialize(models: models)
         progress(1)  // models are in (cached or downloaded): the caller goes back to its "working" message
@@ -85,7 +127,7 @@ enum MeetingDiarizer {
             }
             Task {
                 try? await Task.sleep(for: .seconds(seconds))
-                finish(.failure(Failure(errorDescription: "timed out after \(Int(seconds)) s")))
+                finish(.failure(Failure.timedOut(seconds)))
             }
         }
     }
@@ -113,6 +155,12 @@ enum MeetingDiarizer {
             assert(assign([segment(.others, 0, 20)], turns: [turn("A", 0, 20), turn("B", 30, 50)]) == [segment(.others, 0, 20)])
             // A segment no turn overlaps stays plain "Others".
             assert(assign(segments + [segment(.others, 100, 110)], turns: turns).last?.remote == nil)
+            // Why the lines stay "Others", from the diarizer's errors.
+            assert(SpeakerSplitSkip(error: MeetingDiarizer.Failure.modelDownload("offline")) == .modelDownloadFailed)
+            assert(SpeakerSplitSkip(error: MeetingDiarizer.Failure.timedOut(90)) == .timedOut)
+            assert(SpeakerSplitSkip(error: CancellationError()) == .failed)
+            let messages = [SpeakerSplitSkip.tooShort, .oneSpeaker, .timedOut, .modelDownloadFailed, .failed].map(\.message)
+            assert(Set(messages).count == messages.count)
             // Old segments.json without the field still decodes.
             let old = #"{"speaker":"others","start":1,"end":2,"text":"hi"}"#
             assert((try? JSONDecoder().decode(MeetingSegment.self, from: Data(old.utf8)))?.remote == nil)
