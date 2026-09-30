@@ -4,6 +4,87 @@
         <title>Yap</title>
         <link>https://github.com/Sma1lboy/yap</link>
         <item>
+            <title>Yap 1.9.0</title>
+            <pubDate>Wed, 30 Sep 2026 20:23:00 GMT</pubDate>
+            <sparkle:version>1188</sparkle:version>
+            <sparkle:shortVersionString>1.9.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.9.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.9.0</h1>
+<p dir="auto">Changes since 1.8.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Meetings</h2>
+<ul dir="auto">
+<li>A meeting is no longer lost when Yap quits or crashes during it. At the next launch Yap finishes it in the background, oldest first, one meeting at a time: it transcribes the saved audio, tells speakers apart, writes notes if AI enhancement is on in the mode, and saves one History entry dated when the meeting started. A notification tells you when it is in History. You can start a new meeting while this runs.</li>
+<li>When such a meeting can't be transcribed (the mode has no transcription model, or recovering it was cut off last time), it is saved to History with its audio only and the reason.</li>
+<li>A part of a meeting that fails to transcribe is no longer dropped. Its line reads "(This part couldn't be transcribed.)", the panel says how many parts are marked, and the History row shows an "N parts not transcribed" badge. Notes are written from the lines that did transcribe.</li>
+<li>When a meeting can't be saved to History, or its Markdown file can't be written, the panel shows the error, the path of the meeting's audio and a Show in Finder button. An unsaved meeting keeps its audio, and Yap tries again at the next launch. When Export Markdown fails from History, a notification shows the error.</li>
+<li>When the other side's lines stay "Others", the panel says why in one line: the meeting was too short, only one other person spoke, telling voices apart took too long, the speaker model couldn't be downloaded, or it failed.</li>
+<li>After the first-time speaker model download, the panel goes back to "Telling speakers apart…" instead of staying on "Downloading the speaker model… 99%".</li>
+<li>New "Regenerate Notes" button in the meeting panel and in an expanded meeting row in History. It writes the notes again with the meeting prompt and the mode's AI provider, showing "Writing notes…" while it runs. If it fails, it says why and keeps the previous notes.</li>
+<li>New "Speaker Names…" button in an expanded meeting row in History, with one field per speaker in the order they first speak. The names replace "Me" and "Others 1", "Others 2"… in the transcript and the Markdown export; an empty field goes back to the label. The notes keep the old names until you click Regenerate Notes, and the new notes use the names.</li>
+<li>The meeting panel shows notes as formatted Markdown: headings, lists and to-do boxes. Copy Notes and Export Markdown still give the Markdown source.</li>
+<li>The panel's buttons are in two rows, so "Export Markdown…" is no longer cut off.</li>
+<li>While a meeting is recording, the menu bar item reads "Show Meeting Panel", which is what it always did. You still end a meeting with ✓ in the panel.</li>
+<li>Meetings no longer offer Retranscribe or re-enhancing with a prompt, in History or in Quick History. Retranscribing would turn a meeting into one dictation without speakers or notes, and a prompt would replace the notes. Use Regenerate Notes instead.</li>
+</ul>
+<h2 dir="auto">Dictation and History</h2>
+<ul dir="auto">
+<li>"Skip short transcriptions" (Model Catalog → Model Settings) is now off by default, also on existing installs where you never changed it. Dictations of 3 words or fewer now go through AI enhancement like longer ones. Turn the setting on to skip them again.</li>
+<li>When AI enhancement failed for a dictation, copying it or pasting it again from History or Quick History now gives the original text, not the "Enhancement failed: …" message.</li>
+</ul>
+<h2 dir="auto">AI models</h2>
+<ul dir="auto">
+<li>OpenAI: gpt-6-luna and gpt-6-sol are added. gpt-6-luna is the OpenAI model if you never picked one.</li>
+<li>Cerebras: qwen-3.8-27b is the Cerebras model if you never picked one.</li>
+<li>Parakeet V2, V3 and Ultra now also download the voice activity model they need, and count as downloaded only when it is there. An existing Parakeet model without it shows as not downloaded until you download it again. Cancelling a Parakeet re-download no longer deletes the model files already on disk.</li>
+</ul>
+<h2 dir="auto">Known limits</h2>
+<ul dir="auto">
+<li>Recovering a meeting transcribes it again from the start, so it takes about as long as finishing the meeting did. Parts transcribed before Yap quit are not reused.</li>
+<li>Speaker names belong to one meeting. The names you give in one meeting are not carried to the next.</li>
+<li>"Speaker Names…" appears only while the meeting's recording folder is still on disk.</li>
+<li>How long telling speakers apart takes for an hour-long meeting has not been measured yet.</li>
+</ul>
+<h1 dir="auto">Yap 1.9.0（中文）</h1>
+<p dir="auto">1.8.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">会议</h2>
+<ul dir="auto">
+<li>会议中 Yap 退出或崩溃，会议不会再丢。下次启动时 Yap 在后台把它做完，从最早的开始，一次一场：转写保存下来的录音、区分说话人、模式打开了 AI 增强时写纪要，然后存成一条历史记录，时间是会议开始的时间。存进历史记录后会有通知。这期间可以开始新的会议。</li>
+<li>这样的会议没法转写时（模式里没有选转写模型，或者上次恢复到一半中断了），会只带录音和原因存进历史记录。</li>
+<li>会议里转写失败的片段不再被丢掉。那一行写着“（这段没有转写成功。）”，面板上会说有几段已标出，历史记录的这一行会显示“N 段没有转写成功”。纪要按转写成功的行来写。</li>
+<li>会议没能存进历史记录，或者 Markdown 文件没能写入时，面板会显示错误、会议录音的路径和“在 Finder 中显示”按钮。没存上的会议录音会保留，Yap 下次启动时会再试一次。在历史记录里导出 Markdown 失败时，会用通知显示错误。</li>
+<li>对方的发言都还是“对方”时，面板会用一行说明原因：会议太短、对方只有一个人说话、区分说话人超时、说话人模型没能下载，或者区分出错。</li>
+<li>第一次下载说话人模型之后，面板会回到“正在区分对方的说话人…”，不再一直停在“正在下载说话人模型… 99%”。</li>
+<li>会议面板和历史记录里展开的会议行新增“重新生成纪要”按钮。它用会议纪要提示词和当前模式的 AI 服务商重新写一遍纪要，进行中显示“正在整理纪要…”。失败时会说明原因，原来的纪要保留不变。</li>
+<li>历史记录里展开的会议行新增“说话人名字…”按钮，每个说话人一个输入框，按第一次开口的顺序排列。名字会替换转写和导出的 Markdown 里的“我”和“对方 1”“对方 2”…；留空就回到原来的标签。纪要里还是原来的称呼，点“重新生成纪要”后，新纪要会用上这些名字。</li>
+<li>会议面板把纪要按 Markdown 排版显示：标题、列表和待办框。“复制纪要”和“导出 Markdown…”得到的还是 Markdown 原文。</li>
+<li>面板上的按钮分成两行，“导出 Markdown…”不再被截断。</li>
+<li>会议录制中，菜单栏里这一项现在叫“显示会议面板”，它一直做的就是这件事。结束会议还是点面板上的 ✓。</li>
+<li>会议不再提供“重新转写”和用提示词重新润色，历史记录和快速历史记录里都一样。重新转写会把会议变成一条没有说话人和纪要的普通听写，提示词会替换掉纪要。要更新纪要请用“重新生成纪要”。</li>
+</ul>
+<h2 dir="auto">听写和历史记录</h2>
+<ul dir="auto">
+<li>“跳过简短转写”（模型目录 → 模型设置）现在默认关闭，老用户只要没改过这个设置也一样。3 个词及以下的听写现在也会和长的一样经过 AI 增强。想继续跳过，把这个设置打开。</li>
+<li>某条听写 AI 增强失败时，在历史记录或快速历史记录里复制它、再次粘贴它，得到的是原文，不再是“润色失败：…”这条提示。</li>
+</ul>
+<h2 dir="auto">AI 模型</h2>
+<ul dir="auto">
+<li>OpenAI：新增 gpt-6-luna 和 gpt-6-sol。没选过模型时，OpenAI 用 gpt-6-luna。</li>
+<li>Cerebras：没选过模型时，用 qwen-3.8-27b。</li>
+<li>Parakeet V2、V3 和 Ultra 现在会一起下载它们需要的语音活动检测模型，并且只有这个模型也在时才算下载完成。已经装好、但缺这个模型的 Parakeet 会显示为未下载，重新下载一次即可。取消 Parakeet 的重新下载，不会再删掉已经在磁盘上的模型文件。</li>
+</ul>
+<h2 dir="auto">已知限制</h2>
+<ul dir="auto">
+<li>恢复会议会从头重新转写，所以耗时和正常结束会议差不多。Yap 退出前已经转写好的片段不会复用。</li>
+<li>说话人名字只在这一场会议里有效，不会带到下一场会议。</li>
+<li>只有会议的录音文件夹还在磁盘上时，才会出现“说话人名字…”按钮。</li>
+<li>一小时的会议区分说话人要多久，还没有测过。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.9.0/Yap.zip" sparkle:edSignature="1u6SADHRO3yE+SIQX+w8Wvc3h6j9lQ62B+l6vDUS1iimTWoDAxvtP65qIitU2fDD+6mDiip6+RJM8doZhmqIAA==" length="47612240" type="application/octet-stream" />
+        </item>
+        <item>
             <title>Yap 1.8.0</title>
             <pubDate>Wed, 30 Sep 2026 08:34:17 GMT</pubDate>
             <sparkle:version>1178</sparkle:version>
@@ -544,15 +625,6 @@
             <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
             <link>https://github.com/Sma1lboy/yap/releases/tag/v1.1.0</link>
             <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.1.0/Yap.zip" sparkle:edSignature="wWTfEK/y7nScxrM69a/IvbYcpZZqNmy19KTT6KiuqDRf2N69ckTipth0C4+QNnr/d5uKXXco1DlEw3e8txWCAw==" length="45487529" type="application/octet-stream" />
-        </item>
-        <item>
-            <title>Yap 1.0.0</title>
-            <pubDate>Fri, 25 Sep 2026 05:49:36 GMT</pubDate>
-            <sparkle:version>1005</sparkle:version>
-            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.0.0</link>
-            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.0.0/Yap.zip" sparkle:edSignature="/CeumSi+lIDrLODZo8LYzw+reeWWcAADav3kopYJcu1uEA6qTV7xztgZPgrVBCRx8NL9zNjwzMqH9vUki+htAA==" length="45048163" type="application/octet-stream" />
         </item>
     </channel>
 </rss>
