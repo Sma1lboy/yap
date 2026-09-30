@@ -352,21 +352,22 @@
                 ("meeting-recovery-not-saved", recovered { $0.saveError = CocoaError(.fileWriteOutOfSpace).localizedDescription }),
             ]
             for (name, (title, type, button)) in meetingNotifications {
-                shot("notification-\(name)", main: true, fit: true) {
-                    AppNotificationView(
-                        title: title, type: type, duration: 15, onClose: {}, onTap: nil,
-                        actionButton: button.map { (label: $0, action: {}) })
-                    .padding(AppTheme.Spacing.x4)
+                let notification = AppNotificationView(
+                    title: title, type: type, duration: 15, onClose: {}, onTap: nil,
+                    actionButton: button.map { (label: $0, action: {}) })
+                // The size NotificationManager gives the window, plus the margin around it.
+                let window = NotificationManager.size(of: NSHostingController(rootView: notification))
+                let margin = AppTheme.Spacing.x4 * 2
+                shot("notification-\(name)", size: CGSize(width: window.width + margin, height: window.height + margin), main: true) {
+                    notification.padding(AppTheme.Spacing.x4)
                 }
             }
-            // Settings › Meetings (the shortcut at its default, the call reminder on), found by searching for it.
+            // Settings › Meetings with the call reminder on, found by searching for it.
             UserDefaults.standard.set(true, forKey: MeetingCallDetector.enabledKey)
-            ShortcutStore.setShortcut(.rightCommandSpace, for: .meetingRecording)
             SettingsView.snapshotQuery = String(localized: "Meetings")
             MainWindowNavigation.shared.selectedView = .settings
             shot("settings-meetings", main: true, fullPage: true, titled: true) { ContentView() }
             SettingsView.snapshotQuery = ""
-            ShortcutStore.setShortcut(nil, for: .meetingRecording)
             UserDefaults.standard.removeObject(forKey: MeetingCallDetector.enabledKey)
 
             // Recorder panels mid-dictation, on a dark desktop-like backdrop.

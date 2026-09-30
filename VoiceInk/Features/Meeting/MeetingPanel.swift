@@ -166,23 +166,28 @@ struct MeetingPanelView: View {
             Text(result.notes == nil ? "Meeting Transcript" : "Meeting Notes")
                 .font(AppTheme.font(.headline, .semibold))
                 .accessibilityAddTraits(.isHeader)
-            // Errors, then warnings, then information (MeetingStatusLine); the folder goes with the save error.
-            ForEach(lines.filter { $0.kind == .error }, id: \.self) { MeetingStatusLineView(line: $0) }
-            if result.saveError != nil, let folder = result.folder {
-                HStack(spacing: AppTheme.Spacing.x2) {
-                    Text(String(format: String(localized: "Audio: %@"), (folder.path as NSString).abbreviatingWithTildeInPath))
-                        .font(AppTheme.font(.caption))
-                        .foregroundColor(AppTheme.Text.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .textSelection(.enabled)
-                    Spacer()
-                    Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([folder]) }
-                        .controlSize(.small)
-                        .fixedSize()
+            // Errors, then warnings, then information (MeetingStatusLine), closer together than the panel's parts;
+            // the folder goes with the save error.
+            if !lines.isEmpty {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+                    ForEach(lines.filter { $0.kind == .error }, id: \.self) { MeetingStatusLineView(line: $0) }
+                    if result.saveError != nil, let folder = result.folder {
+                        HStack(spacing: AppTheme.Spacing.x2) {
+                            Text(String(format: String(localized: "Audio: %@"), (folder.path as NSString).abbreviatingWithTildeInPath))
+                                .font(AppTheme.font(.caption))
+                                .foregroundColor(AppTheme.Text.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                                .textSelection(.enabled)
+                            Spacer()
+                            Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([folder]) }
+                                .controlSize(.small)
+                                .fixedSize()
+                        }
+                    }
+                    ForEach(lines.filter { $0.kind != .error }, id: \.self) { MeetingStatusLineView(line: $0) }
                 }
             }
-            ForEach(lines.filter { $0.kind != .error }, id: \.self) { MeetingStatusLineView(line: $0) }
             ScrollView {
                 // Notes are Markdown (headings, lists, to-dos); copy and export keep the Markdown source.
                 if let notes = result.notes {
