@@ -4,6 +4,47 @@
         <title>Yap</title>
         <link>https://github.com/Sma1lboy/yap</link>
         <item>
+            <title>Yap 1.8.0</title>
+            <pubDate>Wed, 30 Sep 2026 08:34:17 GMT</pubDate>
+            <sparkle:version>1178</sparkle:version>
+            <sparkle:shortVersionString>1.8.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.8.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.8.0</h1>
+<p dir="auto">Changes since 1.7.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Meetings</h2>
+<ul dir="auto">
+<li>Meeting transcripts now tell the other side's speakers apart: their lines are labeled "Others 1", "Others 2" and so on, numbered in the order they first speak. Your own lines stay "Me".</li>
+<li>It runs on this Mac, offline, after the meeting ends, while the panel shows "Telling speakers apart…". The first time, Yap downloads a speaker model into its own folder first, and the panel shows "Downloading the speaker model…" with a percentage.</li>
+<li>Labels appear only when at least two people on the other side each spoke for a few seconds and the meeting is at least 15 seconds long. Otherwise, or if it fails or takes too long, the lines stay "Others".</li>
+<li>Meeting notes are now written only when AI enhancement is on in the mode. With it off (the default on a fresh install), the transcript is saved with a hint and no model is started, local ones included. Before, a fresh install could fall back to a local Ollama model for the notes.</li>
+</ul>
+<h2 dir="auto">Known limits</h2>
+<ul dir="auto">
+<li>Speakers are numbered, not named, and "Others 1" in one meeting has nothing to do with "Others 1" in the next.</li>
+<li>Transcript lines are pieces of 20–28 seconds cut at pauses. When two remote speakers talk in one piece, the whole piece gets the label of the one who spoke longer.</li>
+<li>Speed: on a 49-second test recording, telling speakers apart took 14.5 s and 32 s in two cold runs that included downloading the model. How long it takes for an hour-long meeting with the model already downloaded has not been measured yet.</li>
+</ul>
+<h1 dir="auto">Yap 1.8.0（中文）</h1>
+<p dir="auto">1.7.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">会议</h2>
+<ul dir="auto">
+<li>会议转写现在能区分对方的不同说话人：对方的每一行标成“对方 1”“对方 2”，按第一次开口的顺序编号。你自己的行还是“我”。</li>
+<li>区分在会议结束后、在这台 Mac 上离线进行，面板上显示“正在区分对方的说话人…”。第一次会先把说话人模型下载到 Yap 自己的文件夹里，面板上显示“正在下载说话人模型…”和百分比。</li>
+<li>只有对方至少两个人各说了几秒、且会议不短于 15 秒时才会标号。其他情况，或者区分失败、超时，这些行还是“对方”。</li>
+<li>会议纪要现在只在模式打开了 AI 增强时才生成。关着时（新装的默认），只保存转写并给出提示，不会启动任何模型，本机模型也不会。以前新装的 Yap 可能会退回用本机的 Ollama 模型写纪要。</li>
+</ul>
+<h2 dir="auto">已知限制</h2>
+<ul dir="auto">
+<li>说话人只有编号没有名字，这次会议的“对方 1”和下次会议的“对方 1”没有关系。</li>
+<li>转写按停顿切成 20–28 秒一段。对方两个人在同一段里都说了话时，整段标成说得更久的那个人。</li>
+<li>速度：一段 49 秒的测试录音，两次冷启动（含下载模型）区分说话人分别用了 14.5 秒和 32 秒。模型已下载时，一小时的会议要多久还没有测过。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.8.0/Yap.zip" sparkle:edSignature="XvH6qNsvxw1VbyToh/1LbBWFs5mYgvpUYcizb6NQ5f1acIHMIwIZcBh9sZnAQss967HR+Lm1N12N2x5UHTUEBg==" length="47490447" type="application/octet-stream" />
+        </item>
+        <item>
             <title>Yap 1.7.0</title>
             <pubDate>Wed, 30 Sep 2026 01:30:47 GMT</pubDate>
             <sparkle:version>1171</sparkle:version>
