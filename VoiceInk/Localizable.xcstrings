@@ -297,6 +297,34 @@
         }
       }
     },
+    "%@ is on a call. Record this meeting?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist in einem Call. Dieses Meeting aufnehmen?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ est en appel. Enregistrer cette réunion ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 正在通话。要录这场会议吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 正在通話。要錄這場會議嗎？"
+          }
+        }
+      }
+    },
     "%@ is still downloading (%lld%%). Dictation works as soon as it finishes." : {
       "localizations" : {
         "de" : {
@@ -321,6 +349,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ 還在下載（%2$lld%%），下載完就能聽寫。"
+          }
+        }
+      }
+    },
+    "%@ is using the microphone. Record this meeting?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ verwendet das Mikrofon. Dieses Meeting aufnehmen?"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ utilise le micro. Enregistrer cette réunion ?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 正在使用麦克风。要录这场会议吗？"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 正在使用麥克風。要錄這場會議嗎？"
           }
         }
       }
@@ -48166,6 +48222,34 @@
         }
       }
     },
+    "DingTalk" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DingTalk"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DingTalk"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "钉钉"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "釘釘"
+          }
+        }
+      }
+    },
     "e.g. Prakash, Yap" : {
       "localizations" : {
         "de" : {
@@ -49197,6 +49281,34 @@
         }
       }
     },
+    "Feishu" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feishu"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feishu"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "飞书"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "飛書"
+          }
+        }
+      }
+    },
     "No notes: AI enhancement is off in this mode, or it has no AI provider for them (Yap Refine can't write notes). Turn it on and choose a provider in the mode for your next meeting; the transcript is saved in History." : {
       "localizations" : {
         "de" : {
@@ -49221,6 +49333,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "沒有產生紀要：這個模式關閉了 AI 增強，或沒有可用的 AI 供應商（Yap Refine 不能寫紀要）。請在模式裡開啟並選一個供應商，下次會議就會產生；這次的轉錄已儲存到歷史記錄。"
+          }
+        }
+      }
+    },
+    "Remind Me to Record When a Call Starts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei Calls an die Aufnahme erinnern"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proposer d'enregistrer quand un appel commence"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测到通话时提醒我录制"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偵測到通話時提醒我錄製"
+          }
+        }
+      }
+    },
+    "Tencent Meeting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tencent Meeting"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tencent Meeting"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "腾讯会议"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "騰訊會議"
+          }
+        }
+      }
+    },
+    "The call seems to have ended. Click ✓ to end the meeting and save it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Call scheint vorbei zu sein. Klicke auf ✓, um das Meeting zu beenden und zu sichern."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'appel semble terminé. Cliquez sur ✓ pour terminer la réunion et l'enregistrer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通话好像结束了。点 ✓ 结束会议并保存。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通話好像結束了。點 ✓ 結束會議並儲存。"
+          }
+        }
+      }
+    },
+    "When Zoom, Teams, FaceTime, a browser or another call app has used the microphone for 5 seconds, Yap offers to record the meeting; while recording, it tells you when the call seems to have ended. It never starts or stops a recording by itself." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn Zoom, Teams, FaceTime, ein Browser oder eine andere Call-App 5 Sekunden lang das Mikrofon nutzt, bietet Yap an, das Meeting aufzunehmen; während der Aufnahme sagt Yap Bescheid, wenn der Call vorbei zu sein scheint. Yap startet oder stoppt eine Aufnahme nie von selbst."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quand Zoom, Teams, FaceTime, un navigateur ou une autre app d'appel utilise le micro depuis 5 secondes, Yap propose d'enregistrer la réunion ; pendant l'enregistrement, il vous signale quand l'appel semble terminé. Il ne lance ni n'arrête jamais un enregistrement de lui-même."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom、Teams、FaceTime、浏览器或其他通话 App 用麦克风满 5 秒时，Yap 会问你要不要录这场会议；录制中通话好像结束了，也会提醒你。它不会自己开始或停止录制。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoom、Teams、FaceTime、瀏覽器或其他通話 App 使用麥克風滿 5 秒時，Yap 會問你要不要錄這場會議；錄製中通話好像結束了，也會提醒你。它不會自己開始或停止錄製。"
           }
         }
       }

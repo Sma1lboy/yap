@@ -44,6 +44,8 @@ struct VoiceInkApp: App {
         #if DEBUG
             // make ui-snapshots: render fake-data screens to /tmp/yap-ui/snapshots and exit.
             UISnapshots.runIfRequested()
+            // make meeting-call-check: print who uses the microphone and exit, before anything writes settings.
+            MeetingCallCheck.runIfRequested()
         #endif
         // Before onboarding can complete in this session, so a fresh install isn't mistaken for an update.
         ReleaseNotesPresenter.shared.showsOnNextMainWindow = ReleaseNotes.recordLaunch()
@@ -78,6 +80,7 @@ struct VoiceInkApp: App {
             MeetingEdits.selfCheck()
             MeetingRecorder.shortcutSelfCheck()
             MeetingRecorder.recoverySelfCheck()
+            MeetingCallPolicy.selfCheck()
             OpenAICompatibleChat.selfCheck()
             ModelFileDownloader.selfCheck()
             ReplacementText.selfCheck()
@@ -196,6 +199,7 @@ struct VoiceInkApp: App {
         recorderUIManager.configure(engine: engine, recorder: engine.recorder)
         engine.recorderUIManager = recorderUIManager
         MeetingRecorder.shared.configure(engine: engine)
+        MeetingCallDetector.shared.configure(engine: engine)
         // Once; a shortcut the user cleared stays cleared.
         ShortcutStore.seedShortcut(.rightCommandSpace, for: .meetingRecording)
 
