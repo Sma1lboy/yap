@@ -88,7 +88,7 @@ struct MeetingPanelView: View {
     private var consent: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
             Text("Recording a Meeting").font(AppTheme.font(.headline, .semibold))
-            Text("Yap records your microphone and the sound from other apps, transcribes it on the fly with this mode's model, and writes notes when you stop. Press the shortcut again to stop.")
+            Text("Yap records your microphone and the sound from other apps, transcribes it on the fly with this mode's model, and writes notes when you stop. To stop, click ✓ in this panel; the keyboard never stops a meeting.")
                 .font(AppTheme.font(.callout))
                 .fixedSize(horizontal: false, vertical: true)
             Text("You're responsible for telling everyone in the meeting and getting their consent. Recording people without it can be against the law (in China, the EU and many US states, among others) or your company's rules.")
@@ -106,23 +106,33 @@ struct MeetingPanelView: View {
         }
     }
 
+    /// Only a click on ✓ ends the meeting, and it always keeps it: there's no discard, and the keyboard (the
+    /// meeting shortcut included) never stops it.
     private func recording(since started: Date) -> some View {
         HStack(spacing: AppTheme.Spacing.x3) {
             Circle().fill(AppTheme.Status.error).frame(width: 10, height: 10)
             VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
                 Text("Recording meeting").font(AppTheme.font(.callout, .semibold))
                 TimelineView(.periodic(from: started, by: 1)) { context in
-                    Text(MeetingNotes.timestamp(context.date.timeIntervalSince(started)))
-                        .font(AppTheme.font(.caption)).monospacedDigit()
-                        .foregroundColor(AppTheme.Text.secondary)
+                    if let until = recorder.stopReminderUntil, context.date < until {
+                        Text("Still recording. Click ✓ to end the meeting.")
+                            .font(AppTheme.font(.caption))
+                            .foregroundColor(AppTheme.Text.secondary)
+                    } else {
+                        Text(MeetingNotes.timestamp(context.date.timeIntervalSince(started)))
+                            .font(AppTheme.font(.caption)).monospacedDigit()
+                            .foregroundColor(AppTheme.Text.secondary)
+                    }
                 }
             }
             Spacer()
             Button("Copy Notice") { MeetingConsentNotice.copy() }
                 .help("Copy a short note for the meeting chat saying you're recording.")
-            Button("Stop") { Task { await recorder.stop() } }
+                .controlSize(.small)
+            AppIconButton(systemName: "checkmark", help: "End Meeting and Save", size: 32, iconSize: 15) {
+                Task { await recorder.stop() }
+            }
         }
-        .controlSize(.small)
     }
 
     private func done(_ result: MeetingRecorder.MeetingResult) -> some View {

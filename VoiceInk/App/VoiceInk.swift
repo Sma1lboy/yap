@@ -75,6 +75,7 @@ struct VoiceInkApp: App {
             YapIconCheck.selfCheck()
             MeetingChunker.selfCheck()
             MeetingNotes.selfCheck()
+            MeetingRecorder.shortcutSelfCheck()
             OpenAICompatibleChat.selfCheck()
             ModelFileDownloader.selfCheck()
             ReplacementText.selfCheck()

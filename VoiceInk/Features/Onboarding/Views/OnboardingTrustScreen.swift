@@ -82,7 +82,7 @@ struct TrustBody: View {
 
     static func meetingLine(shortcut: Shortcut?) -> String {
         if let shortcut {
-            return String(localized: "Yap can also record meetings: press \(shortcut.displayString) to start and stop.")
+            return String(localized: "Yap can also record meetings: press \(shortcut.displayString) to start, then click ✓ in its panel to stop.")
         }
         return String(localized: "Yap can also record meetings. Set a shortcut for it in Settings.")
     }
