@@ -10,6 +10,8 @@ enum ShortcutAction: Hashable {
     case retryLastTranscription
     case cancelRecorder
     case openQuickHistory
+    /// Opens or closes the floating Scratchpad. Unset by default.
+    case openScratchpad
     case quickAddToDictionary
     /// Starts or stops a meeting recording (MeetingRecorder). Default: right ⌘ + Space.
     case meetingRecording
@@ -53,6 +55,8 @@ enum ShortcutAction: Hashable {
             return "cancelRecorder"
         case .openQuickHistory:
             return "openHistoryWindow"
+        case .openScratchpad:
+            return "openScratchpad"
         case .quickAddToDictionary:
             return "quickAddToDictionary"
         case .meetingRecording:
@@ -90,6 +94,8 @@ enum ShortcutAction: Hashable {
             return String(localized: "Cancel Recording")
         case .openQuickHistory:
             return String(localized: "Open Quick History")
+        case .openScratchpad:
+            return String(localized: "Open Scratchpad")
         case .quickAddToDictionary:
             return String(localized: "Quick Add to Dictionary")
         case .meetingRecording:
@@ -123,6 +129,7 @@ enum ShortcutAction: Hashable {
         .copyLastTranscription,
         .retryLastTranscription,
         .openQuickHistory,
+        .openScratchpad,
         .quickAddToDictionary,
         .undoLastPaste,
         .rewriteLastPaste,

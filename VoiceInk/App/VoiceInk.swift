@@ -68,6 +68,7 @@ struct VoiceInkApp: App {
             PromptTemplates.selfCheck()
             HomeShortcutsCard.selfCheck()
             CursorPaster.selfCheck()
+            ScratchpadStore.selfCheck()
             StarterModeCatalog.selfCheck()
             TranscriptionLanguageSupport.selfCheck()
             CursorContextReader.selfCheck()

@@ -38,7 +38,7 @@ enum SettingsGroup: CaseIterable {
             return [
                 String(localized: "Additional Shortcuts"), String(localized: "Paste Last Transcription (Original)"),
                 String(localized: "Paste Last Transcription (Enhanced)"), String(localized: "Copy Last Transcription"),
-                String(localized: "Retry Last Transcription"), String(localized: "Open Quick History"),
+                String(localized: "Retry Last Transcription"), String(localized: "Open Quick History"), String(localized: "Open Scratchpad"),
                 String(localized: "Quick Add to Dictionary"), String(localized: "Record Meeting"),
                 String(localized: "Cancel Recording"),
             ]

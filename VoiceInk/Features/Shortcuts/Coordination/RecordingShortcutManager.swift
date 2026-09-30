@@ -254,6 +254,8 @@ class RecordingShortcutManager: ObservableObject {
             )
         case .openQuickHistory:
             QuickHistoryController.shared.show(modelContext: engine.modelContext, engine: engine)
+        case .openScratchpad:
+            ScratchpadController.shared.toggle()
         case .quickAddToDictionary:
             DictionaryQuickAddManager.shared.toggle(modelContainer: engine.modelContext.container)
         case .meetingRecording:

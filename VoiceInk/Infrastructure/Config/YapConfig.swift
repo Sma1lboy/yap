@@ -289,6 +289,7 @@ struct YapConfig: Codable, Equatable {
             general?.retryLastTranscriptionShortcut, general?.cancelRecorderShortcut,
             general?.openHistoryWindowShortcut, general?.quickAddToDictionaryShortcut,
             general?.undoLastPasteShortcut, general?.rewriteLastPasteShortcut, general?.copyLastTranscriptionShortcut,
+            general?.openScratchpadShortcut,
             general?.meetingRecordingShortcut,
         ]
         return RestoreSummary(
@@ -645,7 +646,7 @@ extension String {
                 retryLastTranscriptionShortcut: shortcut, cancelRecorderShortcut: shortcut,
                 openHistoryWindowShortcut: shortcut, quickAddToDictionaryShortcut: shortcut,
                 meetingRecordingShortcut: shortcut, undoLastPasteShortcut: shortcut, rewriteLastPasteShortcut: shortcut,
-                copyLastTranscriptionShortcut: shortcut,
+                copyLastTranscriptionShortcut: shortcut, openScratchpadShortcut: shortcut,
                 primaryRecordingShortcutRawValue: "custom", secondaryRecordingShortcutRawValue: "none",
                 primaryRecordingShortcutModeRawValue: "hybrid", secondaryRecordingShortcutModeRawValue: "toggle",
                 launchAtLoginEnabled: true, isMenuBarOnly: false, recorderType: "notch",
