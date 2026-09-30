@@ -48156,6 +48156,12 @@
             "state" : "translated",
             "value" : "对方 %lld"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "對方 %lld"
+          }
         }
       }
     },
@@ -48178,6 +48184,12 @@
             "state" : "translated",
             "value" : "正在区分对方的说话人…"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在區分對方的說話人…"
+          }
         }
       }
     },
@@ -48199,6 +48211,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在下载说话人模型… %lld%%"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在下載說話人模型… %lld%%"
           }
         }
       }
