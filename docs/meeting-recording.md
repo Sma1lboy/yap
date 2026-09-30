@@ -11,6 +11,7 @@ One shortcut (right ⌘ + Space by default) starts a long recording of the micro
 | Timeline | Both channels are written to `mic.wav` / `system.wav` and kept on the wall clock: if a channel falls more than 0.5 s behind (device switch, stalled device), the gap is filled with silence, so both timelines stay aligned. | `MeetingRecorder.Channel` |
 | Pieces | Each channel is cut at the quietest 100 ms between 20 and 28 s. Pieces below about −50 dBFS are dropped (Whisper invents text for silence). Leading silence is trimmed, so the timestamp is where speech starts. | `MeetingChunker` |
 | Transcription | One piece at a time, in order, through `TranscriptionServiceRegistry` with the mode's model and language, the same entry point dictation uses (local Whisper, cloud, Yap Cloud…). | `MeetingRecorder.Transcriber` |
+| Remote speakers | After the last piece is transcribed and only if "Others" spoke and the meeting is at least 15 s: `system.wav` is diarized once, offline, with FluidAudio's `OfflineDiarizerManager` (VBx clustering). Each "Others" piece takes the speaker it overlaps most, numbered by first appearance: `Others 1`, `Others 2` (`segments.json` gets a `remote` field). Speakers with under 3 s of speech are ignored; with fewer than two real speakers, or on any failure or timeout (60 s + half the meeting), the lines stay plain "Others" and the reason is logged. The models (Segmentation, FBank, Embedding, PldaRho) download on first use into `<Yap support folder>/SpeakerModels`, never FluidAudio's own Application Support folder; the panel shows "Downloading the speaker model… n%". Me is never diarized. | `MeetingDiarizer`, `SpeakerLabels`, `MeetingRecorder.labelRemoteSpeakers` |
 | Notes | After the last piece: the mode's AI provider with a built-in "Meeting Notes" prompt (summary, decisions, action items with owner and due date, open questions; notes in the meeting's main language, English terms kept). The timeout is 30 s plus 1 s per 100 characters, up to 300 s, instead of dictation's 7 s. Transcripts over 12,000 characters are summarized in parts, and the parts' notes are merged. Yap Refine or no configured provider: transcript only, with a hint. | `MeetingSummarizer`, `MeetingNotes` |
 | Saving | One `Transcription` with `kind = "meeting"`: `text` is the timestamped transcript (`[00:12] Me: …`), `enhancedText` the notes, `audioFileURL` the mix of both channels. The folder `Recordings/meetings/<id>/` also holds `mic.wav`, `system.wav` and `segments.json`. Deleting the entry, or audio retention, removes the whole folder. History can export a meeting as Markdown. | `MeetingRecorder.complete`, `Transcription.removeAudio` |
 | Consent | The first time, the panel explains what's recorded and that the user must tell everyone. "Copy Recording Notice" copies a two-language line for the meeting chat. While recording, the panel shows "Recording meeting" with a timer, and the menu bar shows ● and the time. | `MeetingPanel.swift` |
@@ -27,9 +28,12 @@ Permission: `NSAudioCaptureUsageDescription` ("System Audio Recording Only"). ma
 - Without an API key, the fresh install's default provider was the Ollama running on this Mac (`qwen3.8:27b-mlx`), which wrote notes too. With no provider at all, the transcript is saved with the hint.
 - Written to disk: `mic.wav mix.wav segments.json system.wav`.
 
+Speaker labels, 2026-09-29, same script with a second remote voice (Shelley says two lines between Reed's, made with `say`, 50 s per channel, Whisper base-q5_1 for speed): the two voices get `Others 1` and `Others 2` and the check (`labels: OK`, read from `segments.json`) requires one label per voice. Diarizing took 14.5 s and 32 s in two runs, each a cold run that included downloading the models; the run before had the models cached only inside the throwaway mock folder, so a warm figure per minute of audio is not measured yet. Nothing was written to `~/Library/Application Support/FluidAudio`.
+
 Self-checks at launch cover:
 - cutting and dropping pieces, the timeline, and the WAV writer;
 - the transcript and Markdown format, splitting long transcripts, the timeout;
+- mapping diarizer turns to `Others n` (order, noise speakers, one speaker, no overlap, old `segments.json`);
 - the right-⌘ rule;
 - deleting a meeting's folder.
 
@@ -63,6 +67,7 @@ None of these can be run here without UI automation or permission prompts on the
 ## Known limits of P0
 
 - **Timestamps are per piece** (20–28 s), not per sentence. One piece can hold two turns of the same speaker.
+- **A piece with two remote speakers gets one label**, the one who spoke longer in it: pieces are cut at pauses, not at speaker changes, and the text can't be split without word timestamps. Speakers are not named, only numbered, and the numbers mean nothing in the next meeting.
 - **Crosstalk:** without headphones the other side also reaches the microphone and shows up under "Me". No de-duplication yet.
 - **Microphone device changes aren't followed.** Only the system audio side is rebuilt; the timeline stays aligned, but "Me" is lost after the input disappears.
 - **Orphaned folders stay:** a crash mid-recording leaves a folder without a History entry, and the Recordings sweep no longer deletes folders.

@@ -39,6 +39,10 @@ defaults write "$ID" hasCompletedOnboardingV2 -bool true
 for clip in deploy bug perf standup meeting infra; do
 	afconvert -f WAVE -d LEI16@16000 -c 1 "$ROOT/setup/asr/clips/$clip.m4a" "$WORK/clips/$clip.wav"
 done
+# A second remote voice (Shelley) speaks twice, so "others" holds two people: Reed (A) and Shelley (B).
+say -v "Shelley (Chinese (China mainland))" -r 230 -o "$WORK/clips/b1.aiff" "我补充一点，[Kubernetes] 那边的 rollout 我已经在测试环境跑过了，没有问题。"
+say -v "Shelley (Chinese (China mainland))" -r 230 -o "$WORK/clips/b2.aiff" "我这边的排期是下周三，需要 design 先确认一下 API 的字段。"
+for clip in b1 b2; do afconvert -f WAVE -d LEI16@16000 -c 1 "$WORK/clips/$clip.aiff" "$WORK/clips/$clip.wav"; done
 python3 - "$WORK" <<'PY'
 import sys, wave
 work = sys.argv[1]
@@ -46,15 +50,18 @@ def frames(name):
     with wave.open(f"{work}/clips/{name}.wav") as w:
         return w.readframes(w.getnframes())
 silence = lambda seconds: b"\0\0" * int(16000 * seconds)
-mic, system = b"", b""
-# Tingting (me) and Reed (others) take turns, one second apart.
-for me_clip, other_clip in [("deploy", "standup"), ("bug", "meeting"), ("perf", "infra")]:
+mic, system, truth = b"", b"", []
+# Tingting (me) and the remote voices take turns, one second apart: me, then A (Reed) or B (Shelley).
+for who, me_clip, other_clip in [("A", "deploy", "standup"), ("B", "bug", "b1"), ("A", "perf", "infra"), ("B", "meeting", "b2")]:
     a, b = frames(me_clip), frames(other_clip)
+    start = len(system) / 32000 + len(a) / 32000 + 1
+    truth.append(f"{who} {start:.1f} {start + len(b) / 32000:.1f}")
     mic += a + silence(1) + silence(len(b) / 32000) + silence(1)
     system += silence(len(a) / 32000) + silence(1) + b + silence(1)
 for name, data in [("mic", mic), ("system", system)]:
     with wave.open(f"{work}/{name}.wav", "wb") as w:
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000); w.writeframes(data)
+open(f"{work}/truth.txt", "w").write("\n".join(truth) + "\n")
 print(f"test meeting: {len(mic) / 32000:.1f} s per channel")
 PY
 
@@ -82,3 +89,25 @@ if [ -n "$NOTES" ] && grep -q '^meeting-check: notes-begin$' "$WORK/out.txt" \
 	echo "FAIL: NOTES=1 but no notes"
 	exit 1
 fi
+
+# Speaker labels, from segments.json: a remote piece takes the voice that speaks most in it (truth.txt), and one
+# label must map to one voice (a piece of 20-28 s can hold both voices; the longer speaker wins).
+python3 - "$WORK" <<'PY'
+import json, re, sys
+work = sys.argv[1]
+truth = [(l.split()[0], float(l.split()[1]), float(l.split()[2])) for l in open(f"{work}/truth.txt")]
+folder = next(l.split(" ", 2)[2].strip() for l in open(f"{work}/out.txt") if l.startswith("meeting-check: folder "))
+seen, bad = {}, 0
+for seg in json.load(open(f"{folder}/segments.json")):
+    if seg["speaker"] != "others": continue
+    overlap = {}
+    for who, s, e in truth:
+        overlap[who] = overlap.get(who, 0) + max(0, min(e, seg["end"]) - max(s, seg["start"]))
+    voice = max(overlap, key=overlap.get)
+    label = seg.get("remote")
+    print(f"labels: {seg['start']:.0f}-{seg['end']:.0f}s voice {voice} -> Others {label}")
+    if label is None or seen.setdefault(label, voice) != voice: bad += 1
+ok = bad == 0 and sorted(seen.values()) == ["A", "B"]
+print("labels:", "OK" if ok else f"FAIL ({bad} pieces off, mapping {seen})")
+sys.exit(0 if ok else 1)
+PY

@@ -162,10 +162,11 @@ final class MeetingRecorder: ObservableObject {
     private func complete(_ session: Session) async -> MeetingResult? {
         guard let engine else { return nil }
         phase = .finishing(String(localized: "Transcribing the last part…"))
-        let (segments, failures) = await session.finish()
+        var (segments, failures) = await session.finish()
         if failures > 0 {
             logger.error("\(failures, privacy: .public) meeting pieces failed to transcribe")
         }
+        segments = await labelRemoteSpeakers(segments, session: session, engine: engine)
 
         phase = .finishing(String(localized: "Writing notes…"))
         let transcript = MeetingNotes.transcript(segments)
@@ -198,6 +199,39 @@ final class MeetingRecorder: ObservableObject {
         MeetingPanelController.shared.show()
         logger.notice("Meeting saved: \(segments.count, privacy: .public) segments, notes \(summary.notes != nil, privacy: .public)")
         return result
+    }
+
+    /// Tells the remote speakers apart ("Others 1", "Others 2"…) by diarizing the system audio once. With one remote
+    /// speaker, a too-short meeting, or any failure or timeout, the segments stay as they are ("Others").
+    private func labelRemoteSpeakers(_ segments: [MeetingSegment], session: Session, engine: VoiceInkEngine) async -> [MeetingSegment] {
+        guard segments.contains(where: { $0.speaker == .others }), session.duration >= MeetingDiarizer.minimumDuration
+        else { return segments }
+        phase = .finishing(String(localized: "Telling speakers apart…"))
+        let started = Date()
+        do {
+            let turns = try await MeetingDiarizer.turns(
+                of: session.folder.appendingPathComponent("system.wav"), duration: session.duration,
+                directory: engine.recordingsDirectory.deletingLastPathComponent().appendingPathComponent("SpeakerModels", isDirectory: true)
+            ) { fraction in
+                guard fraction < 1 else { return }
+                Task { @MainActor [weak self] in
+                    self?.phase = .finishing(String(format: String(localized: "Downloading the speaker model… %lld%%"), Int(fraction * 100)))
+                }
+            }
+            let labeled = SpeakerLabels.assign(segments, turns: turns)
+            try? JSONEncoder().encode(labeled).write(to: session.folder.appendingPathComponent("segments.json"))
+            logger.notice("Diarized in \(Date().timeIntervalSince(started), privacy: .public) s: \(Set(turns.map(\.id)).count, privacy: .public) speakers, \(Set(labeled.compactMap(\.remote)).count, privacy: .public) in the transcript")
+            #if DEBUG
+                if MeetingFilesCheck.isRequested {
+                    let elapsed = String(format: "%.1f", Date().timeIntervalSince(started))
+                    print("meeting-check: diarized in \(elapsed) s; system audio \(Int(session.duration)) s")
+                }
+            #endif
+            return labeled
+        } catch {
+            logger.error("Diarization skipped: \(error.localizedDescription, privacy: .public)")
+            return segments
+        }
     }
 
     #if DEBUG
