@@ -52,7 +52,7 @@ struct MenuBarView: View {
                 recorderUIManager.handleToggleRecorderPanelNotification()
             }
 
-            Button(meetingRecorder.phase.isRecording ? "Stop Meeting Recording" : "Record Meeting") {
+            Button(meetingRecorder.phase.isRecording ? "Show Meeting Panel" : "Record Meeting") {
                 meetingRecorder.toggle()
             }
 
