@@ -1,25 +1,72 @@
 #if DEBUG
     import AppKit
+    import SwiftData
 
     /// `scripts/meeting-files-check.sh`: launched with `--meeting-files <mic.wav> <system.wav>` (16 kHz mono PCM16),
     /// the app runs both files through meeting recording's chunking, transcription (the mode's model), notes and
     /// saving, prints the result between `meeting-check:` marker lines and quits.
     /// `--meeting-fail-pieces N` makes the first N pieces fail; `--meeting-fail-save` makes saving the entry fail.
     /// `--meeting-recovery-check`: waits for the launch-time recovery of interrupted meetings, prints it, quits.
+    /// `--meeting-edit-check <folder> <key=name,…> [--meeting-regenerate N] [--meeting-fail-notes N]`: after the
+    /// launch-time recovery, renames the speakers of the saved meeting in that folder, then regenerates its notes N
+    /// times (the first `--meeting-fail-notes` requests fail), printing each result, and quits.
     @MainActor
     enum MeetingFilesCheck {
         static let argument = "--meeting-files"
         static let recoveryArgument = "--meeting-recovery-check"
         static var isRequested: Bool {
-            CommandLine.arguments.contains(argument) || CommandLine.arguments.contains(recoveryArgument)
+            [argument, recoveryArgument, "--meeting-edit-check"].contains(where: CommandLine.arguments.contains)
         }
-        static var failPieces: Int {
+        static var failPieces: Int { number(after: "--meeting-fail-pieces") }
+        nonisolated static var failsSave: Bool { CommandLine.arguments.contains("--meeting-fail-save") }
+
+        private static func number(after flag: String) -> Int {
             let arguments = CommandLine.arguments
-            guard let index = arguments.firstIndex(of: "--meeting-fail-pieces"), arguments.indices.contains(index + 1)
-            else { return 0 }
+            guard let index = arguments.firstIndex(of: flag), arguments.indices.contains(index + 1) else { return 0 }
             return Int(arguments[index + 1]) ?? 0
         }
-        nonisolated static var failsSave: Bool { CommandLine.arguments.contains("--meeting-fail-save") }
+
+        private static var notesFailuresLeft = number(after: "--meeting-fail-notes")
+        /// `--meeting-fail-notes N`: the first N notes requests fail.
+        static func takeNotesFailure() -> Bool {
+            guard notesFailuresLeft > 0 else { return false }
+            notesFailuresLeft -= 1
+            return true
+        }
+
+        /// After the launch-time recovery, in `--meeting-edit-check` only.
+        static func runEditCheck(engine: VoiceInkEngine) async {
+            let arguments = CommandLine.arguments
+            guard let index = arguments.firstIndex(of: "--meeting-edit-check"), arguments.indices.contains(index + 2)
+            else { return }
+            let folder = arguments[index + 1]
+            var names: MeetingSpeakerNames = [:]
+            for pair in arguments[index + 2].split(separator: ",") {
+                let parts = pair.split(separator: "=", maxSplits: 1).map(String.init)
+                if parts.count == 2 { names[parts[0]] = parts[1] }
+            }
+            let meetings = (try? engine.modelContext.fetch(FetchDescriptor<Transcription>())) ?? []
+            guard let meeting = meetings.first(where: { $0.isMeeting && $0.audioFileURL?.contains("/\(folder)/") == true })
+            else {
+                print("meeting-check: no saved meeting in \(folder)")
+                exit(1)
+            }
+            print("meeting-check: speakers \(MeetingEdits.segments(of: meeting).map { MeetingEdits.speakers(in: $0).map(\.key) } ?? [])")
+            print("meeting-check: transcript-before-begin\n\(meeting.text)\nmeeting-check: transcript-before-end")
+            print("meeting-check: rename-error \(MeetingEdits.rename(meeting, names: names, in: engine.modelContext) ?? "none")")
+            print("meeting-check: stored-names \(meeting.meetingSpeakerNamesJSON ?? "none")")
+            print("meeting-check: transcript-begin\n\(meeting.text)\nmeeting-check: transcript-end")
+            print("meeting-check: markdown-begin\n\(MeetingEdits.markdown(for: meeting))\nmeeting-check: markdown-end")
+            for run in 0..<number(after: "--meeting-regenerate") {
+                let before = meeting.enhancedText
+                let problem = await MeetingEdits.regenerateNotes(for: meeting, engine: engine)
+                print("meeting-check: regenerate \(run + 1) problem \(problem ?? "none") changed \(meeting.enhancedText != before) kept \(problem == nil || meeting.enhancedText == before)")
+            }
+            print("meeting-check: notes-begin\n\(meeting.enhancedText ?? "")\nmeeting-check: notes-end")
+            print("meeting-check: prompt-begin\n\(meeting.aiRequestSystemMessage ?? "")\nmeeting-check: prompt-end")
+            fflush(stdout)
+            exit(0)
+        }
 
         /// After the launch-time recovery, in `--meeting-recovery-check` only.
         static func reportRecovery(_ results: [MeetingRecorder.MeetingResult]) {

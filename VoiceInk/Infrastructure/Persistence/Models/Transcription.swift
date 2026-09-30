@@ -55,6 +55,10 @@ final class Transcription {
     var isMeeting: Bool { kind == Self.meetingKind }
     /// A meeting's pieces that couldn't be transcribed (each is a marked line in `text`); nil when none.
     var meetingFailedPieces: Int?
+    /// A meeting's speaker names (JSON `MeetingSpeakerNames`, "Others 1" → "Reed"); nil when none were given.
+    var meetingSpeakerNamesJSON: String?
+
+    var meetingSpeakerNames: MeetingSpeakerNames { .decode(meetingSpeakerNamesJSON) }
 
     init(
         text: String,

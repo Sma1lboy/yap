@@ -26,13 +26,13 @@ final class MeetingRecorder: ObservableObject {
 
     struct MeetingResult: Equatable {
         let transcriptionID: UUID
-        let notes: String?
+        var notes: String?
         let transcript: String
         /// Why there are no notes (Yap Refine, no AI provider, the request failed); nil when there are.
-        let notesProblem: String?
-        let markdown: String
+        var notesProblem: String?
+        var markdown: String
         /// The AI model that wrote the notes.
-        let notesModel: String?
+        var notesModel: String?
         /// Where the meeting's audio is (mic.wav, system.wav, mix.wav).
         var folder: URL? = nil
         /// Pieces that couldn't be transcribed; each keeps a marked line in the transcript.
@@ -45,6 +45,12 @@ final class MeetingRecorder: ObservableObject {
         var audioOnly = false
         /// The last "Export Markdown…" from the panel couldn't write the file.
         var exportError: String? = nil
+        /// "Regenerate Notes" is writing them; `regenerateProblem` says why the last try left the notes as they were.
+        var isRegenerating = false
+        var regenerateProblem: String? = nil
+
+        /// Only a saved, transcribed meeting has an entry whose notes can be written again.
+        var canRegenerate: Bool { saveError == nil && !audioOnly }
     }
 
     @Published private(set) var phase: Phase = .idle
@@ -112,6 +118,29 @@ final class MeetingRecorder: ObservableObject {
         guard case .done(var result) = phase else { return }
         result.exportError = MeetingExport.saveMarkdown(result.markdown)
         phase = .done(result)
+    }
+
+    /// "Regenerate Notes" in the panel: the same as in History; the old notes stay if it fails.
+    func regenerateNotes() async {
+        guard case .done(var result) = phase, result.canRegenerate, !result.isRegenerating, let engine else { return }
+        let id = result.transcriptionID
+        guard let transcription = try? engine.modelContext.fetch(
+            FetchDescriptor<Transcription>(predicate: #Predicate { $0.id == id })).first
+        else { return }
+        result.isRegenerating = true
+        result.regenerateProblem = nil
+        phase = .done(result)
+        let problem = await MeetingEdits.regenerateNotes(for: transcription, engine: engine)
+        guard case .done(var current) = phase, current.transcriptionID == id else { return }
+        current.isRegenerating = false
+        current.regenerateProblem = problem
+        if problem == nil {
+            current.notes = transcription.enhancedText
+            current.notesProblem = nil
+            current.notesModel = transcription.aiEnhancementModelName
+            current.markdown = MeetingEdits.markdown(for: transcription)
+        }
+        phase = .done(current)
     }
 
     func dismissResult() {
@@ -536,9 +565,13 @@ struct MeetingSummarizer {
         var problem: String?
         var modelName: String?
         var duration: TimeInterval?
+        /// What the final request sent (the prompt with the speakers' names, the transcript or part notes).
+        var systemMessage: String?
+        var userMessage: String?
     }
 
-    func notes(for transcript: String) async -> Summary {
+    /// `names`: the speakers' real names, when the user gave any; the prompt then says who is who.
+    func notes(for transcript: String, names: MeetingSpeakerNames = [:]) async -> Summary {
         guard !transcript.isEmpty else { return Summary() }
         guard let service = engine.enhancementService, let aiService = service.getAIService() else {
             return Summary(problem: Self.setupHint)
@@ -555,10 +588,15 @@ struct MeetingSummarizer {
         else {
             return Summary(problem: Self.setupHint)
         }
+        var last: AIEnhancementResult?
         func ask(_ text: String, prompt: String) async throws -> String {
-            let configuration = withPrompt(prompt)
+            #if DEBUG
+                if MeetingFilesCheck.takeNotesFailure() { throw EnhancementError.enhancementFailed }
+            #endif
+            let configuration = withPrompt(MeetingNotes.named(prompt, names: names))
             let result = try await service.enhance(
                 text, configuration: configuration, timeout: MeetingNotes.timeout(forCharacters: text.count))
+            last = result
             return result.text.trimmingCharacters(in: .whitespacesAndNewlines)
         }
 
@@ -576,7 +614,8 @@ struct MeetingSummarizer {
             let notes = try await ask(input, prompt: MeetingNotes.prompt)
             return Summary(
                 notes: notes.isEmpty ? nil : notes, modelName: base.modelName ?? provider.defaultModel,
-                duration: Date().timeIntervalSince(started))
+                duration: Date().timeIntervalSince(started), systemMessage: last?.systemMessage,
+                userMessage: last?.userMessage)
         } catch {
             return Summary(problem: EnhancementFailureFormatter.message(for: error))
         }
