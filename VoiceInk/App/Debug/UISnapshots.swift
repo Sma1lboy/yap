@@ -278,6 +278,29 @@
                 )
                 .padding(AppTheme.Spacing.x4)
             }
+            // Call detection: the prompt for a meeting app and for a browser, and the reminder when the call ends.
+            func callApp(_ bundleID: String) -> MeetingCallApp {
+                MeetingCallApp.recognize(MicrophoneProcess(pid: 1, bundleID: bundleID, responsiblePID: 1, responsibleBundleID: nil))!
+            }
+            let callNotifications = [
+                ("call-detected", callApp("us.zoom.xos").askMessage, String(localized: "Record Meeting")),
+                ("call-detected-browser", callApp("com.google.Chrome").askMessage, String(localized: "Record Meeting")),
+                ("call-ended", MeetingCallApp.endMessage, String(localized: "Show Meeting Panel")),
+            ]
+            for (name, title, button) in callNotifications {
+                shot("notification-\(name)", size: CGSize(width: 620, height: 80), main: true) {
+                    AppNotificationView(
+                        title: title, type: .info, duration: 15, onClose: {}, onTap: nil, actionButton: (button, {}))
+                    .padding(AppTheme.Spacing.x4)
+                }
+            }
+            // Settings › Additional Shortcuts with the call detection switch on, found by searching for it.
+            UserDefaults.standard.set(true, forKey: MeetingCallDetector.enabledKey)
+            SettingsView.snapshotQuery = String(localized: "Remind Me to Record When a Call Starts")
+            MainWindowNavigation.shared.selectedView = .settings
+            shot("settings-call-detection", main: true, fullPage: true, titled: true) { ContentView() }
+            SettingsView.snapshotQuery = ""
+            UserDefaults.standard.removeObject(forKey: MeetingCallDetector.enabledKey)
 
             // Recorder panels mid-dictation, on a dark desktop-like backdrop.
             app.engine.recordingState = .recording
