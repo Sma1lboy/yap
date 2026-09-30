@@ -213,9 +213,11 @@ final class MeetingRecorder: ObservableObject {
                 of: session.folder.appendingPathComponent("system.wav"), duration: session.duration,
                 directory: engine.recordingsDirectory.deletingLastPathComponent().appendingPathComponent("SpeakerModels", isDirectory: true)
             ) { fraction in
-                guard fraction < 1 else { return }
                 Task { @MainActor [weak self] in
-                    self?.phase = .finishing(String(format: String(localized: "Downloading the speaker model… %lld%%"), Int(fraction * 100)))
+                    self?.phase = .finishing(
+                        fraction < 1
+                            ? String(format: String(localized: "Downloading the speaker model… %lld%%"), Int(fraction * 100))
+                            : String(localized: "Telling speakers apart…"))
                 }
             }
             let labeled = SpeakerLabels.assign(segments, turns: turns)

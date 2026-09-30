@@ -63,6 +63,7 @@ enum MeetingDiarizer {
             try await OfflineDiarizerModels.load(from: directory) { progress($0.fractionCompleted) }
         }
         manager.initialize(models: models)
+        progress(1)  // models are in (cached or downloaded): the caller goes back to its "working" message
         let result = try await withTimeout(timeout(forDuration: duration)) { try await manager.process(system) }
         return result.segments.map {
             SpeakerTurn(id: $0.speakerId, start: TimeInterval($0.startTimeSeconds), end: TimeInterval($0.endTimeSeconds))
