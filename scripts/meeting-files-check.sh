@@ -90,22 +90,24 @@ if [ -n "$NOTES" ] && grep -q '^meeting-check: notes-begin$' "$WORK/out.txt" \
 	exit 1
 fi
 
-# Speaker labels: every remote line must sit in a truth interval (A or B), and one label must map to one voice.
+# Speaker labels, from segments.json: a remote piece takes the voice that speaks most in it (truth.txt), and one
+# label must map to one voice (a piece of 20-28 s can hold both voices; the longer speaker wins).
 python3 - "$WORK" <<'PY'
-import re, sys
+import json, re, sys
 work = sys.argv[1]
 truth = [(l.split()[0], float(l.split()[1]), float(l.split()[2])) for l in open(f"{work}/truth.txt")]
+folder = next(l.split(" ", 2)[2].strip() for l in open(f"{work}/out.txt") if l.startswith("meeting-check: folder "))
 seen, bad = {}, 0
-for line in open(f"{work}/out.txt"):
-    m = re.match(r"\[(?:(\d+):)?(\d+):(\d+)\] [^:]*?(\d+): ", line.removeprefix("meeting-check: ")) if "Others" in line or "对方" in line else None
-    if not m: continue
-    t = int(m.group(1) or 0) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
-    voice = next((w for w, s, e in truth if s - 2 <= t <= e), "?")
-    label = m.group(4)
-    if seen.setdefault(label, voice) != voice or voice == "?": bad += 1
-    print(f"labels: {t}s voice {voice} -> Others {label}")
-labels = {l: v for l, v in seen.items()}
-ok = bad == 0 and len(set(labels.values())) == 2 == len(labels)
-print("labels:", "OK" if ok else f"FAIL ({bad} lines off, mapping {labels})")
+for seg in json.load(open(f"{folder}/segments.json")):
+    if seg["speaker"] != "others": continue
+    overlap = {}
+    for who, s, e in truth:
+        overlap[who] = overlap.get(who, 0) + max(0, min(e, seg["end"]) - max(s, seg["start"]))
+    voice = max(overlap, key=overlap.get)
+    label = seg.get("remote")
+    print(f"labels: {seg['start']:.0f}-{seg['end']:.0f}s voice {voice} -> Others {label}")
+    if label is None or seen.setdefault(label, voice) != voice: bad += 1
+ok = bad == 0 and sorted(seen.values()) == ["A", "B"]
+print("labels:", "OK" if ok else f"FAIL ({bad} pieces off, mapping {seen})")
 sys.exit(0 if ok else 1)
 PY

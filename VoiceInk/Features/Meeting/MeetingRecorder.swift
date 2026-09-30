@@ -196,6 +196,7 @@ final class MeetingRecorder: ObservableObject {
                 of: session.folder.appendingPathComponent("system.wav"), duration: session.duration,
                 directory: engine.recordingsDirectory.deletingLastPathComponent().appendingPathComponent("SpeakerModels", isDirectory: true)
             ) { fraction in
+                guard fraction < 1 else { return }
                 Task { @MainActor [weak self] in
                     self?.phase = .finishing(String(format: String(localized: "Downloading the speaker model… %lld%%"), Int(fraction * 100)))
                 }
@@ -203,6 +204,12 @@ final class MeetingRecorder: ObservableObject {
             let labeled = SpeakerLabels.assign(segments, turns: turns)
             try? JSONEncoder().encode(labeled).write(to: session.folder.appendingPathComponent("segments.json"))
             logger.notice("Diarized in \(Date().timeIntervalSince(started), privacy: .public) s: \(Set(turns.map(\.id)).count, privacy: .public) speakers, \(Set(labeled.compactMap(\.remote)).count, privacy: .public) in the transcript")
+            #if DEBUG
+                if MeetingFilesCheck.isRequested {
+                    let elapsed = String(format: "%.1f", Date().timeIntervalSince(started))
+                    print("meeting-check: diarized in \(elapsed) s; system audio \(Int(session.duration)) s")
+                }
+            #endif
             return labeled
         } catch {
             logger.error("Diarization skipped: \(error.localizedDescription, privacy: .public)")

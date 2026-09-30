@@ -79,7 +79,9 @@ enum MeetingDiarizer {
             @Sendable func finish(_ result: Result<T, Error>) {
                 if done.withLock({ let was = $0; $0 = true; return !was }) { continuation.resume(with: result) }
             }
-            Task { finish(await Result { try await work() }) }
+            Task {
+                do { finish(.success(try await work())) } catch { finish(.failure(error)) }
+            }
             Task {
                 try? await Task.sleep(for: .seconds(seconds))
                 finish(.failure(Failure(errorDescription: "timed out after \(Int(seconds)) s")))
