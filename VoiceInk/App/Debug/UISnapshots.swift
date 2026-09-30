@@ -10,7 +10,8 @@
     /// window is grown by however much the page's scroll view overflows.
     ///
     /// File names start with their group (page, account, settings, onboarding, sheet, recorder), which the review
-    /// page (scripts/ui-review.py) groups by. The Chinese runs (-AppleLanguages (zh-Hans) and (zh-Hant)) render only `main` shots.
+    /// page (scripts/ui-review.py) groups by. The runs in other languages (-AppleLanguages (zh-Hans), (zh-Hant), (de),
+    /// (fr)) render only `main` shots.
     @MainActor
     enum UISnapshots {
         static let argument = "--render-snapshots"

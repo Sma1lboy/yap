@@ -249,7 +249,7 @@ meeting-call-check: build
 	scripts/dev-defaults-guard.sh "$$APP_DIR/VoiceInk Dev.app/Contents/MacOS/VoiceInk Dev" --meeting-call-check
 
 # Render every page, Settings group, onboarding screen and sheet in light and dark, plus the main ones in Chinese
-# (-zh, and -zht for Traditional), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots
+# (-zh, and -zht for Traditional), German (-de) and French (-fr), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots
 # (scripts/ui-snapshots.sh), so its fake modes and providers go to a throwaway defaults domain, never the dev app's;
 # dev-defaults-guard.sh fails the run if the dev app's settings changed anyway. No window, no focus change; the
 # sandbox profile denies network access.

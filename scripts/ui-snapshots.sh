@@ -1,6 +1,7 @@
 #!/bin/bash
 # make ui-snapshots: renders every page, Settings group, onboarding screen and sheet (UISnapshots.swift) to
-# /tmp/yap-ui/snapshots, in English and then Chinese. Runs a copy of the Debug app re-identified as
+# /tmp/yap-ui/snapshots, in English, then the main shots in Chinese (zh-Hans, zh-Hant), German and French (the
+# longest labels, to catch cut-off text). Runs a copy of the Debug app re-identified as
 # me.sma1lboy.yap.snapshots (AppIdentity), offline (scripts/offline.sb): the managers it builds write fake modes
 # and providers into that throwaway defaults domain, which is deleted afterwards with everything else it created.
 # YAP_UI_SNAPSHOTS_OUT=<dir> writes there instead, so a run in another worktree can't replace the shots before
@@ -43,3 +44,5 @@ BIN="$APP/Contents/MacOS/VoiceInk Dev"
 sandbox-exec -f "$(dirname "$0")/offline.sb" "$BIN" --render-snapshots
 sandbox-exec -f "$(dirname "$0")/offline.sb" "$BIN" --render-snapshots -AppleLanguages '(zh-Hans)'
 sandbox-exec -f "$(dirname "$0")/offline.sb" "$BIN" --render-snapshots -AppleLanguages '(zh-Hant)'
+sandbox-exec -f "$(dirname "$0")/offline.sb" "$BIN" --render-snapshots -AppleLanguages '(de)'
+sandbox-exec -f "$(dirname "$0")/offline.sb" "$BIN" --render-snapshots -AppleLanguages '(fr)'
