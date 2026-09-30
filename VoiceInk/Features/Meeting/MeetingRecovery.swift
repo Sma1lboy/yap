@@ -9,7 +9,7 @@ import os
 /// the previous launch's attempt was cut off, it's saved with its audio only and the reason.
 extension MeetingRecorder {
     private static let recoveryAttemptedKey = "RecoveryAttemptedMeetings"
-    private static let channelFiles = ["mic.wav", "system.wav"]
+    nonisolated private static let channelFiles = ["mic.wav", "system.wav"]
     private static let recoveryLogger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "MeetingRecovery")
 
     /// A folder is interrupted when no History entry refers to it and no meeting is being recorded, finished or
@@ -63,7 +63,8 @@ extension MeetingRecorder {
         activeFolders.insert(name)
         defer { activeFolders.remove(name) }
         let started = Self.created(folder)
-        Self.restoreOriginals(in: folder)
+        // File work (up to a few hundred MB for a long meeting) stays off the main thread.
+        await Task.detached { Self.restoreOriginals(in: folder) }.value
 
         // Marked before the work starts: if it crashes the app, the next launch saves the audio only.
         var attempted = Set(UserDefaults.standard.stringArray(forKey: Self.recoveryAttemptedKey) ?? [])
@@ -72,12 +73,12 @@ extension MeetingRecorder {
         UserDefaults.standard.set(Array(attempted), forKey: Self.recoveryAttemptedKey)
 
         if triedBefore {
-            return saveAudioOnly(folder, started: started, engine: engine, reason: String(localized: "Recovering it stopped partway last time."))
+            return await saveAudioOnly(folder, started: started, engine: engine, reason: String(localized: "Recovering it stopped partway last time."))
         }
         guard let configuration = ModeRuntimeResolver.transcriptionConfiguration(
             transcriptionModelManager: engine.transcriptionModelManager)
         else {
-            return saveAudioOnly(folder, started: started, engine: engine, reason: String(localized: "No transcription model is chosen in the mode."))
+            return await saveAudioOnly(folder, started: started, engine: engine, reason: String(localized: "No transcription model is chosen in the mode."))
         }
 
         // The session writes mic.wav and system.wav afresh, so the originals are read from beside them
@@ -90,11 +91,13 @@ extension MeetingRecorder {
         guard let session = try? Session(
             folder: folder, started: started, transcriber: Transcriber(engine: engine, configuration: configuration))
         else {
-            Self.restoreOriginals(in: folder)
-            return saveAudioOnly(folder, started: started, engine: engine, reason: String(localized: "Its folder couldn't be written to."))
+            await Task.detached { Self.restoreOriginals(in: folder) }.value
+            return await saveAudioOnly(folder, started: started, engine: engine, reason: String(localized: "Its folder couldn't be written to."))
         }
-        session.feed(file: folder.appendingPathComponent("mic.wav.orig"), as: .me)
-        session.feed(file: folder.appendingPathComponent("system.wav.orig"), as: .others)
+        await Task.detached {
+            session.feed(file: folder.appendingPathComponent("mic.wav.orig"), as: .me)
+            session.feed(file: folder.appendingPathComponent("system.wav.orig"), as: .others)
+        }.value
         let result = await finishMeeting(session, engine: engine, timestamp: started) { _ in }
         if result.saveError == nil {
             for file in Self.channelFiles { try? fileManager.removeItem(at: folder.appendingPathComponent(file + ".orig")) }
@@ -105,10 +108,10 @@ extension MeetingRecorder {
     }
 
     /// Without transcribing: the mix for the History player and an entry that says why there's no transcript.
-    private func saveAudioOnly(_ folder: URL, started: Date, engine: VoiceInkEngine, reason: String) -> MeetingResult {
+    private func saveAudioOnly(_ folder: URL, started: Date, engine: VoiceInkEngine, reason: String) async -> MeetingResult {
         let channels = Self.channelFiles.map { folder.appendingPathComponent($0) }
         let mix = folder.appendingPathComponent("mix.wav")
-        MeetingMixer.mix(channels, into: mix)
+        await Task.detached { MeetingMixer.mix(channels, into: mix) }.value
         let bytes = channels.compactMap { try? $0.resourceValues(forKeys: [.fileSizeKey]).fileSize }.max() ?? 44
         let text = String(format: String(localized: "Yap quit during this meeting, and it couldn't be transcribed afterwards. %@ The audio is saved with this entry."), reason)
         let transcription = Transcription(
@@ -150,7 +153,7 @@ extension MeetingRecorder {
 
     /// Puts back originals an earlier attempt moved aside, and fixes headers a crash left unfinished, so the
     /// files open in any player.
-    private static func restoreOriginals(in folder: URL) {
+    nonisolated private static func restoreOriginals(in folder: URL) {
         let fileManager = FileManager.default
         for file in channelFiles {
             let url = folder.appendingPathComponent(file), original = folder.appendingPathComponent(file + ".orig")

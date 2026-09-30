@@ -155,4 +155,18 @@ done
 [ "$(sed -n '/^meeting-check: transcript-begin$/,/^meeting-check: transcript-end$/p' "$WORK/recovery1.txt" | grep -c '^\[')" -ge 8 ] \
 	|| { echo "FAIL: recovered transcripts are empty"; exit 1; }
 grep -q '^meeting-check: recovered 0$' "$WORK/recovery2.txt" || { echo "FAIL: the second launch recovered again"; exit 1; }
+
+# A folder whose recovery was cut off last time (it's in the attempted list, its originals moved aside) is saved
+# with its audio only instead of being tried again.
+cut="$(dirname "$unsaved")/$(uuidgen)"
+mkdir -p "$cut"
+cp "$WORK/mic.wav" "$cut/mic.wav.orig"
+cp "$WORK/system.wav" "$cut/system.wav"
+defaults write "$ID" RecoveryAttemptedMeetings -array "$(basename "$cut")"
+XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --meeting-recovery-check \
+	>"$WORK/recovery3.txt" 2>>"$WORK/err.txt" || { echo "app exited with $?"; exit 1; }
+sed -n '/^meeting-check: /,$p' "$WORK/recovery3.txt" | grep -v "^ggml_\|^whisper_\| --> " | sed "s/^meeting-check: /recovery 3: /"
+grep -q '^meeting-check: recovered 1$' "$WORK/recovery3.txt" && grep -q '^meeting-check: audio-only true save-error none' "$WORK/recovery3.txt" \
+	&& [ -s "$cut/mix.wav" ] && [ -f "$cut/mic.wav" ] && [ ! -e "$cut/mic.wav.orig" ] \
+	|| { echo "FAIL: the cut-off recovery wasn't saved with its audio"; exit 1; }
 echo "recovery: OK"

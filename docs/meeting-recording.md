@@ -1,6 +1,6 @@
 # Meeting recording (P0)
 
-One shortcut (right ⌘ + Space by default) starts a long recording of the microphone and the sound from other apps; the same shortcut stops it. Yap transcribes while the meeting goes on and writes notes when it stops. Nothing is pasted: the result is one History entry and a small window with the notes.
+One shortcut (right ⌘ + Space by default) starts a long recording of the microphone and the sound from other apps; only ✓ in the meeting panel stops it (the shortcut then just brings the panel forward). Yap transcribes while the meeting goes on and writes notes when it stops. Nothing is pasted: the result is one History entry and a small window with the notes.
 
 ## How it works
 
@@ -29,7 +29,7 @@ Permission: `NSAudioCaptureUsageDescription` ("System Audio Recording Only"). ma
 - Without `NOTES=1` the mode has AI enhancement off: the transcript is saved with the hint, and no model (local Ollama included) is started.
 - Written to disk: `mic.wav mix.wav segments.json system.wav`.
 
-Failures and recovery, 2026-09-30 (same script, which now always runs these): the first piece is made to fail (`--meeting-fail-pieces 1`, DEBUG only; a real failure can't be produced on demand) and the entry's save too (`--meeting-fail-save`). The transcript keeps exactly one marked line and the result counts 1. Then a folder cut off by a crash (both WAV headers with size 0, a leftover `pieces/`) is put next to the unsaved one, and the app is launched twice with `--meeting-recovery-check`: the first launch recovers both as transcribed meetings (`mix.wav`, `segments.json`, no `*.orig` or `pieces/` left), the second recovers nothing.
+Failures and recovery, 2026-09-30 (same script, which now always runs these): the first piece is made to fail (`--meeting-fail-pieces 1`, DEBUG only; a real failure can't be produced on demand) and the entry's save too (`--meeting-fail-save`). The transcript keeps exactly one marked line and the result counts 1. Then a folder cut off by a crash (both WAV headers with size 0, a leftover `pieces/`) is put next to the unsaved one, and the app is launched twice with `--meeting-recovery-check`: the first launch recovers both as transcribed meetings (`mix.wav`, `segments.json`, no `*.orig` or `pieces/` left), the second recovers nothing. A third folder, marked as a recovery that was cut off last time (in the attempted list, `mic.wav.orig` still aside), is saved with its audio only and the reason.
 
 Speaker labels, 2026-09-29, same script with a second remote voice (Shelley says two lines between Reed's, made with `say`, 50 s per channel, Whisper base-q5_1 for speed): the two voices get `Others 1` and `Others 2` and the check (`labels: OK`, read from `segments.json`) requires one label per voice. Diarizing took 14.5 s and 32 s in two runs, each a cold run that included downloading the models; the run before had the models cached only inside the throwaway mock folder, so a warm figure per minute of audio is not measured yet. Nothing was written to `~/Library/Application Support/FluidAudio`.
 
