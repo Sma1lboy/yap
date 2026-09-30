@@ -241,7 +241,7 @@ struct SettingsView: View {
                     } label: {
                         HStack(spacing: AppTheme.Spacing.x1) {
                             Text("Record Meeting")
-                            InfoTip("Press once to start recording a meeting (your microphone and other apps' sound), again to stop and get notes. ⌘ + Space here always means the right ⌘; the left one stays Spotlight's.")
+                            InfoTip("Starts recording a meeting (your microphone and other apps' sound). To stop and get notes, click ✓ in the meeting panel: pressing the shortcut again doesn't stop it, so a stray key can't end a meeting. ⌘ + Space here always means the right ⌘; the left one stays Spotlight's.")
                         }
                     }
 

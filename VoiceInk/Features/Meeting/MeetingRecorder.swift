@@ -48,21 +48,38 @@ final class MeetingRecorder: ObservableObject {
 
     // MARK: - Start / stop
 
-    /// The shortcut and the menu: starts, or stops a running recording. The first time, the consent note comes
-    /// first and recording starts from its button.
-    func toggle() {
+    /// What the meeting shortcut does in each phase. A running meeting is never stopped from the keyboard (a
+    /// stray right ⌘ + Space ended one): the shortcut only brings the panel forward with a reminder to click ✓.
+    enum ShortcutAction: Equatable { case start, showConsent, cancelConsent, remindToClickStop, ignore }
+
+    static func shortcutAction(for phase: Phase, consentShown: Bool) -> ShortcutAction {
         switch phase {
-        case .recording: Task { await stop() }
-        case .finishing: return
-        case .idle, .done:
-            if UserDefaults.standard.bool(forKey: Self.consentShownKey) {
-                Task { await start() }
-            } else {
-                phase = .consent
-                MeetingPanelController.shared.show()
-            }
-        case .consent:
+        case .recording: return .remindToClickStop
+        case .finishing: return .ignore
+        case .idle, .done: return consentShown ? .start : .showConsent
+        case .consent: return .cancelConsent
+        }
+    }
+
+    /// Until when the recording panel shows "click ✓ to end the meeting" after the shortcut was pressed.
+    @Published private(set) var stopReminderUntil: Date?
+
+    /// The meeting shortcut. Starts a meeting (the first time, the consent note comes first and recording starts
+    /// from its button); during a meeting it doesn't stop it. Stopping is a click on ✓ in the panel.
+    func toggle() {
+        switch Self.shortcutAction(for: phase, consentShown: UserDefaults.standard.bool(forKey: Self.consentShownKey)) {
+        case .start:
+            Task { await start() }
+        case .showConsent:
+            phase = .consent
+            MeetingPanelController.shared.show()
+        case .cancelConsent:
             cancelConsent()
+        case .remindToClickStop:
+            stopReminderUntil = Date().addingTimeInterval(4)
+            MeetingPanelController.shared.show()
+        case .ignore:
+            return
         }
     }
 
@@ -478,3 +495,18 @@ enum MeetingMixer {
         }
     }
 }
+
+#if DEBUG
+    extension MeetingRecorder {
+        /// The keyboard never ends a running meeting.
+        static func shortcutSelfCheck() {
+            for consent in [true, false] {
+                assert(shortcutAction(for: .recording(started: Date()), consentShown: consent) == .remindToClickStop)
+                assert(shortcutAction(for: .finishing("x"), consentShown: consent) == .ignore)
+                assert(shortcutAction(for: .consent, consentShown: consent) == .cancelConsent)
+            }
+            assert(shortcutAction(for: .idle, consentShown: true) == .start)
+            assert(shortcutAction(for: .idle, consentShown: false) == .showConsent)
+        }
+    }
+#endif
