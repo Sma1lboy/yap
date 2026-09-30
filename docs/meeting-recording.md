@@ -25,7 +25,7 @@ Permission: `NSAudioCaptureUsageDescription` ("System Audio Recording Only"). ma
 - 41 s per channel, done 7.7 s after "stop", with local Whisper Large v3 Turbo (Quantized) and deepseek-v4.1-flash notes.
 - Transcript lines interleave correctly: `[00:00] Me`, `[00:08] Others`, `[00:21] Others`, `[00:28] Me`.
 - The notes have headings 摘要 / 决定 / 待办 / 未决问题, English terms are kept, and an owner and due date come out where they were said (Sara, 周四).
-- Without an API key, the fresh install's default provider was the Ollama running on this Mac (`qwen3.8:27b-mlx`), which wrote notes too. With no provider at all, the transcript is saved with the hint.
+- Without `NOTES=1` the mode has AI enhancement off: the transcript is saved with the hint, and no model (local Ollama included) is started.
 - Written to disk: `mic.wav mix.wav segments.json system.wav`.
 
 Speaker labels, 2026-09-29, same script with a second remote voice (Shelley says two lines between Reed's, made with `say`, 50 s per channel, Whisper base-q5_1 for speed): the two voices get `Others 1` and `Others 2` and the check (`labels: OK`, read from `segments.json`) requires one label per voice. Diarizing took 14.5 s and 32 s in two runs, each a cold run that included downloading the models; the run before had the models cached only inside the throwaway mock folder, so a warm figure per minute of audio is not measured yet. Nothing was written to `~/Library/Application Support/FluidAudio`.
@@ -72,5 +72,5 @@ None of these can be run here without UI automation or permission prompts on the
 - **Microphone device changes aren't followed.** Only the system audio side is rebuilt; the timeline stays aligned, but "Me" is lost after the input disappears.
 - **Orphaned folders stay:** a crash mid-recording leaves a folder without a History entry, and the Recordings sweep no longer deletes folders.
 - **No "regenerate notes".** History's re-enhance uses the mode's normal prompt, not the meeting prompt.
-- **Notes can use a provider you didn't expect.** They use the mode's resolved AI provider even when the mode's AI enhancement switch is off; on a fresh install that can be a local Ollama.
+- **Notes need the mode's AI enhancement switch on.** With it off (a fresh install's default), the transcript is saved with a hint and no model, local ones included, is started.
 - **Storage and cost:** WAV only, no m4a. A cloud transcription model is called once per piece, which for an hour-long meeting means 150–250 billed calls (Yap Cloud included).

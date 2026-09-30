@@ -26206,34 +26206,6 @@
         }
       }
     },
-    "No notes: this mode has no AI provider for them (Yap Refine can't write notes). Choose one in the mode for your next meeting; the transcript is saved in History." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keine Notizen: Dieser Modus hat keinen KI-Anbieter dafür (Yap Refine kann keine Notizen schreiben). Wähle einen im Modus für dein nächstes Meeting; das Transkript ist im Verlauf gespeichert."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pas de notes : ce mode n'a pas de fournisseur IA pour cela (Yap Refine ne peut pas rédiger de notes). Choisissez-en un dans le mode pour votre prochaine réunion ; la transcription est enregistrée dans l'historique."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "没有生成纪要：这个模式没有可用的 AI 服务商（Yap Refine 不能写纪要）。请在模式里选一个，下次会议就会生成；这次的转写已保存到历史记录。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "沒有產生紀要：這個模式沒有可用的 AI 供應商（Yap Refine 不能寫紀要）。請在模式裡選一個，下次會議就會產生；這次的轉錄已儲存到歷史記錄。"
-          }
-        }
-      }
-    },
     "No prompts available" : {
       "localizations" : {
         "de" : {
@@ -48184,6 +48156,12 @@
             "state" : "translated",
             "value" : "对方 %lld"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "對方 %lld"
+          }
         }
       }
     },
@@ -48206,6 +48184,12 @@
             "state" : "translated",
             "value" : "正在区分对方的说话人…"
           }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在區分對方的說話人…"
+          }
         }
       }
     },
@@ -48227,6 +48211,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在下载说话人模型… %lld%%"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在下載說話人模型… %lld%%"
+          }
+        }
+      }
+    },
+    "No notes: AI enhancement is off in this mode, or it has no AI provider for them (Yap Refine can't write notes). Turn it on and choose a provider in the mode for your next meeting; the transcript is saved in History." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Notizen: Die KI-Verbesserung ist in diesem Modus aus, oder er hat keinen KI-Anbieter dafür (Yap Refine kann keine Notizen schreiben). Schalte sie im Modus ein und wähle einen Anbieter für dein nächstes Meeting; das Transkript ist im Verlauf gespeichert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de notes : l'amélioration IA est désactivée dans ce mode, ou il n'a pas de fournisseur IA pour cela (Yap Refine ne peut pas rédiger de notes). Activez-la et choisissez un fournisseur dans le mode pour votre prochaine réunion ; la transcription est enregistrée dans l'historique."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有生成纪要：这个模式关闭了 AI 增强，或没有可用的 AI 服务商（Yap Refine 不能写纪要）。请在模式里打开并选一个服务商，下次会议就会生成；这次的转写已保存到历史记录。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有產生紀要：這個模式關閉了 AI 增強，或沒有可用的 AI 供應商（Yap Refine 不能寫紀要）。請在模式裡開啟並選一個供應商，下次會議就會產生；這次的轉錄已儲存到歷史記錄。"
           }
         }
       }

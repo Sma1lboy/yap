@@ -469,7 +469,9 @@ struct MeetingSummarizer {
             base.replacingPrompt(CustomPrompt(title: MeetingNotes.promptTitle, promptText: prompt, useSystemInstructions: false))
         }
         // Checked with the notes prompt in place: the mode's own prompt selection doesn't matter here.
-        guard let provider = base.provider, provider != .voiceInkRefine,
+        // The mode's AI enhancement switch decides: without it, a fresh install would fall back to whatever local
+        // model is around (Ollama) for every meeting.
+        guard base.isEnabled, let provider = base.provider, provider != .voiceInkRefine,
             service.isConfigured(for: withPrompt(MeetingNotes.prompt))
         else {
             return Summary(problem: Self.setupHint)
@@ -502,7 +504,7 @@ struct MeetingSummarizer {
     }
 
     static var setupHint: String {
-        String(localized: "No notes: this mode has no AI provider for them (Yap Refine can't write notes). Choose one in the mode for your next meeting; the transcript is saved in History.")
+        String(localized: "No notes: AI enhancement is off in this mode, or it has no AI provider for them (Yap Refine can't write notes). Turn it on and choose a provider in the mode for your next meeting; the transcript is saved in History.")
     }
 }
 
