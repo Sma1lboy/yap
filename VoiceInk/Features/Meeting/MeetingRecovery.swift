@@ -45,9 +45,7 @@ extension MeetingRecorder {
         guard !folders.isEmpty else { return [] }
 
         if announceStart {
-            NotificationManager.shared.showNotification(
-                title: String(localized: "Yap quit during a meeting. It's being recovered in the background and will be in History."),
-                type: .info, duration: 8)
+            NotificationManager.shared.showNotification(title: Self.recoveryStartedMessage, type: .info, duration: 8)
         }
         var results: [MeetingResult] = []
         for folder in folders {
@@ -128,23 +126,35 @@ extension MeetingRecorder {
             notesModel: nil, folder: folder, saveError: saveError, audioOnly: true)
     }
 
-    private func announce(_ result: MeetingResult, started: Date) {
+    static var recoveryStartedMessage: String {
+        String(localized: "Yap quit during a meeting. It's being recovered in the background and will be in History.")
+    }
+
+    /// How a recovered meeting ended, as its notification says it: title, type and the button's label (Show in
+    /// Finder when it couldn't be saved, Open History otherwise).
+    static func recoveryNotice(for result: MeetingResult, started: Date) -> (title: String, type: AppNotificationView.NotificationType, button: String) {
         let when = started.formatted(date: .abbreviated, time: .shortened)
-        let openHistory: (label: String, action: () -> Void) = (String(localized: "Open History"), { HistoryNavigator.open() })
-        if let error = result.saveError, let folder = result.folder {
-            NotificationManager.shared.showNotification(
-                title: String(format: String(localized: "The meeting from %@ couldn't be saved to History: %@ Its audio is still in its folder."), when, error),
-                type: .error, duration: 30,
-                actionButton: (String(localized: "Show in Finder"), { NSWorkspace.shared.activateFileViewerSelecting([folder]) }))
+        if let error = result.saveError {
+            return (String(format: String(localized: "The meeting from %@ couldn't be saved to History: %@ Its audio is still in its folder."), when, error),
+                .error, String(localized: "Show in Finder"))
         } else if result.audioOnly {
-            NotificationManager.shared.showNotification(
-                title: String(format: String(localized: "The meeting from %@ is in History with its audio only; it couldn't be transcribed."), when),
-                type: .warning, duration: 12, actionButton: openHistory)
+            return (String(format: String(localized: "The meeting from %@ is in History with its audio only; it couldn't be transcribed."), when),
+                .warning, String(localized: "Open History"))
         } else {
-            NotificationManager.shared.showNotification(
-                title: String(format: String(localized: "The interrupted meeting from %@ is recovered and in History."), when),
-                type: .success, duration: 12, actionButton: openHistory)
+            return (String(format: String(localized: "The interrupted meeting from %@ is recovered and in History."), when),
+                .success, String(localized: "Open History"))
         }
+    }
+
+    private func announce(_ result: MeetingResult, started: Date) {
+        let notice = Self.recoveryNotice(for: result, started: started)
+        let folder = result.folder
+        let action: () -> Void = result.saveError == nil
+            ? { HistoryNavigator.open() }
+            : { folder.map { NSWorkspace.shared.activateFileViewerSelecting([$0]) } }
+        NotificationManager.shared.showNotification(
+            title: notice.title, type: notice.type, duration: notice.type == .error ? 30 : 12,
+            actionButton: (notice.button, action))
     }
 
     private func forgetAttempt(_ name: String) {

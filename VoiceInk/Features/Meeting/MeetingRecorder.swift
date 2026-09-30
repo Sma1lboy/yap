@@ -57,8 +57,8 @@ final class MeetingRecorder: ObservableObject {
         /// The speakers were told apart after the meeting was saved: the transcript has them, the notes don't.
         var speakersLabeledLater = false
 
-        /// Only a saved, transcribed meeting has an entry whose notes can be written again.
-        var canRegenerate: Bool { saveError == nil && !audioOnly }
+        /// Only a saved, transcribed meeting in which something was said has notes that can be written again.
+        var canRegenerate: Bool { saveError == nil && !audioOnly && !transcript.isEmpty }
     }
 
     @Published private(set) var phase: Phase = .idle
