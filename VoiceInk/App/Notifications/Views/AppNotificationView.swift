@@ -13,7 +13,7 @@ struct AppNotificationView: View {
     @State private var progress: Double = 1.0
     @State private var timer: Timer?
 
-    /// The widest a notification gets; a longer message wraps to a second line (NotificationManager.size).
+    /// The widest a notification gets; a longer message wraps, up to three lines (NotificationManager.size).
     static let maxWidth: CGFloat = 750
 
     enum NotificationType {
@@ -55,7 +55,7 @@ struct AppNotificationView: View {
                     .font(AppTheme.font(.footnote))
                     .fontWeight(.medium)
                     .foregroundColor(.white)  // design-exempt: HUD, always dark
-                    .lineLimit(2)
+                    .lineLimit(3)
                     .multilineTextAlignment(.leading)
 
                 Spacer()

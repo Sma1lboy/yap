@@ -95,7 +95,7 @@ final class NotificationManager {
     }
 
     /// The notification's size: as wide as its message on one line, and when that reaches the widest a
-    /// notification gets, as tall as the message wrapped at that width (two lines at most), so a long message
+    /// notification gets, as tall as the message wrapped at that width (three lines at most), so a long message
     /// (a meeting that couldn't be saved, and why) isn't cut off after one line.
     static func size(of controller: NSHostingController<AppNotificationView>) -> CGSize {
         let oneLine = controller.view.fittingSize
