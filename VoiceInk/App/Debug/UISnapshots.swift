@@ -228,6 +228,33 @@
                     .padding(AppTheme.Spacing.x4)
                 }
             }
+            // Expanded: a meeting still being told apart (Speaker Names… waits), one where nothing was said, and one
+            // recovered with its audio only (neither has meeting tools).
+            let recoveredReason = String(
+                format: String(localized: "Yap quit during this meeting, and it couldn't be transcribed afterwards. %@ The audio is saved with this entry."),
+                String(localized: "No transcription model is chosen in the mode."))
+            let expandedMeetings: [(String, String, TranscriptionStatus, String?)] = [
+                ("speakers-pending-expanded", "[00:00] \(MeetingSegment.Speaker.me.label): 今天我想把 GitHub Actions 的 pipeline 改一下\n[00:08] "
+                    + "\(MeetingSegment.Speaker.others.label): API 那边还差三个 endpoint，周四能 land", .completed, SpeakerSplitSkip.pendingStatus),
+                ("nothing-said", String(localized: "(Nothing was said in this meeting.)"), .completed, nil),
+                ("audio-only", recoveredReason, .failed, nil),
+            ]
+            MeetingRowTools.snapshotSpeakers = [
+                ("me", MeetingSegment.Speaker.me.label), ("others", MeetingSegment.Speaker.others.label),
+            ].map { (key: $0.0, label: $0.1) }
+            for (name, text, status, speakerStatus) in expandedMeetings {
+                shot("history-row-meeting-\(name)", size: CGSize(width: 680, height: 260), main: true) {
+                    let item = Transcription(text: text, duration: 1_874, transcriptionStatus: status)
+                    let _ = item.kind = Transcription.meetingKind
+                    let _ = item.meetingSpeakerStatus = speakerStatus
+                    HistoryCardRow(
+                        transcription: item, wordCount: 14, isExpanded: true, isChecked: false, isSelecting: false,
+                        onToggleExpand: {}, onToggleCheck: {}, onShowInfo: {}
+                    )
+                    .padding(AppTheme.Spacing.x4)
+                }
+            }
+            MeetingRowTools.snapshotSpeakers = nil
             // A meeting's History row on its notes tab (rendered Markdown), its tools in each state, the names editor.
             let meetingSpeakers = [
                 ("me", MeetingSegment.Speaker.me.label), ("others-1", String(format: String(localized: "Others %lld"), 1)),
