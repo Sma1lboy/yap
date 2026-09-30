@@ -89,12 +89,14 @@ class CursorPaster {
         // Nothing editable focused (desktop, Finder): ⌘V would go nowhere and the restore would then
         // take the text back off the clipboard. Keep it there and say so.
         if !focusedElementCanTakeText() {
-            logger.notice("No editable element focused; leaving text on the clipboard")
+            logger.notice("No editable element focused; leaving text on the clipboard and in the Scratchpad")
             _ = ClipboardManager.setClipboard(text, transient: false, sessionID: nil)
+            ScratchpadStore.shared.append(dictation: text)
             NotificationManager.shared.showNotification(
-                title: String(localized: "Copied to clipboard. No text field was focused, so Yap didn't paste. It's also in History."),
+                title: ScratchpadStore.noTextFieldMessage,
                 type: .warning,
-                duration: 6
+                duration: 6,
+                actionButton: (String(localized: "Open Scratchpad"), { ScratchpadController.shared.show() })
             )
             return PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil)
         }

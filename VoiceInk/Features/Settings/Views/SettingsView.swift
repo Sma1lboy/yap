@@ -220,6 +220,16 @@ struct SettingsView: View {
                             .controlSize(.small)
                     }
 
+                    LabeledContent {
+                        ShortcutRecorder(action: .openScratchpad)
+                            .controlSize(.small)
+                    } label: {
+                        HStack(spacing: AppTheme.Spacing.x1) {
+                            Text("Open Scratchpad")
+                            InfoTip("A small floating note. Dictate into it, or when a dictation finds no text field it is added here with the time. The text stays on this Mac.")
+                        }
+                    }
+
                     LabeledContent("Quick Add to Dictionary") {
                         ShortcutRecorder(action: .quickAddToDictionary)
                             .controlSize(.small)

@@ -197,6 +197,27 @@
                 OnboardingCloudRestoreSheet { _ in }
             }
 
+            // Scratchpad window (empty, with two dictations) and the notification when a dictation found no text field.
+            let scratchpadURL = FileManager.default.temporaryDirectory.appendingPathComponent("yap-snapshot-scratchpad.txt")
+            let scratchpad = ScratchpadStore(fileURL: scratchpadURL)
+            shot("scratchpad-empty", size: CGSize(width: 380, height: 320), main: true) {
+                ScratchpadView(store: scratchpad)
+            }
+            scratchpad.text = ScratchpadStore.appending(
+                MockData.history[0].original, to: "Buy oat milk\nBook the dentist", at: Date(timeIntervalSince1970: 1_790_000_000))
+            scratchpad.text = ScratchpadStore.appending(
+                "Standup 改到 Friday morning。", to: scratchpad.text, at: Date(timeIntervalSince1970: 1_790_003_600))
+            shot("scratchpad-text", size: CGSize(width: 380, height: 320), main: true) {
+                ScratchpadView(store: scratchpad)
+            }
+            shot("notification-scratchpad", size: CGSize(width: 620, height: 80), main: true) {
+                AppNotificationView(
+                    title: ScratchpadStore.noTextFieldMessage, type: .warning, duration: 6, onClose: {}, onTap: nil,
+                    actionButton: (String(localized: "Open Scratchpad"), {})
+                )
+                .padding(AppTheme.Spacing.x4)
+            }
+
             // Recorder panels mid-dictation, on a dark desktop-like backdrop.
             app.engine.recordingState = .recording
             app.engine.partialTranscript = "so the standup 改到 Friday morning"

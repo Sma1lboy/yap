@@ -155,6 +155,11 @@ struct MenuBarView: View {
             }
             .keyboardShortcut("h", modifiers: [.command, .shift])
 
+            Button("Scratchpad") {
+                // Let the MenuBarExtra close first, as Quick History does.
+                DispatchQueue.main.async { ScratchpadController.shared.show() }
+            }
+
             Button(menuBarManager.isMenuBarOnly ? "Show Dock Icon" : "Hide Dock Icon") {
                 let shouldShowMainWindow = menuBarManager.isMenuBarOnly
                 menuBarManager.toggleMenuBarOnly()
