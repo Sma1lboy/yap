@@ -1196,11 +1196,21 @@ struct HistoryCardRow: View {
             }
 
             ScrollView {
-                MarkdownContentView(
-                    displayText,
-                    fontSize: 14,
-                    foregroundColor: AppTheme.Text.primary
-                )
+                // A meeting's transcript is one "[mm:ss] Speaker: …" line per piece; as Markdown its line breaks
+                // would be soft and every line would run into the next.
+                if transcription.isMeeting, selectedTab == .original {
+                    Text(displayText)
+                        .font(AppTheme.font(.callout))
+                        .foregroundStyle(AppTheme.Text.primary)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    MarkdownContentView(
+                        displayText,
+                        fontSize: 14,
+                        foregroundColor: AppTheme.Text.primary
+                    )
+                }
             }
             .frame(maxHeight: 350)
             .hoverCopyButton(textToCopy: displayText)
