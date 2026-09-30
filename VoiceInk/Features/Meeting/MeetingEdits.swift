@@ -57,12 +57,13 @@ enum MeetingEdits {
         // Notes from what was understood, as when the meeting ended; without segments.json, the saved transcript.
         let transcript = segments(of: transcription).map { MeetingNotes.transcript($0.filter { !$0.isFailed }, names: names) }
             ?? transcription.text
+        guard !transcript.isEmpty else { return String(localized: "Nothing was said in this meeting.") }
         let summary = await MeetingSummarizer(engine: engine).notes(for: transcript, names: names)
         guard let notes = summary.notes else {
             if summary.problem == MeetingSummarizer.setupHint {
                 return String(localized: "AI enhancement is off in the current mode, or the mode has no AI provider that can write notes (Yap Refine can't). Turn it on and choose a provider, then try again.")
             }
-            return summary.problem ?? String(localized: "The AI provider returned no notes.")
+            return summary.failure ?? String(localized: "The AI provider returned no notes.")
         }
         let old = (transcription.enhancedText, transcription.aiEnhancementModelName, transcription.promptName,
             transcription.enhancementDuration, transcription.aiRequestSystemMessage, transcription.aiRequestUserMessage)

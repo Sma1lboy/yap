@@ -596,7 +596,10 @@ struct MeetingSummarizer {
 
     struct Summary {
         var notes: String?
+        /// Why there are no notes, as the panel says it after a meeting (`setupHint`, or a failed request).
         var problem: String?
+        /// The failed request's own error, which Regenerate Notes words its way.
+        var failure: String?
         var modelName: String?
         var duration: TimeInterval?
         /// What the final request sent (the prompt with the speakers' names, the transcript or part notes).
@@ -651,7 +654,10 @@ struct MeetingSummarizer {
                 duration: Date().timeIntervalSince(started), systemMessage: last?.systemMessage,
                 userMessage: last?.userMessage)
         } catch {
-            return Summary(problem: EnhancementFailureFormatter.message(for: error))
+            let failure = EnhancementFailureFormatter.description(for: error)
+            return Summary(
+                problem: String(format: String(localized: "The notes couldn't be written: %@"), failure),
+                failure: failure)
         }
     }
 
