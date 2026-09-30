@@ -4798,6 +4798,34 @@
         }
       }
     },
+    "AI enhancement is off in the current mode, or the mode has no AI provider that can write notes (Yap Refine can't). Turn it on and choose a provider, then try again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die KI-Verbesserung ist im aktuellen Modus aus, oder der Modus hat keinen KI-Anbieter, der Notizen schreiben kann (Yap Refine kann es nicht). Schalte sie ein, wähle einen Anbieter und versuche es erneut."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L'amélioration IA est désactivée dans le mode actuel, ou le mode n'a pas de fournisseur IA capable de rédiger des notes (Yap Refine ne le peut pas). Activez-la, choisissez un fournisseur, puis réessayez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前模式关闭了 AI 增强，或没有能写纪要的 AI 服务商（Yap Refine 不能写）。打开它并选一个服务商后再试。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前模式關閉了 AI 增強，或沒有能寫紀要的 AI 供應商（Yap Refine 不能寫）。開啟它並選一個供應商後再試。"
+          }
+        }
+      }
+    },
     "AI Model" : {
       "localizations" : {
         "de" : {
@@ -24791,6 +24819,34 @@
         }
       }
     },
+    "Name" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nom"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名字"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名字"
+          }
+        }
+      }
+    },
     "Name cannot be empty" : {
       "localizations" : {
         "de" : {
@@ -24815,6 +24871,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "名稱不能為空"
+          }
+        }
+      }
+    },
+    "Names saved in the transcript. The notes still use the old names: click Regenerate Notes to update them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Namen stehen jetzt im Transkript. Die Notizen verwenden noch die alten Namen: Klicke auf „Notizen neu erstellen“, um sie zu aktualisieren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les noms sont enregistrés dans la transcription. Les notes utilisent encore les anciens noms : cliquez sur « Régénérer les notes » pour les mettre à jour."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名字已写进转写。纪要里还是原来的称呼：点「重新生成纪要」更新。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "名字已寫進轉錄。紀要裡還是原來的稱呼：按「重新產生紀要」更新。"
           }
         }
       }
@@ -31769,6 +31853,34 @@
         }
       }
     },
+    "Regenerate Notes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizen neu erstellen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Régénérer les notes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新生成纪要"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新產生紀要"
+          }
+        }
+      }
+    },
     "Reload" : {
       "localizations" : {
         "de" : {
@@ -36252,6 +36364,34 @@
         }
       }
     },
+    "Shown in the transcript and the Markdown export, and used for the notes when you regenerate them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erscheinen im Transkript und im Markdown-Export und werden für die Notizen verwendet, wenn du sie neu erstellst."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Affichés dans la transcription et l’export Markdown, et utilisés pour les notes quand vous les régénérez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示在转写和导出的 Markdown 里；重新生成纪要时也会用上。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示在轉錄和匯出的 Markdown 裡；重新產生紀要時也會用上。"
+          }
+        }
+      }
+    },
     "Shows text while you speak. Realtime models stream it; local Whisper models show a preview that the final transcript replaces when you stop." : {
       "localizations" : {
         "de" : {
@@ -37201,6 +37341,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "說句話試試，高亮麥克風旁邊的條應該會動。"
+          }
+        }
+      }
+    },
+    "Speaker Names" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namen der Sprecher"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noms des intervenants"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "说话人名字"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "說話者名字"
+          }
+        }
+      }
+    },
+    "Speaker Names…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Namen der Sprecher…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noms des intervenants…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "说话人名字…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "說話者名字…"
           }
         }
       }
@@ -39269,6 +39465,34 @@
         }
       }
     },
+    "The AI provider returned no notes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der KI-Anbieter hat keine Notizen zurückgegeben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fournisseur IA n’a renvoyé aucune note."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 服务商没有返回纪要。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AI 供應商沒有傳回紀要。"
+          }
+        }
+      }
+    },
     "The AI provider stopped before completing the enhancement." : {
       "comment" : "Error message when the AI provider stops processing the input before completion.",
       "isCommentAutoGenerated" : true,
@@ -40325,6 +40549,34 @@
         }
       }
     },
+    "The notes weren't regenerated: %@ The previous notes are kept." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Notizen wurden nicht neu erstellt: %@ Die bisherigen Notizen bleiben erhalten."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les notes n’ont pas été régénérées : %@ Les notes précédentes sont conservées."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "纪要没有重新生成：%@ 原来的纪要保留不变。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紀要沒有重新產生：%@ 原來的紀要保留不變。"
+          }
+        }
+      }
+    },
     "The original and corrected values must be different." : {
       "comment" : "A warning when the original and corrected values are the same.",
       "isCommentAutoGenerated" : true,
@@ -40957,6 +41209,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "這場會議沒能存進歷史記錄：%@錄音還在，Yap 下次啟動時會再試一次。"
+          }
+        }
+      }
+    },
+    "This meeting's recording folder is gone, so its speakers can't be renamed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Aufnahmeordner dieses Meetings existiert nicht mehr, daher können die Sprecher nicht umbenannt werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dossier d’enregistrement de cette réunion n’existe plus : impossible de renommer les intervenants."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这场会议的录音文件夹已经不在了，没法改说话人的名字。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這場會議的錄音資料夾已經不在了，沒辦法改說話者的名字。"
           }
         }
       }
@@ -45425,6 +45705,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "編寫提示詞指令"
+          }
+        }
+      }
+    },
+    "Write the notes again with the meeting prompt and this mode's AI provider." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schreibt die Notizen mit dem Meeting-Prompt und dem KI-Anbieter dieses Modus neu."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réécrit les notes avec le prompt de réunion et le fournisseur IA de ce mode."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用会议纪要提示词和当前模式的 AI 服务商重新写一遍纪要。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用會議紀要提示詞和目前模式的 AI 供應商重新寫一遍紀要。"
           }
         }
       }

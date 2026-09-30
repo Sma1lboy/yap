@@ -390,10 +390,7 @@ struct HistoryView<Header: View>: View {
 
             if selectedTranscriptions.count == 1, let meeting = selectedTranscriptions.first, meeting.isMeeting {
                 Button(action: {
-                    if let error = MeetingExport.saveMarkdown(MeetingNotes.markdown(
-                        title: String(localized: "Meeting"), date: meeting.timestamp, duration: meeting.duration,
-                        notes: meeting.enhancedText, transcript: meeting.text))
-                    {
+                    if let error = MeetingExport.saveMarkdown(MeetingEdits.markdown(for: meeting)) {
                         NotificationManager.shared.showNotification(
                             title: String(format: String(localized: "The Markdown file couldn't be written: %@"), error),
                             type: .error)
@@ -890,8 +887,15 @@ struct HistoryCardRow: View {
     let onToggleCheck: () -> Void
     let onShowInfo: () -> Void
 
-    @State private var selectedTab: TranscriptionTab = .original
+    @State private var selectedTab: TranscriptionTab = Self.initialTab
     @State private var didCopyCollapsedText = false
+
+    #if DEBUG
+        /// make ui-snapshots: open expanded rows on the notes tab.
+        static var initialTab = TranscriptionTab.original
+    #else
+        static let initialTab = TranscriptionTab.original
+    #endif
     @State private var isHovering = false
 
     private var preferredCopyText: String {
@@ -1125,6 +1129,13 @@ struct HistoryCardRow: View {
 
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+            // Not for a recovered meeting saved with its audio only: its text is the reason, not a transcript.
+            if transcription.isMeeting, transcription.transcriptionStatus != TranscriptionStatus.failed.rawValue {
+                MeetingRowTools(transcription: transcription) {
+                    withAnimation(.easeInOut(duration: 0.15)) { selectedTab = .enhanced }
+                }
+            }
+
             // Tabs
             if transcription.enhancedText != nil {
                 HStack(spacing: AppTheme.Spacing.x1) {

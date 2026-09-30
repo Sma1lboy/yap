@@ -75,6 +75,7 @@ struct VoiceInkApp: App {
             YapIconCheck.selfCheck()
             MeetingChunker.selfCheck()
             MeetingNotes.selfCheck()
+            MeetingEdits.selfCheck()
             MeetingRecorder.shortcutSelfCheck()
             MeetingRecorder.recoverySelfCheck()
             OpenAICompatibleChat.selfCheck()
@@ -272,6 +273,7 @@ struct VoiceInkApp: App {
                 let recovered = await MeetingRecorder.shared.recoverInterruptedMeetings(announceStart: !offeredDictation)
                 #if DEBUG
                     MeetingFilesCheck.reportRecovery(recovered)  // scripts/meeting-files-check.sh only
+                    await MeetingFilesCheck.runEditCheck(engine: engine)  // scripts/meeting-files-check.sh only
                 #endif
             }
 

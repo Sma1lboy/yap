@@ -12,6 +12,10 @@
 # (--meeting-fail-save): the transcript must keep one marked line for the piece. Then a meeting folder cut off by
 # a crash (no History entry, WAV headers never finished) is put next to it, and the app is launched twice with
 # --meeting-recovery-check: the first launch must recover both folders as meetings, the second nothing.
+# Last, --meeting-edit-check names the speakers of the recovered meetings (Me → Tingting, Others 1 → Reed,
+# Others 2 → Shelley; and Others → Reed on a segments.json in the old format, without speaker numbers) and
+# regenerates the notes: once with a failure (no AI provider, or with NOTES=1 an injected failed request), which must
+# keep the old notes, and with NOTES=1 once more, which must replace them with a prompt that has the names.
 set -euo pipefail
 
 APP_DIR="$1"
@@ -170,3 +174,49 @@ grep -q '^meeting-check: recovered 1$' "$WORK/recovery3.txt" && grep -q '^meetin
 	&& [ -s "$cut/mix.wav" ] && [ -f "$cut/mic.wav" ] && [ ! -e "$cut/mic.wav.orig" ] \
 	|| { echo "FAIL: the cut-off recovery wasn't saved with its audio"; exit 1; }
 echo "recovery: OK"
+
+# Speaker names and regenerating the notes, on the two recovered meetings.
+edit() {
+	XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --meeting-edit-check "$@" \
+		>"$WORK/edit.txt" 2>>"$WORK/err.txt" || { echo "app exited with $?"; sed -n 's/^meeting-check: //p' "$WORK/edit.txt"; exit 1; }
+	sed -n '/^meeting-check: /,$p' "$WORK/edit.txt" | grep -v "^ggml_\|^whisper_\| --> " | sed "s/^meeting-check: /edit: /"
+}
+block() { sed -n "/^meeting-check: $1-begin$/,/^meeting-check: $1-end$/p" "$WORK/edit.txt" | sed '1d;$d'; }
+cp "$unsaved/segments.json" "$WORK/segments-before.json"
+if [ -n "$NOTES" ]; then regenerate=(--meeting-regenerate 2 --meeting-fail-notes 1); else regenerate=(--meeting-regenerate 1); fi
+edit "$(basename "$unsaved")" "me=Tingting,others-1=Reed,others-2=Shelley" "${regenerate[@]}"
+grep -q "^meeting-check: speakers \[\"me\", \"others-1\", \"others-2\"\]$" "$WORK/edit.txt" \
+	|| { echo "FAIL: expected speakers me, others-1, others-2"; exit 1; }
+grep -q '^meeting-check: rename-error none$' "$WORK/edit.txt" || { echo "FAIL: renaming wasn't saved"; exit 1; }
+cmp -s "$unsaved/segments.json" "$WORK/segments-before.json" || { echo "FAIL: renaming changed segments.json"; exit 1; }
+[ "$(block transcript-before | grep -o '^\[[0-9:]*\]')" = "$(block transcript | grep -o '^\[[0-9:]*\]')" ] \
+	|| { echo "FAIL: renaming changed the timeline"; exit 1; }
+for name in Tingting Reed Shelley; do
+	block transcript | grep -q "^\[[0-9:]*\] $name: " || { echo "FAIL: no $name line in the transcript"; exit 1; }
+	block markdown | grep -q "^\*\*\[[0-9:]*\] $name\*\*: " || { echo "FAIL: no $name line in the Markdown"; exit 1; }
+done
+block transcript | grep -q '^\[[0-9:]*\] \(Me\|Others\)' && { echo "FAIL: a default label is left"; exit 1; }
+grep -q '^meeting-check: regenerate 1 problem none' "$WORK/edit.txt" && { echo "FAIL: the first regenerate should fail"; exit 1; }
+grep -q '^meeting-check: regenerate 1 .* changed false kept true$' "$WORK/edit.txt" \
+	|| { echo "FAIL: a failed regenerate changed the notes"; exit 1; }
+if [ -n "$NOTES" ]; then
+	grep -q '^meeting-check: regenerate 2 problem none changed true kept true$' "$WORK/edit.txt" \
+		|| { echo "FAIL: regenerating didn't replace the notes"; exit 1; }
+	for name in Tingting Reed Shelley; do
+		block prompt | grep -q "\"$name\"" || { echo "FAIL: the notes prompt doesn't name $name"; exit 1; }
+	done
+fi
+echo "names: OK"
+
+# A segments.json from before speaker numbers (no "remote" or "failed" fields): plain Others is renamed.
+python3 - "$crashed/segments.json" <<'PY2'
+import json, sys
+path = sys.argv[1]
+segments = [{k: s[k] for k in ("speaker", "start", "end", "text")} for s in json.load(open(path)) if not s.get("failed")]
+json.dump(segments, open(path, "w"))
+PY2
+edit "$(basename "$crashed")" "others=Reed"
+grep -q '^meeting-check: speakers \["me", "others"\]$' "$WORK/edit.txt" && grep -q '^meeting-check: rename-error none$' "$WORK/edit.txt" \
+	&& block transcript | grep -q '^\[[0-9:]*\] Reed: ' && ! block transcript | grep -q '^\[[0-9:]*\] Others' \
+	|| { echo "FAIL: the old segments.json wasn't renamed"; exit 1; }
+echo "old segments.json: OK"

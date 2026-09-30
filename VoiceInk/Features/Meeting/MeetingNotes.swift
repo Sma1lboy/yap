@@ -30,6 +30,37 @@ struct MeetingSegment: Codable, Equatable {
         guard speaker == .others, let remote else { return speaker.label }
         return String(format: String(localized: "Others %lld"), remote)
     }
+
+    /// Which person this is, for `MeetingSpeakerNames`: "me", "others", "others-2".
+    var speakerKey: String { remote.map { "\(speaker.rawValue)-\($0)" } ?? speaker.rawValue }
+
+    /// The name the user gave this person, else "Me" / "Others" / "Others 2".
+    func label(names: MeetingSpeakerNames) -> String { names[speakerKey] ?? label }
+}
+
+/// Real names the user gave a meeting's speakers, keyed by `MeetingSegment.speakerKey`. Stored as JSON on the
+/// meeting's `Transcription` (`meetingSpeakerNamesJSON`); a meeting without it has no names.
+typealias MeetingSpeakerNames = [String: String]
+
+extension MeetingSpeakerNames {
+    /// Trimmed, one line, no colons (a transcript line is "[00:12] Name: text"), empty ones dropped.
+    func cleaned() -> MeetingSpeakerNames {
+        compactMapValues { name in
+            let clean = name.replacingOccurrences(of: ":", with: " ").replacingOccurrences(of: "：", with: " ")
+                .split(whereSeparator: \.isWhitespace).joined(separator: " ")
+            return clean.isEmpty ? nil : clean
+        }
+    }
+
+    static func decode(_ json: String?) -> MeetingSpeakerNames {
+        guard let data = json?.data(using: .utf8) else { return [:] }
+        return (try? JSONDecoder().decode(MeetingSpeakerNames.self, from: data)) ?? [:]
+    }
+
+    var json: String? {
+        guard !isEmpty, let data = try? JSONEncoder().encode(self) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
 }
 
 /// Turns a meeting's segments into the saved transcript, the notes request and the Markdown export.
@@ -42,9 +73,9 @@ enum MeetingNotes {
 
     /// `[00:12] Me: …` lines in time order (both channels interleaved). A piece that failed keeps its line, with
     /// `failedMarker` in place of the text.
-    static func transcript(_ segments: [MeetingSegment]) -> String {
+    static func transcript(_ segments: [MeetingSegment], names: MeetingSpeakerNames = [:]) -> String {
         segments.sorted { ($0.start, $0.speaker.rawValue) < ($1.start, $1.speaker.rawValue) }
-            .map { "[\(timestamp($0.start))] \($0.label): \($0.isFailed ? failedMarker : $0.text)" }
+            .map { "[\(timestamp($0.start))] \($0.label(names: names)): \($0.isFailed ? failedMarker : $0.text)" }
             .joined(separator: "\n")
     }
 
@@ -79,6 +110,18 @@ enum MeetingNotes {
         decisions, action items with owners and due dates, open questions, with [mm:ss] where it helps. Keep the \
         language of the transcript and keep English terms as spoken. Output only the notes.
         """
+
+    /// The notes prompt for a meeting whose speakers have names: the same prompt plus who is who. Without names
+    /// it's `prompt` unchanged.
+    static func named(_ prompt: String, names: MeetingSpeakerNames) -> String {
+        guard !names.isEmpty else { return prompt }
+        let me = names["me"].map { "\"\($0)\" is the person who recorded the meeting (the user), in place of \"Me\"." }
+        let others = names.filter { $0.key != "me" }.sorted { $0.key < $1.key }.map { "\"\($0.value)\"" }
+        let rest = others.isEmpty ? nil : "The other people on the call are named: \(others.joined(separator: ", "))."
+        return prompt + "\n\nThe speakers in this transcript have real names. "
+            + [me, rest].compactMap { $0 }.joined(separator: " ")
+            + " Use these names, also as action-item owners."
+    }
 
     /// Transcripts longer than this are summarized in parts first, then the part notes are merged.
     static let maximumCharactersPerRequest = 12_000

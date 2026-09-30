@@ -34,7 +34,7 @@
             YapCloud.isSnapshotMode = true
             try? FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
             let language = Bundle.main.preferredLocalizations.first ?? "en"
-            let suffix = language == "zh-Hant" ? "-zht" : language.hasPrefix("zh") ? "-zh" : ""
+            let suffix = language == "zh-Hant" ? "-zht" : language.hasPrefix("zh") ? "-zh" : language == "en" ? "" : "-\(language)"
 
             let empty = inMemoryContainer()
             let full = inMemoryContainer()
@@ -205,6 +205,55 @@
                 )
                 .padding(AppTheme.Spacing.x4)
             }
+            // A meeting's History row on its notes tab (rendered Markdown), its tools in each state, the names editor.
+            let meetingSpeakers = [
+                ("me", MeetingSegment.Speaker.me.label), ("others-1", String(format: String(localized: "Others %lld"), 1)),
+                ("others-2", String(format: String(localized: "Others %lld"), 2)),
+            ].map { (key: $0.0, label: $0.1) }
+            let namedMeeting = Transcription(
+                text: "[00:00] Jackson: 今天我想把 GitHub Actions 的 pipeline 改一下\n[00:08] Sara: API 那边还差三个 endpoint，周四能 land\n"
+                    + "[00:21] \(meetingSpeakers[2].label): Safari 上 IndexedDB 的问题我来看", duration: 754,
+                enhancedText: """
+                    ## 摘要
+                    - CI 太慢，怀疑 Dockerfile 里 layer 的顺序让 build cache 失效。
+                    - Safari 上的 IndexedDB transaction 问题：retry 改成 exponential backoff。
+
+                    ## 待办
+                    - [ ] 调整 Dockerfile layer 顺序 — Jackson — 周五
+                    - [ ] 补齐三个 endpoint — Sara — 周四
+                    - [x] 复现 Safari 的问题 — \(meetingSpeakers[2].label) — 未指定
+                    """)
+            namedMeeting.kind = Transcription.meetingKind
+            namedMeeting.meetingSpeakerNamesJSON = ["me": "Jackson", "others-1": "Sara"].json
+            MeetingRowTools.snapshotSpeakers = meetingSpeakers
+            HistoryCardRow.initialTab = .enhanced
+            shot("history-row-meeting-notes", size: CGSize(width: 680, height: 460), main: true) {
+                HistoryCardRow(
+                    transcription: namedMeeting, wordCount: 40, isExpanded: true, isChecked: false, isSelecting: false,
+                    onToggleExpand: {}, onToggleCheck: {}, onShowInfo: {}
+                )
+                .padding(AppTheme.Spacing.x4)
+            }
+            HistoryCardRow.initialTab = .original
+            MeetingRowTools.snapshotSpeakers = nil
+            let toolStates: [(String, Bool, String?, Bool)] = [
+                ("regenerating", true, nil, false),
+                ("regenerate-failed", false, MeetingSummarizer.setupHint, false),
+                ("renamed", false, nil, true),
+            ]
+            for (name, regenerating, problem, renamed) in toolStates {
+                shot("history-meeting-tools-\(name)", size: CGSize(width: 620, height: 110), main: true) {
+                    MeetingRowTools(
+                        transcription: namedMeeting, speakers: meetingSpeakers, isRegenerating: regenerating,
+                        problem: problem, renamed: renamed
+                    )
+                    .padding(AppTheme.Spacing.x4)
+                }
+            }
+            shot("history-meeting-speaker-names", size: CGSize(width: 360, height: 300), main: true) {
+                MeetingSpeakerNamesEditor(
+                    speakers: meetingSpeakers, names: namedMeeting.meetingSpeakerNames, onCancel: {}, onSave: { _ in nil })
+            }
             shot("sheet-restore-settings", size: CGSize(width: 440, height: 200)) {
                 OnboardingCloudRestoreSheet { _ in }
             }
@@ -278,7 +327,7 @@
                 + "[00:08] \(MeetingSegment.Speaker.others.label): API 那边还差三个 endpoint，周四能 land"
             let meetingFolder = URL(fileURLWithPath: NSHomeDirectory())
                 .appendingPathComponent("Library/Application Support/me.sma1lboy.yap/Recordings/meetings/9D1C6A0E-0B7F-4E43-A1B5-3F2C8E7D4A10")
-            let meetingStates: [(String, MeetingRecorder.Phase, CGFloat, Bool)] = [
+            var meetingStates: [(String, MeetingRecorder.Phase, CGFloat, Bool)] = [
                 ("consent", .consent, 280, true),
                 ("recording", .recording(started: Date().addingTimeInterval(-754)), 110, true),
                 ("finishing", .finishing(String(localized: "Writing notes…")), 90, false),
@@ -287,7 +336,7 @@
                     markdown: "", notesModel: nil)), 420, true),
                 ("transcript-only", .done(.init(
                     transcriptionID: UUID(), notes: nil, transcript: meetingTranscript,
-                    notesProblem: MeetingSummarizer.setupHint, markdown: "", notesModel: nil)), 300, false),
+                    notesProblem: MeetingSummarizer.setupHint, markdown: "", notesModel: nil)), 330, true),
                 ("failed-pieces", .done(.init(
                     transcriptionID: UUID(), notes: nil, transcript: meetingTranscript + "\n[00:31] "
                         + MeetingSegment.Speaker.others.label + ": " + MeetingNotes.failedMarker,
@@ -301,6 +350,15 @@
                     notesProblem: nil, markdown: "", notesModel: nil, folder: meetingFolder,
                     speakersSkipped: .modelDownloadFailed,
                     exportError: CocoaError(.fileWriteNoPermission).localizedDescription)), 320, true),
+            ]
+            meetingStates += [
+                ("regenerating", .done(.init(
+                    transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
+                    markdown: "", notesModel: nil, isRegenerating: true)), 460, true),
+                ("regenerate-failed", .done(.init(
+                    transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
+                    markdown: "", notesModel: nil,
+                    regenerateProblem: EnhancementFailureFormatter.message(for: EnhancementError.timeout))), 480, true),
             ]
             for (name, phase, height, main) in meetingStates {
                 meeting.setSnapshotPhase(phase)
