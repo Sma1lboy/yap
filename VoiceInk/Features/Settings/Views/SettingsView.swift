@@ -25,6 +25,8 @@ struct SettingsView: View {
         .systemValue
     @AppStorage(RecorderDisplaySettingsKeys.showLiveTranscript) private var showLiveTranscript = true
     @AppStorage(FinishAndSendSettings.key) private var finishAndSendKey = FinishAndSendKey.none.rawValue
+    @AppStorage(MeetingCallDetector.enabledKey) private var meetingCallDetection: Bool?
+    @AppStorage(MeetingRecorder.consentShownKey) private var meetingConsentShown = false
     @State private var showResetOnboardingAlert = false
     @State private var showLanguageRestartAlert = false
     @State private var cancelRecordingShortcutRecorderResetID = 0
@@ -242,6 +244,17 @@ struct SettingsView: View {
                         HStack(spacing: AppTheme.Spacing.x1) {
                             Text("Record Meeting")
                             InfoTip("Starts recording a meeting (your microphone and other apps' sound). To stop and get notes, click ✓ in the meeting panel: pressing the shortcut again doesn't stop it, so a stray key can't end a meeting. ⌘ + Space here always means the right ⌘; the left one stays Spotlight's.")
+                        }
+                    }
+
+                    // Unset: on once a meeting has been recorded (MeetingCallDetector.isEnabled).
+                    Toggle(isOn: Binding(
+                        get: { meetingCallDetection ?? meetingConsentShown },
+                        set: { meetingCallDetection = $0 }
+                    )) {
+                        HStack(spacing: AppTheme.Spacing.x1) {
+                            Text("Remind Me to Record When a Call Starts")
+                            InfoTip("When Zoom, Teams, FaceTime, a browser or another call app has used the microphone for 5 seconds, Yap offers to record the meeting; while recording, it tells you when the call seems to have ended. It never starts or stops a recording by itself.")
                         }
                     }
 

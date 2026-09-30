@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check first-run-check model-residency-check ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-call-check first-run-check model-residency-check ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -223,6 +223,14 @@ meeting-files-check: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh scripts/meeting-files-check.sh "$$APP_DIR" "$(MODEL)" $(NOTES)
+
+# Which processes use the microphone right now and what call detection makes of each (a call app, a browser, Yap
+# itself, nothing), after the detector's self-check. Reads Core Audio only and exits before touching any settings.
+# Run it during a real Zoom / FaceTime / browser call to check the detection by hand (docs/meeting-recording.md).
+meeting-call-check: build
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh "$$APP_DIR/VoiceInk Dev.app/Contents/MacOS/VoiceInk Dev" --meeting-call-check
 
 # Render every page, Settings group, onboarding screen and sheet in light and dark, plus the main ones in Chinese
 # (-zh, and -zht for Traditional), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots

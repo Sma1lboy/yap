@@ -11,6 +11,10 @@ final class NotificationManager {
 
     private init() {}
 
+    /// A notification is on screen. Prompts that mustn't replace one (MeetingCallDetector) wait for
+    /// `.appNotificationDismissed` instead.
+    var isShowingNotification: Bool { notificationWindow != nil }
+
     func showNotification(
         title: String,
         type: AppNotificationView.NotificationType,
@@ -124,8 +128,8 @@ final class NotificationManager {
             },
             completionHandler: {
                 window.close()
-
             })
+        NotificationCenter.default.post(name: .appNotificationDismissed, object: nil)
     }
 
     private func dismissNotification(ifCurrent notificationID: UUID) {
