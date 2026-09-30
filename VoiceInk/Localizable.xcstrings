@@ -49482,6 +49482,172 @@
           }
         }
       }
+    },
+    "Removed %lld echoes: your microphone picked up the other side from the speakers." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Removed %lld echo: your microphone picked up the other side from the speakers."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Removed %lld echoes: your microphone picked up the other side from the speakers."
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Echo entfernt: Dein Mikrofon hat die Gegenseite aus den Lautsprechern aufgenommen."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Echos entfernt: Dein Mikrofon hat die Gegenseite aus den Lautsprechern aufgenommen."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld écho supprimé : votre micro a capté l’autre côté depuis les haut-parleurs."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld échos supprimés : votre micro a capté l’autre côté depuis les haut-parleurs."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "去掉了 %lld 段扬声器回声：麦克风录进了外放的对方声音。"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "去掉了 %lld 段揚聲器回音：麥克風錄進了外放的對方聲音。"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "The meeting is saved. Its transcript gets Others 1, Others 2… when this is done; you can close this panel." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Meeting ist gespeichert. Sein Transkript bekommt „Andere 1“, „Andere 2“…, sobald das fertig ist; du kannst dieses Fenster schließen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réunion est enregistrée. Sa transcription recevra « Autres 1 », « Autres 2 »… une fois terminé ; vous pouvez fermer ce panneau."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会议已保存。区分完后，转写会标出对方 1、对方 2…；可以先关掉这个面板。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "會議已儲存。區分完後，轉錄會標出對方 1、對方 2…；可以先關掉這個面板。"
+          }
+        }
+      }
+    },
+    "The transcript now tells the other speakers apart. The notes still say \"Others\"; Regenerate Notes to use the new labels." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Transkript unterscheidet jetzt die anderen Sprecher. In den Notizen steht noch „Andere“; mit „Notizen neu erstellen“ bekommen sie die neuen Bezeichnungen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La transcription distingue maintenant les autres interlocuteurs. Les notes disent encore « Autres » ; « Régénérer les notes » utilise les nouveaux libellés."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写已经区分出对方的说话人。纪要里还写着“对方”；点「重新生成纪要」换成新的标注。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "轉錄已經區分出對方的說話人。紀要裡還寫著「對方」；按「重新產生紀要」換成新的標註。"
+          }
+        }
+      }
+    },
+    "Speakers not told apart" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprecher nicht unterschieden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Interlocuteurs non distingués"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未区分说话人"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未區分說話人"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

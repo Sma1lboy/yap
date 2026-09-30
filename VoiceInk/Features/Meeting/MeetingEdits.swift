@@ -6,16 +6,21 @@ import SwiftData
 enum MeetingEdits {
     /// The meeting's `segments.json`; nil when its folder is gone (audio retention) or it has none.
     static func segments(of transcription: Transcription) -> [MeetingSegment]? {
-        guard transcription.isMeeting, let string = transcription.audioFileURL, let mix = URL(string: string),
-            let data = try? Data(contentsOf: mix.deletingLastPathComponent().appendingPathComponent("segments.json"))
-        else { return nil }
+        guard let url = segmentsURL(of: transcription), let data = try? Data(contentsOf: url) else { return nil }
         return try? JSONDecoder().decode([MeetingSegment].self, from: data)
     }
 
-    /// The people in a meeting, in order of first appearance: key ("me", "others-2") and default label.
+    /// Where a meeting's `segments.json` is: next to its mix.
+    static func segmentsURL(of transcription: Transcription) -> URL? {
+        guard transcription.isMeeting, let string = transcription.audioFileURL, let mix = URL(string: string) else { return nil }
+        return mix.deletingLastPathComponent().appendingPathComponent("segments.json")
+    }
+
+    /// The people in a meeting, in order of first appearance: key ("me", "others-2") and default label. Echo
+    /// pieces don't count: they aren't in the transcript.
     static func speakers(in segments: [MeetingSegment]) -> [(key: String, label: String)] {
         var seen = Set<String>()
-        return segments.sorted { $0.start < $1.start }.compactMap { segment in
+        return segments.filter { !$0.isEcho }.sorted { $0.start < $1.start }.compactMap { segment in
             seen.insert(segment.speakerKey).inserted ? (segment.speakerKey, segment.label) : nil
         }
     }

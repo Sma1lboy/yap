@@ -98,7 +98,8 @@ extension MeetingRecorder {
             session.feed(file: folder.appendingPathComponent("mic.wav.orig"), as: .me)
             session.feed(file: folder.appendingPathComponent("system.wav.orig"), as: .others)
         }.value
-        let result = await finishMeeting(session, engine: engine, timestamp: started) { _ in }
+        // In the background already, so it waits for the speakers instead of saving without them.
+        let result = await finishMeeting(session, engine: engine, timestamp: started, speakerWait: .infinity) { _ in }
         if result.saveError == nil {
             for file in Self.channelFiles { try? fileManager.removeItem(at: folder.appendingPathComponent(file + ".orig")) }
             forgetAttempt(name)

@@ -14,9 +14,9 @@ enum SpeakerLabels {
     /// A speaker with less speech than this is diarizer noise (a cough, a chair), not a person.
     static let minimumSpeech: TimeInterval = 3
 
-    /// Gives each "others" segment the number of the speaker it overlaps most (numbered by first appearance).
-    /// Fewer than two real speakers, or fewer than two of them in the segments: returned unchanged, so a
-    /// one-on-one call keeps plain "Others".
+    /// Gives each "others" segment the speaker it overlaps most, numbered by first appearance in the transcript
+    /// (a speaker who never wins a segment gets no number, so there's no "Others 2" gap). Fewer than two real
+    /// speakers, or fewer than two of them in the segments: returned unchanged, so a one-on-one call keeps plain "Others".
     static func assign(_ segments: [MeetingSegment], turns: [SpeakerTurn]) -> [MeetingSegment] {
         var speech: [String: TimeInterval] = [:]
         for turn in turns { speech[turn.id, default: 0] += max(0, turn.end - turn.start) }
@@ -36,13 +36,26 @@ enum SpeakerLabels {
             result.remote = overlap.max { ($0.value, -$0.key) < ($1.value, -$1.key) }?.key
             return result
         }
-        return Set(labeled.compactMap(\.remote)).count >= 2 ? labeled : segments
+        var renumbered: [Int: Int] = [:]
+        for segment in labeled.sorted(by: { $0.start < $1.start }) {
+            if let n = segment.remote, renumbered[n] == nil { renumbered[n] = renumbered.count + 1 }
+        }
+        guard renumbered.count >= 2 else { return segments }
+        return labeled.map { segment in
+            var result = segment
+            result.remote = segment.remote.flatMap { renumbered[$0] }
+            return result
+        }
     }
 }
 
-/// Why a meeting's remote lines stay plain "Others": the panel says it in one sentence.
-enum SpeakerSplitSkip: Equatable {
+/// Why a meeting's remote lines stay plain "Others": the panel says it in one sentence. The raw value is stored on
+/// the History entry (`Transcription.meetingSpeakerStatus`) when it's a failure found in the background.
+enum SpeakerSplitSkip: String, Equatable {
     case tooShort, oneSpeaker, timedOut, modelDownloadFailed, failed
+
+    /// `Transcription.meetingSpeakerStatus` while the speakers are still being told apart in the background.
+    static let pendingStatus = "pending"
 
     init(error: Error) {
         switch error as? MeetingDiarizer.Failure {
@@ -51,6 +64,9 @@ enum SpeakerSplitSkip: Equatable {
         case nil: self = .failed
         }
     }
+
+    /// Something went wrong, as opposed to there being nothing to tell apart; History keeps only these.
+    var isFailure: Bool { self == .timedOut || self == .modelDownloadFailed || self == .failed }
 
     var message: String {
         switch self {
@@ -146,6 +162,11 @@ enum MeetingDiarizer {
             let labeled = assign(segments, turns: turns)
             assert(labeled.map(\.remote) == [1, nil, 2, 1])
             assert(labeled[1].speaker == .me && labeled[1].label == MeetingSegment.Speaker.me.label)
+            // A speaker who speaks first but never wins a segment gets no number: Others 1 and 2, not 2 and 3.
+            let gap = assign(
+                [segment(.others, 0, 20), segment(.others, 22, 40)],
+                turns: [turn("C", 0, 4), turn("A", 5, 20), turn("B", 22, 40)])
+            assert(gap.map(\.remote) == [1, 2])
 
             // One real speaker, or a second one below the minimum: plain "Others".
             assert(assign(segments, turns: [turn("A", 0, 60)]) == segments)

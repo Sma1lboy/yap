@@ -27,7 +27,8 @@ final class MeetingRecorder: ObservableObject {
     struct MeetingResult: Equatable {
         let transcriptionID: UUID
         var notes: String?
-        let transcript: String
+        /// Updated when the speakers are told apart after saving.
+        var transcript: String
         /// Why there are no notes (Yap Refine, no AI provider, the request failed); nil when there are.
         var notesProblem: String?
         var markdown: String
@@ -39,6 +40,8 @@ final class MeetingRecorder: ObservableObject {
         var failedPieces = 0
         /// Why the remote lines are plain "Others"; nil when they were told apart or nobody remote spoke.
         var speakersSkipped: SpeakerSplitSkip? = nil
+        /// "Me" pieces the other side's voice was taken out of (MeetingEcho), whole or in part.
+        var echoRemoved = 0
         /// The History entry couldn't be saved (the folder stays, and the next launch recovers it).
         var saveError: String? = nil
         /// A recovered meeting saved with its audio only, not transcribed.
@@ -48,6 +51,11 @@ final class MeetingRecorder: ObservableObject {
         /// "Regenerate Notes" is writing them; `regenerateProblem` says why the last try left the notes as they were.
         var isRegenerating = false
         var regenerateProblem: String? = nil
+        /// The meeting is saved and its remote speakers are still being told apart in the background: what that's
+        /// doing now ("Telling speakers apart…", the model download). nil once done or when not needed.
+        var speakersPending: String? = nil
+        /// The speakers were told apart after the meeting was saved: the transcript has them, the notes don't.
+        var speakersLabeledLater = false
 
         /// Only a saved, transcribed meeting has an entry whose notes can be written again.
         var canRegenerate: Bool { saveError == nil && !audioOnly }
@@ -61,6 +69,10 @@ final class MeetingRecorder: ObservableObject {
     private var session: Session?
     /// Folders of meetings being recorded, finished or recovered right now: never taken for interrupted ones.
     var activeFolders: Set<String> = []
+    /// Speakers being told apart after their meeting was saved (MeetingSpeakers.swift), by History entry.
+    var speakerJobs: [UUID: Task<Void, Never>] = [:]
+    /// Where each running diarization's progress goes, by meeting folder: the "finishing" panel, then the result.
+    var speakerProgress: [String: @MainActor (String) -> Void] = [:]
 
     func configure(engine: VoiceInkEngine) {
         self.engine = engine
@@ -139,6 +151,7 @@ final class MeetingRecorder: ObservableObject {
             current.notesProblem = nil
             current.notesModel = transcription.aiEnhancementModelName
             current.markdown = MeetingEdits.markdown(for: transcription)
+            current.speakersLabeledLater = false  // the new notes have the speakers
         }
         phase = .done(current)
     }
@@ -146,6 +159,11 @@ final class MeetingRecorder: ObservableObject {
     func dismissResult() {
         if case .done = phase { phase = .idle }
         MeetingPanelController.shared.close()
+    }
+
+    /// A newer result for the meeting the panel shows (MeetingSpeakers.swift, when the speakers arrive).
+    func setResult(_ result: MeetingResult) {
+        phase = .done(result)
     }
 
     func start() async {
@@ -220,19 +238,61 @@ final class MeetingRecorder: ObservableObject {
     }
 
     /// Everything after capture, without touching the panel (recovery runs it in the background): waits for the
-    /// transcription, tells remote speakers apart, writes notes, saves the History entry.
+    /// transcription, takes the speakers' echo out of "Me", tells remote speakers apart, writes notes, saves the
+    /// History entry. Telling speakers apart is waited for up to `speakerWait` seconds (`MeetingRecorder.speakerWait`
+    /// when nil); past that the meeting is saved with plain "Others" and the speakers are filled in when they're
+    /// ready (`continueSpeakers`).
     func finishMeeting(
-        _ session: Session, engine: VoiceInkEngine, timestamp: Date? = nil,
+        _ session: Session, engine: VoiceInkEngine, timestamp: Date? = nil, speakerWait: TimeInterval? = nil,
         progress: @escaping @MainActor @Sendable (String) -> Void
     ) async -> MeetingResult {
         defer { activeFolders.remove(session.folder.lastPathComponent) }
         progress(String(localized: "Transcribing the last part…"))
+        let transcribing = Date()
         var (segments, failures) = await session.finish()
         if failures > 0 {
             logger.error("\(failures, privacy: .public) meeting pieces failed to transcribe")
         }
-        let speakersSkipped: SpeakerSplitSkip?
-        (segments, speakersSkipped) = await labelRemoteSpeakers(segments, session: session, engine: engine, progress: progress)
+        #if DEBUG
+            if MeetingFilesCheck.isRequested {
+                let elapsed = String(format: "%.1f", Date().timeIntervalSince(transcribing))
+                print("meeting-check: transcribed in \(elapsed) s; \(segments.count) pieces, \(Int(session.duration)) s per channel")
+            }
+        #endif
+        // Echo: the other side heard through the speakers, transcribed again as "Me". Reads both channels' files.
+        let folder = session.folder
+        let deduplicated = await Task.detached { [segments] in MeetingEcho.removeEcho(from: segments, folder: folder) }.value
+        let echoRemoved = deduplicated.filter(\.hadEcho).count
+        if echoRemoved > 0 {
+            segments = deduplicated
+            try? JSONEncoder().encode(segments).write(to: folder.appendingPathComponent("segments.json"), options: .atomic)
+            logger.notice("Echo taken out of \(echoRemoved, privacy: .public) of the microphone's pieces")
+        }
+        #if DEBUG
+            if MeetingFilesCheck.isRequested { print("meeting-check: echo-removed \(echoRemoved)") }
+        #endif
+        var speakersSkipped: SpeakerSplitSkip? = nil
+        var speakerJob: SpeakerJob? = nil
+        if segments.contains(where: { $0.speaker == .others && !$0.isFailed }) {
+            if session.duration < MeetingDiarizer.minimumDuration {
+                speakersSkipped = .tooShort
+            } else {
+                progress(String(localized: "Telling speakers apart…"))
+                speakerProgress[folder.lastPathComponent] = progress
+                let job = speakerTurns(folder: folder, duration: session.duration, engine: engine)
+                if let turns = await Self.value(of: job, within: speakerWait ?? Self.speakerWait) {
+                    speakerProgress[folder.lastPathComponent] = nil
+                    let labeled: [MeetingSegment]
+                    (labeled, speakersSkipped) = Self.labeled(segments, turns)
+                    if labeled != segments {
+                        segments = labeled
+                        try? JSONEncoder().encode(segments).write(to: folder.appendingPathComponent("segments.json"), options: .atomic)
+                    }
+                } else {
+                    speakerJob = job
+                }
+            }
+        }
 
         progress(String(localized: "Writing notes…"))
         let transcript = MeetingNotes.transcript(segments)
@@ -253,6 +313,7 @@ final class MeetingRecorder: ObservableObject {
             transcriptionStatus: .completed)
         transcription.kind = Transcription.meetingKind
         transcription.meetingFailedPieces = failures > 0 ? failures : nil
+        transcription.meetingSpeakerStatus = speakerJob == nil ? nil : SpeakerSplitSkip.pendingStatus
         if let timestamp { transcription.timestamp = timestamp }
         let saveError = save(transcription, engine: engine)
 
@@ -260,10 +321,21 @@ final class MeetingRecorder: ObservableObject {
             title: String(localized: "Meeting"), date: session.started, duration: session.duration,
             notes: summary.notes, transcript: transcript)
         logger.notice("Meeting saved: \(segments.count, privacy: .public) segments, notes \(summary.notes != nil, privacy: .public)")
-        return MeetingResult(
+        var result = MeetingResult(
             transcriptionID: transcription.id, notes: summary.notes, transcript: transcript,
             notesProblem: summary.problem, markdown: markdown, notesModel: summary.modelName,
-            folder: session.folder, failedPieces: failures, speakersSkipped: speakersSkipped, saveError: saveError)
+            folder: session.folder, failedPieces: failures, speakersSkipped: speakersSkipped, echoRemoved: echoRemoved,
+            saveError: saveError)
+        if let speakerJob {
+            // Without an entry there's nothing to update; the next launch recovers the folder from the start.
+            if saveError == nil {
+                result.speakersPending = String(localized: "Telling speakers apart…")
+                continueSpeakers(speakerJob, id: transcription.id, folder: folder)
+            } else {
+                speakerProgress[folder.lastPathComponent] = nil
+            }
+        }
+        return result
     }
 
     /// Saves a new History entry; returns the error instead of dropping it. A failed entry isn't left pending in
@@ -281,44 +353,6 @@ final class MeetingRecorder: ObservableObject {
             engine.modelContext.delete(transcription)
             logger.error("Meeting not saved: \(error.localizedDescription, privacy: .public)")
             return error.localizedDescription
-        }
-    }
-
-    /// Tells the remote speakers apart ("Others 1", "Others 2"…) by diarizing the system audio once. With one remote
-    /// speaker, a too-short meeting, or any failure or timeout, the segments stay as they are ("Others"), with why.
-    private func labelRemoteSpeakers(
-        _ segments: [MeetingSegment], session: Session, engine: VoiceInkEngine,
-        progress: @escaping @MainActor @Sendable (String) -> Void
-    ) async -> ([MeetingSegment], SpeakerSplitSkip?) {
-        guard segments.contains(where: { $0.speaker == .others && !$0.isFailed }) else { return (segments, nil) }
-        guard session.duration >= MeetingDiarizer.minimumDuration else { return (segments, .tooShort) }
-        progress(String(localized: "Telling speakers apart…"))
-        let started = Date()
-        do {
-            let turns = try await MeetingDiarizer.turns(
-                of: session.folder.appendingPathComponent("system.wav"), duration: session.duration,
-                directory: engine.recordingsDirectory.deletingLastPathComponent().appendingPathComponent("SpeakerModels", isDirectory: true)
-            ) { fraction in
-                Task { @MainActor in
-                    progress(
-                        fraction < 1
-                            ? String(format: String(localized: "Downloading the speaker model… %lld%%"), Int(fraction * 100))
-                            : String(localized: "Telling speakers apart…"))
-                }
-            }
-            let labeled = SpeakerLabels.assign(segments, turns: turns)
-            try? JSONEncoder().encode(labeled).write(to: session.folder.appendingPathComponent("segments.json"))
-            logger.notice("Diarized in \(Date().timeIntervalSince(started), privacy: .public) s: \(Set(turns.map(\.id)).count, privacy: .public) speakers, \(Set(labeled.compactMap(\.remote)).count, privacy: .public) in the transcript")
-            #if DEBUG
-                if MeetingFilesCheck.isRequested {
-                    let elapsed = String(format: "%.1f", Date().timeIntervalSince(started))
-                    print("meeting-check: diarized in \(elapsed) s; system audio \(Int(session.duration)) s")
-                }
-            #endif
-            return (labeled, labeled == segments ? .oneSpeaker : nil)
-        } catch {
-            logger.error("Diarization skipped: \(error.localizedDescription, privacy: .public)")
-            return (segments, SpeakerSplitSkip(error: error))
         }
     }
 

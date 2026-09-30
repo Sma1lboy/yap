@@ -947,6 +947,11 @@ struct HistoryCardRow: View {
         if let failed = transcription.meetingFailedPieces, failed > 0 {
             parts.append(String(localized: "\(Int64(failed)) parts not transcribed"))
         }
+        if transcription.meetingSpeakerStatus == SpeakerSplitSkip.pendingStatus {
+            parts.append(String(localized: "Telling speakers apart…"))
+        } else if let skipped = transcription.meetingSpeakerStatus.flatMap(SpeakerSplitSkip.init(rawValue:)) {
+            parts.append(skipped.message)
+        }
         parts.append(String(preferredCopyText.prefix(300)))
         return parts.joined(separator: ", ")
     }
@@ -1045,6 +1050,23 @@ struct HistoryCardRow: View {
                     .font(AppTheme.font(.caption, .medium))
                     .foregroundStyle(AppTheme.Status.warning)
                     .lineLimit(1)
+            }
+
+            // A meeting whose remote speakers are told apart after it was saved (MeetingSpeakers.swift).
+            if transcription.meetingSpeakerStatus == SpeakerSplitSkip.pendingStatus {
+                HStack(spacing: AppTheme.Spacing.x1) {
+                    ProgressView().controlSize(.mini)
+                    Text("Telling speakers apart…")
+                        .font(AppTheme.font(.caption, .medium))
+                        .foregroundStyle(AppTheme.Text.secondary)
+                        .lineLimit(1)
+                }
+            } else if let skipped = transcription.meetingSpeakerStatus.flatMap(SpeakerSplitSkip.init(rawValue:)) {
+                Label(String(localized: "Speakers not told apart"), yapIcon: "exclamationmark.triangle")
+                    .font(AppTheme.font(.caption, .medium))
+                    .foregroundStyle(AppTheme.Status.warning)
+                    .lineLimit(1)
+                    .help(skipped.message)
             }
 
             Text(verbatim: metaText)

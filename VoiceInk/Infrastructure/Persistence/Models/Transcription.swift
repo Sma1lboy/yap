@@ -57,6 +57,9 @@ final class Transcription {
     var meetingFailedPieces: Int?
     /// A meeting's speaker names (JSON `MeetingSpeakerNames`, "Others 1" → "Reed"); nil when none were given.
     var meetingSpeakerNamesJSON: String?
+    /// A meeting whose remote speakers are still being told apart in the background: "pending"
+    /// (`SpeakerSplitSkip.pendingStatus`); why that failed (a `SpeakerSplitSkip` raw value); nil otherwise.
+    var meetingSpeakerStatus: String?
 
     var meetingSpeakerNames: MeetingSpeakerNames { .decode(meetingSpeakerNamesJSON) }
 
