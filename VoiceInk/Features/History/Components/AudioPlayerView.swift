@@ -454,7 +454,8 @@ struct AudioPlayerView: View {
                         .accessibilityLabel("Retranscribe this audio")
                     }
 
-                    if transcription != nil {
+                    // Not for meetings either: a normal prompt would replace the notes; the row has Regenerate Notes.
+                    if let transcription, !transcription.isMeeting {
                         AsyncCircleButton(
                             defaultIcon: "wand.and.stars",
                             isLoading: isReEnhancing,

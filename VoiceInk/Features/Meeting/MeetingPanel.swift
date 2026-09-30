@@ -166,25 +166,53 @@ struct MeetingPanelView: View {
             if let skipped = result.speakersSkipped {
                 note(skipped.message, color: AppTheme.Text.secondary)
             }
+            if result.isRegenerating {
+                HStack(spacing: AppTheme.Spacing.x2) {
+                    ProgressView().controlSize(.small)
+                    Text("Writing notes…").font(AppTheme.font(.caption)).foregroundColor(AppTheme.Text.secondary)
+                }
+            } else if let problem = result.regenerateProblem {
+                note(String(format: String(localized: "The notes weren't regenerated: %@ The previous notes are kept."), problem),
+                    color: AppTheme.Status.warning)
+            }
             ScrollView {
-                Text(result.notes ?? result.transcript)
-                    .font(AppTheme.font(.callout))
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                // Notes are Markdown (headings, lists, to-dos); copy and export keep the Markdown source.
+                if let notes = result.notes {
+                    MarkdownContentView(notes, fontSize: 13, foregroundColor: AppTheme.Text.primary)
+                } else {
+                    Text(result.transcript)
+                        .font(AppTheme.font(.callout))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
             .frame(maxHeight: 320)
+            // Two rows, so no label is cut off in any language.
             HStack {
                 Button(result.notes == nil ? "Copy Transcript" : "Copy Notes") {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(result.notes ?? result.transcript, forType: .string)
                 }
+                .fixedSize()
                 Button("Export Markdown…") { recorder.exportMarkdown() }
+                    .fixedSize()
+                if result.canRegenerate {
+                    Button("Regenerate Notes") { Task { await recorder.regenerateNotes() } }
+                        .fixedSize()
+                        .disabled(result.isRegenerating)
+                        .help("Write the notes again with the meeting prompt and this mode's AI provider.")
+                }
+            }
+            .controlSize(.small)
+            HStack {
                 Spacer()
                 Button("Open History") {
                     HistoryNavigator.open()
                     recorder.dismissResult()
                 }
+                .fixedSize()
                 Button("Close") { recorder.dismissResult() }
+                    .fixedSize()
             }
             .controlSize(.small)
         }

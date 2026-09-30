@@ -42,9 +42,10 @@ struct QuickHistoryDetailActionBar: View {
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            // Picking a mode retranscribes, which a meeting can't be (AudioTranscriptionService).
+            // Picking a mode retranscribes, which a meeting can't be (AudioTranscriptionService); a prompt would
+            // replace a meeting's notes (History's row has Regenerate Notes).
             if !transcription.isMeeting { modeButton }
-            promptButton
+            if !transcription.isMeeting { promptButton }
             if !transcription.isMeeting { retryButton }
             finderButton
             infoButton

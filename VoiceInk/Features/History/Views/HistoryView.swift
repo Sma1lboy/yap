@@ -390,10 +390,7 @@ struct HistoryView<Header: View>: View {
 
             if selectedTranscriptions.count == 1, let meeting = selectedTranscriptions.first, meeting.isMeeting {
                 Button(action: {
-                    if let error = MeetingExport.saveMarkdown(MeetingNotes.markdown(
-                        title: String(localized: "Meeting"), date: meeting.timestamp, duration: meeting.duration,
-                        notes: meeting.enhancedText, transcript: meeting.text))
-                    {
+                    if let error = MeetingExport.saveMarkdown(MeetingEdits.markdown(for: meeting)) {
                         NotificationManager.shared.showNotification(
                             title: String(format: String(localized: "The Markdown file couldn't be written: %@"), error),
                             type: .error)
@@ -1125,6 +1122,12 @@ struct HistoryCardRow: View {
 
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+            if transcription.isMeeting {
+                MeetingRowTools(transcription: transcription) {
+                    withAnimation(.easeInOut(duration: 0.15)) { selectedTab = .enhanced }
+                }
+            }
+
             // Tabs
             if transcription.enhancedText != nil {
                 HStack(spacing: AppTheme.Spacing.x1) {
