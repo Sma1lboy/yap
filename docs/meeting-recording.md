@@ -43,6 +43,7 @@ Echo, 2026-09-30, `make meeting-echo-check MODEL=<ggml-large-v3-turbo-q5_0.bin>`
 - With echo the delay is found (40 ms: spread 2.3 dB against 21.6; 80 ms: 1.1 against 12.5) and 3 of the 4 "Me" pieces are trimmed. None is all echo: each 20–28 s piece also holds some of the user.
 - What the others said while the user was quiet had been transcribed under "Me" (up to 95 % of a line) and is at 0–16 % after. What's left is echo Whisper heard differently from the system channel (for Shelley's line: "Huberless那边的Doll PTA才7 自断" instead of "Kubernetes 那边的 rollout…").
 - Every line the user said keeps what was transcribed of it; the one said over Reed keeps 65 % (near) and 81 % (far), against 85 % without echo. The drop comes from transcribing with the echo underneath, not from the trimming.
+- The check needs Large v3 Turbo. With Whisper base-q5_1 (2026-09-30) it fails: base transcribes little of the echo under "Me" in the first place ("the echo was never transcribed under Me, so this run checks nothing") and drops some of the user's own lines, so there is nothing to compare.
 
 Long meetings, 2026-09-30, `make meeting-long-check MODEL=<ggml-large-v3-turbo-q5_0.bin>` on an Apple M4 Pro (Mac16,7), Debug build: an 11-minute meeting, "Me" and three remote voices, runs through the whole pipeline, twice in full.
 
