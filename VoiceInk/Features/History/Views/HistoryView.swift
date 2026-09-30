@@ -699,7 +699,10 @@ struct HistoryView<Header: View>: View {
             Button("Copy Original") { _ = ClipboardManager.copyToClipboard(transcription.text) }
         }
         Button("Paste Again") { pasteAgain(transcription) }
-        Button("Retranscribe") { retranscribe(transcription) }
+        // A meeting would come back as one dictation without speakers or notes (AudioTranscriptionService).
+        if !transcription.isMeeting {
+            Button("Retranscribe") { retranscribe(transcription) }
+        }
         Button("Show Info") { openPanel(mode: .info, transcriptionID: transcription.id) }
         Divider()
         Button("Delete", role: .destructive) { requestDeletion(of: transcription) }

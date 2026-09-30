@@ -42,9 +42,10 @@ struct QuickHistoryDetailActionBar: View {
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            modeButton
+            // Picking a mode retranscribes, which a meeting can't be (AudioTranscriptionService).
+            if !transcription.isMeeting { modeButton }
             promptButton
-            retryButton
+            if !transcription.isMeeting { retryButton }
             finderButton
             infoButton
             Spacer(minLength: 8)
