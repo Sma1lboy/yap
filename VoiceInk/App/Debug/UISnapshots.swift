@@ -310,12 +310,14 @@
                     .padding(AppTheme.Spacing.x4)
                 }
             }
-            // Settings › Additional Shortcuts with the call detection switch on, found by searching for it.
+            // Settings › Meetings (the shortcut at its default, the call reminder on), found by searching for it.
             UserDefaults.standard.set(true, forKey: MeetingCallDetector.enabledKey)
-            SettingsView.snapshotQuery = String(localized: "Remind Me to Record When a Call Starts")
+            ShortcutStore.setShortcut(.rightCommandSpace, for: .meetingRecording)
+            SettingsView.snapshotQuery = String(localized: "Meetings")
             MainWindowNavigation.shared.selectedView = .settings
-            shot("settings-call-detection", main: true, fullPage: true, titled: true) { ContentView() }
+            shot("settings-meetings", main: true, fullPage: true, titled: true) { ContentView() }
             SettingsView.snapshotQuery = ""
+            ShortcutStore.setShortcut(nil, for: .meetingRecording)
             UserDefaults.standard.removeObject(forKey: MeetingCallDetector.enabledKey)
 
             // Recorder panels mid-dictation, on a dark desktop-like backdrop.

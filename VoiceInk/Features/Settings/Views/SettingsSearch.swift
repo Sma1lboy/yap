@@ -4,8 +4,8 @@ import Foundation
 /// substring of its title or of one of its row titles, in the app's current language.
 /// ponytail: matches whole sections, not single rows; per-row filtering needs each row wrapped in its own check.
 enum SettingsGroup: CaseIterable {
-    case account, config, shortcuts, voiceEdits, additionalShortcuts, pasting, interface, general, backup, history, help,
-        diagnostics, about
+    case account, config, shortcuts, voiceEdits, additionalShortcuts, meetings, pasting, interface, general, backup,
+        history, help, diagnostics, about
 
     /// Section title first, then its row titles. Keys are the ones the section's own views use.
     var terms: [String] {
@@ -39,8 +39,12 @@ enum SettingsGroup: CaseIterable {
                 String(localized: "Additional Shortcuts"), String(localized: "Paste Last Transcription (Original)"),
                 String(localized: "Paste Last Transcription (Enhanced)"), String(localized: "Copy Last Transcription"),
                 String(localized: "Retry Last Transcription"), String(localized: "Open Quick History"), String(localized: "Open Scratchpad"),
-                String(localized: "Quick Add to Dictionary"), String(localized: "Record Meeting"),
-                String(localized: "Remind Me to Record When a Call Starts"), String(localized: "Cancel Recording"),
+                String(localized: "Quick Add to Dictionary"), String(localized: "Cancel Recording"),
+            ]
+        case .meetings:
+            return [
+                String(localized: "Meetings"), String(localized: "Record Meeting"),
+                String(localized: "Remind Me to Record When a Call Starts"),
             ]
         case .pasting:
             return [
@@ -94,6 +98,10 @@ enum SettingsGroup: CaseIterable {
             assert(!matches("zzz", terms: ["Paste Method"]))
             assert(visible(for: "zzzzqq").isEmpty)
             assert(visible(for: "config.json").contains(.config))
+            // Both meeting settings are in Meetings, not among the shortcuts.
+            assert(visible(for: String(localized: "Remind Me to Record When a Call Starts")) == [.meetings])
+            let meeting = visible(for: String(localized: "Record Meeting"))
+            assert(meeting.contains(.meetings) && !meeting.contains(.additionalShortcuts))
         }
     #endif
 }

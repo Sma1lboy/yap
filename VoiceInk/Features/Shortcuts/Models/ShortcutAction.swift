@@ -13,7 +13,7 @@ enum ShortcutAction: Hashable {
     /// Opens or closes the floating Scratchpad. Unset by default.
     case openScratchpad
     case quickAddToDictionary
-    /// Starts or stops a meeting recording (MeetingRecorder). Default: right ⌘ + Space.
+    /// Starts a meeting recording (MeetingRecorder); only ✓ in the meeting panel stops it. Default: right ⌘ + Space.
     case meetingRecording
     /// Removes the last paste (LastPasteEditor).
     case undoLastPaste
