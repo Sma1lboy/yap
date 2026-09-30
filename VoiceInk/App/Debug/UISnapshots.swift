@@ -10,7 +10,8 @@
     /// window is grown by however much the page's scroll view overflows.
     ///
     /// File names start with their group (page, account, settings, onboarding, sheet, recorder), which the review
-    /// page (scripts/ui-review.py) groups by. The Chinese runs (-AppleLanguages (zh-Hans) and (zh-Hant)) render only `main` shots.
+    /// page (scripts/ui-review.py) groups by. The runs in other languages (-AppleLanguages (zh-Hans), (zh-Hant), (de),
+    /// (fr)) render only `main` shots.
     @MainActor
     enum UISnapshots {
         static let argument = "--render-snapshots"
@@ -62,11 +63,18 @@
             CustomAIProviderManager.shared.replaceProviders([MockData.customProvider])
 
             var written: [String] = []
+            /// `fit`: the view's own size, as a window that sizes to its content (the meeting panel, notifications)
+            /// shows it; `size` is ignored.
             func shot<V: View>(
                 _ name: String, size: CGSize = size, main: Bool = false, fullPage: Bool = false, titled: Bool = false,
-                highContrast: Bool = false, @ViewBuilder _ content: () -> V
+                highContrast: Bool = false, fit: Bool = false, @ViewBuilder _ content: () -> V
             ) {
                 guard main || suffix.isEmpty else { return }
+                var size = size
+                if fit {
+                    let fitting = NSHostingView(rootView: app.environment(content())).fittingSize
+                    size = CGSize(width: fitting.width.rounded(.up), height: fitting.height.rounded(.up))
+                }
                 written += render(
                     name + suffix, size: size, fullPage: fullPage, titled: titled, highContrast: highContrast
                 ) {
@@ -220,6 +228,33 @@
                     .padding(AppTheme.Spacing.x4)
                 }
             }
+            // Expanded: a meeting still being told apart (Speaker Names… waits), one where nothing was said, and one
+            // recovered with its audio only (neither has meeting tools).
+            let recoveredReason = String(
+                format: String(localized: "Yap quit during this meeting, and it couldn't be transcribed afterwards. %@ The audio is saved with this entry."),
+                String(localized: "No transcription model is chosen in the mode."))
+            let expandedMeetings: [(String, String, TranscriptionStatus, String?)] = [
+                ("speakers-pending-expanded", "[00:00] \(MeetingSegment.Speaker.me.label): 今天我想把 GitHub Actions 的 pipeline 改一下\n[00:08] "
+                    + "\(MeetingSegment.Speaker.others.label): API 那边还差三个 endpoint，周四能 land", .completed, SpeakerSplitSkip.pendingStatus),
+                ("nothing-said", String(localized: "(Nothing was said in this meeting.)"), .completed, nil),
+                ("audio-only", recoveredReason, .failed, nil),
+            ]
+            MeetingRowTools.snapshotSpeakers = [
+                ("me", MeetingSegment.Speaker.me.label), ("others", MeetingSegment.Speaker.others.label),
+            ].map { (key: $0.0, label: $0.1) }
+            for (name, text, status, speakerStatus) in expandedMeetings {
+                shot("history-row-meeting-\(name)", size: CGSize(width: 680, height: 260), main: true) {
+                    let item = Transcription(text: text, duration: 1_874, transcriptionStatus: status)
+                    let _ = item.kind = Transcription.meetingKind
+                    let _ = item.meetingSpeakerStatus = speakerStatus
+                    HistoryCardRow(
+                        transcription: item, wordCount: 14, isExpanded: true, isChecked: false, isSelecting: false,
+                        onToggleExpand: {}, onToggleCheck: {}, onShowInfo: {}
+                    )
+                    .padding(AppTheme.Spacing.x4)
+                }
+            }
+            MeetingRowTools.snapshotSpeakers = nil
             // A meeting's History row on its notes tab (rendered Markdown), its tools in each state, the names editor.
             let meetingSpeakers = [
                 ("me", MeetingSegment.Speaker.me.label), ("others-1", String(format: String(localized: "Others %lld"), 1)),
@@ -293,27 +328,45 @@
                 )
                 .padding(AppTheme.Spacing.x4)
             }
-            // Call detection: the prompt for a meeting app and for a browser, and the reminder when the call ends.
+            // Meeting notifications, at the size the notification window takes: call detection (the prompt for a
+            // meeting app and for a browser, the reminder when the call ends), then recovering a meeting Yap quit in
+            // the middle of (started, recovered, saved with its audio only, not saved).
             func callApp(_ bundleID: String) -> MeetingCallApp {
                 MeetingCallApp.recognize(MicrophoneProcess(pid: 1, bundleID: bundleID, responsiblePID: 1, responsibleBundleID: nil))!
             }
-            let callNotifications = [
-                ("call-detected", callApp("us.zoom.xos").askMessage, String(localized: "Record Meeting")),
-                ("call-detected-browser", callApp("com.google.Chrome").askMessage, String(localized: "Record Meeting")),
-                ("call-ended", MeetingCallApp.endMessage, String(localized: "Show Meeting Panel")),
+            let recoveredAt = Date(timeIntervalSince1970: 1_790_000_000)
+            func recovered(_ change: (inout MeetingRecorder.MeetingResult) -> Void) -> (String, AppNotificationView.NotificationType, String?) {
+                var result = MeetingRecorder.MeetingResult(
+                    transcriptionID: UUID(), notes: nil, transcript: "", notesProblem: nil, markdown: "", notesModel: nil)
+                change(&result)
+                let notice = MeetingRecorder.recoveryNotice(for: result, started: recoveredAt)
+                return (notice.title, notice.type, notice.button)
+            }
+            let meetingNotifications: [(String, (String, AppNotificationView.NotificationType, String?))] = [
+                ("call-detected", (callApp("us.zoom.xos").askMessage, .info, String(localized: "Record Meeting"))),
+                ("call-detected-browser", (callApp("com.google.Chrome").askMessage, .info, String(localized: "Record Meeting"))),
+                ("call-ended", (MeetingCallApp.endMessage, .info, String(localized: "Show Meeting Panel"))),
+                ("meeting-recovering", (MeetingRecorder.recoveryStartedMessage, .info, nil)),
+                ("meeting-recovered", recovered { _ in }),
+                ("meeting-recovered-audio-only", recovered { $0.audioOnly = true }),
+                ("meeting-recovery-not-saved", recovered { $0.saveError = CocoaError(.fileWriteOutOfSpace).localizedDescription }),
             ]
-            for (name, title, button) in callNotifications {
-                shot("notification-\(name)", size: CGSize(width: 620, height: 80), main: true) {
-                    AppNotificationView(
-                        title: title, type: .info, duration: 15, onClose: {}, onTap: nil, actionButton: (button, {}))
-                    .padding(AppTheme.Spacing.x4)
+            for (name, (title, type, button)) in meetingNotifications {
+                let notification = AppNotificationView(
+                    title: title, type: type, duration: 15, onClose: {}, onTap: nil,
+                    actionButton: button.map { (label: $0, action: {}) })
+                // The size NotificationManager gives the window, plus the margin around it.
+                let window = NotificationManager.size(of: NSHostingController(rootView: notification))
+                let margin = AppTheme.Spacing.x4 * 2
+                shot("notification-\(name)", size: CGSize(width: window.width + margin, height: window.height + margin), main: true) {
+                    notification.padding(AppTheme.Spacing.x4)
                 }
             }
-            // Settings › Additional Shortcuts with the call detection switch on, found by searching for it.
+            // Settings › Meetings with the call reminder on, found by searching for it.
             UserDefaults.standard.set(true, forKey: MeetingCallDetector.enabledKey)
-            SettingsView.snapshotQuery = String(localized: "Remind Me to Record When a Call Starts")
+            SettingsView.snapshotQuery = String(localized: "Meetings")
             MainWindowNavigation.shared.selectedView = .settings
-            shot("settings-call-detection", main: true, fullPage: true, titled: true) { ContentView() }
+            shot("settings-meetings", main: true, fullPage: true, titled: true) { ContentView() }
             SettingsView.snapshotQuery = ""
             UserDefaults.standard.removeObject(forKey: MeetingCallDetector.enabledKey)
 
@@ -365,54 +418,65 @@
                 + "[00:08] \(MeetingSegment.Speaker.others.label): API 那边还差三个 endpoint，周四能 land"
             let meetingFolder = URL(fileURLWithPath: NSHomeDirectory())
                 .appendingPathComponent("Library/Application Support/me.sma1lboy.yap/Recordings/meetings/9D1C6A0E-0B7F-4E43-A1B5-3F2C8E7D4A10")
-            var meetingStates: [(String, MeetingRecorder.Phase, CGFloat, Bool)] = [
-                ("consent", .consent, 280, true),
-                ("recording", .recording(started: Date().addingTimeInterval(-754)), 110, true),
-                ("finishing", .finishing(String(localized: "Writing notes…")), 90, false),
+            // Each at the size the panel takes (it sizes to its content).
+            var meetingStates: [(String, MeetingRecorder.Phase, Bool)] = [
+                ("consent", .consent, true),
+                ("recording", .recording(started: Date().addingTimeInterval(-754)), true),
+                ("finishing", .finishing(String(localized: "Writing notes…")), false),
                 ("notes", .done(.init(
                     transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
-                    markdown: "", notesModel: nil)), 420, true),
+                    markdown: "", notesModel: nil)), true),
                 ("transcript-only", .done(.init(
                     transcriptionID: UUID(), notes: nil, transcript: meetingTranscript,
-                    notesProblem: MeetingSummarizer.setupHint, markdown: "", notesModel: nil)), 330, true),
+                    notesProblem: MeetingSummarizer.setupHint, markdown: "", notesModel: nil)), true),
+                ("nothing-said", .done(.init(
+                    transcriptionID: UUID(), notes: nil, transcript: "", notesProblem: nil, markdown: "", notesModel: nil)), true),
                 ("failed-pieces", .done(.init(
                     transcriptionID: UUID(), notes: nil, transcript: meetingTranscript + "\n[00:31] "
                         + MeetingSegment.Speaker.others.label + ": " + MeetingNotes.failedMarker,
-                    notesProblem: nil, markdown: "", notesModel: nil, failedPieces: 1, speakersSkipped: .oneSpeaker)), 300, true),
+                    notesProblem: nil, markdown: "", notesModel: nil, failedPieces: 1, speakersSkipped: .oneSpeaker)), true),
                 ("save-failed", .done(.init(
                     transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
                     markdown: "", notesModel: nil, folder: meetingFolder, speakersSkipped: .timedOut,
-                    saveError: CocoaError(.fileWriteOutOfSpace).localizedDescription)), 520, true),
+                    saveError: CocoaError(.fileWriteOutOfSpace).localizedDescription)), true),
                 ("export-failed", .done(.init(
                     transcriptionID: UUID(), notes: nil, transcript: meetingTranscript,
                     notesProblem: nil, markdown: "", notesModel: nil, folder: meetingFolder,
                     speakersSkipped: .modelDownloadFailed,
-                    exportError: CocoaError(.fileWriteNoPermission).localizedDescription)), 320, true),
+                    exportError: CocoaError(.fileWriteNoPermission).localizedDescription)), true),
             ]
             meetingStates += [
                 ("regenerating", .done(.init(
                     transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
-                    markdown: "", notesModel: nil, isRegenerating: true)), 460, true),
+                    markdown: "", notesModel: nil, isRegenerating: true)), true),
                 ("regenerate-failed", .done(.init(
                     transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
                     markdown: "", notesModel: nil,
-                    regenerateProblem: EnhancementFailureFormatter.message(for: EnhancementError.timeout))), 480, true),
+                    regenerateProblem: EnhancementFailureFormatter.description(for: EnhancementError.timeout))), true),
                 // Echo taken out of "Me"; then an hour-long meeting saved before its speakers were told apart, and
                 // the same once they arrived.
                 ("echo-removed", .done(.init(
                     transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
-                    markdown: "", notesModel: nil, echoRemoved: 3)), 450, true),
+                    markdown: "", notesModel: nil, echoRemoved: 3)), true),
                 ("speakers-pending", .done(.init(
                     transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
                     markdown: "", notesModel: nil, echoRemoved: 2,
-                    speakersPending: String(localized: "Telling speakers apart…"))), 500, true),
+                    speakersPending: String(localized: "Telling speakers apart…"))), true),
                 ("speakers-arrived", .done(.init(
                     transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
-                    markdown: "", notesModel: nil, speakersLabeledLater: true)), 460, true),
+                    markdown: "", notesModel: nil, speakersLabeledLater: true)), true),
+                // Every status line at once (some can't happen together), in the order MeetingStatusLine puts them.
+                ("all-status-lines", .done(.init(
+                    transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
+                    markdown: "", notesModel: nil, folder: meetingFolder, failedPieces: 3, speakersSkipped: .timedOut,
+                    echoRemoved: 2, saveError: CocoaError(.fileWriteOutOfSpace).localizedDescription,
+                    exportError: CocoaError(.fileWriteNoPermission).localizedDescription,
+                    regenerateProblem: EnhancementFailureFormatter.description(for: EnhancementError.timeout),
+                    speakersPending: String(localized: "Telling speakers apart…"), speakersLabeledLater: true)), true),
             ]
-            for (name, phase, height, main) in meetingStates {
+            for (name, phase, main) in meetingStates {
                 meeting.setSnapshotPhase(phase)
-                shot("meeting-\(name)", size: CGSize(width: 420, height: height), main: main) {
+                shot("meeting-\(name)", main: main, fit: true) {
                     MeetingPanelView(recorder: meeting).padding(AppTheme.Spacing.x4)
                 }
             }

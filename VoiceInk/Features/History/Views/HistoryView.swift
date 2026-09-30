@@ -936,6 +936,7 @@ struct HistoryCardRow: View {
     /// VoiceOver reads the row as one line: time, mode, status, then the text.
     private var accessibilitySummary: String {
         var parts = [transcription.timestamp.formatted(date: .abbreviated, time: .shortened)]
+        if transcription.isMeeting { parts.append(String(localized: "Meeting")) }
         if let modeName = transcription.modeName, !modeName.isEmpty { parts.append(modeName) }
         if let appName = transcription.sourceAppName, !appName.isEmpty { parts.append(appName) }
         switch transcription.transcriptionStatus {
@@ -1022,24 +1023,17 @@ struct HistoryCardRow: View {
                 .monospacedDigit()
                 .foregroundStyle(AppTheme.Text.secondary)
 
+            // What "Open History" in the meeting panel leads to, and what "Meetings only" filters by.
+            if transcription.isMeeting {
+                metaCapsule(Text("Meeting"))
+            }
+
             if let modeName = transcription.modeName, !modeName.isEmpty {
-                Text(verbatim: modeName)
-                    .font(AppTheme.font(.micro, .medium))
-                    .foregroundStyle(AppTheme.Text.secondary)
-                    .lineLimit(1)
-                    .padding(.horizontal, AppTheme.Spacing.x2)
-                    .padding(.vertical, AppTheme.Spacing.half)
-                    .background(Capsule().fill(AppTheme.Surface.subtle))
+                metaCapsule(Text(verbatim: modeName))
             }
 
             if transcription.usedYapCloud == true {
-                Text("Yap Cloud")
-                    .font(AppTheme.font(.micro, .medium))
-                    .foregroundStyle(AppTheme.Text.secondary)
-                    .lineLimit(1)
-                    .padding(.horizontal, AppTheme.Spacing.x2)
-                    .padding(.vertical, AppTheme.Spacing.half)
-                    .background(Capsule().fill(AppTheme.Surface.subtle))
+                metaCapsule(Text("Yap Cloud"))
                     .help("Billed to your Yap Cloud balance")
             }
 
@@ -1096,6 +1090,16 @@ struct HistoryCardRow: View {
         }
     }
 
+    private func metaCapsule(_ text: Text) -> some View {
+        text
+            .font(AppTheme.font(.micro, .medium))
+            .foregroundStyle(AppTheme.Text.secondary)
+            .lineLimit(1)
+            .padding(.horizontal, AppTheme.Spacing.x2)
+            .padding(.vertical, AppTheme.Spacing.half)
+            .background(Capsule().fill(AppTheme.Surface.subtle))
+    }
+
     @ViewBuilder
     private var statusBadge: some View {
         switch transcription.transcriptionStatus {
@@ -1146,15 +1150,20 @@ struct HistoryCardRow: View {
         "Yap " + transcription.timestamp.formatted(.iso8601.year().month().day().dateSeparator(.dash))
     }
 
-    /// A meeting's second tab holds its notes ("纪要"), not a dictation's enhanced text ("已润色").
+    /// A meeting's tabs hold its transcript and its notes ("转写", "纪要"), not a dictation's original and enhanced
+    /// text ("原文", "已润色"): the words the meeting panel uses.
     private func tabTitle(_ tab: TranscriptionTab) -> Text {
-        tab == .enhanced && transcription.isMeeting ? Text(MeetingNotes.notesTitle) : Text(LocalizedStringKey(tab.rawValue))
+        guard transcription.isMeeting else { return Text(LocalizedStringKey(tab.rawValue)) }
+        return tab == .enhanced ? Text(MeetingNotes.notesTitle) : Text("Transcript")
     }
 
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
-            // Not for a recovered meeting saved with its audio only: its text is the reason, not a transcript.
-            if transcription.isMeeting, transcription.transcriptionStatus != TranscriptionStatus.failed.rawValue {
+            // Not for a recovered meeting saved with its audio only (its text is the reason, not a transcript), nor
+            // for one where nothing was said (no notes to write, nobody to name).
+            if transcription.isMeeting, transcription.transcriptionStatus != TranscriptionStatus.failed.rawValue,
+                MeetingNotes.hasLines(transcription.text)
+            {
                 MeetingRowTools(transcription: transcription) {
                     withAnimation(.easeInOut(duration: 0.15)) { selectedTab = .enhanced }
                 }
@@ -1180,17 +1189,28 @@ struct HistoryCardRow: View {
                                 )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityAddTraits(selectedTab == tab ? .isSelected : [])
                     }
                     Spacer()
                 }
             }
 
             ScrollView {
-                MarkdownContentView(
-                    displayText,
-                    fontSize: 14,
-                    foregroundColor: AppTheme.Text.primary
-                )
+                // A meeting's transcript is one "[mm:ss] Speaker: …" line per piece; as Markdown its line breaks
+                // would be soft and every line would run into the next.
+                if transcription.isMeeting, selectedTab == .original {
+                    Text(displayText)
+                        .font(AppTheme.font(.callout))
+                        .foregroundStyle(AppTheme.Text.primary)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    MarkdownContentView(
+                        displayText,
+                        fontSize: 14,
+                        foregroundColor: AppTheme.Text.primary
+                    )
+                }
             }
             .frame(maxHeight: 350)
             .hoverCopyButton(textToCopy: displayText)

@@ -55,7 +55,7 @@ final class NotificationManager {
             secondaryButton: secondaryButton
         )
         let hostingController = NSHostingController(rootView: notificationView)
-        let size = hostingController.view.fittingSize
+        let size = Self.size(of: hostingController)
 
         let panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
@@ -92,6 +92,15 @@ final class NotificationManager {
                 self?.dismissNotification(ifCurrent: notificationID)
             }
         }
+    }
+
+    /// The notification's size: as wide as its message on one line, and when that reaches the widest a
+    /// notification gets, as tall as the message wrapped at that width (three lines at most), so a long message
+    /// (a meeting that couldn't be saved, and why) isn't cut off after one line.
+    static func size(of controller: NSHostingController<AppNotificationView>) -> CGSize {
+        let oneLine = controller.view.fittingSize
+        guard oneLine.width >= AppNotificationView.maxWidth else { return oneLine }
+        return controller.sizeThatFits(in: CGSize(width: AppNotificationView.maxWidth, height: .greatestFiniteMagnitude))
     }
 
     private func positionWindow(_ window: NSWindow) {

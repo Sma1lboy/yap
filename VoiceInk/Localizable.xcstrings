@@ -4469,7 +4469,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Une réunion ne peut pas être retranscrite : ses interlocuteurs et ses notes seraient perdus."
+            "value" : "Une réunion ne peut pas être retranscrite : ses intervenants et ses notes seraient perdus."
           }
         },
         "zh-Hans" : {
@@ -4481,7 +4481,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "會議不能重新轉錄：會丟掉說話人和紀要。"
+            "value" : "會議不能重新轉錄：會丟掉說話者和紀要。"
           }
         }
       }
@@ -23600,6 +23600,34 @@
         }
       }
     },
+    "Meetings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meetings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réunions"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会议"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "會議"
+          }
+        }
+      }
+    },
     "Meetings only" : {
       "localizations" : {
         "de" : {
@@ -27894,6 +27922,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "上周同期沒有記錄"
+          }
+        }
+      }
+    },
+    "Nothing was said in this meeting." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In diesem Meeting wurde nichts gesagt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien n’a été dit pendant cette réunion."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这场会议里没有识别到说话内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這場會議裡沒有辨識到說話內容。"
           }
         }
       }
@@ -40605,6 +40661,34 @@
         }
       }
     },
+    "The notes couldn't be written: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Notizen konnten nicht geschrieben werden: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les notes n’ont pas pu être rédigées : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没能生成纪要：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒能產生紀要：%@"
+          }
+        }
+      }
+    },
     "The notes weren't regenerated: %@ The previous notes are kept." : {
       "localizations" : {
         "de" : {
@@ -40744,7 +40828,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "對方的發言都標為「對方」：區分說話人出錯了。"
+            "value" : "對方的發言都標為「對方」：區分說話者出錯了。"
           }
         }
       }
@@ -40772,7 +40856,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "對方的發言都標為「對方」：區分說話人逾時，已停止。"
+            "value" : "對方的發言都標為「對方」：區分說話者逾時，已停止。"
           }
         }
       }
@@ -40828,7 +40912,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "對方的發言都標為「對方」：說話人模型沒能下載。"
+            "value" : "對方的發言都標為「對方」：說話者模型沒能下載。"
           }
         }
       }
@@ -41031,6 +41115,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "設定匯入操作已取消。"
+          }
+        }
+      }
+    },
+    "The transcript now tells the other speakers apart. The notes still say \"Others\": click Regenerate Notes to update them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Transkript unterscheidet jetzt die anderen Sprecher. In den Notizen steht noch „Andere“: Klicke auf „Notizen neu erstellen“, um sie zu aktualisieren."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La transcription distingue maintenant les autres intervenants. Les notes disent encore « Autres » : cliquez sur « Régénérer les notes » pour les mettre à jour."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写已经区分出对方的说话人，纪要里还写着“对方”：点「重新生成纪要」更新。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "轉錄已經區分出對方的說話者，紀要裡還寫著「對方」：按「重新產生紀要」更新。"
           }
         }
       }
@@ -49236,7 +49348,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Identification des interlocuteurs…"
+            "value" : "Identification des intervenants…"
           }
         },
         "zh-Hans" : {
@@ -49248,7 +49360,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在區分對方的說話人…"
+            "value" : "正在區分對方的說話者…"
           }
         }
       }
@@ -49276,7 +49388,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在下載說話人模型… %lld%%"
+            "value" : "正在下載說話者模型… %lld%%"
           }
         }
       }
@@ -49593,34 +49705,6 @@
         }
       }
     },
-    "The transcript now tells the other speakers apart. The notes still say \"Others\"; Regenerate Notes to use the new labels." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Das Transkript unterscheidet jetzt die anderen Sprecher. In den Notizen steht noch „Andere“; mit „Notizen neu erstellen“ bekommen sie die neuen Bezeichnungen."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La transcription distingue maintenant les autres interlocuteurs. Les notes disent encore « Autres » ; « Régénérer les notes » utilise les nouveaux libellés."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "转写已经区分出对方的说话人。纪要里还写着“对方”；点「重新生成纪要」换成新的标注。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "轉錄已經區分出對方的說話人。紀要裡還寫著「對方」；按「重新產生紀要」換成新的標註。"
-          }
-        }
-      }
-    },
     "Speakers not told apart" : {
       "localizations" : {
         "de" : {
@@ -49632,7 +49716,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interlocuteurs non distingués"
+            "value" : "Intervenants non distingués"
           }
         },
         "zh-Hans" : {
@@ -49644,7 +49728,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未區分說話人"
+            "value" : "未區分說話者"
           }
         }
       }

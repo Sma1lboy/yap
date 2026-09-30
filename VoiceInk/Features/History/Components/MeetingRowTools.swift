@@ -65,16 +65,15 @@ struct MeetingRowTools: View {
                 }
                 Spacer(minLength: 0)
             }
+            // The panel's status line rule (MeetingStatusLine): stale or kept notes are a warning.
             if let problem {
-                Text(String(format: String(localized: "The notes weren't regenerated: %@ The previous notes are kept."), problem))
-                    .font(AppTheme.font(.caption))
-                    .foregroundStyle(AppTheme.Status.warning)
-                    .fixedSize(horizontal: false, vertical: true)
+                MeetingStatusLineView(line: .init(
+                    kind: .warning,
+                    text: String(format: String(localized: "The notes weren't regenerated: %@ The previous notes are kept."), problem)))
             } else if renamed {
-                Text("Names saved in the transcript. The notes still use the old names: click Regenerate Notes to update them.")
-                    .font(AppTheme.font(.caption))
-                    .foregroundStyle(AppTheme.Text.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                MeetingStatusLineView(line: .init(
+                    kind: .warning,
+                    text: String(localized: "Names saved in the transcript. The notes still use the old names: click Regenerate Notes to update them.")))
             }
         }
         .task(id: transcription.meetingSpeakerStatus) {

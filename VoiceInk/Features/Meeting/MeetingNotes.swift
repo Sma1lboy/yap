@@ -89,6 +89,12 @@ enum MeetingNotes {
 
     static var failedMarker: String { String(localized: "(This part couldn't be transcribed.)") }
 
+    /// A meeting's saved text is a transcript when it has timestamped lines; otherwise it's the "nothing was said"
+    /// placeholder, or the reason a recovered meeting has its audio only. Doesn't depend on the app's language.
+    static func hasLines(_ text: String) -> Bool {
+        text.range(of: #"^\[\d+:\d{2}(:\d{2})?\] "#, options: .regularExpression) != nil
+    }
+
     // MARK: - Notes
 
     static let promptTitle = "Meeting Notes"
@@ -200,6 +206,8 @@ enum MeetingNotes {
             assert(transcript(segments + [failed]).hasSuffix("\n[01:01] \(others): \(failedMarker)"))
             let decoded = try? JSONDecoder().decode([MeetingSegment].self, from: JSONEncoder().encode([failed, segments[0]]))
             assert(decoded?.map(\.isFailed) == [true, false])
+            assert(hasLines(text) && hasLines("[1:01:01] x: y") && !hasLines(String(localized: "(Nothing was said in this meeting.)")))
+            assert(!hasLines("") && !hasLines("Yap quit during this meeting [00:01] "))
 
             let named = [MeetingSegment(speaker: .others, start: 1, end: 5, text: "ok", remote: 2)]
             assert(transcript(named) == "[00:01] \(String(format: String(localized: "Others %lld"), 2)): ok")

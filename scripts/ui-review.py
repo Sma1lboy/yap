@@ -2,9 +2,9 @@
 """make ui-review: turns /tmp/yap-ui/snapshots into self-contained review pages.
 
 Each shot's light and dark PNGs are shrunk to JPEG (sips) and inlined as data URIs, grouped by the file-name
-prefix UISnapshots uses (page, account, settings, sheet, recorder, onboarding); Chinese (-zh) shots get their own
-group. A page is kept under 3.8 MB (the share server takes 4 MB); when the shots don't fit, they continue in
-review-2.html, review-3.html…
+prefix UISnapshots uses (page, account, settings, sheet, recorder, onboarding); shots in other languages (-zh, -zht,
+-de, -fr) get a group per language. A page is kept under 3.8 MB (the share server takes 4 MB); when the shots don't
+fit, they continue in review-2.html, review-3.html…
 """
 import base64
 import html
@@ -35,6 +35,8 @@ GROUPS = [
     ("onboarding", "Onboarding"),
     ("zh", "中文界面"),
     ("zht", "繁體中文界面"),
+    ("de", "Deutsch"),
+    ("fr", "Français"),
     ("site", "官网"),
     ("web", "paygate 页面、邮件和 dashboard（design/web）"),
     ("og", "分享预览（og:image，1200×630）"),
@@ -81,7 +83,10 @@ def group_of(base):
     group = base.split("-")[0]
     if group in ("site", "web", "screenshot"):
         return group
-    return "zh" if base.endswith("-zh") else "zht" if base.endswith("-zht") else group
+    for suffix in ("zh", "zht", "de", "fr"):
+        if base.endswith("-" + suffix):
+            return suffix
+    return group
 
 
 def jpeg(path, tmp):
