@@ -49,9 +49,13 @@ enum SpeakerLabels {
     }
 }
 
-/// Why a meeting's remote lines stay plain "Others": the panel says it in one sentence.
-enum SpeakerSplitSkip: Equatable {
+/// Why a meeting's remote lines stay plain "Others": the panel says it in one sentence. The raw value is stored on
+/// the History entry (`Transcription.meetingSpeakerStatus`) when it's a failure found in the background.
+enum SpeakerSplitSkip: String, Equatable {
     case tooShort, oneSpeaker, timedOut, modelDownloadFailed, failed
+
+    /// `Transcription.meetingSpeakerStatus` while the speakers are still being told apart in the background.
+    static let pendingStatus = "pending"
 
     init(error: Error) {
         switch error as? MeetingDiarizer.Failure {
@@ -60,6 +64,9 @@ enum SpeakerSplitSkip: Equatable {
         case nil: self = .failed
         }
     }
+
+    /// Something went wrong, as opposed to there being nothing to tell apart; History keeps only these.
+    var isFailure: Bool { self == .timedOut || self == .modelDownloadFailed || self == .failed }
 
     var message: String {
         switch self {

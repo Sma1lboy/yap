@@ -18,13 +18,21 @@ struct MeetingSegment: Codable, Equatable {
     /// Seconds from the start of the recording.
     let start: TimeInterval
     let end: TimeInterval
-    let text: String
+    var text: String
     /// Which remote person this is ("Others 2"), when the meeting's system audio was diarized and had several.
     var remote: Int? = nil
     /// The piece couldn't be transcribed: `text` is empty and the transcript shows `MeetingNotes.failedMarker`.
     var failed: Bool? = nil
+    /// A "Me" piece that is the other side's voice, picked up by the microphone from the speakers (MeetingEcho):
+    /// kept here with its text, left out of the transcript and the notes.
+    var echo: Bool? = nil
+    /// A "Me" piece the other side's words were cut out of: its text as transcribed; `text` is what the user said.
+    var textWithEcho: String? = nil
 
     var isFailed: Bool { failed == true }
+    var isEcho: Bool { echo == true }
+    /// Echo was taken out of it: the whole piece or some of its words.
+    var hadEcho: Bool { isEcho || textWithEcho != nil }
 
     var label: String {
         guard speaker == .others, let remote else { return speaker.label }
@@ -71,10 +79,10 @@ enum MeetingNotes {
         return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%02d:%02d", m, s)
     }
 
-    /// `[00:12] Me: …` lines in time order (both channels interleaved). A piece that failed keeps its line, with
-    /// `failedMarker` in place of the text.
+    /// `[00:12] Me: …` lines in time order (both channels interleaved), without the pieces that are echo. A piece
+    /// that failed keeps its line, with `failedMarker` in place of the text.
     static func transcript(_ segments: [MeetingSegment], names: MeetingSpeakerNames = [:]) -> String {
-        segments.sorted { ($0.start, $0.speaker.rawValue) < ($1.start, $1.speaker.rawValue) }
+        segments.filter { !$0.isEcho }.sorted { ($0.start, $0.speaker.rawValue) < ($1.start, $1.speaker.rawValue) }
             .map { "[\(timestamp($0.start))] \($0.label(names: names)): \($0.isFailed ? failedMarker : $0.text)" }
             .joined(separator: "\n")
     }

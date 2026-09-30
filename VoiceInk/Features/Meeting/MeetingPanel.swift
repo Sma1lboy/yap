@@ -160,11 +160,28 @@ struct MeetingPanelView: View {
             if result.failedPieces > 0 {
                 note(String(localized: "\(Int64(result.failedPieces)) parts couldn't be transcribed; they're marked in the transcript."), color: AppTheme.Status.warning)
             }
+            if result.echoRemoved > 0 {
+                note(String(localized: "Removed \(Int64(result.echoRemoved)) echoes: your microphone picked up the other side from the speakers."),
+                    color: AppTheme.Text.secondary)
+            }
             if let problem = result.notesProblem {
                 note(problem, color: AppTheme.Status.warning)
             }
             if let skipped = result.speakersSkipped {
                 note(skipped.message, color: AppTheme.Text.secondary)
+            }
+            if let pending = result.speakersPending {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
+                    HStack(spacing: AppTheme.Spacing.x2) {
+                        ProgressView().controlSize(.small)
+                        Text(pending).font(AppTheme.font(.caption)).foregroundColor(AppTheme.Text.secondary)
+                    }
+                    note(String(localized: "The meeting is saved. Its transcript gets Others 1, Others 2… when this is done; you can close this panel."),
+                        color: AppTheme.Text.secondary)
+                }
+            } else if result.speakersLabeledLater, result.notes != nil {
+                note(String(localized: "The transcript now tells the other speakers apart. The notes still say \"Others\"; Regenerate Notes to use the new labels."),
+                    color: AppTheme.Text.secondary)
             }
             if result.isRegenerating {
                 HStack(spacing: AppTheme.Spacing.x2) {

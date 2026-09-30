@@ -39,8 +39,9 @@ struct MeetingRowTools: View {
                     .disabled(isRegenerating)
                     .help("Write the notes again with the meeting prompt and this mode's AI provider.")
                 if let speakers, !speakers.isEmpty {
+                    // Not while the others are still being told apart: the names would be for "Others", which goes away.
                     AppActionButton("Speaker Names…") { isEditingNames = true }
-                        .disabled(isRegenerating)
+                        .disabled(isRegenerating || transcription.meetingSpeakerStatus == SpeakerSplitSkip.pendingStatus)
                         .popover(isPresented: $isEditingNames, arrowEdge: .bottom) {
                             MeetingSpeakerNamesEditor(
                                 speakers: speakers, names: transcription.meetingSpeakerNames,
@@ -76,8 +77,9 @@ struct MeetingRowTools: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .task(id: transcription.id) {
-            if speakers == nil { speakers = MeetingEdits.segments(of: transcription).map(MeetingEdits.speakers) }
+        .task(id: transcription.meetingSpeakerStatus) {
+            // Again when the speakers told apart in the background arrive (the status goes from "pending" to nil).
+            if let loaded = MeetingEdits.segments(of: transcription).map(MeetingEdits.speakers) { speakers = loaded }
         }
     }
 

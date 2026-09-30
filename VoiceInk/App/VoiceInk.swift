@@ -78,7 +78,9 @@ struct VoiceInkApp: App {
             MeetingChunker.selfCheck()
             MeetingNotes.selfCheck()
             MeetingEdits.selfCheck()
+            MeetingEcho.selfCheck()
             MeetingRecorder.shortcutSelfCheck()
+            MeetingRecorder.speakersSelfCheck()
             MeetingRecorder.recoverySelfCheck()
             MeetingCallPolicy.selfCheck()
             OpenAICompatibleChat.selfCheck()
@@ -278,6 +280,11 @@ struct VoiceInkApp: App {
                 #if DEBUG
                     MeetingFilesCheck.reportRecovery(recovered)  // scripts/meeting-files-check.sh only
                     await MeetingFilesCheck.runEditCheck(engine: engine)  // scripts/meeting-files-check.sh only
+                #endif
+                // Meetings saved while their speakers were still being told apart, when the app quit.
+                let resumed = await MeetingRecorder.shared.resumeSpeakers()
+                #if DEBUG
+                    MeetingFilesCheck.reportSpeakersResume(resumed, engine: engine)  // scripts/meeting-long-check.sh only
                 #endif
             }
 
