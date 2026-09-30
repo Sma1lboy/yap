@@ -127,7 +127,7 @@ struct HistoryView<Header: View>: View {
                 }
                 .onCopyCommand {
                     guard let row = keyboardRow else { return [] }
-                    let text = row.enhancedText.flatMap { $0.isEmpty ? nil : $0 } ?? row.text
+                    let text = row.preferredHistoryText
                     return [NSItemProvider(object: text as NSString)]
                 }
             }
@@ -899,10 +899,7 @@ struct HistoryCardRow: View {
     @State private var isHovering = false
 
     private var preferredCopyText: String {
-        guard let enhancedText = transcription.enhancedText, !enhancedText.isEmpty else {
-            return transcription.text
-        }
-        return enhancedText
+        transcription.preferredHistoryText
     }
 
     private var displayText: String {
