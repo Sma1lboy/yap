@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-call-check first-run-check model-residency-check ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-echo-check meeting-long-check meeting-call-check first-run-check model-residency-check ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -223,6 +223,22 @@ meeting-files-check: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh scripts/meeting-files-check.sh "$$APP_DIR" "$(MODEL)" $(NOTES)
+
+# A meeting without headphones: the other side's voice reaches the microphone through the speakers (30 ms / 12 dB and
+# 80 ms / 20 dB). Checks that echo is taken out of "Me" and nothing the user said is. See scripts/meeting-echo-check.sh.
+meeting-echo-check: build
+	@test -n "$(MODEL)" || { echo "usage: make meeting-echo-check MODEL=/path/to/ggml-large-v3-turbo-q5_0.bin"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/meeting-echo-check.sh "$$APP_DIR" "$(MODEL)"
+
+# An 11-minute meeting with three remote voices: how long transcribing and telling speakers apart take at the end,
+# with the speaker models downloaded (cold) and cached (warm). See scripts/meeting-long-check.sh.
+meeting-long-check: build
+	@test -n "$(MODEL)" || { echo "usage: make meeting-long-check MODEL=/path/to/ggml-*.bin"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/meeting-long-check.sh "$$APP_DIR" "$(MODEL)"
 
 # Which processes use the microphone right now and what call detection makes of each (a call app, a browser, Yap
 # itself, nothing), after the detector's self-check. Reads Core Audio only and exits before touching any settings.

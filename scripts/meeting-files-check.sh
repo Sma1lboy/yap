@@ -21,36 +21,12 @@ set -euo pipefail
 APP_DIR="$1"
 MODEL="${2:?usage: meeting-files-check.sh <app dir> <ggml-*.bin> [notes]}"
 NOTES="${3:-}"
-ID=me.sma1lboy.yap.mock
 WORK=/tmp/yap-meeting-check
-APP="$WORK/Yap Mock.app"
-SUPPORT="$HOME/Library/Application Support/$ID"
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+source "$(dirname "$0")/meeting-check-common.sh"
 
-cleanup() {
-	defaults delete "$ID" >/dev/null 2>&1 || true
-	while security delete-generic-password -s "$ID" >/dev/null 2>&1; do :; done
-	rm -rf "$SUPPORT" "$HOME/Library/Caches/$ID" "$HOME/Library/HTTPStorages/$ID" \
-		"$HOME/Library/Saved Application State/$ID.savedState" "$HOME/Library/WebKit/$ID"
-}
-trap 'cleanup; rm -rf "$WORK"' EXIT
-cleanup
-rm -rf "$WORK" && mkdir -p "$WORK/config/yap" "$WORK/clips" "$SUPPORT/WhisperModels"
-
-ditto "$APP_DIR/VoiceInk Dev.app" "$APP"
-/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $ID" -c "Set :CFBundleName Yap Mock" "$APP/Contents/Info.plist"
-/usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "$APP/Contents/Info.plist" 2>/dev/null || true
-codesign --force --deep --sign - "$APP" >/dev/null 2>&1
-cp -c "$MODEL" "$SUPPORT/WhisperModels/" 2>/dev/null || cp "$MODEL" "$SUPPORT/WhisperModels/"
-defaults write "$ID" hasCompletedOnboardingV2 -bool true
-
-for clip in deploy bug perf standup meeting infra; do
-	afconvert -f WAVE -d LEI16@16000 -c 1 "$ROOT/setup/asr/clips/$clip.m4a" "$WORK/clips/$clip.wav"
-done
 # A second remote voice (Shelley) speaks twice, so "others" holds two people: Reed (A) and Shelley (B).
-say -v "Shelley (Chinese (China mainland))" -r 230 -o "$WORK/clips/b1.aiff" "我补充一点，[Kubernetes] 那边的 rollout 我已经在测试环境跑过了，没有问题。"
-say -v "Shelley (Chinese (China mainland))" -r 230 -o "$WORK/clips/b2.aiff" "我这边的排期是下周三，需要 design 先确认一下 API 的字段。"
-for clip in b1 b2; do afconvert -f WAVE -d LEI16@16000 -c 1 "$WORK/clips/$clip.aiff" "$WORK/clips/$clip.wav"; done
+say_clip b1 "Shelley (Chinese (China mainland))" "我补充一点，[Kubernetes] 那边的 rollout 我已经在测试环境跑过了，没有问题。"
+say_clip b2 "Shelley (Chinese (China mainland))" "我这边的排期是下周三，需要 design 先确认一下 API 的字段。"
 python3 - "$WORK" <<'PY'
 import sys, wave
 work = sys.argv[1]
@@ -73,26 +49,14 @@ open(f"{work}/truth.txt", "w").write("\n".join(truth) + "\n")
 print(f"test meeting: {len(mic) / 32000:.1f} s per channel")
 PY
 
-model=$(basename "$MODEL" .bin)
-if [ -n "$NOTES" ]; then
-	key="${OPENROUTER_API_KEY:-$(sed -n 's/^OPENROUTER_API_KEY=//p' "$HOME/.env" 2>/dev/null | tr -d '"' | head -1)}"
-	[ -n "$key" ] || { echo "NOTES=1 needs OPENROUTER_API_KEY (environment or ~/.env)"; exit 2; }
-	export YAP_MOCK_API_KEY_OPENROUTER="$key"
-	ai='"isAIEnhancementEnabled": true, "selectedAIProvider": "OpenRouter", "selectedAIModel": "deepseek/deepseek-v4.1-flash",'
-else
-	ai='"isAIEnhancementEnabled": false,'
-fi
-cat >"$WORK/config/yap/config.json" <<EOF
-{ "modes": [ { "id": "0FF11E00-0000-4000-8000-000000000002", "name": "Meeting check", "isDefault": true,
-    "selectedTranscriptionModelName": "$model", "selectedLanguage": "auto", $ai
-    "useClipboardContext": false, "useSelectedTextContext": false, "useScreenCapture": false } ] }
-EOF
-
-XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --meeting-files "$WORK/mic.wav" "$WORK/system.wav" \
-	--meeting-fail-pieces 1 --meeting-fail-save \
-	>"$WORK/out.txt" 2>"$WORK/err.txt" || { echo "app exited with $?"; grep -v '^\s*$' "$WORK/err.txt" | tail -5; exit 1; }
-sed -n '/^meeting-check: /,$p' "$WORK/out.txt" | grep -v '^\[.*\] *$' | grep -v "^ggml_\|^whisper_" | sed 's/^meeting-check: //'
+# The save is made to fail, so a meeting saved without its speakers would never get them: wait for them here (the
+# background path is meeting-long-check's).
+run_app "$WORK/out.txt" --meeting-files "$WORK/mic.wav" "$WORK/system.wav" --meeting-fail-pieces 1 --meeting-fail-save \
+	--meeting-speaker-wait 600
+show "$WORK/out.txt"
 grep -q '^meeting-check: transcript-begin' "$WORK/out.txt" || { echo "FAIL: no result"; exit 1; }
+# This meeting has no echo (the microphone is silent while the others speak): no "Me" piece may be taken out.
+grep -q '^meeting-check: echo-removed 0$' "$WORK/out.txt" || { echo "FAIL: echo taken out of a meeting without echo"; exit 1; }
 if [ -n "$NOTES" ] && grep -q '^meeting-check: notes-begin$' "$WORK/out.txt" \
 	&& [ "$(sed -n '/^meeting-check: notes-begin$/,/^meeting-check: notes-end$/p' "$WORK/out.txt" | wc -l)" -le 2 ]; then
 	echo "FAIL: NOTES=1 but no notes"
@@ -141,10 +105,8 @@ for name in ["mic", "system"]:
     open(f"{folder}/{name}.wav", "wb").write(data)
 PY
 for run in 1 2; do
-	XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --meeting-recovery-check \
-		>"$WORK/recovery$run.txt" 2>>"$WORK/err.txt" || { echo "app exited with $?"; exit 1; }
-	sed -n '/^meeting-check: /,$p' "$WORK/recovery$run.txt" | grep -v '^\[.*\] *$' | grep -v "^ggml_\|^whisper_\| --> " \
-		| sed "s/^meeting-check: /recovery $run: /"
+	run_app "$WORK/recovery$run.txt" --meeting-recovery-check
+	show "$WORK/recovery$run.txt" "recovery $run: "
 done
 grep -q '^meeting-check: recovered 2$' "$WORK/recovery1.txt" || { echo "FAIL: expected 2 recovered meetings"; exit 1; }
 for folder in "$unsaved" "$crashed"; do
@@ -167,9 +129,8 @@ mkdir -p "$cut"
 cp "$WORK/mic.wav" "$cut/mic.wav.orig"
 cp "$WORK/system.wav" "$cut/system.wav"
 defaults write "$ID" RecoveryAttemptedMeetings -array "$(basename "$cut")"
-XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --meeting-recovery-check \
-	>"$WORK/recovery3.txt" 2>>"$WORK/err.txt" || { echo "app exited with $?"; exit 1; }
-sed -n '/^meeting-check: /,$p' "$WORK/recovery3.txt" | grep -v "^ggml_\|^whisper_\| --> " | sed "s/^meeting-check: /recovery 3: /"
+run_app "$WORK/recovery3.txt" --meeting-recovery-check
+show "$WORK/recovery3.txt" "recovery 3: "
 grep -q '^meeting-check: recovered 1$' "$WORK/recovery3.txt" && grep -q '^meeting-check: audio-only true save-error none' "$WORK/recovery3.txt" \
 	&& [ -s "$cut/mix.wav" ] && [ -f "$cut/mic.wav" ] && [ ! -e "$cut/mic.wav.orig" ] \
 	|| { echo "FAIL: the cut-off recovery wasn't saved with its audio"; exit 1; }
@@ -177,9 +138,8 @@ echo "recovery: OK"
 
 # Speaker names and regenerating the notes, on the two recovered meetings.
 edit() {
-	XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --meeting-edit-check "$@" \
-		>"$WORK/edit.txt" 2>>"$WORK/err.txt" || { echo "app exited with $?"; sed -n 's/^meeting-check: //p' "$WORK/edit.txt"; exit 1; }
-	sed -n '/^meeting-check: /,$p' "$WORK/edit.txt" | grep -v "^ggml_\|^whisper_\| --> " | sed "s/^meeting-check: /edit: /"
+	run_app "$WORK/edit.txt" --meeting-edit-check "$@"
+	show "$WORK/edit.txt" "edit: "
 }
 block() { sed -n "/^meeting-check: $1-begin$/,/^meeting-check: $1-end$/p" "$WORK/edit.txt" | sed '1d;$d'; }
 cp "$unsaved/segments.json" "$WORK/segments-before.json"
