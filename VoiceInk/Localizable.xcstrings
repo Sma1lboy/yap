@@ -4469,7 +4469,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Une réunion ne peut pas être retranscrite : ses interlocuteurs et ses notes seraient perdus."
+            "value" : "Une réunion ne peut pas être retranscrite : ses intervenants et ses notes seraient perdus."
           }
         },
         "zh-Hans" : {
@@ -4481,7 +4481,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "會議不能重新轉錄：會丟掉說話人和紀要。"
+            "value" : "會議不能重新轉錄：會丟掉說話者和紀要。"
           }
         }
       }
@@ -27926,6 +27926,34 @@
         }
       }
     },
+    "Nothing was said in this meeting." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In diesem Meeting wurde nichts gesagt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien n’a été dit pendant cette réunion."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这场会议里没有识别到说话内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這場會議裡沒有辨識到說話內容。"
+          }
+        }
+      }
+    },
     "OK" : {
       "localizations" : {
         "de" : {
@@ -40633,6 +40661,34 @@
         }
       }
     },
+    "The notes couldn't be written: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Notizen konnten nicht geschrieben werden: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les notes n’ont pas pu être rédigées : %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没能生成纪要：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒能產生紀要：%@"
+          }
+        }
+      }
+    },
     "The notes weren't regenerated: %@ The previous notes are kept." : {
       "localizations" : {
         "de" : {
@@ -40772,7 +40828,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "對方的發言都標為「對方」：區分說話人出錯了。"
+            "value" : "對方的發言都標為「對方」：區分說話者出錯了。"
           }
         }
       }
@@ -40800,7 +40856,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "對方的發言都標為「對方」：區分說話人逾時，已停止。"
+            "value" : "對方的發言都標為「對方」：區分說話者逾時，已停止。"
           }
         }
       }
@@ -40856,7 +40912,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "對方的發言都標為「對方」：說話人模型沒能下載。"
+            "value" : "對方的發言都標為「對方」：說話者模型沒能下載。"
           }
         }
       }
@@ -49292,7 +49348,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Identification des interlocuteurs…"
+            "value" : "Identification des intervenants…"
           }
         },
         "zh-Hans" : {
@@ -49304,7 +49360,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在區分對方的說話人…"
+            "value" : "正在區分對方的說話者…"
           }
         }
       }
@@ -49332,7 +49388,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在下載說話人模型… %lld%%"
+            "value" : "正在下載說話者模型… %lld%%"
           }
         }
       }
@@ -49660,7 +49716,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Interlocuteurs non distingués"
+            "value" : "Intervenants non distingués"
           }
         },
         "zh-Hans" : {
@@ -49672,7 +49728,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未區分說話人"
+            "value" : "未區分說話者"
           }
         }
       }
