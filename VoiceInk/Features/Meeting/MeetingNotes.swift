@@ -19,6 +19,13 @@ struct MeetingSegment: Codable, Equatable {
     let start: TimeInterval
     let end: TimeInterval
     let text: String
+    /// Which remote person this is ("Others 2"), when the meeting's system audio was diarized and had several.
+    var remote: Int? = nil
+
+    var label: String {
+        guard speaker == .others, let remote else { return speaker.label }
+        return String(format: String(localized: "Others %lld"), remote)
+    }
 }
 
 /// Turns a meeting's segments into the saved transcript, the notes request and the Markdown export.
@@ -32,7 +39,7 @@ enum MeetingNotes {
     /// `[00:12] Me: …` lines in time order (both channels interleaved).
     static func transcript(_ segments: [MeetingSegment]) -> String {
         segments.sorted { ($0.start, $0.speaker.rawValue) < ($1.start, $1.speaker.rawValue) }
-            .map { "[\(timestamp($0.start))] \($0.speaker.label): \($0.text)" }
+            .map { "[\(timestamp($0.start))] \($0.label): \($0.text)" }
             .joined(separator: "\n")
     }
 
@@ -42,7 +49,9 @@ enum MeetingNotes {
 
     static let prompt = """
         You write meeting notes from a transcript. Lines start with [mm:ss] and a speaker: "Me" (or 我) is the \
-        person who recorded the meeting, "Others" (or 对方) is everyone else on the call. The transcript comes from \
+        person who recorded the meeting, "Others" (or 对方) is everyone else on the call; \
+        when the other people could be told apart they are "Others 1", "Others 2"… (对方 1, 对方 2…), each a different \
+        person, and action-item owners use those labels unless a real name was said. The transcript comes from \
         speech recognition, so expect misheard words; fix them only when the meaning is clear.
 
         Write the notes in the language most of the meeting was spoken in. Keep English terms, product names, code \
@@ -59,7 +68,7 @@ enum MeetingNotes {
 
     static let partPrompt = """
         This is one part of a longer meeting transcript (lines start with [mm:ss] and a speaker: "Me"/我 is the \
-        person recording, "Others"/对方 everyone else). Write compact notes for this part only: key points, \
+        person recording, "Others"/对方 everyone else, or "Others 1", "Others 2"… for different people). Write compact notes for this part only: key points, \
         decisions, action items with owners and due dates, open questions, with [mm:ss] where it helps. Keep the \
         language of the transcript and keep English terms as spoken. Output only the notes.
         """
@@ -121,7 +130,11 @@ enum MeetingNotes {
             ]
             let text = transcript(segments)
             let me = MeetingSegment.Speaker.me.label, others = MeetingSegment.Speaker.others.label
+            SpeakerLabels.selfCheck()
             assert(text == "[00:03] \(me): 先看一下 CI\n[00:12] \(me): 可以\n[00:12] \(others): Can we ship Friday?")
+
+            let named = [MeetingSegment(speaker: .others, start: 1, end: 5, text: "ok", remote: 2)]
+            assert(transcript(named) == "[00:01] \(String(format: String(localized: "Others %lld"), 2)): ok")
 
             assert(parts(of: "a\nb\nc", limit: 3) == ["a\nb", "c"])
             assert(parts(of: String(repeating: "x", count: 7), limit: 3) == ["xxx", "xxx", "x"])
