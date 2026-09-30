@@ -404,6 +404,9 @@ enum MeetingEcho {
             let removed = removeEcho(from: segments, mic: mic, system: system)
             assert(removed[0].isEcho && removed[1] == segments[1])
             assert(MeetingNotes.transcript(removed) == MeetingNotes.transcript([segments[1]]))
+            // A "Me" piece no "Others" piece overlaps (within 2 s) is never touched, echo in the signal or not.
+            let apart = MeetingSegment(speaker: .me, start: 22.5, end: 29, text: "we ship it friday")
+            assert(removeEcho(from: segments + [apart], mic: mic, system: system).last == apart)
 
             // segments.json: the echo marks round-trip, and an old file without them reads as not echo.
             var trimmed = MeetingSegment(speaker: .me, start: 1, end: 2, text: "left")
