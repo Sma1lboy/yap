@@ -49309,6 +49309,40 @@
         }
       }
     },
+    "meeting.notesTitle" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "纪要"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紀要"
+          }
+        }
+      }
+    },
     "No notes: AI enhancement is off in this mode, or it has no AI provider for them (Yap Refine can't write notes). Turn it on and choose a provider in the mode for your next meeting; the transcript is saved in History." : {
       "localizations" : {
         "de" : {

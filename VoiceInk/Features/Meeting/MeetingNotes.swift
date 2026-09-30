@@ -153,11 +153,15 @@ enum MeetingNotes {
 
     // MARK: - Export
 
+    /// A meeting's notes, as the History tab and the Markdown heading call them ("纪要"). Its own key: the plain
+    /// "Notes" key is the Notes app (备忘录).
+    static var notesTitle: String { String(localized: "meeting.notesTitle", defaultValue: "Notes") }
+
     static func markdown(title: String, date: Date, duration: TimeInterval, notes: String?, transcript: String) -> String {
         let when = date.formatted(date: .abbreviated, time: .shortened)
         var sections = ["# \(title)", "\(when) · \(timestamp(duration))"]
         if let notes, !notes.isEmpty {
-            sections.append("## \(String(localized: "Notes"))\n\n\(notes)")
+            sections.append("## \(notesTitle)\n\n\(notes)")
         }
         let lines = transcript.split(separator: "\n").map { line -> String in
             // "[00:12] Me: text" → "**[00:12] Me**: text"
@@ -200,7 +204,8 @@ enum MeetingNotes {
             let md = markdown(title: "Weekly", date: Date(timeIntervalSince1970: 0), duration: 65, notes: "- ok", transcript: text)
             assert(md.hasPrefix("# Weekly\n\n") && md.contains("· 01:05") && md.contains("- ok"))
             assert(md.contains("**[00:03] \(me)**: 先看一下 CI"))
-            assert(!markdown(title: "T", date: Date(), duration: 1, notes: nil, transcript: "").contains("## \(String(localized: "Notes"))"))
+            assert(md.contains("## \(notesTitle)\n\n- ok"))
+            assert(!markdown(title: "T", date: Date(), duration: 1, notes: nil, transcript: "").contains("## \(notesTitle)"))
 
             // The default shortcut: right ⌘ + Space fires, left ⌘ + Space (Spotlight) doesn't.
             let command = NSEvent.ModifierFlags.command.rawValue

@@ -1124,6 +1124,11 @@ struct HistoryCardRow: View {
         "Yap " + transcription.timestamp.formatted(.iso8601.year().month().day().dateSeparator(.dash))
     }
 
+    /// A meeting's second tab holds its notes ("纪要"), not a dictation's enhanced text ("已润色").
+    private func tabTitle(_ tab: TranscriptionTab) -> Text {
+        tab == .enhanced && transcription.isMeeting ? Text(MeetingNotes.notesTitle) : Text(LocalizedStringKey(tab.rawValue))
+    }
+
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
             // Not for a recovered meeting saved with its audio only: its text is the reason, not a transcript.
@@ -1142,7 +1147,7 @@ struct HistoryCardRow: View {
                                 selectedTab = tab
                             }
                         } label: {
-                            Text(LocalizedStringKey(tab.rawValue))
+                            tabTitle(tab)
                                 .font(AppTheme.font(.caption, .medium))
                                 .foregroundColor(selectedTab == tab ? .primary : .secondary)
                                 .padding(.horizontal, AppTheme.Spacing.x3)
