@@ -6,16 +6,27 @@
     /// `make mcp-check`: launched with `--mcp-fixture <data folder> <expected folder>`, the app writes a Yap data
     /// folder for yap-mcp to read and quits before touching any settings or data of its own. The folder gets the
     /// app's stores, made by the app's own `createPersistentContainer` (default.store left with its `-wal`, as a
-    /// running Yap has it), with three meetings and a dictation in History, and
+    /// running Yap has it), with three meetings and dictations in History (one with an app, a mode and a
+    /// cleaned-up text in Chinese and English, one long one, and 55 alike for search_history's limit), and
     /// one meeting's `Recordings/meetings/<id>/segments.json`; that meeting's speakers are renamed the way History's
-    /// Speaker Names… does it (`MeetingEdits.rename`). For each meeting, the expected folder gets
-    /// `<id>.md`, History's Export Markdown of it. One `mcp-fixture: <role> <id>` line per entry goes to stdout.
+    /// Speaker Names… does it (`MeetingEdits.rename`). The dictionary gets words and replacement rules. For each
+    /// meeting, the expected folder gets `<id>.md`, History's Export Markdown of it. One
+    /// `mcp-fixture: <role> <id>` line per named entry goes to stdout.
+    ///
+    /// `--mcp-fixture-writer <data folder>` keeps adding dictations to that folder's history, one save each, for up
+    /// to two minutes: the writer yap-mcp has to read next to. Dictation n's text is `writer-seq-n` and 8 KB of
+    /// filler, its enhanced text `writer-check-n`; `mcp-writer: n` goes to stdout after each save.
     @MainActor
     enum MCPFixture {
         static let argument = "--mcp-fixture"
+        static let writerArgument = "--mcp-fixture-writer"
+        static let writerFiller = String(repeating: "0123456789abcdef", count: 512)
 
         static func runIfRequested() {
             let arguments = CommandLine.arguments
+            if let index = arguments.firstIndex(of: writerArgument), arguments.indices.contains(index + 1) {
+                keepWriting(to: URL(fileURLWithPath: arguments[index + 1], isDirectory: true))
+            }
             guard let index = arguments.firstIndex(of: argument), arguments.indices.contains(index + 2) else { return }
             // Kept open until exit, as a running Yap keeps it: closing the store would fold the -wal into it.
             let container: ModelContainer
@@ -32,6 +43,37 @@
             withExtendedLifetime(container) { exit(0) }
         }
 
+        private static func container(in data: URL) throws -> ModelContainer {
+            try VoiceInkApp.createPersistentContainer(
+                schema: YapStores.schema, logger: Logger(subsystem: "com.prakashjoshipax.voiceink", category: "MCPFixture"),
+                directory: data)
+        }
+
+        private static func keepWriting(to data: URL) -> Never {
+            do {
+                let container = try container(in: data)
+                let context = ModelContext(container)
+                let deadline = Date().addingTimeInterval(120)
+                var sequence = 0
+                while Date() < deadline {
+                    sequence += 1
+                    let entry = Transcription(
+                        text: "writer-seq-\(sequence) " + writerFiller, duration: 1,
+                        enhancedText: "writer-check-\(sequence)", transcriptionStatus: .completed)
+                    context.insert(entry)
+                    try context.save()
+                    print("mcp-writer: \(sequence)")
+                    fflush(stdout)
+                    usleep(2_000)
+                }
+                exit(0)
+            } catch {
+                print("mcp-writer: failed \(error)")
+                fflush(stdout)
+                exit(1)
+            }
+        }
+
         private static func date(_ day: Int, _ hour: Int, _ minute: Int) -> Date {
             Calendar.current.date(from: DateComponents(year: 2026, month: 9, day: day, hour: hour, minute: minute))!
         }
@@ -39,9 +81,7 @@
         private static func write(data: URL, expected: URL) throws -> ModelContainer {
             let fileManager = FileManager.default
             try fileManager.createDirectory(at: expected, withIntermediateDirectories: true)
-            let container = try VoiceInkApp.createPersistentContainer(
-                schema: YapStores.schema, logger: Logger(subsystem: "com.prakashjoshipax.voiceink", category: "MCPFixture"),
-                directory: data)
+            let container = try container(in: data)
             let context = ModelContext(container)
 
             // Speakers named in History: Me, Others 1, Others 2 (and a piece that couldn't be transcribed).
@@ -88,9 +128,50 @@
             let dictation = Transcription(text: "A dictation, not a meeting.", duration: 3, transcriptionStatus: .completed)
             dictation.timestamp = date(30, 10, 0)
             context.insert(dictation)
+
+            // Dictated into an app with a mode that cleaned it up; Chinese and English in one sentence.
+            let mixed = Transcription(
+                text: "好的 我们先看一下 ci 再合并", duration: 4, enhancedText: "好的，我们先看一下 CI 再合并。",
+                modeName: "Chat", transcriptionStatus: .completed)
+            mixed.timestamp = date(30, 10, 5)
+            mixed.sourceAppName = "Slack"
+            mixed.sourceAppBundleID = "com.tinyspeck.slackmacgap"
+            context.insert(mixed)
+
+            // Long enough that a snippet from its middle is cut on both sides.
+            let long = Transcription(
+                text: "notes for the deploy", duration: 60,
+                enhancedText: String(repeating: "Before the deploy we check the dashboards. ", count: 5)
+                    + "Then the Kubernetes rollout starts. "
+                    + String(repeating: "After the deploy we watch the error rate. ", count: 5),
+                transcriptionStatus: .completed)
+            long.timestamp = date(27, 8, 0)
+            context.insert(long)
+
+            // 55 alike, for search_history's limit.
+            for minute in 0..<55 {
+                let note = Transcription(text: "Standup note \(minute)", duration: 2, transcriptionStatus: .completed)
+                note.timestamp = date(1, 9, minute)
+                context.insert(note)
+            }
+
+            // The dictionary: words (one learned automatically) and replacement rules (one with two originals).
+            let learned = VocabularyWord(word: "Tingting")
+            learned.isAutoLearned = true
+            for word in [VocabularyWord(word: "Kubernetes"), VocabularyWord(word: "Shelley"), learned] {
+                context.insert(word)
+            }
+            let k8s = WordReplacement(originalText: "k8s, kates", replacementText: "Kubernetes")
+            let typo = WordReplacement(originalText: "先看下", replacementText: "先看一下")
+            typo.isAutoLearned = true
+            context.insert(k8s)
+            context.insert(typo)
             try context.save()
 
-            for (role, entry) in [("renamed", renamed), ("pending", pending), ("failed", failed), ("dictation", dictation)] {
+            for (role, entry) in [
+                ("renamed", renamed), ("pending", pending), ("failed", failed), ("dictation", dictation),
+                ("mixed", mixed), ("long", long),
+            ] {
                 if entry.isMeeting {
                     try Data(MeetingNotes.markdown(for: entry).utf8)
                         .write(to: expected.appendingPathComponent("\(entry.id.uuidString).md"))

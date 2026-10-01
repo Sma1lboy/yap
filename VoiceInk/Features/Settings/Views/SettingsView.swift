@@ -469,6 +469,10 @@ struct SettingsView: View {
                 }
             }
 
+            if visibleGroups.contains(.agentAccess) {
+                AgentAccessSettingsSection()
+            }
+
             if visibleGroups.contains(.help) {
                 Section("Help") {
                     LabeledContent {

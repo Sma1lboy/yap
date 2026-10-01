@@ -23,7 +23,7 @@ One shortcut (right ⌘ + Space by default) starts a long recording of the micro
 
 Permission: `NSAudioCaptureUsageDescription` ("System Audio Recording Only"). macOS asks the first time the tap is used. There's no API to query the answer: when it's denied, the tap still runs but delivers only zeros. If system audio is all zeros 8 s in, Yap says so, with a button to the Privacy settings. The message allows for the call simply not having started.
 
-Agents (Claude Code, Cursor, Codex…) can read saved meetings through Yap's local, read-only MCP server, `Yap.app/Contents/Helpers/yap-mcp`: a list, and each meeting as the same Markdown as History's export (`MeetingMarkdown.swift`, compiled into both). See `docs/mcp.md`.
+Agents (Claude Code, Cursor, Codex…) can read saved meetings through Yap's local, read-only MCP server, `Yap.app/Contents/Helpers/yap-mcp`, once Settings › Agent Access (MCP) › Let Agents Read Yap's Data is on (it's off by default): a list, search, and each meeting as the same Markdown as History's export (`MeetingMarkdown.swift`, compiled into both). See `docs/mcp.md`.
 
 ## Verified here
 

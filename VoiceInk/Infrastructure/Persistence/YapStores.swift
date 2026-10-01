@@ -15,4 +15,12 @@ enum YapStores {
         ModelConfiguration(
             "default", schema: Schema([Transcription.self]), url: url, allowsSave: allowsSave, cloudKitDatabase: .none)
     }
+
+    /// The dictionary (vocabulary and replacements). Release syncs it through the user's private CloudKit database;
+    /// Debug and local builds, and yap-mcp's private copy, open it without CloudKit.
+    static func dictionaryConfiguration(url: URL, cloudKitDatabase: ModelConfiguration.CloudKitDatabase) -> ModelConfiguration {
+        ModelConfiguration(
+            "dictionary", schema: Schema([VocabularyWord.self, WordReplacement.self]), url: url,
+            cloudKitDatabase: cloudKitDatabase)
+    }
 }

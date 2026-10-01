@@ -292,8 +292,11 @@ final class ModelFileDownloader: NSObject, URLSessionDownloadDelegate, @unchecke
             let progress = Progress(received: 100, total: 1100, bytesPerSecond: 50)
             assert(progress.secondsLeft == 20 && abs(progress.fraction - 100.0 / 1100) < 1e-9)
             assert(Progress(received: 1, total: 2, bytesPerSecond: nil).secondsLeft == nil)
-            assert(bytes(574_041_195) == "547 MB")
-            assert(Progress(received: 0, total: 574_041_195, bytesPerSecond: nil).summary.contains("547 MB"))
+            // Binary and not adaptive: 574,041,195 bytes are 547 MiB, whole. The unit's spelling follows the
+            // app's language ("547 MB", "547 Mo").
+            let size = bytes(574_041_195)
+            assert(size.prefix(while: \.isNumber) == "547" && size.dropFirst(3).first?.isWhitespace == true, size)
+            assert(Progress(received: 0, total: 574_041_195, bytesPerSecond: nil).summary.contains(bytes(574_041_195)))
             assert(Progress(received: 0, total: 1_000_000, bytesPerSecond: 10_000).summary.contains("·"))
 
             let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

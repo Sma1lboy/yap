@@ -7,12 +7,15 @@ final class MCPServer {
     /// Newest first; an `initialize` asking for another version gets the newest.
     static let protocolVersions = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"]
 
-    private let library: MeetingLibrary
+    private let library: YapLibrary
     private let output: FileHandle
+    /// Read again for every tools/call: the user can change Settings › Agent Access (MCP) mid-session.
+    private let access: () -> AgentAccess.Level
 
-    init(library: MeetingLibrary, output: FileHandle) {
+    init(library: YapLibrary, output: FileHandle, access: @escaping () -> AgentAccess.Level) {
         self.library = library
         self.output = output
+        self.access = access
     }
 
     /// Answers each line until stdin closes, then returns (the client's way of ending the session).
@@ -55,9 +58,13 @@ final class MCPServer {
                 "capabilities": ["tools": [String: Any]()],
                 "serverInfo": ["name": "yap", "title": "Yap", "version": EnclosingApp.version],
                 "instructions": """
-                    Read-only access to the meetings recorded with Yap on this Mac: their AI notes and timestamped \
-                    transcripts, read from Yap's local history (nothing goes over the network). Find a meeting with \
-                    list_meetings (newest first, filter by date), then read it with get_meeting.
+                    Read-only access to Yap's data on this Mac (Yap is a dictation and meeting-notes app): meetings \
+                    with their AI notes and timestamped transcripts, the user's dictation history, and the \
+                    dictionary of words and replacements. Everything is read from Yap's local files; nothing goes \
+                    over the network. Find meetings with list_meetings and read one with get_meeting; search \
+                    dictations and meetings with search_history and read a dictation with get_dictation; \
+                    get_dictionary lists the dictionary. The user decides in Yap's Settings what agents may read: \
+                    when something is switched off, the tool's error says which switch to turn on.
                     """,
             ], id: id)
         case "ping":
@@ -71,7 +78,9 @@ final class MCPServer {
             guard params["arguments"] == nil || params["arguments"] is [String: Any] else {
                 return send(error: -32602, "Invalid params: arguments must be an object", id: id)
             }
-            guard let result = Tools.call(name, arguments: params["arguments"] as? [String: Any] ?? [:], library: library)
+            guard
+                let result = Tools.call(
+                    name, arguments: params["arguments"] as? [String: Any] ?? [:], library: library, access: access)
             else {
                 return send(error: -32602, "Unknown tool: \(name)", id: id)
             }
@@ -102,7 +111,7 @@ final class MCPServer {
     }
 }
 
-/// The tools: read-only, local, and nothing but meetings for now.
+/// The tools: read-only and local. Settings › Agent Access (MCP) decides which of them answer (`AgentAccess`).
 enum Tools {
     static let readOnly: [String: Any] = [
         "readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false,
@@ -184,12 +193,13 @@ enum Tools {
                 writes it: a heading, the start date and time and the duration, the AI notes (when Yap wrote \
                 them: summary, decisions, action items, open questions) and the timestamped transcript (lines like \
                 **[00:12] Reed**: …, with the speaker names the user gave; "Me" is the person who recorded). \
-                Headings are in Yap's app language. Read-only, from Yap's local history. Get ids from list_meetings.
+                Headings are in Yap's app language. Read-only, from Yap's local history. Get ids from list_meetings \
+                or search_history.
                 """,
             "inputSchema": [
                 "type": "object",
                 "properties": [
-                    "id": ["type": "string", "description": "The meeting's id, from list_meetings."],
+                    "id": ["type": "string", "description": "The meeting's id, from list_meetings or search_history."],
                     "include_transcript": [
                         "type": "boolean", "default": true,
                         "description": "false returns the heading and the notes only (an hour's transcript is long).",
@@ -200,41 +210,207 @@ enum Tools {
             ],
             "annotations": readOnly,
         ],
+        [
+            "name": "search_history",
+            "title": "Search Yap's history",
+            "description": """
+                Search what the user dictated with Yap and the meetings Yap recorded on this Mac, newest first. \
+                Finds a piece of text anywhere (case and accents ignored; Chinese, English or both, like \
+                "先看一下 CI") in a dictation's original or enhanced (cleaned-up) text, or in a meeting's \
+                transcript or AI notes. Read-only, from Yap's local history; nothing leaves the Mac. Each result: \
+                id, kind ("dictation" or "meeting"), at (ISO 8601 with the Mac's UTC offset), app (the app the \
+                user dictated into, when known), mode (the Yap mode used, when any), field (where the snippet is \
+                from: "original", "enhanced", "transcript" or "notes"), snippet (about 80 characters on each side \
+                of the first match, "…" where cut), length (characters in that whole field) and read_with \
+                (get_dictation or get_meeting: the tool that reads the whole entry with this id). "more" is true \
+                when more entries match than "limit". When the user shares meetings but not dictations, only \
+                meetings are searched and dictations_excluded is true.
+                """,
+            "inputSchema": [
+                "type": "object",
+                "properties": [
+                    "query": [
+                        "type": "string", "minLength": 1,
+                        "description": "The text to find, as a substring: a word, a name, part of a sentence.",
+                    ],
+                    "kind": [
+                        "type": "string", "enum": ["all", "dictation", "meeting"], "default": "all",
+                        "description": "Search dictations, meetings, or both (default).",
+                    ],
+                    "since": [
+                        "type": "string",
+                        "description": "Only entries from this on: a date (2026-09-30, from local midnight) or an ISO 8601 date-time.",
+                    ],
+                    "until": [
+                        "type": "string",
+                        "description": "Only entries up to this: a date (2026-09-30, the whole day counts) or an ISO 8601 date-time.",
+                    ],
+                    "limit": [
+                        "type": "integer", "minimum": 1, "maximum": AgentAccess.maxSearchLimit,
+                        "default": AgentAccess.defaultSearchLimit,
+                        "description": "How many results, newest first (default 20; at most 50, larger values give 50).",
+                    ],
+                ],
+                "required": ["query"],
+                "additionalProperties": false,
+            ],
+            "outputSchema": [
+                "type": "object",
+                "properties": [
+                    "results": [
+                        "type": "array",
+                        "items": [
+                            "type": "object",
+                            "properties": [
+                                "id": ["type": "string"],
+                                "kind": ["type": "string", "enum": ["dictation", "meeting"]],
+                                "at": ["type": "string"],
+                                "app": ["type": "string"],
+                                "mode": ["type": "string"],
+                                "field": ["type": "string", "enum": ["original", "enhanced", "transcript", "notes"]],
+                                "snippet": ["type": "string"],
+                                "length": ["type": "integer"],
+                                "read_with": ["type": "string", "enum": ["get_dictation", "get_meeting"]],
+                            ],
+                            "required": ["id", "kind", "at", "field", "snippet", "length", "read_with"],
+                        ],
+                    ],
+                    "more": ["type": "boolean"],
+                    "dictations_excluded": ["type": "boolean"],
+                ],
+                "required": ["results", "more", "dictations_excluded"],
+            ],
+            "annotations": readOnly,
+        ],
+        [
+            "name": "get_dictation",
+            "title": "Get a Yap dictation",
+            "description": """
+                One dictation from Yap's history on this Mac: original (what the speech recognition wrote), \
+                enhanced (the cleaned-up text Yap pasted, when the mode cleaned it up), at, duration_seconds, \
+                app, mode and status (when it isn't "completed"). Read-only, from Yap's local history. Get ids \
+                from search_history. Meetings are read with get_meeting.
+                """,
+            "inputSchema": [
+                "type": "object",
+                "properties": ["id": ["type": "string", "description": "The dictation's id, from search_history."]],
+                "required": ["id"],
+                "additionalProperties": false,
+            ],
+            "outputSchema": [
+                "type": "object",
+                "properties": [
+                    "id": ["type": "string"],
+                    "at": ["type": "string"],
+                    "duration_seconds": ["type": "number"],
+                    "app": ["type": "string"],
+                    "mode": ["type": "string"],
+                    "original": ["type": "string"],
+                    "enhanced": ["type": "string"],
+                    "status": ["type": "string"],
+                ],
+                "required": ["id", "at", "duration_seconds", "original"],
+            ],
+            "annotations": readOnly,
+        ],
+        [
+            "name": "get_dictionary",
+            "title": "Get Yap's dictionary",
+            "description": """
+                The user's dictionary in Yap on this Mac. words: names and terms Yap tells the speech recognition \
+                to expect. replacements: rules Yap applies to every dictation, writing replacement wherever it \
+                hears one of originals. auto_added: Yap learned it from the user's corrections rather than the \
+                user typing it in. Read-only, from Yap's local dictionary.
+                """,
+            "inputSchema": [
+                "type": "object",
+                "properties": [
+                    "query": [
+                        "type": "string",
+                        "description": "Only entries containing this text (case and accents ignored).",
+                    ]
+                ],
+                "additionalProperties": false,
+            ],
+            "outputSchema": [
+                "type": "object",
+                "properties": [
+                    "words": [
+                        "type": "array",
+                        "items": [
+                            "type": "object",
+                            "properties": ["word": ["type": "string"], "auto_added": ["type": "boolean"]],
+                            "required": ["word", "auto_added"],
+                        ],
+                    ],
+                    "replacements": [
+                        "type": "array",
+                        "items": [
+                            "type": "object",
+                            "properties": [
+                                "originals": ["type": "array", "items": ["type": "string"]],
+                                "replacement": ["type": "string"],
+                                "auto_added": ["type": "boolean"],
+                            ],
+                            "required": ["originals", "replacement", "auto_added"],
+                        ],
+                    ],
+                ],
+                "required": ["words", "replacements"],
+            ],
+            "annotations": readOnly,
+        ],
     ]
 
     /// A `tools/call` result, or nil for a tool this server doesn't have (a protocol error, not a tool error).
-    static func call(_ name: String, arguments: [String: Any], library: MeetingLibrary) -> [String: Any]? {
+    /// `access` is read only for tools that exist, once per call.
+    static func call(
+        _ name: String, arguments: [String: Any], library: YapLibrary, access: () -> AgentAccess.Level
+    ) -> [String: Any]? {
+        guard definitions.contains(where: { $0["name"] as? String == name }) else { return nil }
+        let level = access()
+        guard level != .off else { return failure(accessOff) }
         switch name {
         case "list_meetings": return listMeetings(arguments, library: library)
         case "get_meeting": return getMeeting(arguments, library: library)
+        case "search_history": return searchHistory(arguments, library: library, level: level)
+        case "get_dictation": return getDictation(arguments, library: library, level: level)
+        case "get_dictionary": return getDictionary(arguments, library: library)
         default: return nil
         }
     }
 
-    private static func listMeetings(_ arguments: [String: Any], library: MeetingLibrary) -> [String: Any] {
+    /// The switches' names as Yap shows them, in the app's language.
+    static var accessOff: String {
+        let bundle = EnclosingApp.strings
+        return """
+            Yap doesn't let agents read its data: ask the user to turn on "\(AgentAccess.enabledTitle(bundle: bundle))" \
+            in \(AgentAccess.settingsPath(bundle: bundle)). It applies to the next call, without restarting anything.
+            """
+    }
+
+    static var dictationsOff: String {
+        let bundle = EnclosingApp.strings
+        return """
+            The user hasn't shared their dictation history with agents; meetings and the dictionary can be read. To \
+            read dictations, ask the user to turn on "\(AgentAccess.dictationsTitle(bundle: bundle))" in \
+            \(AgentAccess.settingsPath(bundle: bundle)).
+            """
+    }
+
+    private static func listMeetings(_ arguments: [String: Any], library: YapLibrary) -> [String: Any] {
         if let unknown = arguments.keys.first(where: { !["limit", "since", "until"].contains($0) }) {
             return failure("Unknown argument \"\(unknown)\". list_meetings takes limit, since and until.")
         }
         var limit = 20
         if let value = arguments["limit"] {
-            guard let number = value as? NSNumber, !JSON.isBool(value), let exact = Int(exactly: number.doubleValue),
-                (1...100).contains(exact)
+            guard let exact = wholeNumber(value), (1...100).contains(exact)
             else { return failure("limit must be a whole number from 1 to 100.") }
             limit = exact
         }
-        var bounds: [Date?] = []
-        for (key, endOfDay) in [("since", false), ("until", true)] {
-            guard let value = arguments[key] else {
-                bounds.append(nil)
-                continue
-            }
-            guard let text = value as? String, let date = Dates.parse(text, endOfDay: endOfDay) else {
-                return failure("\(key) must be a date like 2026-09-30 or an ISO 8601 date-time like 2026-09-30T14:00:00+02:00.")
-            }
-            bounds.append(date)
-        }
+        guard let range = dateRange(arguments) else { return failure(dateHelp) }
         do {
-            let (meetings, more) = try library.meetings(since: bounds[0], until: bounds[1], limit: limit)
+            let (meetings, more) = try library.meetings(since: range.since, until: range.until, limit: limit)
             let items: [[String: Any]] = meetings.map { meeting in
                 var item: [String: Any] = [
                     "id": meeting.id.uuidString,
@@ -248,16 +424,13 @@ enum Tools {
                 if let parts = meeting.untranscribedParts, parts > 0 { item["untranscribed_parts"] = parts }
                 return item
             }
-            let structured: [String: Any] = ["meetings": items, "more": more]
-            let text = (try? JSONSerialization.data(withJSONObject: structured, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]))
-                .flatMap { String(data: $0, encoding: .utf8) } ?? ""
-            return ["content": [["type": "text", "text": text]], "structuredContent": structured, "isError": false]
+            return structured(["meetings": items, "more": more])
         } catch {
             return failure("Yap's history couldn't be read: \(error.localizedDescription)")
         }
     }
 
-    private static func getMeeting(_ arguments: [String: Any], library: MeetingLibrary) -> [String: Any] {
+    private static func getMeeting(_ arguments: [String: Any], library: YapLibrary) -> [String: Any] {
         if let unknown = arguments.keys.first(where: { !["id", "include_transcript"].contains($0) }) {
             return failure("Unknown argument \"\(unknown)\". get_meeting takes id and include_transcript.")
         }
@@ -279,6 +452,146 @@ enum Tools {
         } catch {
             return failure("Yap's history couldn't be read: \(error.localizedDescription)")
         }
+    }
+
+    private static func searchHistory(_ arguments: [String: Any], library: YapLibrary, level: AgentAccess.Level)
+        -> [String: Any]
+    {
+        if let unknown = arguments.keys.first(where: { !["query", "kind", "since", "until", "limit"].contains($0) }) {
+            return failure("Unknown argument \"\(unknown)\". search_history takes query, kind, since, until and limit.")
+        }
+        guard let query = (arguments["query"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+            !query.isEmpty
+        else { return failure("query is required: the text to find.") }
+        let kind = arguments["kind"] as? String ?? "all"
+        guard arguments["kind"] == nil || arguments["kind"] is String, ["all", "dictation", "meeting"].contains(kind)
+        else { return failure("kind must be \"all\", \"dictation\" or \"meeting\".") }
+        var requested: Int?
+        if let value = arguments["limit"] {
+            guard let exact = wholeNumber(value) else { return failure("limit must be a whole number (1 to 50).") }
+            requested = exact
+        }
+        guard let range = dateRange(arguments) else { return failure(dateHelp) }
+
+        let dictationsShared = level == .everything
+        if kind == "dictation" && !dictationsShared { return failure(dictationsOff) }
+        var filter = HistoryFilter()
+        filter.meetingsOnly = kind == "meeting" || !dictationsShared
+        filter.dictationsOnly = kind == "dictation"
+        filter.since = range.since
+        filter.until = range.until
+        do {
+            let (matches, more) = try library.search(query, filter: filter, limit: AgentAccess.searchLimit(requested))
+            let results: [[String: Any]] = matches.map { match in
+                var item: [String: Any] = [
+                    "id": match.id.uuidString,
+                    "kind": match.isMeeting ? "meeting" : "dictation",
+                    "at": Dates.iso8601(match.timestamp),
+                    "field": match.isMeeting
+                        ? (match.inEnhancedText ? "notes" : "transcript") : (match.inEnhancedText ? "enhanced" : "original"),
+                    "snippet": match.snippet,
+                    "length": match.fullLength,
+                    "read_with": match.isMeeting ? "get_meeting" : "get_dictation",
+                ]
+                if let app = match.appName, !app.isEmpty { item["app"] = app }
+                if let mode = match.modeName, !mode.isEmpty { item["mode"] = mode }
+                return item
+            }
+            var result = structured([
+                "results": results, "more": more, "dictations_excluded": kind == "all" && !dictationsShared,
+            ])
+            if kind == "all" && !dictationsShared, var content = result["content"] as? [[String: Any]] {
+                content.append(["type": "text", "text": "Only meetings were searched. \(dictationsOff)"])
+                result["content"] = content
+            }
+            return result
+        } catch {
+            return failure("Yap's history couldn't be read: \(error.localizedDescription)")
+        }
+    }
+
+    private static func getDictation(_ arguments: [String: Any], library: YapLibrary, level: AgentAccess.Level)
+        -> [String: Any]
+    {
+        guard level == .everything else { return failure(dictationsOff) }
+        if let unknown = arguments.keys.first(where: { $0 != "id" }) {
+            return failure("Unknown argument \"\(unknown)\". get_dictation takes id.")
+        }
+        guard let text = arguments["id"] as? String else {
+            return failure("id is required: a dictation id from search_history.")
+        }
+        let notFound = "There is no dictation with id \(text) in Yap's history on this Mac. Use search_history for the ids."
+        guard let id = UUID(uuidString: text.trimmingCharacters(in: .whitespaces)) else { return failure(notFound) }
+        do {
+            guard let dictation = try library.dictation(id: id) else {
+                if try library.isMeeting(id: id) {
+                    return failure("\(text) is a meeting, not a dictation: read it with get_meeting.")
+                }
+                return failure(notFound)
+            }
+            var item: [String: Any] = [
+                "id": dictation.id.uuidString,
+                "at": Dates.iso8601(dictation.timestamp),
+                "duration_seconds": (dictation.duration * 10).rounded() / 10,
+                "original": dictation.text,
+            ]
+            if let enhanced = dictation.enhancedText, !enhanced.isEmpty { item["enhanced"] = enhanced }
+            if let app = dictation.appName, !app.isEmpty { item["app"] = app }
+            if let mode = dictation.modeName, !mode.isEmpty { item["mode"] = mode }
+            if let status = dictation.status, status != "completed" { item["status"] = status }
+            return structured(item)
+        } catch {
+            return failure("Yap's history couldn't be read: \(error.localizedDescription)")
+        }
+    }
+
+    private static func getDictionary(_ arguments: [String: Any], library: YapLibrary) -> [String: Any] {
+        if let unknown = arguments.keys.first(where: { $0 != "query" }) {
+            return failure("Unknown argument \"\(unknown)\". get_dictionary takes query.")
+        }
+        guard arguments["query"] == nil || arguments["query"] is String else { return failure("query must be text.") }
+        let query = (arguments["query"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        do {
+            let dictionary = try library.dictionary(matching: query)
+            return structured([
+                "words": dictionary.words.map { ["word": $0.word, "auto_added": $0.autoAdded] },
+                "replacements": dictionary.replacements.map {
+                    ["originals": $0.originals, "replacement": $0.replacement, "auto_added": $0.autoAdded]
+                },
+            ])
+        } catch {
+            return failure("Yap's dictionary couldn't be read: \(error.localizedDescription)")
+        }
+    }
+
+    private static let dateHelp =
+        "since and until must be a date like 2026-09-30 or an ISO 8601 date-time like 2026-09-30T14:00:00+02:00."
+
+    /// since and until (each optional), or nil when one doesn't parse.
+    private static func dateRange(_ arguments: [String: Any]) -> (since: Date?, until: Date?)? {
+        var bounds: [Date?] = []
+        for (key, endOfDay) in [("since", false), ("until", true)] {
+            guard let value = arguments[key] else {
+                bounds.append(nil)
+                continue
+            }
+            guard let text = value as? String, let date = Dates.parse(text, endOfDay: endOfDay) else { return nil }
+            bounds.append(date)
+        }
+        return (bounds[0], bounds[1])
+    }
+
+    /// A JSON integer (not true/false, not 2.5).
+    private static func wholeNumber(_ value: Any) -> Int? {
+        guard let number = value as? NSNumber, !JSON.isBool(value) else { return nil }
+        return Int(exactly: number.doubleValue)
+    }
+
+    /// A result with `structuredContent`, and the same JSON as text for clients that only read text.
+    private static func structured(_ object: [String: Any]) -> [String: Any] {
+        let text = (try? JSONSerialization.data(withJSONObject: object, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]))
+            .flatMap { String(data: $0, encoding: .utf8) } ?? ""
+        return ["content": [["type": "text", "text": text]], "structuredContent": object, "isError": false]
     }
 
     /// A tool error: the agent sees the message and can correct its call.

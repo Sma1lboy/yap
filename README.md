@@ -145,6 +145,32 @@ API keys are never written to config.json or sent to Yap Cloud. Yap only reads t
 
 Current picks (Sept 2026): transcription `microsoft/mai-transcribe-2` ($0.10/h; 80/82 key terms on an earlier, uncommitted bench, 59/82 on the harder set in `setup/asr/`, see [docs/dictation-accuracy.md](docs/dictation-accuracy.md)), cleanup `deepseek/deepseek-v4.1-flash` (23–24 of 25 cases, ~0.5 s, see [docs/cloud-models.md](docs/cloud-models.md)). Onboarding's "Your OpenRouter Key" option applies exactly this setup with your own OpenRouter key; usage is billed by OpenRouter. Re-run `setup/bench.py` after editing `VoiceInk/Resources/RecommendedPrompt.md`.
 
+## Use your Yap data in Claude Code / Cursor / Codex
+
+Yap ships a small read-only MCP server inside the app, `Yap.app/Contents/Helpers/yap-mcp`. Your agent starts it as a subprocess and talks to it over stdin/stdout: it opens no network port, sends nothing anywhere, and works whether or not Yap is running. Each call copies Yap's local database and reads the copy; Yap's own files are only copied, never opened by SQLite.
+
+It's **off** until you turn it on in **Settings › Agent Access (MCP)**:
+
+- **Let Agents Read Yap's Data**: meetings (notes and transcripts) and your dictionary. While it's off, agents can connect but every read is an error that tells them where the switch is.
+- **Include Dictation History**: your dictations too. Off by default, because dictations often hold passwords, private messages and drafts.
+
+The helper rereads both switches on every call, so turning one off applies to the agent's next request.
+
+Tools: `list_meetings`, `get_meeting`, `search_history` (substring search across dictations and meetings, Chinese and English), `get_dictation`, `get_dictionary`. The same Settings section copies the commands below with the path of your copy of Yap.
+
+```sh
+claude mcp add yap -- /Applications/Yap.app/Contents/Helpers/yap-mcp     # Claude Code
+codex mcp add yap -- /Applications/Yap.app/Contents/Helpers/yap-mcp      # Codex
+```
+
+Cursor, in `~/.cursor/mcp.json`:
+
+```json
+{ "mcpServers": { "yap": { "type": "stdio", "command": "/Applications/Yap.app/Contents/Helpers/yap-mcp" } } }
+```
+
+Then ask, for example: "Summarize the action items from this week's meetings", "What did I dictate about the CI migration last month?" (needs dictation history), "Check this README against the spellings in my Yap dictionary". Details, tool arguments and limits: [docs/mcp.md](docs/mcp.md).
+
 ## Development
 
 - `make mock`: runs the Debug app with fake data (signed in to Yap Cloud with $4.21, 20 transcripts, 5 modes, a custom provider, dictionary entries), offline and in its own settings domain `me.sma1lboy.yap.mock`; your dev and release settings aren't touched, and quitting deletes everything it created.

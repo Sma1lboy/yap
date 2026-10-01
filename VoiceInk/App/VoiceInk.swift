@@ -46,8 +46,8 @@ struct VoiceInkApp: App {
             UISnapshots.runIfRequested()
             // make meeting-call-check: print who uses the microphone and exit, before anything writes settings.
             MeetingCallCheck.runIfRequested()
-            // make mcp-check: write a data folder for yap-mcp and the expected exports, and exit. Before the
-            // self-checks, which assume English (the check also runs the app in Chinese).
+            // make mcp-check: write a data folder for yap-mcp and the expected exports, and exit, before anything
+            // writes settings.
             MCPFixture.runIfRequested()
         #endif
         // Before onboarding can complete in this session, so a fresh install isn't mistaken for an update.
@@ -98,6 +98,8 @@ struct VoiceInkApp: App {
             YapCloud.modeNamesSelfCheck()
             RecordingContextSnapshot.selfCheck()
             HistoryQuery.selfCheck()
+            AgentAccess.selfCheck()
+            AgentConnection.selfCheck()
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
@@ -333,7 +335,6 @@ struct VoiceInkApp: App {
 
         let transcriptConfig = YapStores.historyConfiguration(url: defaultStoreURL)
 
-        let dictionarySchema = Schema([VocabularyWord.self, WordReplacement.self])
         // Dev shares the local stores but must never connect to CloudKit.
         #if DEBUG || LOCAL_BUILD
             let dictionaryCloudKit: ModelConfiguration.CloudKitDatabase = .none
@@ -341,12 +342,7 @@ struct VoiceInkApp: App {
             let dictionaryCloudKit: ModelConfiguration.CloudKitDatabase = .private(
                 "iCloud.com.prakashjoshipax.VoiceInk")
         #endif
-        let dictionaryConfig = ModelConfiguration(
-            "dictionary",
-            schema: dictionarySchema,
-            url: dictionaryStoreURL,
-            cloudKitDatabase: dictionaryCloudKit
-        )
+        let dictionaryConfig = YapStores.dictionaryConfiguration(url: dictionaryStoreURL, cloudKitDatabase: dictionaryCloudKit)
 
         let statsSchema = Schema([SessionMetric.self])
         let statsConfig = ModelConfiguration(

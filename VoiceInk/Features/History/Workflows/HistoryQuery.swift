@@ -1,14 +1,21 @@
 import Foundation
 import SwiftData
 
-/// What History's Filter menu narrows the list to. Combines with the search text.
+/// What History's Filter menu narrows the list to. Combines with the search text. yap-mcp's search_history uses
+/// the same filter (HistoryQuery.swift is compiled into it), with the kind and date fields History doesn't show.
 struct HistoryFilter: Equatable {
     var appBundleID: String?
     var appName: String?
     var modeName: String?
     var meetingsOnly = false
+    var dictationsOnly = false
+    /// Started at or after `since` and at or before `until`.
+    var since: Date?
+    var until: Date?
 
-    var isActive: Bool { appBundleID != nil || modeName != nil || meetingsOnly }
+    var isActive: Bool {
+        appBundleID != nil || modeName != nil || meetingsOnly || dictationsOnly || since != nil || until != nil
+    }
 }
 
 enum HistorySort: CaseIterable, Identifiable {
@@ -58,7 +65,8 @@ enum HistoryQuery {
     }
 
     /// Search text, filter and (for the next page) the position after `cursor` in one predicate.
-    /// Unused parts are switched off by a captured Bool, since a #Predicate can't be assembled piece by piece.
+    /// Unused parts are switched off by a captured Bool, since a #Predicate can't be assembled piece by piece. What
+    /// and when are two predicates joined with `evaluate`: as one expression they're too big for the type checker.
     static func predicate(search: String, filter: HistoryFilter, after cursor: Cursor? = nil)
         -> Predicate<Transcription>
     {
@@ -66,20 +74,40 @@ enum HistoryQuery {
         let query = search
         let app: String? = filter.appBundleID
         let mode: String? = filter.modeName
-        let meetingKind: String? = filter.meetingsOnly ? Transcription.meetingKind : nil
+        // One kind or the other: meetings have `meetingKind`, dictations nil.
+        let filtersKind = filter.meetingsOnly || filter.dictationsOnly
+        let kind: String? = filter.meetingsOnly ? Transcription.meetingKind : nil
+        let since = filter.since ?? .distantPast
+        let until = filter.until ?? .distantFuture
         let hasCursor = cursor != nil
         let cursorTimestamp = cursor?.timestamp ?? .distantFuture
         let cursorID = cursor?.id ?? UUID()
 
-        return #Predicate<Transcription> { t in
+        let what = #Predicate<Transcription> { t in
             (!hasQuery || t.text.localizedStandardContains(query)
                 || (t.enhancedText?.localizedStandardContains(query) ?? false))
                 && (app == nil || t.sourceAppBundleID == app)
                 && (mode == nil || t.modeName == mode)
-                && (meetingKind == nil || t.kind == meetingKind)
+                && (!filtersKind || t.kind == kind)
+        }
+        let when = #Predicate<Transcription> { t in
+            t.timestamp >= since && t.timestamp <= until
                 && (!hasCursor || t.timestamp < cursorTimestamp
                     || (t.timestamp == cursorTimestamp && t.id < cursorID))
         }
+        return #Predicate<Transcription> { what.evaluate($0) && when.evaluate($0) }
+    }
+
+    /// Where `search` first occurs in `text`, by the same rule as the predicate (`localizedStandardContains`: case
+    /// and diacritics ignored), with about `radius` characters on each side on one line, "…" where it's cut. nil
+    /// when `text` doesn't contain it.
+    static func snippet(of text: String, matching search: String, radius: Int = 80) -> String? {
+        guard !search.isEmpty, let hit = text.localizedStandardRange(of: search) else { return nil }
+        let start = text.index(hit.lowerBound, offsetBy: -radius, limitedBy: text.startIndex) ?? text.startIndex
+        let end = text.index(hit.upperBound, offsetBy: radius, limitedBy: text.endIndex) ?? text.endIndex
+        let line = text[start..<end].split(whereSeparator: \.isNewline).joined(separator: " ")
+            .trimmingCharacters(in: .whitespaces)
+        return (start > text.startIndex ? "…" : "") + line + (end < text.endIndex ? "…" : "")
     }
 
     /// Apps and modes that appear in `items`, for the Filter menu. Apps are keyed by bundle id.
@@ -151,11 +179,56 @@ enum HistoryQuery {
             later.timestamp = mail.timestamp.addingTimeInterval(60)
             let after = predicate(search: "", filter: HistoryFilter(), after: cursor)
             assert((try? after.evaluate(earlier)) == true && (try? after.evaluate(later)) == false, "cursor")
+            // Same second as the cursor: only ids after it (the page is ordered by timestamp, then id, descending).
+            let tie = make("tie")
+            tie.timestamp = mail.timestamp
+            assert((try? after.evaluate(tie)) == (tie.id < mail.id), "cursor tie")
+            // An until before the cursor bounds the page, ties included; one after it leaves the cursor in charge.
+            var bounded = HistoryFilter()
+            bounded.until = earlier.timestamp
+            let tieAtUntil = make("at until")
+            tieAtUntil.timestamp = earlier.timestamp
+            let page = predicate(search: "", filter: bounded, after: cursor)
+            assert((try? page.evaluate(earlier)) == true && (try? page.evaluate(tieAtUntil)) == true, "until, inclusive")
+            assert((try? page.evaluate(tie)) == false && (try? page.evaluate(later)) == false, "until below the cursor")
+            bounded.until = later.timestamp
+            let wide = predicate(search: "", filter: bounded, after: cursor)
+            assert((try? wide.evaluate(earlier)) == true && (try? wide.evaluate(later)) == false, "cursor below until")
 
             let facets = facets(of: [mail, notes, meeting, old])
             assert(facets.apps.map(\.id) == ["com.apple.mail", "com.apple.Notes"])
             assert(facets.modes == ["Email", "Meeting"])
             assert(!HistoryFilter().isActive && f.isActive)
+
+            // search_history's kinds and dates.
+            f = HistoryFilter()
+            f.dictationsOnly = true
+            assert(matches(mail, "", f) && !matches(meeting, "", f), "dictations only")
+            f = HistoryFilter()
+            f.since = mail.timestamp.addingTimeInterval(-1)
+            f.until = mail.timestamp.addingTimeInterval(1)
+            let lastWeek = make("hello")
+            lastWeek.timestamp = mail.timestamp.addingTimeInterval(-7 * 86_400)
+            assert(matches(mail, "hello", f) && !matches(lastWeek, "hello", f), "since/until")
+            f.since = nil
+            assert(matches(lastWeek, "hello", f), "until alone")
+            // Mixed Chinese and English, any case: the dictation said "CI", the search says "ci".
+            let mixed = make("好的，我们先看一下 CI 再合并")
+            assert(matches(mixed, "先看一下 ci") && matches(mixed, "看一下") && !matches(mixed, "先看一下CD"), "mixed")
+
+            // Snippets: about 80 characters each side, cut ends marked, one line.
+            let long = String(repeating: "a", count: 200) + " Needle here " + String(repeating: "b", count: 200)
+            let middle = snippet(of: long, matching: "needle")!
+            assert(middle.hasPrefix("…") && middle.hasSuffix("…") && middle.contains("Needle"), middle)
+            assert(middle.count == 1 + 80 + "Needle".count + 80 + 1, "\(middle.count)")
+            let first = snippet(of: "Needle at the start\nof two lines", matching: "NEEDLE")!
+            assert(first == "Needle at the start of two lines", first)
+            let last = snippet(of: String(repeating: "x", count: 100) + " ends with needle", matching: "needle")!
+            assert(last.hasPrefix("…") && !last.hasSuffix("…") && last.hasSuffix("needle"), last)
+            let chinese = String(repeating: "很", count: 100) + "先看一下 CI" + String(repeating: "好", count: 100)
+            let hit = snippet(of: chinese, matching: "先看一下 ci")!
+            assert(hit == "…" + String(repeating: "很", count: 80) + "先看一下 CI" + String(repeating: "好", count: 80) + "…", hit)
+            assert(snippet(of: "abc", matching: "x") == nil && snippet(of: "abc", matching: "") == nil)
 
             let base = Date()
             func item(_ text: String, seconds: TimeInterval, age: TimeInterval) -> Transcription {

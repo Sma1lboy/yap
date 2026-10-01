@@ -140,12 +140,16 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Configuration/AppIdentity.swift,
+				Features/Dictionary/Workflows/WordReplacementVariants.swift,
+				Features/History/Workflows/HistoryQuery.swift,
 				Features/Meeting/MeetingMarkdown.swift,
+				Features/Settings/AgentAccess.swift,
 				Infrastructure/Persistence/Models/SessionMetric.swift,
 				Infrastructure/Persistence/Models/Transcription.swift,
 				Infrastructure/Persistence/Models/VocabularyWord.swift,
 				Infrastructure/Persistence/Models/WordReplacement.swift,
 				Infrastructure/Persistence/YapStores.swift,
+				Infrastructure/TextProcessing/WordCounter.swift,
 			);
 			target = E1CD00042FC0000000000001 /* yap-mcp */;
 		};
