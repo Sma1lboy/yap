@@ -232,6 +232,7 @@ final class OfflineTranscribeCppService: TranscriptionService, @unchecked Sendab
             logger.notice(
                 "\(model.displayName, privacy: .public) loaded with \(loadedModel.backend, privacy: .public) in \(startedAt.duration(to: .now).formatted(.units(allowed: [.seconds], width: .narrow)), privacy: .public)"
             )
+            DictationTimeline.modelDidLoad()
             return loadedModel
         } catch {
             stateLock.withLock {

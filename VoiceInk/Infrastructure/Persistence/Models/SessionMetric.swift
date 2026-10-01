@@ -18,6 +18,20 @@ final class SessionMetric {
     var enhancementDuration: TimeInterval?
     var enhancementEstimatedTokenCount: Int?
 
+    // DictationTimeline: how the dictation was stopped and, in seconds after that, when each step finished. Nil on
+    // metrics recorded before these fields existed and for steps that didn't happen (no model load, no AI cleanup,
+    // no ⌘V). Optional, so SwiftData adds the columns by lightweight migration.
+    /// DictationTimeline.StopSource raw value.
+    var stopSource: String?
+    var stopToRecorderStopped: TimeInterval?
+    var stopToModelReady: TimeInterval?
+    var stopToTranscribed: TimeInterval?
+    var stopToProcessed: TimeInterval?
+    var stopToEnhanced: TimeInterval?
+    var stopToPasteCommand: TimeInterval?
+    /// DictationTimeline.PasteOutcome raw value; nil when the text wasn't pasted (a response, a custom command).
+    var pasteOutcome: String?
+
     init(
         transcriptionId: UUID,
         timestamp: Date = Date(),

@@ -183,8 +183,11 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
     // MARK: - Toggle Record
 
+    /// `stop`: when and how the user stopped the recording, if this call stops one; nil means now, from somewhere
+    /// other than a shortcut (DictationTimeline).
     func toggleRecord(
-        modeId: UUID? = nil, isAssistantFollowUp: Bool = false, editsLastPaste: Bool = false, sendAfterPaste: Bool = false
+        modeId: UUID? = nil, isAssistantFollowUp: Bool = false, editsLastPaste: Bool = false, sendAfterPaste: Bool = false,
+        stop: DictationTimeline.Stop? = nil
     ) async {
         if recordingState == .starting {
             await cancelRecording()
@@ -192,12 +195,14 @@ class VoiceInkEngine: NSObject, ObservableObject {
         }
 
         if recordingState == .recording {
+            let timeline = DictationTimeline(stop: stop ?? .now(.other))
             activePipelineUseCase = activeRecordingUseCase
             activeRecordingUseCase = .newSession
             activeRecordingStartID = nil
             partialTranscript = ""
             recordingState = .transcribing
             await recorder.stopRecording()
+            timeline.mark(.recorderStopped)
 
             if let recordedFile {
                 if !shouldCancelRecording {
@@ -215,7 +220,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
                         on: transcription,
                         audioURL: recordedFile,
                         contextStore: activeRecordingContextStore,
-                        sendAfterPaste: sendAfterPaste
+                        sendAfterPaste: sendAfterPaste,
+                        timeline: timeline
                     )
                 } else {
                     await finishActiveRecorderCancellation()
@@ -375,34 +381,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
                             self.scheduleVoiceInkRefinePreparation(for: startID)
 
                             Task { @MainActor [weak self] in
-                                guard let self else { return }
-
-                                let currentModel = ModeRuntimeResolver.transcriptionConfiguration(
-                                    transcriptionModelManager: self.transcriptionModelManager
-                                )?.model
-
-                                if let model = currentModel,
-                                    model.provider == .whisper
-                                {
-                                    if let localWhisperModel = self.whisperModelManager.availableModels.first(where: {
-                                        $0.name == model.name
-                                    }),
-                                        self.whisperModelManager.whisperContext == nil
-                                    {
-                                        do {
-                                            try await self.whisperModelManager.loadModel(localWhisperModel)
-                                        } catch {
-                                            self.logger.error("❌ Model loading failed: \(error, privacy: .public)")
-                                        }
-                                    }
-                                } else if let fluidAudioModel = currentModel as? FluidAudioModel {
-                                    try? await self.serviceRegistry.fluidAudioTranscriptionService.loadModel(
-                                        for: fluidAudioModel)
-                                } else if let transcribeCppModel = currentModel as? TranscribeCppModel {
-                                    try? await self.serviceRegistry.transcribeCppTranscriptionService.loadModel(
-                                        for: transcribeCppModel)
-                                }
-
+                                await self?.preloadTranscriptionModel()
                             }
 
                         } catch {
@@ -439,6 +418,33 @@ class VoiceInkEngine: NSObject, ObservableObject {
                     logger.error("Recording permission denied")
                 }
             }
+        }
+    }
+
+    /// Loads the current mode's local model while the user speaks, so it's ready when they stop.
+    func preloadTranscriptionModel() async {
+        let currentModel = ModeRuntimeResolver.transcriptionConfiguration(
+            transcriptionModelManager: transcriptionModelManager
+        )?.model
+
+        if let model = currentModel,
+            model.provider == .whisper
+        {
+            if let localWhisperModel = whisperModelManager.availableModels.first(where: {
+                $0.name == model.name
+            }),
+                whisperModelManager.whisperContext == nil
+            {
+                do {
+                    try await whisperModelManager.loadModel(localWhisperModel)
+                } catch {
+                    logger.error("❌ Model loading failed: \(error, privacy: .public)")
+                }
+            }
+        } else if let fluidAudioModel = currentModel as? FluidAudioModel {
+            try? await serviceRegistry.fluidAudioTranscriptionService.loadModel(for: fluidAudioModel)
+        } else if let transcribeCppModel = currentModel as? TranscribeCppModel {
+            try? await serviceRegistry.transcribeCppTranscriptionService.loadModel(for: transcribeCppModel)
         }
     }
 
@@ -621,12 +627,16 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
     // MARK: - Pipeline Dispatch
 
+    /// Returns once the text is delivered; the returned task finishes when the paste it started has sent ⌘V (or
+    /// failed) and the dictation's SessionMetric has its paste time.
+    @discardableResult
     private func runPipeline(
         on transcription: Transcription,
         audioURL: URL,
         contextStore: RecordingContextSnapshotStore?,
-        sendAfterPaste: Bool
-    ) async {
+        sendAfterPaste: Bool,
+        timeline: DictationTimeline?
+    ) async -> Task<Void, Never>? {
         guard
             let transcriptionConfiguration = currentSessionTranscriptionConfiguration
                 ?? ModeRuntimeResolver.transcriptionConfiguration(transcriptionModelManager: transcriptionModelManager)
@@ -636,14 +646,14 @@ class VoiceInkEngine: NSObject, ObservableObject {
             try? modelContext.save()
             recordingState = .idle
             activePipelineUseCase = .newSession
-            return
+            return nil
         }
 
         let session = currentSession
         let transcriptionID = transcription.id
         activePipelineTranscriptionID = transcriptionID
 
-        await pipeline.run(
+        let pasteTask = await pipeline.run(
             transcription: transcription,
             audioURL: audioURL,
             transcriptionConfiguration: transcriptionConfiguration,
@@ -675,6 +685,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
                 ModeRuntimeResolver.outputConfiguration()
             },
             sendAfterPaste: sendAfterPaste,
+            timeline: timeline,
             onStateChange: { [weak self] state in
                 guard let self, self.activePipelineTranscriptionID == transcriptionID else { return }
                 self.recordingState = state
@@ -745,6 +756,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
         {
             recordingState = .idle
         }
+        return pasteTask
     }
 
     private func selectTriggerWordModeIfNeeded(for text: String) -> String? {
@@ -1007,18 +1019,23 @@ enum AudioFileMetadata {
 #if DEBUG
     extension VoiceInkEngine {
         /// `make offline-check` (OfflineCheck): the steps `toggleRecord` runs once a recording stops, on a WAV file
-        /// instead of the microphone, so a dictation can run without a hotkey or microphone permission.
-        func dictateFile(_ file: URL) async -> Transcription {
+        /// instead of the microphone, so a dictation can run without a hotkey or microphone permission. `measured`
+        /// (`make dictation-latency`): the dictation gets a timeline whose stop is taken once the file is in place, and
+        /// this returns only after the paste has sent ⌘V (CursorPaster.dryRun) and the SessionMetric has its times.
+        func dictateFile(_ file: URL, measured: Bool = false) async -> Transcription {
             let audioURL = recordingsDirectory.appendingPathComponent("\(UUID().uuidString).wav")
             try? FileManager.default.copyItem(at: file, to: audioURL)
             startRecordingContextCapture()
             recordingState = .transcribing
+            let timeline = measured ? DictationTimeline(stop: .now(.file)) : nil
             let transcription = makeRecordingTranscription(
                 for: audioURL, text: "", duration: 0, transcriptionStatus: .pending)
             modelContext.insert(transcription)
             try? modelContext.save()
-            await runPipeline(
-                on: transcription, audioURL: audioURL, contextStore: activeRecordingContextStore, sendAfterPaste: false)
+            let pasteTask = await runPipeline(
+                on: transcription, audioURL: audioURL, contextStore: activeRecordingContextStore, sendAfterPaste: false,
+                timeline: timeline)
+            await pasteTask?.value
             return transcription
         }
     }

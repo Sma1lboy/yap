@@ -141,7 +141,9 @@ class FluidAudioTranscriptionService: TranscriptionService {
         -> String
     {
         if FluidAudioModelManager.isParakeetUnifiedModel(named: model.name) {
+            let wasLoaded = unifiedAsrManager != nil
             try await ensureUnifiedModelsLoaded()
+            if !wasLoaded { DictationTimeline.modelDidLoad() }
             guard let unifiedAsrManager else {
                 throw ASRError.notInitialized
             }
@@ -153,7 +155,9 @@ class FluidAudioTranscriptionService: TranscriptionService {
         }
 
         if FluidAudioModelManager.isNemotronModel(named: model.name) {
+            let wasLoaded = nemotronAsrManager != nil && activeNemotronModelName == model.name
             try await ensureNemotronModelsLoaded(named: model.name)
+            if !wasLoaded { DictationTimeline.modelDidLoad() }
             guard let nemotronAsrManager else {
                 throw ASRError.notInitialized
             }
@@ -180,7 +184,9 @@ class FluidAudioTranscriptionService: TranscriptionService {
         }
 
         let targetVersion = version(for: model)
+        let wasLoaded = asrManager != nil && activeVersion == targetVersion
         try await ensureModelsLoaded(for: targetVersion)
+        if !wasLoaded { DictationTimeline.modelDidLoad() }
 
         guard let asrManager = asrManager else {
             throw ASRError.notInitialized

@@ -50,6 +50,7 @@ class WhisperTranscriptionService: TranscriptionService {
             logger.notice("Loading model: \(model.name, privacy: .public)")
             do {
                 whisperContext = try await WhisperContext.createContext(path: modelURL.path)
+                DictationTimeline.modelDidLoad()
             } catch {
                 logger.error("❌ Failed to load model: \(model.name, privacy: .public) - \(error, privacy: .public)")
                 throw VoiceInkEngineError.modelLoadFailed

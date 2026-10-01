@@ -65,6 +65,11 @@ struct VoiceInkApp: App {
             WhisperTranscriptionService.selfCheck()
             ChineseCleanup.selfCheck()
             WhisperLivePreview.selfCheck()
+            DictationTimeline.selfCheck()
+            Task { @MainActor in await RecordingShortcutModeHandler.selfCheck() }
+            Task.detached {
+                do { try SessionMetricRecorder.selfCheck() } catch { assertionFailure("SessionMetric selfCheck: \(error)") }
+            }
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()

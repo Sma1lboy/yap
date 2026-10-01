@@ -97,8 +97,9 @@ class RecorderUIManager: ObservableObject, RecorderPanelPresenting {
                     recorder: recorder,
                     assistantSession: engine.assistantSession,
                     onRecordButtonTapped: { [weak self] in
+                        let stop = DictationTimeline.Stop.now(.recorderButton)
                         Task { @MainActor in
-                            await self?.toggleRecorderPanel()
+                            await self?.toggleRecorderPanel(stop: stop)
                         }
                     },
                     onCloseTapped: { [weak self] in
@@ -121,8 +122,9 @@ class RecorderUIManager: ObservableObject, RecorderPanelPresenting {
                     recorder: recorder,
                     assistantSession: engine.assistantSession,
                     onRecordButtonTapped: { [weak self] in
+                        let stop = DictationTimeline.Stop.now(.recorderButton)
                         Task { @MainActor in
-                            await self?.toggleRecorderPanel()
+                            await self?.toggleRecorderPanel(stop: stop)
                         }
                     },
                     onCloseTapped: { [weak self] in
@@ -219,13 +221,15 @@ class RecorderUIManager: ObservableObject, RecorderPanelPresenting {
 
     // MARK: - Recorder Panel Management
 
-    func toggleRecorderPanel(modeId: UUID? = nil) async {
+    /// `stop`: when and how the user stopped, if this call stops a recording (the dictation's timeline); the menu bar,
+    /// the Shortcuts app and other callers without one stop "now".
+    func toggleRecorderPanel(modeId: UUID? = nil, stop: DictationTimeline.Stop? = nil) async {
         guard let engine = engine else { return }
 
         if isRecorderPanelVisible {
             switch engine.recordingState {
             case .recording:
-                await engine.toggleRecord(modeId: modeId)
+                await engine.toggleRecord(modeId: modeId, stop: stop ?? .now(.other))
             case .starting, .transcribing, .enhancing:
                 await cancelRecording()
             case .idle:
@@ -251,7 +255,7 @@ class RecorderUIManager: ObservableObject, RecorderPanelPresenting {
 
     func finishRecordingAndSend() async {
         guard isRecorderPanelVisible, let engine, engine.recordingState == .recording else { return }
-        await engine.toggleRecord(sendAfterPaste: true)
+        await engine.toggleRecord(sendAfterPaste: true, stop: .now(.finishAndSend))
     }
 
     var isActivelyRecording: Bool {
