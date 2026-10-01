@@ -20,6 +20,9 @@
             guard let index = arguments.firstIndex(of: argument), arguments.indices.contains(index + 1) else { return }
             let file = URL(fileURLWithPath: arguments[index + 1])
             if arguments.contains("--residency-check") { return runResidency(engine: engine, file: file) }
+            if let stateIndex = arguments.firstIndex(of: QuitCheck.argument), arguments.indices.contains(stateIndex + 1) {
+                return QuitCheck.run(engine: engine, file: file, state: arguments[stateIndex + 1])
+            }
             if let modelIndex = arguments.firstIndex(of: firstRunArgument), arguments.indices.contains(modelIndex + 1) {
                 return runFirstRun(engine: engine, modelName: arguments[modelIndex + 1], file: file)
             }
@@ -37,7 +40,7 @@
                 try? await Task.sleep(for: .seconds(5))
                 print("offline-check: quit \(Date().timeIntervalSince1970)")
                 fflush(stdout)
-                exit(0)  // NSApp.terminate is turned into "hide to the menu bar"
+                exit(0)  // not NSApp.terminate, which can't finish from inside a Task (AppDelegate.applicationShouldTerminate)
             }
         }
 

@@ -104,6 +104,7 @@ class WhisperModelManager: ObservableObject {
     func loadModel(_ model: WhisperModelFile) async throws {
         if let loadTask { return try await loadTask.value }
         guard whisperContext == nil else { return }
+        guard !isClosed else { throw VoiceInkEngineError.modelLoadFailed }
 
         // Cleared by the load itself, so whoever waits on it sees it gone as soon as it finishes.
         let task = Task {
@@ -414,6 +415,17 @@ class WhisperModelManager: ObservableObject {
         logger.notice("WhisperModelManager.cleanupResources: completed")
     }
 
+    /// Set by Quit: a load asked for after it fails, so nothing loads a model again between the release and exit().
+    private var isClosed = false
+
+    /// Quit: no load starts from now on, and the loaded model is freed once a load or a decode in flight has finished
+    /// (`releaseResources` queues behind the decode on the WhisperContext actor). ggml frees its Metal device in a
+    /// static destructor during exit() and aborts if a model's buffers are still allocated then.
+    func closeForQuit() async {
+        isClosed = true
+        await cleanupResources()
+    }
+
     // MARK: - Import Local Model
 
     func importWhisperModel(from sourceURL: URL) async {
@@ -469,8 +481,9 @@ extension WhisperModelManager: WhisperModelProvider {}
 #if DEBUG
     extension WhisperModelManager {
         /// Loads are counted with placeholder contexts (no model file is read): a dictation stopped while the press's
-        /// preload is still loading waits for it, a press during a release still preloads, and a dictation needing a
-        /// different model releases the loaded one first.
+        /// preload is still loading waits for it, a press during a release still preloads, a dictation needing a
+        /// different model releases the loaded one first, and Quit during a preload frees it once loaded, after which
+        /// nothing loads.
         static func selfCheck() async {
             final class Loads { var names: [String] = [] }
             let loads = Loads()
@@ -521,6 +534,16 @@ extension WhisperModelManager: WhisperModelProvider {}
             precondition(missing == nil && loads.names == ["a", "a", "b"])
             await manager.cleanupResources()
             precondition(manager.loadedContext(named: "b") == nil)
+
+            // Quit while the press's preload is loading: the load finishes and is freed; a dictation after Quit fails
+            // instead of loading the model again before exit().
+            let preloadAtQuit = Task { try? await manager.loadModel(files[0]) }
+            await Task.yield()
+            await manager.closeForQuit()
+            await preloadAtQuit.value
+            precondition(loads.names == ["a", "a", "b", "a"] && manager.whisperContext == nil, "\(loads.names)")
+            let afterQuit = await ready("a")
+            precondition(afterQuit == nil && loads.names == ["a", "a", "b", "a"] && manager.whisperContext == nil)
         }
     }
 #endif

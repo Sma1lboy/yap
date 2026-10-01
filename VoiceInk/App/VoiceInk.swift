@@ -37,6 +37,9 @@ struct VoiceInkApp: App {
     @StateObject private var prewarmService: ModelPrewarmService
 
     init() {
+        // NSApp is YapApplication (see there): SwiftUI creates NSApplication.shared itself and doesn't read
+        // NSPrincipalClass, so the subclass has to be the first to ask for it.
+        _ = YapApplication.shared
         // Disable HTTP response caching — prevents API responses from being stored in Cache.db
         URLCache.shared = URLCache(memoryCapacity: 0, diskCapacity: 0)
 
@@ -115,6 +118,7 @@ struct VoiceInkApp: App {
             RecentlyLearnedSection.selfCheck()
             Task { @MainActor in await RecordingShortcutModeHandler.selfCheck() }
             Task { @MainActor in await WhisperModelManager.selfCheck() }
+            Task { @MainActor in await AppDelegate.quitSelfCheck() }
             Task.detached {
                 do { try SessionMetricRecorder.selfCheck() } catch { assertionFailure("SessionMetric selfCheck: \(error)") }
             }
@@ -283,6 +287,7 @@ struct VoiceInkApp: App {
         _prewarmService = StateObject(wrappedValue: prewarmService)
 
         appDelegate.menuBarManager = menuBarManager
+        appDelegate.engine = engine
 
         // Ensure no lingering recording state from previous runs
         Task {

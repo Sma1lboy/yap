@@ -1019,6 +1019,12 @@ class VoiceInkEngine: NSObject, ObservableObject {
         await serviceRegistry.releaseAll()
     }
 
+    /// Quit (AppDelegate): as `releaseModels`, but Whisper loads nothing after it (`closeForQuit`).
+    func closeLocalModels() async {
+        await whisperModelManager.closeForQuit()
+        await serviceRegistry.releaseAll()
+    }
+
     // MARK: - Notification Handling
 
     func setupNotifications() {

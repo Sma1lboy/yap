@@ -111,6 +111,43 @@ no network connection was opened during the dictation
 
 The last two weren't in the measured run (the check can't hold a real sign-in); they come from reading `AppDelegate` and `CloudConfigSync`. Neither is triggered by a dictation. A fully offline user who never signs in sends nothing but the update check.
 
+## Quitting with a model loaded
+
+whisper.cpp frees its Metal device in a C++ static destructor when the process calls `exit()`, and aborts (`GGML_ASSERT([rsets->data count] == 0)` in `ggml_metal_rsets_free`) if any model buffer is still allocated then. Quit ends in `exit()` inside `-[NSApplication terminate:]`, so up to 1.13.0 quitting with a Whisper model in memory crashed: with Keep model loaded set to a time or Always, right after launch (the launch prewarm loads the model), within 30 s of a dictation's preload under After Each Dictation, or mid-dictation.
+
+Now `AppDelegate.applicationShouldTerminate` answers `.terminateLater` and, before replying:
+
+1. During a meeting, asks first as before (Keep Recording is the default and cancels the Quit with nothing closed; End Meeting and Quit finishes and saves the meeting).
+2. `VoiceInkEngine.closeLocalModels`: `WhisperModelManager.closeForQuit` refuses any load from then on (a preload or a dictation after Quit fails instead of loading again), waits for a load in flight, then frees the context. Freeing goes through the `WhisperContext` actor, so it waits for a decode in flight to finish; it doesn't abort it. A decode is one actor call per dictation, per imported file and per meeting piece, so Quit during a long file import waits for the whole file, with nothing on screen meanwhile; End Meeting and Quit already waited for the notes request. Then `serviceRegistry.releaseAll()` as the idle release does (FluidAudio, transcribe.cpp).
+3. Replies, and AppKit exits.
+
+A second ⌘Q (or Quit from the Dock) during those steps used to make AppKit exit at once without asking again, in the middle of the release (crash) or of a meeting being saved. `YapApplication`, the app's `NSApplication`, drops `terminate:` from the `.terminateLater` answer until just before the reply. (After a quit Apple event AppKit's own exit on the reply calls `terminate:` again; dropping that one too left Yap running.)
+
+`terminate:` has to come from the run loop (a menu item, a quit Apple event from the Dock, logout or Sparkle). Called from inside a `Task` or `DispatchQueue.main.async`, AppKit's wait for the reply can't run the main actor and Quit never finishes. AppKit also ignores `terminate:` while a sheet is attached to a window, e.g. the release notes after an update; that is unchanged.
+
+`make quit-check MODEL=<path to ggml-*.bin>` (`scripts/quit-check.sh`) launches the Debug app as the mock identity with `--quit-check <state>`, brings the model to that state and quits with nothing released first: `NSApplication.terminate` from a run loop block, the real "Quit Yap" item of the menu bar icon's menu or of the app menu (`NSMenu.performActionForItem`, which runs the app's own button action), or a quit Apple event sent from another process (`NSRunningApplication.terminate`). Per case it requires exit status 0, no crash report for that process, NSApp being `YapApplication`, the model gone at `willTerminate`, and in the unified log `quit: closing local models` → `WhisperModelManager.cleanupResources: completed` → `quit: local models closed`, once. Results with Large v3 Turbo (Quantized), 2026-10-01:
+
+| Keep model loaded | State at Quit | Before (main, 1.13.0 code) | Now |
+|---|---|---|---|
+| Always | after a dictation, loaded | SIGABRT in `ggml_metal_rsets_free` | exit 0, freed in 11 ms |
+| 900 s | after a dictation, loaded | SIGABRT | exit 0 |
+| After Each Dictation | after a dictation, already released | exit 0 | exit 0 |
+| After Each Dictation | shortcut preload finished | SIGABRT | exit 0 |
+| Always (no launch prewarm) | preload still loading | not reached (check's own timing) | exit 0, waited 226 ms for the load, then freed |
+| Always | dictation decoding | SIGABRT | exit 0, waited 1.1 s for the decode; the dictation finished first |
+| Always | Quit, then Quit again 10 ms later | SIGABRT | exit 0, released once |
+| Always | menu bar icon › Quit Yap | not run | exit 0 |
+| Always | app menu › Quit (the ⌘Q item) | not run | exit 0 |
+| Always | quit Apple event from another process | not run | exit 0 |
+
+Not verified by a run:
+
+- The Release build: CI compiles it; every run above is the Debug app.
+- End Meeting and Quit: needs a real microphone. `AppDelegate.quitSelfCheck` (DEBUG, at launch) checks with stand-ins that Keep Recording closes nothing and that the order is meeting saved → models freed → reply.
+- transcribe.cpp and FluidAudio models: none on this Mac. They're released through the same `releaseAll` as the idle release. transcribe.cpp links its own ggml; an unload is skipped while it transcribes (`activeTranscriptionCount`), so a Quit mid-transcription there may still crash.
+- The launch prewarm (`ModelPrewarmService`) has its own `TranscriptionServiceRegistry`; its FluidAudio and transcribe.cpp services aren't released on Quit (nor by the idle release). Its Whisper model is the shared one and is.
+- The warm-up right after a model download (`WhisperModelWarmupCoordinator`) uses a context of its own for a few seconds; a Quit during it isn't covered.
+
 ## Reproduce
 
 - Clips: `python3 setup/asr/make_clips.py` (macOS `say`, voices Tingting and Reed (Chinese, mainland), rate 230, from `setup/asr/clips.json`).
@@ -118,3 +155,4 @@ The last two weren't in the measured run (the check can't hold a real sign-in); 
 - Live text: `LIVE=0` / `LIVE=1` (optionally `LIVE_PRINT=1`, `LIVE_INTERVAL_MS`) in the environment of `setup/asr/harness/.build/release/whisperbench <model> <silero> auto "" <wavs…>` prints final time, CPU seconds and joules per file. In the app: `PREVIEW=1 WAIT=1 scripts/first-run-check.sh <app dir>`.
 - Cleanup: `uvx --with mlx-lm python setup/refine_bench.py`.
 - Offline: `make offline-check MODEL=…`.
+- Quit: `make quit-check MODEL=…` (`CASES="0:twice"` for one case; `OUT=<dir>` keeps each case's output and log).
