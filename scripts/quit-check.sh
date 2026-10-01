@@ -163,12 +163,24 @@ times = {}
 for m, l in zip(marks, [l for l in out.splitlines() if l.startswith("quit-check:")]):
     try: times[m] = float(l.split()[-1])
     except ValueError: pass  # `text …` lines have no time
+# Closing the local models longer than a second: the Quit panel came up (after half a second) saying what it waits for.
+def logged_at(message):
+    line = next((l for l in log.splitlines() if message in l), "")
+    t = re.search(r"(\d\d):(\d\d):(\d\d\.\d+)", line)
+    return int(t[1]) * 3600 + int(t[2]) * 60 + float(t[3]) if t else None
+start, end = logged_at("quit: closing local models"), logged_at("quit: local models closed")
+closing_seconds = end - start if start is not None and end is not None else None
+if closing_seconds is not None and closing_seconds > 1 and "quit: wait panel shown" not in log:
+    problems.append(f"closing the models took {closing_seconds:.2f} s and the Quit panel never came up")
 verdict = "ok" if not problems else "FAIL: " + "; ".join(problems)
 print(f"keep {keep:>4} {state:10} {verdict}")
 for line in out.splitlines():
     if line.startswith("quit-check:"): print("    " + line)
 if "terminate" in times and "will terminate" in times:
     print(f"    Quit took {times['will terminate'] - times['terminate']:.2f} s")
+if closing_seconds is not None:
+    panel = "panel shown" if "quit: wait panel shown" in log else "no panel"
+    print(f"    closing the local models took {closing_seconds:.2f} s ({panel})")
 if (d / "sender.txt").exists(): print("    sender: " + (d / "sender.txt").read_text().strip())
 sys.exit(1 if problems else 0)
 PY

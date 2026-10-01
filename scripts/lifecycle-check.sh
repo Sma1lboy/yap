@@ -2,9 +2,11 @@
 # make lifecycle-check MODEL=<ggml-*.bin> MODEL2=<another ggml-*.bin> [SUITES="whisper residency tcpp fluid"]:
 # cancelling, releasing and quitting with local models in use (LifecycleCheck.swift). The Debug app re-identified as
 # me.sma1lboy.yap.mock as a fresh install (scripts/meeting-check-common.sh), one launch per suite:
-# - whisper: MODEL; cancel a request waiting for its turn, one decoding, one waiting for its load, a dictation and an
-#   audio import; whatever comes next must come out as alone. Then the live preview's final text, alone and with a
-#   request for MODEL2 in the middle of the recording.
+# - whisper: MODEL; speech detection a piece at a time against one whisper.cpp call; cancel a request waiting for its
+#   turn, one decoding, one in speech detection (the ~22 min clip), one waiting for its load, a dictation and an audio
+#   import; whatever comes next must come out as alone, and each cancel must stop within 2 s. A dictation queued
+#   behind speech detection says what it waits for. Then the live preview's final text, alone and with a request for
+#   MODEL2 in the middle of the recording, and the long clip alone again (against the start: the Mac slowing down).
 # - residency: MODEL; "Keep model loaded" Always / 5 s / After each against a live-preview final, an import, a
 #   meeting, the wake prewarm and a cancelled request; a memory-pressure warning during a meeting.
 # - tcpp: transcribe.cpp SenseVoice Small (TCPP_MODEL, default /tmp/yap-test-models/SenseVoiceSmall-Q8_0.gguf, from
@@ -91,14 +93,30 @@ launch() {
 files=("$WORK/long.wav" "$WORK/clips/english.wav" "$WORK/mic.wav" "$WORK/system.wav")
 backend_files=("$WORK/longer.wav" "$WORK/clips/english.wav" "$WORK/mic.wav" "$WORK/system.wav")
 
+# machine_state <file>: what else the Mac was doing (written before and after each suite next to its output).
+machine_state() {
+	{
+		date '+%F %T'
+		git -C "$ROOT" rev-parse HEAD
+		uptime
+		pmset -g therm
+		sysctl vm.swapusage
+		vm_stat
+		top -l 2 -s 1 -n 12 -o cpu -stats pid,command,cpu,threads,state  # the second sample has the CPU use
+	} >"$1" 2>&1
+}
+
 failed=0
 for suite in $SUITES; do
 	out="$OUT/$suite.txt"
+	machine_state "$out.before"
 	case "$suite" in
 	whisper | residency)
 		prepare "$(basename "$MODEL" .bin)" zh
 		defaults write "$ID" PrewarmModelOnWake -bool true
-		status=$(launch "$out" --lifecycle-check "$suite" "${files[@]}")
+		extra=()
+		[ "$suite" = whisper ] && extra=("$WORK/longer.wav")
+		status=$(launch "$out" --lifecycle-check "$suite" "${files[@]}" ${extra[@]+"${extra[@]}"})
 		;;
 	tcpp)
 		size=$(stat -f %z "$TCPP_MODEL")
@@ -130,6 +148,7 @@ for suite in $SUITES; do
 		;;
 	*) echo "unknown suite $suite"; failed=1; continue ;;
 	esac
+	machine_state "$out.after"
 	echo "$suite: $(speaker_models_source "$out.err")"
 	crash=$(find "$REPORTS" -name 'VoiceInk Dev-*.ips' -newer "$out.started" 2>/dev/null | head -1 || true)
 	[ -n "$crash" ] && cp "$crash" "$OUT/"

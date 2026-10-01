@@ -13,6 +13,8 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
     /// come from AppKit, which SwiftUI cannot observe on its own, so without this the view keeps
     /// whatever sizes it happened to compute the last time it was rendered.
     @State private var screenGeneration = 0
+    @ObservedObject private var activity = LocalModelActivity.shared
+    @State private var now = Date()
 
     // MARK: - Display State
 
@@ -20,7 +22,12 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
         case collapsed
         case active
         case liveText
+        case modelWait
         case assistant
+    }
+
+    private var modelWait: LocalModelActivity.Snapshot? {
+        stateProvider.recordingState == .transcribing ? activity.dictationWait(at: now) : nil
     }
 
     private var displayState: DisplayState {
@@ -33,7 +40,7 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
             let shouldShowLive = showLiveTranscript && !stateProvider.partialTranscript.isEmpty
             return shouldShowLive ? .liveText : .active
         case .transcribing, .enhancing:
-            return .active
+            return modelWait != nil ? .modelWait : .active
         default:
             return .collapsed
         }
@@ -77,6 +84,8 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
     private let assistantSideExpansion: CGFloat = 230
     private let activeHeightBonus: CGFloat = 6
     private let transcriptPanelHeight: CGFloat = 57
+    /// Two lines, or three with the "can't be stopped" note.
+    private var modelWaitPanelHeight: CGFloat { modelWait?.stopNote == nil ? 60 : 78 }
     private let assistantPanelHeight: CGFloat = 320
 
     private var mainRowHeight: CGFloat { notchHeight + activeHeightBonus }
@@ -87,7 +96,7 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
         switch displayState {
         case .collapsed: return notchWidth
         case .active: return notchWidth + recordingSideExpansion * 2
-        case .liveText: return notchWidth + transcriptSideExpansion * 2
+        case .liveText, .modelWait: return notchWidth + transcriptSideExpansion * 2
         case .assistant: return notchWidth + assistantSideExpansion * 2
         }
     }
@@ -97,13 +106,14 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
         case .collapsed: return 0
         case .active: return mainRowHeight
         case .liveText: return mainRowHeight + transcriptPanelHeight
+        case .modelWait: return mainRowHeight + modelWaitPanelHeight
         case .assistant: return mainRowHeight + assistantPanelHeight
         }
     }
 
     private var sideExpansion: CGFloat {
         switch displayState {
-        case .liveText:
+        case .liveText, .modelWait:
             return transcriptSideExpansion
         case .assistant:
             return assistantSideExpansion
@@ -113,7 +123,7 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
     }
 
     private var sideEdgePadding: CGFloat {
-        displayState == .liveText || displayState == .assistant ? 20 : 16
+        displayState == .active || displayState == .collapsed ? 16 : 20
     }
 
     private var shouldShowCloseButton: Bool {
@@ -151,6 +161,7 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
         ) { _ in
             screenGeneration += 1
         }
+        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { now = $0 }
     }
 
     // MARK: - Pill
@@ -159,14 +170,15 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
         VStack(spacing: 0) {
             mainRow
             liveTextPanel
+            modelWaitPanel
             assistantPanel
         }
         .frame(width: pillWidth, height: pillHeight)
         .background(Color.black)
         .clipShape(
             NotchShape(
-                topCornerRadius: displayState == .liveText ? 12 : 8,
-                bottomCornerRadius: displayState == .liveText || displayState == .assistant ? 22 : 16
+                topCornerRadius: displayState == .liveText || displayState == .modelWait ? 12 : 8,
+                bottomCornerRadius: displayState == .active || displayState == .collapsed ? 16 : 22
             )
         )
     }
@@ -223,6 +235,18 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
             }
         }
         .frame(height: displayState == .liveText ? transcriptPanelHeight : 0)
+        .clipped()
+    }
+
+    private var modelWaitPanel: some View {
+        VStack(spacing: 0) {
+            if displayState == .modelWait, let modelWait {
+                Divider().background(Color.white.opacity(0.15))
+                RecorderWaitLine(wait: modelWait, now: now)
+                    .padding(.horizontal, AppTheme.Spacing.x2)
+            }
+        }
+        .frame(height: displayState == .modelWait ? modelWaitPanelHeight : 0, alignment: .top)
         .clipped()
     }
 

@@ -143,7 +143,9 @@ class FluidAudioTranscriptionService: TranscriptionService {
             await self.turns.take()
             defer { self.turns.give() }
             guard !self.turns.isClosed else { throw CancellationError() }
-            try await self.loadManagers(for: model)
+            try await LocalModelActivity.shared.run(.load, stage: .loading, interruptible: false) {
+                try await self.loadManagers(for: model)
+            }
         }
         managerLoad = (model.name, task)
         defer { if managerLoad?.name == model.name { managerLoad = nil } }
@@ -164,13 +166,27 @@ class FluidAudioTranscriptionService: TranscriptionService {
         try await ensureModelsLoaded(for: version(for: model))
     }
 
+    /// Reported to LocalModelActivity as a decode that stops on a cancel for Nemotron (its chunks run Core ML's async
+    /// `prediction(from:)`, which throws when the task is cancelled: a cancel 10 s into a ~39 s decode returned in
+    /// 0.02 s in `make lifecycle-check`), and as one that may not for the other FluidAudio models (not run).
     func transcribe(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext) async throws
         -> String
     {
         // A preload asked first runs first; cancelled while waiting, this leaves the queue without decoding.
-        try await turns.take(cancellable: true)
+        try await turns.takeForTranscription()
         defer { turns.give() }
         guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
+        return try await LocalModelActivity.shared.run(
+            .transcription(LocalModelActivity.requester), stage: .decoding,
+            interruptible: FluidAudioModelManager.isNemotronModel(named: model.name)
+        ) {
+            try await transcribeInTurn(audioURL: audioURL, model: model, context: context)
+        }
+    }
+
+    private func transcribeInTurn(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext)
+        async throws -> String
+    {
         if FluidAudioModelManager.isParakeetUnifiedModel(named: model.name) {
             let wasLoaded = unifiedAsrManager != nil
             try await ensureUnifiedModelsLoaded()
@@ -208,7 +224,7 @@ class FluidAudioTranscriptionService: TranscriptionService {
             if speechAudio.count + trailingSilenceSamples <= maxSingleChunkSamples {
                 speechAudio += [Float](repeating: 0, count: trailingSilenceSamples)
             }
-            // Nemotron's process/finish don't stop for a cancelled task; check before starting the decode.
+            // Also checked here, before the decode starts (the language and reset above don't check).
             try Task.checkCancellation()
             _ = try await nemotronAsrManager.process(samples: speechAudio)
             let text = try await nemotronAsrManager.finish()
@@ -324,10 +340,12 @@ class FluidAudioTranscriptionService: TranscriptionService {
     func releaseAll() async {
         await turns.take()
         defer { turns.give() }
-        loadingTask?.task.cancel()
-        loadingTask = nil
-        await cleanupLoadedManagers()
-        cachedModels = nil
+        await LocalModelActivity.shared.run(.release, stage: .unloading, interruptible: false) {
+            loadingTask?.task.cancel()
+            loadingTask = nil
+            await cleanupLoadedManagers()
+            cachedModels = nil
+        }
     }
 
     /// Quit: no transcription or preload starts from now on (those still waiting fail without running), then

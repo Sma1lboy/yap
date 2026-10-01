@@ -50,7 +50,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 // A file being imported can take minutes; the queue isn't kept across launches anyway. Its decode
                 // is aborted (Whisper's abort callback, transcribe.cpp's) instead of Quit waiting for the whole file.
                 AudioTranscriptionManager.shared.cancelProcessing()
+                // What's left (a step that can't stop, a load, a warm-up) is shown while Quit waits for it.
+                let waitPanel = QuitWaitPanel()
+                waitPanel.showAfterDelay()
                 await self?.engine?.closeLocalModels()
+                waitPanel.close()
             },
             reply: {
                 (sender as? YapApplication)?.isClosingForQuit = false

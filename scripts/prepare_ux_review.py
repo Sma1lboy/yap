@@ -4,6 +4,7 @@
 The production sources at the recorded SHA remain the source of every rendered view.
 The recorded fixture.patch makes initial state/fixture changes explicit: expanded
 privacy, fake permission statuses, stopped download error, and pending preset.
+The snapshot guard keeps its existing ONLY filter before limiting the UX review pages.
 No permissions, recording, credentials or network requests are performed by this script.
 """
 from pathlib import Path
@@ -62,7 +63,7 @@ new_permissions = '''        private static func onboardingPermissions(
 
 '''
 edit('VoiceInk/App/Debug/UISnapshots.swift', [
-    ('guard main || suffix.isEmpty else { return }', '''guard main || suffix.isEmpty else { return }
+    ('guard main || suffix.isEmpty, only.isEmpty || only.contains(where: name.hasPrefix) else { return }', '''guard main || suffix.isEmpty, only.isEmpty || only.contains(where: name.hasPrefix) else { return }
                 guard name.hasPrefix("onboarding-1-") || name.hasPrefix("onboarding-3-")
                     || name.hasPrefix("onboarding-7-") || name.hasPrefix("settings-agent") else { return }'''),
     (old_permissions, new_permissions),

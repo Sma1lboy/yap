@@ -346,6 +346,38 @@ struct LiveTranscriptView: View {
     }
 }
 
+// MARK: - Local model wait
+
+/// Under a dictation queued for its local model (`LocalModelActivity.dictationWait`): what it waits for (a cancelled
+/// dictation still in a step that can't stop, an import, a meeting piece, a load), that work's step and how long it
+/// has been in it.
+struct RecorderWaitLine: View {
+    let wait: LocalModelActivity.Snapshot
+    let now: Date
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
+            Text(wait.waitTitle)
+                .font(AppTheme.font(.footnote, .medium))
+                .foregroundColor(.white.opacity(0.9))
+            Text(wait.stageLine(now: now))
+                .font(AppTheme.font(.caption))
+                .monospacedDigit()
+                .foregroundColor(.white.opacity(0.7))
+            if let note = wait.stopNote {
+                Text(note)
+                    .font(AppTheme.font(.caption))
+                    .foregroundColor(.white.opacity(0.7))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, AppTheme.Spacing.x4)
+        .padding(.vertical, AppTheme.Spacing.x2)
+        .accessibilityElement(children: .combine)
+    }
+}
+
 // MARK: - Recorder Status Display
 
 struct RecorderStatusDisplay: View {

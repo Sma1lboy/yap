@@ -109,6 +109,8 @@ class WhisperModelManager: ObservableObject {
         // Cleared by the load itself, so whoever waits on it sees it gone as soon as it finishes.
         let task = Task {
             defer { self.loadTask = nil }
+            let work = LocalModelActivity.shared.begin(.load, stage: .loading, interruptible: false)
+            defer { work.end() }
             try await self.createContext(for: model)
         }
         loadTask = task
@@ -137,18 +139,26 @@ class WhisperModelManager: ObservableObject {
     /// after a stop (~20 ms). `loaded` (passed to `body`) is true when the model had to be loaded or a load waited for.
     /// Throws when the model can't be loaded, and after Quit. Cancelled while waiting for its turn, it throws
     /// CancellationError without holding one; cancelled during a load, the load still finishes (it's shared) and
-    /// `body` doesn't run. Cancelling `body` itself is up to `body` (WhisperContext.Abort).
+    /// `body` doesn't run. Cancelling `body` itself is up to `body` (WhisperContext.Abort). The wait and the work in
+    /// the turn are reported to LocalModelActivity (as `LocalModelActivity.requester`), `body` running as its
+    /// `current` work.
     nonisolated func withContext<T>(
         named name: String, _ body: (_ context: WhisperContext, _ loaded: Bool) async throws -> T
     ) async throws -> T {
-        try await turns.take(cancellable: true)
+        try await turns.takeForTranscription()
         defer { turns.give() }
         guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
         try Task.checkCancellation()
-        if let context = loadedSnapshot.context(named: name) { return try await body(context, false) }
-        let ready = try await context(forModelNamed: name)
-        try Task.checkCancellation()
-        return try await body(ready.context, ready.waited)
+        let loadedContext = loadedSnapshot.context(named: name)
+        return try await LocalModelActivity.shared.run(
+            .transcription(LocalModelActivity.requester), stage: loadedContext == nil ? .loading : .speechDetection,
+            interruptible: loadedContext != nil
+        ) {
+            if let loadedContext { return try await body(loadedContext, false) }
+            let ready = try await context(forModelNamed: name)
+            try Task.checkCancellation()
+            return try await body(ready.context, ready.waited)
+        }
     }
 
     /// The shared context holding the model named `name`, in a turn. A load already running (the shortcut-press
@@ -417,6 +427,8 @@ class WhisperModelManager: ObservableObject {
     func cleanupResources() async {
         await turns.take()
         defer { turns.give() }
+        let work = LocalModelActivity.shared.begin(.release, stage: .unloading, interruptible: false)
+        defer { work.end() }
         await releaseContext()
     }
 
@@ -445,9 +457,12 @@ class WhisperModelManager: ObservableObject {
         let task = Task {
             _ = try? await previous?.value
             guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
-            let context = try await WhisperContext.createContext(path: model.url.path)
-            _ = await context.transcribe(samples: samples, language: nil, prompt: nil, abort: abort)
-            await context.releaseResources()
+            try await LocalModelActivity.shared.run(.warmUp, stage: .loading, interruptible: false) {
+                let context = try await WhisperContext.createContext(path: model.url.path)
+                _ = await context.transcribe(samples: samples, language: nil, prompt: nil, abort: abort)
+                LocalModelActivity.current?.stage(.unloading, interruptible: false)
+                await context.releaseResources()
+            }
         }
         warmup = task
         try await task.value

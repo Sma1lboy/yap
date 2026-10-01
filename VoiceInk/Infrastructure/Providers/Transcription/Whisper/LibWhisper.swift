@@ -56,8 +56,9 @@ actor WhisperContext {
         let languageDetectionTime: TimeInterval
     }
 
-    /// Stops a `transcribe` in flight: whisper.cpp checks it before each graph computation (`abort_callback`), and
-    /// the window loop before each window. Set from any thread (a cancelled request's cancellation handler).
+    /// Stops a `transcribe` in flight: speech detection checks it between pieces of about a second, language detection
+    /// before each attempt, whisper.cpp before each graph computation of a decode (`abort_callback`), and the window
+    /// loop before each window. Set from any thread (a cancelled request's cancellation handler).
     final class Abort: @unchecked Sendable {
         private let lock = NSLock()
         private var value = false
@@ -69,7 +70,8 @@ actor WhisperContext {
     /// One whole transcription with this request's language and prompt. A single synchronous actor call, so no other
     /// request on this context can change the language or prompt between setting them and decoding, or reset the
     /// results before they're returned. Nil when whisper_full fails, `abort` is set, or the model has been released;
-    /// an aborted decode leaves the context usable for the next one.
+    /// an aborted transcription leaves the context usable for the next one. Reports its stage to
+    /// `LocalModelActivity.current` (the turn's work).
     func transcribe(samples: [Float], language: String?, prompt: String?, abort: Abort? = nil) -> Transcript? {
         self.language = language
         self.prompt = prompt
@@ -90,7 +92,12 @@ actor WhisperContext {
         whisper_reset_timings(context)
 
         let isVADEnabled = UserDefaults.standard.bool(forKey: "IsVADEnabled")
-        guard let (speech, probs) = detectSpeech(samples) else {
+        let work = LocalModelActivity.current
+        work?.stage(.speechDetection)
+        let speechDetection = detectSpeech(samples)
+        if abort?.isSet == true { return false }
+        guard let (speech, probs) = speechDetection else {
+            work?.stage(.decoding)
             return decode(samples[...], vad: isVADEnabled && vadModelPath != nil)
         }
 
@@ -107,6 +114,7 @@ actor WhisperContext {
             detections[index] = result
             return result
         }
+        if autoLanguage { work?.stage(.languageDetection, interruptible: false) }
         // Each detection costs a full encoder pass, as much as decoding the window. When the first, middle
         // and last windows agree, decode every window in that language instead of detecting each one.
         let recordingLanguage =
@@ -116,6 +124,7 @@ actor WhisperContext {
             : nil
         for (index, window) in windows.enumerated() {
             if abort?.isSet == true { return false }
+            if autoLanguage && recordingLanguage == nil { work?.stage(.languageDetection, interruptible: false) }
             let runs: [(range: Range<Int>, language: String)]
             if let recordingLanguage {
                 runs = [(window, recordingLanguage)]
@@ -127,6 +136,8 @@ actor WhisperContext {
             if runs.count > 1 {
                 logger.notice("Mixed-language window: \(runs.map(\.language).joined(separator: ","), privacy: .public)")
             }
+            if abort?.isSet == true { return false }
+            work?.stage(.decoding)
             if runs.isEmpty {
                 guard decode(samples[window], vad: false) else { return false }
             }
@@ -166,8 +177,10 @@ actor WhisperContext {
         return left.isEmpty || right.isEmpty ? [(range, language)] : left + right
     }
 
+    /// Nil when it fails, or when the transcription was cancelled (one attempt is an encoder pass whisper.cpp can't
+    /// stop, so the flag is checked before each).
     private func detectLanguage(_ samples: ArraySlice<Float>) -> (language: String, probability: Float)? {
-        guard let context else { return nil }
+        guard let context, abort?.isSet != true else { return nil }
         let start = ProcessInfo.processInfo.systemUptime
         defer { languageDetectionTime += ProcessInfo.processInfo.systemUptime - start }
         let threads = Int32(max(1, min(8, cpuCount() - 2)))
@@ -181,30 +194,136 @@ actor WhisperContext {
         return (String(cString: name), probabilities[Int(id)])
     }
 
-    /// Speech ranges in samples plus Silero's per-hop speech probabilities. Nil when the VAD model is
-    /// unavailable.
+    /// Speech ranges in samples plus Silero's per-window speech probabilities. Nil when the VAD model is
+    /// unavailable, detection fails, or `abort` was set.
+    ///
+    /// The probabilities are computed a piece (`speechPieceSamples`) at a time, so a cancel stops between pieces:
+    /// whisper.cpp has no abort callback for VAD, and one call over a whole recording took 0.14 s for 65 s of audio
+    /// on an idle Mac but 86 s in one slowed-down run. Silero keeps an LSTM state from window to window;
+    /// `whisper_vad_detect_speech_no_reset` carries it across calls, and with pieces a whole number of windows long
+    /// only the last window is zero-padded, as in one call, so the probabilities are the same ones. whisper.cpp
+    /// only turns the probabilities of its last call into segments, so `WhisperSpeechSegments` does that for the
+    /// joined ones, the same way.
     private func detectSpeech(_ samples: [Float]) -> ([Range<Int>], [Float])? {
-        guard let vadModelPath,
-            let vctx = whisper_vad_init_from_file_with_params(vadModelPath, whisper_vad_default_context_params())
+        guard let vadModelPath, let vctx = whisper_vad_init_from_file_with_params(vadModelPath, Self.vadContextParams())
         else { return nil }
         defer { whisper_vad_free(vctx) }
+        let started = ProcessInfo.processInfo.systemUptime
+        let params = vadParams()
 
-        guard
-            samples.withUnsafeBufferPointer({ whisper_vad_detect_speech(vctx, $0.baseAddress, Int32($0.count)) }),
-            let segments = whisper_vad_segments_from_probs(vctx, vadParams())
-        else { return nil }
-        defer { whisper_vad_free_segments(segments) }
-        let probs = Array(UnsafeBufferPointer(start: whisper_vad_probs(vctx), count: Int(whisper_vad_n_probs(vctx))))
+        let centiseconds: [(start: Int64, end: Int64)]
+        let probs: [Float]
+        if samples.count > Self.speechPieceSamples, let (pieceProbs, window) = speechProbabilities(vctx, samples) {
+            probs = pieceProbs
+            centiseconds = WhisperSpeechSegments.segments(probs: probs, window: window, params: .init(params))
+        } else {
+            if abort?.isSet == true { return nil }
+            // Up to one piece of audio (or a window that doesn't divide a piece): one call, as before.
+            guard samples.withUnsafeBufferPointer({ whisper_vad_detect_speech(vctx, $0.baseAddress, Int32($0.count)) }),
+                let segments = whisper_vad_segments_from_probs(vctx, params)
+            else { return nil }
+            defer { whisper_vad_free_segments(segments) }
+            probs = Array(UnsafeBufferPointer(start: whisper_vad_probs(vctx), count: Int(whisper_vad_n_probs(vctx))))
+            centiseconds = (0..<whisper_vad_segments_n_segments(segments)).map {
+                (
+                    Int64(whisper_vad_segments_get_segment_t0(segments, $0)),
+                    Int64(whisper_vad_segments_get_segment_t1(segments, $0))
+                )
+            }
+        }
+        // With the thread's QoS class and the thermal state: one run took 600 times as long as usual (M4.3).
+        logger.notice(
+            "Speech detection: \(samples.count / WhisperChunking.sampleRate, privacy: .public)s of audio in \(String(format: "%.3f", ProcessInfo.processInfo.systemUptime - started), privacy: .public)s, QoS \(qos_class_self().rawValue, privacy: .public), thermal \(ProcessInfo.processInfo.thermalState.rawValue, privacy: .public)"
+        )
 
         // Segment times are centiseconds.
         let perCs = WhisperChunking.sampleRate / 100
-        let speech = (0..<whisper_vad_segments_n_segments(segments)).map { i in
-            let t0 = Int(whisper_vad_segments_get_segment_t0(segments, i)) * perCs
-            let t1 = Int(whisper_vad_segments_get_segment_t1(segments, i)) * perCs
+        let speech = centiseconds.map { segment in
+            let t0 = Int(segment.start) * perCs
+            let t1 = Int(segment.end) * perCs
             return min(t0, samples.count)..<min(max(t0, t1), samples.count)
         }
         return (speech, probs)
     }
+
+    /// One thread instead of whisper.cpp's default four: Silero's graph is tiny (one 512-sample window at a time),
+    /// so the threads mostly wait for each other. Same probabilities to the bit (`speechDetectionParity` compares
+    /// against a default four-thread call), 0.11 s instead of 0.15 s for 65 s of audio, and 0.46 s instead of
+    /// 0.88-1.09 s when the process runs at background QoS.
+    private static func vadContextParams() -> whisper_vad_context_params {
+        var params = whisper_vad_default_context_params()
+        params.n_threads = 1
+        return params
+    }
+
+    /// About a second of audio: 32 of Silero v5's 512-sample windows.
+    private static let speechPieceSamples = 16_384
+
+    /// Silero's probabilities for `samples`, one piece at a time with the state carried across (see `detectSpeech`),
+    /// and its window in samples. Nil when `abort` was set, a call failed, or the window doesn't divide a piece
+    /// (Silero's window isn't exposed; the first piece's count of probabilities tells it), after which the caller
+    /// does it in one call.
+    private func speechProbabilities(_ vctx: OpaquePointer, _ samples: [Float]) -> (probs: [Float], window: Int)? {
+        whisper_vad_reset_state(vctx)
+        var probs: [Float] = []
+        var window = 0
+        var start = 0
+        while start < samples.count {
+            if abort?.isSet == true { return nil }
+            let end = min(start + Self.speechPieceSamples, samples.count)
+            let detected = samples.withUnsafeBufferPointer {
+                whisper_vad_detect_speech_no_reset(vctx, $0.baseAddress! + start, Int32(end - start))
+            }
+            let count = Int(whisper_vad_n_probs(vctx))
+            guard detected, count > 0 else { return nil }
+            if start == 0 {
+                guard Self.speechPieceSamples % count == 0 else { return nil }
+                window = Self.speechPieceSamples / count
+                probs.reserveCapacity(samples.count / window + 1)
+            }
+            probs.append(contentsOf: UnsafeBufferPointer(start: whisper_vad_probs(vctx), count: count))
+            start = end
+        }
+        return (probs, window)
+    }
+
+    #if DEBUG
+        /// `make lifecycle-check`: speech detection a piece at a time against one whisper.cpp call over the same audio.
+        /// Probabilities must be bit for bit the same, and the segments (centiseconds) the same as
+        /// `whisper_vad_segments_from_probs` makes from the one call's.
+        func speechDetectionParity(_ samples: [Float]) -> [String: Any] {
+            guard let vadModelPath,
+                let whole = whisper_vad_init_from_file_with_params(vadModelPath, whisper_vad_default_context_params()),
+                let pieces = whisper_vad_init_from_file_with_params(vadModelPath, Self.vadContextParams())
+            else { return ["ok": false, "error": "no VAD model"] }
+            defer {
+                whisper_vad_free(whole)
+                whisper_vad_free(pieces)
+            }
+            let params = vadParams()
+            guard samples.withUnsafeBufferPointer({ whisper_vad_detect_speech(whole, $0.baseAddress, Int32($0.count)) }),
+                let native = whisper_vad_segments_from_probs(whole, params)
+            else { return ["ok": false, "error": "whole call failed"] }
+            defer { whisper_vad_free_segments(native) }
+            let wholeProbs = Array(UnsafeBufferPointer(start: whisper_vad_probs(whole), count: Int(whisper_vad_n_probs(whole))))
+            let nativeSegments = (0..<whisper_vad_segments_n_segments(native)).map {
+                [Int64(whisper_vad_segments_get_segment_t0(native, $0)), Int64(whisper_vad_segments_get_segment_t1(native, $0))]
+            }
+            guard let (pieceProbs, window) = speechProbabilities(pieces, samples) else {
+                return ["ok": false, "error": "pieces failed"]
+            }
+            let swiftSegments = WhisperSpeechSegments.segments(probs: pieceProbs, window: window, params: .init(params))
+                .map { [$0.start, $0.end] }
+            let probsEqual =
+                wholeProbs.count == pieceProbs.count
+                && zip(wholeProbs, pieceProbs).allSatisfy { $0.bitPattern == $1.bitPattern }
+            return [
+                "ok": probsEqual && swiftSegments == nativeSegments, "probs": wholeProbs.count, "window": window,
+                "probsEqual": probsEqual, "segmentCount": nativeSegments.count,
+                "segmentsEqual": swiftSegments == nativeSegments,
+            ]
+        }
+    #endif
 
     private func vadParams() -> whisper_vad_params {
         var vadParams = whisper_vad_default_params()
@@ -469,5 +588,14 @@ extension Optional where Wrapped == [CChar] {
         case .some(let array): return array.withUnsafeBufferPointer { body($0.baseAddress) }
         case .none: return body(nil)
         }
+    }
+}
+
+extension WhisperSpeechSegments.Params {
+    fileprivate init(_ params: whisper_vad_params) {
+        self.init(
+            threshold: params.threshold, minSpeechDurationMs: Int(params.min_speech_duration_ms),
+            minSilenceDurationMs: Int(params.min_silence_duration_ms), maxSpeechDurationS: params.max_speech_duration_s,
+            speechPadMs: Int(params.speech_pad_ms))
     }
 }

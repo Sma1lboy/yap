@@ -586,8 +586,10 @@ final class MeetingRecorder: ObservableObject {
                 #endif
                 try PCM16WAVWriter.write(piece.samples, to: url)
                 defer { try? FileManager.default.removeItem(at: url) }
-                let raw = try await registry.transcribe(
-                    audioURL: url, model: configuration.model, context: configuration.requestContext)
+                let raw = try await LocalModelActivity.$requester.withValue(.meeting) {
+                    try await registry.transcribe(
+                        audioURL: url, model: configuration.model, context: configuration.requestContext)
+                }
                 let text = TranscriptionOutputFilter.filter(raw).trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !text.isEmpty else { return }
                 lock.lock()

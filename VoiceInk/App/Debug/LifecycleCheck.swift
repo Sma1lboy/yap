@@ -3,17 +3,21 @@
     import SwiftData
 
     /// `make lifecycle-check` (scripts/lifecycle-check.sh): launched with `--dictate-file <short clip>
-    /// --lifecycle-check <suite> <long clip> <second-language clip> <mic.wav> <system.wav>`, runs one suite against the
-    /// mode's local model through the app's own registry, engine, import queue and meeting recorder, printing one
-    /// `lifecycle:` JSON line per result (IsolationCheck.emit); the script compares them.
-    /// - `whisper`: cancelling a request waiting for its turn, one decoding, one waiting for a load, a dictation
-    ///   (Cancel during transcription) and an audio import, each followed by a request that must come out as alone.
+    /// --lifecycle-check <suite> <long clip> <second-language clip> <mic.wav> <system.wav> [<longer clip>]`, runs one
+    /// suite against the mode's local model through the app's own registry, engine, import queue and meeting recorder,
+    /// printing one `lifecycle:` JSON line per result (IsolationCheck.emit); the script compares them.
+    /// - `whisper`: speech detection a piece at a time against one whisper.cpp call on every clip; cancelling a
+    ///   request waiting for its turn, one decoding, one in speech detection (the longer clip), one waiting for a load,
+    ///   a dictation (Cancel during transcription) and an audio import, each followed by a request that must come out
+    ///   as alone; a dictation queued behind a request in speech detection, with what it waits for as the recorder
+    ///   shows it; the long clip alone again at the end, against the start (the Mac slowing down meanwhile).
     /// - `residency`: per "Keep model loaded" (Always, 5 s, After each dictation): whether the model is loaded right
     ///   after, and a while after, a live-preview session's final text, an audio import, a meeting and the wake
     ///   prewarm, and after a cancelled request; then a memory-pressure warning during a meeting.
     /// - `backend` (FluidAudio or transcribe.cpp as the mode's model): the short clip (mode language) and the
     ///   second-language clip alone, then started together; a release during a decode; a cancelled request in the
-    ///   queue and one decoding; then Quit through NSApplication.terminate one second into a transcription.
+    ///   queue and one decoding; then Quit through NSApplication.terminate one second into a transcription, with what
+    ///   the Quit waits for and whether its panel is up, every half second until the exit.
     @MainActor
     enum LifecycleCheck {
         static let argument = "--lifecycle-check"
@@ -38,6 +42,7 @@
             let second = URL(fileURLWithPath: arguments[2])
             let microphone = URL(fileURLWithPath: arguments[3])
             let system = URL(fileURLWithPath: arguments[4])
+            let longer = arguments.count >= 6 ? URL(fileURLWithPath: arguments[5]) : nil
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(10))  // launch-time work settles, as in offline-check
                 CursorPaster.dryRun = true
@@ -55,7 +60,7 @@
                     exit(1)
                 }
                 let checks = Checks(engine: engine, configuration: configuration, clip: clip, long: long, second: second,
-                                    microphone: microphone, system: system)
+                                    microphone: microphone, system: system, longer: longer)
                 switch suite {
                 case "whisper": await checks.whisper()
                 case "residency": await checks.residency()
@@ -105,10 +110,12 @@
             let engine: VoiceInkEngine
             let configuration: TranscriptionRuntimeConfiguration
             let clip, long, second, microphone, system: URL
+            let longer: URL?
             var registry: TranscriptionServiceRegistry { engine.serviceRegistry }
+            let activity = LocalModelActivity.shared
 
             init(engine: VoiceInkEngine, configuration: TranscriptionRuntimeConfiguration, clip: URL, long: URL,
-                 second: URL, microphone: URL, system: URL) {
+                 second: URL, microphone: URL, system: URL, longer: URL?) {
                 self.engine = engine
                 self.configuration = configuration
                 self.clip = clip
@@ -116,6 +123,7 @@
                 self.second = second
                 self.microphone = microphone
                 self.system = system
+                self.longer = longer
             }
 
             func record(_ phase: String, _ request: String, _ result: [String: Any]) {
@@ -171,6 +179,34 @@
                 return true
             }
 
+            /// The step of the oldest local-model work in flight, as the recorder and the Quit panel read it.
+            var stage: LocalModelActivity.Stage? { activity.works.first?.stage }
+
+            /// Cancels `task` once it has spent `after` seconds in `stage`; how long the cancel took and in which
+            /// step it came.
+            func cancel(_ task: Task<[String: Any], Never>, in stage: LocalModelActivity.Stage, after: Double)
+                async -> [String: Any]
+            {
+                guard await waitUntil(60, { self.stage == stage }) else {
+                    task.cancel()
+                    return (await task.value).merging(["reachedStage": false]) { $1 }
+                }
+                try? await Task.sleep(for: .seconds(after))
+                let stageAtCancel = self.stage
+                let interruptible = activity.works.first?.interruptible ?? true
+                let cancelAt = Date()
+                task.cancel()
+                // Still running a moment later (a step that can't stop): the work says it was cancelled.
+                _ = await waitUntil(1) { self.activity.works.first?.cancelled ?? true }
+                let marked = activity.works.first?.cancelled ?? true
+                let result = await task.value
+                return result.merging([
+                    "reachedStage": true, "stageAtCancel": "\(stageAtCancel.map { "\($0)" } ?? "none")",
+                    "interruptibleAtCancel": interruptible, "afterCancel": Date().timeIntervalSince(cancelAt),
+                    "markedCancelled": marked, "loadedAfter": loaded,
+                ]) { $1 }
+            }
+
             // MARK: - whisper
 
             func whisper() async {
@@ -182,22 +218,70 @@
                     record("baseline", "long", await transcribe(big))
                 }
 
+                // Speech detection a piece at a time: whisper.cpp's own probabilities and segments, on every clip.
+                if let context = engine.whisperModelManager.whisperContext {
+                    for file in [clip, long, second, microphone, system] + [longer].compactMap({ $0 }) {
+                        let samples = (try? WhisperTranscriptionService.readAudioSamples(file)) ?? []
+                        record("vad-parity", file.lastPathComponent, await context.speechDetectionParity(samples))
+                    }
+                }
+
+                // The longer clip (about 22 minutes): how long speech detection over it takes alone, then a cancel
+                // during its decode; then cancels a tenth, half and nine tenths into speech detection.
+                if let longer {
+                    let huge = request("longer", longer, language: language)
+                    var speechSeconds: [Double] = []
+                    for round in 0..<2 {
+                        let running = start(huge)
+                        _ = await waitUntil(60) { self.stage == .speechDetection }
+                        let began = Date()
+                        _ = await waitUntil(900) { self.stage != .speechDetection }
+                        speechSeconds.append(Date().timeIntervalSince(began))
+                        record("speech-baseline", "longer", ["ok": true, "round": round, "seconds": speechSeconds.last!])
+                        record("cancel-longer-decoding", "longer",
+                               (await cancel(running, in: .decoding, after: 1)).merging(["round": round]) { $1 })
+                    }
+                    let speech = speechSeconds.sorted()[speechSeconds.count / 2]
+                    for (round, fraction) in [0.1, 0.5, 0.9].enumerated() {
+                        let running = start(huge)
+                        let result = await cancel(running, in: .speechDetection, after: speech * fraction)
+                        record("cancel-speech", "longer", result.merging(["round": round, "fraction": fraction]) { $1 })
+                        record("cancel-speech-after", "A", await transcribe(a).merging(["round": round]) { $1 })
+                    }
+
+                    // A dictation queued behind a request in speech detection: what it waits for, as the recorder
+                    // shows it; then that request is cancelled and the dictation completes.
+                    let running = start(huge)
+                    _ = await waitUntil(60) { self.stage == .speechDetection }
+                    let dictating = IsolationCheck.Running { await self.dictate(self.clip) }
+                    _ = await waitUntil(10) { self.activity.dictationWait(at: Date()) != nil }
+                    let seen = activity.dictationWait(at: Date())
+                    running.cancel()
+                    _ = await running.value
+                    _ = await waitUntil(120) { dictating.result != nil }
+                    record("wait-visible", "dictation", (dictating.result ?? ["ok": false]).merging([
+                        "waitSeen": seen != nil, "waitTitle": seen?.waitTitle ?? "", "waitStage": seen?.stageText ?? "",
+                    ]) { $1 })
+                }
+
                 // Queued: the long request decodes, A waits for its turn and is cancelled there.
                 for round in 0..<3 {
                     let running = start(big)
                     try? await Task.sleep(for: .milliseconds(300))
                     let queued = start(a)
                     try? await Task.sleep(for: .milliseconds(200))
+                    let cancelAt = Date()
                     queued.cancel()
                     let cancelled = await queued.value
+                    let afterCancel = Date().timeIntervalSince(cancelAt)
                     let first = await running.value
-                    record("cancel-queued", "A", cancelled.merging(["round": round]) { $1 })
+                    record("cancel-queued", "A", cancelled.merging(["round": round, "afterCancel": afterCancel]) { $1 })
                     record("cancel-queued", "long", first.merging(["round": round]) { $1 })
                     record("cancel-queued-after", "A", await transcribe(a).merging(["round": round]) { $1 })
                 }
 
-                // Decoding: stops at the next window or whisper.cpp graph computation (abort callback); the speech
-                // detection over the whole file before the windows isn't interruptible. The model stays loaded.
+                // Cancelled 0.5-5 s in: in speech detection (stops between pieces) or in a decode (the next window or
+                // whisper.cpp graph computation, its abort callback). The model stays loaded.
                 for (round, offset) in [0.5, 2.0, 3.5, 5.0].enumerated() {
                     let decoding = start(big)
                     try? await Task.sleep(for: .seconds(offset))
@@ -275,6 +359,12 @@
                 } else {
                     record("preview-switch", "long", ["ok": false, "error": "no second Whisper model"])
                 }
+
+                // The long clip alone again: against the start, whether the Mac slowed down during the suite.
+                record("baseline-end", "long", await transcribe(big))
+                // Nothing left reported as running or waiting: every piece of work ended once.
+                let idle = await waitUntil(5) { self.activity.works.isEmpty && self.activity.waits.isEmpty }
+                record("activity-idle", "all", ["ok": idle, "works": activity.works.count, "waits": activity.waits.count])
             }
 
             func dictate(_ file: URL) async -> [String: Any] {
@@ -457,10 +547,13 @@
                 queued.cancel()
                 record("cancel-queued", "A", await queued.value)
                 record("cancel-queued", "long", await running.value)
-                let cancelling = start(big)
-                try? await Task.sleep(for: .milliseconds(700))
-                cancelling.cancel()
-                record("cancel-decoding", "long", await cancelling.value)
+                // Cancelled 0.7 s into its decode step and well inside it (10 s into Nemotron's ~39 s, 3 s into
+                // transcribe.cpp's ~7 s), each followed by a request that must come out as alone.
+                record("cancel-decoding", "long", await cancel(start(big), in: .decoding, after: 0.7))
+                record("cancel-after", "A", await transcribe(a))
+                let late: Double = configuration.model.provider == .fluidAudio ? 10 : 3
+                record("cancel-decoding-late", "long",
+                       (await cancel(start(big), in: .decoding, after: late)).merging(["offset": late]) { $1 })
                 record("cancel-after", "A", await transcribe(a))
 
                 // Quit one second into a transcription, through NSApplication.terminate from the run loop.
@@ -470,12 +563,32 @@
                     forName: NSApplication.willTerminateNotification, object: nil, queue: .main
                 ) { _ in
                     MainActor.assumeIsolated {
-                        IsolationCheck.emit(["event": "will terminate", "loaded": self.loaded])
+                        // Work still running at the exit: Quit didn't wait for it. (The in-flight request's own result
+                        // is recorded from a main-actor task that may not run again before the exit.)
+                        IsolationCheck.emit([
+                            "event": "will terminate", "loaded": self.loaded,
+                            "running": LocalModelActivity.shared.runningCount,
+                        ])
                     }
                 }
                 Task { @MainActor in
                     let result = await inFlight.value
                     self.record("quit-in-flight", "long", result)
+                }
+                // What the Quit panel shows while Quit waits, and whether it is up: the main actor keeps running.
+                Task { @MainActor in
+                    while true {
+                        try? await Task.sleep(for: .milliseconds(500))
+                        let work = self.activity.works.first
+                        let panel = NSApp.windows.contains { window in
+                            window is NSPanel && window.isVisible
+                                && window.contentView.map { "\(type(of: $0))".contains("QuitWaitView") } == true
+                        }
+                        IsolationCheck.emit([
+                            "event": "quit-wait", "title": work?.waitTitle ?? "", "stage": work?.stageText ?? "",
+                            "interruptible": work?.interruptible ?? true, "panel": panel,
+                        ])
+                    }
                 }
                 IsolationCheck.emit(["event": "terminate"])
                 RunLoop.main.perform(inModes: [.common]) { NSApplication.shared.terminate(nil) }

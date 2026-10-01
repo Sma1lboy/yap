@@ -167,11 +167,13 @@ class AudioTranscriptionManager: ObservableObject {
             // Phase: Transcribing
             item.status = .processing(phase: .transcribing)
             let transcriptionStart = Date()
-            let transcribed = try await serviceRegistry.transcribeWithSegments(
-                audioURL: permanentURL,
-                model: currentModel,
-                context: transcriptionConfiguration.requestContext
-            )
+            let transcribed = try await LocalModelActivity.$requester.withValue(.fileImport) {
+                try await serviceRegistry.transcribeWithSegments(
+                    audioURL: permanentURL,
+                    model: currentModel,
+                    context: transcriptionConfiguration.requestContext
+                )
+            }
             var text = transcribed.text
             let transcriptionDuration = Date().timeIntervalSince(transcriptionStart)
             // Local Whisper also gives timed segments; they get the same filter and dictionary replacements as
