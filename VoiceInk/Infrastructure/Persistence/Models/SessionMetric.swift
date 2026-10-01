@@ -32,6 +32,13 @@ final class SessionMetric {
     /// DictationTimeline.PasteOutcome raw value; nil when the text wasn't pasted (a response, a custom command).
     var pasteOutcome: String?
 
+    // The mode whose language setting the transcription used, and, with that set to auto on local Whisper, the
+    // languages Whisper decoded the dictation in (comma-separated, in order, e.g. "zh" or "en,zh") and how long
+    // detecting them took. Nil on older metrics, a set language, and every other model. Never leaves the Mac.
+    var modeID: UUID?
+    var detectedLanguages: String?
+    var languageDetectionDuration: TimeInterval?
+
     init(
         transcriptionId: UUID,
         timestamp: Date = Date(),

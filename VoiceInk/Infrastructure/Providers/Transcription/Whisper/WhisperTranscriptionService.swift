@@ -61,6 +61,8 @@ class WhisperTranscriptionService: TranscriptionService {
 
         let text = await whisperContext.getTranscription()
         lastSegments = await whisperContext.getSegments()
+        let detection = await whisperContext.getLanguageDetection()
+        DictationTimeline.languagesDetected(detection.languages, seconds: detection.seconds)
 
         logger.notice("Whisper transcription completed successfully.")
         return text

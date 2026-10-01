@@ -11,6 +11,7 @@ enum SessionMetricRecorder {
     static func recordRecorderSession(
         transcription: Transcription,
         model: (any TranscriptionModel)?,
+        modeID: UUID? = nil,
         timeline: DictationTimeline? = nil,
         in modelContext: ModelContext,
         timestamp: Date = Date()
@@ -55,6 +56,7 @@ enum SessionMetricRecorder {
             enhancementDuration: enhancementDuration,
             enhancementEstimatedTokenCount: enhancementTokenEstimate?.tokenCount
         )
+        metric.modeID = modeID
         if let timeline {
             apply(timeline, to: metric)
         }
@@ -75,6 +77,10 @@ enum SessionMetricRecorder {
         metric.stopToEnhanced = offsets[.enhanced]
         metric.stopToPasteCommand = offsets[.pasteCommand]
         metric.pasteOutcome = timeline.pasteOutcome?.rawValue
+        if let detection = timeline.languageDetection {
+            metric.detectedLanguages = detection.languages.joined(separator: ",")
+            metric.languageDetectionDuration = detection.seconds
+        }
     }
 
     private static func finalTextForCounting(from transcription: Transcription) -> String {
@@ -131,6 +137,7 @@ enum SessionMetricRecorder {
             let rows = try ModelContext(migrated).fetch(FetchDescriptor<SessionMetric>())
             assert(rows.count == 1 && rows[0].wordCount == 42, "old rows survive")
             assert(rows[0].stopSource == nil && rows[0].stopToPasteCommand == nil && rows[0].pasteOutcome == nil)
+            assert(rows[0].modeID == nil && rows[0].detectedLanguages == nil && rows[0].languageDetectionDuration == nil)
 
             // A dictation's metric is recorded after the paste, with every step and the paste outcome.
             let memory = try ModelContainer(
@@ -140,16 +147,29 @@ enum SessionMetricRecorder {
             context.insert(transcription)
             let timeline = DictationTimeline(stop: DictationTimeline.Stop(time: 10, source: .shortcutRelease))
             timeline.mark(.recorderStopped, at: 10.05)
+            DictationTimeline.$current.withValue(timeline) {
+                DictationTimeline.languagesDetected(["en", "zh"], seconds: 0.47)
+            }
             timeline.mark(.transcribed, at: 10.8)
             timeline.mark(.processed, at: 10.81)
             timeline.pasteFinished(.pasted, commandAt: 11)
+            let mode = UUID()
             guard let metric = try recordRecorderSession(
-                transcription: transcription, model: nil, timeline: timeline, in: context)
+                transcription: transcription, model: nil, modeID: mode, timeline: timeline, in: context)
             else { return assertionFailure("a completed dictation gets a metric") }
             assert(metric.stopSource == "shortcutRelease" && metric.stopToTranscribed.map { abs($0 - 0.8) < 1e-9 } == true)
             assert(metric.stopToPasteCommand == 1 && metric.pasteOutcome == "pasted" && metric.stopToModelReady == nil)
+            assert(metric.modeID == mode && metric.detectedLanguages == "en,zh" && metric.languageDetectionDuration == 0.47)
             let again = try recordRecorderSession(transcription: transcription, model: nil, in: context)
             assert(again == nil, "one metric per dictation")
+
+            // A set language (or another model): nothing detected, nothing recorded.
+            let fixed = Transcription(text: "你好", duration: 1, transcriptionStatus: .completed)
+            context.insert(fixed)
+            let plain = DictationTimeline(stop: DictationTimeline.Stop(time: 0, source: .shortcutRelease))
+            DictationTimeline.$current.withValue(plain) { DictationTimeline.languagesDetected([], seconds: 0) }
+            let fixedMetric = try recordRecorderSession(transcription: fixed, model: nil, timeline: plain, in: context)
+            assert(fixedMetric?.detectedLanguages == nil && fixedMetric?.languageDetectionDuration == nil)
         }
     }
 #endif
