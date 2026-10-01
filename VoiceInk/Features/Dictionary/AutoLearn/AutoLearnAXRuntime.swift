@@ -24,21 +24,22 @@ final class AutoLearnAXRuntime: @unchecked Sendable {
         await perform { [self] in
             session = nil
 
-            guard AXIsProcessTrusted() else { return rejectCapture("accessibility-not-trusted") }
+            guard AXIsProcessTrusted() else { return rejectCapture(.accessibilityNotTrusted) }
             guard processID != ProcessInfo.processInfo.processIdentifier else {
-                return rejectCapture("target-is-voiceink")
+                return rejectCapture(.targetIsYap)
             }
-            guard !text.isEmpty else { return rejectCapture("empty-pasted-text") }
+            guard !text.isEmpty else { return rejectCapture(.emptyPaste) }
             guard text.count <= AutoLearnLimits.maximumPastedCharacters else {
-                return rejectCapture("pasted-text-too-large")
+                return rejectCapture(.pasteTooLong)
             }
 
             var matchedReading: AutoLearnAXTextReading?
             var pastedRange: NSRange?
             var lastReading: AutoLearnAXTextReading?
 
-            let readings = textReader.focusedReadings(processID: processID)
-            for reading in readings {
+            let focused = textReader.focusedText(processID: processID)
+            if let exclusion = focused.exclusion { return rejectCapture(exclusion) }
+            for reading in focused.readings {
                 lastReading = reading
                 if let resolvedRange = resolvedPastedRange(
                     for: text,
@@ -53,9 +54,7 @@ final class AutoLearnAXRuntime: @unchecked Sendable {
 
             guard let reading = matchedReading, let pastedRange else {
                 textReader.restoreWebAccessibility(processID: processID, appElement: AXUIElementCreateApplication(processID))
-                return rejectCapture(
-                    lastReading == nil ? "focused-text-reading-unavailable" : "pasted-range-invalid"
-                )
+                return rejectCapture(lastReading == nil ? .noReadableField : .pastedTextNotFound)
             }
 
             let fieldText = reading.fieldText
@@ -84,6 +83,11 @@ final class AutoLearnAXRuntime: @unchecked Sendable {
             session = nil
 
             defer { textReader.restoreWebAccessibility(processID: AXProcessID(active.appElement), appElement: active.appElement) }
+            if let exclusion = textReader.exclusion(for: active.targetElement) {
+                AutoLearnUnobservableCounts.record(exclusion)
+                logger.notice("Auto Learn final read skipped reason=\(exclusion.rawValue, privacy: .public)")
+                return nil
+            }
             guard let finalTextValue = textReader.textValue(from: active.targetElement) else { return nil }
             let finalFieldText = finalTextValue.text
             guard finalFieldText.utf16.count <= AutoLearnLimits.maximumFieldUTF16Length else { return nil }
@@ -125,9 +129,10 @@ final class AutoLearnAXRuntime: @unchecked Sendable {
         lhs.utf16.elementsEqual(rhs.utf16)
     }
 
-    private func rejectCapture(_ reason: String) -> AutoLearnPasteToken? {
+    private func rejectCapture(_ reason: AutoLearnUnobservableReason) -> AutoLearnPasteToken? {
+        AutoLearnUnobservableCounts.record(reason)
         logger.notice(
-            "Auto Learn capture rejected reason=\(reason, privacy: .public)"
+            "Auto Learn capture rejected reason=\(reason.rawValue, privacy: .public)"
         )
         return nil
     }

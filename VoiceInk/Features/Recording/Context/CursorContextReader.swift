@@ -2,8 +2,9 @@ import AppKit
 import ApplicationServices
 
 /// Where the dictation is going: the frontmost app, its focused window's title, and the text around the cursor in
-/// the focused field. The text is nil when the field can't be read (no editable focus, no Accessibility, a secure
-/// field); cleanup then falls back to the screen text if the mode allows it.
+/// the focused field. The text is nil when the field can't be read (no editable focus, no Accessibility, a password
+/// field or secure input: AutoLearnAXTextReader.focusedText); cleanup then falls back to the screen text if the mode
+/// allows it.
 struct CursorContext: Equatable {
     var appName: String?
     var windowTitle: String?
@@ -39,7 +40,7 @@ enum CursorContextReader {
         let appElement = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(appElement, AutoLearnLimits.captureAccessibilityTimeoutSeconds)
         var context = CursorContext(appName: app.localizedName, windowTitle: windowTitle(appElement))
-        guard AXIsProcessTrusted(), !isSecureFieldFocused(appElement) else { return context }
+        guard AXIsProcessTrusted() else { return context }
 
         let reader = AutoLearnAXTextReader()
         let readings = reader.focusedReadings(processID: pid)
@@ -73,31 +74,6 @@ enum CursorContextReader {
         else { return nil }
         let trimmed = (title as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed?.isEmpty == false ? trimmed : nil
-    }
-
-    /// Password fields report the secure-text subrole (native and web); their value is never read.
-    private static func isSecureFieldFocused(_ appElement: AXUIElement) -> Bool {
-        var candidates: [AXUIElement] = []
-        var focused: CFTypeRef?
-        if AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focused) == .success,
-            let focused, CFGetTypeID(focused) == AXUIElementGetTypeID()
-        {
-            candidates.append(focused as! AXUIElement)
-        }
-        var systemFocused: CFTypeRef?
-        if AXUIElementCopyAttributeValue(
-            AXUIElementCreateSystemWide(), kAXFocusedUIElementAttribute as CFString, &systemFocused) == .success,
-            let systemFocused, CFGetTypeID(systemFocused) == AXUIElementGetTypeID()
-        {
-            candidates.append(systemFocused as! AXUIElement)
-        }
-        return candidates.contains { element in
-            [kAXRoleAttribute, kAXSubroleAttribute].contains { attribute in
-                var value: CFTypeRef?
-                AXUIElementCopyAttributeValue(element, attribute as CFString, &value)
-                return (value as? String) == (kAXSecureTextFieldSubrole as String)
-            }
-        }
     }
 }
 

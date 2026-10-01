@@ -1,4 +1,5 @@
 import ApplicationServices
+import Carbon  // IsSecureEventInputEnabled
 import Foundation
 
 struct AutoLearnAXTextReading {
@@ -13,6 +14,20 @@ struct AutoLearnAXTextReading {
 struct AutoLearnAXTextValue {
     let text: String
     let source: String
+}
+
+/// What the focused element says about itself, read before its value is: enough to refuse a field that must not be read.
+struct AutoLearnAXFieldDescription: Equatable {
+    var role: String?
+    var subrole: String?
+    /// AXNumberOfCharacters, when the element reports it.
+    var characterCount: Int?
+}
+
+struct AutoLearnAXFocusedText {
+    let readings: [AutoLearnAXTextReading]
+    /// Set when a focused element was refused before reading anything; `readings` is then empty.
+    let exclusion: AutoLearnUnobservableReason?
 }
 
 /// Reads editable text through macOS Accessibility only. Web accessibility is
@@ -36,7 +51,18 @@ final class AutoLearnAXTextReader {
     private var manualAccessibilityUnsupportedUntil: [pid_t: UInt64] = [:]
     private var manualAccessibilityPreviousValue: [pid_t: Bool] = [:]
 
+    /// The focused editable field's text; empty for a password field or while secure input is on (focusedText).
     func focusedReadings(processID: pid_t) -> [AutoLearnAXTextReading] {
+        focusedText(processID: processID).readings
+    }
+
+    /// The focused editable field's text. Every focused candidate is described before any value is read: while secure
+    /// input is on, or if one of them is a password field, nothing is read from any of them; a field that's too long
+    /// is skipped.
+    func focusedText(processID: pid_t) -> AutoLearnAXFocusedText {
+        if IsSecureEventInputEnabled() {
+            return AutoLearnAXFocusedText(readings: [], exclusion: .secureInput)
+        }
         let appElement = AXUIElementCreateApplication(processID)
         AXUIElementSetMessagingTimeout(
             appElement,
@@ -56,9 +82,20 @@ final class AutoLearnAXTextReader {
             appendUnique(systemFocused, source: "system-focus", to: &candidates)
         }
 
+        let exclusions = candidates.map { Self.exclusion(for: describe($0.element), secureInputEnabled: false) }
+        if exclusions.contains(.secureField) {
+            restoreWebAccessibility(processID: processID, appElement: appElement)
+            return AutoLearnAXFocusedText(readings: [], exclusion: .secureField)
+        }
+
         var readings: [AutoLearnAXTextReading] = []
-        for candidate in candidates {
+        var skippedTooLong = false
+        for (candidate, exclusion) in zip(candidates, exclusions) {
             guard isEditable(candidate.element) else { continue }
+            guard exclusion == nil else {
+                skippedTooLong = true
+                continue
+            }
 
             let candidateReadings = makeReadings(
                 from: candidate.element,
@@ -68,7 +105,33 @@ final class AutoLearnAXTextReader {
             readings.append(contentsOf: candidateReadings)
         }
         if readings.isEmpty { restoreWebAccessibility(processID: processID, appElement: appElement) }
-        return readings
+        return AutoLearnAXFocusedText(
+            readings: readings, exclusion: readings.isEmpty && skippedTooLong ? .fieldTooLong : nil)
+    }
+
+    /// Why a field must not be read, from what it says about itself; nil when it may be. Secure input (system-wide,
+    /// on while any password field has focus) refuses every field.
+    static func exclusion(
+        for field: AutoLearnAXFieldDescription, secureInputEnabled: Bool
+    ) -> AutoLearnUnobservableReason? {
+        if secureInputEnabled { return .secureInput }
+        let secure = kAXSecureTextFieldSubrole as String
+        if field.role == secure || field.subrole == secure { return .secureField }
+        if let count = field.characterCount, count > AutoLearnLimits.maximumFieldUTF16Length { return .fieldTooLong }
+        return nil
+    }
+
+    /// The same check for one element, for a read of a field found earlier (the end-of-observation snapshot).
+    func exclusion(for element: AXUIElement) -> AutoLearnUnobservableReason? {
+        Self.exclusion(for: describe(element), secureInputEnabled: IsSecureEventInputEnabled())
+    }
+
+    private func describe(_ element: AXUIElement) -> AutoLearnAXFieldDescription {
+        AutoLearnAXFieldDescription(
+            role: copyString(kAXRoleAttribute as CFString, from: element),
+            subrole: copyString(kAXSubroleAttribute as CFString, from: element),
+            characterCount: copyInteger(kAXNumberOfCharactersAttribute as CFString, from: element)
+        )
     }
 
     func restoreWebAccessibility(processID: pid_t, appElement: AXUIElement) {
@@ -409,3 +472,36 @@ final class AutoLearnAXTextReader {
             && range.length <= length - range.location
     }
 }
+
+#if DEBUG
+    extension AutoLearnAXTextReader {
+        static func selfCheck() {
+            let textField = kAXTextFieldRole as String
+            let secure = kAXSecureTextFieldSubrole as String
+            let password = AutoLearnAXFieldDescription(role: textField, subrole: secure, characterCount: 8)
+            assert(exclusion(for: password, secureInputEnabled: false) == .secureField, "native and web password fields")
+            let secureRole = AutoLearnAXFieldDescription(role: secure, subrole: nil, characterCount: nil)
+            assert(exclusion(for: secureRole, secureInputEnabled: false) == .secureField)
+            let plain = AutoLearnAXFieldDescription(role: textField, subrole: nil, characterCount: 120)
+            assert(exclusion(for: plain, secureInputEnabled: false) == nil, "an ordinary field is read")
+            let area = AutoLearnAXFieldDescription(role: kAXTextAreaRole as String, subrole: nil, characterCount: nil)
+            assert(exclusion(for: area, secureInputEnabled: false) == nil, "no character count: read, capped later")
+            assert(exclusion(for: plain, secureInputEnabled: true) == .secureInput, "secure input refuses every field")
+            let limit = AutoLearnLimits.maximumFieldUTF16Length
+            let atLimit = AutoLearnAXFieldDescription(role: textField, subrole: nil, characterCount: limit)
+            assert(exclusion(for: atLimit, secureInputEnabled: false) == nil)
+            let huge = AutoLearnAXFieldDescription(role: kAXTextAreaRole as String, subrole: nil, characterCount: limit + 1)
+            assert(exclusion(for: huge, secureInputEnabled: false) == .fieldTooLong)
+
+            // Only a count per reason is kept.
+            let suite = "yap.selfcheck.autolearn.\(UUID().uuidString)"
+            guard let defaults = UserDefaults(suiteName: suite) else { return }
+            defer { defaults.removePersistentDomain(forName: suite) }
+            AutoLearnUnobservableCounts.record(.secureField, defaults: defaults)
+            AutoLearnUnobservableCounts.record(.secureField, defaults: defaults)
+            AutoLearnUnobservableCounts.record(.fieldTooLong, defaults: defaults)
+            assert(AutoLearnUnobservableCounts.all(defaults: defaults) == [.secureField: 2, .fieldTooLong: 1])
+            assert(defaults.persistentDomain(forName: suite).map { Array($0.keys) } == [AutoLearnUnobservableCounts.defaultsKey])
+        }
+    }
+#endif
