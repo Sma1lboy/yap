@@ -28,6 +28,14 @@ class TranscriptionPipeline {
     private let transcriptionModelManager: TranscriptionModelManager
     private let delivery = TranscriptionDelivery()
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "TranscriptionPipeline")
+    /// The transcription step of each running pipeline, by History entry: `cancelTranscription` stops it.
+    private var transcribing: [UUID: Task<String, Error>] = [:]
+
+    /// The user cancelled while this entry transcribes: a local model's request leaves its queue or aborts its
+    /// decode instead of finishing first. The pipeline then saves the entry as cancelled (`shouldCancel`).
+    func cancelTranscription(of transcriptionID: UUID) {
+        transcribing[transcriptionID]?.cancel()
+    }
 
     init(
         modelContext: ModelContext,
@@ -115,13 +123,15 @@ class TranscriptionPipeline {
             }
             let transcriptionStart = Date()
             var text: String
-            if let session {
-                text = try await DictationTimeline.$current.withValue(timeline) {
-                    try await session.transcribe(audioURL: audioURL)
+            let billed = YapCloud.GenerationCollector()
+            // In a task of its own (it inherits the task locals) so that cancelTranscription can stop it.
+            let step = Task { [serviceRegistry] in
+                if let session {
+                    return try await DictationTimeline.$current.withValue(timeline) {
+                        try await session.transcribe(audioURL: audioURL)
+                    }
                 }
-            } else {
-                let billed = YapCloud.GenerationCollector()
-                text = try await YapCloud.$generationCollector.withValue(billed) {
+                return try await YapCloud.$generationCollector.withValue(billed) {
                     try await DictationTimeline.$current.withValue(timeline) {
                         try await serviceRegistry.transcribe(
                             audioURL: audioURL,
@@ -130,8 +140,11 @@ class TranscriptionPipeline {
                         )
                     }
                 }
-                transcription.yapCloudTranscriptionGenerationID = billed.last
             }
+            transcribing[transcription.id] = step
+            defer { transcribing[transcription.id] = nil }
+            text = try await step.value
+            if session == nil { transcription.yapCloudTranscriptionGenerationID = billed.last }
             timeline?.mark(.transcribed)
             text = TranscriptionOutputFilter.filter(text)
             text = ChineseCleanup.apply(text, options: ChineseCleanup.currentOptions)

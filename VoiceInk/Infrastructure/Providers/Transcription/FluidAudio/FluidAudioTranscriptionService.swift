@@ -12,6 +12,14 @@ class FluidAudioTranscriptionService: TranscriptionService {
     private var cachedModels: AsrModels?
     private var loadingTask: (version: AsrModelVersion, task: Task<AsrModels, Error>)?
     private var managerLoad: (name: String, task: Task<Void, Error>)?
+    /// One transcription, preload or release at a time: Nemotron's and Unified's managers keep one decode's state
+    /// (language, audio buffer, decoder) on the shared manager, and a release mid-decode would clean them up under
+    /// it. Streaming sessions build their own managers and don't take turns.
+    private let turns = ModelTurns()
+    #if DEBUG
+        /// `make lifecycle-check`: whether a batch manager is loaded.
+        var hasLoadedManagers: Bool { asrManager != nil || unifiedAsrManager != nil || nemotronAsrManager != nil }
+    #endif
     private let audioConverter = AudioConverter()
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "FluidAudioTranscriptionService")
 
@@ -125,13 +133,18 @@ class FluidAudioTranscriptionService: TranscriptionService {
     }
 
     /// One manager load at a time per model: the shortcut-press preload and the load after the mode is applied
-    /// (and a transcription that starts mid-load) share it instead of each building a manager.
+    /// share it instead of each building a manager. In a turn, so it never replaces managers a transcription uses.
     func loadModel(for model: FluidAudioModel) async throws {
         if let (name, task) = managerLoad {
             if name == model.name { return try await task.value }
             _ = try? await task.value
         }
-        let task = Task { try await self.loadManagers(for: model) }
+        let task = Task {
+            await self.turns.take()
+            defer { self.turns.give() }
+            guard !self.turns.isClosed else { throw CancellationError() }
+            try await self.loadManagers(for: model)
+        }
         managerLoad = (model.name, task)
         defer { if managerLoad?.name == model.name { managerLoad = nil } }
         try await task.value
@@ -154,7 +167,10 @@ class FluidAudioTranscriptionService: TranscriptionService {
     func transcribe(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext) async throws
         -> String
     {
-        _ = try? await managerLoad?.task.value  // a preload still running
+        // A preload asked first runs first; cancelled while waiting, this leaves the queue without decoding.
+        try await turns.take(cancellable: true)
+        defer { turns.give() }
+        guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
         if FluidAudioModelManager.isParakeetUnifiedModel(named: model.name) {
             let wasLoaded = unifiedAsrManager != nil
             try await ensureUnifiedModelsLoaded()
@@ -192,7 +208,8 @@ class FluidAudioTranscriptionService: TranscriptionService {
             if speechAudio.count + trailingSilenceSamples <= maxSingleChunkSamples {
                 speechAudio += [Float](repeating: 0, count: trailingSilenceSamples)
             }
-
+            // Nemotron's process/finish don't stop for a cancelled task; check before starting the decode.
+            try Task.checkCancellation()
             _ = try await nemotronAsrManager.process(samples: speechAudio)
             let text = try await nemotronAsrManager.finish()
             return text
@@ -302,18 +319,22 @@ class FluidAudioTranscriptionService: TranscriptionService {
         }
     }
 
-    // Releases ASR/VAD resources but preserves cached models for reuse
-    func cleanup() async {
-        await cleanupLoadedManagers()
-    }
-
-    /// Also drops the loaded Core ML models (`cleanup()` keeps them): the idle release in ModelResidency.
+    /// Every loaded manager and the cached Core ML models: the idle release in ModelResidency. After the
+    /// transcription or preload in its turn, never under it.
     func releaseAll() async {
-        _ = try? await managerLoad?.task.value
+        await turns.take()
+        defer { turns.give() }
         loadingTask?.task.cancel()
         loadingTask = nil
         await cleanupLoadedManagers()
         cachedModels = nil
+    }
+
+    /// Quit: no transcription or preload starts from now on (those still waiting fail without running), then
+    /// `releaseAll` once the one in its turn has finished.
+    func close() async {
+        turns.close()
+        await releaseAll()
     }
 
 }

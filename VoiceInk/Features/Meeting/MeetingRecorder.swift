@@ -13,6 +13,14 @@ final class MeetingRecorder: ObservableObject {
     static let shared = MeetingRecorder()
     /// Read by the dictation Recorder, which must not mute the output or pause media during a meeting.
     static var isRecordingMeeting: Bool { shared.phase.isRecording }
+    /// Recording or finishing. ModelResidency counts it as busy, so an idle or memory-pressure release waits for the
+    /// meeting's end instead of freeing the model between two pieces, which would only load it again for the next one.
+    static var isMeetingInProgress: Bool {
+        switch shared.phase {
+        case .recording, .finishing: return true
+        default: return false
+        }
+    }
 
     enum Phase: Equatable {
         case idle
@@ -359,6 +367,15 @@ final class MeetingRecorder: ObservableObject {
         /// `--meeting-files <mic.wav> <system.wav>` (MeetingFilesCheck): two 16 kHz mono PCM16 files go through the
         /// same channels, chunking, transcription, notes and saving as a live recording, without capture.
         func processFiles(microphone: URL, system: URL) async -> (MeetingResult, folder: URL)? {
+            guard let session = startFromFiles(microphone: microphone, system: system) else { return nil }
+            self.session = nil
+            return await complete(session).map { ($0, session.folder) }
+        }
+
+        /// A meeting recording whose two channels are fed from files, left recording as a live one is: `stop()`
+        /// (End Meeting, or End Meeting and Quit) finishes it the same way. `make quit-check`'s `meeting` case.
+        @discardableResult
+        func startFromFiles(microphone: URL, system: URL) -> Session? {
             guard let engine, let configuration = ModeRuntimeResolver.transcriptionConfiguration(
                 transcriptionModelManager: engine.transcriptionModelManager)
             else { return nil }
@@ -367,11 +384,12 @@ final class MeetingRecorder: ObservableObject {
             guard let session = try? Session(
                 folder: folder, started: Date(), transcriber: Transcriber(engine: engine, configuration: configuration))
             else { return nil }
+            self.session = session
             activeFolders.insert(folder.lastPathComponent)
             phase = .recording(started: session.started)
             session.feed(file: microphone, as: .me)
             session.feed(file: system, as: .others)
-            return await complete(session).map { ($0, folder) }
+            return session
         }
     #endif
 

@@ -65,6 +65,8 @@ Large v3 Turbo q5_0, language auto, audio fed in real time:
 
 On the 65 s recording: 26–29 previews, none looping. The last preview's character error rate against the final is 0.25. The final text is identical with the preview on and off. In the app the final includes the session path around the decode, which is why it's slower than the harness. A 2.5 s interval saved little (3.3 s CPU, 8.4 J for the 11 clips) and showed text less often, so the interval stays at 1.5 s.
 
+In the app (`WAIT=1 PREVIEW=1 make first-run-check MODEL=ggml-tiny`, the 65 s recording fed in real time, "After each dictation", a busy Mac with load average 3–5): the preview sessions showed 33 and 34 previews, the four finals (two with the preview, two without) printed the same text, and the model stayed loaded throughout. Time from release to final: 1.1 s for the first session, 7.7–8.3 s for the next three, with or without previews; most of it was before the decode starts (3–3.5 s) and a 4.8 s decode where the first session's took 1 s. That slowdown is the same with the preview off, so it isn't the preview's; it wasn't investigated further. The check itself was why #62's run showed no preview text and main took 85–87 s: it didn't count the recording as a use for `ModelResidency`, so "After each dictation" freed the model 30 s in, every preview decode found no model, and the final waited for a reload. It now holds the model as a real recording does (seen on this branch in the log; main's 85 s is the same check, not rerun).
+
 ## Local cleanup
 
 On macOS 26, Apple Intelligence (Foundation Models) is an experimental cleanup option behind Models > Advanced, until it passes the bench in [cloud-models.md](cloud-models.md#on-device-2026-09-27). The other local cleanup options are Yap Refine (a fine-tuned Qwen 3.5 run with MLX in `VoiceInkRefineXPC`, 1.06 GB download, needs 16 GB of memory), Ollama and a local CLI. Ollama and the local CLI run whatever model you install yourself, so they aren't benched here.
@@ -118,7 +120,10 @@ whisper.cpp frees its Metal device in a C++ static destructor when the process c
 Now `AppDelegate.applicationShouldTerminate` answers `.terminateLater` and, before replying:
 
 1. During a meeting, asks first as before (Keep Recording is the default and cancels the Quit with nothing closed; End Meeting and Quit finishes and saves the meeting).
-2. `VoiceInkEngine.closeLocalModels`: `WhisperModelManager.closeForQuit` refuses any load and any transcription's turn from then on (a preload or a dictation after Quit fails with an error instead of loading again; a transcription still waiting for its turn fails without decoding), waits for a load in flight and for a post-download warm-up, then frees the context in its own turn, after the decode in flight; it doesn't abort it. A decode is one turn per dictation, per imported file and per meeting piece, so Quit during a long file import waits for the whole file, with nothing on screen meanwhile; End Meeting and Quit already waited for the notes request. Then `serviceRegistry.releaseAll()` as the idle release does (FluidAudio, transcribe.cpp).
+2. The audio import queue is cancelled: the file being imported goes back to pending (the queue isn't kept across launches anyway) and its decode is aborted (Whisper's and transcribe.cpp's abort callbacks; a FluidAudio Nemotron decode already running still finishes, see below) instead of Quit waiting for the whole file. Then `VoiceInkEngine.closeLocalModels`:
+   - Whisper (`WhisperModelManager.closeForQuit`): refuses any load and any transcription's turn from then on (a preload or a dictation after Quit fails with an error instead of loading again; a transcription still waiting for its turn fails without decoding), aborts the decode of a post-download warm-up and waits for its context to be freed, waits for a load in flight, then frees the shared context in its own turn, after the decode in flight. A dictation or a meeting piece in flight is waited for, not aborted. End Meeting and Quit already waited for the remaining pieces and the notes request.
+   - FluidAudio: no transcription or preload starts from then on; the managers and Core ML models are released after the transcription in its turn. With a 3-minute Nemotron file transcribing (not an import, which is cancelled first), Quit waited 23 s on an idle Mac and 170 s on a busy one.
+   - transcribe.cpp: no transcription or load starts from then on; it waits for the running ones to end (a 22-minute SenseVoice file: 16 s) and frees the model. It links its own ggml: with that wait taken out, a Quit one second into a transcription crashed in `ggml_metal_rsets_free` (`GGML_ASSERT([rsets->data count] == 0)`, exit 134), as Whisper's did in 1.13.0.
 3. Replies, and AppKit exits.
 
 A second ⌘Q (or Quit from the Dock) during those steps used to make AppKit exit at once without asking again, in the middle of the release (crash) or of a meeting being saved. `YapApplication`, the app's `NSApplication`, drops `terminate:` from the `.terminateLater` answer until just before the reply. (After a quit Apple event AppKit's own exit on the reply calls `terminate:` again; dropping that one too left Yap running.)
@@ -139,14 +144,17 @@ A second ⌘Q (or Quit from the Dock) during those steps used to make AppKit exi
 | Always | menu bar icon › Quit Yap | not run | exit 0 |
 | Always | app menu › Quit (the ⌘Q item) | not run | exit 0 |
 | Always | quit Apple event from another process | not run | exit 0 |
+| Always (no launch prewarm) | post-download warm-up running (the mode's model as the one just downloaded) | not run | exit 0; 0.12 s, or 16 s when it was compiling Metal shaders for the first time (that part can't be interrupted) |
+| Always | 3-minute file being imported | not run | exit 0 after 0.9 s: the import was cancelled and its decode aborted |
+| Always | 3 s into a recording with the live preview on | not run | exit 0 after 0.01 s |
+| Always | meeting recording (fed from files), End Meeting and Quit | not run | exit 0 after 5.5 s: the remaining pieces, 0 failed, and the History entry were saved before the exit |
 
 Not verified by a run:
 
 - The Release build: CI compiles it; every run above is the Debug app.
-- End Meeting and Quit: needs a real microphone. `AppDelegate.quitSelfCheck` (DEBUG, at launch) checks with stand-ins that Keep Recording closes nothing and that the order is meeting saved → models freed → reply.
-- transcribe.cpp and FluidAudio models: none on this Mac. They're released through the same `releaseAll` as the idle release. transcribe.cpp links its own ggml; an unload is skipped while it transcribes (`activeTranscriptionCount`), so a Quit mid-transcription there may still crash.
-- The launch prewarm, audio import and History's Retranscribe each used to build a `TranscriptionServiceRegistry` of their own, whose FluidAudio and transcribe.cpp services nothing released on Quit or when idle. They use the engine's now (see below), so `releaseAll` covers them. Not run with those providers (no model here).
-- The warm-up right after a model download (`WhisperModelWarmupCoordinator`) still uses a context of its own, through `WhisperModelManager.warmUp`: Quit waits for it and none starts after Quit. Not run (it needs a fresh download).
+- End Meeting and Quit with a real microphone and system audio: the `meeting` case feeds the same recording session from two files (`MeetingRecorder.startFromFiles`) and answers the alert by a DEBUG switch; capture itself isn't exercised.
+- A Quit during a Sparkle update: Sparkle 2.9.2's installer sends the same quit Apple event the `appleevent` case sends, but no update was installed.
+- Quit with a FluidAudio or transcribe.cpp transcription in flight waits for it (see below); that ran through `NSApplication.terminate` in `make lifecycle-check`, not through the menu items.
 
 ## Transcriptions that overlap
 
@@ -163,12 +171,43 @@ Now:
 
 **Waiting instead of memory.** Still only one Whisper model in memory. With a meeting on one model and dictation on another they take turns, and every switch is a load: in two runs of the check (M4 Pro, models in the page cache, "After each dictation") a dictation that came during the meeting took 1.6 s (median) instead of 0.5–0.6 s alone, because it waited for the piece being decoded and then for its model to load; the 54 s test meeting (6 pieces, 6 dictations during it, 12 loads) finished in 10.1–10.2 s (12–15 s alone, as the first meeting of the run). Yap's footprint stayed at 0.85–0.92 GB with Large v3 Turbo loaded, apart from one sample of 1.5 GB per run while the earlier meetings' speakers were being told apart (FluidAudio, in the background). Keeping both models would save those loads but hold both for as long as a meeting runs, which for two large models doubles that; that's left out. Meeting pieces and dictations are equal in the queue: a dictation waits for at most the piece ahead of it, not for the whole meeting.
 
-Not covered:
+Not covered: the Release build (every run is the Debug app; CI compiles Release).
 
-- Cancelling a transcription that's waiting for its turn or decoding: the turn is held until the decode returns (M4.3). Quit waits for the decode in its turn and for a post-download warm-up (its first decode compiles Metal shaders, ~16 s for Large v3 Turbo).
-- FluidAudio (its Nemotron model keeps the language and its stream in one shared manager: `setLanguage`, `reset`, `process` per request) and transcribe.cpp take no turns. A meeting and a dictation on the same FluidAudio model could mix the same way Whisper did. Since audio import, Retranscribe and the prewarm now share the engine's FluidAudio service instead of each having its own, they can too: the trade for having those models released when idle and on Quit. None of those models is on this Mac to check.
-- The Release build: every run is the Debug app; CI compiles Release.
-- `make isolation-check` isn't offline: its meetings are long enough to be diarized, which downloads the speaker models into the mock identity's folder each run.
+## Cancelling a local transcription
+
+Cancel in the recorder while a dictation is transcribing, and Clear or Stop in the audio import queue, cancel the transcription's task (`TranscriptionPipeline.cancelTranscription`, `AudioTranscriptionManager.cancelProcessing`). Up to M4.2 the dictation's decode ran to its end first and was then thrown away, holding the model's turn meanwhile. Now:
+
+| Where the request is | Whisper | FluidAudio (Nemotron, Parakeet, Unified) | transcribe.cpp |
+|---|---|---|---|
+| waiting for its turn | leaves the queue at once, never decodes, holds nothing; the ones behind move up (0.2 s in the check) | the same (0.2 s) | no queue: native runs take turns per ≤30 s chunk, so a request between another one's chunks runs right away |
+| its model loading | the load finishes (others may share it), then it stops without decoding; the model stays loaded (0.5–0.7 s) | stops before decoding | stops before decoding |
+| decoding | whisper.cpp's abort callback before each graph computation, and a check before each window: once past speech detection it stopped within 0.01–0.34 s in the check. Speech detection over the whole file runs first and can't be interrupted: 0.15–3.6 s for a 65 s file on an idle Mac, 86 s while the Mac was busy with other work | Nemotron: checked right before its decode starts (a cancel 0.7 s into a 3-minute file stopped there); a decode already running finishes, its SDK calls don't stop for a cancelled task. Parakeet's SDK checks for cancellation in its decoder loop (read in the SDK, not run) | transcribe.cpp's abort callback between decode steps (1 s into a 22-minute file) |
+
+A cancelled request throws `CancellationError`; the next request on the same model comes out as alone, and nothing frees the context another request uses. A cancelled dictation is saved as cancelled ("The transcription was canceled."), never as a transcript; a cancelled import goes back to pending and creates no History entry. Meeting pieces aren't cancelled: End Meeting waits for them.
+
+## FluidAudio and transcribe.cpp
+
+What their SDKs (FluidAudio 762baf6, Transcribe-cpp-swift fb1c1ad) already do, and what changed:
+
+- **FluidAudio.** Its managers are actors, but a batch transcription is several awaited calls on one shared manager: Nemotron's `setLanguage`, `reset`, `process`, `finish` keep one stream's language and audio on the manager, and Unified resets one shared decoder per window (read in the SDK). Two requests at once mixed them: with the turns taken out, the check's Chinese and English Nemotron requests started together crashed the app (heap corruption in `NemotronMelExtractor`, `free_medium_botch`). A release during a decode cleans the same managers up (read in the app and SDK; the crash came first in that run). `FluidAudioTranscriptionService` now takes a `ModelTurns` turn per transcription, preload and release, the same FIFO type Whisper uses: 20 of 20 overlapping requests came out as alone, and a release asked during a decode waited for it (5 s on an idle Mac, 141 s on a busy one) and then freed the models. Streaming sessions build their own managers and take no turns.
+- **transcribe.cpp.** Its `Model` already serializes native runs (one `runLock`) and each request has its own `Session`, so overlapping requests don't mix: 20 of 20 as alone, which comes from the SDK's lock, not from this change. Two things changed. The model was unloaded after every transcription whatever "Keep model loaded" said, and an unload asked for while one ran was skipped and never done; now it stays loaded until a release asks, and a release asked during a transcription happens after the last one ends. And Quit waits for the running transcriptions (above).
+- Models: the FluidAudio download (`--fluidaudio-models <dir>` in DEBUG) now passes its folder to Nemotron's `downloadVariant` instead of relying on the SDK's default, which is the same `~/Library/Application Support/FluidAudio/Models` folder for production; Parakeet's and VAD's folders still come from the SDK.
+
+Not run: Parakeet v2/v3, Unified and Cohere (only Nemotron Multilingual and SenseVoice Small were downloaded), FluidAudio and transcribe.cpp streaming sessions, FluidAudio's VAD (off in the check: its model folder can't be set, and the check must not write the shared FluidAudio folder).
+
+## Keep model loaded, against real work
+
+`ModelResidency` releases on a timer or a memory-pressure warning, never while a recording, a transcription (`withUse`) or, now, a meeting (recording or finishing) is in progress. Before, the meeting's gaps between pieces counted as idle, so a memory-pressure warning freed the model between two pieces and the next piece loaded it again. In `make lifecycle-check`, Large v3 Turbo, after each of a live-preview final, an audio import, a 54 s meeting, the wake prewarm and a cancelled request:
+
+| Keep model loaded | Right after | A while after |
+|---|---|---|
+| Always | loaded | loaded (9 s later) |
+| 5 s | loaded | released (9 s later) |
+| After each dictation | loaded | released (36 s later: these aren't dictations, so the 30 s grace applies) |
+
+A memory-pressure warning one second into a meeting (with Always): 0 failed pieces, the model released 1.7 s after the meeting ended, the next request loaded it again.
+
+`make lifecycle-check MODEL=<ggml-*.bin> MODEL2=<another ggml-*.bin>` (`scripts/lifecycle-check.sh`, `LifecycleCheck.swift`, `scripts/lifecycle-check.py`) runs these as the mock identity, one launch per suite: `whisper` (the cancels above, then the live-preview final alone and with a MODEL2 request in the middle of the recording), `residency`, `tcpp` (SenseVoice Small from the catalog URL, checked against its size and SHA-256, in `/tmp/yap-test-models`) and `fluid` (Nemotron Multilingual, downloaded once by the app's own download into `/tmp/yap-test-models/fluidaudio`; FluidAudio's shared folder stayed absent). The meetings' speaker models are downloaded once into `/tmp/yap-speaker-models` and copied in after that (isolation-check uses the same cache).
 
 `make isolation-check MODEL=<ggml-*.bin> MODEL2=<another ggml-*.bin>` (`scripts/isolation-check.sh`, `IsolationCheck.swift`) runs the Debug app as the mock identity and compares every overlapping result, text and timed segments, with the same request run alone (twice, which must agree): ten same-model pairs started together, the second after 0, 0, 2, 10 or 50 ms, in both orders; an audio import (its segments read back from the saved entry) while clip A runs again and again; a model that isn't on disk failing alone and next to clip A, then clip A again; two 54 s two-channel meetings on MODEL while the mode is switched to MODEL2 and clip A is dictated until each meeting is done, each meeting with 0 failed pieces. It prints the median time, the loads and the footprint per phase. `WhisperModelManager.selfCheck` (DEBUG, at launch) pins the turn order with placeholder contexts: a piece, then a dictation on another model, then the next piece run in that order with each model still loaded at the end of its own decode; an idle release asked during a decode frees after it; a failed load doesn't stop the next one; after Quit a waiting transcription fails without running.
 

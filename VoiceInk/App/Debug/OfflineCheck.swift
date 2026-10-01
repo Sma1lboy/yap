@@ -26,6 +26,9 @@
             if let isolationIndex = arguments.firstIndex(of: IsolationCheck.argument) {
                 return IsolationCheck.run(engine: engine, clipA: file, arguments: Array(arguments[(isolationIndex + 1)...]))
             }
+            if let lifecycleIndex = arguments.firstIndex(of: LifecycleCheck.argument) {
+                return LifecycleCheck.run(engine: engine, clip: file, arguments: Array(arguments[(lifecycleIndex + 1)...]))
+            }
             if let modelIndex = arguments.firstIndex(of: firstRunArgument), arguments.indices.contains(modelIndex + 1) {
                 return runFirstRun(engine: engine, modelName: arguments[modelIndex + 1], file: file)
             }
@@ -105,7 +108,9 @@
 
         /// `--preview-check`: the recorder's path for local Whisper with the live transcript on. The registry's
         /// session gets the file's PCM in real time through its chunk callback, as the recorder would send it; each
-        /// preview text is printed with its time, then the final transcription is timed.
+        /// preview text is printed with its time, then the final transcription is timed. The whole "recording" counts
+        /// as a use for ModelResidency, as a real one does (the engine's recording state): without it "After each
+        /// dictation" freed the model 30 s in, every preview decode found no model, and the final waited for a reload.
         private static func runLivePreview(engine: VoiceInkEngine, modelName: String, file: URL) async {
             let manager = engine.whisperModelManager
             if manager.whisperContext == nil, let model = manager.availableModels.first(where: { $0.name == modelName }) {
@@ -123,23 +128,27 @@
             }
             let pcm = Data(bytes: int16[0], count: Int(buffer.frameLength) * 2)
             let recordingStart = Date()
+            var previews = 0
             let session = engine.serviceRegistry.createSession(for: configuration) { text in
+                previews += 1
                 print("first-run: preview at \(String(format: "%.1f", Date().timeIntervalSince(recordingStart))) s: \(text)")
             }
             print("first-run: preview session \(type(of: session))")
-            // Nil for a session without live text; the recording still takes its real time.
-            let feed = try? await session.prepare(configuration: configuration)
-            var offset = 0
-            while offset < pcm.count {
-                let next = min(pcm.count, offset + 3_200)  // 100 ms of 16 kHz Int16
-                feed?(pcm.subdata(in: offset..<next))
-                offset = next
-                let due = recordingStart.addingTimeInterval(Double(offset) / 32_000)
-                if due > Date() { try? await Task.sleep(for: .seconds(due.timeIntervalSinceNow)) }
+            await ModelResidency.shared.withUse {
+                // Nil for a session without live text; the recording still takes its real time.
+                let feed = try? await session.prepare(configuration: configuration)
+                var offset = 0
+                while offset < pcm.count {
+                    let next = min(pcm.count, offset + 3_200)  // 100 ms of 16 kHz Int16
+                    feed?(pcm.subdata(in: offset..<next))
+                    offset = next
+                    let due = recordingStart.addingTimeInterval(Double(offset) / 32_000)
+                    if due > Date() { try? await Task.sleep(for: .seconds(due.timeIntervalSinceNow)) }
+                }
+                let released = Date()
+                let text = (try? await session.transcribe(audioURL: file)) ?? "(failed)"
+                print("first-run: final with \(type(of: session)) \(Date().timeIntervalSince(released)), \(previews) previews, model loaded during it \(manager.whisperContext != nil): \(text)")
             }
-            let released = Date()
-            let text = (try? await session.transcribe(audioURL: file)) ?? "(failed)"
-            print("first-run: final with \(type(of: session)) \(Date().timeIntervalSince(released)) \(text)")
         }
 
         /// Fresh install without the model: download it through WhisperModelManager (as onboarding's Download

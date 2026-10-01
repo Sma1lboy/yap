@@ -39,16 +39,30 @@ class WhisperTranscriptionService: TranscriptionService {
         let samples = try Self.readAudioSamples(audioURL)
         let prompt = WhisperPrompt.withVocabulary(context.prompt ?? "", words: dictionaryWords())
         // The shared context, in this request's turn: the preload the shortcut press started is waited for, never
-        // loaded a second time, and the language and prompt go with this decode only.
+        // loaded a second time, and the language and prompt go with this decode only. Cancelling the task takes it
+        // out of the queue, or aborts its decode (whisper.cpp's abort callback) and frees the turn for the next one.
+        let abort = WhisperContext.Abort()
         let transcript: WhisperContext.Transcript?
         do {
-            transcript = try await modelProvider.withContext(named: model.name) { whisperContext, loaded in
-                if loaded { DictationTimeline.modelDidLoad() }
-                return await whisperContext.transcribe(samples: samples, language: context.language, prompt: prompt)
+            transcript = try await withTaskCancellationHandler {
+                try await modelProvider.withContext(named: model.name) { whisperContext, loaded in
+                    if loaded { DictationTimeline.modelDidLoad() }
+                    return await whisperContext.transcribe(
+                        samples: samples, language: context.language, prompt: prompt, abort: abort)
+                }
+            } onCancel: {
+                abort.set()
             }
+        } catch is CancellationError {
+            logger.notice("Local transcription cancelled before decoding")
+            throw CancellationError()
         } catch {
             logger.error("❌ Failed to load model: \(model.name, privacy: .public) - \(error, privacy: .public)")
             throw VoiceInkEngineError.modelLoadFailed
+        }
+        if abort.isSet {
+            logger.notice("Local transcription cancelled while decoding")
+            throw CancellationError()
         }
         guard let transcript else {
             logger.error("❌ Core transcription engine failed (whisper_full).")

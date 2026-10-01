@@ -129,62 +129,25 @@ class WhisperModelManager: ObservableObject {
     }
     private nonisolated let loadedSnapshot = LoadedSnapshot()
 
-    /// Whisper work on the loaded model, one at a time in the order it asked: each transcription (with the switch to
-    /// its model when another one is loaded) and each release (idle, memory pressure, Quit). Decodes on one context
-    /// already ran one at a time; the turn also keeps a release or another model's load from freeing the context
-    /// between a transcription getting it and getting its result, and lets a meeting piece and a dictation that use
-    /// different models take turns instead of failing. Lock-based so a loaded model is used without waiting for the
-    /// main actor.
-    private final class Turns: @unchecked Sendable {
-        private let lock = NSLock()
-        private var busy = false
-        private var waiting: [CheckedContinuation<Void, Never>] = []
-        private var closed = false
-
-        /// Set by Quit: every turn from then on fails without touching a model.
-        var isClosed: Bool { lock.withLock { closed } }
-        func close() { lock.withLock { closed = true } }
-
-        func take() async {
-            await withCheckedContinuation { (turn: CheckedContinuation<Void, Never>) in
-                let now = lock.withLock { () -> Bool in
-                    guard busy else {
-                        busy = true
-                        return true
-                    }
-                    waiting.append(turn)
-                    return false
-                }
-                if now { turn.resume() }
-            }
-        }
-
-        func give() {
-            let next = lock.withLock { () -> CheckedContinuation<Void, Never>? in
-                guard !waiting.isEmpty else {
-                    busy = false
-                    return nil
-                }
-                return waiting.removeFirst()
-            }
-            next?.resume()
-        }
-    }
-    private nonisolated let turns = Turns()
+    private nonisolated let turns = ModelTurns()
 
     /// Runs `body` on the context holding the model named `name`, in its turn: no other transcription, release or
     /// model switch runs until `body` returns, so its context is neither freed nor replaced in the middle. A model
     /// already loaded is used without waiting for the main actor, which is busy with the recorder and History right
     /// after a stop (~20 ms). `loaded` (passed to `body`) is true when the model had to be loaded or a load waited for.
-    /// Throws when the model can't be loaded, and after Quit.
+    /// Throws when the model can't be loaded, and after Quit. Cancelled while waiting for its turn, it throws
+    /// CancellationError without holding one; cancelled during a load, the load still finishes (it's shared) and
+    /// `body` doesn't run. Cancelling `body` itself is up to `body` (WhisperContext.Abort).
     nonisolated func withContext<T>(
         named name: String, _ body: (_ context: WhisperContext, _ loaded: Bool) async throws -> T
     ) async throws -> T {
-        await turns.take()
+        try await turns.take(cancellable: true)
         defer { turns.give() }
         guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
+        try Task.checkCancellation()
         if let context = loadedSnapshot.context(named: name) { return try await body(context, false) }
         let ready = try await context(forModelNamed: name)
+        try Task.checkCancellation()
         return try await body(ready.context, ready.waited)
     }
 
@@ -473,28 +436,33 @@ class WhisperModelManager: ObservableObject {
 
     /// The warm-up right after a download (WhisperModelWarmupCoordinator): decodes `samples` once with the model just
     /// downloaded, in a context of its own so the one dictation uses stays loaded, and frees it. Not in a turn (it can
-    /// take ~16 s and dictation shouldn't wait for it), but Quit waits for it and none starts after Quit.
+    /// take ~16 s and dictation shouldn't wait for it). Quit aborts its decode and waits for its context to be freed;
+    /// none starts after Quit.
     func warmUp(_ model: WhisperModelFile, samples: [Float]) async throws {
         guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
         let previous = warmup
+        let abort = warmupAbort
         let task = Task {
             _ = try? await previous?.value
             guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
             let context = try await WhisperContext.createContext(path: model.url.path)
-            _ = await context.transcribe(samples: samples, language: nil, prompt: nil)
+            _ = await context.transcribe(samples: samples, language: nil, prompt: nil, abort: abort)
             await context.releaseResources()
         }
         warmup = task
         try await task.value
     }
     private var warmup: Task<Void, Error>?
+    /// Set by Quit: a warm-up's decode stops before its next graph computation (whisper.cpp's abort callback).
+    private let warmupAbort = WhisperContext.Abort()
 
-    /// Quit: every turn and load from now on fails, and the loaded model is freed once the transcription in its turn,
-    /// a load in flight and a warm-up have finished. Transcriptions still waiting for a turn fail without decoding.
-    /// ggml frees its Metal device in a static destructor during exit() and aborts if a model's buffers are still
-    /// allocated then.
+    /// Quit: every turn and load from now on fails, a warm-up's decode is aborted, and the loaded model is freed once
+    /// the transcription in its turn, a load in flight and the warm-up's context have finished. Transcriptions still
+    /// waiting for a turn fail without decoding. ggml frees its Metal device in a static destructor during exit() and
+    /// aborts if a model's buffers are still allocated then.
     func closeForQuit() async {
         turns.close()
+        warmupAbort.set()
         _ = try? await warmup?.value
         await cleanupResources()
     }
@@ -556,8 +524,9 @@ extension WhisperModelManager: WhisperModelProvider {}
         /// Loads are counted with placeholder contexts (no model file is read): a dictation stopped while the press's
         /// preload is still loading waits for it, a press during a release still preloads, a transcription needing a
         /// different model waits for the one using the loaded model and then releases it first, transcriptions and
-        /// releases go in the order they asked, and Quit during a preload frees it once loaded, after which nothing
-        /// loads and transcriptions still waiting fail without running.
+        /// releases go in the order they asked, one cancelled while it waits leaves the queue without running, and
+        /// Quit during a preload frees it once loaded, after which nothing loads and transcriptions still waiting fail
+        /// without running.
         static func selfCheck() async {
             final class Log {
                 var loads: [String] = []
@@ -627,6 +596,23 @@ extension WhisperModelManager: WhisperModelProvider {}
                 log.uses == ["start piece 1", "end piece 1", "start dictation", "end dictation", "start piece 2", "end piece 2"],
                 "in the order asked: \(log.uses)")
             precondition(log.loads == ["a", "a", "b", "a"] && results[1]?.loaded == true, "\(log.loads)")
+
+            // A dictation on "b" cancelled while it waits behind a piece leaves the queue at once: it returns before
+            // the piece ends, never runs, loads nothing, and the request behind it moves up.
+            let longPiece = Task { await use("a", "piece 3", milliseconds: 60) }
+            await started("piece 3")
+            let cancelled = Task { await use("b", "cancelled") }
+            await Task.yield()
+            let nextInLine = Task { await use("a", "next in line") }
+            await Task.yield()
+            cancelled.cancel()
+            let cancelledResult = await cancelled.value
+            precondition(cancelledResult == nil && log.uses.last == "start piece 3", "cancelled while waiting: \(log.uses)")
+            _ = await longPiece.value
+            let nextResult = await nextInLine.value
+            precondition(nextResult != nil && !log.uses.contains("start cancelled"), "\(log.uses)")
+            precondition(log.uses.suffix(3) == ["end piece 3", "start next in line", "end next in line"], "\(log.uses)")
+            precondition(log.loads == ["a", "a", "b", "a"], "nothing loaded for the cancelled one: \(log.loads)")
 
             // The idle release asked during a decode frees the model after it, not under it.
             let decode = Task { await use("a", "decode", milliseconds: 40) }

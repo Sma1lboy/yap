@@ -34,9 +34,20 @@ final class TranscribeCppTranscriptionService: TranscriptionService, @unchecked 
         )
     }
 
+    /// The idle or memory-pressure release: now, or after the last running transcription.
     func cleanup() {
         offlineService.cleanup()
     }
+
+    /// Quit: aborts running transcriptions and returns once the model is freed.
+    func close() async {
+        await offlineService.close()
+    }
+
+    #if DEBUG
+        /// `make lifecycle-check`: whether a model is loaded.
+        var isModelLoaded: Bool { offlineService.isModelLoaded }
+    #endif
 
     private func unsupportedModelError(_ modelName: String) -> NSError {
         NSError(

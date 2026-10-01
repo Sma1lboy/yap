@@ -46,7 +46,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             isRecordingMeeting: MeetingRecorder.isRecordingMeeting,
             confirmEndingMeeting: Self.confirmEndingMeeting,
             endMeeting: { await MeetingRecorder.shared.stop() },
-            closeModels: { [weak self] in await self?.engine?.closeLocalModels() },
+            closeModels: { [weak self] in
+                // A file being imported can take minutes; the queue isn't kept across launches anyway. Its decode
+                // is aborted (Whisper's abort callback, transcribe.cpp's) instead of Quit waiting for the whole file.
+                AudioTranscriptionManager.shared.cancelProcessing()
+                await self?.engine?.closeLocalModels()
+            },
             reply: {
                 (sender as? YapApplication)?.isClosingForQuit = false
                 sender.reply(toApplicationShouldTerminate: true)
@@ -56,6 +61,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private static func confirmEndingMeeting() -> Bool {
+        #if DEBUG
+            // make quit-check's `meeting` case: the same Quit, with "End Meeting and Quit" chosen (no alert shown).
+            if QuitCheck.endsMeetingOnQuit { return true }
+        #endif
         let alert = NSAlert()
         alert.messageText = String(localized: "A meeting is recording")
         alert.informativeText = String(localized: "Quitting now would cut it off. End the meeting to save its transcript and notes first, or keep recording.")

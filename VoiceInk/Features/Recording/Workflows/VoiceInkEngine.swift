@@ -173,7 +173,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
         super.init()
 
         ModelResidency.shared.configure(
-            isBusy: { [weak self] in (self?.recordingState ?? .idle) != .idle },
+            isBusy: { [weak self] in (self?.recordingState ?? .idle) != .idle || MeetingRecorder.isMeetingInProgress },
             release: { [weak self] in await self?.releaseModels() }
         )
         createRecordingsDirectoryIfNeeded()
@@ -843,6 +843,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
             let activePipelineTranscriptionID
         {
             canceledPipelineTranscriptionIDs.insert(activePipelineTranscriptionID)
+            pipeline.cancelTranscription(of: activePipelineTranscriptionID)
         }
 
         cancelCurrentSession()
@@ -1011,17 +1012,18 @@ class VoiceInkEngine: NSObject, ObservableObject {
         logger.notice("cleanupResources: completed")
     }
 
-    /// The idle or memory-pressure release: every local model out of memory.
+    /// The idle or memory-pressure release: every local model out of memory, each after the transcription using it.
     func releaseModels() async {
         logger.notice("releaseModels: releasing local models")
         await whisperModelManager.cleanupResources()
         await serviceRegistry.releaseAll()
     }
 
-    /// Quit (AppDelegate): as `releaseModels`, but Whisper loads nothing after it (`closeForQuit`).
+    /// Quit (AppDelegate): as `releaseModels`, but no local backend loads or starts a transcription after it, and it
+    /// returns once every model is freed (`closeForQuit`).
     func closeLocalModels() async {
         await whisperModelManager.closeForQuit()
-        await serviceRegistry.releaseAll()
+        await serviceRegistry.closeForQuit()
     }
 }
 

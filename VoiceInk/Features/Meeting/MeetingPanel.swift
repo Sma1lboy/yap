@@ -383,16 +383,19 @@ enum MeetingExport {
     }
 }
 
-/// Next to the duck in the menu bar while a meeting records: a red dot and the elapsed time.
+/// Next to the duck in the menu bar while a meeting records: a red dot and the elapsed time. Ticks from a one-second
+/// timer. With a TimelineView here the status item was redrawn without pause for the whole meeting (a sample of the
+/// main thread: 99% in MenuBarExtraController.updateButton), so the meeting's pieces and End Meeting and Quit waited
+/// behind it on the main actor.
 struct MeetingMenuBarBadge: View {
     @ObservedObject var recorder = MeetingRecorder.shared
+    @State private var now = Date()
 
     var body: some View {
         if case .recording(let started) = recorder.phase {
-            TimelineView(.periodic(from: started, by: 1)) { context in
-                Text("● " + MeetingNotes.timestamp(context.date.timeIntervalSince(started)))
-                    .monospacedDigit()
-            }
+            Text("● " + MeetingNotes.timestamp(max(0, now.timeIntervalSince(started))))
+                .monospacedDigit()
+                .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { now = $0 }
         }
     }
 }
