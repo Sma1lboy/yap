@@ -287,13 +287,13 @@ struct VoiceInkApp: App {
             Task { @MainActor in
                 let recovered = await MeetingRecorder.shared.recoverInterruptedMeetings(announceStart: !offeredDictation)
                 #if DEBUG
-                    MeetingFilesCheck.reportRecovery(recovered)  // scripts/meeting-files-check.sh only
+                    await MeetingFilesCheck.reportRecovery(recovered, engine: engine)  // scripts/meeting-files-check.sh only
                     await MeetingFilesCheck.runEditCheck(engine: engine)  // scripts/meeting-files-check.sh only
                 #endif
                 // Meetings saved while their speakers were still being told apart, when the app quit.
                 let resumed = await MeetingRecorder.shared.resumeSpeakers()
                 #if DEBUG
-                    MeetingFilesCheck.reportSpeakersResume(resumed, engine: engine)  // scripts/meeting-long-check.sh only
+                    await MeetingFilesCheck.reportSpeakersResume(resumed, engine: engine)  // scripts/meeting-long-check.sh only
                 #endif
             }
 
