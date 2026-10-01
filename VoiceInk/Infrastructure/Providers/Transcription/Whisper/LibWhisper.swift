@@ -205,8 +205,7 @@ actor WhisperContext {
     /// only turns the probabilities of its last call into segments, so `WhisperSpeechSegments` does that for the
     /// joined ones, the same way.
     private func detectSpeech(_ samples: [Float]) -> ([Range<Int>], [Float])? {
-        guard let vadModelPath,
-            let vctx = whisper_vad_init_from_file_with_params(vadModelPath, whisper_vad_default_context_params())
+        guard let vadModelPath, let vctx = whisper_vad_init_from_file_with_params(vadModelPath, Self.vadContextParams())
         else { return nil }
         defer { whisper_vad_free(vctx) }
         let started = ProcessInfo.processInfo.systemUptime
@@ -247,6 +246,16 @@ actor WhisperContext {
         return (speech, probs)
     }
 
+    /// One thread instead of whisper.cpp's default four: Silero's graph is tiny (one 512-sample window at a time),
+    /// so the threads mostly wait for each other. Same probabilities to the bit (`speechDetectionParity` compares
+    /// against a default four-thread call), 0.11 s instead of 0.15 s for 65 s of audio, and 0.46 s instead of
+    /// 0.88-1.09 s when the process runs at background QoS.
+    private static func vadContextParams() -> whisper_vad_context_params {
+        var params = whisper_vad_default_context_params()
+        params.n_threads = 1
+        return params
+    }
+
     /// About a second of audio: 32 of Silero v5's 512-sample windows.
     private static let speechPieceSamples = 16_384
 
@@ -285,7 +294,7 @@ actor WhisperContext {
         func speechDetectionParity(_ samples: [Float]) -> [String: Any] {
             guard let vadModelPath,
                 let whole = whisper_vad_init_from_file_with_params(vadModelPath, whisper_vad_default_context_params()),
-                let pieces = whisper_vad_init_from_file_with_params(vadModelPath, whisper_vad_default_context_params())
+                let pieces = whisper_vad_init_from_file_with_params(vadModelPath, Self.vadContextParams())
             else { return ["ok": false, "error": "no VAD model"] }
             defer {
                 whisper_vad_free(whole)

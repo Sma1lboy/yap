@@ -5,7 +5,8 @@ import Foundation
 /// transcription (one that was cancelled but is still in a step that can't stop, an import, a meeting piece), and Quit
 /// waiting for the work in flight. Backends report each piece of work (`begin`, `Work.stage`, `Work.end`) and each
 /// request waiting for a model's turn (`beginWait`). Reporting is lock-based and never waits for the main actor; the
-/// main-actor copies (`works`, `waits`) are what views read.
+/// main-actor copies (`works`, `waits`) are what views read. While any work runs, Yap holds a user-initiated activity
+/// so macOS doesn't App Nap it (`activityToken`).
 final class LocalModelActivity: ObservableObject, @unchecked Sendable {
     static let shared = LocalModelActivity()
 
@@ -72,6 +73,11 @@ final class LocalModelActivity: ObservableObject, @unchecked Sendable {
     private var running: [Snapshot] = []
     private var waiting: [(id: UInt64, wait: WaitSnapshot)] = []
     private var publishQueued = false
+    /// Held while any work runs (`ProcessInfo.beginActivity`, user-initiated, idle sleep still allowed). Without it,
+    /// partway through a `make lifecycle-check` run (Yap in the background, no window in front) speech detection over
+    /// 65 s of audio took 0.86-1.28 s instead of 0.15 s, and 22 minutes took 9-20 s instead of 3.8-4.0 s; the same
+    /// work run as a background-QoS process slows down about as much, which is what App Nap does to an app.
+    private var activityToken: NSObjectProtocol?
 
     func begin(_ kind: Kind, stage: Stage, interruptible: Bool = true) -> Work {
         let id = lock.withLock { () -> UInt64 in
@@ -80,6 +86,10 @@ final class LocalModelActivity: ObservableObject, @unchecked Sendable {
                 Snapshot(
                     id: lastID, kind: kind, stage: stage, stageStarted: Date(), cancelled: false,
                     interruptible: interruptible))
+            if activityToken == nil {
+                activityToken = ProcessInfo.processInfo.beginActivity(
+                    options: .userInitiatedAllowingIdleSystemSleep, reason: "Transcribing with a local model")
+            }
             return lastID
         }
         publish()
@@ -116,7 +126,13 @@ final class LocalModelActivity: ObservableObject, @unchecked Sendable {
     }
 
     private func finish(_ id: UInt64) {
-        lock.withLock { running.removeAll { $0.id == id } }
+        lock.withLock {
+            running.removeAll { $0.id == id }
+            if running.isEmpty, let activityToken {
+                ProcessInfo.processInfo.endActivity(activityToken)
+                self.activityToken = nil
+            }
+        }
         publish()
     }
 
