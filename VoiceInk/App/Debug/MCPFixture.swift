@@ -23,6 +23,7 @@
         static let writerFiller = String(repeating: "0123456789abcdef", count: 512)
 
         static func runIfRequested() {
+            MCPEvalFixture.runIfRequested()
             let arguments = CommandLine.arguments
             if let index = arguments.firstIndex(of: writerArgument), arguments.indices.contains(index + 1) {
                 keepWriting(to: URL(fileURLWithPath: arguments[index + 1], isDirectory: true))
