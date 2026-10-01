@@ -35,7 +35,11 @@ class PermissionCopyTests(unittest.TestCase):
         self.assertIn('return coordinator.hasRequestedScreenRecording ? String(localized: "Open Settings")', source)
 
     def test_locked_status_explains_next_action(self):
-        self.assertIn('Finish earlier permissions first', self.read('Components/PermissionStepRow.swift'))
+        source = self.read('Components/PermissionStepRow.swift')
+        self.assertIn('Text("Finish earlier permissions first", tableName: "PermissionCopy")', source)
+        badge = source.split('private var statusBadge')[1].split('private var statusTone')[0]
+        self.assertIn('String(localized: "Waiting", table: "PermissionCopy")', badge)
+        self.assertNotIn('Finish earlier permissions first', badge)
 
     def test_localized_catalog_and_wiring(self):
         path = ROOT / 'VoiceInk/PermissionCopy.xcstrings'

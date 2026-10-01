@@ -26,6 +26,13 @@ struct PermissionStepRow: View {
                         .font(AppTheme.font(.footnote))
                         .foregroundColor(AppTheme.Text.muted)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    if isLocked {
+                        Text("Finish earlier permissions first", tableName: "PermissionCopy")
+                            .font(AppTheme.font(.caption))
+                            .foregroundColor(AppTheme.Text.muted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
 
                 Spacer(minLength: 10)
@@ -92,7 +99,7 @@ struct PermissionStepRow: View {
     }
 
     private var statusBadge: some View {
-        Text(isLocked ? String(localized: "Finish earlier permissions first", table: "PermissionCopy") : status.label)
+        Text(isLocked ? String(localized: "Waiting", table: "PermissionCopy") : status.label)
             .font(AppTheme.font(.footnote, .semibold))
             .foregroundColor(isLocked ? AppTheme.Text.muted : statusTone)
             .padding(.horizontal, AppTheme.Spacing.x3)
