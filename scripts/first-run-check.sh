@@ -8,6 +8,7 @@
 # PREVIEW=1: dictate all 11 clips as one 65 s file, then run it through the live-preview session in real time.
 # The dev and release apps' settings are never read or written.
 set -euo pipefail
+source "$(dirname "$0")/mock-lock.sh"
 
 APP_DIR="$1"
 MODEL_NAME="${2:-ggml-large-v3-turbo-q5_0}"
