@@ -55,7 +55,8 @@ struct AppNotificationView: View {
                     .font(AppTheme.font(.footnote))
                     .fontWeight(.medium)
                     .foregroundColor(.white)  // design-exempt: HUD, always dark
-                    .lineLimit(3)
+                    // Four: the language suggestion's cost and "go back any time" must not be cut in German or French.
+                    .lineLimit(4)
                     .multilineTextAlignment(.leading)
 
                 Spacer()

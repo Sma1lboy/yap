@@ -45,9 +45,37 @@ With the mode's language on Auto-detect and a local Whisper model, the SessionMe
 setting the transcription used. All three are nil with a fixed language, on cloud models and Parakeet, and for
 meetings, imported files and the live preview, which run outside a dictation's DictationTimeline.
 
-Metrics from before these fields existed read nil (optional attributes, SwiftData lightweight migration). Home and
-Insights don't show any of this yet. The History entry and the SessionMetric are saved once, after ⌘V (or after the
-paste failed); without a paste (a response, a custom command, a failure) before the pipeline returns.
+Metrics from before these fields existed read nil (optional attributes, SwiftData lightweight migration). Home shows
+the stop → ⌘V median ("On Home" below); Insights only takes the measured waits off its time saved. The History entry
+and the SessionMetric are saved once, after ⌘V (or after the paste failed); without a paste (a response, a custom
+command, a failure) before the pipeline returns.
+
+## On Home
+
+Home's week panel (`HomeWeekPanel`, `WeekStats`) has a **Stop to paste** card: the median `stopToPasteCommand` of
+this week's dictations, in seconds. It is the time to Yap sending ⌘V, not to the text showing up in the app in front:
+nothing confirms the insert, and no desktop paste success rate has been measured.
+
+- **What counts** (`SessionMetric.isRealPaste`, `measuredPasteWait`): `source` `recorder`, a `stopSource` other than
+  `file` (so not `make dictation-latency`, and not older metrics or recovered recordings, which have none),
+  `pasteOutcome` `pasted`, and a `stopToPasteCommand` that is there, finite and ≥ 0. Scratchpad, clipboard-only and
+  failed pastes, responses and commands don't count. Meetings and imported files never get a SessionMetric. A
+  missing time is left out, never taken as 0.
+- **Week**: Monday 00:00 to now on the dashboard calendar (this Mac's time zone). Last week is cut at the same weekday
+  and time.
+- **At least 5**: with fewer than 5 timed pastes the card shows how many so far and that it needs 5, no median. Only
+  older dictations this week: it says they weren't timed. The change against last week, in seconds, shows only when
+  both weeks have 5; otherwise the card says there isn't enough to compare.
+
+**Time saved** (Home's tile and Insights, one formula, `DashboardTimeSaving.timeSaved`) is an estimate:
+`words / 40 wpm − recording time − sum of the measured stop → ⌘V waits`, never below 0. Dictations without a measured
+wait take nothing off for it; the line under the panel (and under Insights' summary) says how many of the dictations
+were timed, that editing time isn't counted, and that Chinese word counts (one per character) don't compare directly
+with an English typing speed. Insights' snapshot cache (`dashboard-stats-snapshot.json`) went to version 3 for the
+new totals; an older one is dropped and recomputed. stats.store itself is unchanged.
+
+`make home-feedback-check` writes six fixed weeks of SessionMetrics to an in-memory store, loads each through
+`WeekStatsLoader` and checks the numbers; `make ui-snapshots` renders them (`home-feedback-*`).
 
 ## The wait before ⌘V
 
@@ -126,10 +154,10 @@ On M3.2's five clips (`CLIPS=latency ROUNDS=12`, two runs each): auto 1200 / 118
 ms. That is 0.45 s less per dictation, −45 % against M3.1's 1343 ms. The language detection Yap now records took
 475–477 ms p50 in every auto run. What a fixed language saves is that pass and nothing else.
 
-- **One main language (Chinese with English terms, or English):** fixing it is about 0.45 s faster and no worse. In
-  Chinese, 45 instead of 44 key terms and 2 points more character errors (the zh prompt); in English, fewer errors.
-  The English terms in Chinese sentences come through with `zh`: that is what the `zh` column of the first row
-  measures.
+- **One main language (Chinese with English terms, or English):** fixing it is about 0.45 s faster. In English it is
+  also more accurate (0.3 % character errors instead of 1.3 %). In Chinese it is not free: character errors go from
+  22.4 % to 24.4 % (the zh prompt), key terms from 44 to 45 of 82, so the English terms come through about as often
+  as on auto. That is what the `zh` column of the first row measures; it is not "no worse".
 - **Whole sentences in both languages:** a fixed language breaks them. With `zh` the English sentence comes out as
   Chinese (61.5 % errors), with `en` the Chinese one as English (33.9 %). Auto splits a recording of 12 s or more at
   the switch and decodes each piece in its language (`LibWhisper.languagePieces`), which is why it takes 2.7 s here.
@@ -154,8 +182,10 @@ Whisper, Yap looks at that mode's last 20 dictations with a recorded language (`
   count; a dictation deleted from History counts against it;
 - the mode hasn't said No Thanks, and no other notification is on screen (then the next dictation asks).
 
-The text gives this Mac's own number: the median detection time of those 20 dictations, rounded to 0.1 s. "English
-terms are still recognized" is added for Chinese only, where it was measured.
+The text gives this Mac's own number: the median detection time of those 20 dictations, rounded to 0.1 s, and the
+cost: whole sentences in another language, or switching languages mid-dictation, may come out wrong, and the mode can
+go back to Auto-detect at any time. It no longer says English terms are still recognized: the terms held up, but the
+character errors didn't.
 
 - **Set to Chinese** fixes the mode's language, as the menu bar's language menu does. A confirmation follows with
   **Back to Auto-detect**, which puts auto back and stops the suggestion for that mode.
@@ -173,9 +203,10 @@ Cloud models, Parakeet, Apple Speech, meetings, imported files and the live prev
 never trigger it.
 
 In the mode's settings, under the language picker while it is on Auto-detect with a local Whisper model: "On this
-Mac, Auto-detect adds about 0.5 s to every dictation with this model. A fixed language skips it." The number is the
-median of this Mac's last 20 recorded detections with that model. Before there are any, the line says the same
-without a number. Cloud and Parakeet modes don't show it.
+Mac, Auto-detect adds about 0.5 s to every dictation with this model. A fixed language skips that, but whole
+sentences in another language, or switching languages mid-dictation, may come out wrong. You can switch back any
+time." The number is the median of this Mac's last 20 recorded detections with that model. Before there are any, the
+line says the same without a number. Cloud and Parakeet modes don't show it.
 
 ## Results
 

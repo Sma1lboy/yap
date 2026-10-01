@@ -34,7 +34,8 @@ final class DashboardStatsSnapshotStore: @unchecked Sendable {
         let summary: DashboardStatsSummary
     }
 
-    private static let currentVersion = 2
+    /// 3: DashboardStatsSummary has the measured stop → ⌘V waits. An older snapshot is dropped and recomputed.
+    private static let currentVersion = 3
     private static let staleDefaultsKey = "dashboardStatsSnapshotStale"
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "DashboardStatsSnapshotStore")
     private let fileManager: FileManager

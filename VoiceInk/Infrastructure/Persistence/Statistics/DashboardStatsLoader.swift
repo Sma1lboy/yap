@@ -56,6 +56,11 @@ enum DashboardStatsLoader {
             var allTimeMonthWords: [Date: Int] = [:]
             var allTimeDayWords: [Date: Int] = [:]
             var firstMetricDate: Date?
+            var totalMeasuredPastes = DashboardMeasuredPastes()
+            var todayMeasuredPastes = DashboardMeasuredPastes()
+            var recentSevenDayMeasuredPastes = DashboardMeasuredPastes()
+            var lastThirtyDayMeasuredPastes = DashboardMeasuredPastes()
+            var thisYearMeasuredPastes = DashboardMeasuredPastes()
             let windows = DashboardPeriodWindows()
             let now = windows.now
             let calendar = windows.calendar
@@ -111,17 +116,20 @@ enum DashboardStatsLoader {
                 for metric in records {
                     words += metric.wordCount
                     duration += metric.audioDuration
+                    totalMeasuredPastes.add(metric)
 
                     if windows.todayInterval.contains(metric.timestamp) {
                         todayCount += 1
                         todayWords += metric.wordCount
                         todayDuration += metric.audioDuration
+                        todayMeasuredPastes.add(metric)
                     }
 
                     if windows.recentSevenDayInterval.contains(metric.timestamp) {
                         recentSevenDayCount += 1
                         recentSevenDayWords += metric.wordCount
                         recentSevenDayDuration += metric.audioDuration
+                        recentSevenDayMeasuredPastes.add(metric)
                     } else if windows.previousSevenDayInterval.contains(metric.timestamp) {
                         previousSevenDayCount += 1
                         previousSevenDayWords += metric.wordCount
@@ -132,12 +140,14 @@ enum DashboardStatsLoader {
                         lastThirtyDayCount += 1
                         lastThirtyDayWords += metric.wordCount
                         lastThirtyDayDuration += metric.audioDuration
+                        lastThirtyDayMeasuredPastes.add(metric)
                     }
 
                     if windows.thisYearInterval.contains(metric.timestamp) {
                         thisYearCount += 1
                         thisYearWords += metric.wordCount
                         thisYearDuration += metric.audioDuration
+                        thisYearMeasuredPastes.add(metric)
                     }
 
                     let metricHourStart = startOfHour(for: metric.timestamp, calendar: calendar)
@@ -256,7 +266,7 @@ enum DashboardStatsLoader {
                 )
             }()
 
-            return DashboardStatsSummary(
+            var summary = DashboardStatsSummary(
                 totalCount: count,
                 totalWords: words,
                 totalDuration: duration,
@@ -328,6 +338,12 @@ enum DashboardStatsLoader {
                 thisYearPeakHours: Self.peakHoursSummary(from: thisYearPeakHours),
                 allTimePeakHours: Self.peakHoursSummary(from: allTimePeakHours)
             )
+            summary.totalMeasuredPastes = totalMeasuredPastes
+            summary.todayMeasuredPastes = todayMeasuredPastes
+            summary.recentSevenDayMeasuredPastes = recentSevenDayMeasuredPastes
+            summary.lastThirtyDayMeasuredPastes = lastThirtyDayMeasuredPastes
+            summary.thisYearMeasuredPastes = thisYearMeasuredPastes
+            return summary
         }
 
         return try await withTaskCancellationHandler {

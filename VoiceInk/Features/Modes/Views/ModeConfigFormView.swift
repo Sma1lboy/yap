@@ -362,15 +362,16 @@ struct ModeConfigFormView: View {
                     }
                     .labelsHidden()
                 }
-                // Only local Whisper detects the language in a pass of its own; cloud models and Parakeet don't.
+                // Only local Whisper detects the language in a pass of its own; cloud models and Parakeet don't. What a
+                // fixed language costs is said here, before it's picked.
                 if modelInfo.provider == .whisper, effectiveLanguage(for: modelInfo) == "auto" {
                     Text(
                         autoDetectCost.map {
                             String(
-                                format: String(localized: "On this Mac, Auto-detect adds about %@ s to every dictation with this model. A fixed language skips it."),
+                                format: String(localized: "On this Mac, Auto-detect adds about %@ s to every dictation with this model. A fixed language skips that, but whole sentences in another language, or switching languages mid-dictation, may come out wrong. You can switch back any time."),
                                 LanguagePinSuggestion.formatted($0))
                         }
-                            ?? String(localized: "Auto-detect listens for the language before every dictation with a local model. A fixed language skips it.")
+                            ?? String(localized: "Auto-detect listens for the language before every dictation with a local model. A fixed language skips that, but whole sentences in another language, or switching languages mid-dictation, may come out wrong. You can switch back any time.")
                     )
                     .font(AppTheme.font(.footnote))
                     .foregroundStyle(AppTheme.Text.secondary)

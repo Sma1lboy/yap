@@ -4,9 +4,15 @@ struct DashboardTimeSavedSummary: Equatable {
     let timeSaved: TimeInterval
     let wordCount: Int
     let sessionCount: Int
+    /// Dictations whose stop → ⌘V wait was measured and taken off the time saved.
+    var timedPastes = 0
 
     var hasData: Bool {
         sessionCount > 0 || wordCount > 0
+    }
+
+    var explanation: String {
+        DashboardTimeSaving.explanation(timedPastes: timedPastes, dictations: sessionCount)
     }
 }
 

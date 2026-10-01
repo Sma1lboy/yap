@@ -51,6 +51,8 @@ struct VoiceInkApp: App {
             MCPFixture.runIfRequested()
             // make edit-rate-check: print the correction-rate fixtures, run their self-checks, and exit.
             EditRateCheck.runIfRequested()
+            // make home-feedback-check: Home's paste numbers on fixed weeks, through WeekStatsLoader, and exit.
+            HomeFeedbackFixture.runIfRequested()
         #endif
         // Before onboarding can complete in this session, so a fresh install isn't mistaken for an update.
         ReleaseNotesPresenter.shared.showsOnNextMainWindow = ReleaseNotes.recordLaunch()

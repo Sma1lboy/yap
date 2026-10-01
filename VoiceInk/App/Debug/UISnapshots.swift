@@ -125,6 +125,19 @@
             setSnapshotShortcuts()
             MainWindowNavigation.shared.selectedView = .dashboard
             shot("page-home-empty", titled: true) { ContentView().modelContainer(empty) }
+            // Home's week panel on each HomeFeedbackFixture week (with data, only older dictations, too few, Auto Learn
+            // off, few pastes watched, nothing last week), each loaded through WeekStatsLoader and checked first.
+            for scenario in HomeFeedbackFixture.scenarios() {
+                let week = HomeFeedbackFixture.load(scenario)
+                shot("home-feedback-\(scenario.name)", main: true, fit: true) {
+                    HomeWeekPanelContent(
+                        stats: week, modeSummary: "⌥ · Dictation · Large v3 Turbo (Quantized)",
+                        isAutoLearnEnabled: scenario.isAutoLearnEnabled
+                    )
+                    .frame(width: 760)
+                    .padding(AppTheme.Spacing.x6)
+                }
+            }
 
             for state in YapCloud.SnapshotState.allCases where state != .funded {
                 YapCloud.shared.applySnapshotState(state)
@@ -428,8 +441,8 @@
                         title: title, type: type, duration: 15, onClose: {}, onTap: nil,
                         actionButton: button.map { (label: $0, action: {}) }))
             }
-            // Fixing the mode's language (LanguagePinSuggestion): the suggestion for Chinese, for English (without the
-            // sentence about English terms), and the confirmation with Back to Auto-detect.
+            // Fixing the mode's language (LanguagePinSuggestion): the suggestion for Chinese and for English, each with
+            // what a fixed language costs, and the confirmation with Back to Auto-detect.
             let pinNotifications: [(String, String, AppNotificationView.NotificationType, String, String?)] = [
                 ("language-suggestion", LanguagePinSuggestion.message(for: .init(language: "zh", seconds: 0.46)), .info,
                  LanguagePinSuggestion.setButtonTitle("zh"), String(localized: "No Thanks")),

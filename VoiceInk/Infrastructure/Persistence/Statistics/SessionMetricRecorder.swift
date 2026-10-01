@@ -137,6 +137,7 @@ final class SessionEditRecorder {
             guard SessionMetricRecorder.apply(outcome, to: metric) else { return }
             do {
                 try modelContext.save()
+                NotificationCenter.default.post(name: .sessionEditOutcomeDidChange, object: nil)
             } catch {
                 logger.error("Failed to save the edit outcome: \(error, privacy: .public)")
             }
@@ -246,6 +247,11 @@ final class SessionEditRecorder {
                 context.insert(transcription)
                 return try SessionMetricRecorder.recordRecorderSession(transcription: transcription, model: nil, in: context)!
             }
+            // Home reloads on this; it must come once the outcome is saved, and only then.
+            var refreshes = 0
+            let observer = NotificationCenter.default.addObserver(
+                forName: .sessionEditOutcomeDidChange, object: nil, queue: nil) { _ in refreshes += 1 }
+            defer { NotificationCenter.default.removeObserver(observer) }
 
             // Refused at capture, before the pipeline saved the metric.
             let early = UUID()
@@ -258,15 +264,22 @@ final class SessionEditRecorder {
             recorder.metricRecorded(refused)
             assert(refused.editObserved == false && refused.editUnobservableReason == "secureField")
             assert(refused.editChanged == nil && refused.editDistance == nil)
+            assert(refreshes == 0, "a waiting outcome is saved with the metric; the pipeline announces that")
 
             // Watched to the end, after the metric was saved.
             let edited = try metric("Send it to Jon.")
             try context.save()
             recorder.record(.observed(distance: 0.2), for: edited.transcriptionId)
             assert(edited.editObserved == true && edited.editChanged == true && edited.editDistance == 0.2)
+            assert(refreshes == 1, "a late outcome reloads Home")
+            // Saved: a fresh context, as WeekStatsLoader reads with, sees it.
+            let editedID = edited.transcriptionId
+            let reread = try ModelContext(container).fetch(
+                FetchDescriptor<SessionMetric>(predicate: #Predicate { $0.transcriptionId == editedID }))
+            assert(reread.first?.editChanged == true)
             // A later outcome for the same dictation (an edit after focus left) doesn't replace it.
             recorder.record(.observed(distance: 1), for: edited.transcriptionId)
-            assert(edited.editDistance == 0.2, "the first outcome stands")
+            assert(edited.editDistance == 0.2 && refreshes == 1, "the first outcome stands")
 
             let untouched = try metric("Fine as is.")
             recorder.record(.observed(distance: 0), for: untouched.transcriptionId)
@@ -277,6 +290,7 @@ final class SessionEditRecorder {
             assert(unwatched.editObserved == nil)
             for _ in 0..<(maximumWaiting + 4) { recorder.record(.observed(distance: 0), for: UUID()) }
             assert(recorder.waiting.count == maximumWaiting)
+            assert(refreshes == 2, "only outcomes that changed a saved metric reload Home")
         }
     }
 #endif

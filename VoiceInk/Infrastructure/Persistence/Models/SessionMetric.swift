@@ -79,3 +79,32 @@ final class SessionMetric {
         self.enhancementEstimatedTokenCount = enhancementEstimatedTokenCount
     }
 }
+
+/// Which metrics count as a real dictation pasted with ⌘V, and its measured stop → ⌘V time. Home's week panel and
+/// Insights' time saved both filter through this (docs/dictation-latency.md, "On Home").
+extension SessionMetric {
+    /// A dictation recorded with its timeline (not older metrics, recovered recordings or a `make dictation-latency`
+    /// file) whose text went out with ⌘V. Not proof the app in front inserted it. Raw values of
+    /// DictationTimeline.StopSource and PasteOutcome: this file is also built into yap-mcp, which doesn't have them.
+    static func isRealPaste(source: String?, stopSource: String?, pasteOutcome: String?) -> Bool {
+        let stops: Set = ["shortcutRelease", "shortcutPress", "recorderButton", "finishAndSend", "other"]
+        guard source == "recorder", let stopSource, stops.contains(stopSource) else { return false }
+        return pasteOutcome == "pasted"
+    }
+
+    /// Seconds from the stop to ⌘V for a real paste; nil when it isn't one or the time is missing, negative or not
+    /// finite. Never 0 in place of a missing time.
+    static func measuredPasteWait(
+        source: String?, stopSource: String?, pasteOutcome: String?, stopToPasteCommand: TimeInterval?
+    ) -> TimeInterval? {
+        guard isRealPaste(source: source, stopSource: stopSource, pasteOutcome: pasteOutcome),
+            let seconds = stopToPasteCommand, seconds.isFinite, seconds >= 0
+        else { return nil }
+        return seconds
+    }
+
+    var measuredPasteWait: TimeInterval? {
+        Self.measuredPasteWait(
+            source: source, stopSource: stopSource, pasteOutcome: pasteOutcome, stopToPasteCommand: stopToPasteCommand)
+    }
+}

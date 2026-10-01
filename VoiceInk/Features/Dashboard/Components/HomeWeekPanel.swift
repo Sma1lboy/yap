@@ -1,3 +1,4 @@
+import Combine
 import SwiftData
 import SwiftUI
 
@@ -10,9 +11,15 @@ enum WeekStatsLoader {
             var descriptor = FetchDescriptor<SessionMetric>(
                 predicate: #Predicate { $0.timestamp >= since }
             )
-            descriptor.propertiesToFetch = [\.timestamp, \.wordCount, \.audioDuration]
+            descriptor.propertiesToFetch = [
+                \.timestamp, \.wordCount, \.audioDuration, \.source, \.stopSource, \.pasteOutcome, \.stopToPasteCommand,
+                \.editObserved, \.editChanged, \.editDistance,
+            ]
             let samples = try ModelContext(container).fetch(descriptor).map {
-                WeekStatsSample(timestamp: $0.timestamp, words: $0.wordCount, audioDuration: $0.audioDuration)
+                WeekStatsSample(
+                    timestamp: $0.timestamp, words: $0.wordCount, audioDuration: $0.audioDuration, source: $0.source,
+                    stopSource: $0.stopSource, pasteOutcome: $0.pasteOutcome, stopToPasteCommand: $0.stopToPasteCommand,
+                    editObserved: $0.editObserved, editChanged: $0.editChanged, editDistance: $0.editDistance)
             }
             return WeekStats.compute(samples: samples, now: now, calendar: calendar)
         }.value
@@ -24,12 +31,13 @@ struct HomeWeekPanel: View {
     let modeSummary: String?
 
     @Environment(\.modelContext) private var modelContext
+    @AppStorage(AutoLearnSettings.isEnabledKey) private var isAutoLearnEnabled = true
     @State private var stats = WeekStats.compute(
         samples: [], now: Date(), calendar: DashboardPeriodWindows.dashboardCalendar())
     @State private var metricChangeTask: Task<Void, Never>?
 
     var body: some View {
-        HomeWeekPanelContent(stats: stats, modeSummary: modeSummary)
+        HomeWeekPanelContent(stats: stats, modeSummary: modeSummary, isAutoLearnEnabled: isAutoLearnEnabled)
             .task {
                 #if DEBUG
                     WeekStats.runSelfCheck()
@@ -40,7 +48,11 @@ struct HomeWeekPanel: View {
                     try? await Task.sleep(for: .seconds(60))
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .sessionMetricsDidChange)) { _ in
+            // A new dictation, or Auto Learn's outcome for one, saved up to 60 s after its paste.
+            .onReceive(
+                NotificationCenter.default.publisher(for: .sessionMetricsDidChange)
+                    .merge(with: NotificationCenter.default.publisher(for: .sessionEditOutcomeDidChange))
+            ) { _ in
                 metricChangeTask?.cancel()
                 metricChangeTask = Task {
                     try? await Task.sleep(for: .milliseconds(500))
@@ -62,6 +74,8 @@ struct HomeWeekPanel: View {
 struct HomeWeekPanelContent: View {
     let stats: WeekStats
     let modeSummary: String?
+    /// Off: no paste is watched, so the unchanged share can't grow (and Home doesn't ask to turn it on).
+    let isAutoLearnEnabled: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
@@ -82,8 +96,100 @@ struct HomeWeekPanelContent: View {
                     GridRow { ForEach(all.suffix(2), id: \.offset) { HomeStatTile(model: $0.element) } }
                 }
             }
+
+            HStack(alignment: .top, spacing: AppTheme.Spacing.x3) {
+                HomeFeedbackCard(model: pasteWaitModel)
+                HomeFeedbackCard(model: unchangedModel)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+
+            if stats.sessions > 0 {
+                Text(
+                    verbatim: DashboardTimeSaving.explanation(
+                        timedPastes: stats.pastes.waits.count, dictations: stats.sessions)
+                )
+                .font(AppTheme.font(.caption))
+                .foregroundStyle(AppTheme.Text.muted)
+                .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Median stop → ⌘V this week (docs/dictation-latency.md, "On Home").
+    private var pasteWaitModel: HomeFeedbackCard.Model {
+        let pastes = stats.pastes
+        var lines: [String] = []
+        if let median = pastes.waitMedian {
+            lines.append(String(format: String(localized: "%lld timed pastes this week"), pastes.waits.count))
+            if let change = stats.waitChangeVsLastWeek {
+                lines.append(
+                    String(
+                        format: String(localized: "%@ s vs last week"),
+                        change.formatted(.number.precision(.fractionLength(2)).sign(strategy: .always()))))
+            } else {
+                lines.append(String(localized: "Not enough from last week to compare"))
+            }
+            return .init(
+                title: "Stop to paste", value: median.formatted(.number.precision(.fractionLength(2))),
+                unit: "s median", lines: lines,
+                footnote: String(localized: "From stopping a dictation to Yap sending ⌘V, not until the text shows up in the app."))
+        }
+        if !pastes.waits.isEmpty {
+            lines.append(
+                String(
+                    format: String(localized: "Collecting: %1$lld so far, %2$lld needed"), pastes.waits.count,
+                    WeekStats.minimumSamples))
+        } else if stats.sessions > 0, stats.untimedSessions == stats.sessions {
+            lines.append(String(localized: "Dictations saved by older versions of Yap weren't timed"))
+        } else {
+            lines.append(String(localized: "No timed pastes yet this week"))
+        }
+        return .init(
+            title: "Stop to paste", value: "–", unit: nil, lines: lines,
+            footnote: String(localized: "From stopping a dictation to Yap sending ⌘V, not until the text shows up in the app."))
+    }
+
+    /// Watched pastes left as pasted this week (docs/auto-learn.md, "On Home").
+    private var unchangedModel: HomeFeedbackCard.Model {
+        let pastes = stats.pastes
+        var lines: [String] = []
+        if !isAutoLearnEnabled {
+            lines.append(String(localized: "Auto Learn is off, so new pastes aren't watched."))
+        }
+        let share = pastes.unchangedShare
+        if share != nil {
+            lines.append(
+                String(
+                    format: String(localized: "%1$lld of %2$lld watched pastes left as pasted"), pastes.unchanged,
+                    pastes.watched))
+        } else if pastes.watched > 0 {
+            lines.append(
+                String(
+                    format: String(localized: "Collecting: %1$lld so far, %2$lld needed"), pastes.watched,
+                    WeekStats.minimumSamples))
+        } else if isAutoLearnEnabled {
+            lines.append(String(localized: "No watched pastes yet this week"))
+        }
+        if pastes.count > 0 {
+            lines.append(
+                String(format: String(localized: "Watched %1$lld of %2$lld pastes this week"), pastes.watched, pastes.count))
+        }
+        if share != nil {
+            if let points = stats.unchangedPointsVsLastWeek {
+                lines.append(
+                    String(
+                        format: String(localized: "%@ pts vs last week"),
+                        points.formatted(.number.precision(.fractionLength(0)).sign(strategy: .always()))))
+            } else {
+                lines.append(String(localized: "Not enough from last week to compare"))
+            }
+        }
+        return .init(
+            title: "Unchanged after paste",
+            value: share.map { $0.formatted(.percent.precision(.fractionLength(0))) } ?? "–", unit: nil, lines: lines,
+            footnote: String(
+                localized: "Auto Learn checks a paste for up to 60 s, until focus leaves the field. Not an accuracy score: changes after that aren't seen."))
     }
 
     /// The default mode's models, and the week on the right. The brand (icon, Yap, version) is in the sidebar.
@@ -155,7 +261,7 @@ struct HomeWeekPanelContent: View {
     }
 
     private var tileModels: [HomeStatTile.Model] {
-        let timeSaved = DashboardTimeSaving.timeSaved(words: stats.words, duration: stats.audioDuration)
+        let timeSaved = stats.timeSaved
         let wpm = stats.wordsPerMinute
 
         let streakNote =
@@ -168,7 +274,7 @@ struct HomeWeekPanelContent: View {
                 title: "Time saved",
                 value: Formatters.formattedCompactHoursAndMinutes(timeSaved),
                 unit: nil,
-                note: String(localized: "vs typing at 40 wpm")),
+                note: String(localized: "Estimate · 40 wpm")),
             .init(
                 title: "Speaking pace",
                 value: wpm.map { Formatters.formattedNumber(Int($0.rounded())) } ?? "–",
@@ -206,23 +312,7 @@ struct HomeStatTile: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
-            Text(model.title)
-                .font(AppTheme.font(.caption, .medium))
-                .foregroundStyle(AppTheme.Text.secondary)
-                .lineLimit(1)
-
-            HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x1) {
-                Text(verbatim: model.value)
-                    .font(AppTheme.font(.title, .semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(AppTheme.Text.primary)
-                if let unit = model.unit {
-                    Text(unit)
-                        .font(AppTheme.font(.footnote))
-                        .foregroundStyle(AppTheme.Text.secondary)
-                }
-            }
-            .lineLimit(1)
+            HomeTileHeader(title: model.title, value: model.value, unit: model.unit)
 
             Text(verbatim: model.note)
                 .font(AppTheme.font(.caption))
@@ -234,6 +324,73 @@ struct HomeStatTile: View {
         .frame(minWidth: 128, maxWidth: .infinity, alignment: .leading)
         // A card like every other on Home (surface + 1px border, DESIGN.md), not a sunken well.
         .background(AppCardBackground(cornerRadius: AppTheme.Radius.card))
+    }
+}
+
+/// A measured number with what it is counted from and what it doesn't mean: the value (or – while collecting), its
+/// sample counts and comparison, and a footnote on what was measured.
+struct HomeFeedbackCard: View {
+    struct Model {
+        let title: LocalizedStringKey
+        let value: String
+        let unit: LocalizedStringKey?
+        let lines: [String]
+        let footnote: String
+    }
+
+    let model: Model
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+            HomeTileHeader(title: model.title, value: model.value, unit: model.unit)
+
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
+                ForEach(model.lines, id: \.self) { line in
+                    Text(verbatim: line)
+                        .font(AppTheme.font(.footnote))
+                        .monospacedDigit()
+                        .foregroundStyle(AppTheme.Text.secondary)
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            Text(verbatim: model.footnote)
+                .font(AppTheme.font(.caption))
+                .foregroundStyle(AppTheme.Text.muted)
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(AppTheme.Spacing.x4)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .accessibilityElement(children: .combine)
+        .background(AppCardBackground(cornerRadius: AppTheme.Radius.card))
+    }
+}
+
+/// A Home tile's title over its number and unit.
+private struct HomeTileHeader: View {
+    let title: LocalizedStringKey
+    let value: String
+    let unit: LocalizedStringKey?
+
+    var body: some View {
+        Text(title)
+            .font(AppTheme.font(.caption, .medium))
+            .foregroundStyle(AppTheme.Text.secondary)
+            .lineLimit(1)
+
+        HStack(alignment: .firstTextBaseline, spacing: AppTheme.Spacing.x1) {
+            Text(verbatim: value)
+                .font(AppTheme.font(.title, .semibold))
+                .monospacedDigit()
+                .foregroundStyle(AppTheme.Text.primary)
+            if let unit {
+                Text(unit)
+                    .font(AppTheme.font(.footnote))
+                    .foregroundStyle(AppTheme.Text.secondary)
+            }
+        }
+        .lineLimit(1)
     }
 }
 
@@ -330,7 +487,7 @@ extension WeekStats {
 }
 
 #Preview("Week panel") {
-    HomeWeekPanelContent(stats: .previewSample, modeSummary: "⌥ Space · Scribe · gpt-5-mini")
+    HomeWeekPanelContent(stats: .previewSample, modeSummary: "⌥ Space · Scribe · gpt-5-mini", isAutoLearnEnabled: true)
         .padding(AppTheme.Spacing.x6)
         .frame(width: 760)
 }

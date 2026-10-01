@@ -90,10 +90,34 @@ the correction rate needs the same reads of the field, and Yap doesn't read it f
 
 **Where it's stored and who sees it.** Only in `stats.store` in Yap's Application Support folder, on this Mac. That
 store is never synced (no CloudKit), not part of exports or Yap Cloud config sync, and `yap-mcp` doesn't read it. No
-text is stored with it, only the numbers and the reason. Nothing in the app shows it yet.
+text is stored with it, only the numbers and the reason. Home shows part of it ("On Home" below), read from that
+store on this Mac; nothing new is stored for it.
 
 The correction rate is then, over pasted dictations: the share with `editObserved == false` (couldn't be watched),
 and among the rest, the share with `editChanged == true` and the mean `editDistance`.
+
+### On Home
+
+Home's week panel has an **Unchanged after paste** card (`WeekStats`, `WeekPastes`). It is not an accuracy score and
+doesn't say dictations need no editing: it only counts what Auto Learn saw in the field for up to 60 s after the
+paste, until focus left it. An edit after that isn't seen.
+
+- **Denominator**: this week's real ⌘V pastes (the same filter as the Stop to paste card,
+  [dictation-latency.md](dictation-latency.md#on-home)) with `editObserved == true` and a complete result:
+  `editChanged` and `editDistance` both set, the distance finite and in 0…1, and `editChanged == (editDistance > 0)`.
+- **Numerator**: of those, `editChanged == false`.
+- **Not counted either way**: nil (Auto Learn off, an older metric, the next dictation within 120 ms), every
+  `editObserved == false` reason (`fieldCleared`, which can be a chat app sending; `autoSent`; `pastedTextNotFound`;
+  `secureField`; …) and incomplete results. A paste rewritten by typing new text after a send within 60 s can count
+  as changed; that's a known limit.
+- **Coverage**, on its own line: watched / real ⌘V pastes this week.
+- **At least 5** watched pastes before a share; fewer shows how many so far. The change against last week (cut at the
+  same weekday and time) is in percentage points, and only when both weeks have 5.
+- **Auto Learn off**: Home says new pastes aren't watched, and doesn't ask to turn it on. Nothing new reads the
+  field: the card only reads stats.store.
+
+A late outcome (up to 60 s after the paste) is saved on the metric and then posts `sessionEditOutcomeDidChange`, so
+Home reloads without waiting for its 60 s refresh. `make home-feedback-check` covers the filter and the boundaries.
 
 ## Recently Learned
 
