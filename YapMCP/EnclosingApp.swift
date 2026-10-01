@@ -36,4 +36,14 @@ enum EnclosingApp {
         }
         UserDefaults.standard.setVolatileDomain(preferences, forName: UserDefaults.argumentDomain)
     }
+
+    /// What Settings › Agent Access (MCP) allows now, read from the app's own defaults on every call (synchronized
+    /// first, so a switch flipped in Yap applies to the next call). Off when the helper runs outside Yap.app, where
+    /// there are no switches to read.
+    static func agentAccess() -> AgentAccess.Level {
+        guard let identifier = bundle?.bundleIdentifier else { return .off }
+        let domain = identifier as CFString
+        CFPreferencesAppSynchronize(domain)
+        return AgentAccess.level { CFPreferencesCopyAppValue($0 as CFString, domain) }
+    }
 }

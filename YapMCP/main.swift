@@ -48,4 +48,4 @@ while let argument = arguments.popFirst() {
 EnclosingApp.adoptLanguage()
 let language = EnclosingApp.strings.preferredLocalizations.first ?? "?"
 log("\(EnclosingApp.version), data in \(dataDirectory.path), \(language) strings from \(EnclosingApp.strings.bundlePath)")
-MCPServer(library: MeetingLibrary(dataDirectory: dataDirectory), output: protocolOutput).run()
+MCPServer(library: YapLibrary(dataDirectory: dataDirectory), output: protocolOutput, access: EnclosingApp.agentAccess).run()
