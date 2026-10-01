@@ -28459,6 +28459,35 @@
         }
       }
     },
+    "Not enough data" : {
+      "comment" : "Insights' best time of day, before there are any dictations in the period.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zu wenige Daten"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas assez de données"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数据不足"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "資料不足"
+          }
+        }
+      }
+    },
     "Not enough disk space: the model needs %@, and %@ is free. Free up some space and try again." : {
       "localizations" : {
         "de" : {

@@ -72,12 +72,9 @@ struct ModelUsageCard: View {
 }
 
 enum ModelUsageFormatting {
+    /// One rounded unit, so it fits the 74 pt column in every language ("132 hr", "132 Std.", "45分钟").
     static func duration(_ interval: TimeInterval) -> String {
-        if interval < 3600 {
-            return Formatters.formattedDuration(interval, style: .abbreviated, fallback: "0m")
-        }
-
-        return Formatters.formattedCompactHoursAndMinutes(interval)
+        Formatters.formattedRoundedDuration(interval)
     }
 
     static func tokenCount(_ count: Int) -> String {
