@@ -6,6 +6,7 @@
 # ModelResidency releases the model, dictate again, once without and once with the preload the shortcut press starts.
 # `footprint` samples the process every second. The dev and release apps' settings are never read or written.
 set -euo pipefail
+source "$(dirname "$0")/mock-lock.sh"
 
 APP_DIR="$1"
 MODEL="${2:?usage: model-residency-check.sh <app dir> <ggml-*.bin>}"

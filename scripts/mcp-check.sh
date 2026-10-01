@@ -12,6 +12,7 @@
 # ends the process. Last, the copy launched with --mcp-fixture-writer keeps saving dictations while the helper
 # searches: every answer must be a consistent history or a "busy" error.
 set -euo pipefail
+source "$(dirname "$0")/mock-lock.sh"
 
 APP_DIR="$1"
 WORK=/tmp/yap-mcp-check
