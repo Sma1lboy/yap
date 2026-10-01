@@ -141,10 +141,12 @@ final class DictationTimeline: @unchecked Sendable {
             assert(fallback.pasteOutcome == .clipboardOnly && fallback.offsets[.pasteCommand] == nil)
             assert(stages(fallback.offsets).count == 1)
 
-            // Shortcut events carry their own time: mach ticks on the systemUptime clock.
-            let now = ProcessInfo.processInfo.systemUptime
+            // Shortcut events carry their own time, in mach ticks or nanoseconds, on the systemUptime clock.
+            let now: TimeInterval = 100_000
             let ticks = CGEventTimestamp((now - 0.25) * ShortcutMonitor.machTicksPerSecond)
             assert(abs((ShortcutMonitor.uptime(ofEventTimestamp: ticks, now: now) ?? 0) - (now - 0.25)) < 1e-3)
+            let nanoseconds = CGEventTimestamp((now - 0.3) * 1e9)
+            assert(abs((ShortcutMonitor.uptime(ofEventTimestamp: nanoseconds, now: now) ?? 0) - (now - 0.3)) < 1e-3)
             assert(ShortcutMonitor.uptime(ofEventTimestamp: 0, now: now) == nil, "synthetic events have none")
             let future = CGEventTimestamp((now + 1) * ShortcutMonitor.machTicksPerSecond)
             assert(ShortcutMonitor.uptime(ofEventTimestamp: future, now: now) == nil)

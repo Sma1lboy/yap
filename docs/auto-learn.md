@@ -43,4 +43,5 @@ No text, app name or window title is stored or logged with it. The counts are th
 rate: of all pastes, how many could be observed at all.
 
 Text Around the Cursor (cleanup context) and Undo / Rewrite Last Paste read the focused field through the same
-reader, so the same refusals apply to them.
+reader, so the same refusals apply to them (without the counts). While secure keyboard entry is on anywhere, cleanup
+gets no text around the cursor, and Undo / Rewrite Last Paste can't find the last paste and say so.

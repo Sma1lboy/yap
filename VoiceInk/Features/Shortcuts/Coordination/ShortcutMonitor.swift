@@ -44,14 +44,17 @@ final class ShortcutMonitor {
         return 1e9 * Double(timebase.denom) / Double(timebase.numer)
     }()
 
-    /// The event's own time on the systemUptime clock (CGEvent timestamps are mach_absolute_time ticks), so a busy
-    /// main thread doesn't move it. Nil for events without one (synthetic) or with one that isn't from the last few
-    /// seconds, which would mean the ticks aren't what this assumes.
+    /// The event's own time on the systemUptime clock, so a busy main thread doesn't move it. CGEventTimestamp is
+    /// documented as nanoseconds since startup but has been mach_absolute_time ticks on Apple silicon (24 MHz, not
+    /// 1 GHz); whichever reading lands in the last few seconds is the one used (both agree on Intel, where a tick is a
+    /// nanosecond). Nil when neither does, or for synthetic events, which have no timestamp.
     static func uptime(ofEventTimestamp timestamp: CGEventTimestamp, now: TimeInterval) -> TimeInterval? {
         guard timestamp > 0 else { return nil }
-        let time = Double(timestamp) / machTicksPerSecond
-        guard time <= now + 0.001, now - time < 5 else { return nil }
-        return time
+        for ticksPerSecond in [machTicksPerSecond, 1e9] {
+            let time = Double(timestamp) / ticksPerSecond
+            if time <= now + 0.001, now - time < 5 { return time }
+        }
+        return nil
     }
 
     deinit {

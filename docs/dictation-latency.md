@@ -88,6 +88,9 @@ prebuilt whisper.cpp framework either way.
 When the model isn't loaded yet at the stop (stopped before the press-time preload finished), the transcription
 loads it itself: `stopToModelReady` ≈ 220 ms and the total ≈ 1.5 s, about 180 ms more.
 
+With a small model the fixed part weighs more: Base (Quantized) `ggml-base-q5_1.bin`, one round of the same five
+clips, gave a total p50 of 369 ms, of which 148 ms is the step from the processed text to ⌘V.
+
 ### Where the 1.3 s goes
 
 Split further with temporary timing around each call (30 dictations, p50):
