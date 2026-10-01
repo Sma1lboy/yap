@@ -4,6 +4,81 @@
         <title>Yap</title>
         <link>https://github.com/Sma1lboy/yap</link>
         <item>
+            <title>Yap 1.12.0</title>
+            <pubDate>Thu, 01 Oct 2026 04:38:53 GMT</pubDate>
+            <sparkle:version>1213</sparkle:version>
+            <sparkle:shortVersionString>1.12.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.12.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.12.0</h1>
+<p dir="auto">Changes since 1.11.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Password fields and secure keyboard entry</h2>
+<ul dir="auto">
+<li>Auto Learn, Text Around the Cursor (cleanup context), Undo Last Paste and Rewrite Last Dictation now check the focused field before reading any of its text. They read nothing from a password field (native, or a password input in Safari, Chrome or an Electron app), from a field that reports more than 100,000 characters, or from any field while secure keyboard entry is on.</li>
+<li>macOS turns secure keyboard entry on while a password field has focus. Terminal's Secure Keyboard Entry and some password managers turn it on too, for as long as they are active.</li>
+<li>What you'll notice while secure keyboard entry is on anywhere, for example with Terminal's Secure Keyboard Entry enabled: Auto Learn skips the dictations you paste, cleanup gets no text around the cursor, and Undo Last Paste and Rewrite Last Dictation can't find a dictation pasted then and say "No recent dictation Yap can find to change." The same happens for a dictation pasted into a password field. Pasting itself works as before.</li>
+<li>For each skipped paste Auto Learn keeps only a count per reason on this Mac, with no text, app name or window title.</li>
+</ul>
+<h2 dir="auto">Dictation timing</h2>
+<ul dir="auto">
+<li>Each dictation now records, on this Mac only, how long each step took from the moment you stopped it to the ⌘V: recording stopped, model ready (when it had to be loaded), transcribed, filters and replacements done, AI cleanup done, ⌘V sent. When you stop with the shortcut, the clock starts at the key event itself, not when Yap got around to handling it.</li>
+<li>It also records how you stopped (the shortcut, the record button, or another way) and how the paste ended: pasted, put in the Scratchpad because no text field had focus, left on the clipboard because Yap has no Accessibility permission, or failed.</li>
+<li>These numbers are kept with Yap's other dictation statistics, which don't sync to iCloud and aren't sent anywhere. Nothing about how dictation works has changed.</li>
+</ul>
+<h2 dir="auto">Agents (MCP)</h2>
+<ul dir="auto">
+<li>The <code class="notranslate">yap-mcp</code> helper is faster on a long history. It now keeps its private copy of Yap's database between calls and copies again only after Yap has written to it. On a test history of 20,000 dictations and 200 hour-long meetings (M4 Pro, median times), with no new writes since the last call: listing the 20 newest meetings went from 232 to 39 ms, listing 100 meetings from 587 to 131 ms, and a search from about 240 to about 120 ms.</li>
+<li>The copies are deleted when the agent ends the session: when it closes the connection or stops the helper with SIGTERM, SIGINT or SIGHUP. Yap's own files are still only copied, never opened or changed.</li>
+<li><code class="notranslate">list_meetings</code> now returns a <code class="notranslate">summary</code> for each meeting that has AI notes: the first line of the notes that isn't a heading, at most 200 characters, usually the first point of the summary. Agents can tell meetings apart from the list without opening each one.</li>
+</ul>
+<h2 dir="auto">Meetings</h2>
+<ul dir="auto">
+<li>When writing meeting notes times out, in the meeting panel or with Regenerate Notes in History, the message now says "The request timed out. Check your connection and try again." Before, it showed the dictation cleanup message, which pointed to the cleanup timeout setting.</li>
+</ul>
+<h2 dir="auto">Known limits</h2>
+<ul dir="auto">
+<li>The dictation timings aren't shown anywhere in Yap yet. They are only in the local statistics; a later version will show them.</li>
+<li>While Terminal's Secure Keyboard Entry or a password manager keeps secure keyboard entry on, Auto Learn, Text Around the Cursor, Undo Last Paste and Rewrite Last Dictation stay off for every app, not just for the app that turned it on.</li>
+<li>If the <code class="notranslate">yap-mcp</code> helper is killed outright (SIGKILL), its copy of the database stays in the temporary folder.</li>
+<li>Search time still grows with the history: <code class="notranslate">search_history</code> reads every entry for each query, about 250 ms for the first call and 120 ms after that at 20,000 dictations.</li>
+</ul>
+<h1 dir="auto">Yap 1.12.0（中文）</h1>
+<p dir="auto">1.11.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">密码框和安全键盘输入</h2>
+<ul dir="auto">
+<li>自动学习、光标附近的文字（润色时的上下文）、撤销上次粘贴和改写上一次听写，现在先检查当前输入框，再读里面的文字。密码框（系统原生的，或者 Safari、Chrome、Electron app 里的密码输入框）、自己报告超过 100,000 个字符的输入框，以及安全键盘输入开着时的任何输入框，一个字都不读。</li>
+<li>密码框获得焦点时 macOS 会打开安全键盘输入。终端的“安全键盘输入”和一些密码管理器也会打开它，开着期间一直有效。</li>
+<li>你会注意到的变化：只要有任何地方开着安全键盘输入，比如终端打开了“安全键盘输入”，自动学习会跳过这时粘贴的听写，润色拿不到光标附近的文字，撤销上次粘贴和改写上一次听写找不到这时粘贴的听写，并提示“找不到最近一次可以修改的听写。”。粘贴到密码框里的听写也一样。粘贴本身和以前一样。</li>
+<li>每跳过一次，自动学习只在这台 Mac 上按原因记一个次数，不记文字、app 名或窗口标题。</li>
+</ul>
+<h2 dir="auto">听写耗时</h2>
+<ul dir="auto">
+<li>每次听写现在会记下从你停止到 ⌘V 每一步用了多久，只存在这台 Mac 上：录音停止、模型就绪（需要加载时）、转写完成、过滤和替换完成、AI 润色完成、发出 ⌘V。用快捷键停止时，计时从按键事件本身开始，而不是从 Yap 处理它的时候。</li>
+<li>也会记下你是怎么停止的（快捷键、录音按钮或其他方式），以及粘贴的结果：粘贴了；没有输入框获得焦点，放进了便签；Yap 没有辅助功能权限，只留在剪贴板；或者失败。</li>
+<li>这些数字和 Yap 其他的听写统计放在一起，不通过 iCloud 同步，也不发到任何地方。听写本身的流程没有改。</li>
+</ul>
+<h2 dir="auto">Agent（MCP）</h2>
+<ul dir="auto">
+<li>历史记录很多时，<code class="notranslate">yap-mcp</code> 辅助程序更快了。它现在在两次调用之间保留 Yap 数据库的私有拷贝，Yap 写过之后才重新拷。在一份 20,000 条听写加 200 场一小时会议的测试数据上（M4 Pro，中位数），上次调用之后没有新写入时：列出最新 20 场会议从 232 毫秒降到 39 毫秒，列出 100 场会议从 587 毫秒降到 131 毫秒，搜索从约 240 毫秒降到约 120 毫秒。</li>
+<li>agent 结束会话时拷贝会被删掉：关闭连接，或者用 SIGTERM、SIGINT、SIGHUP 结束辅助程序时。Yap 自己的文件仍然只被复制，从不被打开或改动。</li>
+<li><code class="notranslate">list_meetings</code> 现在给每场有 AI 纪要的会议返回 <code class="notranslate">summary</code>：纪要里第一行不是标题的内容，最多 200 个字符，通常是总结的第一点。agent 看列表就能分清会议，不用一场场打开。</li>
+</ul>
+<h2 dir="auto">会议</h2>
+<ul dir="auto">
+<li>写会议纪要超时时（会议面板里，或者在历史记录里点“重新生成纪要”），提示现在是“请求超时。请检查网络连接后重试。”。以前显示的是听写润色的提示，让人去延长润色的超时时长。</li>
+</ul>
+<h2 dir="auto">已知限制</h2>
+<ul dir="auto">
+<li>听写耗时目前在 Yap 里还看不到，只在本机的统计数据里；后续版本会显示。</li>
+<li>终端的“安全键盘输入”或密码管理器让安全键盘输入一直开着时，自动学习、光标附近的文字、撤销上次粘贴和改写上一次听写对所有 app 都不工作，不只是打开它的那个 app。</li>
+<li><code class="notranslate">yap-mcp</code> 辅助程序被强行结束（SIGKILL）时，它的数据库拷贝会留在临时文件夹里。</li>
+<li>搜索时间仍然随历史记录变长：<code class="notranslate">search_history</code> 每次查询都要读一遍所有条目，20,000 条听写时第一次约 250 毫秒，之后约 120 毫秒。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.12.0/Yap.zip" sparkle:edSignature="XURQ5M/tIYU5aXCBc/BIAZPNV10NwwbxZXzpXQzxcKibDVL1btTOUkM9pQBNSNxVr3VrhcicjjZ6DpLdRRohDQ==" length="48072947" type="application/octet-stream" />
+        </item>
+        <item>
             <title>Yap 1.11.0</title>
             <pubDate>Thu, 01 Oct 2026 02:13:12 GMT</pubDate>
             <sparkle:version>1206</sparkle:version>
@@ -511,101 +586,6 @@
 <li>网站和 README 不再写“未公证”，并补上了 1.3.0 之后权限需要重新授权的说明。</li>
 </ul>]]></description>
             <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.4.0/Yap.zip" sparkle:edSignature="oYYQv5it4kpIIg7vSVC1HqCHJNgRF/9KYd6Yi8rKCeJLr6WQ6FtTsKPSIpBRE1dMOudxz0/35aWIy+bO35CrBg==" length="47259137" type="application/octet-stream" />
-        </item>
-        <item>
-            <title>Yap 1.3.0</title>
-            <pubDate>Tue, 29 Sep 2026 01:47:51 GMT</pubDate>
-            <sparkle:version>1123</sparkle:version>
-            <sparkle:shortVersionString>1.3.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.3.0</link>
-            <description><![CDATA[<h1 dir="auto">Yap 1.3.0</h1>
-<p dir="auto">Changes since 1.2.0. 中文在下面。</p>
-<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
-<h2 dir="auto">Signed and notarized by Apple</h2>
-<p dir="auto">Yap is now signed with a Developer ID and notarized, so a zip downloaded in a browser opens with the usual "downloaded from the internet" prompt instead of being blocked. Because the signature changed, macOS asks for permissions once more after this update:</p>
-<ul dir="auto">
-<li>Microphone: allow it again on your next recording.</li>
-<li>Accessibility: System Settings › Privacy &amp; Security › Accessibility still shows Yap as on but it won't paste until you remove Yap from the list (−) and add it again, or toggle it off and on.</li>
-<li>Keychain: macOS asks once whether Yap may use its saved API key or Yap Cloud sign-in; choose Always Allow.</li>
-</ul>
-<p dir="auto">Later updates keep these permissions.</p>
-<h2 dir="auto">Subtitles from audio files</h2>
-<ul dir="auto">
-<li>Transcribe an audio or video file with a local Whisper model, then Export Subtitles as SRT, WebVTT or Markdown with timestamps, from the transcription page or from History.</li>
-<li>Timestamps are in the whole file's time, including long files that are decoded in windows and recordings that switch language.</li>
-</ul>
-<h2 dir="auto">Your dictionary reaches cloud transcription</h2>
-<ul dir="auto">
-<li>With OpenRouter or Yap Cloud, the words in your Dictionary are now sent to the transcription model, not only to cleanup, in the field each model actually reads. On the Chinese–English test set, the default model (mai-transcribe-2) got 68 of 82 key terms right instead of 59.</li>
-<li>Also sent for gpt-4o-transcribe, gpt-4o-mini-transcribe and whisper-large-v3. Models that ignore it (qwen3-asr-flash, gemini) don't get it.</li>
-<li>The transcription language you picked is sent too; with automatic detection nothing changes.</li>
-</ul>
-<h2 dir="auto">Home, Dictionary and Settings</h2>
-<ul dir="auto">
-<li>Home shows your shortcuts for dictating, Undo Last Paste and Rewrite Last Dictation, with Change in Settings; its stat tiles are cards like the rest of the page.</li>
-<li>Dictionary lists can be filtered to Auto-added or Manually added words, and Select lets you delete many at once.</li>
-<li>Undo Last Paste and Rewrite Last Dictation have their own Voice Edits group in Settings. The four Chinese Cleanup options are switches with an explanation each.</li>
-<li>Help › Explore Key Features shows one card per feature with its current shortcut, and Show Me takes you to where it's set up.</li>
-</ul>
-<h2 dir="auto">Also in 1.2.0, but missing from its notes</h2>
-<p dir="auto">These shipped in 1.2.0 without being listed:</p>
-<ul dir="auto">
-<li><strong>Meeting recording.</strong> Right ⌘ + Space (change it under Settings › Shortcuts › Record Meeting) records your microphone and the sound from other apps until you press it again. Yap transcribes while the meeting goes on, then writes notes (summary, decisions, action items, open questions) with your mode's AI provider. The meeting goes to History with a timestamped transcript; Export Markdown… saves it. macOS asks once for System Audio Recording.</li>
-<li><strong>Live text with local Whisper.</strong> The recorder shows the text while you speak (Live Text Display, on by default). What gets pasted is still the full transcription made when you let go.</li>
-<li><strong>Undo or rewrite the last paste by voice.</strong> Say only "scratch that" or "删掉刚才那句" to remove what Yap pasted last, or use the Undo Last Paste shortcut. Rewrite Last Dictation: press, say how to change it ("make it more formal", "改正式一点"), press again, and the text is replaced in place. Both check first that the text is still where Yap put it and unchanged.</li>
-<li><strong>Text around the cursor as context.</strong> Cleanup sees the app, window title and the text around where you're typing, so names and terms match. On by default per mode (Text Around the Cursor); password fields are never read.</li>
-<li><strong>Chinese cleanup without a model.</strong> Even with no AI cleanup, 嗯 / 呃 and a leading 那个 are removed, spoken 换行 and 新段落 become line breaks, and Traditional becomes Simplified. Each is a switch under Chinese Cleanup.</li>
-<li><strong>Parakeet Ultra</strong>, a more accurate Parakeet V3 (same languages, no Chinese), in the local models.</li>
-</ul>
-<h2 dir="auto">For macOS 26</h2>
-<ul dir="auto">
-<li>Apple Intelligence can be used for cleanup, on the Mac, after turning on Models › Advanced. It stays behind that switch until it's measured against Yap Refine.</li>
-</ul>
-<h1 dir="auto">Yap 1.3.0（中文）</h1>
-<p dir="auto">1.2.0 之后的改动。</p>
-<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
-<h2 dir="auto">经过 Apple 签名和公证</h2>
-<p dir="auto">Yap 现在用 Developer ID 签名并经过 Apple 公证，浏览器下载的 zip 打开时只会出现普通的“从互联网下载”确认，不会再被拦住。因为签名变了，这次更新后 macOS 会再要一次权限：</p>
-<ul dir="auto">
-<li>麦克风：下一次录音时重新允许。</li>
-<li>辅助功能：“系统设置 › 隐私与安全性 › 辅助功能”里 Yap 看起来还开着，但粘贴不会生效，要先把 Yap 从列表里移除（−）再加回来，或者关掉再打开。</li>
-<li>钥匙串：macOS 会问一次 Yap 能否使用已保存的 API key 或 Yap Cloud 登录信息，选“始终允许”。</li>
-</ul>
-<p dir="auto">之后的更新会保留这些权限。</p>
-<h2 dir="auto">从音频文件导出字幕</h2>
-<ul dir="auto">
-<li>用本地 Whisper 模型转写音频或视频文件后，可以在转写页面或历史记录里导出字幕：SRT、WebVTT，或带时间戳的 Markdown。</li>
-<li>时间戳按整个文件计算，分段解码的长文件、中途换语言的录音也对得上。</li>
-</ul>
-<h2 dir="auto">词典也用在云端转写上</h2>
-<ul dir="auto">
-<li>用 OpenRouter 或 Yap Cloud 时，词典里的词现在会发给转写模型，而不只是给清理用，并且放在每个模型真正会读的字段里。在中英混说测试集上，默认模型（mai-transcribe-2）的关键词从 82 个里对 59 个提高到 68 个。</li>
-<li>gpt-4o-transcribe、gpt-4o-mini-transcribe 和 whisper-large-v3 也会收到词典。不理会词典的模型（qwen3-asr-flash、gemini）不发。</li>
-<li>你选定的转写语言也会一起发；自动检测时不变。</li>
-</ul>
-<h2 dir="auto">主页、词典和设置</h2>
-<ul dir="auto">
-<li>主页显示听写、撤销上次粘贴、改写上一次听写的快捷键，可以直接去设置里修改；统计数字改成了和页面其他部分一样的卡片。</li>
-<li>词典列表可以只看自动添加或手动添加的词，点“选择”可以一次删掉多个。</li>
-<li>撤销上次粘贴和改写上一次听写在设置里有了单独的“语音修改”分组。中文清理的四个选项改成开关，每个都带说明。</li>
-<li>帮助 › 功能导览：每个功能一张卡片，写着当前快捷键，点“带我去”跳到设置它的地方。</li>
-</ul>
-<h2 dir="auto">1.2.0 里已经有、但当时的说明漏掉了</h2>
-<p dir="auto">下面这些在 1.2.0 里就有，只是没写进说明：</p>
-<ul dir="auto">
-<li><strong>会议录制。</strong> 右 ⌘ + 空格（可以在 设置 › 快捷键 › 录制会议 里改）开始录麦克风和其他 app 的声音，再按一次结束。开会过程中 Yap 边录边转写，结束后用当前模式的 AI 服务商写纪要（摘要、决定、待办、未决问题）。会议保存在历史记录里，带时间戳的转写可以用“导出 Markdown…”保存。第一次使用时 macOS 会请求“系统音频录制”权限。</li>
-<li><strong>本地 Whisper 实时显示文字。</strong> 说话时录音条上就能看到文字（实时文本显示，默认开启）。粘贴的仍然是松开后对整段录音的完整转写。</li>
-<li><strong>用语音撤销或改写上一次粘贴。</strong> 只说“删掉刚才那句”或“scratch that”，就能删掉 Yap 上一次粘贴的文字，也可以用撤销上次粘贴的快捷键。改写上一次听写：按一下，说怎么改（“改正式一点”），再按一下，文字原地替换。两者都会先确认文字还在原处、没被改过。</li>
-<li><strong>光标附近的文字作为上下文。</strong> 清理时会参考当前 app、窗口标题和你正在输入位置前后的文字，人名、术语更容易写对。每个模式默认开启（光标附近的文字）；密码框永远不读。</li>
-<li><strong>不用模型的中文清理。</strong> 即使不开 AI 清理，也会去掉“嗯 / 呃”和句首的“那个”，把说出来的“换行”“新段落”变成真正的换行，繁体转简体。每一项都是“中文清理”里的一个开关。</li>
-<li><strong>Parakeet Ultra</strong>：更准确的 Parakeet V3（语言相同，不支持中文），在本地模型里。</li>
-</ul>
-<h2 dir="auto">macOS 26</h2>
-<ul dir="auto">
-<li>打开 模型 › 高级 之后，可以用 Apple 智能在本机做清理。在和 Yap Refine 对比测过之前，它会一直放在这个开关后面。</li>
-</ul>]]></description>
-            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.3.0/Yap.zip" sparkle:edSignature="0+wfzZ/tMPaRMLVKrMtXUnDIkWM1QfcaZjayC9RB2lFcaJoC5uPu8tHXPPVM1q3Oua1wnaNgC4Vh63K2FbInDQ==" length="46920184" type="application/octet-stream" />
         </item>
     </channel>
 </rss>
