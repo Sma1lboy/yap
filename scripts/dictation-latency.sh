@@ -66,7 +66,8 @@ python3 - "$WORK/out.txt" <<'PY'
 import json, sys
 rows = [json.loads(l.split(": ", 1)[1]) for l in open(sys.argv[1]) if l.startswith("dictation-latency: ")]
 loads = [r for r in rows if "loads" in r]  # model released first: one load from the press to the paste
-rows = [r for r in rows if "loads" not in r]
+failed = [r for r in rows if "inHistory" in r]  # a paste that fails
+rows = [r for r in rows if "loads" not in r and "inHistory" not in r]
 if not rows:
     sys.exit("FAIL: no dictations reported")
 steps = ["recorderStopped", "modelReady", "transcribed", "processed", "enhanced", "pasteCommand"]
@@ -78,6 +79,11 @@ if bad:
     sys.exit(f"FAIL: {len(bad)} dictation(s) without a paste time: {bad[0]}")
 if len(loads) != 6 or any(r["loads"] != 1 for r in loads):
     sys.exit(f"FAIL: the model must load once per press, got {[(r['clip'], r.get('loads')) for r in loads]}")
+early = [r for r in rows + loads if not r.get("savedAfterPaste", -1) >= 0]
+if early:
+    sys.exit(f"FAIL: History saved before ⌘V: {early[0]}")
+if len(failed) != 1 or failed[0].get("pasteOutcome") != "failed" or not failed[0]["inHistory"]:
+    sys.exit(f"FAIL: a failed paste must still be saved to History: {failed}")
 
 def pct(values, p):  # nearest rank
     values = sorted(values)
@@ -116,4 +122,7 @@ print("\nModel released before the press (Keep model loaded: After Each Dictatio
 for r in loads:
     ready = f"waited {r['modelReady'] * 1000:.0f} ms for it" if "modelReady" in r else "loaded before the stop"
     print(f"  {r['clip']} {r['round']}: {r['loads']} load, {ready}, ⌘V at {r['pasteCommand'] * 1000:.0f} ms")
+saved = [r["savedAfterPaste"] * 1000 for r in rows]
+print(f"\nHistory saved after ⌘V in every dictation: p50 {pct(saved, 50):.0f} ms, p95 {pct(saved, 95):.0f} ms later")
+print(f"Paste failed: outcome {failed[0]['pasteOutcome']}, in History: {failed[0]['inHistory']}")
 PY
