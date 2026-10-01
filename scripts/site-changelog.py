@@ -45,7 +45,7 @@ def render(lines):
             items.append(line[2:])
         elif not line:
             flush()
-        elif re.match(r"(Changes since|Yap is an open-source|1\.\d\.\d 之后的改动|Yap 是一个开源)", line):
+        elif re.match(r"(Changes since|Yap is an open-source|\d+\.\d+\.\d+ 之后的改动|Yap 是一个开源)", line):
             continue
         else:
             flush()
