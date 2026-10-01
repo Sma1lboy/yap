@@ -324,6 +324,8 @@ class TranscriptionPipeline {
                         timeline: timeline,
                         in: modelContext
                     )
+                    // Auto Learn may already know the paste can't be watched (a password field, say).
+                    sessionMetric.map(SessionEditRecorder.shared.metricRecorded)
                 } catch {
                     logger.error("Failed to record session metric: \(error, privacy: .public)")
                 }

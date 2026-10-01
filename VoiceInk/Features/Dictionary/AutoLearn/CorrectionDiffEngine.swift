@@ -353,7 +353,7 @@ enum CorrectionDiffEngine {
             && destination.count <= AutoLearnLimits.maximumUnspacedCandidateCharacters
     }
 
-    private static func isCompactScriptScalar(_ scalar: Unicode.Scalar) -> Bool {
+    static func isCompactScriptScalar(_ scalar: Unicode.Scalar) -> Bool {
         switch scalar.value {
         case 0x0E00...0x0EFF, // Thai and Lao
             0x1000...0x109F, // Myanmar

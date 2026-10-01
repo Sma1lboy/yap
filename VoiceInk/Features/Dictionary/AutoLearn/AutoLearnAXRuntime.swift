@@ -20,7 +20,8 @@ final class AutoLearnAXRuntime: @unchecked Sendable {
     private let textReader = AutoLearnAXTextReader()
     private var session: Session?
 
-    func capturePastedText(text: String, processID: pid_t) async -> AutoLearnPasteToken? {
+    /// The token of the paste being watched, or why it can't be watched (counted in AutoLearnUnobservableCounts).
+    func capturePastedText(text: String, processID: pid_t) async -> Result<AutoLearnPasteToken, AutoLearnUnobservableError> {
         await perform { [self] in
             session = nil
 
@@ -73,32 +74,36 @@ final class AutoLearnAXRuntime: @unchecked Sendable {
                 pastedRange: pastedRange,
                 pastedText: observedPastedText
             )
-            return token
+            return .success(token)
         }
     }
 
-    func finishSnapshot(token: AutoLearnPasteToken) async -> AutoLearnFieldSnapshot? {
+    /// The field as the watch ends, or why it can't be read now (counted). Nil when the session is gone (discarded).
+    func finishSnapshot(token: AutoLearnPasteToken) async -> Result<AutoLearnFieldSnapshot, AutoLearnUnobservableError>? {
         await perform { [self] in
             guard let active = session, active.token == token else { return nil }
             session = nil
 
             defer { textReader.restoreWebAccessibility(processID: AXProcessID(active.appElement), appElement: active.appElement) }
             if let exclusion = textReader.exclusion(for: active.targetElement) {
-                AutoLearnUnobservableCounts.record(exclusion)
                 logger.notice("Auto Learn final read skipped reason=\(exclusion.rawValue, privacy: .public)")
-                return nil
+                return reject(exclusion)
             }
-            guard let finalTextValue = textReader.textValue(from: active.targetElement) else { return nil }
+            guard let finalTextValue = textReader.textValue(from: active.targetElement) else {
+                return reject(.noReadableField)
+            }
             let finalFieldText = finalTextValue.text
-            guard finalFieldText.utf16.count <= AutoLearnLimits.maximumFieldUTF16Length else { return nil }
-            guard !textIsExactlyEqual(finalFieldText, active.baselineFieldText) else { return nil }
+            guard finalFieldText.utf16.count <= AutoLearnLimits.maximumFieldUTF16Length else {
+                return reject(.fieldTooLong)
+            }
 
-            return AutoLearnFieldSnapshot(
-                baselineFieldText: active.baselineFieldText,
-                finalFieldText: finalFieldText,
-                pastedRange: active.pastedRange,
-                originalPastedText: active.pastedText
-            )
+            return .success(
+                AutoLearnFieldSnapshot(
+                    baselineFieldText: active.baselineFieldText,
+                    finalFieldText: finalFieldText,
+                    pastedRange: active.pastedRange,
+                    originalPastedText: active.pastedText
+                ))
         }
     }
 
@@ -129,12 +134,16 @@ final class AutoLearnAXRuntime: @unchecked Sendable {
         lhs.utf16.elementsEqual(rhs.utf16)
     }
 
-    private func rejectCapture(_ reason: AutoLearnUnobservableReason) -> AutoLearnPasteToken? {
-        AutoLearnUnobservableCounts.record(reason)
+    private func rejectCapture(_ reason: AutoLearnUnobservableReason) -> Result<AutoLearnPasteToken, AutoLearnUnobservableError> {
         logger.notice(
             "Auto Learn capture rejected reason=\(reason.rawValue, privacy: .public)"
         )
-        return nil
+        return reject(reason)
+    }
+
+    private func reject<T>(_ reason: AutoLearnUnobservableReason) -> Result<T, AutoLearnUnobservableError> {
+        AutoLearnUnobservableCounts.record(reason)
+        return .failure(AutoLearnUnobservableError(reason: reason))
     }
 
     private func focusedElementMatches(_ targetElement: AXUIElement, in appElement: AXUIElement) -> Bool {

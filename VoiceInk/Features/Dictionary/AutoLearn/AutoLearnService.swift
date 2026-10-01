@@ -19,6 +19,9 @@ actor AutoLearnService {
     private var activeGeneration: UInt64?
     private var activeProcessID: pid_t?
     private var deadlineTask: Task<Void, Never>?
+    /// The dictation of the paste being watched (or about to be), whose SessionMetric gets the edit outcome. Nil for
+    /// pastes that aren't a dictation (Scratchpad, History, Rewrite).
+    private var watchedDictationID: UUID?
     private var focusFinalizationTask: Task<Void, Never>?
     private var reviewTask: Task<Void, Never>?
     private var reviewGeneration: UInt64 = 0
@@ -213,7 +216,7 @@ actor AutoLearnService {
         await discardActiveSession()
     }
 
-    func pasteDidFinish(text: String, processID: pid_t?, commandPosted: Bool) async -> UInt64? {
+    func pasteDidFinish(text: String, processID: pid_t?, commandPosted: Bool, dictationID: UUID? = nil) async -> UInt64? {
         guard AutoLearnSettings.isEnabled,
             replacementStore != nil,
             commandPosted,
@@ -226,6 +229,7 @@ actor AutoLearnService {
         // SwiftData work do not delay the paste.
         let previousToken = activeToken
         lifecycleGeneration &+= 1
+        let previousDictationID = watchedDictationID
         let generation = lifecycleGeneration
         deadlineTask?.cancel()
         deadlineTask = nil
@@ -236,18 +240,20 @@ actor AutoLearnService {
         activeGeneration = nil
         activeProcessID = nil
 
+        watchedDictationID = dictationID
         guard lifecycleGeneration == generation, AutoLearnSettings.isEnabled else { return nil }
 
         deadlineTask = Task { [weak self] in
             if let previousToken {
                 // `finishSnapshot` drops the session, so the pending capture is
                 // cancelled before a new one can be started.
-                await self?.persistFinishedSession(token: previousToken)
+                await self?.persistFinishedSession(token: previousToken, dictationID: previousDictationID)
             }
             await self?.beginObservation(
                 text: text,
                 processID: processID,
-                generation: generation
+                generation: generation,
+                dictationID: dictationID
             )
         }
         return generation
@@ -257,6 +263,8 @@ actor AutoLearnService {
         guard AutoLearnSettings.isEnabled else { return }
         guard lifecycleGeneration == generation else { return }
         lifecycleGeneration &+= 1
+        AutoLearnUnobservableCounts.record(.autoSent)
+        await record(.unobservable(.autoSent), for: watchedDictationID)
         await discardActiveSession()
     }
 
@@ -277,7 +285,8 @@ actor AutoLearnService {
     private func beginObservation(
         text: String,
         processID: pid_t,
-        generation: UInt64
+        generation: UInt64,
+        dictationID: UUID?
     ) async {
         guard await sleep(nanoseconds: AutoLearnLimits.verificationDelayNanoseconds),
             !Task.isCancelled,
@@ -285,11 +294,14 @@ actor AutoLearnService {
             AutoLearnSettings.isEnabled
         else { return }
 
-        guard let token = await accessibilityRuntime.capturePastedText(
-                text: text,
-                processID: processID
-            )
-        else { return }
+        let token: AutoLearnPasteToken
+        switch await accessibilityRuntime.capturePastedText(text: text, processID: processID) {
+        case .success(let captured):
+            token = captured
+        case .failure(let error):
+            await record(.unobservable(error.reason), for: dictationID)
+            return
+        }
 
         guard lifecycleGeneration == generation,
             !Task.isCancelled,
@@ -325,6 +337,7 @@ actor AutoLearnService {
         activeGeneration = nil
         activeProcessID = nil
         if let token {
+        watchedDictationID = nil
             await accessibilityRuntime.discard(token: token)
         } else {
             await accessibilityRuntime.discard()
@@ -334,26 +347,33 @@ actor AutoLearnService {
     private func completeSession(token: AutoLearnPasteToken, persist: Bool) async {
         guard activeToken == token, activeGeneration != nil else { return }
         deadlineTask?.cancel()
+        let dictationID = watchedDictationID
         activeToken = nil
         activeGeneration = nil
         activeProcessID = nil
         deadlineTask = nil
+        watchedDictationID = nil
         focusFinalizationTask?.cancel()
         focusFinalizationTask = nil
         focusObserver.stop()
 
         if persist {
-            await persistFinishedSession(token: token)
+            await persistFinishedSession(token: token, dictationID: dictationID)
         } else {
             await accessibilityRuntime.discard(token: token)
         }
     }
 
-    private func persistFinishedSession(token: AutoLearnPasteToken) async {
+    private func persistFinishedSession(token: AutoLearnPasteToken, dictationID: UUID?) async {
         let cancellationGeneration = snapshotCancellationGeneration
-        let snapshot = await accessibilityRuntime.finishSnapshot(token: token)
-        guard snapshotCancellationGeneration == cancellationGeneration else { return }
-        await persistSnapshot(snapshot)
+        let result = await accessibilityRuntime.finishSnapshot(token: token)
+        guard snapshotCancellationGeneration == cancellationGeneration, let result else { return }
+        switch result {
+        case .success(let snapshot):
+            await persistSnapshot(snapshot, dictationID: dictationID)
+        case .failure(let error):
+            await record(.unobservable(error.reason), for: dictationID)
+        }
     }
 
     private func finalizeIfFocusLeft(token: AutoLearnPasteToken) async {
@@ -385,10 +405,14 @@ actor AutoLearnService {
         await completeSession(token: token, persist: true)
     }
 
-    private func persistSnapshot(_ snapshot: AutoLearnFieldSnapshot?) async {
-        guard AutoLearnSettings.isEnabled,
-            let snapshot
-        else { return }
+    private func persistSnapshot(_ snapshot: AutoLearnFieldSnapshot, dictationID: UUID?) async {
+        guard AutoLearnSettings.isEnabled else { return }
+
+        let outcome = FinalSnapshotDiffEngine.observe(snapshot)
+        if case .unobservable(let reason) = outcome {
+            AutoLearnUnobservableCounts.record(reason)
+        }
+        await record(outcome, for: dictationID)
 
         guard let revision = FinalSnapshotDiffEngine.revision(from: snapshot) else { return }
         let candidates = CorrectionDiffEngine.candidates(from: revision)
@@ -409,6 +433,13 @@ actor AutoLearnService {
     }
 
     private func schedulePendingReview() async {
+    private func record(_ outcome: AutoLearnEditOutcome, for dictationID: UUID?) async {
+        guard let dictationID else { return }
+        await MainActor.run {
+            SessionEditRecorder.shared.record(outcome, for: dictationID)
+        }
+    }
+
         guard reviewTask == nil,
             AutoLearnSettings.isEnabled,
             replacementStore != nil,

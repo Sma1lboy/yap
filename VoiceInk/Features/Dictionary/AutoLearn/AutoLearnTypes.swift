@@ -222,6 +222,14 @@ enum AutoLearnUnobservableCounts {
 }
 
 enum AutoLearnProviderPolicy {
+    /// The field was empty at the end. A chat app empties it on send, so a send can't be told from a deletion.
+    case fieldCleared
+    /// Finish and Send pressed Return right after the paste.
+    case autoSent
+}
+
+struct AutoLearnUnobservableError: Error {
+    let reason: AutoLearnUnobservableReason
     static func isSupported(_ provider: AIProvider) -> Bool {
         provider.supportsEnhancement
             && provider != .voiceInkRefine

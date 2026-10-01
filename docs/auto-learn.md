@@ -35,13 +35,62 @@ The field is refused, with nothing read from it, when:
 | `fieldTooLong` | The element reports more than 100,000 characters (`AXNumberOfCharacters`). |
 
 Paste-side rejections are counted the same way: `accessibilityNotTrusted`, `targetIsYap`, `emptyPaste`,
-`pasteTooLong` (over 12,000 characters), `noReadableField` (no editable focused field), `pastedTextNotFound` (the
-pasted text isn't where the paste should have put it).
+`pasteTooLong` (over 12,000 characters), `noReadableField` (no editable focused field, or the final read got no
+value), `pastedTextNotFound` (the pasted text isn't where the paste should have put it, or at the end the text around
+it no longer locates it), `fieldCleared` (the field was empty at the end) and `autoSent` (Finish and Send pressed
+Return right after the paste).
 
 For each refusal Yap keeps only a count per reason, in the `AutoLearnUnobservableCounts` user default, on this Mac.
-No text, app name or window title is stored or logged with it. The counts are the denominator for a later correction
-rate: of all pastes, how many could be observed at all.
+No text, app name or window title is stored or logged with it.
 
 Text Around the Cursor (cleanup context) and Undo / Rewrite Last Paste read the focused field through the same
 reader, so the same refusals apply to them (without the counts). While secure keyboard entry is on anywhere, cleanup
 gets no text around the cursor, and Undo / Rewrite Last Paste can't find the last paste and say so.
+
+## Correction rate
+
+For every dictation it pastes with ⌘V, Auto Learn records on that dictation's `SessionMetric` how much of the pasted
+text you changed before the watch ended (focus left the field, the next recording started, or 60 s passed):
+
+| Field | Value |
+|---|---|
+| `editObserved` | `true`: Auto Learn read the field at the end and found the pasted text. `false`: it couldn't. |
+| `editUnobservableReason` | When `false`: one of the reasons above (`secureField`, `noReadableField`, `fieldCleared`…). |
+| `editDistance` | When `true`: 0 untouched … 1 deleted or rewritten. |
+| `editChanged` | When `true`: `editDistance > 0`. |
+
+All four stay nil when Auto Learn didn't watch: it's off, the text wasn't pasted with ⌘V (Scratchpad, clipboard only,
+a response), or the next dictation started within 120 ms of the paste. Turning Auto Learn off turns this off too:
+the correction rate needs the same reads of the field, and Yap doesn't read it for anything else.
+
+**Distance** (`AutoLearnEditMeasure`, `FinalSnapshotDiffEngine.observe`):
+
+- The pasted text and what's now between the text that was right before and right after it are split into units:
+  each Chinese, Japanese, Korean, Thai, Lao, Myanmar or Khmer character; each word (letters and digits, with `'`, `-`
+  or `_` inside); each other character such as punctuation. Whitespace isn't a unit, so spacing-only edits count as
+  untouched. Line endings, non-breaking and zero-width spaces are normalized first.
+- `editDistance = levenshtein(units before, units after) / max(count before, count after)`: insertions, deletions and
+  substitutions of a unit cost 1 each. Changing one word of a 7-word sentence is 1/7 ≈ 0.14, one character of an
+  11-character Chinese sentence is 1/11 ≈ 0.09.
+- When the part that differs (after the common start and end) is over 4,000,000 unit pairs, the edit count is taken as
+  the longer side's unit count instead of computed, which reads as a full rewrite.
+
+**Edge cases:**
+
+| What happened in the field | Recorded |
+|---|---|
+| Nothing changed before focus left | observed, distance 0 |
+| Text typed before or after the pasted text, which is still there unchanged | observed, distance 0 |
+| The pasted text deleted, the text around it kept | observed, distance 1 |
+| The whole field emptied | not observed, `fieldCleared`: chat apps empty the field when you send, so a send can't be told from a deletion |
+| The text around the paste changed too, so the paste can't be located | not observed, `pastedTextNotFound` |
+| Edits after focus left the field | not seen: the field is read once, when focus leaves, and the first outcome recorded for a dictation stands |
+
+`make edit-rate-check` prints the outcome for each of these on fixed text and runs the self-checks.
+
+**Where it's stored and who sees it.** Only in `stats.store` in Yap's Application Support folder, on this Mac. That
+store is never synced (no CloudKit), not part of exports or Yap Cloud config sync, and `yap-mcp` doesn't read it. No
+text is stored with it, only the numbers and the reason. Nothing in the app shows it yet.
+
+The correction rate is then, over pasted dictations: the share with `editObserved == false` (couldn't be watched),
+and among the rest, the share with `editChanged == true` and the mean `editDistance`.

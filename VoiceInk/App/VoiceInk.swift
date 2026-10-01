@@ -49,6 +49,8 @@ struct VoiceInkApp: App {
             // make mcp-check: write a data folder for yap-mcp and the expected exports, and exit, before anything
             // writes settings.
             MCPFixture.runIfRequested()
+            // make edit-rate-check: print the correction-rate fixtures, run their self-checks, and exit.
+            EditRateCheck.runIfRequested()
         #endif
         // Before onboarding can complete in this session, so a fresh install isn't mistaken for an update.
         ReleaseNotesPresenter.shared.showsOnNextMainWindow = ReleaseNotes.recordLaunch()
@@ -98,6 +100,10 @@ struct VoiceInkApp: App {
             DictationTimeline.selfCheck()
             TranscriptionDelivery.selfCheck()
             AutoLearnAXTextReader.selfCheck()
+            FinalSnapshotDiffEngine.selfCheck()
+            Task { @MainActor in
+                do { try SessionEditRecorder.selfCheck() } catch { assertionFailure("SessionEditRecorder selfCheck: \(error)") }
+            }
             Task { @MainActor in await RecordingShortcutModeHandler.selfCheck() }
             Task { @MainActor in await WhisperModelManager.selfCheck() }
             Task.detached {
@@ -160,6 +166,7 @@ struct VoiceInkApp: App {
             MockEnvironment.seedStores(resolvedContainer)  // make mock only
         #endif
         DictionaryService.cleanUpDictionaryContent(context: resolvedContainer.mainContext, source: "launch")
+        SessionEditRecorder.shared.modelContext = resolvedContainer.mainContext
 
         // Initialize services with proper sharing of instances
         let aiService = AIService()
