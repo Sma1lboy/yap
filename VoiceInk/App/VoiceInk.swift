@@ -98,6 +98,7 @@ struct VoiceInkApp: App {
             DictationTimeline.selfCheck()
             AutoLearnAXTextReader.selfCheck()
             Task { @MainActor in await RecordingShortcutModeHandler.selfCheck() }
+            Task { @MainActor in await WhisperModelManager.selfCheck() }
             Task.detached {
                 do { try SessionMetricRecorder.selfCheck() } catch { assertionFailure("SessionMetric selfCheck: \(error)") }
             }

@@ -19,6 +19,11 @@ actor WhisperContext {
 
     private init() {}
 
+    #if DEBUG
+        /// A context without a model, for selfChecks that count loads.
+        static func placeholder() -> WhisperContext { WhisperContext() }
+    #endif
+
     init(context: OpaquePointer) {
         self.context = context
         preview.attach(context)

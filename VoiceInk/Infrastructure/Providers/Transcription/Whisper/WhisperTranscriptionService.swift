@@ -5,11 +5,10 @@ import os
 
 class WhisperTranscriptionService: TranscriptionService {
 
-    private var whisperContext: WhisperContext?
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "WhisperTranscriptionService")
     private let modelsDirectory: URL
     private weak var modelProvider: (any WhisperModelProvider)?
-    /// Source of dictionary words for the prompt; nil (warmup) means no dictionary.
+    /// Source of dictionary words for the prompt; nil means no dictionary.
     private let modelContext: ModelContext?
     /// The last transcription's timed segments (seconds from the start of the audio), for subtitle export.
     private(set) var lastSegments: [TimedSegment] = []
@@ -24,56 +23,29 @@ class WhisperTranscriptionService: TranscriptionService {
         -> String
     {
         lastSegments = []
-        guard model.provider == .whisper else {
+        guard model.provider == .whisper, let modelProvider else {
             throw VoiceInkEngineError.modelLoadFailed
         }
 
         logger.notice("Initiating local transcription for model: \(model.displayName, privacy: .public)")
 
-        // A preload started by the shortcut press may still be running; wait for it instead of loading twice.
-        await modelProvider?.finishPendingLoad()
-
-        // Check if the required model is already loaded in the model provider
-        if let provider = modelProvider,
-            await provider.isModelLoaded,
-            let loadedContext = await provider.whisperContext,
-            await provider.loadedWhisperModel?.name == model.name
-        {
-
-            logger.notice("Using already loaded model: \(model.name, privacy: .public)")
-            whisperContext = loadedContext
-        } else {
-            // Resolve the on-disk URL using the provider's availableModels (covers imports)
-            let resolvedURL: URL? = await modelProvider?.availableModels.first(where: { $0.name == model.name })?.url
-            guard let modelURL = resolvedURL, FileManager.default.fileExists(atPath: modelURL.path) else {
-                logger.error("❌ Model file not found for: \(model.name, privacy: .public)")
-                throw VoiceInkEngineError.modelLoadFailed
-            }
-
-            logger.notice("Loading model: \(model.name, privacy: .public)")
-            do {
-                whisperContext = try await WhisperContext.createContext(path: modelURL.path)
-                DictationTimeline.modelDidLoad()
-            } catch {
-                logger.error("❌ Failed to load model: \(model.name, privacy: .public) - \(error, privacy: .public)")
-                throw VoiceInkEngineError.modelLoadFailed
-            }
-        }
-
-        guard let whisperContext = whisperContext else {
-            logger.error("❌ Cannot transcribe: Model could not be loaded")
+        // The shared context: the preload the shortcut press started is waited for, never loaded a second time.
+        let whisperContext: WhisperContext
+        do {
+            let ready = try await modelProvider.context(forModelNamed: model.name)
+            whisperContext = ready.context
+            if ready.waited { DictationTimeline.modelDidLoad() }
+        } catch {
+            logger.error("❌ Failed to load model: \(model.name, privacy: .public) - \(error, privacy: .public)")
             throw VoiceInkEngineError.modelLoadFailed
         }
 
-        // Read audio data
-        let data = try readAudioSamples(audioURL)
+        let data = try Self.readAudioSamples(audioURL)
 
-        // Set prompt
         await whisperContext.setLanguage(context.language)
         await whisperContext.setPrompt(
             WhisperPrompt.withVocabulary(context.prompt ?? "", words: await dictionaryWords()))
 
-        // Transcribe
         let success = await whisperContext.fullTranscribe(samples: data)
 
         guard success else {
@@ -85,13 +57,6 @@ class WhisperTranscriptionService: TranscriptionService {
         lastSegments = await whisperContext.getSegments()
 
         logger.notice("Whisper transcription completed successfully.")
-
-        // Only release resources if we created a new context (not using the shared one)
-        if await modelProvider?.whisperContext !== whisperContext {
-            await whisperContext.releaseResources()
-            self.whisperContext = nil
-        }
-
         return text
     }
 
@@ -102,15 +67,21 @@ class WhisperTranscriptionService: TranscriptionService {
         }
     }
 
-    private func readAudioSamples(_ url: URL) throws -> [Float] {
-        let data = try Data(contentsOf: url)
-        let floats = stride(from: Self.pcmDataOffset(data), to: data.count - 1, by: 2).map {
-            return data[$0..<$0 + 2].withUnsafeBytes {
-                let short = Int16(littleEndian: $0.load(as: Int16.self))
+    static func readAudioSamples(_ url: URL) throws -> [Float] {
+        samples(fromWAV: try Data(contentsOf: url))
+    }
+
+    /// 16-bit PCM from `pcmDataOffset` on, scaled to -1...1. One pass over the bytes: slicing `Data` per sample took
+    /// 8 ms for an 8 s recording, between the stop and the decode.
+    static func samples(fromWAV data: Data) -> [Float] {
+        let start = pcmDataOffset(data)
+        let count = max(0, (data.count - start) / 2)
+        return data.withUnsafeBytes { raw in
+            (0..<count).map { index in
+                let short = Int16(littleEndian: raw.loadUnaligned(fromByteOffset: start + 2 * index, as: Int16.self))
                 return max(-1.0, min(Float(short) / 32767.0, 1.0))
             }
         }
-        return floats
     }
 
     /// Where the samples start. Apple's writers put a FLLR padding chunk before `data`, so the recorder's
@@ -141,6 +112,23 @@ class WhisperTranscriptionService: TranscriptionService {
                 + chunk("FLLR", [UInt8](repeating: 0, count: 4044)) + chunk("data", [7, 0])
             assert(pcmDataOffset(Data(padded)) == 4096)
             assert(pcmDataOffset(Data([1, 2, 3])) == 44)
+
+            // Same floats as the per-sample read it replaced: every Int16 value, both offsets, an odd trailing byte.
+            func perSample(_ data: Data) -> [Float] {
+                stride(from: pcmDataOffset(data), to: data.count - 1, by: 2).map {
+                    data[$0..<$0 + 2].withUnsafeBytes {
+                        max(-1.0, min(Float(Int16(littleEndian: $0.load(as: Int16.self))) / 32767.0, 1.0))
+                    }
+                }
+            }
+            let allValues = (Int(Int16.min)...Int(Int16.max)).flatMap { value -> [UInt8] in
+                let bits = UInt16(bitPattern: Int16(value))
+                return [UInt8(bits & 0xFF), UInt8(bits >> 8)]
+            }
+            for wav in [Data(plain.dropLast(2) + allValues + [9]), Data(padded.dropLast(2) + allValues)] {
+                assert(samples(fromWAV: wav) == perSample(wav))
+            }
+            assert(samples(fromWAV: Data(plain)).count == 1 && samples(fromWAV: Data([1, 2, 3])).isEmpty)
         }
     #endif
 }

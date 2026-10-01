@@ -50,6 +50,10 @@ class WhisperModelManager: ObservableObject {
     @Published var isModelLoading = false
     private var activeDownloadTasks: [String: Task<Void, Never>] = [:]
     private var loadTask: Task<Void, Error>?
+    /// How a load turns a model file into a context; selfCheck replaces it to count loads without a model.
+    var makeContext: (WhisperModelFile) async throws -> WhisperContext = {
+        try await WhisperContext.createContext(path: $0.url.path)
+    }
 
     let modelsDirectory: URL
     let whisperPrompt = WhisperPrompt()
@@ -95,15 +99,18 @@ class WhisperModelManager: ObservableObject {
 
     // MARK: - Model Loading
 
-    /// One load at a time: the shortcut-press preload and the load after the mode is applied share it, and a
-    /// transcription that starts mid-load waits for the rest of it (`finishPendingLoad`).
+    /// One load at a time: the shortcut-press preload, the load after the mode is applied and a transcription
+    /// (`context(forModelNamed:)`) share it.
     func loadModel(_ model: WhisperModelFile) async throws {
         if let loadTask { return try await loadTask.value }
         guard whisperContext == nil else { return }
 
-        let task = Task { try await self.createContext(for: model) }
+        // Cleared by the load itself, so whoever waits on it sees it gone as soon as it finishes.
+        let task = Task {
+            defer { self.loadTask = nil }
+            try await self.createContext(for: model)
+        }
         loadTask = task
-        defer { loadTask = nil }
         try await task.value
     }
 
@@ -111,12 +118,38 @@ class WhisperModelManager: ObservableObject {
         try? await loadTask?.value
     }
 
+    /// The shared context holding the model named `name`, for a transcription. A load already running (the
+    /// shortcut-press preload) is waited for instead of started again, and a different loaded model is released
+    /// before this one loads, so a dictation never holds two copies. `waited` is true when the transcription had to
+    /// wait for a load.
+    func context(forModelNamed name: String) async throws -> (context: WhisperContext, waited: Bool) {
+        var waited = false
+        while true {
+            if let loadTask {
+                waited = true
+                _ = try? await loadTask.value
+            } else if let whisperContext, isModelLoaded, loadedWhisperModel?.name == name {
+                return (whisperContext, waited)
+            } else {
+                guard let model = availableModels.first(where: { $0.name == name }),
+                    FileManager.default.fileExists(atPath: model.url.path)
+                else {
+                    logger.error("❌ Model file not found for: \(name, privacy: .public)")
+                    throw VoiceInkEngineError.modelLoadFailed
+                }
+                waited = true
+                if whisperContext != nil { await cleanupResources() }
+                try await loadModel(model)
+            }
+        }
+    }
+
     private func createContext(for model: WhisperModelFile) async throws {
         isModelLoading = true
         defer { isModelLoading = false }
 
         do {
-            whisperContext = try await WhisperContext.createContext(path: model.url.path)
+            whisperContext = try await makeContext(model)
 
             let currentPrompt =
                 UserDefaults.standard.string(forKey: "TranscriptionPrompt") ?? whisperPrompt.transcriptionPrompt
@@ -354,9 +387,12 @@ class WhisperModelManager: ObservableObject {
     func cleanupResources() async {
         logger.notice("WhisperModelManager.cleanupResources: releasing whisper context")
         await finishPendingLoad()
-        await whisperContext?.releaseResources()
+        // Cleared before the release finishes: a preload that starts meanwhile then loads a fresh copy instead of
+        // finding this one, skipping, and leaving the dictation to load it again after the stop.
+        let releasing = whisperContext
         whisperContext = nil
         isModelLoaded = false
+        await releasing?.releaseResources()
         logger.notice("WhisperModelManager.cleanupResources: completed")
     }
 
@@ -411,6 +447,61 @@ class WhisperModelManager: ObservableObject {
 // MARK: - WhisperModelProvider
 
 extension WhisperModelManager: WhisperModelProvider {}
+
+#if DEBUG
+    extension WhisperModelManager {
+        /// Loads are counted with placeholder contexts (no model file is read): a dictation stopped while the press's
+        /// preload is still loading waits for it, a press during a release still preloads, and a dictation needing a
+        /// different model releases the loaded one first.
+        static func selfCheck() async {
+            final class Loads { var names: [String] = [] }
+            let loads = Loads()
+            let directory = FileManager.default.temporaryDirectory.appendingPathComponent("yap-model-load-\(UUID())")
+            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            defer { try? FileManager.default.removeItem(at: directory) }
+            let files = ["a", "b"].map { WhisperModelFile(name: $0, url: directory.appendingPathComponent("\($0).bin")) }
+            for file in files { FileManager.default.createFile(atPath: file.url.path, contents: Data()) }
+
+            let manager = WhisperModelManager(modelsDirectory: directory)
+            manager.availableModels = files
+            manager.makeContext = { file in
+                loads.names.append(file.name)
+                try await Task.sleep(for: .milliseconds(30))
+                return WhisperContext.placeholder()
+            }
+            func ready(_ name: String) async -> (context: WhisperContext, waited: Bool)? {
+                try? await manager.context(forModelNamed: name)
+            }
+
+            // Stopped while the press's preload is loading: that load is waited for, not repeated.
+            let preload = Task { try? await manager.loadModel(files[0]) }
+            await Task.yield()
+            let stopped = await ready("a")
+            await preload.value
+            precondition(loads.names == ["a"] && stopped?.waited == true, "one load, waited for: \(loads.names)")
+            precondition(stopped?.context === manager.whisperContext)
+            let again = await ready("a")
+            precondition(again?.waited == false && loads.names == ["a"], "loaded: used as is")
+
+            // The next press comes while the last dictation's release is still running: it loads a fresh copy.
+            let release = Task { await manager.cleanupResources() }
+            let nextPress = Task { try? await manager.loadModel(files[0]) }
+            await release.value
+            await nextPress.value
+            precondition(manager.whisperContext != nil && loads.names == ["a", "a"], "preloaded: \(loads.names)")
+            let afterPress = await ready("a")
+            precondition(afterPress?.waited == false && loads.names == ["a", "a"])
+
+            // The mode wants another model: the loaded one goes first, so there is only ever one.
+            let other = await ready("b")
+            precondition(other?.waited == true && loads.names == ["a", "a", "b"])
+            precondition(manager.loadedWhisperModel?.name == "b" && other?.context === manager.whisperContext)
+            let missing = await ready("missing")
+            precondition(missing == nil && loads.names == ["a", "a", "b"])
+            await manager.cleanupResources()
+        }
+    }
+#endif
 
 // MARK: - Download Progress View
 
