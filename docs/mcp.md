@@ -123,7 +123,7 @@ Then turn on the switch and ask the agent something like:
   | # | Question | Switches | Tools called (now, run 1) | Calls before | Calls now | Right |
   |---|---|---|---|---|---|---|
   | 1 | 上周四那场会议的待办分别是谁的？ | both on | list_meetings → get_meeting | 2, 2 | 2, 2 | 4/4 |
-  | 2 | 最近三场会议里关于 rollout 做了哪些决定？ | both on | list_meetings → get_meeting ×3 | 4, 4 | 4, 5 | 4/4 |
+  | 2 | 最近三场会议里关于 rollout 做了哪些决定？ | both on | list_meetings → search_history → get_meeting ×4 | 4, 4 | 6, 4 | 4/4 |
   | 3 | 我在 Slack 里说过 Kubernetes 升级什么时候做？ | both on | search_history → get_dictation | 2, 2 | 2, 2 | 4/4 |
   | 4 | 我的 Yap 词典里 Postgres 是怎么写的？ | both on | get_dictionary | 1, 1 | 1, 1 | 4/4 |
   | 5 | 上周四的会上 Reed 负责什么？ | off | list_meetings (error) | 1, 1 | 1, 1 | 4/4 |
@@ -133,7 +133,7 @@ Then turn on the switch and ask the agent something like:
   | 9 | 上周我用 Mail 给 Jenny 发的发票邮件里，发票号和金额是多少？ | both on | search_history → get_dictation | 2, 2 | 2, 2 | 4/4 |
   | 10 | 我在 Cursor 里口述的 rate limiter 注释里，限流阈值是多少？ | both on | search_history | 1, 1 | 1, 1 | 4/4 |
 
-  Every answer was right, checked by the script and read by hand. With a switch off, the agent made one call, got the tool error and told the user which switch to turn on in Yap › 设置 › Agent 访问（MCP）, by its Chinese name, without guessing an answer. It worked out "上周四" from today's date and passed it as `since`/`until`. The one place it searched around was question 8: the design review's notes are in Chinese, so the English words "onboarding" and "setup" found the wrong meeting or only the transcript, and `title` (a date) didn't say which meeting was which. `list_meetings` now returns each meeting's `summary`; the agent then read the list before opening the meeting, but made as many calls as before. A sentence in `search_history`'s description saying that matching is literal and per language made no difference in a run of its own and was taken out again. Finding a meeting by topic across languages (an English question about Chinese notes) is the one thing substring search can't do; that is the case for the vector search listed under Known limits, not something a tool description fixes.
+  Every answer was right, checked by the script and read by hand. With a switch off, the agent made one call, got the tool error and told the user which switch to turn on in Yap › 设置 › Agent 访问（MCP）, by its Chinese name, without guessing an answer. It worked out "上周四" from today's date and passed it as `since`/`until`. Call counts vary between runs of the same question (question 2 took 4 to 6: sometimes the notes first, then the transcripts). The question it searched around on most was 8 (4 calls in three of four runs): the design review's notes are in Chinese, so the English words "onboarding" and "setup" found the wrong meeting or only the transcript, and `title` (a date) didn't say which meeting was which. `list_meetings` now returns each meeting's `summary`; the agent then read the list before opening the meeting, but made as many calls as before. A sentence in `search_history`'s description saying that matching is literal and per language made no difference in a run of its own and was taken out again. Finding a meeting by topic across languages (an English question about Chinese notes) is the one thing substring search can't do; that is the case for the vector search listed under Known limits, not something a tool description fixes.
 - **By hand, on real data:** turn the switch on, then:
 
   ```sh
