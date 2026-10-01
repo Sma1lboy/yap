@@ -22,7 +22,7 @@ jobs:
           python-version: '3.12'
       - name: Install browser test tools from PyPI and Playwright
         run: |
-          python -m pip install playwright==1.51.1
+          python -m pip install playwright==1.51.0
           python -m playwright install --with-deps chromium
       - name: Render original source before and after
         env:
