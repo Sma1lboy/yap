@@ -215,7 +215,7 @@ struct MenuBarView: View {
                 HStack {
                     Image(yapIcon: "globe")
                         .font(AppTheme.font(.caption, .medium))
-                    Text(String(format: String(localized: "Language: %@"), languages[current] ?? current))
+                    Text(String(format: String(localized: "Language: %@"), TranscriptionLanguageSupport.displayName(current, catalogName: languages[current])))
                     Image(yapIcon: "chevron.up.chevron.down")
                         .font(AppTheme.font(.micro))
                 }

@@ -53,6 +53,8 @@ struct VoiceInkApp: App {
             EditRateCheck.runIfRequested()
             // make home-feedback-check: Home's paste numbers on fixed weeks, through WeekStatsLoader, and exit.
             HomeFeedbackFixture.runIfRequested()
+            // make home-feedback-perf: Home's week panel on 20,000 metrics in a stats.store on disk, and exit.
+            HomeFeedbackPerf.runIfRequested()
         #endif
         // Before onboarding can complete in this session, so a fresh install isn't mistaken for an update.
         ReleaseNotesPresenter.shared.showsOnNextMainWindow = ReleaseNotes.recordLaunch()

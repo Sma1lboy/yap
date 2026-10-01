@@ -78,8 +78,8 @@ struct WeekPastes: Equatable, Sendable {
 
 /// Monday-to-Sunday summary for the Home panel. Pure value, computed by `WeekStats.compute`.
 struct WeekStats: Equatable, Sendable {
-    /// How far back the loader fetches. Covers last week's comparison and caps the streak.
-    // ponytail: streak tops out at 60 days; widen lookbackDays if long streaks need to show.
+    /// How far back the streak counts: today and this many days before it.
+    // ponytail: streak tops out at 61 days; widen lookbackDays if long streaks need to show.
     static let lookbackDays = 60
     /// Fewer samples than this and Home shows the count, not a median or a share.
     static let minimumSamples = 5
@@ -132,10 +132,14 @@ struct WeekStats: Equatable, Sendable {
             words: words, duration: audioDuration, measuredPasteWait: pastes.waits.reduce(0, +))
     }
 
-    static func compute(samples: [WeekStatsSample], now: Date, calendar: Calendar) -> WeekStats {
+    /// `wasActive` answers for days before last week's Monday, which the loader doesn't read samples for: only the
+    /// streak reaches back that far.
+    static func compute(
+        samples: [WeekStatsSample], now: Date, calendar: Calendar, wasActive: (Date) -> Bool = { _ in false }
+    ) -> WeekStats {
         let today = calendar.startOfDay(for: now)
         let weekStart = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? today
-        let previousWeekStart = calendar.date(byAdding: .day, value: -7, to: weekStart) ?? weekStart
+        let previousWeekStart = Self.previousWeekStart(now: now, calendar: calendar)
         let previousCutoff = calendar.date(byAdding: .day, value: -7, to: now) ?? now
 
         var stats = WeekStats(
@@ -165,14 +169,21 @@ struct WeekStats: Equatable, Sendable {
         }
 
         stats.hasSessionToday = activeDays.contains(today)
+        let earliest = calendar.date(byAdding: .day, value: -lookbackDays, to: today) ?? today
         var day = stats.hasSessionToday ? today : calendar.date(byAdding: .day, value: -1, to: today) ?? today
-        while activeDays.contains(day) {
+        while day >= earliest, activeDays.contains(day) || (day < previousWeekStart && wasActive(day)) {
             stats.streakDays += 1
             guard let previous = calendar.date(byAdding: .day, value: -1, to: day) else { break }
             day = previous
         }
 
         return stats
+    }
+
+    /// Last week's Monday 00:00: the loader reads every dictation from here on.
+    static func previousWeekStart(now: Date, calendar: Calendar) -> Date {
+        let weekStart = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? calendar.startOfDay(for: now)
+        return calendar.date(byAdding: .day, value: -7, to: weekStart) ?? weekStart
     }
 }
 
@@ -230,6 +241,19 @@ extension WeekStats {
             samples: [sample(date(20, 9), 5), sample(date(22, 9), 5), sample(date(23, 9), 5), sample(date(24, 8), 5)],
             now: now, calendar: calendar)
         precondition(withToday.streakDays == 3 && withToday.hasSessionToday, "streak includes today")
+
+        // Every day since last Monday (Sep 14), and before that, what the loader's per-day count says: Sep 10–13
+        // active, Sep 9 not → 11 + 4. Days inside the read window are never asked; the streak stops at 61 days.
+        let everyDay = (14...24).map { sample(date($0, 9), 5) }
+        var asked: [Date] = []
+        let longer = compute(samples: everyDay, now: now, calendar: calendar) { day in
+            asked.append(day)
+            return day >= date(10, 0)
+        }
+        precondition(longer.streakDays == 15, "streak continues before the read window")
+        precondition(asked == [date(13, 0), date(12, 0), date(11, 0), date(10, 0), date(9, 0)], "asked only while it lasts")
+        let capped = compute(samples: everyDay, now: now, calendar: calendar) { _ in true }
+        precondition(capped.streakDays == lookbackDays + 1, "today and 60 days before it")
 
         // Pace: 150 words in 60 s of audio.
         let pace = compute(samples: [sample(date(22, 9), 150, 60)], now: now, calendar: calendar)

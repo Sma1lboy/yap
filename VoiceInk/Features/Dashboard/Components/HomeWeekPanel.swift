@@ -3,25 +3,28 @@ import SwiftData
 import SwiftUI
 
 enum WeekStatsLoader {
+    /// Reads every dictation since last week's Monday, and for the streak, whether there was one on each day before
+    /// that. Fetching a SwiftData row costs about 0.1 ms whatever properties it asks for (2.7 s for 20,000 on an M4
+    /// Pro), so the 60 days the streak can reach aren't fetched whole: each earlier day is a count, asked only while
+    /// the streak is still going (`make home-feedback-perf`).
     static func load(from container: ModelContainer, now: Date = Date()) async throws -> WeekStats {
         try await Task.detached(priority: .utility) {
             let calendar = DashboardPeriodWindows.dashboardCalendar()
-            let since =
-                calendar.date(byAdding: .day, value: -WeekStats.lookbackDays, to: calendar.startOfDay(for: now)) ?? now
-            var descriptor = FetchDescriptor<SessionMetric>(
-                predicate: #Predicate { $0.timestamp >= since }
-            )
-            descriptor.propertiesToFetch = [
-                \.timestamp, \.wordCount, \.audioDuration, \.source, \.stopSource, \.pasteOutcome, \.stopToPasteCommand,
-                \.editObserved, \.editChanged, \.editDistance,
-            ]
-            let samples = try ModelContext(container).fetch(descriptor).map {
-                WeekStatsSample(
-                    timestamp: $0.timestamp, words: $0.wordCount, audioDuration: $0.audioDuration, source: $0.source,
-                    stopSource: $0.stopSource, pasteOutcome: $0.pasteOutcome, stopToPasteCommand: $0.stopToPasteCommand,
-                    editObserved: $0.editObserved, editChanged: $0.editChanged, editDistance: $0.editDistance)
+            let context = ModelContext(container)
+            let since = WeekStats.previousWeekStart(now: now, calendar: calendar)
+            let samples = try context.fetch(FetchDescriptor<SessionMetric>(predicate: #Predicate { $0.timestamp >= since }))
+                .map {
+                    WeekStatsSample(
+                        timestamp: $0.timestamp, words: $0.wordCount, audioDuration: $0.audioDuration, source: $0.source,
+                        stopSource: $0.stopSource, pasteOutcome: $0.pasteOutcome, stopToPasteCommand: $0.stopToPasteCommand,
+                        editObserved: $0.editObserved, editChanged: $0.editChanged, editDistance: $0.editDistance)
+                }
+            return WeekStats.compute(samples: samples, now: now, calendar: calendar) { day in
+                let end = calendar.date(byAdding: .day, value: 1, to: day) ?? day
+                let count = try? context.fetchCount(
+                    FetchDescriptor<SessionMetric>(predicate: #Predicate { $0.timestamp >= day && $0.timestamp < end }))
+                return (count ?? 0) > 0
             }
-            return WeekStats.compute(samples: samples, now: now, calendar: calendar)
         }.value
     }
 }
@@ -67,8 +70,17 @@ struct HomeWeekPanel: View {
     private func reload() async {
         if let fresh = try? await WeekStatsLoader.load(from: modelContext.container) {
             stats = fresh
+            #if DEBUG
+                Self.reloads = (Self.reloads.count + 1, fresh)
+            #endif
         }
     }
+
+    #if DEBUG
+        /// How many weeks the panel has loaded and the last one: `make home-feedback-perf` counts the fetches and
+        /// checks what the last one saw.
+        @MainActor static var reloads: (count: Int, last: WeekStats?) = (0, nil)
+    #endif
 }
 
 struct HomeWeekPanelContent: View {
@@ -88,14 +100,17 @@ struct HomeWeekPanelContent: View {
                     .frame(width: 220)
             }
 
+            // A note that doesn't fit wraps to a second line ("Dictez aujourd'hui pour la conserver"); the row's tiles
+            // keep one height.
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: AppTheme.Spacing.x3) { tiles }
+                HStack(alignment: .top, spacing: AppTheme.Spacing.x3) { tiles }
                 Grid(horizontalSpacing: AppTheme.Spacing.x3, verticalSpacing: AppTheme.Spacing.x3) {
                     let all = Array(tileModels.enumerated())
                     GridRow { ForEach(all.prefix(2), id: \.offset) { HomeStatTile(model: $0.element) } }
                     GridRow { ForEach(all.suffix(2), id: \.offset) { HomeStatTile(model: $0.element) } }
                 }
             }
+            .fixedSize(horizontal: false, vertical: true)
 
             HStack(alignment: .top, spacing: AppTheme.Spacing.x3) {
                 HomeFeedbackCard(model: pasteWaitModel)
@@ -274,7 +289,8 @@ struct HomeWeekPanelContent: View {
                 title: "Time saved",
                 value: Formatters.formattedCompactHoursAndMinutes(timeSaved),
                 unit: nil,
-                note: String(localized: "Estimate · 40 wpm")),
+                note: String(localized: "Estimate · 40 wpm"),
+                spokenValue: Formatters.spokenHoursAndMinutes(timeSaved)),
             .init(
                 title: "Speaking pace",
                 value: wpm.map { Formatters.formattedNumber(Int($0.rounded())) } ?? "–",
@@ -306,22 +322,25 @@ struct HomeStatTile: View {
         let value: String
         let unit: LocalizedStringKey?
         let note: String
+        /// What VoiceOver reads instead of `value`, when that is abbreviated ("1h 5m").
+        var spokenValue: String? = nil
     }
 
     let model: Model
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
-            HomeTileHeader(title: model.title, value: model.value, unit: model.unit)
+            HomeTileHeader(title: model.title, value: model.value, unit: model.unit, spokenValue: model.spokenValue)
 
             Text(verbatim: model.note)
                 .font(AppTheme.font(.caption))
                 .foregroundStyle(AppTheme.Text.muted)
-                .lineLimit(1)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(AppTheme.Spacing.x4)
         .accessibilityElement(children: .combine)
-        .frame(minWidth: 128, maxWidth: .infinity, alignment: .leading)
+        .frame(minWidth: 128, maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         // A card like every other on Home (surface + 1px border, DESIGN.md), not a sunken well.
         .background(AppCardBackground(cornerRadius: AppTheme.Radius.card))
     }
@@ -372,6 +391,7 @@ private struct HomeTileHeader: View {
     let title: LocalizedStringKey
     let value: String
     let unit: LocalizedStringKey?
+    var spokenValue: String? = nil
 
     var body: some View {
         Text(title)
@@ -384,6 +404,8 @@ private struct HomeTileHeader: View {
                 .font(AppTheme.font(.title, .semibold))
                 .monospacedDigit()
                 .foregroundStyle(AppTheme.Text.primary)
+                // "–" would be read as "en dash".
+                .accessibilityLabel(value == "–" ? Text("No number yet") : Text(verbatim: spokenValue ?? value))
             if let unit {
                 Text(unit)
                     .font(AppTheme.font(.footnote))
@@ -391,6 +413,8 @@ private struct HomeTileHeader: View {
             }
         }
         .lineLimit(1)
+        // A number is never cut ("403h 21…"): too wide for four tiles in a row, the panel puts them in two.
+        .fixedSize(horizontal: true, vertical: false)
     }
 }
 

@@ -174,7 +174,6 @@ struct ConfigurationRow: View {
     private var selectedLanguage: String? {
         if let langCode = config.selectedLanguage {
             if langCode == "auto" { return String(localized: "Auto") }
-            if langCode == "en" { return String(localized: "English") }
 
             if let modelName = config.selectedTranscriptionModelName,
                 let model = TranscriptionModelRegistry.model(
@@ -184,7 +183,7 @@ struct ConfigurationRow: View {
                 let langName = TranscriptionLanguageSupport.languages(
                     for: model, realtimeEnabled: config.isRealtimeTranscriptionEnabled)[langCode]
             {
-                return langName
+                return TranscriptionLanguageSupport.displayName(langCode, catalogName: langName)
             }
             return langCode.uppercased()
         }
