@@ -62,6 +62,14 @@ final class DictationTimeline: @unchecked Sendable {
     private let lock = NSLock()
     private var times: [Milestone: TimeInterval] = [:]
     private var outcome: PasteOutcome?
+    private var detection: LanguageDetection?
+
+    /// What local Whisper did with the mode's language set to auto: the languages the recording was decoded in, in
+    /// order, each once, and how long detecting them took (nil when whisper_full detected it during the decode).
+    struct LanguageDetection: Equatable {
+        let languages: [String]
+        let seconds: TimeInterval?
+    }
 
     init(stop: Stop) {
         self.stop = stop
@@ -80,6 +88,8 @@ final class DictationTimeline: @unchecked Sendable {
 
     var pasteOutcome: PasteOutcome? { lock.withLock { outcome } }
 
+    var languageDetection: LanguageDetection? { lock.withLock { detection } }
+
     /// Seconds from the stop to each step that happened.
     var offsets: [Milestone: TimeInterval] {
         lock.withLock { times.mapValues { $0 - stop.time } }
@@ -92,6 +102,13 @@ final class DictationTimeline: @unchecked Sendable {
     /// while recording runs outside that scope and marks nothing.
     static func modelDidLoad() {
         current?.mark(.modelReady)
+    }
+
+    /// Local Whisper calls this after a transcription with language auto, inside a dictation's transcription.
+    static func languagesDetected(_ languages: [String], seconds: TimeInterval) {
+        guard let current, !languages.isEmpty else { return }
+        let detection = LanguageDetection(languages: languages, seconds: seconds > 0 ? seconds : nil)
+        current.lock.withLock { current.detection = detection }
     }
 
     /// The time each step took: from the previous step that happened (or the stop) to this one. Each stage is named by

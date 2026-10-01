@@ -192,6 +192,38 @@
             shot("sheet-mode-editor-context", main: true, fullPage: true, titled: true) { ContentView() }
             ModeView.snapshotEditsEnhancedMode = false
             ModeConfigFormView.snapshotExpandsContext = false
+            // The first mode on local Whisper with Auto-detect: under the language, this Mac's detection time from
+            // its last dictations with that model; with a model it hasn't dictated with, the sentence without one.
+            if let first = ModeManager.shared.configurations.first {
+                let turbo = "ggml-large-v3-turbo-q5_0"
+                app.whisperModelManager.availableModels = [turbo, "ggml-base"].map {
+                    WhisperModelFile(name: $0, url: FileManager.default.temporaryDirectory.appendingPathComponent("\($0).bin"))
+                }
+                app.transcriptionModelManager.refreshAllAvailableModels()
+                let detections = (0..<LanguagePinSuggestion.window).map { index in
+                    let metric = SessionMetric(
+                        transcriptionId: UUID(), timestamp: Date().addingTimeInterval(Double(-index) * 600), wordCount: 24,
+                        audioDuration: 6, transcriptionModelName: "Large v3 Turbo (Quantized)", transcriptionDuration: 1.2,
+                        speedFactor: 5, modeName: first.name, aiEnhancementModelName: nil, enhancementDuration: nil)
+                    metric.detectedLanguages = "zh"
+                    metric.languageDetectionDuration = 0.44 + Double(index % 5) * 0.01
+                    full.mainContext.insert(metric)
+                    return metric
+                }
+                try? full.mainContext.save()
+                var local = first
+                local.selectedLanguage = "auto"
+                for (name, model) in [("local-auto", turbo), ("local-auto-new", "ggml-base")] {
+                    local.selectedTranscriptionModelName = model
+                    ModeManager.shared.updateConfiguration(local)
+                    shot("sheet-mode-editor-\(name)", main: true, fullPage: true, titled: true) { ContentView() }
+                }
+                ModeManager.shared.updateConfiguration(first)
+                detections.forEach(full.mainContext.delete)
+                try? full.mainContext.save()
+                app.whisperModelManager.availableModels = []
+                app.transcriptionModelManager.refreshAllAvailableModels()
+            }
             ModeView.snapshotOpensEditor = false
             ModelManagementView.snapshotFilter = .custom
             ModelManagementView.snapshotPanel = .customProviderEditor
@@ -381,16 +413,37 @@
                 let title = AutoLearnService.learnedNotificationTitle(for: Array(MockData.learnedCorrections.prefix(count)))
                 return ("learned-\(count)", (title, AppNotificationView.NotificationType.success, Optional(String(localized: "Undo"))))
             }
-            for (name, (title, type, button)) in meetingNotifications + learnedNotifications {
-                let notification = AppNotificationView(
-                    title: title, type: type, duration: 15, onClose: {}, onTap: nil,
-                    actionButton: button.map { (label: $0, action: {}) })
-                // The size NotificationManager gives the window, plus the margin around it.
+            /// At the size NotificationManager gives the window, plus the margin around it.
+            func notificationShot(_ name: String, _ notification: AppNotificationView) {
                 let window = NotificationManager.size(of: NSHostingController(rootView: notification))
                 let margin = AppTheme.Spacing.x4 * 2
                 shot("notification-\(name)", size: CGSize(width: window.width + margin, height: window.height + margin), main: true) {
                     notification.padding(AppTheme.Spacing.x4)
                 }
+            }
+            for (name, (title, type, button)) in meetingNotifications + learnedNotifications {
+                notificationShot(
+                    name,
+                    AppNotificationView(
+                        title: title, type: type, duration: 15, onClose: {}, onTap: nil,
+                        actionButton: button.map { (label: $0, action: {}) }))
+            }
+            // Fixing the mode's language (LanguagePinSuggestion): the suggestion for Chinese, for English (without the
+            // sentence about English terms), and the confirmation with Back to Auto-detect.
+            let pinNotifications: [(String, String, AppNotificationView.NotificationType, String, String?)] = [
+                ("language-suggestion", LanguagePinSuggestion.message(for: .init(language: "zh", seconds: 0.46)), .info,
+                 LanguagePinSuggestion.setButtonTitle("zh"), String(localized: "No Thanks")),
+                ("language-suggestion-en", LanguagePinSuggestion.message(for: .init(language: "en", seconds: 0.46)), .info,
+                 LanguagePinSuggestion.setButtonTitle("en"), String(localized: "No Thanks")),
+                ("language-fixed", LanguagePinSuggestion.confirmation(modeName: String(localized: "Dictation"), language: "zh"),
+                 .success, String(localized: "Back to Auto-detect"), nil),
+            ]
+            for (name, title, type, action, secondary) in pinNotifications {
+                notificationShot(
+                    name,
+                    AppNotificationView(
+                        title: title, type: type, duration: 15, onClose: {}, onTap: nil, actionButton: (label: action, action: {}),
+                        secondaryButton: secondary.map { (label: $0, action: {}) }))
             }
             // Settings › Meetings with the call reminder on, found by searching for it.
             UserDefaults.standard.set(true, forKey: MeetingCallDetector.enabledKey)

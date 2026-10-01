@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 struct ModeConfigFormView: View {
@@ -13,7 +14,10 @@ struct ModeConfigFormView: View {
 
     @EnvironmentObject private var aiService: AIService
     @EnvironmentObject private var modeWarmupStore: ModeFormWarmupStore
+    @Environment(\.modelContext) private var modelContext
     @FocusState private var isNameFieldFocused: Bool
+    /// This Mac's median language detection time with the selected local Whisper model (LanguagePinSuggestion).
+    @State private var autoDetectCost: TimeInterval?
 
     @State private var isShowingIconPicker = false
     @State private var isBrowsingYapCloudTranscriptionModels = false
@@ -326,38 +330,60 @@ struct ModeConfigFormView: View {
                 set: { draft.selectedLanguage = $0 }
             )
 
-            HStack(spacing: AppTheme.Spacing.x2) {
-                HStack(spacing: AppTheme.Spacing.x1) {
-                    Text("Language")
-                }
-
-                Spacer(minLength: 12)
-
-                if modelInfo.provider == .nativeApple {
-                    NativeAppleLanguageAssetControl(
-                        localeIdentifier: effectiveLanguage(for: modelInfo),
-                        isVisible: true,
-                        startsDownloadAutomatically: true
-                    )
-                    .layoutPriority(1)
-                    .frame(width: 28, height: 24)
-                }
-
-                Picker("", selection: languageBinding) {
-                    ForEach(
-                        availableLanguages(for: modelInfo).sorted(by: {
-                            if $0.key == "auto" { return true }
-                            if $1.key == "auto" { return false }
-                            return $0.value < $1.value
-                        }), id: \.key
-                    ) { key, value in
-                        Text(value).tag(key as String?)
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
+                HStack(spacing: AppTheme.Spacing.x2) {
+                    HStack(spacing: AppTheme.Spacing.x1) {
+                        Text("Language")
                     }
+
+                    Spacer(minLength: 12)
+
+                    if modelInfo.provider == .nativeApple {
+                        NativeAppleLanguageAssetControl(
+                            localeIdentifier: effectiveLanguage(for: modelInfo),
+                            isVisible: true,
+                            startsDownloadAutomatically: true
+                        )
+                        .layoutPriority(1)
+                        .frame(width: 28, height: 24)
+                    }
+
+                    Picker("", selection: languageBinding) {
+                        ForEach(
+                            availableLanguages(for: modelInfo).sorted(by: {
+                                if $0.key == "auto" { return true }
+                                if $1.key == "auto" { return false }
+                                return $0.value < $1.value
+                            }), id: \.key
+                        ) { key, value in
+                            // The line below names it; the catalog's names are English.
+                            Text(key == "auto" ? String(localized: "Auto-detect") : value).tag(key as String?)
+                        }
+                    }
+                    .labelsHidden()
                 }
-                .labelsHidden()
+                // Only local Whisper detects the language in a pass of its own; cloud models and Parakeet don't.
+                if modelInfo.provider == .whisper, effectiveLanguage(for: modelInfo) == "auto" {
+                    Text(
+                        autoDetectCost.map {
+                            String(
+                                format: String(localized: "On this Mac, Auto-detect adds about %@ s to every dictation with this model. A fixed language skips it."),
+                                LanguagePinSuggestion.formatted($0))
+                        }
+                            ?? String(localized: "Auto-detect listens for the language before every dictation with a local model. A fixed language skips it.")
+                    )
+                    .font(AppTheme.font(.footnote))
+                    .foregroundStyle(AppTheme.Text.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .onAppear {
                 draft.selectedLanguage = effectiveLanguage(for: modelInfo)
+            }
+            .task(id: modelInfo.selectionKey) {
+                autoDetectCost =
+                    modelInfo.provider == .whisper
+                    ? LanguagePinSuggestion.detectionCost(model: modelInfo, in: modelContext) : nil
             }
         } else if let selectedModel = effectiveModelName,
             let modelInfo = warmupSnapshot.transcriptionModel(named: selectedModel)

@@ -98,6 +98,7 @@ struct VoiceInkApp: App {
             ChineseCleanup.selfCheck()
             WhisperLivePreview.selfCheck()
             DictationTimeline.selfCheck()
+            LanguagePinSuggestion.selfCheck()
             TranscriptionDelivery.selfCheck()
             AutoLearnAXTextReader.selfCheck()
             FinalSnapshotDiffEngine.selfCheck()

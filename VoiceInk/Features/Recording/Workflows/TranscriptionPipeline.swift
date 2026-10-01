@@ -311,7 +311,8 @@ class TranscriptionPipeline {
 
         /// The audio duration, the History entry, the SessionMetric and the completion notice. After a paste this runs
         /// once ⌘V is out (or the paste failed): none of it changes what is pasted, so the paste doesn't wait for it, and
-        /// the SessionMetric gets the paste time with everything else.
+        /// the SessionMetric gets the paste time with everything else. Then, maybe, the suggestion to fix the mode's
+        /// language (LanguagePinSuggestion), which reads the metric just saved.
         func finishAndSave() async {
             var sessionMetric: SessionMetric?
 
@@ -321,6 +322,7 @@ class TranscriptionPipeline {
                     sessionMetric = try SessionMetricRecorder.recordRecorderSession(
                         transcription: transcription,
                         model: model,
+                        modeID: transcriptionConfiguration.mode.id,
                         timeline: timeline,
                         in: modelContext
                     )
@@ -339,6 +341,10 @@ class TranscriptionPipeline {
                 NotificationCenter.default.post(name: .transcriptionCompleted, object: transcription)
             } catch {
                 logger.error("Failed to save transcription: \(error, privacy: .public)")
+            }
+            if sessionMetric?.detectedLanguages != nil {
+                LanguagePinSuggestion.considerAfterDictation(
+                    modeID: transcriptionConfiguration.mode.id, model: model, in: modelContext)
             }
         }
 

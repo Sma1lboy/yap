@@ -40,11 +40,17 @@ actor WhisperContext {
     /// This transcription's segments, in seconds from the start of the recording (windows and language
     /// pieces are decoded separately; their offsets are added back).
     private var segments: [TimedSegment] = []
+    /// With language auto: every language this transcription was decoded in, in order, each once; and the time the
+    /// detections took. Empty and 0 when the language was set.
+    private var detectedLanguages: [String] = []
+    private var languageDetectionTime: TimeInterval = 0
 
     func fullTranscribe(samples: [Float]) -> Bool {
         guard let context = context else { return false }
         transcription = ""
         segments = []
+        detectedLanguages = []
+        languageDetectionTime = 0
         whisper_reset_timings(context)
 
         let isVADEnabled = UserDefaults.standard.bool(forKey: "IsVADEnabled")
@@ -125,6 +131,8 @@ actor WhisperContext {
 
     private func detectLanguage(_ samples: ArraySlice<Float>) -> (language: String, probability: Float)? {
         guard let context else { return nil }
+        let start = ProcessInfo.processInfo.systemUptime
+        defer { languageDetectionTime += ProcessInfo.processInfo.systemUptime - start }
         let threads = Int32(max(1, min(8, cpuCount() - 2)))
         let melStatus = samples.withUnsafeBufferPointer {
             whisper_pcm_to_mel(context, $0.baseAddress, Int32($0.count), threads)
@@ -231,7 +239,8 @@ actor WhisperContext {
         promptCString = nil
 
         if success {
-            for i in 0..<whisper_full_n_segments(context) {
+            let count = whisper_full_n_segments(context)
+            for i in 0..<count {
                 let text = String(cString: whisper_full_get_segment_text(context, i))
                 transcription += text
                 // Slices keep the recording's indices, so startIndex is this slice's offset. With whisper's own
@@ -240,6 +249,14 @@ actor WhisperContext {
                     TimedSegments.fromWhisper(
                         t0: whisper_full_get_segment_t0(context, i), t1: whisper_full_get_segment_t1(context, i),
                         text: text, offsetSamples: samples.startIndex, sliceSamples: samples.count))
+            }
+            // Under auto: the language this piece came out in, whether detected above or by whisper_full itself.
+            if count > 0, (self.language ?? "auto") == "auto",
+                let decoded = selectedLanguage != "auto"
+                    ? selectedLanguage : whisper_lang_str(whisper_full_lang_id(context)).map({ String(cString: $0) }),
+                !detectedLanguages.contains(decoded)
+            {
+                detectedLanguages.append(decoded)
             }
         }
         return success
@@ -355,6 +372,11 @@ actor WhisperContext {
 
     func getSegments() -> [TimedSegment] {
         segments
+    }
+
+    /// The last transcription's languages and detection time (see `detectedLanguages`).
+    func getLanguageDetection() -> (languages: [String], seconds: TimeInterval) {
+        (detectedLanguages, languageDetectionTime)
     }
 
     static func createContext(path: String) async throws -> WhisperContext {
