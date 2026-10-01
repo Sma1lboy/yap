@@ -97,10 +97,15 @@
             ModelManagementView.snapshotFilter = nil
             page("transcribe-audio", .transcribeAudio)
             page("audio", .audio)
+            // Recently Learned: empty on the plain Dictionary page, then with four rules from MockData's dictionary.
+            RecentlyLearnedSection.snapshotEntries = []
             page("dictionary", .dictionary)
             WordReplacementView.snapshotSelecting = true
             page("dictionary-select", .dictionary)
             WordReplacementView.snapshotSelecting = false
+            RecentlyLearnedSection.snapshotEntries = MockData.recentlyLearned(now: Date())
+            page("dictionary-recently-learned", .dictionary)
+            RecentlyLearnedSection.snapshotEntries = []
             page("settings", .settings)
             page("account", .account)
 
@@ -403,6 +408,11 @@
                 ("meeting-recovered-audio-only", recovered { $0.audioOnly = true }),
                 ("meeting-recovery-not-saved", recovered { $0.saveError = CocoaError(.fileWriteOutOfSpace).localizedDescription }),
             ]
+            // Auto Learn learned several rules at once: the first ones are listed, then how many more.
+            let learnedNotifications = [3, 5].map { count in
+                let title = AutoLearnService.learnedNotificationTitle(for: Array(MockData.learnedCorrections.prefix(count)))
+                return ("learned-\(count)", (title, AppNotificationView.NotificationType.success, Optional(String(localized: "Undo"))))
+            }
             /// At the size NotificationManager gives the window, plus the margin around it.
             func notificationShot(_ name: String, _ notification: AppNotificationView) {
                 let window = NotificationManager.size(of: NSHostingController(rootView: notification))
@@ -411,7 +421,7 @@
                     notification.padding(AppTheme.Spacing.x4)
                 }
             }
-            for (name, (title, type, button)) in meetingNotifications {
+            for (name, (title, type, button)) in meetingNotifications + learnedNotifications {
                 notificationShot(
                     name,
                     AppNotificationView(

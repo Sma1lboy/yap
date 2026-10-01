@@ -53,6 +53,27 @@
         static let vocabulary = ["Yap", "paygate", "OpenRouter", "Parakeet", "SwiftUI", "周报", "standup"]
         static let replacements = [("open router", "OpenRouter"), ("pay gate", "paygate"), ("why app", "Yap")]
 
+        /// What Auto Learn would have learned for the dictionary above, with the edit each came from.
+        static let learnedCorrections: [AutoLearnAppliedCorrection] = [
+            ("pay gate", "paygate", true, false, "send the invoice through pay gate today", "send the invoice through paygate today"),
+            ("why app", "Yap", true, true, "dictate it in why app instead", "dictate it in Yap instead"),
+            ("parakeet", "Parakeet", false, true, "the parakeet model is faster", "the Parakeet model is faster"),
+            ("州报", "周报", false, true, "这周的州报发了吗", "这周的周报发了吗"),
+            ("open router", "OpenRouter", true, false, "route it through open router", "route it through OpenRouter"),
+        ].map { from, to, replacement, vocabulary, before, after in
+            AutoLearnAppliedCorrection(
+                incorrectTextToReplace: from, correctedVocabularyTerm: to, replacementSourceWasAdded: replacement,
+                vocabularyCreationDate: vocabulary ? Date(timeIntervalSince1970: 1_790_000_000) : nil,
+                sourceOriginal: before, sourceCorrected: after)
+        }
+
+        /// The first four, learned two hours to five days before `now`.
+        static func recentlyLearned(now: Date) -> [AutoLearnLearnedEntry] {
+            zip(learnedCorrections.prefix(4), [2.0, 26, 72, 120]).map { correction, hoursAgo in
+                AutoLearnLearnedEntry(id: UUID(), learnedAt: now.addingTimeInterval(-hoursAgo * 3600), correction: correction)
+            }
+        }
+
         static let customProvider = CustomAIProviderConfig(
             name: "LM Studio", baseURL: "http://localhost:1234/v1", models: ["qwen3-8b", "gemma-3-12b"],
             selectedModel: "qwen3-8b")

@@ -100,11 +100,12 @@ class CursorPaster {
 
     /// The checks, the clipboard and the selection read start now, in the caller's turn on the main thread; the wait
     /// and ⌘V follow in the returned task. The wait counts from the clipboard write, so main-thread work queued ahead of
-    /// that task (the recorder closing, the session cleanup) runs inside the wait instead of before it.
+    /// that task (the recorder closing, the session cleanup) runs inside the wait instead of before it. `dictationID`:
+    /// the dictation being pasted, whose SessionMetric gets what Auto Learn sees become of it.
     @MainActor
     @discardableResult
-    static func startPasteAtCursor(_ text: String, lead: Lead = .other) -> Task<PasteOutcome, Never> {
-        switch preparePaste(text, lead: lead) {
+    static func startPasteAtCursor(_ text: String, lead: Lead = .other, dictationID: UUID? = nil) -> Task<PasteOutcome, Never> {
+        switch preparePaste(text, lead: lead, dictationID: dictationID) {
         case .finished(let outcome):
             return Task { outcome }
         case .ready(let paste):
@@ -120,6 +121,7 @@ class CursorPaster {
     private struct PreparedPaste {
         let text: String
         let lead: Lead
+        let dictationID: UUID?
         let timing: (prePaste: TimeInterval, minimumRestore: TimeInterval)
         let clipboardSetAt: TimeInterval
         let targetProcessID: pid_t?
@@ -129,7 +131,7 @@ class CursorPaster {
     }
 
     @MainActor
-    private static func preparePaste(_ text: String, lead: Lead) -> Preparation {
+    private static func preparePaste(_ text: String, lead: Lead, dictationID: UUID?) -> Preparation {
         let pasteboard = NSPasteboard.general
 
         // Both paste methods send keystrokes, which macOS drops without Accessibility.
@@ -181,7 +183,8 @@ class CursorPaster {
         let targetProcessID = NSWorkspace.shared.frontmostApplication?.processIdentifier
         return .ready(
             PreparedPaste(
-                text: text, lead: lead, timing: timing, clipboardSetAt: ProcessInfo.processInfo.systemUptime,
+                text: text, lead: lead, dictationID: dictationID, timing: timing,
+                clipboardSetAt: ProcessInfo.processInfo.systemUptime,
                 targetProcessID: targetProcessID,
                 replaced: dryRun
                     ? nil : Task.detached { targetProcessID.map { LastPasteEditor.selectedText(processID: $0) } ?? "" },
@@ -208,7 +211,8 @@ class CursorPaster {
             autoLearnGeneration = await AutoLearnService.shared.pasteDidFinish(
                 text: paste.text,
                 processID: paste.targetProcessID,
-                commandPosted: posted.result.didPostPasteCommand
+                commandPosted: posted.result.didPostPasteCommand,
+                dictationID: paste.dictationID
             )
         } else {
             posted = await postPasteCommand()

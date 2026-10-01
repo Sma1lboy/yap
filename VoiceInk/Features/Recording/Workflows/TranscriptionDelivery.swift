@@ -60,7 +60,9 @@ final class TranscriptionDelivery {
         }
 
         if let text = request.text {
-            return await paste(text, sendAfterPaste: request.sendAfterPaste, timeline: request.timeline, actions: actions)
+            return await paste(
+                text, dictationID: request.transcription.id, sendAfterPaste: request.sendAfterPaste,
+                timeline: request.timeline, actions: actions)
         } else {
             await actions.dismiss()
             return nil
@@ -176,7 +178,7 @@ final class TranscriptionDelivery {
     }
 
     private func paste(
-        _ text: String, sendAfterPaste: Bool, timeline: DictationTimeline?, actions: Actions
+        _ text: String, dictationID: UUID, sendAfterPaste: Bool, timeline: DictationTimeline?, actions: Actions
     ) async -> Task<Void, Never> {
         let textToPaste = text
         let appendSpace = UserDefaults.standard.bool(forKey: "AppendTrailingSpace")
@@ -187,7 +189,7 @@ final class TranscriptionDelivery {
         let lead = timeline?.stop.source.pasteLead(yapWindowIsKey: NSApp.keyWindow != nil) ?? .other
         await actions.dismiss()
 
-        let pasteTask = CursorPaster.startPasteAtCursor(pastedText, lead: lead)
+        let pasteTask = CursorPaster.startPasteAtCursor(pastedText, lead: lead, dictationID: dictationID)
 
         let selectedKey = FinishAndSendSettings.selectedKey
         let finishAndSendKey: FinishAndSendKey = sendAfterPaste ? selectedKey : .none

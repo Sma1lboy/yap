@@ -21,6 +21,7 @@ extension Notification.Name {
     static let wordReplacementsDidChange = Notification.Name("wordReplacementsDidChange")
     static let autoLearnQueueDidChange = Notification.Name("autoLearnQueueDidChange")
     static let autoLearnReviewProposalsDidChange = Notification.Name("autoLearnReviewProposalsDidChange")
+    static let autoLearnRecentlyLearnedDidChange = Notification.Name("autoLearnRecentlyLearnedDidChange")
     static let openFileForTranscription = Notification.Name("openFileForTranscription")
     static let recordingDeviceChangeRequired = Notification.Name("recordingDeviceChangeRequired")
     /// NotificationManager's notification went away (timed out or closed), not replaced by another.
