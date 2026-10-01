@@ -34,18 +34,19 @@ struct OnboardingTrustScreen: View {
 private struct OnboardingTrustContent: View {
     var body: some View {
         // Stacked, not overlaid: at the 750pt minimum height the centered body used to run into the header.
-        // Scrolls when the window is short; the bottom padding clears the overlaid Back / Start bar.
+        // Reserve space outside the scroll viewport so text never scrolls behind Back / Start.
         ScrollView {
             VStack(spacing: AppTheme.Spacing.x8) {
                 TrustHeader()
                 TrustBody()
             }
             .padding(.top, AppTheme.Spacing.x12)
-            .padding(.bottom, 100)  // design-exempt: layout offset, not spacing
+            .padding(.bottom, AppTheme.Spacing.x6)
             .frame(maxWidth: .infinity)
         }
         .scrollIndicators(.automatic)
         .padding(.horizontal, AppTheme.Spacing.x8)
+        .padding(.bottom, 100)  // design-exempt: reserve viewport space for the overlaid navigation bar
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
@@ -97,14 +98,14 @@ struct TrustBody: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if !showsTrySaying {
+            if !showsTrySaying && !showsPrivacyDetails {
                 TrustMapView()
                     .frame(height: 230)
                     .padding(.bottom, AppTheme.Spacing.x6)
             }
 
             VStack(spacing: AppTheme.Spacing.x3) {
-                Text("Yap collects no usage data. Transcripts are stored only on this Mac.")
+                Text("Yap saves history on this Mac. Cloud processing sends audio or text to your chosen services.", tableName: "PrivacyCopy")
                     .font(AppTheme.font(.title3, .semibold))
                     .foregroundColor(AppTheme.Text.primary)
                     .multilineTextAlignment(.center)
@@ -126,10 +127,16 @@ struct TrustBody: View {
                 .accessibilityValue(showsPrivacyDetails ? Text("Expanded") : Text("Collapsed"))
 
                 if showsPrivacyDetails {
-                    Text("Local models keep everything on this Mac. With your own API key, audio and text go only to the provider you choose. With Yap Cloud, they pass through Yap's server on the way to the model provider; the server records the model and cost for billing. If you turn on Sync via Yap Cloud, your modes, prompts, dictionary, shortcuts and custom models are stored there too, never your API keys.")
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.x3) {
+                        Text("Local models process audio or text on this Mac. Choose local transcription and local enhancement for on-device processing.", tableName: "PrivacyCopy")
+                        Text("With your own API key, cloud models receive the audio, text and enabled context needed for the request.", tableName: "PrivacyCopy")
+                        Text("Yap Cloud sends requests through Yap's server to model providers and records the model and cost for billing.", tableName: "PrivacyCopy")
+                        Text("Optional cloud sync stores modes, prompts, dictionary, shortcuts and custom models on Yap's server, without your API keys.", tableName: "PrivacyCopy")
+                        Text("If you enable Agent Access (MCP), connected agents can read allowed history and dictionary data. Their own privacy policies apply.", tableName: "PrivacyCopy")
+                    }
                         .font(AppTheme.font(.body))
                         .foregroundColor(AppTheme.Text.secondary)
-                        .multilineTextAlignment(.center)
+                        .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: 610)
                         .transition(.opacity)
@@ -157,7 +164,7 @@ struct TrustBody: View {
                     .frame(maxWidth: 610)
             }
 
-            if showsTrySaying {
+            if showsTrySaying && !showsPrivacyDetails {
                 TrySayingCard()
                     .padding(.top, AppTheme.Spacing.x5)
             }

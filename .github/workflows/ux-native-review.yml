@@ -1,0 +1,82 @@
+name: UX native snapshots
+on:
+  pull_request:
+    branches: [main]
+    paths: ["VoiceInk/**", ".github/workflows/ux-native-review.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: ux-native-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  snapshots:
+    runs-on: macos-26
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        revision: [before, after]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.revision == 'before' && github.event.pull_request.base.sha || github.event.pull_request.head.sha }}
+      - name: Record exact source
+        run: |
+          mkdir -p "$RUNNER_TEMP/ux-evidence"
+          git rev-parse HEAD | tee "$RUNNER_TEMP/ux-evidence/source-sha.txt"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: .ux-review-tools
+          persist-credentials: false
+      - name: Apply identical explicit fixtures to both revisions
+        run: |
+          python3 .ux-review-tools/scripts/prepare_ux_review.py "$PWD"
+          git diff -- VoiceInk > "$RUNNER_TEMP/ux-evidence/fixture.patch"
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      - name: Install Metal toolchain
+        run: xcodebuild -downloadComponent MetalToolchain
+      - uses: actions/cache/restore@v4
+        with:
+          path: ~/VoiceInk-Dependencies
+          key: whisper-${{ runner.os }}-xcode26.6-v1
+      - uses: actions/cache/restore@v4
+        with:
+          path: .local-build
+          key: ux-debug-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            xcbuild-${{ runner.os }}-xcode26.6-${{ hashFiles('VoiceInk.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}-
+      - name: Compile the actual Debug app without release credentials
+        shell: bash
+        run: |
+          set -o pipefail
+          make setup design-check
+          xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug \
+            -derivedDataPath "$PWD/.local-build" -xcconfig LocalBuild.xcconfig \
+            CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES DEVELOPMENT_TEAM="" \
+            CODE_SIGN_ENTITLEMENTS="$PWD/VoiceInk/VoiceInk.local.entitlements" \
+            SWIFT_ACTIVE_COMPILATION_CONDITIONS='$(inherited) LOCAL_BUILD DEBUG' \
+            -skipPackagePluginValidation -skipMacroValidation build \
+            2>&1 | tee "$RUNNER_TEMP/ux-evidence/build.log"
+      - name: Render real SwiftUI views with existing offline fixtures
+        timeout-minutes: 15
+        shell: bash
+        env:
+          YAP_UI_SNAPSHOTS_OUT: ${{ runner.temp }}/ux-snapshots
+        run: |
+          set -o pipefail
+          # Existing harness uses an isolated app identity and in-memory sample data. It never records audio,
+          # requests permissions or performs cloud inference; offline.sb denies outbound IP traffic.
+          scripts/dev-defaults-guard.sh scripts/ui-snapshots.sh "$PWD/.local-build/Build/Products/Debug" \
+            2>&1 | tee "$RUNNER_TEMP/ux-evidence/render.log"
+          mkdir -p "$RUNNER_TEMP/ux-evidence/screenshots"
+          find "$YAP_UI_SNAPSHOTS_OUT" -type f \( -name 'onboarding-*.png' -o -name 'settings-agent*.png' \) \
+            -exec cp {} "$RUNNER_TEMP/ux-evidence/screenshots/" \;
+          test "$(find "$RUNNER_TEMP/ux-evidence/screenshots" -name '*.png' | wc -l | tr -d ' ')" -gt 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yap-native-${{ matrix.revision }}-${{ github.event.pull_request.number }}
+          path: ${{ runner.temp }}/ux-evidence
+          retention-days: 14

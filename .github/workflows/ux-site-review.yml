@@ -1,0 +1,43 @@
+name: UX website evidence
+on:
+  pull_request:
+    branches: [main]
+    paths: ["site/**", "scripts/test_site_privacy.py", ".github/workflows/ux-site-review.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: ux-site-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  website:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser test tools from PyPI and Playwright
+        run: |
+          python -m pip install playwright==1.51.0
+          python -m playwright install --with-deps chromium
+      - name: Render original source before and after
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          mkdir -p evidence
+          git worktree add --detach "$RUNNER_TEMP/yap-before" "$BASE_SHA"
+          git rev-parse HEAD > evidence/after-sha.txt
+          git -C "$RUNNER_TEMP/yap-before" rev-parse HEAD > evidence/before-sha.txt
+          python scripts/test_site_privacy.py \
+            --before "$RUNNER_TEMP/yap-before/site" --after "$PWD/site" --output "$PWD/evidence" \
+            2>&1 | tee evidence/browser.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yap-website-before-after
+          path: evidence
+          retention-days: 14

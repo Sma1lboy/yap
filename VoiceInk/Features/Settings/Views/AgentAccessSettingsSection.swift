@@ -51,7 +51,7 @@ struct AgentAccessSettingsSection: View {
                        copy: AgentConnection.cursor(helperPath), button: "Copy JSON")
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
-                Text("Data is read on this Mac only. Yap opens no network port.")
+                Text("The helper reads data locally. Connected agents may send it to their own services.", tableName: "PrivacyCopy")
                     .settingsDescription()
                 if !isEnabled {
                     Text("Agents can connect now, but they read data only after you turn on the switch above.")

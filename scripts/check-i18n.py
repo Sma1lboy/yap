@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Every key in the .xcstrings catalogs has a translation in every app language (en is the source text)."""
 import json, sys
+from pathlib import Path
 
 LANGS = ["de", "fr", "zh-Hans", "zh-Hant"]
 bad = 0
-for f in ["VoiceInk/Localizable.xcstrings", "VoiceInk/InfoPlist.xcstrings"]:
+for f in sorted(Path("VoiceInk").glob("*.xcstrings")):
     for key, entry in json.load(open(f))["strings"].items():
         if entry.get("shouldTranslate") is False:
             continue

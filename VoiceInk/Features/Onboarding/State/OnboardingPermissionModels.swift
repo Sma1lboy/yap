@@ -66,7 +66,7 @@ enum OnboardingStage: String, CaseIterable {
             return String(
                 localized: "Yap can select the right mode from the app you are using and the rules you configure.")
         case .trust:
-            return String(localized: "Local models keep everything on this Mac. Cloud providers and Yap Cloud get only what you send them.")
+            return String(localized: "Yap saves history on this Mac. Cloud processing sends audio or text to your chosen services.", table: "PrivacyCopy")
         }
     }
 }
