@@ -190,6 +190,51 @@ make local</pre></div>
   </div>
 </section>
 
+<section id="agents">
+  <div class="wrap split">
+    <div>
+      <p class="eyebrow"><span lang="en">For your agents</span><span lang="zh-Hans">给你的 agent 用</span></p>
+      <h2><span lang="en">Use your Yap data in Claude Code, Cursor and Codex.</span><span lang="zh-Hans">在 Claude Code、Cursor、Codex 里用 Yap 的数据。</span></h2>
+      <p class="fine" lang="en">Yap ships a read-only MCP server inside the app, <code>Yap.app/Contents/Helpers/yap-mcp</code>. Your agent starts it and talks to it over stdin/stdout: no network port, nothing uploaded, Yap doesn't need to be running. Each call reads a copy of Yap's local database.</p>
+      <p class="fine" lang="zh-Hans">Yap 在 app 里带了一个只读的 MCP server：<code>Yap.app/Contents/Helpers/yap-mcp</code>。agent 启动它，通过 stdin/stdout 通信：不开网络端口，不上传任何东西，Yap 不用开着。每次调用读的是 Yap 本地数据库的一份拷贝。</p>
+      <p class="fine" lang="en">Off until you turn it on in Settings › Agent Access (MCP). The first switch shares meetings and your dictionary; dictation history needs a second switch, because dictations often hold passwords and private messages. Turning a switch off applies to the agent's next request.</p>
+      <p class="fine" lang="zh-Hans">在 设置 › Agent 访问（MCP） 里打开之前什么都读不到。第一个开关开放会议和词典；听写历史要再开第二个开关，因为听写里常有密码和私信。关掉开关后，agent 的下一次请求就读不到了。</p>
+      <p class="fine" lang="en">Then ask: “Summarize the action items from this week's meetings.” “What did I dictate about the CI migration last month?” <a href="https://github.com/Sma1lboy/yap/blob/main/docs/mcp.md">Tools and limits</a></p>
+      <p class="fine" lang="zh-Hans">然后可以问：“总结一下这周会议里的待办。”“上个月我听写过哪些关于 CI 迁移的内容？”<a href="https://github.com/Sma1lboy/yap/blob/main/docs/mcp.md">工具和限制</a></p>
+    </div>
+    <div class="stack">
+      <div>
+        <div class="code"><pre id="mcp-claude">claude mcp add yap -- /Applications/Yap.app/Contents/Helpers/yap-mcp</pre></div>
+        <div class="code-actions">
+          <span class="fine" style="margin: 0"><span lang="en">Claude Code</span><span lang="zh-Hans">Claude Code</span></span>
+          <button class="btn btn--secondary" type="button" data-copy="mcp-claude"><span lang="en">Copy</span><span lang="zh-Hans">复制</span></button>
+        </div>
+      </div>
+      <div>
+        <div class="code"><pre id="mcp-codex">codex mcp add yap -- /Applications/Yap.app/Contents/Helpers/yap-mcp</pre></div>
+        <div class="code-actions">
+          <span class="fine" style="margin: 0"><span lang="en">Codex</span><span lang="zh-Hans">Codex</span></span>
+          <button class="btn btn--secondary" type="button" data-copy="mcp-codex"><span lang="en">Copy</span><span lang="zh-Hans">复制</span></button>
+        </div>
+      </div>
+      <div>
+        <div class="code"><pre id="mcp-cursor">{
+  "mcpServers": {
+    "yap": {
+      "type": "stdio",
+      "command": "/Applications/Yap.app/Contents/Helpers/yap-mcp"
+    }
+  }
+}</pre></div>
+        <div class="code-actions">
+          <span class="fine" style="margin: 0"><span lang="en">Cursor: ~/.cursor/mcp.json</span><span lang="zh-Hans">Cursor：~/.cursor/mcp.json</span></span>
+          <button class="btn btn--secondary" type="button" data-copy="mcp-cursor"><span lang="en">Copy</span><span lang="zh-Hans">复制</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="models">
   <div class="wrap">
     <p class="eyebrow"><span lang="en">Three ways to run it</span><span lang="zh-Hans">三种用法</span></p>

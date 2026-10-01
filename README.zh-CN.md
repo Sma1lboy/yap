@@ -145,6 +145,32 @@ API key 永远不会写进 config.json，也不会上传到 Yap Cloud。Yap 只�
 
 当前选择（2026 年 9 月）：转写用 `microsoft/mai-transcribe-2`（$0.10/小时；82 个关键词里对 80 个是旧 bench 的数字，那套录音没有保存，不能直接对比；`setup/asr/` 里更难的那套 bench 上是 59/82，见 [docs/dictation-accuracy.md](docs/dictation-accuracy.md)），润色用 `deepseek/deepseek-v4.1-flash`（25 个用例里过 23–24 个，约 0.5 秒，见 [docs/cloud-models.md](docs/cloud-models.md)）。引导流程里的「自带 OpenRouter Key」选项用你自己的 OpenRouter key 应用这套配置，费用直接付给 OpenRouter。修改 `VoiceInk/Resources/RecommendedPrompt.md` 后请重新跑 `setup/bench.py`。
 
+## 在 Claude Code / Cursor / Codex 里用 Yap 的数据
+
+Yap 在 app 里带了一个只读的 MCP server：`Yap.app/Contents/Helpers/yap-mcp`。agent 把它当子进程启动，通过 stdin/stdout 跟它通信：不开网络端口，不往任何地方发数据，Yap 开不开着都能用。每次调用先把 Yap 的本地数据库拷一份再读拷贝，Yap 自己的文件只被复制，SQLite 从不打开它们。
+
+在 **设置 › Agent 访问（MCP）** 里打开之前，它什么都读不到：
+
+- **让 agent 读取 Yap 的数据**：会议（纪要和转写）和词典。关着时 agent 能连上，但每次读取都会报错，并告诉它开关在哪。
+- **包括听写历史**：连听写一起。默认关，因为听写里常有密码、私信和草稿。
+
+helper 每次调用都重新读这两个开关，所以关掉之后 agent 的下一次请求就读不到了。
+
+工具：`list_meetings`、`get_meeting`、`search_history`（在听写和会议里按子串搜索，中文英文都行）、`get_dictation`、`get_dictionary`。同一个设置分组里可以直接复制下面的命令，路径是你这份 Yap 的实际位置。
+
+```sh
+claude mcp add yap -- /Applications/Yap.app/Contents/Helpers/yap-mcp     # Claude Code
+codex mcp add yap -- /Applications/Yap.app/Contents/Helpers/yap-mcp      # Codex
+```
+
+Cursor，写在 `~/.cursor/mcp.json` 里：
+
+```json
+{ "mcpServers": { "yap": { "type": "stdio", "command": "/Applications/Yap.app/Contents/Helpers/yap-mcp" } } }
+```
+
+然后可以问：“总结一下这周会议里的待办”“上个月我听写过哪些关于 CI 迁移的内容？”（需要打开听写历史）“按我 Yap 词典里的拼写检查这份 README”。工具参数、细节和已知限制见 [docs/mcp.md](docs/mcp.md)。
+
 ## 开发
 
 - `make mock`：用假数据启动 Debug 版（已登录 Yap Cloud、余额 $4.21、20 条转写记录、5 个模式、一个自定义 provider、词典条目）。不联网，设置写在单独的域 `me.sma1lboy.yap.mock` 里，不碰 dev 和正式版的设置；退出时清掉它创建的所有东西。
