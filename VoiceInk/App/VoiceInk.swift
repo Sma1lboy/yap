@@ -106,13 +106,7 @@ struct VoiceInkApp: App {
         #endif
 
         let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "Initialization")
-        // Keep existing model order stable; append new models after synced entities.
-        let schema = Schema([
-            Transcription.self,
-            VocabularyWord.self,
-            WordReplacement.self,
-            SessionMetric.self,
-        ])
+        let schema = YapStores.schema
         let resolvedContainer: ModelContainer
 
         // Attempt 1: Try persistent storage
@@ -321,9 +315,12 @@ struct VoiceInkApp: App {
         return lines.joined(separator: "\n")
     }
 
-    private static func createPersistentContainer(schema: Schema, logger: Logger) throws -> ModelContainer {
-        let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    /// The app's stores in `directory` (Yap's Application Support folder; `make mcp-check`'s fixture passes its own).
+    static func createPersistentContainer(
+        schema: Schema, logger: Logger,
+        directory appSupportURL: URL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent(AppIdentity.supportDirectoryName, isDirectory: true)
+    ) throws -> ModelContainer {
 
         try? FileManager.default.createDirectory(at: appSupportURL, withIntermediateDirectories: true)
 
@@ -331,13 +328,7 @@ struct VoiceInkApp: App {
         let dictionaryStoreURL = appSupportURL.appendingPathComponent("dictionary.store")
         let statsStoreURL = appSupportURL.appendingPathComponent("stats.store")
 
-        let transcriptSchema = Schema([Transcription.self])
-        let transcriptConfig = ModelConfiguration(
-            "default",
-            schema: transcriptSchema,
-            url: defaultStoreURL,
-            cloudKitDatabase: .none
-        )
+        let transcriptConfig = YapStores.historyConfiguration(url: defaultStoreURL)
 
         let dictionarySchema = Schema([VocabularyWord.self, WordReplacement.self])
         // Dev shares the local stores but must never connect to CloudKit.

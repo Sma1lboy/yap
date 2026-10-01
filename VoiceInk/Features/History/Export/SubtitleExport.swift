@@ -7,6 +7,10 @@ struct TimedSegment: Codable, Equatable {
     var text: String
 }
 
+extension Transcription {
+    var timedSegments: [TimedSegment] { TimedSegments.decode(segmentsJSON) }
+}
+
 /// Subtitles and timestamped text from `TimedSegment`s (local Whisper only: cloud providers mostly return
 /// no timestamps). Speaker labels aren't part of this.
 enum SubtitleFormat: String, CaseIterable, Identifiable {

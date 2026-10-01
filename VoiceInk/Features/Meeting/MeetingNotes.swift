@@ -71,14 +71,11 @@ extension MeetingSpeakerNames {
     }
 }
 
-/// Turns a meeting's segments into the saved transcript, the notes request and the Markdown export.
-enum MeetingNotes {
-    static func timestamp(_ seconds: TimeInterval) -> String {
-        let total = max(0, Int(seconds))
-        let (h, m, s) = (total / 3600, total / 60 % 60, total % 60)
-        return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%02d:%02d", m, s)
-    }
+extension Transcription {
+    var meetingSpeakerNames: MeetingSpeakerNames { .decode(meetingSpeakerNamesJSON) }
+}
 
+extension MeetingNotes {
     /// `[00:12] Me: …` lines in time order (both channels interleaved), without the pieces that are echo. A piece
     /// that failed keeps its line, with `failedMarker` in place of the text.
     static func transcript(_ segments: [MeetingSegment], names: MeetingSpeakerNames = [:]) -> String {
@@ -164,27 +161,6 @@ enum MeetingNotes {
     static func timeout(forCharacters count: Int) -> TimeInterval {
         min(300, 30 + TimeInterval(count) / 100)
     }
-
-    // MARK: - Export
-
-    /// A meeting's notes, as the History tab and the Markdown heading call them ("纪要"). Its own key: the plain
-    /// "Notes" key is the Notes app (备忘录).
-    static var notesTitle: String { String(localized: "meeting.notesTitle", defaultValue: "Notes") }
-
-    static func markdown(title: String, date: Date, duration: TimeInterval, notes: String?, transcript: String) -> String {
-        let when = date.formatted(date: .abbreviated, time: .shortened)
-        var sections = ["# \(title)", "\(when) · \(timestamp(duration))"]
-        if let notes, !notes.isEmpty {
-            sections.append("## \(notesTitle)\n\n\(notes)")
-        }
-        let lines = transcript.split(separator: "\n").map { line -> String in
-            // "[00:12] Me: text" → "**[00:12] Me**: text"
-            guard let colon = line.range(of: ": "), line.hasPrefix("[") else { return String(line) }
-            return "**\(line[..<colon.lowerBound])**: \(line[colon.upperBound...])"
-        }
-        sections.append("## \(String(localized: "Transcript"))\n\n" + lines.joined(separator: "\n\n"))
-        return sections.joined(separator: "\n\n") + "\n"
-    }
 }
 
 #if DEBUG
@@ -217,11 +193,20 @@ enum MeetingNotes {
             assert(parts(of: "") == [] && parts(of: "short") == ["short"])
             assert(timeout(forCharacters: 0) == 30 && timeout(forCharacters: 12_000) == 150 && timeout(forCharacters: 99_999) == 300)
 
-            let md = markdown(title: "Weekly", date: Date(timeIntervalSince1970: 0), duration: 65, notes: "- ok", transcript: text)
-            assert(md.hasPrefix("# Weekly\n\n") && md.contains("· 01:05") && md.contains("- ok"))
+            let md = markdown(date: Date(timeIntervalSince1970: 0), duration: 65, notes: "- ok", transcript: text)
+            assert(md.hasPrefix("# \(String(localized: "Meeting"))\n\n") && md.contains("· 01:05") && md.contains("- ok"))
             assert(md.contains("**[00:03] \(me)**: 先看一下 CI"))
-            assert(md.contains("## \(notesTitle)\n\n- ok"))
-            assert(!markdown(title: "T", date: Date(), duration: 1, notes: nil, transcript: "").contains("## \(notesTitle)"))
+            assert(md.contains("## \(notesTitle())\n\n- ok"))
+            assert(!markdown(date: Date(), duration: 1, notes: nil, transcript: "").contains("## \(notesTitle())"))
+            let notesOnly = markdown(date: Date(timeIntervalSince1970: 0), duration: 65, notes: "- ok", transcript: nil)
+            assert(notesOnly.hasSuffix("## \(notesTitle())\n\n- ok\n") && !notesOnly.contains(String(localized: "Transcript")))
+
+            // Speakers as the saved transcript names them, first appearance first, failed lines too.
+            let renamed = "[00:03] Tingting: 先看一下 CI\n[00:12] Reed: \(failedMarker)\n[1:00:12] Tingting: ok\n[00:20] Others 2: a: b"
+            assert(speakers(inTranscript: renamed) == ["Tingting", "Reed", "Others 2"])
+            assert(speakers(inTranscript: text) == [me, others])
+            assert(speakers(inTranscript: String(localized: "(Nothing was said in this meeting.)")).isEmpty)
+            assert(speakers(inTranscript: "Yap quit during this meeting [00:01] x: y").isEmpty)
 
             // The default shortcut: right ⌘ + Space fires, left ⌘ + Space (Spotlight) doesn't.
             let command = NSEvent.ModifierFlags.command.rawValue

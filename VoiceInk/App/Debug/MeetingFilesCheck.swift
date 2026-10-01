@@ -65,7 +65,7 @@
             print("meeting-check: rename-error \(MeetingEdits.rename(meeting, names: names, in: engine.modelContext) ?? "none")")
             print("meeting-check: stored-names \(meeting.meetingSpeakerNamesJSON ?? "none")")
             print("meeting-check: transcript-begin\n\(meeting.text)\nmeeting-check: transcript-end")
-            print("meeting-check: markdown-begin\n\(MeetingEdits.markdown(for: meeting))\nmeeting-check: markdown-end")
+            print("meeting-check: markdown-begin\n\(MeetingNotes.markdown(for: meeting))\nmeeting-check: markdown-end")
             for run in 0..<number(after: "--meeting-regenerate") {
                 let before = meeting.enhancedText
                 let problem = await MeetingEdits.regenerateNotes(for: meeting, engine: engine)

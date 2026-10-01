@@ -150,7 +150,7 @@ final class MeetingRecorder: ObservableObject {
             current.notes = transcription.enhancedText
             current.notesProblem = nil
             current.notesModel = transcription.aiEnhancementModelName
-            current.markdown = MeetingEdits.markdown(for: transcription)
+            current.markdown = MeetingNotes.markdown(for: transcription)
             current.speakersLabeledLater = false  // the new notes have the speakers
         }
         phase = .done(current)
@@ -318,8 +318,7 @@ final class MeetingRecorder: ObservableObject {
         let saveError = save(transcription, engine: engine)
 
         let markdown = MeetingNotes.markdown(
-            title: String(localized: "Meeting"), date: session.started, duration: session.duration,
-            notes: summary.notes, transcript: transcript)
+            date: session.started, duration: session.duration, notes: summary.notes, transcript: transcript)
         logger.notice("Meeting saved: \(segments.count, privacy: .public) segments, notes \(summary.notes != nil, privacy: .public)")
         var result = MeetingResult(
             transcriptionID: transcription.id, notes: summary.notes, transcript: transcript,

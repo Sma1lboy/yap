@@ -25,12 +25,6 @@ enum MeetingEdits {
         }
     }
 
-    static func markdown(for transcription: Transcription) -> String {
-        MeetingNotes.markdown(
-            title: String(localized: "Meeting"), date: transcription.timestamp, duration: transcription.duration,
-            notes: transcription.enhancedText, transcript: transcription.text)
-    }
-
     /// Stores the names and rewrites the transcript with them; timestamps, pieces and `segments.json` stay as
     /// they are. The notes aren't touched (regenerate them for the new names). Returns why it couldn't be saved.
     static func rename(_ transcription: Transcription, names: MeetingSpeakerNames, in context: ModelContext) -> String? {
