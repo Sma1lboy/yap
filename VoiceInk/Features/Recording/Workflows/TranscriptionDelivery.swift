@@ -13,6 +13,7 @@ final class TranscriptionDelivery {
         let responseError: String?
         let isAssistantFollowUp: Bool
         let sendAfterPaste: Bool
+        let timeline: DictationTimeline?
     }
 
     struct Actions {
@@ -23,27 +24,30 @@ final class TranscriptionDelivery {
         let failResponse: (String) async -> Void
     }
 
-    func deliver(_ request: Request, actions: Actions) async {
+    /// Returns, for a paste, the task that finishes once the paste has sent ⌘V or failed; the request's timeline has
+    /// its paste time and outcome by then.
+    @discardableResult
+    func deliver(_ request: Request, actions: Actions) async -> Task<Void, Never>? {
         guard request.transcription.transcriptionStatus == TranscriptionStatus.completed.rawValue else {
             await actions.dismiss()
-            return
+            return nil
         }
 
         if request.isAssistantFollowUp {
             await deliverFollowUp(request, actions: actions)
-            return
+            return nil
         }
 
         if request.output.outputMode == .respond,
             request.responseConfig != nil || request.responseError != nil
         {
             await deliverResponse(request, actions: actions)
-            return
+            return nil
         }
 
         if request.output.outputMode == .customCommand {
             await deliverCustomCommand(request, actions: actions)
-            return
+            return nil
         }
 
         // "Scratch that" / 删掉刚才那句 on its own takes back the last paste (checked before cleanup reworded it).
@@ -51,13 +55,14 @@ final class TranscriptionDelivery {
             SoundManager.shared.playStopSound()
             await actions.dismiss()
             await LastPasteEditor.shared.undoLastPaste()
-            return
+            return nil
         }
 
         if let text = request.text {
-            await paste(text, sendAfterPaste: request.sendAfterPaste, actions: actions)
+            return await paste(text, sendAfterPaste: request.sendAfterPaste, timeline: request.timeline, actions: actions)
         } else {
             await actions.dismiss()
+            return nil
         }
     }
 
@@ -169,7 +174,9 @@ final class TranscriptionDelivery {
         String(format: "%.3f", duration)
     }
 
-    private func paste(_ text: String, sendAfterPaste: Bool, actions: Actions) async {
+    private func paste(
+        _ text: String, sendAfterPaste: Bool, timeline: DictationTimeline?, actions: Actions
+    ) async -> Task<Void, Never> {
         let textToPaste = text
         let appendSpace = UserDefaults.standard.bool(forKey: "AppendTrailingSpace")
         let pastedText = textToPaste + (appendSpace ? " " : "")
@@ -180,8 +187,9 @@ final class TranscriptionDelivery {
 
         let selectedKey = FinishAndSendSettings.selectedKey
         let finishAndSendKey: FinishAndSendKey = sendAfterPaste ? selectedKey : .none
-        Task { @MainActor in
+        return Task { @MainActor in
             let pasteOutcome = await pasteTask.value
+            timeline?.pasteFinished(pasteOutcome.result.timelineOutcome, commandAt: pasteOutcome.commandTime)
             if pasteOutcome.result.didPostPasteCommand { DictationAnnouncer.pasted() }
 
             if finishAndSendKey.isEnabled && pasteOutcome.result.didPostPasteCommand {
@@ -191,6 +199,17 @@ final class TranscriptionDelivery {
                 }
                 CursorPaster.performSendKey(finishAndSendKey)
             }
+        }
+    }
+}
+
+extension CursorPaster.PasteResult {
+    fileprivate var timelineOutcome: DictationTimeline.PasteOutcome {
+        switch self {
+        case .commandPosted: return .pasted
+        case .leftOnClipboard: return .clipboardOnly
+        case .sentToScratchpad: return .scratchpad
+        case .commandNotPosted: return .failed
         }
     }
 }

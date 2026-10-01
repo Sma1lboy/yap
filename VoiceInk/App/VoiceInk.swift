@@ -95,6 +95,12 @@ struct VoiceInkApp: App {
             WhisperTranscriptionService.selfCheck()
             ChineseCleanup.selfCheck()
             WhisperLivePreview.selfCheck()
+            DictationTimeline.selfCheck()
+            AutoLearnAXTextReader.selfCheck()
+            Task { @MainActor in await RecordingShortcutModeHandler.selfCheck() }
+            Task.detached {
+                do { try SessionMetricRecorder.selfCheck() } catch { assertionFailure("SessionMetric selfCheck: \(error)") }
+            }
             ModelResidency.selfCheck()
             YapCloud.modeNamesSelfCheck()
             RecordingContextSnapshot.selfCheck()

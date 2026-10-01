@@ -105,8 +105,8 @@ class RecordingShortcutManager: ObservableObject {
             recordingState: {
                 engine.recordingState
             },
-            toggleRecorderPanel: { modeId in
-                await recorderUIManager.toggleRecorderPanel(modeId: modeId)
+            toggleRecorderPanel: { modeId, stop in
+                await recorderUIManager.toggleRecorderPanel(modeId: modeId, stop: stop)
             },
             cancelRecording: {
                 await recorderUIManager.cancelRecording()
@@ -193,7 +193,7 @@ class RecordingShortcutManager: ObservableObject {
                             mode: mode
                         )
                     } else {
-                        await self.handleGlobalShortcut(action)
+                        await self.handleGlobalShortcut(action, eventTime: eventTime)
                     }
                 }
             },
@@ -237,7 +237,7 @@ class RecordingShortcutManager: ObservableObject {
         }
     }
 
-    private func handleGlobalShortcut(_ action: ShortcutAction) async {
+    private func handleGlobalShortcut(_ action: ShortcutAction, eventTime: TimeInterval) async {
         switch action {
         case .pasteLastTranscription:
             LastTranscriptionService.pasteLastTranscription(from: engine.modelContext)
@@ -265,7 +265,7 @@ class RecordingShortcutManager: ObservableObject {
         case .rewriteLastPaste:
             // First press selects the last paste and records the instruction; the next press stops recording.
             if engine.recordingState == .recording || engine.recordingState == .starting {
-                await engine.toggleRecord()
+                await engine.toggleRecord(stop: DictationTimeline.Stop(time: eventTime, source: .shortcutRelease))
             } else if engine.recordingState == .idle, await LastPasteEditor.shared.prepareRewrite() {
                 await engine.toggleRecord(editsLastPaste: true)
             }
@@ -318,7 +318,9 @@ final class RecordingShortcutModeHandler {
     private let canHandleShortcutAction: @MainActor () -> Bool
     private let isRecorderVisible: @MainActor () -> Bool
     private let recordingState: @MainActor () -> RecordingState
-    private let toggleRecorderPanel: @MainActor (UUID?) async -> Void
+    /// Starts or stops; when it stops, the stop is when the shortcut event happened (key up, or the second press in
+    /// toggle mode), for the dictation's timeline.
+    private let toggleRecorderPanel: @MainActor (UUID?, DictationTimeline.Stop) async -> Void
     private let cancelRecording: @MainActor () async -> Void
 
     private var shortcutPressStartTime: TimeInterval?
@@ -339,7 +341,7 @@ final class RecordingShortcutModeHandler {
         canHandleShortcutAction: @escaping @MainActor () -> Bool,
         isRecorderVisible: @escaping @MainActor () -> Bool,
         recordingState: @escaping @MainActor () -> RecordingState,
-        toggleRecorderPanel: @escaping @MainActor (UUID?) async -> Void,
+        toggleRecorderPanel: @escaping @MainActor (UUID?, DictationTimeline.Stop) async -> Void,
         cancelRecording: @escaping @MainActor () async -> Void
     ) {
         self.canHandleShortcutAction = canHandleShortcutAction
@@ -423,19 +425,19 @@ final class RecordingShortcutModeHandler {
             if isHandsFreeRecording {
                 isHandsFreeRecording = false
                 guard canHandleShortcutAction() else { return }
-                await toggleRecorderPanel(modeId)
+                await toggleRecorderPanel(modeId, DictationTimeline.Stop(time: eventTime, source: .shortcutPress))
                 return
             }
 
             if !isRecorderVisible() {
                 guard canHandleShortcutAction() else { return }
-                await toggleRecorderPanel(modeId)
+                await toggleRecorderPanel(modeId, DictationTimeline.Stop(time: eventTime, source: .shortcutPress))
             }
 
         case .pushToTalk:
             if !isRecorderVisible() {
                 guard canHandleShortcutAction() else { return }
-                await toggleRecorderPanel(modeId)
+                await toggleRecorderPanel(modeId, DictationTimeline.Stop(time: eventTime, source: .shortcutPress))
             }
 
         case .doubleTap:
@@ -462,14 +464,14 @@ final class RecordingShortcutModeHandler {
         case .pushToTalk:
             if isRecorderVisible() {
                 guard canHandleShortcutAction() else { return }
-                await toggleRecorderPanel(modeId)
+                await toggleRecorderPanel(modeId, DictationTimeline.Stop(time: eventTime, source: .shortcutRelease))
             }
 
         case .hybrid:
             let pressDuration = shortcutPressStartTime.map { eventTime - $0 } ?? 0
             if pressDuration >= hybridPressThreshold && recordingState() == .recording {
                 guard canHandleShortcutAction() else { return }
-                await toggleRecorderPanel(modeId)
+                await toggleRecorderPanel(modeId, DictationTimeline.Stop(time: eventTime, source: .shortcutRelease))
             } else {
                 isHandsFreeRecording = true
             }
@@ -486,7 +488,7 @@ final class RecordingShortcutModeHandler {
                 eventTime - firstRelease >= 0,
                 eventTime - firstRelease <= doubleTapThreshold
             {
-                await toggleRecorderPanel(modeId)
+                await toggleRecorderPanel(modeId, DictationTimeline.Stop(time: eventTime, source: .shortcutRelease))
                 isHandsFreeRecording = isRecorderVisible()
             } else {
                 pendingDoubleTapReleaseTimes[action] = eventTime
@@ -524,3 +526,52 @@ final class RecordingShortcutModeHandler {
         !isRecorderVisible() && recordingState() == .idle
     }
 }
+
+#if DEBUG
+    extension RecordingShortcutModeHandler {
+        /// The stop each mode hands to the recorder: push-to-talk and hybrid-hold the key-up event's time, toggle the
+        /// second press's, never the time the handler ran.
+        static func selfCheck() async {
+            @MainActor final class Panel {
+                var visible = false
+                var calls: [DictationTimeline.Stop] = []
+            }
+            func handler(_ panel: Panel) -> RecordingShortcutModeHandler {
+                RecordingShortcutModeHandler(
+                    canHandleShortcutAction: { true },
+                    isRecorderVisible: { panel.visible },
+                    recordingState: { panel.visible ? .recording : .idle },
+                    toggleRecorderPanel: { _, stop in
+                        panel.visible.toggle()
+                        panel.calls.append(stop)
+                    },
+                    cancelRecording: { panel.visible = false })
+            }
+
+            let pushToTalk = Panel()
+            let ptt = handler(pushToTalk)
+            await ptt.handleShortcutDown(action: .primaryRecording, eventTime: 20, mode: .pushToTalk)
+            await ptt.handleShortcutUp(action: .primaryRecording, eventTime: 23.5, mode: .pushToTalk)
+            assert(pushToTalk.calls.count == 2 && !pushToTalk.visible)
+            assert(pushToTalk.calls[1].time == 23.5 && pushToTalk.calls[1].source == .shortcutRelease)
+
+            let hybrid = Panel()
+            let held = handler(hybrid)
+            await held.handleShortcutDown(action: .primaryRecording, eventTime: 40, mode: .hybrid)
+            await held.handleShortcutUp(action: .primaryRecording, eventTime: 42, mode: .hybrid)
+            assert(hybrid.calls.last?.time == 42 && hybrid.calls.last?.source == .shortcutRelease && !hybrid.visible)
+
+            let toggle = Panel()
+            let tg = handler(toggle)
+            await tg.handleShortcutDown(action: .primaryRecording, eventTime: 30, mode: .toggle)
+            await tg.handleShortcutUp(action: .primaryRecording, eventTime: 30.1, mode: .toggle)
+            assert(toggle.calls.count == 1 && toggle.visible, "the first release doesn't stop a toggle recording")
+            try? await Task.sleep(for: .milliseconds(600))  // the handler ignores presses within 0.5 s
+            await tg.handleShortcutDown(action: .primaryRecording, eventTime: 35, mode: .toggle)
+            assert(toggle.calls.count == 2 && !toggle.visible)
+            assert(toggle.calls[1].time == 35 && toggle.calls[1].source == .shortcutPress, "the second press")
+            await tg.handleShortcutUp(action: .primaryRecording, eventTime: 35.2, mode: .toggle)
+            assert(toggle.calls.count == 2, "its release does nothing")
+        }
+    }
+#endif

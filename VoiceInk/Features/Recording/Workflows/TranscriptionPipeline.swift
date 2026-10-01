@@ -51,6 +51,10 @@ class TranscriptionPipeline {
     ///   - shouldCancel: Returns true if the user requested cancellation.
     ///   - onCancel: Called when cancellation is detected to cancel active session state.
     ///   - onDismiss: Called when delivery should close the recorder panel.
+    ///   - timeline: The dictation's DictationTimeline, marked as each step finishes and saved on its SessionMetric.
+    /// - Returns: For a paste, a task that finishes once ⌘V was sent (or the paste failed) and the SessionMetric has
+    ///   the paste time and outcome.
+    @discardableResult
     func run(
         transcription: Transcription,
         audioURL: URL,
@@ -62,12 +66,13 @@ class TranscriptionPipeline {
         recordingContextSnapshot: @escaping () async -> RecordingContextSnapshot? = { nil },
         outputConfiguration: @escaping () -> OutputRuntimeConfiguration,
         sendAfterPaste: Bool = false,
+        timeline: DictationTimeline? = nil,
         onStateChange: @escaping (RecordingState) -> Void,
         shouldCancel: () -> Bool,
         onCancel: @escaping () async -> Void,
         onDismiss: @escaping () async -> Void,
         assistant: AssistantHooks = .inactive
-    ) async {
+    ) async -> Task<Void, Never>? {
         let model = transcriptionConfiguration.model
         var finalText: String?
         var responseError: String?
@@ -100,7 +105,7 @@ class TranscriptionPipeline {
 
         if shouldCancel() {
             await finishCanceledTranscription()
-            return
+            return nil
         }
 
         do {
@@ -111,18 +116,23 @@ class TranscriptionPipeline {
             let transcriptionStart = Date()
             var text: String
             if let session {
-                text = try await session.transcribe(audioURL: audioURL)
+                text = try await DictationTimeline.$current.withValue(timeline) {
+                    try await session.transcribe(audioURL: audioURL)
+                }
             } else {
                 let billed = YapCloud.GenerationCollector()
                 text = try await YapCloud.$generationCollector.withValue(billed) {
-                    try await serviceRegistry.transcribe(
-                        audioURL: audioURL,
-                        model: model,
-                        context: transcriptionConfiguration.requestContext
-                    )
+                    try await DictationTimeline.$current.withValue(timeline) {
+                        try await serviceRegistry.transcribe(
+                            audioURL: audioURL,
+                            model: model,
+                            context: transcriptionConfiguration.requestContext
+                        )
+                    }
                 }
                 transcription.yapCloudTranscriptionGenerationID = billed.last
             }
+            timeline?.mark(.transcribed)
             text = TranscriptionOutputFilter.filter(text)
             text = ChineseCleanup.apply(text, options: ChineseCleanup.currentOptions)
             if TranscriptionOutputFilter.isKnownHallucination(text) { throw RecordedAudioIssue.hallucinated(text) }
@@ -130,7 +140,7 @@ class TranscriptionPipeline {
 
             if shouldCancel() {
                 await finishCanceledTranscription()
-                return
+                return nil
             }
 
             text = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -155,6 +165,7 @@ class TranscriptionPipeline {
 
             text = WordReplacementService.shared.applyReplacements(to: text, using: modelContext)
             let cleanedText = text
+            timeline?.mark(.processed)
 
             let actualDuration = await AudioFileMetadata.duration(for: audioURL)
 
@@ -198,7 +209,7 @@ class TranscriptionPipeline {
                 {
                     if shouldCancel() {
                         await finishCanceledTranscription()
-                        return
+                        return nil
                     }
 
                     onStateChange(.enhancing)
@@ -252,9 +263,10 @@ class TranscriptionPipeline {
                         }
                         if shouldCancel() {
                             await finishCanceledTranscription()
-                            return
+                            return nil
                         }
                     }
+                    timeline?.mark(.enhanced)
                 }
             }
 
@@ -291,14 +303,15 @@ class TranscriptionPipeline {
             }
         }
 
-        func saveTranscriptionAndPostCompletion() {
-            var didInsertSessionMetric = false
+        func saveTranscriptionAndPostCompletion() -> SessionMetric? {
+            var sessionMetric: SessionMetric?
 
             if transcription.transcriptionStatus == TranscriptionStatus.completed.rawValue {
                 do {
-                    didInsertSessionMetric = try SessionMetricRecorder.recordRecorderSession(
+                    sessionMetric = try SessionMetricRecorder.recordRecorderSession(
                         transcription: transcription,
                         model: model,
+                        timeline: timeline,
                         in: modelContext
                     )
                 } catch {
@@ -308,21 +321,22 @@ class TranscriptionPipeline {
 
             do {
                 try modelContext.save()
-                if didInsertSessionMetric {
+                if sessionMetric != nil {
                     NotificationCenter.default.post(name: .sessionMetricsDidChange, object: nil)
                 }
                 NotificationCenter.default.post(name: .transcriptionCompleted, object: transcription)
             } catch {
                 logger.error("Failed to save transcription: \(error, privacy: .public)")
             }
+            return sessionMetric
         }
 
         if shouldCancel() {
             await finishCanceledTranscription()
-            return
+            return nil
         }
 
-        await delivery.deliver(
+        let pasteTask = await delivery.deliver(
             TranscriptionDelivery.Request(
                 transcription: transcription,
                 text: finalText,
@@ -330,7 +344,8 @@ class TranscriptionPipeline {
                 responseConfig: responseConfig,
                 responseError: responseError,
                 isAssistantFollowUp: assistant.isFollowUp,
-                sendAfterPaste: sendAfterPaste
+                sendAfterPaste: sendAfterPaste,
+                timeline: timeline
             ),
             actions: TranscriptionDelivery.Actions(
                 setState: onStateChange,
@@ -341,10 +356,22 @@ class TranscriptionPipeline {
             )
         )
 
-        saveTranscriptionAndPostCompletion()
+        let sessionMetric = saveTranscriptionAndPostCompletion()
 
         if let transcriptionFailure {
             showTranscriptionFailure(transcriptionFailure)
+        }
+
+        guard let pasteTask else { return nil }
+        return Task { @MainActor [modelContext, logger] in
+            await pasteTask.value
+            guard let sessionMetric, let timeline else { return }
+            SessionMetricRecorder.apply(timeline, to: sessionMetric)
+            do {
+                try modelContext.save()
+            } catch {
+                logger.error("Failed to save the paste time: \(error, privacy: .public)")
+            }
         }
     }
 

@@ -11,6 +11,10 @@ class CursorPaster {
     enum PasteResult: Equatable {
         case commandPosted
         case commandNotPosted
+        /// No Accessibility permission: the text stays on the clipboard for the user to paste.
+        case leftOnClipboard
+        /// No editable element focused: the text stays on the clipboard and goes to the Scratchpad.
+        case sentToScratchpad
 
         var didPostPasteCommand: Bool {
             self == .commandPosted
@@ -20,7 +24,19 @@ class CursorPaster {
     struct PasteOutcome {
         let result: PasteResult
         let autoLearnGeneration: UInt64?
+        /// System uptime when ⌘V went out: the V key-down, or when the AppleScript paste returned.
+        var commandTime: TimeInterval?
     }
+
+    #if DEBUG
+        /// `make dictation-latency`: the clipboard and every wait up to ⌘V run as usual, but the frontmost app isn't
+        /// asked about its focused field or selection, no key event is posted and nothing goes to Auto Learn or Last
+        /// Paste, so nothing is read from or typed into whatever app is in front. Uses the normal timing even when a
+        /// remote-desktop app is frontmost.
+        static var dryRun = false
+    #else
+        static let dryRun = false
+    #endif
 
     private static let prePasteDelay: TimeInterval = 0.10
     private static let pasteShortcutEventDelay: TimeInterval = 0.01
@@ -74,7 +90,7 @@ class CursorPaster {
 
         // Both paste methods send keystrokes, which macOS drops without Accessibility.
         // Leave the text on the clipboard (no restore) so nothing is lost.
-        guard AXIsProcessTrusted() else {
+        guard dryRun || AXIsProcessTrusted() else {
             logger.error("Accessibility permission missing; leaving text on the clipboard")
             _ = ClipboardManager.setClipboard(text, transient: false, sessionID: nil)
             NotificationManager.shared.showNotification(
@@ -83,12 +99,12 @@ class CursorPaster {
                 duration: 8,
                 actionButton: (String(localized: "Open Settings"), PrivacySettingsPane.accessibility.open)
             )
-            return PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil)
+            return PasteOutcome(result: .leftOnClipboard, autoLearnGeneration: nil)
         }
 
         // Nothing editable focused (desktop, Finder): ⌘V would go nowhere and the restore would then
         // take the text back off the clipboard. Keep it there and say so.
-        if !focusedElementCanTakeText() {
+        if !dryRun && !focusedElementCanTakeText() {
             logger.notice("No editable element focused; leaving text on the clipboard and in the Scratchpad")
             _ = ClipboardManager.setClipboard(text, transient: false, sessionID: nil)
             ScratchpadStore.shared.append(dictation: text)
@@ -98,10 +114,11 @@ class CursorPaster {
                 duration: 6,
                 actionButton: (String(localized: "Open Scratchpad"), { ScratchpadController.shared.show() })
             )
-            return PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil)
+            return PasteOutcome(result: .sentToScratchpad, autoLearnGeneration: nil)
         }
 
-        let timing = pasteTiming(frontmostBundleID: NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
+        let timing = pasteTiming(
+            frontmostBundleID: dryRun ? nil : NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
         let shouldRestoreClipboard = UserDefaults.standard.bool(forKey: "restoreClipboardAfterPaste")
         let savedContents = shouldRestoreClipboard ? snapshotClipboard(from: pasteboard) : []
         let sessionID = UUID().uuidString
@@ -119,23 +136,28 @@ class CursorPaster {
 
         // Read while the prePaste delay runs; the text about to be replaced is what Undo Last Paste restores.
         let targetProcessID = NSWorkspace.shared.frontmostApplication?.processIdentifier
+        if dryRun {
+            await wait(timing.prePaste)
+            return PasteOutcome(result: .commandPosted, autoLearnGeneration: nil, commandTime: await simulatePasteKeys())
+        }
         let replacedTask = Task.detached { targetProcessID.map { LastPasteEditor.selectedText(processID: $0) } ?? "" }
         await wait(timing.prePaste)
         let replaced = await replacedTask.value
 
-        let pasteResult: PasteResult
+        let posted: (result: PasteResult, commandTime: TimeInterval?)
         let autoLearnGeneration: UInt64?
         if AutoLearnSettings.isEnabled {
-            pasteResult = await postPasteCommand()
+            posted = await postPasteCommand()
             autoLearnGeneration = await AutoLearnService.shared.pasteDidFinish(
                 text: text,
                 processID: targetProcessID,
-                commandPosted: pasteResult.didPostPasteCommand
+                commandPosted: posted.result.didPostPasteCommand
             )
         } else {
-            pasteResult = await postPasteCommand()
+            posted = await postPasteCommand()
             autoLearnGeneration = nil
         }
+        let pasteResult = posted.result
         if pasteResult.didPostPasteCommand {
             LastPasteEditor.shared.pasteDidFinish(text: text, processID: targetProcessID, replacing: replaced)
         }
@@ -150,7 +172,7 @@ class CursorPaster {
             )
         }
 
-        return PasteOutcome(result: pasteResult, autoLearnGeneration: autoLearnGeneration)
+        return PasteOutcome(result: pasteResult, autoLearnGeneration: autoLearnGeneration, commandTime: posted.commandTime)
     }
 
     /// Roles that are never a text target. Anything else (including an unreadable element) counts as text.
@@ -204,9 +226,10 @@ class CursorPaster {
     }
 
     @MainActor
-    private static func postPasteCommand() async -> PasteResult {
+    private static func postPasteCommand() async -> (result: PasteResult, commandTime: TimeInterval?) {
         if PasteMethod.current() == .appleScript {
-            return pasteUsingAppleScript() ? .commandPosted : .commandNotPosted
+            let posted = pasteUsingAppleScript()
+            return posted ? (.commandPosted, ProcessInfo.processInfo.systemUptime) : (.commandNotPosted, nil)
         } else {
             return await pasteFromClipboard()
         }
@@ -292,10 +315,10 @@ class CursorPaster {
 
     // Posts Cmd+V via CGEvent without modifying the active input source.
     @MainActor
-    private static func pasteFromClipboard() async -> PasteResult {
+    private static func pasteFromClipboard() async -> (result: PasteResult, commandTime: TimeInterval?) {
         guard AXIsProcessTrusted() else {
             logger.error("Accessibility permission is required to paste with simulated key events")
-            return .commandNotPosted
+            return (.commandNotPosted, nil)
         }
 
         let source = CGEventSource(stateID: .privateState)
@@ -306,7 +329,7 @@ class CursorPaster {
             let cmdUp = CGEvent(keyboardEventSource: source, virtualKey: 0x37, keyDown: false)
         else {
             logger.error("Failed to create Cmd+V keyboard events")
-            return .commandNotPosted
+            return (.commandNotPosted, nil)
         }
 
         cmdDown.flags = .maskCommand
@@ -315,13 +338,23 @@ class CursorPaster {
 
         cmdDown.post(tap: .cghidEventTap)
         await wait(pasteShortcutEventDelay)
+        let commandTime = ProcessInfo.processInfo.systemUptime
         vDown.post(tap: .cghidEventTap)
         await wait(pasteShortcutEventDelay)
         vUp.post(tap: .cghidEventTap)
         await wait(pasteShortcutEventDelay)
         cmdUp.post(tap: .cghidEventTap)
 
-        return .commandPosted
+        return (.commandPosted, commandTime)
+    }
+
+    /// dryRun: the waits of pasteFromClipboard without its events; returns when V would have gone down.
+    private static func simulatePasteKeys() async -> TimeInterval {
+        await wait(pasteShortcutEventDelay)
+        let commandTime = ProcessInfo.processInfo.systemUptime
+        await wait(pasteShortcutEventDelay)
+        await wait(pasteShortcutEventDelay)
+        return commandTime
     }
 
     private static func wait(_ seconds: TimeInterval) async {

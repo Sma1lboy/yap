@@ -35,6 +35,27 @@ final class ShortcutMonitor {
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "ShortcutMonitor")
 
     private static let shortcutInterruptionWindow: TimeInterval = 1.0
+    private var didLogTimestampFallback = false
+
+    /// mach_absolute_time ticks per second; systemUptime is mach_absolute_time in seconds.
+    static let machTicksPerSecond: Double = {
+        var timebase = mach_timebase_info_data_t()
+        mach_timebase_info(&timebase)
+        return 1e9 * Double(timebase.denom) / Double(timebase.numer)
+    }()
+
+    /// The event's own time on the systemUptime clock, so a busy main thread doesn't move it. CGEventTimestamp is
+    /// documented as nanoseconds since startup but has been mach_absolute_time ticks on Apple silicon (24 MHz, not
+    /// 1 GHz); whichever reading lands in the last few seconds is the one used (both agree on Intel, where a tick is a
+    /// nanosecond). Nil when neither does, or for synthetic events, which have no timestamp.
+    static func uptime(ofEventTimestamp timestamp: CGEventTimestamp, now: TimeInterval) -> TimeInterval? {
+        guard timestamp > 0 else { return nil }
+        for ticksPerSecond in [machTicksPerSecond, 1e9] {
+            let time = Double(timestamp) / ticksPerSecond
+            if time <= now + 0.001, now - time < 5 { return time }
+        }
+        return nil
+    }
 
     deinit {
         stop()
@@ -162,11 +183,17 @@ final class ShortcutMonitor {
         }
 
         let modifierFlags = NSEvent.ModifierFlags(rawValue: UInt(event.flags.rawValue))
+        let now = ProcessInfo.processInfo.systemUptime
+        let eventTime = Self.uptime(ofEventTimestamp: event.timestamp, now: now)
+        if eventTime == nil && !didLogTimestampFallback {
+            didLogTimestampFallback = true
+            logger.notice("Shortcut event without a usable timestamp; using the time it was handled")
+        }
         return handleEvent(
             kind: eventKind,
             inputCode: inputCode,
             modifierFlags: modifierFlags,
-            eventTime: ProcessInfo.processInfo.systemUptime
+            eventTime: eventTime ?? now
         )
     }
 

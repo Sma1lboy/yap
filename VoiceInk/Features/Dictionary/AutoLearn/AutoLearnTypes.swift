@@ -187,6 +187,40 @@ enum AutoLearnLimits {
     static let maximumReviewBatchCandidates = 100
 }
 
+/// Why Auto Learn couldn't watch a paste (or read the field at the end). Nothing from the field is kept; only how often
+/// each reason happened, in UserDefaults, on this Mac (docs/auto-learn.md).
+enum AutoLearnUnobservableReason: String, CaseIterable {
+    case accessibilityNotTrusted
+    case targetIsYap
+    case emptyPaste
+    case pasteTooLong
+    /// Secure keyboard entry is on (a password field has focus somewhere, or Terminal's Secure Keyboard Entry).
+    case secureInput
+    /// The field reports the secure-text-field role or subrole (native and web password fields).
+    case secureField
+    /// More than AutoLearnLimits.maximumFieldUTF16Length characters.
+    case fieldTooLong
+    case noReadableField
+    case pastedTextNotFound
+}
+
+enum AutoLearnUnobservableCounts {
+    static let defaultsKey = "AutoLearnUnobservableCounts"
+
+    static func record(_ reason: AutoLearnUnobservableReason, defaults: UserDefaults = .standard) {
+        var counts = defaults.dictionary(forKey: defaultsKey) as? [String: Int] ?? [:]
+        counts[reason.rawValue, default: 0] += 1
+        defaults.set(counts, forKey: defaultsKey)
+    }
+
+    static func all(defaults: UserDefaults = .standard) -> [AutoLearnUnobservableReason: Int] {
+        let counts = defaults.dictionary(forKey: defaultsKey) as? [String: Int] ?? [:]
+        return Dictionary(uniqueKeysWithValues: counts.compactMap { key, value in
+            AutoLearnUnobservableReason(rawValue: key).map { ($0, value) }
+        })
+    }
+}
+
 enum AutoLearnProviderPolicy {
     static func isSupported(_ provider: AIProvider) -> Bool {
         provider.supportsEnhancement

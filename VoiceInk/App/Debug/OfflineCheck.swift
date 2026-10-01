@@ -15,6 +15,7 @@
         static var isRequested: Bool { CommandLine.arguments.contains(argument) || MeetingFilesCheck.isRequested }
 
         static func runIfRequested(engine: VoiceInkEngine) {
+            if DictationLatencyCheck.runIfRequested(engine: engine) { return }
             let arguments = CommandLine.arguments
             guard let index = arguments.firstIndex(of: argument), arguments.indices.contains(index + 1) else { return }
             let file = URL(fileURLWithPath: arguments[index + 1])
@@ -24,10 +25,7 @@
             }
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(10))
-                let pasteboard = NSPasteboard.general
-                let saved = pasteboard.pasteboardItems?.map { item in
-                    item.types.compactMap { type in item.data(forType: type).map { (type, $0) } }
-                } ?? []
+                let restorePasteboard = savePasteboard()
                 print("offline-check: start \(Date().timeIntervalSince1970)")
                 let transcription = await engine.dictateFile(file)
                 print("offline-check: end \(Date().timeIntervalSince1970)")
@@ -35,16 +33,27 @@
                 print("offline-check: enhanced \(transcription.enhancedText != nil)")
                 print("offline-check: seconds \(transcription.transcriptionDuration ?? 0)")
                 print("offline-check: text \(transcription.text)")
+                restorePasteboard()
+                try? await Task.sleep(for: .seconds(5))
+                print("offline-check: quit \(Date().timeIntervalSince1970)")
+                fflush(stdout)
+                exit(0)  // NSApp.terminate is turned into "hide to the menu bar"
+            }
+        }
+
+        /// Delivery copies the text to the general pasteboard; call the returned closure to put back what's there now.
+        static func savePasteboard() -> () -> Void {
+            let pasteboard = NSPasteboard.general
+            let saved = pasteboard.pasteboardItems?.map { item in
+                item.types.compactMap { type in item.data(forType: type).map { (type, $0) } }
+            } ?? []
+            return {
                 pasteboard.clearContents()
                 pasteboard.writeObjects(saved.map { pairs in
                     let item = NSPasteboardItem()
                     pairs.forEach { item.setData($0.1, forType: $0.0) }
                     return item
                 })
-                try? await Task.sleep(for: .seconds(5))
-                print("offline-check: quit \(Date().timeIntervalSince1970)")
-                fflush(stdout)
-                exit(0)  // NSApp.terminate is turned into "hide to the menu bar"
             }
         }
 
@@ -55,10 +64,7 @@
         private static func runResidency(engine: VoiceInkEngine, file: URL) {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(10))
-                let pasteboard = NSPasteboard.general
-                let saved = pasteboard.pasteboardItems?.map { item in
-                    item.types.compactMap { type in item.data(forType: type).map { (type, $0) } }
-                } ?? []
+                let restorePasteboard = savePasteboard()
                 let keep = UserDefaults.standard.integer(forKey: ModelResidency.keepSecondsKey)
                 func mark(_ name: String) {
                     print("residency: mark \(name) \(Date().timeIntervalSince1970)")
@@ -85,12 +91,7 @@
                 try? await Task.sleep(for: .seconds(3))
                 await dictate("released, preload 3 s earlier")
                 await engine.releaseModels()  // ggml asserts at exit() while any Metal buffer is still allocated
-                pasteboard.clearContents()
-                pasteboard.writeObjects(saved.map { pairs in
-                    let item = NSPasteboardItem()
-                    pairs.forEach { item.setData($0.1, forType: $0.0) }
-                    return item
-                })
+                restorePasteboard()
                 fflush(stdout)
                 exit(0)
             }
@@ -148,10 +149,7 @@
                     print("first-run: unknown model \(modelName)")
                     exit(1)
                 }
-                let pasteboard = NSPasteboard.general
-                let saved = pasteboard.pasteboardItems?.map { item in
-                    item.types.compactMap { type in item.data(forType: type).map { (type, $0) } }
-                } ?? []
+                let restorePasteboard = savePasteboard()
                 let start = Date()
                 manager.startDownload(model)
                 var reportedPreflight = false
@@ -193,12 +191,7 @@
                 }
                 // ggml asserts at exit() while any Metal buffer is still allocated.
                 await manager.cleanupResources()
-                pasteboard.clearContents()
-                pasteboard.writeObjects(saved.map { pairs in
-                    let item = NSPasteboardItem()
-                    pairs.forEach { item.setData($0.1, forType: $0.0) }
-                    return item
-                })
+                restorePasteboard()
                 fflush(stdout)
                 exit(0)
             }
