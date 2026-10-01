@@ -166,16 +166,16 @@ else:  # tcpp, fluid: the backend suite
             check(r.get("cancelled") is True or same(r, a, ("text",)), f"request beside the long one: {show(r)}")
     for r in by("cancel-queued", "long"):
         check(r.get("ok") is True, f"the long request beside a cancelled one failed: {show(r)}")
-    for r in by("cancel-decoding", "long"):
-        check(r.get("cancelled") is True, f"decoding request wasn't cancelled: {show(r)}")
+    for r in by("cancel-decoding", "long") + by("cancel-decoding-late", "long"):
+        check(r.get("cancelled") is True, f"{r['phase']}: decoding request wasn't cancelled: {show(r)}")
         if suite == "fluid":
             # Nemotron's decode doesn't stop on a cancel: the wait is shown as a step that can't be stopped, and the
-            # request still ends cancelled. How long it took is reported only.
+            # request still ends cancelled (nothing published). How long it took is reported only.
             check(r.get("interruptibleAtCancel") is False and r.get("markedCancelled") is True,
-                  f"FluidAudio's decode not shown as cancelled and unstoppable: {show(r)}")
-            print(f"  cancel during the Nemotron decode took {r.get('afterCancel', 0):.2f} s (it can't be stopped)")
+                  f"{r['phase']}: FluidAudio's decode not shown as cancelled and unstoppable: {show(r)}")
+            print(f"  {r['phase']}: the cancel took {r.get('afterCancel', 0):.2f} s (Nemotron's decode can't be stopped)")
         else:
-            check(r.get("afterCancel", 1e9) <= 2.0, f"transcribe.cpp took {r.get('afterCancel', 0):.2f} s to stop")
+            check(r.get("afterCancel", 1e9) <= 2.0, f"{r['phase']}: transcribe.cpp took {r.get('afterCancel', 0):.2f} s to stop")
     events = [l.get("event") for l in lines if "event" in l]
     check("terminate" in events and "will terminate" in events, "no Quit through NSApplication")
     quit_at = next((l["t"] for l in lines if l.get("event") == "terminate"), None)

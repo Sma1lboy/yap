@@ -547,8 +547,12 @@
                 queued.cancel()
                 record("cancel-queued", "A", await queued.value)
                 record("cancel-queued", "long", await running.value)
-                let cancelling = start(big)
-                record("cancel-decoding", "long", await cancel(cancelling, in: .decoding, after: 0.7))
+                // Cancelled 0.7 s into its decode step (for Nemotron, often still before the SDK's decode starts) and
+                // 3 s in (inside it; the 22-minute file takes transcribe.cpp ~7 s), each followed by a request that
+                // must come out as alone.
+                record("cancel-decoding", "long", await cancel(start(big), in: .decoding, after: 0.7))
+                record("cancel-after", "A", await transcribe(a))
+                record("cancel-decoding-late", "long", await cancel(start(big), in: .decoding, after: 3))
                 record("cancel-after", "A", await transcribe(a))
 
                 // Quit one second into a transcription, through NSApplication.terminate from the run loop.
