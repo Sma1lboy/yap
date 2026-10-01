@@ -6,8 +6,9 @@
 # five clips (three Chinese with English terms from setup/asr/clips, two English made with `say`) ROUNDS times each
 # through the normal stop → transcribe → deliver path. Paste is a dry run: the clipboard and every wait up to ⌘V are
 # real, the key events are not posted, so nothing is typed into the app in front. The times are read back from each
-# dictation's SessionMetric. Prints p50/p95 per step and for the total. The dev and release apps' settings are never
-# read or written.
+# dictation's SessionMetric. Prints p50/p95 per step and for the total, and fails unless every History save came after
+# its ⌘V, the model loads once per press when it was released first, and a failed paste still lands in History. The
+# dev and release apps' settings are never read or written.
 set -euo pipefail
 
 APP_DIR="$1"

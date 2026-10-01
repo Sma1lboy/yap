@@ -43,4 +43,4 @@ next screens, instead of inside the first dictation. A user who dictates the mom
 the full 17 s once. The shader cache survives relaunches.
 
 These times wrap the whole `dictateFile` call. The step-by-step time from the user stopping to the ⌘V that pastes
-(p50 1.3 s with this model warm) is in [dictation-latency.md](dictation-latency.md).
+(p50 1.2 s with this model warm, language auto) is in [dictation-latency.md](dictation-latency.md).
