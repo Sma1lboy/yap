@@ -158,6 +158,20 @@
             shot("settings-account-signed-in", main: true, fullPage: true) { accountGroup() }
             UserDefaults.standard.set(false, forKey: CloudConfigSync.enabledKey)
 
+            // Settings › Agent Access (MCP): both switches off (as installed), then both on. Found through the
+            // search field, as a user would, in the whole window.
+            SettingsView.snapshotQuery = "MCP"
+            MainWindowNavigation.shared.selectedView = .settings
+            UserDefaults.standard.removeObject(forKey: AgentAccess.enabledKey)
+            UserDefaults.standard.removeObject(forKey: AgentAccess.dictationsKey)
+            shot("settings-agent-access-off", main: true, fullPage: true, titled: true) { ContentView() }
+            UserDefaults.standard.set(true, forKey: AgentAccess.enabledKey)
+            UserDefaults.standard.set(true, forKey: AgentAccess.dictationsKey)
+            shot("settings-agent-access-on", main: true, fullPage: true, titled: true) { ContentView() }
+            UserDefaults.standard.removeObject(forKey: AgentAccess.enabledKey)
+            UserDefaults.standard.removeObject(forKey: AgentAccess.dictationsKey)
+            SettingsView.snapshotQuery = ""
+
             // Panels that open inside a page.
             ModeView.snapshotOpensEditor = true
             MainWindowNavigation.shared.selectedView = .modes

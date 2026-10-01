@@ -99,6 +99,7 @@ struct VoiceInkApp: App {
             RecordingContextSnapshot.selfCheck()
             HistoryQuery.selfCheck()
             AgentAccess.selfCheck()
+            AgentConnection.selfCheck()
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()

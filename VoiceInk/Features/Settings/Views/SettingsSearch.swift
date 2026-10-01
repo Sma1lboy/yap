@@ -5,7 +5,7 @@ import Foundation
 /// ponytail: matches whole sections, not single rows; per-row filtering needs each row wrapped in its own check.
 enum SettingsGroup: CaseIterable {
     case account, config, shortcuts, voiceEdits, additionalShortcuts, meetings, pasting, interface, general, backup,
-        history, help, diagnostics, about
+        history, agentAccess, help, diagnostics, about
 
     /// Section title first, then its row titles. Keys are the ones the section's own views use.
     var terms: [String] {
@@ -67,6 +67,12 @@ enum SettingsGroup: CaseIterable {
             ]
         case .history:
             return [String(localized: "History"), String(localized: "Auto-delete transcripts and audio")]
+        case .agentAccess:
+            return [
+                String(localized: "Agent Access (MCP)"), AgentAccess.enabledTitle(), AgentAccess.dictationsTitle(),
+                String(localized: "Connect an Agent"), String(localized: "Helper"), "MCP", "Claude Code", "Codex",
+                "Cursor",
+            ]
         case .help:
             return [String(localized: "Help"), String(localized: "Explore Key Features")]
         case .diagnostics:
@@ -102,6 +108,9 @@ enum SettingsGroup: CaseIterable {
             assert(visible(for: String(localized: "Remind Me to Record When a Call Starts")) == [.meetings])
             let meeting = visible(for: String(localized: "Record Meeting"))
             assert(meeting.contains(.meetings) && !meeting.contains(.additionalShortcuts))
+            // Agent access is found by its switches and by the clients' names.
+            assert(visible(for: AgentAccess.dictationsTitle()) == [.agentAccess])
+            assert(visible(for: "claude code") == [.agentAccess] && visible(for: "mcp").contains(.agentAccess))
         }
     #endif
 }

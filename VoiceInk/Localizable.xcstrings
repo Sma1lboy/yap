@@ -4798,6 +4798,62 @@
         }
       }
     },
+    "Agent Access (MCP)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent-Zugriff (MCP)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accès des agents (MCP)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent 访问（MCP）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent 存取（MCP）"
+          }
+        }
+      }
+    },
+    "Agents can connect now, but they read data only after you turn on the switch above." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agents können sich schon jetzt verbinden, lesen aber erst Daten, wenn du den Schalter oben einschaltest."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les agents peuvent déjà se connecter, mais ne lisent les données qu'une fois l'option ci-dessus activée."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "现在就能连上，但打开上面的开关后 agent 才能读到数据。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在就能連上，但打開上面的開關後 agent 才能讀到資料。"
+          }
+        }
+      }
+    },
     "AI Enhancement" : {
       "localizations" : {
         "de" : {
@@ -9897,6 +9953,34 @@
         }
       }
     },
+    "Claude Code, Cursor, Codex and other agents can read your meetings and dictionary through a helper inside Yap. While this is off, every read gets an error." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code, Cursor, Codex und andere Agents können über ein Hilfsprogramm in Yap deine Meetings und dein Wörterbuch lesen. Solange das aus ist, bekommt jeder Lesezugriff einen Fehler."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code, Cursor, Codex et d'autres agents peuvent lire vos réunions et votre dictionnaire grâce à un programme d'assistance intégré à Yap. Tant que cette option est désactivée, chaque lecture renvoie une erreur."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code、Cursor、Codex 等 agent 可以通过 Yap 自带的辅助程序读取你的会议和词典。关着时，每次读取都会报错。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Claude Code、Cursor、Codex 等 agent 可以透過 Yap 內建的輔助程式讀取你的會議和字典。關閉時，每次讀取都會回報錯誤。"
+          }
+        }
+      }
+    },
     "Clear the Scratchpad?" : {
       "localizations" : {
         "de" : {
@@ -11645,6 +11729,34 @@
         }
       }
     },
+    "Connect an Agent" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agent verbinden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connecter un agent"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连接 agent"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "連接 agent"
+          }
+        }
+      }
+    },
     "Connect Ollama or configure a CLI command for local enhancement." : {
       "localizations" : {
         "de" : {
@@ -12208,6 +12320,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "全部複製"
+          }
+        }
+      }
+    },
+    "Copy Command" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Befehl kopieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier la commande"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制命令"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複製指令"
+          }
+        }
+      }
+    },
+    "Copy JSON" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JSON kopieren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier le JSON"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制 JSON"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "複製 JSON"
           }
         }
       }
@@ -13827,6 +13995,34 @@
         }
       }
     },
+    "Data is read on this Mac only. Yap opens no network port." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Daten werden nur auf diesem Mac gelesen. Yap öffnet keinen Netzwerkport."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les données sont lues uniquement sur ce Mac. Yap n'ouvre aucun port réseau."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数据只在这台 Mac 上读取，Yap 不开网络端口。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "資料只在這台 Mac 上讀取，Yap 不開網路連接埠。"
+          }
+        }
+      }
+    },
     "Database backups keep your email until they expire, at most about 89 days." : {
       "localizations" : {
         "de" : {
@@ -15150,6 +15346,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "聽寫次數"
+          }
+        }
+      }
+    },
+    "Dictations often hold passwords, private messages and drafts. While this is off, agents can search meetings only." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diktate enthalten oft Passwörter, private Nachrichten und Entwürfe. Solange das aus ist, können Agents nur Meetings durchsuchen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les dictées contiennent souvent des mots de passe, des messages privés et des brouillons. Tant que cette option est désactivée, les agents ne cherchent que dans les réunions."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "听写里常有密码、私信和草稿。关着时，agent 只能搜索会议。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "聽寫裡常有密碼、私訊和草稿。關閉時，agent 只能搜尋會議。"
           }
         }
       }
@@ -20036,6 +20260,34 @@
         }
       }
     },
+    "Helper" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hilfsprogramm"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Programme d'assistance"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "辅助程序"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輔助程式"
+          }
+        }
+      }
+    },
     "How long a local model stays in memory after a dictation. Keeping the default Whisper model loaded holds about 0.7 GB, and in our test a released model reloaded while you spoke without a longer wait, so After Each Dictation is the default. Under memory pressure a model is released sooner." : {
       "localizations" : {
         "de" : {
@@ -21311,6 +21563,34 @@
         }
       }
     },
+    "Include Dictation History" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diktatverlauf einbeziehen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inclure l'historique des dictées"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "包括听写历史"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "包括聽寫歷史"
+          }
+        }
+      }
+    },
     "Individual categories" : {
       "localizations" : {
         "de" : {
@@ -22300,6 +22580,34 @@
         }
       }
     },
+    "Learn More" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehr erfahren"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En savoir plus"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "了解更多"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "了解更多"
+          }
+        }
+      }
+    },
     "Learned %lld corrections" : {
       "comment" : "Success notification showing how many corrections Auto Learn applied.",
       "localizations" : {
@@ -22384,6 +22692,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更少"
+          }
+        }
+      }
+    },
+    "Let Agents Read Yap's Data" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agents dürfen Yaps Daten lesen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser les agents à lire les données de Yap"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让 agent 读取 Yap 的数据"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "讓 agent 讀取 Yap 的資料"
           }
         }
       }
@@ -29338,6 +29674,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "再次貼上"
+          }
+        }
+      }
+    },
+    "Paste into ~/.cursor/mcp.json" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In ~/.cursor/mcp.json einfügen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À coller dans ~/.cursor/mcp.json"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粘贴到 ~/.cursor/mcp.json"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "貼到 ~/.cursor/mcp.json"
           }
         }
       }
