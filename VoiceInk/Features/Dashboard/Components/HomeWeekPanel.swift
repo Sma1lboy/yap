@@ -71,14 +71,15 @@ struct HomeWeekPanel: View {
         if let fresh = try? await WeekStatsLoader.load(from: modelContext.container) {
             stats = fresh
             #if DEBUG
-                Self.reloads.append(fresh)
+                Self.reloads = (Self.reloads.count + 1, fresh)
             #endif
         }
     }
 
     #if DEBUG
-        /// Every week the panel loaded, in order: `make home-feedback-perf` counts them and checks what each saw.
-        @MainActor static var reloads: [WeekStats] = []
+        /// How many weeks the panel has loaded and the last one: `make home-feedback-perf` counts the fetches and
+        /// checks what the last one saw.
+        @MainActor static var reloads: (count: Int, last: WeekStats?) = (0, nil)
     #endif
 }
 

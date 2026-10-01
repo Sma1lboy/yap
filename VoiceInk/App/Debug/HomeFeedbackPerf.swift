@@ -239,7 +239,7 @@
             let defaults = UserDefaults(suiteName: suite)!
             defer { defaults.removePersistentDomain(forName: suite) }
             defaults.set(true, forKey: AutoLearnSettings.isEnabledKey)
-            HomeWeekPanel.reloads = []
+            HomeWeekPanel.reloads = (0, nil)
             let window = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 800, height: 600), styleMask: [.borderless], backing: .buffered,
                 defer: false)
