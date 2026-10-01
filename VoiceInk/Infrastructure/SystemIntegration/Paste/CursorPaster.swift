@@ -32,20 +32,40 @@ class CursorPaster {
         /// `make dictation-latency`: the clipboard and every wait up to ⌘V run as usual, but the frontmost app isn't
         /// asked about its focused field or selection, no key event is posted and nothing goes to Auto Learn or Last
         /// Paste, so nothing is read from or typed into whatever app is in front. Uses the normal timing even when a
-        /// remote-desktop app is frontmost.
+        /// remote-desktop app is frontmost. `dryRunResult` is what the paste reports (a failed paste for its check).
         static var dryRun = false
+        static var dryRunResult = PasteResult.commandPosted
+        /// When the last dry-run ⌘V would have gone out, so the check can tell what happened after it.
+        static var lastDryRunCommandTime: TimeInterval?
     #else
         static let dryRun = false
     #endif
 
+    /// What happened just before the paste, which decides how long ⌘V waits after the clipboard is set.
+    enum Lead {
+        /// The dictation was stopped with its keyboard shortcut. Yap's recorder never had keyboard focus (it is a
+        /// non-activating panel nobody clicked), so the app in front already has the focus ⌘V goes to.
+        case shortcut
+        /// A click in Yap's recorder or menu bar, a paste from History, or a selection Yap just set through
+        /// Accessibility (Undo and Rewrite Last Paste): focus or selection may still be moving.
+        case other
+    }
+
+    /// The clipboard is written and read back before the wait (ClipboardManager.setClipboard), so a local app reading
+    /// it on ⌘V gets the new text without any wait; upstream VoiceInk pasted with none before May 2026 (caca8c4d^).
+    /// What a wait still covers: focus coming back from Yap's own windows, and selection changes made through
+    /// Accessibility, which web views apply asynchronously. After a shortcut stop neither happened; the 20 ms is
+    /// margin, not measured.
     private static let prePasteDelay: TimeInterval = 0.10
+    private static let shortcutPrePasteDelay: TimeInterval = 0.02
     private static let pasteShortcutEventDelay: TimeInterval = 0.01
     private static let minimumClipboardRestoreDelay: TimeInterval = 0.25
 
     /// Remote-desktop and VM windows copy the local clipboard to the other machine asynchronously.
     /// With the usual 0.1 s / 0.25 s timing the remote side pastes before it has the new text, or the
     /// restore lands first, so it pastes the previous dictation (upstream #928, Screen Sharing; the
-    /// reporter's working setting was a 5 s restore delay).
+    /// reporter's working setting was a 5 s restore delay). XQuartz copies the pasteboard to X11's
+    /// clipboard the same way (its pbproxy), so X11 apps get the same timing.
     // ponytail: fixed bundle-ID list; add apps here as reports come in.
     private static let clipboardSyncingApps: Set<String> = [
         "com.apple.ScreenSharing",
@@ -58,13 +78,15 @@ class CursorPaster {
         "com.p5sys.jump.mac.viewer",
         "com.citrix.receiver.icaviewer.mac",
         "com.realvnc.vncviewer",
+        "org.xquartz.X11",
+        "org.macosforge.xquartz.X11",
     ]
 
-    static func pasteTiming(frontmostBundleID: String?) -> (prePaste: TimeInterval, minimumRestore: TimeInterval) {
-        guard let frontmostBundleID, clipboardSyncingApps.contains(frontmostBundleID) else {
-            return (prePasteDelay, minimumClipboardRestoreDelay)
+    static func pasteTiming(frontmostBundleID: String?, lead: Lead) -> (prePaste: TimeInterval, minimumRestore: TimeInterval) {
+        if let frontmostBundleID, clipboardSyncingApps.contains(frontmostBundleID) {
+            return (0.5, 5)
         }
-        return (0.5, 5)
+        return (lead == .shortcut ? shortcutPrePasteDelay : prePasteDelay, minimumClipboardRestoreDelay)
     }
 
     static func pasteAtCursor(_ text: String) {
@@ -76,16 +98,38 @@ class CursorPaster {
         }
     }
 
+    /// The checks, the clipboard and the selection read start now, in the caller's turn on the main thread; the wait
+    /// and ⌘V follow in the returned task. The wait counts from the clipboard write, so main-thread work queued ahead of
+    /// that task (the recorder closing, the session cleanup) runs inside the wait instead of before it.
     @MainActor
     @discardableResult
-    static func startPasteAtCursor(_ text: String) -> Task<PasteOutcome, Never> {
-        Task { @MainActor in
-            await performPasteSession(text)
+    static func startPasteAtCursor(_ text: String, lead: Lead = .other) -> Task<PasteOutcome, Never> {
+        switch preparePaste(text, lead: lead) {
+        case .finished(let outcome):
+            return Task { outcome }
+        case .ready(let paste):
+            return Task { @MainActor in await post(paste) }
         }
     }
 
+    private enum Preparation {
+        case finished(PasteOutcome)
+        case ready(PreparedPaste)
+    }
+
+    private struct PreparedPaste {
+        let text: String
+        let lead: Lead
+        let timing: (prePaste: TimeInterval, minimumRestore: TimeInterval)
+        let clipboardSetAt: TimeInterval
+        let targetProcessID: pid_t?
+        /// The text the paste is about to replace, what Undo Last Paste restores; read while the wait runs.
+        let replaced: Task<String, Never>?
+        let restore: (savedContents: ClipboardSnapshot, sessionID: String)?
+    }
+
     @MainActor
-    private static func performPasteSession(_ text: String) async -> PasteOutcome {
+    private static func preparePaste(_ text: String, lead: Lead) -> Preparation {
         let pasteboard = NSPasteboard.general
 
         // Both paste methods send keystrokes, which macOS drops without Accessibility.
@@ -99,7 +143,7 @@ class CursorPaster {
                 duration: 8,
                 actionButton: (String(localized: "Open Settings"), PrivacySettingsPane.accessibility.open)
             )
-            return PasteOutcome(result: .leftOnClipboard, autoLearnGeneration: nil)
+            return .finished(PasteOutcome(result: .leftOnClipboard, autoLearnGeneration: nil))
         }
 
         // Nothing editable focused (desktop, Finder): ⌘V would go nowhere and the restore would then
@@ -114,11 +158,11 @@ class CursorPaster {
                 duration: 6,
                 actionButton: (String(localized: "Open Scratchpad"), { ScratchpadController.shared.show() })
             )
-            return PasteOutcome(result: .sentToScratchpad, autoLearnGeneration: nil)
+            return .finished(PasteOutcome(result: .sentToScratchpad, autoLearnGeneration: nil))
         }
 
         let timing = pasteTiming(
-            frontmostBundleID: dryRun ? nil : NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
+            frontmostBundleID: dryRun ? nil : NSWorkspace.shared.frontmostApplication?.bundleIdentifier, lead: lead)
         let shouldRestoreClipboard = UserDefaults.standard.bool(forKey: "restoreClipboardAfterPaste")
         let savedContents = shouldRestoreClipboard ? snapshotClipboard(from: pasteboard) : []
         let sessionID = UUID().uuidString
@@ -131,26 +175,39 @@ class CursorPaster {
             )
         else {
             logger.error("Failed to prepare clipboard for paste")
-            return PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil)
+            return .finished(PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil))
         }
 
-        // Read while the prePaste delay runs; the text about to be replaced is what Undo Last Paste restores.
         let targetProcessID = NSWorkspace.shared.frontmostApplication?.processIdentifier
+        return .ready(
+            PreparedPaste(
+                text: text, lead: lead, timing: timing, clipboardSetAt: ProcessInfo.processInfo.systemUptime,
+                targetProcessID: targetProcessID,
+                replaced: dryRun
+                    ? nil : Task.detached { targetProcessID.map { LastPasteEditor.selectedText(processID: $0) } ?? "" },
+                restore: shouldRestoreClipboard ? (savedContents, sessionID) : nil))
+    }
+
+    @MainActor
+    private static func post(_ paste: PreparedPaste) async -> PasteOutcome {
+        await waitBeforePaste(paste)
         if dryRun {
-            await wait(timing.prePaste)
+            #if DEBUG
+                guard dryRunResult == .commandPosted else {
+                    return PasteOutcome(result: dryRunResult, autoLearnGeneration: nil)
+                }
+            #endif
             return PasteOutcome(result: .commandPosted, autoLearnGeneration: nil, commandTime: await simulatePasteKeys())
         }
-        let replacedTask = Task.detached { targetProcessID.map { LastPasteEditor.selectedText(processID: $0) } ?? "" }
-        await wait(timing.prePaste)
-        let replaced = await replacedTask.value
+        let replaced = await paste.replaced?.value ?? ""
 
         let posted: (result: PasteResult, commandTime: TimeInterval?)
         let autoLearnGeneration: UInt64?
         if AutoLearnSettings.isEnabled {
             posted = await postPasteCommand()
             autoLearnGeneration = await AutoLearnService.shared.pasteDidFinish(
-                text: text,
-                processID: targetProcessID,
+                text: paste.text,
+                processID: paste.targetProcessID,
                 commandPosted: posted.result.didPostPasteCommand
             )
         } else {
@@ -159,20 +216,33 @@ class CursorPaster {
         }
         let pasteResult = posted.result
         if pasteResult.didPostPasteCommand {
-            LastPasteEditor.shared.pasteDidFinish(text: text, processID: targetProcessID, replacing: replaced)
+            LastPasteEditor.shared.pasteDidFinish(text: paste.text, processID: paste.targetProcessID, replacing: replaced)
         }
         // A paste that never reached the app must not take the text back off the clipboard.
-        if shouldRestoreClipboard && pasteResult.didPostPasteCommand {
+        if let restore = paste.restore, pasteResult.didPostPasteCommand {
             scheduleClipboardRestore(
-                savedContents,
-                expectedText: text,
-                sessionID: sessionID,
-                minimumDelay: timing.minimumRestore,
-                on: pasteboard
+                restore.savedContents,
+                expectedText: paste.text,
+                sessionID: restore.sessionID,
+                minimumDelay: paste.timing.minimumRestore,
+                on: NSPasteboard.general
             )
         }
 
         return PasteOutcome(result: pasteResult, autoLearnGeneration: autoLearnGeneration, commandTime: posted.commandTime)
+    }
+
+    /// The pre-paste wait, counted from the clipboard write. After a shortcut stop the user may still be holding the
+    /// shortcut's modifiers (toggle mode stops on a press), which would turn ⌘V into ⌥⌘V or ⇧⌘V; ⌘V waits for them to
+    /// come up, until 0.1 s after the clipboard write at most, the wait it used to have.
+    private static func waitBeforePaste(_ paste: PreparedPaste) async {
+        func elapsed() -> TimeInterval { ProcessInfo.processInfo.systemUptime - paste.clipboardSetAt }
+        await wait(paste.timing.prePaste - elapsed())
+        guard paste.lead == .shortcut else { return }
+        let held: NSEvent.ModifierFlags = [.shift, .control, .option, .function]
+        while elapsed() < prePasteDelay, !NSEvent.modifierFlags.intersection(held).isEmpty {
+            await wait(pasteShortcutEventDelay)
+        }
     }
 
     /// Roles that are never a text target. Anything else (including an unreadable element) counts as text.
@@ -211,6 +281,14 @@ class CursorPaster {
         assert(!canTakeText(focusRole: nil, focusMissing: true, readFailed: false), "no focused element")
         assert(!canTakeText(focusRole: "AXList", focusMissing: false, readFailed: false), "Finder list")
         assert(canTakeText(focusRole: nil, focusMissing: false, readFailed: true), "AX unreadable keeps pasting")
+        // Clipboard-syncing apps keep their long wait whatever came before; a shortcut stop waits less than a click.
+        for lead in [Lead.shortcut, .other] {
+            assert(pasteTiming(frontmostBundleID: "com.apple.ScreenSharing", lead: lead) == (0.5, 5))
+            assert(pasteTiming(frontmostBundleID: "org.xquartz.X11", lead: lead) == (0.5, 5))
+        }
+        let local = "com.apple.TextEdit"
+        assert(pasteTiming(frontmostBundleID: local, lead: .shortcut).prePaste < pasteTiming(frontmostBundleID: local, lead: .other).prePaste)
+        assert(pasteTiming(frontmostBundleID: local, lead: .other).prePaste == prePasteDelay, "clicks keep the old wait")
     }
     #endif
 
@@ -352,6 +430,9 @@ class CursorPaster {
     private static func simulatePasteKeys() async -> TimeInterval {
         await wait(pasteShortcutEventDelay)
         let commandTime = ProcessInfo.processInfo.systemUptime
+        #if DEBUG
+            lastDryRunCommandTime = commandTime
+        #endif
         await wait(pasteShortcutEventDelay)
         await wait(pasteShortcutEventDelay)
         return commandTime

@@ -96,6 +96,7 @@ struct VoiceInkApp: App {
             ChineseCleanup.selfCheck()
             WhisperLivePreview.selfCheck()
             DictationTimeline.selfCheck()
+            TranscriptionDelivery.selfCheck()
             AutoLearnAXTextReader.selfCheck()
             Task { @MainActor in await RecordingShortcutModeHandler.selfCheck() }
             Task { @MainActor in await WhisperModelManager.selfCheck() }

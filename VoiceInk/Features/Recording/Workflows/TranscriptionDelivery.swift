@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import os
 
@@ -181,9 +182,12 @@ final class TranscriptionDelivery {
         let appendSpace = UserDefaults.standard.bool(forKey: "AppendTrailingSpace")
         let pastedText = textToPaste + (appendSpace ? " " : "")
         SoundManager.shared.playStopSound()
+        // Read before the recorder is dismissed: a Yap window with keyboard focus (the recorder clicked during the
+        // recording, or Yap's own window in front) means focus has to come back before ⌘V.
+        let lead = timeline?.stop.source.pasteLead(yapWindowIsKey: NSApp.keyWindow != nil) ?? .other
         await actions.dismiss()
 
-        let pasteTask = CursorPaster.startPasteAtCursor(pastedText)
+        let pasteTask = CursorPaster.startPasteAtCursor(pastedText, lead: lead)
 
         let selectedKey = FinishAndSendSettings.selectedKey
         let finishAndSendKey: FinishAndSendKey = sendAfterPaste ? selectedKey : .none
@@ -213,3 +217,30 @@ extension CursorPaster.PasteResult {
         }
     }
 }
+
+extension DictationTimeline.StopSource {
+    /// A stop with the keyboard shortcut leaves focus in the app in front, unless a Yap window had it; a click in Yap's
+    /// recorder or menu bar may have moved it. `file` is `make dictation-latency`, which measures the shortcut path
+    /// into another app (the mock app's own window doesn't count).
+    fileprivate func pasteLead(yapWindowIsKey: Bool) -> CursorPaster.Lead {
+        switch self {
+        case .file: return .shortcut
+        case .shortcutRelease, .shortcutPress: return yapWindowIsKey ? .other : .shortcut
+        case .recorderButton, .finishAndSend, .other: return .other
+        }
+    }
+}
+
+#if DEBUG
+    extension TranscriptionDelivery {
+        static func selfCheck() {
+            for source in [DictationTimeline.StopSource.shortcutRelease, .shortcutPress] {
+                assert(source.pasteLead(yapWindowIsKey: false) == .shortcut)
+                assert(source.pasteLead(yapWindowIsKey: true) == .other, "focus has to come back from Yap first")
+            }
+            for source in [DictationTimeline.StopSource.recorderButton, .finishAndSend, .other] {
+                assert(source.pasteLead(yapWindowIsKey: false) == .other, "a click may have moved focus")
+            }
+        }
+    }
+#endif
