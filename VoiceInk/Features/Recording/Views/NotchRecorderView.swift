@@ -84,7 +84,8 @@ struct NotchRecorderView<S: RecorderStateProvider & ObservableObject>: View {
     private let assistantSideExpansion: CGFloat = 230
     private let activeHeightBonus: CGFloat = 6
     private let transcriptPanelHeight: CGFloat = 57
-    private let modelWaitPanelHeight: CGFloat = 78
+    /// Two lines, or three with the "can't be stopped" note.
+    private var modelWaitPanelHeight: CGFloat { modelWait?.stopNote == nil ? 60 : 78 }
     private let assistantPanelHeight: CGFloat = 320
 
     private var mainRowHeight: CGFloat { notchHeight + activeHeightBonus }

@@ -537,26 +537,30 @@
             }
 
             // A dictation queued for its local model: behind a cancelled dictation still detecting the language
-            // (a step that can't stop), and behind the audio import's decode; the Quit panel waiting for each. Then
-            // the same dictation once its own transcription runs (no line), and the Quit panel with nothing left but
-            // freeing the models. All languages, light and dark.
+            // (a step that can't stop), behind the audio import's decode, behind a dictation still transcribing; the
+            // Quit panel for the states Quit can meet (it cancels an import before it waits). Then the same dictation
+            // once its own transcription runs (no line), and the Quit panel with nothing left but freeing the models.
+            // All languages, light and dark.
             app.engine.recordingState = .transcribing
             app.engine.partialTranscript = ""
             let activity = LocalModelActivity.shared
-            let waitStates: [(String, LocalModelActivity.Snapshot)] = [
+            let waitStates: [(String, LocalModelActivity.Snapshot, quit: Bool)] = [
                 ("cancelled", .init(
                     id: 1, kind: .transcription(.dictation), stage: .languageDetection,
-                    stageStarted: Date().addingTimeInterval(-12), cancelled: true, interruptible: false)),
+                    stageStarted: Date().addingTimeInterval(-12), cancelled: true, interruptible: false), true),
                 ("import", .init(
                     id: 2, kind: .transcription(.fileImport), stage: .decoding,
-                    stageStarted: Date().addingTimeInterval(-48), cancelled: false, interruptible: true)),
+                    stageStarted: Date().addingTimeInterval(-48), cancelled: false, interruptible: true), false),
+                ("dictation", .init(
+                    id: 3, kind: .transcription(.dictation), stage: .decoding,
+                    stageStarted: Date().addingTimeInterval(-7), cancelled: false, interruptible: true), true),
             ]
-            for (name, work) in waitStates {
+            for (name, work, quit) in waitStates {
                 activity.setSnapshot(
                     works: [work], waits: [.init(requester: .dictation, since: Date().addingTimeInterval(-20))])
                 shot("recorder-wait-mini-\(name)", size: CGSize(width: 420, height: 200), main: true) { miniRecorder() }
                 shot("recorder-wait-notch-\(name)", size: CGSize(width: 560, height: 200), main: true) { notchRecorder() }
-                shot("quit-wait-\(name)", main: true, fit: true) { QuitWaitView(activity: activity) }
+                if quit { shot("quit-wait-\(name)", main: true, fit: true) { QuitWaitView(activity: activity) } }
             }
             activity.setSnapshot(works: [], waits: [])
             shot("recorder-wait-mini-done", size: CGSize(width: 420, height: 200), main: true) { miniRecorder() }
