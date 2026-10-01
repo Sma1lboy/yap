@@ -206,7 +206,7 @@ struct YapLibrary {
         let start = clock.now
         let container: ModelContainer
         var copied = start
-        if let kept = copies.kept[name], kept.stamps == Self.stamps(of: store) {
+        if let kept = copies.kept(name), kept.stamps == Self.stamps(of: store) {
             container = kept.container
         } else {
             copies.remove(name)
@@ -222,7 +222,7 @@ struct YapLibrary {
                 // by Yap 1.9.0 has other entity hashes than later builds). Nothing here saves. A Release dictionary
                 // store was written with CloudKit; its copy is opened without.
                 container = try ModelContainer(for: YapStores.schema, configurations: configuration(copy))
-                copies.kept[name] = Copies.Copy(stamps: stamps, folder: folder, container: container)
+                copies.keep(name, Copies.Copy(stamps: stamps, folder: folder, container: container))
             } catch {
                 try? FileManager.default.removeItem(at: folder)
                 throw error
@@ -239,14 +239,15 @@ struct YapLibrary {
         return result
     }
 
-    /// Deletes the copies. The server calls it before it exits.
+    /// Deletes the copies. The server calls it before it exits, also on SIGTERM, SIGINT and SIGHUP (main.swift).
     func removeCopies() {
-        for name in Array(copies.kept.keys) { copies.remove(name) }
+        copies.removeAll()
     }
 
     /// The copy of each store and the container open on it, kept while Yap's files are unchanged: opening a copy
     /// makes SQLite rebuild the WAL's index (the `-shm`, which isn't copied), about 90 ms for a 4 MB WAL, and a
-    /// session's calls usually come seconds apart while Yap writes nothing.
+    /// session's calls usually come seconds apart while Yap writes nothing. Locked: a signal handler on another
+    /// thread removes them while a call may be running.
     final class Copies {
         struct Copy {
             let stamps: [String]
@@ -254,11 +255,28 @@ struct YapLibrary {
             let container: ModelContainer
         }
 
-        var kept: [String: Copy] = [:]
+        private var copies: [String: Copy] = [:]
+        private let lock = NSLock()
+
+        func kept(_ name: String) -> Copy? {
+            lock.withLock { copies[name] }
+        }
+
+        func keep(_ name: String, _ copy: Copy) {
+            lock.withLock { copies[name] = copy }
+        }
 
         func remove(_ name: String) {
-            guard let copy = kept.removeValue(forKey: name) else { return }
+            guard let copy = lock.withLock({ copies.removeValue(forKey: name) }) else { return }
             try? FileManager.default.removeItem(at: copy.folder)
+        }
+
+        func removeAll() {
+            let all = lock.withLock {
+                defer { copies = [:] }
+                return copies.values
+            }
+            for copy in all { try? FileManager.default.removeItem(at: copy.folder) }
         }
     }
 

@@ -53,5 +53,17 @@ EnclosingApp.adoptLanguage()
 let language = EnclosingApp.strings.preferredLocalizations.first ?? "?"
 log("\(EnclosingApp.version), data in \(dataDirectory.path), \(language) strings from \(EnclosingApp.strings.bundlePath)")
 let library = YapLibrary(dataDirectory: dataDirectory, logsTiming: logsTiming)
+// A client that stops the server with a signal instead of closing stdin still gets the copies deleted (MCP's stdio
+// shutdown is close stdin, then SIGTERM, then SIGKILL; only SIGKILL leaves one behind).
+let signalSources = [SIGTERM, SIGINT, SIGHUP].map { number in
+    signal(number, SIG_IGN)
+    let source = DispatchSource.makeSignalSource(signal: number, queue: .global())
+    source.setEventHandler {
+        library.removeCopies()
+        exit(0)
+    }
+    source.resume()
+    return source
+}
 MCPServer(library: library, output: protocolOutput, access: EnclosingApp.agentAccess).run()
 library.removeCopies()

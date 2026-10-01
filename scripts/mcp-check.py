@@ -345,6 +345,22 @@ def tools(helper, folder, version, domain):
     check(not os.path.exists(os.path.join(folder, "no-such-folder")), "the missing folder was created")
     print("%s: missing data folder: empty lists, ids are tool errors" % lang)
 
+    # A client that ends the session with SIGTERM instead of closing stdin: the copy the helper kept is deleted too.
+    switches(domain, True, True)
+    before = set(glob.glob(os.path.join(tempfile.gettempdir(), "yap-mcp-*")))
+    t = Session(helper, os.path.join(folder, "data"), stderr)
+    t.initialize()
+    t.ok("list_meetings")
+    t.ok("get_dictionary")
+    kept = set(glob.glob(os.path.join(tempfile.gettempdir(), "yap-mcp-*"))) - before
+    check(len(kept) == 2, "copies kept between calls (history, dictionary): %r" % sorted(kept))
+    t.process.terminate()
+    check(t.process.wait(timeout=5) == 0, "SIGTERM: exit code %r" % t.process.returncode)
+    left = set(glob.glob(os.path.join(tempfile.gettempdir(), "yap-mcp-*"))) - before
+    check(not left, "SIGTERM left copies: %r" % sorted(left))
+    switches(domain, None, None)
+    print("%s: two copies kept between calls; SIGTERM deleted them and exited 0" % lang)
+
 
 def concurrent(helper, app, folder, domain):
     """The writer saves a dictation every few milliseconds. A consistent state of the history holds dictations
