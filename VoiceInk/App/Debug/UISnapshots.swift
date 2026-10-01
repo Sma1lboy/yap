@@ -537,9 +537,9 @@
             }
 
             // A dictation queued for its local model: behind a cancelled dictation still detecting the language
-            // (a step that can't stop), and behind the audio import's decode; then the same dictation once its own
-            // transcription runs (no line). And the Quit panel: waiting for a cancelled dictation, then with
-            // nothing left but freeing the models.
+            // (a step that can't stop), and behind the audio import's decode; the Quit panel waiting for each. Then
+            // the same dictation once its own transcription runs (no line), and the Quit panel with nothing left but
+            // freeing the models. All languages, light and dark.
             app.engine.recordingState = .transcribing
             app.engine.partialTranscript = ""
             let activity = LocalModelActivity.shared
@@ -554,14 +554,14 @@
             for (name, work) in waitStates {
                 activity.setSnapshot(
                     works: [work], waits: [.init(requester: .dictation, since: Date().addingTimeInterval(-20))])
-                shot("recorder-wait-mini-\(name)", size: CGSize(width: 420, height: 200)) { miniRecorder() }
-                shot("recorder-wait-notch-\(name)", size: CGSize(width: 560, height: 200)) { notchRecorder() }
-                shot("quit-wait-\(name)", size: CGSize(width: 380, height: 200)) { QuitWaitView(activity: activity) }
+                shot("recorder-wait-mini-\(name)", size: CGSize(width: 420, height: 200), main: true) { miniRecorder() }
+                shot("recorder-wait-notch-\(name)", size: CGSize(width: 560, height: 200), main: true) { notchRecorder() }
+                shot("quit-wait-\(name)", main: true, fit: true) { QuitWaitView(activity: activity) }
             }
             activity.setSnapshot(works: [], waits: [])
-            shot("recorder-wait-mini-done", size: CGSize(width: 420, height: 200)) { miniRecorder() }
-            shot("recorder-wait-notch-done", size: CGSize(width: 560, height: 200)) { notchRecorder() }
-            shot("quit-wait-freeing", size: CGSize(width: 380, height: 160)) { QuitWaitView(activity: activity) }
+            shot("recorder-wait-mini-done", size: CGSize(width: 420, height: 200), main: true) { miniRecorder() }
+            shot("recorder-wait-notch-done", size: CGSize(width: 560, height: 200), main: true) { notchRecorder() }
+            shot("quit-wait-freeing", main: true, fit: true) { QuitWaitView(activity: activity) }
             app.engine.recordingState = .idle
             app.engine.partialTranscript = ""
 

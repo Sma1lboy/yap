@@ -570,8 +570,9 @@
                     while true {
                         try? await Task.sleep(for: .milliseconds(500))
                         let work = self.activity.works.first
-                        let panel = NSApp.windows.contains {
-                            $0 is NSPanel && $0.isVisible && "\(type(of: $0.contentView as Any))".contains("QuitWaitView")
+                        let panel = NSApp.windows.contains { window in
+                            window is NSPanel && window.isVisible
+                                && window.contentView.map { "\(type(of: $0))".contains("QuitWaitView") } == true
                         }
                         IsolationCheck.emit([
                             "event": "quit-wait", "title": work?.waitTitle ?? "", "stage": work?.stageText ?? "",

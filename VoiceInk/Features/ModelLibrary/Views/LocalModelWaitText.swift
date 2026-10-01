@@ -8,7 +8,8 @@ extension LocalModelActivity.Snapshot {
         switch kind {
         case .transcription(.dictation):
             return cancelled
-                ? String(localized: "Waiting for a cancelled dictation") : String(localized: "Waiting for another dictation")
+                ? String(localized: "Waiting for a cancelled dictation")
+                : String(localized: "Waiting for an earlier dictation")
         case .transcription(.fileImport):
             return cancelled
                 ? String(localized: "Waiting for a cancelled audio import") : String(localized: "Waiting for the audio import")
@@ -17,7 +18,7 @@ extension LocalModelActivity.Snapshot {
         case .transcription(.other):
             return cancelled
                 ? String(localized: "Waiting for a cancelled transcription")
-                : String(localized: "Waiting for another transcription")
+                : String(localized: "Waiting for an earlier transcription")
         case .warmUp: return String(localized: "Waiting for the model's warm-up")
         case .load: return String(localized: "Waiting for the model to load")
         case .release: return String(localized: "Waiting for the model to unload")

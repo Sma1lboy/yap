@@ -46799,58 +46799,58 @@
         }
       }
     },
-    "Waiting for another dictation" : {
+    "Waiting for an earlier dictation" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Warten auf ein anderes Diktat"
+            "value" : "Warten auf ein früheres Diktat"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En attente d’une autre dictée"
+            "value" : "En attente d’une dictée précédente"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在等待另一次听写"
+            "value" : "正在等待之前的一次听写"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在等待另一次聽寫"
+            "value" : "正在等待之前的一次聽寫"
           }
         }
       }
     },
-    "Waiting for another transcription" : {
+    "Waiting for an earlier transcription" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Warten auf eine andere Transkription"
+            "value" : "Warten auf eine frühere Transkription"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En attente d’une autre transcription"
+            "value" : "En attente d’une transcription précédente"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在等待另一次转写"
+            "value" : "正在等待之前的一次转写"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在等待另一次轉錄"
+            "value" : "正在等待之前的一次轉錄"
           }
         }
       }
