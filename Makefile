@@ -314,11 +314,12 @@ home-feedback-perf: build
 # (-zh, and -zht for Traditional), German (-de) and French (-fr), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots
 # (scripts/ui-snapshots.sh), so its fake modes and providers go to a throwaway defaults domain, never the dev app's;
 # dev-defaults-guard.sh fails the run if the dev app's settings changed anyway. No window, no focus change; the
-# sandbox profile denies network access.
+# sandbox profile denies network access. ONLY=<prefix>[,<prefix>…] renders just the shots whose names start with one
+# of them (with YAP_UI_SNAPSHOTS_OUT=<dir>, so the full set elsewhere isn't replaced).
 ui-snapshots: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
-	scripts/dev-defaults-guard.sh scripts/ui-snapshots.sh "$$APP_DIR"
+	YAP_UI_SNAPSHOTS_ONLY="$(ONLY)" scripts/dev-defaults-guard.sh scripts/ui-snapshots.sh "$$APP_DIR"
 
 # Self-contained review page(s) of the snapshots: /tmp/yap-ui/review.html (review-N.html past 3.8 MB each).
 ui-review: ui-snapshots

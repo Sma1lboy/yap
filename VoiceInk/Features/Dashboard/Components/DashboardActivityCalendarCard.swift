@@ -64,7 +64,11 @@ struct DashboardActivityCalendarCard: View {
 
             HStack(alignment: .top, spacing: AppTheme.Spacing.x8) {
                 metric(label: "Sessions", value: summary.hasData ? Formatters.formattedCompactNumber(summary.sessionCount) : "--", emphasized: true)
-                metric(label: "Average output", value: summary.hasData ? "\(Formatters.formattedCompactNumber(averageWordsPerSession)) words" : "--")
+                metric(
+                    label: "Average output",
+                    value: summary.hasData
+                        ? String(format: String(localized: "%@ words"), Formatters.formattedCompactNumber(averageWordsPerSession))
+                        : "--")
                 metric(label: "Best time", value: peakWindowText)
             }
         }
@@ -250,7 +254,7 @@ struct DashboardActivityCalendarCard: View {
 
     private var peakWindowText: String {
         guard !isPeakHoursLocked, peakHoursSummary.hasData else {
-            return "Not enough data"
+            return String(localized: "Not enough data")
         }
 
         return "\(formattedHour(peakHoursSummary.startHour))–\(formattedHour(peakHoursSummary.endHour))"

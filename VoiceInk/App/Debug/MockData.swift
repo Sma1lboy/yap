@@ -74,6 +74,65 @@
             }
         }
 
+        /// The Insights page for `make ui-snapshots`: `scale` 1 is a heavy year (403 h saved, 131 h of audio on one
+        /// model, long model names), 0 a first day (seconds of audio, under a minute saved), below 0 nothing at all.
+        static func insightsPage(scale: Double) -> some View {
+            let calendar = DashboardPeriodWindows.dashboardCalendar()
+            let start = calendar.dateInterval(of: .weekOfYear, for: Date())?.start ?? Date()
+            let heavy = scale > 0, empty = scale < 0
+            let points = (0..<7).map { day -> DashboardProductivityPoint in
+                let date = calendar.date(byAdding: .day, value: day, to: start) ?? start
+                let words = empty ? 0 : heavy ? [212_004, 318_920, 297_113, 456_300, 0, 0, 0][day] : (day == 3 ? 90 : 0)
+                return DashboardProductivityPoint(
+                    date: date, label: date.formatted(.dateTime.weekday(.abbreviated)),
+                    accessibilityLabel: date.formatted(.dateTime.weekday(.wide)), words: words)
+            }
+            let hours = (0..<24).map { hour in
+                DashboardHourlyActivityPoint(
+                    hour: hour, wordCount: empty ? 0 : heavy ? 1_000 * (hour % 12) : (hour == 10 ? 90 : 0),
+                    sessionCount: empty ? 0 : heavy ? 10 * (hour % 12) : (hour == 10 ? 3 : 0))
+            }
+            let usage =
+                empty
+                ? ModelUsageSummary.empty
+                : heavy
+                    ? ModelUsageSummary(
+                        transcriptionModels: [
+                            TranscriptionModelUsage(name: "Large v3 Turbo (Quantized)", sessionCount: 11_208, totalAudioDuration: 131 * 3_600 + 47 * 60),
+                            TranscriptionModelUsage(name: "openai/gpt-4o-transcribe-2026-09-preview", sessionCount: 1_160, totalAudioDuration: 45 * 60 + 12),
+                            TranscriptionModelUsage(name: "Parakeet V3", sessionCount: 40, totalAudioDuration: 38),
+                        ],
+                        enhancementModels: [
+                            EnhancementTokenUsage(name: "deepseek/deepseek-v4.1-flash", sessionCount: 9_870, estimatedTokens: 12_400_000),
+                            EnhancementTokenUsage(name: "gpt-5-mini", sessionCount: 120, estimatedTokens: 84_000),
+                        ])
+                    : ModelUsageSummary(
+                        transcriptionModels: [TranscriptionModelUsage(name: "Large v3 Turbo (Quantized)", sessionCount: 3, totalAudioDuration: 27)],
+                        enhancementModels: [])
+            let performance: [ModelPerformanceSummary] =
+                empty
+                ? []
+                : [
+                    ModelPerformanceSummary(kind: .transcription, name: "Large v3 Turbo (Quantized)", sessionCount: heavy ? 11_208 : 3, averageProcessingDuration: heavy ? 1.18 : 0.74, averageSpeedFactor: 7),
+                    ModelPerformanceSummary(kind: .enhancement, name: "deepseek/deepseek-v4.1-flash", sessionCount: heavy ? 9_870 : 1, averageProcessingDuration: heavy ? 61.3 : 0.52),
+                ]
+            return DashboardInsightsView(
+                selectedPeriod: .constant(.lastSevenDays), productivityPoints: points, dailyActivityPoints: points,
+                peakHoursSummary: empty
+                    ? .empty
+                    : DashboardPeakHoursSummary(
+                        startHour: 10, endHour: 12, wordCount: heavy ? 22_000 : 90, sessionCount: heavy ? 220 : 3, hourlyActivity: hours),
+                isPeakHoursLocked: false,
+                timeSavedSummary: DashboardTimeSavedSummary(
+                    timeSaved: empty ? 0 : heavy ? 403 * 3_600 + 21 * 60 : 38, wordCount: empty ? 0 : heavy ? 1_284_337 : 90,
+                    sessionCount: empty ? 0 : heavy ? 12_408 : 3, timedPastes: empty ? 0 : heavy ? 9_870 : 3),
+                modelUsage: usage, modelPerformanceSummaries: performance,
+                updatedAtText: String(
+                    format: String(localized: "Updated at %@"),
+                    Date(timeIntervalSince1970: 1_790_000_000).formatted(.dateTime.month(.abbreviated).day().hour().minute())),
+                isRefreshingStats: false, onBack: {}, onRefreshStats: {}, onViewModelUsage: {}, onViewModelPerformance: {})
+        }
+
         static let customProvider = CustomAIProviderConfig(
             name: "LM Studio", baseURL: "http://localhost:1234/v1", models: ["qwen3-8b", "gemma-3-12b"],
             selectedModel: "qwen3-8b")

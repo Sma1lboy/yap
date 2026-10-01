@@ -63,13 +63,16 @@
             CustomAIProviderManager.shared.replaceProviders([MockData.customProvider])
 
             var written: [String] = []
+            /// YAP_UI_SNAPSHOTS_ONLY=<prefix>[,<prefix>…] renders only the shots whose names start with one of them
+            /// (`make ui-snapshots ONLY=insights-page`), for a targeted re-check without all of them.
+            let only = (ProcessInfo.processInfo.environment["YAP_UI_SNAPSHOTS_ONLY"] ?? "").split(separator: ",").map(String.init)
             /// `fit`: the view's own size, as a window that sizes to its content (the meeting panel, notifications)
             /// shows it; `size` is ignored.
             func shot<V: View>(
                 _ name: String, size: CGSize = size, main: Bool = false, fullPage: Bool = false, titled: Bool = false,
                 highContrast: Bool = false, fit: Bool = false, @ViewBuilder _ content: () -> V
             ) {
-                guard main || suffix.isEmpty else { return }
+                guard main || suffix.isEmpty, only.isEmpty || only.contains(where: name.hasPrefix) else { return }
                 var size = size
                 if fit {
                     let fitting = NSHostingView(rootView: app.environment(content())).fittingSize
@@ -169,6 +172,13 @@
                 )
                 .frame(width: 760)
                 .padding(AppTheme.Spacing.x6)
+            }
+            // The whole Insights page with what its durations can be: hundreds of hours and long model names, under a
+            // minute, and nothing yet. At 620 pt, about what the page gets in the smallest window.
+            for (name, scale) in [("long", 1.0), ("short", 0.0), ("empty", -1.0)] {
+                shot("insights-page-\(name)", main: true, fit: true) {
+                    MockData.insightsPage(scale: scale).frame(width: 620).padding(AppTheme.Spacing.x6)
+                }
             }
 
             for state in YapCloud.SnapshotState.allCases where state != .funded {

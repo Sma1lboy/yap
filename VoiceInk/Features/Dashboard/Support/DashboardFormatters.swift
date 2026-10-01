@@ -54,12 +54,24 @@ enum Formatters {
         if hours >= 1000 {
             return "\(formattedCompactNumber(hours)) h"
         }
-        return durationFormatter(.short, for: interval).string(from: displayed(interval)) ?? "\(hours) h"
+        return durationFormatter(.short, units: inSeconds(interval) ? [.second] : [.hour, .minute])
+            .string(from: displayed(interval)) ?? "\(hours) h"
     }
 
     /// The same, written out for VoiceOver: "3 hours, 5 minutes".
     static func spokenHoursAndMinutes(_ interval: TimeInterval) -> String {
-        durationFormatter(.full, for: interval).string(from: displayed(interval)) ?? formattedCompactHoursAndMinutes(interval)
+        durationFormatter(.full, units: inSeconds(interval) ? [.second] : [.hour, .minute]).string(from: displayed(interval))
+            ?? formattedCompactHoursAndMinutes(interval)
+    }
+
+    /// One unit, rounded, for a narrow column: "132 hr", "45 min", "38 sec" ("132小时", "45 Min.").
+    static func formattedRoundedDuration(_ interval: TimeInterval) -> String {
+        let interval = max(0, interval)
+        let (value, unit): (TimeInterval, NSCalendar.Unit) =
+            interval >= 3_570
+            ? ((interval / 3_600).rounded() * 3_600, .hour)
+            : interval >= 59.5 ? ((interval / 60).rounded() * 60, .minute) : (interval.rounded(), .second)
+        return durationFormatter(.short, units: [unit]).string(from: value) ?? "\(Int(value)) s"
     }
 
     /// Whole minutes, or whole seconds between 1 and 59; nothing at all reads "0 min".
@@ -68,14 +80,15 @@ enum Formatters {
         return inSeconds(interval) ? interval.rounded() : (interval / 60).rounded() * 60
     }
 
-    private static func inSeconds(_ interval: TimeInterval) -> Bool { (1..<60).contains(interval.rounded()) }
+    private static func inSeconds(_ interval: TimeInterval) -> Bool { (1..<60).contains(max(0, interval).rounded()) }
 
-    private static func durationFormatter(_ style: DateComponentsFormatter.UnitsStyle, for interval: TimeInterval)
+    /// In the app's language, which can differ from the Mac's.
+    private static func durationFormatter(_ style: DateComponentsFormatter.UnitsStyle, units: NSCalendar.Unit)
         -> DateComponentsFormatter
     {
         let formatter = DateComponentsFormatter()
         formatter.unitsStyle = style
-        formatter.allowedUnits = inSeconds(max(0, interval)) ? [.second] : [.hour, .minute]
+        formatter.allowedUnits = units
         var calendar = Calendar.current
         calendar.locale = TranscriptionLanguageSupport.appLocale
         formatter.calendar = calendar
@@ -117,37 +130,19 @@ enum Formatters {
         return Int(step * magnitude)
     }
 
-    static func formattedDuration(
-        _ interval: TimeInterval, style: DateComponentsFormatter.UnitsStyle, fallback: String = "-"
-    ) -> String {
-        guard interval > 0 else { return fallback }
-        let formatter = DateComponentsFormatter()
-        formatter.maximumUnitCount = 2
-        formatter.unitsStyle = style
-        formatter.allowedUnits = interval >= 3600 ? [.hour, .minute] : [.minute, .second]
-        return formatter.string(from: interval) ?? fallback
-    }
-
+    /// A latency: tenths of a second under a minute ("1.2 sec", "1,2 Sek.", "1.2秒"), then minutes and seconds, then
+    /// hours and minutes, in the app's language.
     static func formattedPreciseDuration(_ interval: TimeInterval, fallback: String = "-") -> String {
         guard interval > 0 else {
             return fallback
         }
-
-        let roundedTenths = Int((interval * 10).rounded())
-
-        if roundedTenths < 600 {
-            return String(format: "%.1f sec", Double(roundedTenths) / 10)
+        let tenths = (interval * 10).rounded() / 10
+        guard tenths >= 60 else {
+            return Measurement(value: tenths, unit: UnitDuration.seconds).formatted(
+                .measurement(width: .abbreviated, usage: .asProvided, numberFormatStyle: .number.precision(.fractionLength(1)))
+                    .locale(TranscriptionLanguageSupport.appLocale))
         }
-
-        if roundedTenths < 36_000 {
-            let minutes = roundedTenths / 600
-            let seconds = Double(roundedTenths % 600) / 10
-            return "\(minutes)m \(String(format: "%.1f", seconds))s"
-        }
-
-        let totalMinutes = roundedTenths / 600
-        let hours = totalMinutes / 60
-        let minutes = totalMinutes % 60
-        return "\(hours)h \(minutes)m"
+        let units: NSCalendar.Unit = tenths >= 3_600 ? [.hour, .minute] : [.minute, .second]
+        return durationFormatter(.abbreviated, units: units).string(from: tenths.rounded()) ?? fallback
     }
 }
