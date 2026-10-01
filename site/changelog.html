@@ -35,6 +35,34 @@
     <h1><span lang="en">Every Yap release</span><span lang="zh-Hans">Yap 的每一个版本</span></h1>
     <p class="intro" lang="en">Newest first. Yap updates itself; <a href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip">the zip</a> and Homebrew always have the latest.</p>
     <p class="intro" lang="zh-Hans">最新的在最上面。Yap 会自己更新；<a href="https://github.com/Sma1lboy/yap/releases/latest/download/Yap.zip">zip</a> 和 Homebrew 装到的总是最新版。</p>
+<article class="release" id="v1.12.0">
+  <h2>Yap 1.12.0</h2>
+  <p class="fine"><a href="https://github.com/Sma1lboy/yap/releases/tag/v1.12.0"><span lang="en">GitHub release</span><span lang="zh-Hans">GitHub 发布页</span></a></p>
+  <div class="notes" lang="en">
+<h3>Password fields and secure keyboard entry</h3>
+<ul><li>Auto Learn, Text Around the Cursor (cleanup context), Undo Last Paste and Rewrite Last Dictation now check the focused field before reading any of its text. They read nothing from a password field (native, or a password input in Safari, Chrome or an Electron app), from a field that reports more than 100,000 characters, or from any field while secure keyboard entry is on.</li><li>macOS turns secure keyboard entry on while a password field has focus. Terminal's Secure Keyboard Entry and some password managers turn it on too, for as long as they are active.</li><li>What you'll notice while secure keyboard entry is on anywhere, for example with Terminal's Secure Keyboard Entry enabled: Auto Learn skips the dictations you paste, cleanup gets no text around the cursor, and Undo Last Paste and Rewrite Last Dictation can't find a dictation pasted then and say "No recent dictation Yap can find to change." The same happens for a dictation pasted into a password field. Pasting itself works as before.</li><li>For each skipped paste Auto Learn keeps only a count per reason on this Mac, with no text, app name or window title.</li></ul>
+<h3>Dictation timing</h3>
+<ul><li>Each dictation now records, on this Mac only, how long each step took from the moment you stopped it to the ⌘V: recording stopped, model ready (when it had to be loaded), transcribed, filters and replacements done, AI cleanup done, ⌘V sent. When you stop with the shortcut, the clock starts at the key event itself, not when Yap got around to handling it.</li><li>It also records how you stopped (the shortcut, the record button, or another way) and how the paste ended: pasted, put in the Scratchpad because no text field had focus, left on the clipboard because Yap has no Accessibility permission, or failed.</li><li>These numbers are kept with Yap's other dictation statistics, which don't sync to iCloud and aren't sent anywhere. Nothing about how dictation works has changed.</li></ul>
+<h3>Agents (MCP)</h3>
+<ul><li>The <code>yap-mcp</code> helper is faster on a long history. It now keeps its private copy of Yap's database between calls and copies again only after Yap has written to it. On a test history of 20,000 dictations and 200 hour-long meetings (M4 Pro, median times), with no new writes since the last call: listing the 20 newest meetings went from 232 to 39 ms, listing 100 meetings from 587 to 131 ms, and a search from about 240 to about 120 ms.</li><li>The copies are deleted when the agent ends the session: when it closes the connection or stops the helper with SIGTERM, SIGINT or SIGHUP. Yap's own files are still only copied, never opened or changed.</li><li><code>list_meetings</code> now returns a <code>summary</code> for each meeting that has AI notes: the first line of the notes that isn't a heading, at most 200 characters, usually the first point of the summary. Agents can tell meetings apart from the list without opening each one.</li></ul>
+<h3>Meetings</h3>
+<ul><li>When writing meeting notes times out, in the meeting panel or with Regenerate Notes in History, the message now says "The request timed out. Check your connection and try again." Before, it showed the dictation cleanup message, which pointed to the cleanup timeout setting.</li></ul>
+<h3>Known limits</h3>
+<ul><li>The dictation timings aren't shown anywhere in Yap yet. They are only in the local statistics; a later version will show them.</li><li>While Terminal's Secure Keyboard Entry or a password manager keeps secure keyboard entry on, Auto Learn, Text Around the Cursor, Undo Last Paste and Rewrite Last Dictation stay off for every app, not just for the app that turned it on.</li><li>If the <code>yap-mcp</code> helper is killed outright (SIGKILL), its copy of the database stays in the temporary folder.</li><li>Search time still grows with the history: <code>search_history</code> reads every entry for each query, about 250 ms for the first call and 120 ms after that at 20,000 dictations.</li></ul>
+  </div>
+  <div class="notes" lang="zh-Hans">
+<h3>密码框和安全键盘输入</h3>
+<ul><li>自动学习、光标附近的文字（润色时的上下文）、撤销上次粘贴和改写上一次听写，现在先检查当前输入框，再读里面的文字。密码框（系统原生的，或者 Safari、Chrome、Electron app 里的密码输入框）、自己报告超过 100,000 个字符的输入框，以及安全键盘输入开着时的任何输入框，一个字都不读。</li><li>密码框获得焦点时 macOS 会打开安全键盘输入。终端的“安全键盘输入”和一些密码管理器也会打开它，开着期间一直有效。</li><li>你会注意到的变化：只要有任何地方开着安全键盘输入，比如终端打开了“安全键盘输入”，自动学习会跳过这时粘贴的听写，润色拿不到光标附近的文字，撤销上次粘贴和改写上一次听写找不到这时粘贴的听写，并提示“找不到最近一次可以修改的听写。”。粘贴到密码框里的听写也一样。粘贴本身和以前一样。</li><li>每跳过一次，自动学习只在这台 Mac 上按原因记一个次数，不记文字、app 名或窗口标题。</li></ul>
+<h3>听写耗时</h3>
+<ul><li>每次听写现在会记下从你停止到 ⌘V 每一步用了多久，只存在这台 Mac 上：录音停止、模型就绪（需要加载时）、转写完成、过滤和替换完成、AI 润色完成、发出 ⌘V。用快捷键停止时，计时从按键事件本身开始，而不是从 Yap 处理它的时候。</li><li>也会记下你是怎么停止的（快捷键、录音按钮或其他方式），以及粘贴的结果：粘贴了；没有输入框获得焦点，放进了便签；Yap 没有辅助功能权限，只留在剪贴板；或者失败。</li><li>这些数字和 Yap 其他的听写统计放在一起，不通过 iCloud 同步，也不发到任何地方。听写本身的流程没有改。</li></ul>
+<h3>Agent（MCP）</h3>
+<ul><li>历史记录很多时，<code>yap-mcp</code> 辅助程序更快了。它现在在两次调用之间保留 Yap 数据库的私有拷贝，Yap 写过之后才重新拷。在一份 20,000 条听写加 200 场一小时会议的测试数据上（M4 Pro，中位数），上次调用之后没有新写入时：列出最新 20 场会议从 232 毫秒降到 39 毫秒，列出 100 场会议从 587 毫秒降到 131 毫秒，搜索从约 240 毫秒降到约 120 毫秒。</li><li>agent 结束会话时拷贝会被删掉：关闭连接，或者用 SIGTERM、SIGINT、SIGHUP 结束辅助程序时。Yap 自己的文件仍然只被复制，从不被打开或改动。</li><li><code>list_meetings</code> 现在给每场有 AI 纪要的会议返回 <code>summary</code>：纪要里第一行不是标题的内容，最多 200 个字符，通常是总结的第一点。agent 看列表就能分清会议，不用一场场打开。</li></ul>
+<h3>会议</h3>
+<ul><li>写会议纪要超时时（会议面板里，或者在历史记录里点“重新生成纪要”），提示现在是“请求超时。请检查网络连接后重试。”。以前显示的是听写润色的提示，让人去延长润色的超时时长。</li></ul>
+<h3>已知限制</h3>
+<ul><li>听写耗时目前在 Yap 里还看不到，只在本机的统计数据里；后续版本会显示。</li><li>终端的“安全键盘输入”或密码管理器让安全键盘输入一直开着时，自动学习、光标附近的文字、撤销上次粘贴和改写上一次听写对所有 app 都不工作，不只是打开它的那个 app。</li><li><code>yap-mcp</code> 辅助程序被强行结束（SIGKILL）时，它的数据库拷贝会留在临时文件夹里。</li><li>搜索时间仍然随历史记录变长：<code>search_history</code> 每次查询都要读一遍所有条目，20,000 条听写时第一次约 250 毫秒，之后约 120 毫秒。</li></ul>
+  </div>
+</article>
 <article class="release" id="v1.11.0">
   <h2>Yap 1.11.0</h2>
   <p class="fine"><a href="https://github.com/Sma1lboy/yap/releases/tag/v1.11.0"><span lang="en">GitHub release</span><span lang="zh-Hans">GitHub 发布页</span></a></p>
