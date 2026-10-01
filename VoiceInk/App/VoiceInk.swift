@@ -46,8 +46,8 @@ struct VoiceInkApp: App {
             UISnapshots.runIfRequested()
             // make meeting-call-check: print who uses the microphone and exit, before anything writes settings.
             MeetingCallCheck.runIfRequested()
-            // make mcp-check: write a data folder for yap-mcp and the expected exports, and exit. Before the
-            // self-checks, which assume English (the check also runs the app in Chinese).
+            // make mcp-check: write a data folder for yap-mcp and the expected exports, and exit, before anything
+            // writes settings.
             MCPFixture.runIfRequested()
         #endif
         // Before onboarding can complete in this session, so a fresh install isn't mistaken for an update.

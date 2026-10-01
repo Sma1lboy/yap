@@ -89,7 +89,8 @@ struct TrustBody: View {
 
     #if DEBUG
         static func selfCheck() {
-            assert(meetingLine(shortcut: nil).contains("Settings"))
+            // Points to the Settings page by the name the sidebar shows, in whatever language the app runs in.
+            assert(meetingLine(shortcut: nil).contains(String(localized: "Settings")))
             assert(meetingLine(shortcut: .rightCommandSpace).contains(Shortcut.rightCommandSpace.displayString))
         }
     #endif
