@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-echo-check meeting-long-check meeting-call-check edit-rate-check mcp-check mcp-agent-eval mcp-perf first-run-check model-residency-check quit-check dictation-latency ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-echo-check meeting-long-check meeting-call-check edit-rate-check mcp-check mcp-agent-eval mcp-perf first-run-check model-residency-check quit-check isolation-check dictation-latency ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -216,6 +216,14 @@ quit-check: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh scripts/quit-check.sh "$$APP_DIR" "$(MODEL)"
+
+# Local Whisper requests that overlap (same model with other languages and prompts, an audio import, a failed load,
+# a meeting on MODEL while dictation uses MODEL2) each come out as they do alone (scripts/isolation-check.sh).
+isolation-check: build
+	@test -n "$(MODEL)" -a -n "$(MODEL2)" || { echo "usage: make isolation-check MODEL=/path/to/ggml-*.bin MODEL2=/path/to/another-ggml-*.bin"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/isolation-check.sh "$$APP_DIR" "$(MODEL)" "$(MODEL2)"
 
 # yap-mcp, the read-only MCP server in Yap.app/Contents/Helpers (docs/mcp.md), over stdio against fixture data written
 # by the mock app: protocol, tools, get_meeting byte for byte the History export (English and Chinese), data files'

@@ -7,9 +7,9 @@ import SwiftData
 protocol WhisperModelProvider: AnyObject {
     var whisperContext: WhisperContext? { get }
     var loadedWhisperModel: WhisperModelFile? { get }
-    /// The context when the model named `name` is loaded, read without the main actor; nil when it isn't.
-    nonisolated func loadedContext(named name: String) -> WhisperContext?
-    /// The shared context holding the model named `name`, loaded once: a load already running is waited for, never
-    /// repeated. `waited` is true when the caller had to wait for a load.
-    func context(forModelNamed name: String) async throws -> (context: WhisperContext, waited: Bool)
+    /// Runs `body` on the shared context holding the model named `name`, in its turn: nothing frees or replaces that
+    /// context until `body` returns. `loaded` is true when the model had to be loaded (or a load waited for).
+    nonisolated func withContext<T>(
+        named name: String, _ body: (_ context: WhisperContext, _ loaded: Bool) async throws -> T
+    ) async throws -> T
 }

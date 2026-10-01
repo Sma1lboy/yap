@@ -45,7 +45,30 @@ actor WhisperContext {
     private var detectedLanguages: [String] = []
     private var languageDetectionTime: TimeInterval = 0
 
-    func fullTranscribe(samples: [Float]) -> Bool {
+    /// What one `transcribe` produced.
+    struct Transcript {
+        let text: String
+        /// In seconds from the start of the audio (see `segments`).
+        let segments: [TimedSegment]
+        /// With language auto: the languages it was decoded in and the time detecting them took (see
+        /// `detectedLanguages`).
+        let detectedLanguages: [String]
+        let languageDetectionTime: TimeInterval
+    }
+
+    /// One whole transcription with this request's language and prompt. A single synchronous actor call, so no other
+    /// request on this context can change the language or prompt between setting them and decoding, or reset the
+    /// results before they're returned. Nil when whisper_full fails or the model has been released.
+    func transcribe(samples: [Float], language: String?, prompt: String?) -> Transcript? {
+        self.language = language
+        self.prompt = prompt
+        guard fullTranscribe(samples: samples) else { return nil }
+        return Transcript(
+            text: transcription, segments: segments, detectedLanguages: detectedLanguages,
+            languageDetectionTime: languageDetectionTime)
+    }
+
+    private func fullTranscribe(samples: [Float]) -> Bool {
         guard let context = context else { return false }
         transcription = ""
         segments = []
@@ -366,19 +389,6 @@ actor WhisperContext {
 
     nonisolated let preview = PreviewSlot()
 
-    func getTranscription() -> String {
-        transcription
-    }
-
-    func getSegments() -> [TimedSegment] {
-        segments
-    }
-
-    /// The last transcription's languages and detection time (see `detectedLanguages`).
-    func getLanguageDetection() -> (languages: [String], seconds: TimeInterval) {
-        (detectedLanguages, languageDetectionTime)
-    }
-
     static func createContext(path: String) async throws -> WhisperContext {
         let whisperContext = WhisperContext()
         try await whisperContext.initializeModel(path: path)
@@ -424,14 +434,6 @@ actor WhisperContext {
             self.context = nil
         }
         languageCString = nil
-    }
-
-    func setPrompt(_ prompt: String?) {
-        self.prompt = prompt
-    }
-
-    func setLanguage(_ language: String?) {
-        self.language = language
     }
 }
 
