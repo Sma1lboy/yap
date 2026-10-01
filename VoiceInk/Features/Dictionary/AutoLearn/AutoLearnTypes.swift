@@ -149,11 +149,31 @@ struct AutoLearnMutationSummary: Sendable {
     )
 }
 
-struct AutoLearnAppliedCorrection: Sendable {
+struct AutoLearnAppliedCorrection: Codable, Hashable, Sendable {
     let incorrectTextToReplace: String
     let correctedVocabularyTerm: String
     let replacementSourceWasAdded: Bool
     let vocabularyCreationDate: Date?
+    /// The edit it was learned from: the pasted words around the change, and what the user made of them
+    /// (AutoLearnReviewCandidate, at most a few words either side).
+    let sourceOriginal: String
+    let sourceCorrected: String
+}
+
+extension AutoLearnAppliedCorrection {
+    /// “heard” → “meant”, or “term” when only the vocabulary entry was added.
+    var displayPair: String {
+        replacementSourceWasAdded
+            ? String(localized: "“\(incorrectTextToReplace)” → “\(correctedVocabularyTerm)”")
+            : String(localized: "“\(correctedVocabularyTerm)”")
+    }
+}
+
+/// A rule Auto Learn added, kept for the Dictionary's Recently Learned list (AutoLearnLearnedLog).
+struct AutoLearnLearnedEntry: Codable, Identifiable, Hashable, Sendable {
+    let id: UUID
+    let learnedAt: Date
+    let correction: AutoLearnAppliedCorrection
 }
 
 enum AutoLearnReviewSchedule: String, CaseIterable, Identifiable {
@@ -202,6 +222,14 @@ enum AutoLearnUnobservableReason: String, CaseIterable {
     case fieldTooLong
     case noReadableField
     case pastedTextNotFound
+    /// The field was empty at the end. A chat app empties it on send, so a send can't be told from a deletion.
+    case fieldCleared
+    /// Finish and Send pressed Return right after the paste.
+    case autoSent
+}
+
+struct AutoLearnUnobservableError: Error {
+    let reason: AutoLearnUnobservableReason
 }
 
 enum AutoLearnUnobservableCounts {

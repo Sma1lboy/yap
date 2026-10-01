@@ -77,6 +77,22 @@ enum SessionMetricRecorder {
         metric.pasteOutcome = timeline.pasteOutcome?.rawValue
     }
 
+    /// Auto Learn's outcome on the dictation's metric, once: the first outcome stands. False when it already had one.
+    @discardableResult
+    static func apply(_ outcome: AutoLearnEditOutcome, to metric: SessionMetric) -> Bool {
+        guard metric.editObserved == nil else { return false }
+        switch outcome {
+        case .unobservable(let reason):
+            metric.editObserved = false
+            metric.editUnobservableReason = reason.rawValue
+        case .observed(let distance):
+            metric.editObserved = true
+            metric.editChanged = distance > 0
+            metric.editDistance = distance
+        }
+        return true
+    }
+
     private static func finalTextForCounting(from transcription: Transcription) -> String {
         if let enhancedText = transcription.enhancedText,
             transcription.enhancementDuration != nil,
@@ -86,6 +102,49 @@ enum SessionMetricRecorder {
         }
 
         return transcription.text
+    }
+}
+
+/// Puts Auto Learn's edit outcome on the pasted dictation's SessionMetric. The outcome comes after ⌘V: a refused
+/// field within 120 ms, usually before the pipeline has saved the metric; the final read up to 60 s later. One that
+/// arrives first waits here (the last few only) until `metricRecorded`.
+@MainActor
+final class SessionEditRecorder {
+    static let shared = SessionEditRecorder()
+    private static let maximumWaiting = 16
+
+    private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "SessionMetricRecorder")
+    /// The app's main context, set at launch.
+    var modelContext: ModelContext?
+    private var waiting: [(dictationID: UUID, outcome: AutoLearnEditOutcome)] = []
+
+    init(modelContext: ModelContext? = nil) {
+        self.modelContext = modelContext
+    }
+
+    func record(_ outcome: AutoLearnEditOutcome, for dictationID: UUID) {
+        if let modelContext,
+            let metric = try? modelContext.fetch(
+                FetchDescriptor<SessionMetric>(predicate: #Predicate { $0.transcriptionId == dictationID })
+            ).first
+        {
+            guard SessionMetricRecorder.apply(outcome, to: metric) else { return }
+            do {
+                try modelContext.save()
+            } catch {
+                logger.error("Failed to save the edit outcome: \(error, privacy: .public)")
+            }
+            return
+        }
+        guard !waiting.contains(where: { $0.dictationID == dictationID }) else { return }
+        waiting.append((dictationID, outcome))
+        if waiting.count > Self.maximumWaiting { waiting.removeFirst() }
+    }
+
+    /// The pipeline just inserted the dictation's metric; it's saved with it.
+    func metricRecorded(_ metric: SessionMetric) {
+        guard let index = waiting.firstIndex(where: { $0.dictationID == metric.transcriptionId }) else { return }
+        SessionMetricRecorder.apply(waiting.remove(at: index).outcome, to: metric)
     }
 }
 
@@ -131,6 +190,7 @@ enum SessionMetricRecorder {
             let rows = try ModelContext(migrated).fetch(FetchDescriptor<SessionMetric>())
             assert(rows.count == 1 && rows[0].wordCount == 42, "old rows survive")
             assert(rows[0].stopSource == nil && rows[0].stopToPasteCommand == nil && rows[0].pasteOutcome == nil)
+            assert(rows[0].editObserved == nil && rows[0].editDistance == nil, "old rows: Auto Learn didn't watch")
 
             // A dictation's metric is recorded after the paste, with every step and the paste outcome.
             let memory = try ModelContainer(
@@ -150,6 +210,53 @@ enum SessionMetricRecorder {
             assert(metric.stopToPasteCommand == 1 && metric.pasteOutcome == "pasted" && metric.stopToModelReady == nil)
             let again = try recordRecorderSession(transcription: transcription, model: nil, in: context)
             assert(again == nil, "one metric per dictation")
+        }
+    }
+
+    extension SessionEditRecorder {
+        /// The outcome lands on the right metric whether it comes before or after the metric is saved, and only once:
+        /// after the watch ends (focus left, next recording, 60 s) nothing changes it.
+        static func selfCheck() throws {
+            let container = try ModelContainer(
+                for: Transcription.self, SessionMetric.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+            let context = ModelContext(container)
+            let recorder = SessionEditRecorder(modelContext: context)
+            func metric(_ text: String) throws -> SessionMetric {
+                let transcription = Transcription(text: text, duration: 1, transcriptionStatus: .completed)
+                context.insert(transcription)
+                return try SessionMetricRecorder.recordRecorderSession(transcription: transcription, model: nil, in: context)!
+            }
+
+            // Refused at capture, before the pipeline saved the metric.
+            let early = UUID()
+            recorder.record(.unobservable(.secureField), for: early)
+            let refusedTranscription = Transcription(text: "pw", duration: 1, transcriptionStatus: .completed)
+            refusedTranscription.id = early
+            context.insert(refusedTranscription)
+            let refused = try SessionMetricRecorder.recordRecorderSession(
+                transcription: refusedTranscription, model: nil, in: context)!
+            recorder.metricRecorded(refused)
+            assert(refused.editObserved == false && refused.editUnobservableReason == "secureField")
+            assert(refused.editChanged == nil && refused.editDistance == nil)
+
+            // Watched to the end, after the metric was saved.
+            let edited = try metric("Send it to Jon.")
+            try context.save()
+            recorder.record(.observed(distance: 0.2), for: edited.transcriptionId)
+            assert(edited.editObserved == true && edited.editChanged == true && edited.editDistance == 0.2)
+            // A later outcome for the same dictation (an edit after focus left) doesn't replace it.
+            recorder.record(.observed(distance: 1), for: edited.transcriptionId)
+            assert(edited.editDistance == 0.2, "the first outcome stands")
+
+            let untouched = try metric("Fine as is.")
+            recorder.record(.observed(distance: 0), for: untouched.transcriptionId)
+            assert(untouched.editObserved == true && untouched.editChanged == false && untouched.editDistance == 0)
+
+            // A paste Auto Learn didn't watch keeps nil, and outcomes for metrics that never come are bounded.
+            let unwatched = try metric("Auto Learn off.")
+            assert(unwatched.editObserved == nil)
+            for _ in 0..<(maximumWaiting + 4) { recorder.record(.observed(distance: 0), for: UUID()) }
+            assert(recorder.waiting.count == maximumWaiting)
         }
     }
 #endif

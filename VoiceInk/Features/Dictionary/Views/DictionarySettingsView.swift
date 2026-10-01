@@ -50,6 +50,9 @@ struct DictionarySettingsView: View {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.x5) {
                     sectionSelector
                     selectedSectionForm
+                    DictionaryGroupedSection {
+                        RecentlyLearnedSection { activePanel = .settings }
+                    }
                 }
                 .padding(.horizontal, AppTheme.Spacing.x6)
                 .padding(.top, AppTheme.Spacing.x5)

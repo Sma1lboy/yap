@@ -1058,6 +1058,35 @@
         }
       }
     },
+    "%lld more" : {
+      "comment" : "Last item of the list of learned rules in the notification: how many more were learned.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld weitere"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld autres"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另外 %lld 条"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另外 %lld 條"
+          }
+        }
+      }
+    },
     "%lld parts couldn't be transcribed; they're marked in the transcript." : {
       "localizations" : {
         "en" : {
@@ -8947,6 +8976,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自動學習"
+          }
+        }
+      }
+    },
+    "Auto Learn is off. Turn it on in Dictionary Settings to learn from the words you correct after Yap pastes." : {
+      "comment" : "Empty state of the Recently Learned section when Auto Learn is off.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auto Learn ist aus. Schalte es in den Wörterbuch-Einstellungen ein, damit Yap aus den Wörtern lernt, die du nach dem Einfügen korrigierst."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’apprentissage automatique est désactivé. Activez-le dans les paramètres du dictionnaire pour apprendre des mots que vous corrigez après un collage de Yap."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动学习已关闭。在词典设置中打开后，Yap 会从你在粘贴后修改的词里学习。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動學習已關閉。在字典設定中開啟後，Yap 會從你在貼上後修改的詞裡學習。"
           }
         }
       }
@@ -22608,31 +22666,31 @@
         }
       }
     },
-    "Learned %lld corrections" : {
-      "comment" : "Success notification showing how many corrections Auto Learn applied.",
+    "Learned %lld corrections: %@" : {
+      "comment" : "Notification after Auto Learn added several rules: how many, then a list of the first ones.",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld Korrekturen gelernt"
+            "value" : "%1$lld Korrekturen gelernt: %2$@"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Corrections %lld apprises"
+            "value" : "%1$lld corrections apprises : %2$@"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已学习 %lld 个更正"
+            "value" : "已学到 %1$lld 条更正：%2$@"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已學習 %lld 個更正"
+            "value" : "已學到 %1$lld 條更正：%2$@"
           }
         }
       }
@@ -28234,6 +28292,35 @@
         }
       }
     },
+    "Nothing learned in the last 7 days. When you correct a word Yap pasted, the rule Auto Learn adds shows up here." : {
+      "comment" : "Empty state of the Recently Learned section when Auto Learn is on.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In den letzten 7 Tagen wurde nichts gelernt. Wenn du ein Wort korrigierst, das Yap eingefügt hat, erscheint hier die Regel, die Auto Learn daraus macht."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien appris ces 7 derniers jours. Quand vous corrigez un mot collé par Yap, la règle ajoutée par l’apprentissage automatique apparaît ici."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近 7 天没有学到新规则。你修改 Yap 粘贴的词之后，自动学习添加的规则会显示在这里。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近 7 天沒有學到新規則。你修改 Yap 貼上的詞之後，自動學習新增的規則會顯示在這裡。"
+          }
+        }
+      }
+    },
     "Nothing to compare with last week" : {
       "localizations" : {
         "de" : {
@@ -31656,6 +31743,35 @@
         }
       }
     },
+    "Recently Learned" : {
+      "comment" : "Title of the Dictionary page section listing rules Auto Learn added recently.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kürzlich gelernt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appris récemment"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近学到"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近學到"
+          }
+        }
+      }
+    },
     "Recheck" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -34281,6 +34397,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在本機對每條轉錄結果執行、在 AI 潤色之前生效，所以離線也能用。"
+          }
+        }
+      }
+    },
+    "Rules Auto Learn added in the last 7 days, and the edit each one came from." : {
+      "comment" : "Subtitle of the Recently Learned section on the Dictionary page.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Regeln, die Auto Learn in den letzten 7 Tagen hinzugefügt hat, und die Korrektur, aus der jede stammt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les règles ajoutées par l’apprentissage automatique ces 7 derniers jours, et la correction d’où vient chacune."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动学习在最近 7 天添加的规则，以及每条规则来自你的哪次修改。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動學習在最近 7 天新增的規則，以及每條規則來自你的哪次修改。"
           }
         }
       }
@@ -49557,6 +49702,64 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "字/分鐘"
+          }
+        }
+      }
+    },
+    "“%@”" : {
+      "comment" : "A word Auto Learn added to Vocabulary, in quotes.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %@ »"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」"
+          }
+        }
+      }
+    },
+    "“%@” → “%@”" : {
+      "comment" : "A learned rule or the edit it came from: what Yap pasted → what the user changed it to.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%1$@“ → „%2$@“"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "« %1$@ » → « %2$@ »"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%1$@”→“%2$@”"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%1$@」→「%2$@」"
           }
         }
       }

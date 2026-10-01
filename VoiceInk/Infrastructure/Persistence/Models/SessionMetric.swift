@@ -32,6 +32,17 @@ final class SessionMetric {
     /// DictationTimeline.PasteOutcome raw value; nil when the text wasn't pasted (a response, a custom command).
     var pasteOutcome: String?
 
+    // What Auto Learn saw become of the pasted text (docs/auto-learn.md, "Correction rate"). All nil when it didn't
+    // watch: Auto Learn off, the text wasn't pasted with ⌘V, or metrics recorded before these fields existed.
+    /// Auto Learn could tell whether the pasted text was changed.
+    var editObserved: Bool?
+    /// AutoLearnUnobservableReason raw value, when it couldn't.
+    var editUnobservableReason: String?
+    /// editDistance > 0.
+    var editChanged: Bool?
+    /// AutoLearnEditMeasure.distance: 0 untouched … 1 deleted or rewritten.
+    var editDistance: Double?
+
     init(
         transcriptionId: UUID,
         timestamp: Date = Date(),
