@@ -106,7 +106,7 @@
                 await engine.releaseModels()  // ggml asserts at exit() while any Metal buffer is still allocated
                 restorePasteboard()
                 fflush(stdout)
-                exit(0)  // NSApp.terminate is turned into "hide to the menu bar"
+                exit(0)  // not NSApp.terminate, which can't finish from inside a Task (AppDelegate.applicationShouldTerminate)
             }
             return true
         }

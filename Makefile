@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-echo-check meeting-long-check meeting-call-check edit-rate-check mcp-check mcp-agent-eval mcp-perf first-run-check model-residency-check dictation-latency ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-echo-check meeting-long-check meeting-call-check edit-rate-check mcp-check mcp-agent-eval mcp-perf first-run-check model-residency-check quit-check dictation-latency ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -208,6 +208,14 @@ model-residency-check: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh scripts/model-residency-check.sh "$$APP_DIR" "$(MODEL)"
+
+# Quit through applicationShouldTerminate with the local Whisper model loaded, loading or decoding, under each Keep
+# model loaded setting: exit status, crash reports, release order (scripts/quit-check.sh). OUT=<dir> keeps the logs.
+quit-check: build
+	@test -n "$(MODEL)" || { echo "usage: make quit-check MODEL=/path/to/ggml-*.bin"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/quit-check.sh "$$APP_DIR" "$(MODEL)"
 
 # yap-mcp, the read-only MCP server in Yap.app/Contents/Helpers (docs/mcp.md), over stdio against fixture data written
 # by the mock app: protocol, tools, get_meeting byte for byte the History export (English and Chinese), data files'
