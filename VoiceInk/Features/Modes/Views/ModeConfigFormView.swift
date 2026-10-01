@@ -356,7 +356,8 @@ struct ModeConfigFormView: View {
                                 return $0.value < $1.value
                             }), id: \.key
                         ) { key, value in
-                            Text(value).tag(key as String?)
+                            // The line below names it; the catalog's names are English.
+                            Text(key == "auto" ? String(localized: "Auto-detect") : value).tag(key as String?)
                         }
                     }
                     .labelsHidden()
