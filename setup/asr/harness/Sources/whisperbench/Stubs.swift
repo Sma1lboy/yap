@@ -8,3 +8,8 @@ final class VADModelManager {
     var path: String?
     func getModelPath() async -> String? { path }
 }
+
+/// SubtitleExport.swift extends the app's SwiftData model; only its segments field is touched.
+final class Transcription {
+    var segmentsJSON: String?
+}
