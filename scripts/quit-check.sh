@@ -44,10 +44,17 @@ cat >"$WORK/config/yap/config.json" <<EOF
     "selectedTranscriptionModelName": "$name", "selectedLanguage": "auto", "isAIEnhancementEnabled": false,
     "useClipboardContext": false, "useSelectedTextContext": false, "useScreenCapture": false } ] }
 EOF
+# `appleevent`: the quit Apple event the Dock, logout and Sparkle's installer send (NSRunningApplication.terminate).
+cat >"$WORK/quit-event.swift" <<'EOF'
+import AppKit
+let pid = pid_t(CommandLine.arguments[1])!
+guard let app = NSRunningApplication(processIdentifier: pid) else { print("no running application \(pid)"); exit(1) }
+print("quit Apple event sent: \(app.terminate())")
+EOF
 
 version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
 # Keep model loaded (seconds; 0 Always, -1 After each dictation) and the state Quit comes in.
-CASES="${CASES:-0:dictated 900:dictated -1:dictated -1:preloaded 0:loading 0:decoding 0:twice}"
+CASES="${CASES:-0:dictated 900:dictated -1:dictated -1:preloaded 0:loading 0:decoding 0:twice 0:menubar 0:appmenu 0:appleevent}"
 failed=0
 for case in $CASES; do
 	keep=${case%%:*} state=${case#*:} dir="$OUT/keep${keep}-$state"
@@ -67,7 +74,15 @@ for case in $CASES; do
 		--quit-check "$state" >"$dir/out.txt" 2>"$dir/err.txt" &
 	pid=$!
 	# Not `timeout`: a Quit that hangs is itself the failure, reported as such.
-	for _ in $(seq 1 600); do kill -0 "$pid" 2>/dev/null || break; sleep 0.1; done
+	sent=""
+	for _ in $(seq 1 600); do
+		kill -0 "$pid" 2>/dev/null || break
+		if [ "$state" = appleevent ] && [ -z "$sent" ] && grep -q "quit-check: terminate," "$dir/out.txt"; then
+			xcrun swift "$WORK/quit-event.swift" "$pid" >"$dir/sender.txt" 2>&1 &
+			sent=1
+		fi
+		sleep 0.1
+	done
 	if kill -0 "$pid" 2>/dev/null; then
 		kill -9 "$pid"
 		echo "hung" >"$dir/hung"
@@ -116,6 +131,7 @@ verdict = "ok" if not problems else "FAIL: " + "; ".join(problems)
 print(f"keep {keep:>4} {state:10} {verdict}")
 for line in out.splitlines():
     if line.startswith("quit-check:"): print("    " + line)
+if (d / "sender.txt").exists(): print("    sender: " + (d / "sender.txt").read_text().strip())
 sys.exit(1 if problems else 0)
 PY
 done

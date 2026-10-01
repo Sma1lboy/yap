@@ -118,14 +118,14 @@ whisper.cpp frees its Metal device in a C++ static destructor when the process c
 Now `AppDelegate.applicationShouldTerminate` answers `.terminateLater` and, before replying:
 
 1. During a meeting, asks first as before (Keep Recording is the default and cancels the Quit with nothing closed; End Meeting and Quit finishes and saves the meeting).
-2. `VoiceInkEngine.closeLocalModels`: `WhisperModelManager.closeForQuit` refuses any load from then on (a preload or a dictation after Quit fails instead of loading again), waits for a load in flight, then frees the context. Freeing goes through the `WhisperContext` actor, so it waits for a decode in flight to finish; it doesn't abort it. Then `serviceRegistry.releaseAll()` as the idle release does (FluidAudio, transcribe.cpp).
+2. `VoiceInkEngine.closeLocalModels`: `WhisperModelManager.closeForQuit` refuses any load from then on (a preload or a dictation after Quit fails instead of loading again), waits for a load in flight, then frees the context. Freeing goes through the `WhisperContext` actor, so it waits for a decode in flight to finish; it doesn't abort it. A decode is one actor call per dictation, per imported file and per meeting piece, so Quit during a long file import waits for the whole file, with nothing on screen meanwhile; End Meeting and Quit already waited for the notes request. Then `serviceRegistry.releaseAll()` as the idle release does (FluidAudio, transcribe.cpp).
 3. Replies, and AppKit exits.
 
-A second ⌘Q (or Quit from the Dock) during those steps used to make AppKit exit at once without asking again, in the middle of the release (crash) or of a meeting being saved. `YapApplication`, the app's `NSApplication`, drops `terminate:` while the reply is pending.
+A second ⌘Q (or Quit from the Dock) during those steps used to make AppKit exit at once without asking again, in the middle of the release (crash) or of a meeting being saved. `YapApplication`, the app's `NSApplication`, drops `terminate:` from the `.terminateLater` answer until just before the reply. (After a quit Apple event AppKit's own exit on the reply calls `terminate:` again; dropping that one too left Yap running.)
 
-`terminate:` has to come from the run loop (a menu item, a quit Apple event from the Dock, logout or Sparkle). Called from inside a `Task` or `DispatchQueue.main.async`, AppKit's wait for the reply can't run the main actor and Quit never finishes. Every in-app Quit is a SwiftUI button action. AppKit also ignores `terminate:` while a sheet is attached to a window, e.g. the release notes after an update; that is unchanged.
+`terminate:` has to come from the run loop (a menu item, a quit Apple event from the Dock, logout or Sparkle). Called from inside a `Task` or `DispatchQueue.main.async`, AppKit's wait for the reply can't run the main actor and Quit never finishes. AppKit also ignores `terminate:` while a sheet is attached to a window, e.g. the release notes after an update; that is unchanged.
 
-`make quit-check MODEL=<path to ggml-*.bin>` (`scripts/quit-check.sh`) launches the Debug app as the mock identity with `--quit-check <state>`, brings the model to that state and calls `NSApplication.terminate` from a run loop block, with nothing released first. Per case it requires exit status 0, no crash report for that process, the model gone at `willTerminate`, and in the unified log `quit: closing local models` → `WhisperModelManager.cleanupResources: completed` → `quit: local models closed`, once. Results with Large v3 Turbo (Quantized), 2026-10-01:
+`make quit-check MODEL=<path to ggml-*.bin>` (`scripts/quit-check.sh`) launches the Debug app as the mock identity with `--quit-check <state>`, brings the model to that state and quits with nothing released first: `NSApplication.terminate` from a run loop block, the real "Quit Yap" item of the menu bar icon's menu or of the app menu (`NSMenu.performActionForItem`, which runs the app's own button action), or a quit Apple event sent from another process (`NSRunningApplication.terminate`). Per case it requires exit status 0, no crash report for that process, NSApp being `YapApplication`, the model gone at `willTerminate`, and in the unified log `quit: closing local models` → `WhisperModelManager.cleanupResources: completed` → `quit: local models closed`, once. Results with Large v3 Turbo (Quantized), 2026-10-01:
 
 | Keep model loaded | State at Quit | Before (main, 1.13.0 code) | Now |
 |---|---|---|---|
@@ -136,9 +136,13 @@ A second ⌘Q (or Quit from the Dock) during those steps used to make AppKit exi
 | Always (no launch prewarm) | preload still loading | not reached (check's own timing) | exit 0, waited 226 ms for the load, then freed |
 | Always | dictation decoding | SIGABRT | exit 0, waited 1.1 s for the decode; the dictation finished first |
 | Always | Quit, then Quit again 10 ms later | SIGABRT | exit 0, released once |
+| Always | menu bar icon › Quit Yap | not run | exit 0 |
+| Always | app menu › Quit (the ⌘Q item) | not run | exit 0 |
+| Always | quit Apple event from another process | not run | exit 0 |
 
 Not verified by a run:
 
+- The Release build: CI compiles it; every run above is the Debug app.
 - End Meeting and Quit: needs a real microphone. `AppDelegate.quitSelfCheck` (DEBUG, at launch) checks with stand-ins that Keep Recording closes nothing and that the order is meeting saved → models freed → reply.
 - transcribe.cpp and FluidAudio models: none on this Mac. They're released through the same `releaseAll` as the idle release. transcribe.cpp links its own ggml; an unload is skipped while it transcribes (`activeTranscriptionCount`), so a Quit mid-transcription there may still crash.
 - The launch prewarm (`ModelPrewarmService`) has its own `TranscriptionServiceRegistry`; its FluidAudio and transcribe.cpp services aren't released on Quit (nor by the idle release). Its Whisper model is the shared one and is.

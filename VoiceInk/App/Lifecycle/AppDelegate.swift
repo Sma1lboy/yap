@@ -47,7 +47,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             confirmEndingMeeting: Self.confirmEndingMeeting,
             endMeeting: { await MeetingRecorder.shared.stop() },
             closeModels: { [weak self] in await self?.engine?.closeLocalModels() },
-            reply: { sender.reply(toApplicationShouldTerminate: true) })
+            reply: {
+                (sender as? YapApplication)?.isClosingForQuit = false
+                sender.reply(toApplicationShouldTerminate: true)
+            })
         if answer == .terminateLater { (sender as? YapApplication)?.isClosingForQuit = true }
         return answer
     }
@@ -138,7 +141,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 /// Quit from the Dock during AppDelegate's closing would cut off the meeting being saved or the model being freed.
 /// Those are dropped.
 final class YapApplication: NSApplication {
-    /// Set when applicationShouldTerminate answers `.terminateLater`; the reply ends the process.
+    /// From applicationShouldTerminate's `.terminateLater` until just before its reply: after a quit Apple event (Dock,
+    /// logout, Sparkle) AppKit's exit on that reply goes through `terminate:` again.
     var isClosingForQuit = false
 
     override func terminate(_ sender: Any?) {
