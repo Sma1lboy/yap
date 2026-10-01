@@ -193,12 +193,13 @@ enum Tools {
                 writes it: a heading, the start date and time and the duration, the AI notes (when Yap wrote \
                 them: summary, decisions, action items, open questions) and the timestamped transcript (lines like \
                 **[00:12] Reed**: …, with the speaker names the user gave; "Me" is the person who recorded). \
-                Headings are in Yap's app language. Read-only, from Yap's local history. Get ids from list_meetings.
+                Headings are in Yap's app language. Read-only, from Yap's local history. Get ids from list_meetings \
+                or search_history.
                 """,
             "inputSchema": [
                 "type": "object",
                 "properties": [
-                    "id": ["type": "string", "description": "The meeting's id, from list_meetings."],
+                    "id": ["type": "string", "description": "The meeting's id, from list_meetings or search_history."],
                     "include_transcript": [
                         "type": "boolean", "default": true,
                         "description": "false returns the heading and the notes only (an hour's transcript is long).",
