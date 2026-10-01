@@ -4,6 +4,7 @@
 # WAVs in $WORK/clips. NOTES=1 gives the mode OpenRouter (deepseek-v4.1-flash) for notes; OPENROUTER_API_KEY comes
 # from the environment or ~/.env and is passed only to the mock app, as YAP_MOCK_API_KEY_OPENROUTER.
 # The caller sets APP_DIR, MODEL, NOTES and WORK before sourcing.
+source "$(dirname "${BASH_SOURCE[0]}")/mock-lock.sh"
 ID=me.sma1lboy.yap.mock
 APP="$WORK/Yap Mock.app"
 SUPPORT="$HOME/Library/Application Support/$ID"
