@@ -1,0 +1,146 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Applying setup…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einrichtung wird angewendet…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Application de la configuration…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在应用设置…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在套用設定…"
+          }
+        }
+      }
+    },
+    "Applying your transcription and enhancement settings…": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transkriptions- und Textverbesserungseinstellungen werden angewendet…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Application des réglages de transcription et d’amélioration…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在应用转写和增强设置…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在套用轉錄和增強設定…"
+          }
+        }
+      }
+    },
+    "API key saved.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API-Schlüssel gespeichert."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clé API enregistrée."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API key 已保存。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "API key 已儲存。"
+          }
+        }
+      }
+    },
+    "Large v3 Turbo is unavailable. Choose a cloud option, or set up a local model later in Models.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Large v3 Turbo ist nicht verfügbar. Wähle eine Cloud-Option oder richte später unter Modelle ein lokales Modell ein."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Large v3 Turbo est indisponible. Choisis une option cloud ou configure un modèle local plus tard dans Modèles."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Large v3 Turbo 暂不可用。请选择云端方式，或稍后在“模型”中设置本地模型。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Large v3 Turbo 暫時無法使用。請選擇雲端方式，或稍後在「模型」中設定本機模型。"
+          }
+        }
+      }
+    },
+    "The model could not be downloaded. Review the details below, then try again.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Modell konnte nicht geladen werden. Prüfe die Details unten und versuche es erneut."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le modèle n’a pas pu être téléchargé. Consulte les détails ci-dessous, puis réessaie."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模型未能下载。请查看下方详情，处理后重试。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模型未能下載。請查看下方詳細資訊，處理後重試。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.1"
+}

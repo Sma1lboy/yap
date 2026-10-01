@@ -14,13 +14,16 @@ struct TranscriptionModelDownloadCard: View {
             header
             modelMetadata
 
-            if let status {
+            if let errorMessage, !isDownloaded && !isDownloading {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.x1) {
+                    Text("The model could not be downloaded. Review the details below, then try again.", tableName: "SetupCopy")
+                    Text(errorMessage)
+                }
+                .font(AppTheme.font(.caption))
+                .foregroundColor(AppTheme.Status.error)
+                .fixedSize(horizontal: false, vertical: true)
+            } else if let status {
                 progressPanel(status)
-            } else if let errorMessage, !isDownloaded {
-                Text(String(format: String(localized: "Download failed: %@ Check your connection and try again."), errorMessage))
-                    .font(AppTheme.font(.caption))
-                    .foregroundColor(AppTheme.Status.error)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(AppTheme.Spacing.x5)
@@ -162,12 +165,12 @@ struct TranscriptionModelDownloadCard: View {
             return "Cancel"
         }
 
-        if status != nil {
-            return "Resume Download"
-        }
-
         if errorMessage != nil {
             return "Retry"
+        }
+
+        if status != nil {
+            return "Resume Download"
         }
 
         return "Download Model"
