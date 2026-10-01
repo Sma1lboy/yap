@@ -5,10 +5,11 @@ import SwiftData
 /// and WhisperTranscriptionService from concrete manager types.
 @MainActor
 protocol WhisperModelProvider: AnyObject {
-    var isModelLoaded: Bool { get }
     var whisperContext: WhisperContext? { get }
     var loadedWhisperModel: WhisperModelFile? { get }
-    var availableModels: [WhisperModelFile] { get }
-    /// Returns once a load that is already running has finished.
-    func finishPendingLoad() async
+    /// The context when the model named `name` is loaded, read without the main actor; nil when it isn't.
+    nonisolated func loadedContext(named name: String) -> WhisperContext?
+    /// The shared context holding the model named `name`, loaded once: a load already running is waited for, never
+    /// repeated. `waited` is true when the caller had to wait for a load.
+    func context(forModelNamed name: String) async throws -> (context: WhisperContext, waited: Bool)
 }

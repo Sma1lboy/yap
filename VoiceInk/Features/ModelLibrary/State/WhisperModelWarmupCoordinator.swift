@@ -34,12 +34,14 @@ final class WhisperModelWarmupCoordinator: ObservableObject {
     }
 
     private func runWarmup(for model: WhisperModel, whisperModelManager: WhisperModelManager) async throws {
-        guard let sampleURL = warmupSampleURL() else { return }
-        let service = WhisperTranscriptionService(
-            modelsDirectory: whisperModelManager.modelsDirectory,
-            modelProvider: whisperModelManager
-        )
-        _ = try await service.transcribe(audioURL: sampleURL, model: model)
+        guard let sampleURL = warmupSampleURL(),
+            let file = whisperModelManager.availableModels.first(where: { $0.name == model.name }),
+            whisperModelManager.whisperContext == nil || whisperModelManager.loadedWhisperModel?.name != model.name
+        else { return }
+        // A context of its own, freed right after: the model just downloaded must not replace the one dictation uses.
+        let context = try await WhisperContext.createContext(path: file.url.path)
+        _ = await context.fullTranscribe(samples: try WhisperTranscriptionService.readAudioSamples(sampleURL))
+        await context.releaseResources()
     }
 
     private func warmupSampleURL() -> URL? {

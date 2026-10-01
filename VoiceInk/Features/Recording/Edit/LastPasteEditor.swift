@@ -191,21 +191,12 @@ final class LastPasteEditor {
         return .success(record)
     }
 
-    /// The selected text in the focused field of `processID`, read just before a paste replaces it.
+    /// The selected text in the focused field of `processID`, read just before a paste replaces it. Only the selection
+    /// is read: ⌘V waits for this.
     nonisolated static func selectedText(processID: pid_t) -> String {
         let reader = AutoLearnAXTextReader()
-        let appElement = AXUIElementCreateApplication(processID)
-        defer { reader.restoreWebAccessibility(processID: processID, appElement: appElement) }
-        for reading in reader.focusedReadings(processID: processID) {
-            if let selected = selectedText(in: reading.fieldText, selection: reading.selection) { return selected }
-        }
-        return ""
-    }
-
-    nonisolated static func selectedText(in field: String, selection: NSRange?) -> String? {
-        let field = field as NSString
-        guard let selection, selection.length > 0, NSMaxRange(selection) <= field.length else { return nil }
-        return field.substring(with: selection)
+        defer { reader.restoreWebAccessibility(processID: processID, appElement: AXUIElementCreateApplication(processID)) }
+        return reader.focusedSelection(processID: processID)
     }
 
     nonisolated private static func capture(text: String, processID: pid_t, replaced: String) -> Record? {
@@ -254,9 +245,6 @@ final class LastPasteEditor {
 
             assert(isScratchPhrase("Scratch that.") && isScratchPhrase("删掉刚才那句。") && isScratchPhrase(" delete that! "))
             assert(!isScratchPhrase("scratch that part about Friday") && !isScratchPhrase("删掉刚才那句里的错字"))
-            assert(selectedText(in: "Hi 你好 there", selection: NSRange(location: 3, length: 2)) == "你好")
-            assert(selectedText(in: "Hi", selection: NSRange(location: 1, length: 0)) == nil, "cursor only: nothing replaced")
-            assert(selectedText(in: "Hi", selection: NSRange(location: 1, length: 5)) == nil && selectedText(in: "Hi", selection: nil) == nil)
             assert(rewriteInput(text: "a", instruction: "b") == "<TEXT>\na\n</TEXT>\n<INSTRUCTION>\nb\n</INSTRUCTION>")
         }
     }

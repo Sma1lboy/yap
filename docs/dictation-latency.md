@@ -28,7 +28,7 @@ Then, in seconds after the stop (nil when the step didn't happen):
 | Field | Step |
 |---|---|
 | `stopToRecorderStopped` | the recorder drained its buffers, flushed the resampler and closed the WAV (`CoreAudioRecorder.stopRecording`) |
-| `stopToModelReady` | only when the transcription had to load the model first (preload hadn't finished, or a model it doesn't preload) |
+| `stopToModelReady` | only when the transcription waited for the model: a load still running from the press (Keep model loaded: After Each Dictation releases it after every dictation), or one it had to start (no preload, or another model) |
 | `stopToTranscribed` | the model returned its text |
 | `stopToProcessed` | output filter, Chinese cleanup, trigger words, paragraph formatting and word replacements done |
 | `stopToEnhanced` | AI cleanup returned or failed |
@@ -40,7 +40,23 @@ with a notification), `scratchpad` (no editable field had focus: the text went t
 in the recorder, a custom command, "scratch that".
 
 Metrics from before these fields existed read nil (optional attributes, SwiftData lightweight migration). Home and
-Insights don't show any of this yet.
+Insights don't show any of this yet. The History entry and the SessionMetric are saved once, after ⌘V (or after the
+paste failed); without a paste (a response, a custom command, a failure) before the pipeline returns.
+
+## The wait before ⌘V
+
+`CursorPaster.pasteTiming`. The clipboard is written and read back before the wait (`ClipboardManager.setClipboard`),
+so a local app that reads it on ⌘V already has the new text; upstream VoiceInk posted ⌘V right after the write, with
+no wait and its recorder still on screen, until caca8c4d (May 2026). The wait counts from the clipboard write.
+
+| Before the paste | Wait | Why |
+|---|---|---|
+| Remote desktop, VM or XQuartz in front (Screen Sharing, Windows App, Parallels, VMware Fusion, UTM, TeamViewer, AnyDesk, Jump Desktop, Citrix, VNC Viewer, XQuartz) | 500 ms, clipboard restored after 5 s at the earliest | these copy the clipboard to the other side asynchronously (upstream #928); XQuartz's pbproxy copies it to X11's clipboard the same way |
+| Stopped with the shortcut, no Yap window key | 20 ms, then until shift, control, option and fn are up (100 ms at most) | focus never left the app in front: the recorder is a non-activating panel nobody clicked. The 20 ms is margin, not measured. A toggle-mode stop is a key press, and a modifier still held would turn ⌘V into ⇧⌘V or ⌥⌘V |
+| Stopped from the recorder (record button, Finish and Send), the menu bar or anything else; a Yap window was key; History's paste; Undo and Rewrite Last Paste | 100 ms, as before | a click in Yap's windows may have taken keyboard focus; Undo and Rewrite set the selection through Accessibility first, which web views apply asynchronously |
+
+No app was tested by pasting into it: that needs desktop automation. The shortcut case is the one dictation takes
+by far most often; everything that involves Yap's own windows or Accessibility kept its wait.
 
 ## Measuring it
 
@@ -56,10 +72,18 @@ the way a press does while the user speaks and lets the recording's context capt
 read back from the SessionMetric. One untimed dictation goes first.
 
 The path after the stop is the real one (`runPipeline` → `TranscriptionPipeline` → `TranscriptionDelivery` →
-`CursorPaster`), including the stop sound, the panel dismissal, the clipboard and every wait. `CursorPaster.dryRun`
-leaves out what touches the app in front: the check that a text field has focus, the read of the selection the paste
-will replace (Undo Last Paste), and the key events. The ⌘V time is when V would have gone down; nothing is read from
-or typed into the app in front, and Auto Learn and Last Paste aren't told about it.
+`CursorPaster`), including the stop sound, the panel dismissal, the clipboard and every wait; the stop counts as a
+shortcut stop (the 20 ms wait). `CursorPaster.dryRun` leaves out what touches the app in front: the check that a text
+field has focus, the read of the selection the paste will replace (Undo Last Paste), and the key events. The ⌘V time
+is when V would have gone down; nothing is read from or typed into the app in front, and Auto Learn and Last Paste
+aren't told about it.
+
+After the rounds the script also checks, and fails otherwise:
+
+- every History save came after its ⌘V (`savedAfterPaste`);
+- six dictations with the model released first, as After Each Dictation does: three stopped while the press's preload
+  is still loading, three pressed while the release is still running. Each must load the model once (`loads`);
+- a paste that fails (`CursorPaster.dryRunResult`) still leaves the dictation in History, saved to the store.
 
 Not covered:
 
@@ -67,14 +91,121 @@ Not covered:
   record `stopToRecorderStopped`; read it from stats.store.
 - **Cloud transcription.** The mock identity has no provider keys and the script doesn't borrow the dev app's.
   Yap Cloud's network latency is in [cloud-latency.md](cloud-latency.md).
-- **Remote-desktop apps**, which get a 500 ms pre-paste wait instead of 100 ms (`CursorPaster.pasteTiming`).
-- **The focused-field check and the selection read before ⌘V.** The selection read runs alongside the 100 ms wait,
-  but ⌘V waits for it to finish, so a slow app can make the wait longer than 100 ms. Real dictations include it.
+- **Waits other than the shortcut one** (see the table above).
+- **The focused-field check and the selection read before ⌘V.** Both run before the wait starts or during it; ⌘V
+  waits for the selection read. It reads only the selected text (`AutoLearnAXTextReader.focusedSelection`), no longer
+  the whole field. Real dictations include both.
 
 ## Results
 
-Mac16,7 (M4 Pro, 48 GB), macOS 15.1, Large v3 Turbo (Quantized) `ggml-large-v3-turbo-q5_0.bin`, 12 rounds × 5 clips,
-2026-09-30, main as of 1.11.0:
+Mac16,7 (M4 Pro, 48 GB), macOS 15.1, Debug build, language auto, 2026-09-30. Before is main at 39d1c150 (M3.1), after
+is this change; the two were run alternately, each pair of runs back to back.
+
+| model | rounds × clips | before p50 / p95 ms | after p50 / p95 ms | p50 |
+|---|---|---|---|---|
+| Large v3 Turbo (Quantized) `ggml-large-v3-turbo-q5_0.bin` | 12 × 5 | 1343 / 1383 | 1181 / 1231 | −12.1 % |
+| same, second pair | 12 × 5 | 1344 / 1382 | 1184 / 1220 | −11.9 % |
+| Base (Quantized) `ggml-base-q5_1.bin` | 24 × 5 | 393 / 423 | 225 / 255 | −42.7 % |
+| same, second pair | 24 × 5 | 394 / 424 | 225 / 254 | −42.9 % |
+
+One more Turbo pair, run before these, gave 1348 → 1223 with an after p95 of 1586: something else on the Mac slowed
+some decodes in that run (its decode step p95 was 1550 against 1195 in the others).
+
+With the model released before the press and the stop coming while it still loads, the dictation waits for that
+load (`stopToModelReady` 43–85 ms in the released-model dictations of "Measuring it") and ⌘V comes at 1.20–1.34 s.
+
+Turbo by step (second pair, p50 ms):
+
+| step | before | after |
+|---|---|---|
+| → transcribed (reads the WAV, decodes) | 1183 | 1146 |
+| → filters and replacements done | 2 | 2 |
+| → ⌘V (sound, panel, clipboard, waits) | 158 | 35 |
+
+Transcripts didn't change: every dictation in every run had the same text before and after (5 clips' text compared,
+character counts of all 60 and 120), and nothing in the decode was changed (see below). Every paste was `pasted`.
+
+### What changed (Turbo, p50 ms saved, from temporary timing around each call)
+
+| change | ms |
+|---|---|
+| Pre-paste wait after a shortcut stop: 100 → 20 ms (table above) | ~80 |
+| The paste is prepared (checks, clipboard, Undo's selection read) when it is started, and the wait counts from the clipboard write, so main-thread work queued before the paste task (session cleanup, model release) runs inside the wait | ~17 |
+| History save, SessionMetric and the second audio-duration read after ⌘V | ~25 |
+| The recording context snapshot is read only when AI cleanup can run | ~11 |
+| Stop → decode start: the loaded context is read from a lock-protected snapshot and dictionary words through the service's own ModelContext, instead of three waits for the main thread, which is busy with the recorder and History right after the stop | 47 → 8 |
+| The WAV is converted with vDSP through a lookup table: 8 ms → 0.5 ms, the same floats (selfCheck compares all 65,536 values; vDSP's own division differs in the last bit) | (in the line above) |
+
+Also changed, not visible in these numbers:
+
+- **One model load per press.** Main already waited for the press's preload (`finishPendingLoad`, since #102; the
+  M3.1 note about a second copy predates it). What remained: a transcription that found the model missing loaded a
+  private copy, freed after the dictation and invisible to the live preview. That happened when the press came while
+  the last dictation's release was still running (the preload saw the old context and skipped), or when the mode
+  wanted a different model than the one preloaded (two models in memory). Now every load goes through
+  `WhisperModelManager.context(forModelNamed:)`: a load in flight is waited for, a different model is released
+  first, and the release clears the context before freeing it. The warmup after a download keeps a context of its
+  own. `WhisperModelManager.selfCheck` and the six released-model dictations above cover it; with the old release
+  order the selfCheck traps.
+- **Undo Last Paste's selection read** reads only the selection, not up to 100,000 characters of the field.
+
+### Where the 1.18 s goes now
+
+Turbo, language auto, p50 ms, from temporary timing around each call:
+
+| block | ms |
+|---|---|
+| stop → decode starts (pipeline, silence check, WAV read) | 8 |
+| VAD (Silero) | 18 |
+| language detection: one full encoder pass | 476 |
+| decode (`whisper_full`: another encoder pass and the tokens) | 647 |
+| filters, replacements | 5 |
+| → ⌘V: 20 ms wait, ⌘ down → V down 10 ms, timer slack | 36 |
+
+1141 of 1184 ms is whisper.cpp. Even with everything else at zero the total would be 15 % under M3.1's 1343, short of
+20 %; reaching 20 % (≤ 1074 ms) needs the decode itself to get shorter. What was tried there, all on the 11 clips of
+`setup/asr` (82 key terms) plus the two English clips, with the app's `LibWhisper.swift` through `whisperbench`:
+
+| decode setting | 5 latency clips, decode time (sum, ms) | CER, auto (13 clips) | CER, zh (11 clips) | key terms auto / zh | transcripts changed (of 24) |
+|---|---|---|---|---|---|
+| as shipped: temperature 0.2, best_of 5, 8 threads | 5471 | 17.6 % | 24.4 % | 45 / 45 | – |
+| temperature 0 (fallback +0.2 kept) | 5504 | 17.0 % | 23.3 % | 46 / 45 | 12 |
+| best_of 1 | 5325 | 18.3 % | 25.0 % | 46 / 44 | 15 |
+| 4 threads | 6486 | 17.6 % | 24.4 % | 45 / 45 | 0 |
+| 12 threads | 6132 | 17.6 % | 24.4 % | 45 / 45 | 0 |
+| `no_timestamps` | 5446 | 18.7 % | 23.0 % | 45 / 46 | 13 |
+| `single_segment` | 5509 | 17.6 % | 24.4 % | 45 / 45 | 0 |
+| `audio_ctx` = audio length + 64 frames | 3890 | 71.3 % | 44.6 % | 4 / 30 | 24 |
+| language detection with `audio_ctx` = audio length (+64) | 3623 | 41.2 % (40.1 %) | 24.4 % | 39 / 45 (40 / 45) | 9 |
+
+None was kept. The thread count is already the fastest. temperature 0 is no faster with language auto and changes
+half the transcripts (better on the whole, worse on two clips); best_of 1 saves 3 % and gets worse. A shorter
+encoder window is the only large saving, and it breaks Turbo: shorter decodes hallucinate, and a shorter language
+detection calls 9 of the 11 Chinese clips English (p 0.6–0.94, against 0.99 zh with the full window).
+
+Two other ways to skip the 476 ms language detection:
+
+- **The live preview's language** (Live Text Display, on by default, detects on the first 3 s while recording). It
+  agreed with the final detection on all 13 clips but not on code-switched recordings: on an English sentence
+  followed by a Chinese one, and on the reverse (15.6 s each), the whole-recording detection is unsure and the window
+  is split into an English and a Chinese piece, each decoded in its language; the preview's language (from the first
+  3 s) would decode the whole recording as one. Not kept: it changes exactly the transcripts this app is for.
+- **Reusing the detection's encoder pass for the decode.** whisper.cpp's `whisper_full` always encodes again; skipping
+  that needs a whisper.cpp change, and the framework is built from upstream whisper.cpp head (`make whisper`), cached
+  in CI under a key in `.github/`.
+
+What would make the decode itself shorter is a product decision, not done here:
+
+- **A language in the mode.** With Chinese (or English) set instead of auto there is no detection pass: decode p50
+  0.66 s against 1.12 s on the bench (`whisper-ggml-large-v3-turbo-q5_0.bin` vs `…-auto` in `setup/asr/results`),
+  45 against 44 key terms. A user who speaks one language (or Chinese with English terms, which the zh prompt handles)
+  would wait about 0.46 s less per dictation.
+- **Large v3 Turbo unquantized** (1.6 GB against 547 MB): p50 0.60 s against 0.66 s on the bench with language zh,
+  46 against 45 key terms. It also has a Core ML encoder, which wasn't measured.
+
+## M3.1 numbers (main as of 1.11.0, before the changes above)
+
+Same Mac, Large v3 Turbo (Quantized), 12 rounds × 5 clips, 2026-09-30:
 
 | step | n | p50 ms | p95 ms |
 |---|---|---|---|
@@ -85,46 +216,11 @@ Mac16,7 (M4 Pro, 48 GB), macOS 15.1, Large v3 Turbo (Quantized) `ggml-large-v3-t
 | Chinese clips | 36 | 1361 | 1392 |
 | English clips | 24 | 1306 | 1317 |
 
-The numbers below were taken on the code before it was merged with main 1.11.0, where the same run gave a p50 of
-1322 ms; the split hasn't changed in kind.
-
 A Debug build with Swift optimization on (`-O`, whole module) gave the same total as the plain Debug build run just
-before it (p50 1326 ms against 1330 ms), so unoptimized Swift doesn't move these numbers; the decode runs in the
-prebuilt whisper.cpp framework either way.
+before it (p50 1326 ms against 1330 ms); the decode runs in the prebuilt whisper.cpp framework either way.
 
-When the model isn't loaded yet at the stop (stopped before the press-time preload finished), the transcription
-loads it itself: `stopToModelReady` ≈ 220 ms and the total ≈ 1.5 s, about 180 ms more.
-
-With a small model the fixed part weighs more: Base (Quantized) `ggml-base-q5_1.bin`, one round of the same five
-clips, gave a total p50 of 369 ms, of which 148 ms is the step from the processed text to ⌘V.
-
-### Where the 1.3 s goes
-
-Split further with temporary timing around each call (30 dictations, p50):
-
-| # | Block | ms | share | Kind |
-|---|---|---|---|---|
-| 1 | Whisper decode (`whisper_full`) | 1130 | 85 % | compute; depends on model and audio length |
-| 2 | Waits before ⌘V: `prePasteDelay` 100 ms + ⌘-down → V-down 10 ms (`pasteShortcutEventDelay`), as slept | 117 | 9 % | fixed constants |
-| 3 | Everything else between the stop and ⌘V | 77 | 6 % | code path |
-|   | · from the silence check to the Whisper service reading the WAV (service dispatch, loaded-model lookup; not split further) | 25 | | |
-|   | · the paste task waits while the pipeline saves the transcription and SessionMetric and posts `transcriptionCompleted` | 15 | | |
-|   | · audio duration read again (`AVURLAsset`) after the text is ready | 10 | | |
-|   | · recording context snapshot hop | 9 | | |
-|   | · WAV read into samples 8, silence check 5, filters 2, the rest 3 | 18 | | |
-
-Stop sound, panel dismissal and setting the clipboard are each under 1 ms.
-
-What could shrink (M3.2; nothing here was changed):
-
-- The decode is the bulk. Options: a faster model or decode settings, trimming silence before the decode, or using
-  the text the live preview already decoded while the user spoke.
-- The 100 ms pre-paste wait gives the target app time to see the new clipboard; whether it can be shorter needs
-  testing per app. The 10 ms between key events is small.
-- Saving the transcription before the paste task runs, and reading the audio duration again, could move after ⌘V.
-- With Keep model loaded at its default, After Each Dictation (Models > Advanced, `ModelResidency`), the model is
-  released after every dictation and loaded again at the next press, about 180 ms while the user speaks. A dictation
-  stopped before that load finishes loads a second copy in `WhisperTranscriptionService` instead of waiting for the
-  one in progress.
-- The selection read for Undo Last Paste reads the whole focused field (up to 100,000 characters) during the
-  pre-paste wait; ⌘V waits for it.
+With Base (Quantized) `ggml-base-q5_1.bin`, one round, the total p50 was 369 ms, 148 ms of it from the processed
+text to ⌘V. Split with temporary timing (30 dictations, p50) the Turbo total was 1130 ms decode (85 %), 117 ms of
+waits before ⌘V (9 %) and 77 ms of code path (6 %): 25 ms to the Whisper service reading the WAV, 15 ms of paste
+task waiting behind the save, 10 ms reading the audio duration again, 9 ms for the context snapshot, 18 ms WAV read,
+silence check and filters. All of these are addressed above.

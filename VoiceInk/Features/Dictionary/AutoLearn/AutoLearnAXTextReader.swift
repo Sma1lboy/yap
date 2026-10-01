@@ -63,36 +63,18 @@ final class AutoLearnAXTextReader {
         if IsSecureEventInputEnabled() {
             return AutoLearnAXFocusedText(readings: [], exclusion: .secureInput)
         }
-        let appElement = AXUIElementCreateApplication(processID)
-        AXUIElementSetMessagingTimeout(
-            appElement,
-            AutoLearnLimits.captureAccessibilityTimeoutSeconds
-        )
-        enableWebAccessibilityIfNeeded(processID: processID, appElement: appElement)
-
-        var candidates: [(element: AXUIElement, source: String)] = []
-        if let appFocused = copyElement(kAXFocusedUIElementAttribute as CFString, from: appElement) {
-            appendUnique(appFocused, source: "application-focus", to: &candidates)
-        }
-
-        let systemWide = AXUIElementCreateSystemWide()
-        if let systemFocused = copyElement(kAXFocusedUIElementAttribute as CFString, from: systemWide),
-            owningProcessID(of: systemFocused) == processID
-        {
-            appendUnique(systemFocused, source: "system-focus", to: &candidates)
-        }
-
-        let exclusions = candidates.map { Self.exclusion(for: describe($0.element), secureInputEnabled: false) }
-        if exclusions.contains(.secureField) {
+        let appElement = focusedApplication(processID: processID)
+        let candidates = focusedCandidates(processID: processID, appElement: appElement)
+        if candidates.contains(where: { $0.exclusion == .secureField }) {
             restoreWebAccessibility(processID: processID, appElement: appElement)
             return AutoLearnAXFocusedText(readings: [], exclusion: .secureField)
         }
 
         var readings: [AutoLearnAXTextReading] = []
         var skippedTooLong = false
-        for (candidate, exclusion) in zip(candidates, exclusions) {
+        for candidate in candidates {
             guard isEditable(candidate.element) else { continue }
-            guard exclusion == nil else {
+            guard candidate.exclusion == nil else {
                 skippedTooLong = true
                 continue
             }
@@ -107,6 +89,67 @@ final class AutoLearnAXTextReader {
         if readings.isEmpty { restoreWebAccessibility(processID: processID, appElement: appElement) }
         return AutoLearnAXFocusedText(
             readings: readings, exclusion: readings.isEmpty && skippedTooLong ? .fieldTooLong : nil)
+    }
+
+    /// Only the selected text of the focused editable field: what a paste is about to replace (Undo Last Paste). The
+    /// same fields are refused as by focusedText, but the rest of the field isn't read, so this read, which ⌘V waits
+    /// for, doesn't grow with the field. Empty when nothing is selected or the field is refused. The caller restores
+    /// web accessibility.
+    func focusedSelection(processID: pid_t) -> String {
+        if IsSecureEventInputEnabled() { return "" }
+        let candidates = focusedCandidates(processID: processID, appElement: focusedApplication(processID: processID))
+        guard !candidates.contains(where: { $0.exclusion == .secureField }) else { return "" }
+        for candidate in candidates where candidate.exclusion == nil && isEditable(candidate.element) {
+            if let selected = selectedText(of: candidate.element) { return selected }
+        }
+        return ""
+    }
+
+    private func focusedApplication(processID: pid_t) -> AXUIElement {
+        let appElement = AXUIElementCreateApplication(processID)
+        AXUIElementSetMessagingTimeout(
+            appElement,
+            AutoLearnLimits.captureAccessibilityTimeoutSeconds
+        )
+        enableWebAccessibilityIfNeeded(processID: processID, appElement: appElement)
+        return appElement
+    }
+
+    /// The application's and the system's focused element, each described (not read) and judged first.
+    private func focusedCandidates(
+        processID: pid_t, appElement: AXUIElement
+    ) -> [(element: AXUIElement, source: String, exclusion: AutoLearnUnobservableReason?)] {
+        var candidates: [(element: AXUIElement, source: String)] = []
+        if let appFocused = copyElement(kAXFocusedUIElementAttribute as CFString, from: appElement) {
+            appendUnique(appFocused, source: "application-focus", to: &candidates)
+        }
+
+        let systemWide = AXUIElementCreateSystemWide()
+        if let systemFocused = copyElement(kAXFocusedUIElementAttribute as CFString, from: systemWide),
+            owningProcessID(of: systemFocused) == processID
+        {
+            appendUnique(systemFocused, source: "system-focus", to: &candidates)
+        }
+
+        return candidates.map {
+            ($0.element, $0.source, Self.exclusion(for: describe($0.element), secureInputEnabled: false))
+        }
+    }
+
+    /// The selection's own text: the native selected range, or the selected text-marker range in web fields.
+    private func selectedText(of element: AXUIElement) -> String? {
+        if let range = copyRange(kAXSelectedTextRangeAttribute as CFString, from: element) {
+            guard range.length > 0 else { return nil }
+            if let text = copyStringForRange(range, from: element)
+                ?? copyString(kAXSelectedTextAttribute as CFString, from: element), !text.isEmpty
+            {
+                return text
+            }
+        }
+        guard let markers = copyOpaque(Self.selectedMarkerRangeAttribute, from: element),
+            let text = stringForMarkerRange(markers, on: element), !text.isEmpty
+        else { return nil }
+        return text
     }
 
     /// Why a field must not be read, from what it says about itself; nil when it may be. Secure input (system-wide,

@@ -43,6 +43,14 @@
             return true
         }
 
+        /// Meeting pieces load the shared model, kept per Keep model loaded; ggml asserts at exit() while any Metal
+        /// buffer is still allocated, so every exit after a transcription releases it first.
+        private static func exitReleasingModels(_ engine: VoiceInkEngine?) async -> Never {
+            await engine?.releaseModels()
+            fflush(stdout)
+            exit(0)
+        }
+
         /// After the launch-time recovery, in `--meeting-edit-check` only.
         static func runEditCheck(engine: VoiceInkEngine) async {
             let arguments = CommandLine.arguments
@@ -73,12 +81,11 @@
             }
             print("meeting-check: notes-begin\n\(meeting.enhancedText ?? "")\nmeeting-check: notes-end")
             print("meeting-check: prompt-begin\n\(meeting.aiRequestSystemMessage ?? "")\nmeeting-check: prompt-end")
-            fflush(stdout)
-            exit(0)
+            await exitReleasingModels(engine)
         }
 
         /// After the launch-time resume of speakers, in `--meeting-speakers-resume-check` only.
-        static func reportSpeakersResume(_ ids: [UUID], engine: VoiceInkEngine) {
+        static func reportSpeakersResume(_ ids: [UUID], engine: VoiceInkEngine) async {
             guard CommandLine.arguments.contains(speakersResumeArgument) else { return }
             print("meeting-check: speakers-resumed \(ids.count)")
             for id in ids {
@@ -87,8 +94,7 @@
                 else { continue }
                 printSpeakers(meeting)
             }
-            fflush(stdout)
-            exit(0)
+            await exitReleasingModels(engine)
         }
 
         /// A saved meeting's speaker status and transcript.
@@ -98,7 +104,7 @@
         }
 
         /// After the launch-time recovery, in `--meeting-recovery-check` only.
-        static func reportRecovery(_ results: [MeetingRecorder.MeetingResult]) {
+        static func reportRecovery(_ results: [MeetingRecorder.MeetingResult], engine: VoiceInkEngine) async {
             guard CommandLine.arguments.contains(recoveryArgument) else { return }
             print("meeting-check: recovered \(results.count)")
             for result in results {
@@ -106,8 +112,7 @@
                 print("meeting-check: audio-only \(result.audioOnly) save-error \(result.saveError ?? "none") failed-pieces \(result.failedPieces)")
                 print("meeting-check: transcript-begin\n\(result.transcript)\nmeeting-check: transcript-end")
             }
-            fflush(stdout)
-            exit(0)
+            await exitReleasingModels(engine)
         }
 
         static func runIfRequested() {
@@ -152,8 +157,7 @@
                         }
                     }
                 }
-                fflush(stdout)
-                exit(0)
+                await exitReleasingModels(MeetingRecorder.shared.engine)
             }
         }
     }

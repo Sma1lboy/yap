@@ -167,10 +167,7 @@ class TranscriptionPipeline {
             let cleanedText = text
             timeline?.mark(.processed)
 
-            let actualDuration = await AudioFileMetadata.duration(for: audioURL)
-
             transcription.text = cleanedText
-            transcription.duration = actualDuration
             transcription.transcriptionModelName = model.displayName
             if model.provider == .yapCloud { transcription.usedYapCloud = true }
             transcription.transcriptionDuration = transcriptionDuration
@@ -191,7 +188,16 @@ class TranscriptionPipeline {
                 let isSkipShortEnhancementEnabled = UserDefaults.standard.bool(forKey: "SkipShortEnhancement")
                 let savedThreshold = UserDefaults.standard.integer(forKey: "ShortEnhancementWordThreshold")
                 let shortEnhancementWordThreshold = savedThreshold > 0 ? savedThreshold : 3
-                let contextSnapshot = await recordingContextSnapshot()
+                let canEnhance = resolvedEnhancementConfiguration.map { configuration in
+                    configuration.isEnabled && enhancementService?.isConfigured(for: configuration) == true
+                } ?? false
+                // Only cleanup reads the snapshot, and getting it is a hop to the main actor before the paste.
+                let contextSnapshot: RecordingContextSnapshot?
+                if canEnhance {
+                    contextSnapshot = await recordingContextSnapshot()
+                } else {
+                    contextSnapshot = nil
+                }
                 // With selected text captured, a short utterance is an instruction for that text
                 // ("make it formal"), not a transcript too short to clean up (upstream #968).
                 let hasSelectedTextContext =
@@ -303,10 +309,14 @@ class TranscriptionPipeline {
             }
         }
 
-        func saveTranscriptionAndPostCompletion() -> SessionMetric? {
+        /// The audio duration, the History entry, the SessionMetric and the completion notice. After a paste this runs
+        /// once ⌘V is out (or the paste failed): none of it changes what is pasted, so the paste doesn't wait for it, and
+        /// the SessionMetric gets the paste time with everything else.
+        func finishAndSave() async {
             var sessionMetric: SessionMetric?
 
             if transcription.transcriptionStatus == TranscriptionStatus.completed.rawValue {
+                transcription.duration = await AudioFileMetadata.duration(for: audioURL)
                 do {
                     sessionMetric = try SessionMetricRecorder.recordRecorderSession(
                         transcription: transcription,
@@ -328,7 +338,6 @@ class TranscriptionPipeline {
             } catch {
                 logger.error("Failed to save transcription: \(error, privacy: .public)")
             }
-            return sessionMetric
         }
 
         if shouldCancel() {
@@ -356,22 +365,16 @@ class TranscriptionPipeline {
             )
         )
 
-        let sessionMetric = saveTranscriptionAndPostCompletion()
-
-        if let transcriptionFailure {
-            showTranscriptionFailure(transcriptionFailure)
-        }
-
-        guard let pasteTask else { return nil }
-        return Task { @MainActor [modelContext, logger] in
-            await pasteTask.value
-            guard let sessionMetric, let timeline else { return }
-            SessionMetricRecorder.apply(timeline, to: sessionMetric)
-            do {
-                try modelContext.save()
-            } catch {
-                logger.error("Failed to save the paste time: \(error, privacy: .public)")
+        guard let pasteTask else {
+            await finishAndSave()
+            if let transcriptionFailure {
+                showTranscriptionFailure(transcriptionFailure)
             }
+            return nil
+        }
+        return Task { @MainActor in
+            await pasteTask.value
+            await finishAndSave()
         }
     }
 

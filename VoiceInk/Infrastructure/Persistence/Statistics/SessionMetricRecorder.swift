@@ -64,8 +64,8 @@ enum SessionMetricRecorder {
         return metric
     }
 
-    /// Copies what the timeline has so far; again once the paste is done, for its time and outcome.
-    static func apply(_ timeline: DictationTimeline, to metric: SessionMetric) {
+    /// The timeline's stop, steps and paste. Recorded once the paste is done (TranscriptionPipeline).
+    private static func apply(_ timeline: DictationTimeline, to metric: SessionMetric) {
         let offsets = timeline.offsets
         metric.stopSource = timeline.stop.source.rawValue
         metric.stopToRecorderStopped = offsets[.recorderStopped]
@@ -132,7 +132,7 @@ enum SessionMetricRecorder {
             assert(rows.count == 1 && rows[0].wordCount == 42, "old rows survive")
             assert(rows[0].stopSource == nil && rows[0].stopToPasteCommand == nil && rows[0].pasteOutcome == nil)
 
-            // A dictation's metric gets the steps so far, then the paste once it's done.
+            // A dictation's metric is recorded after the paste, with every step and the paste outcome.
             let memory = try ModelContainer(
                 for: Transcription.self, SessionMetric.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
             let context = ModelContext(memory)
@@ -142,14 +142,12 @@ enum SessionMetricRecorder {
             timeline.mark(.recorderStopped, at: 10.05)
             timeline.mark(.transcribed, at: 10.8)
             timeline.mark(.processed, at: 10.81)
+            timeline.pasteFinished(.pasted, commandAt: 11)
             guard let metric = try recordRecorderSession(
                 transcription: transcription, model: nil, timeline: timeline, in: context)
             else { return assertionFailure("a completed dictation gets a metric") }
             assert(metric.stopSource == "shortcutRelease" && metric.stopToTranscribed.map { abs($0 - 0.8) < 1e-9 } == true)
-            assert(metric.stopToPasteCommand == nil && metric.pasteOutcome == nil && metric.stopToModelReady == nil)
-            timeline.pasteFinished(.pasted, commandAt: 11)
-            apply(timeline, to: metric)
-            assert(metric.stopToPasteCommand == 1 && metric.pasteOutcome == "pasted")
+            assert(metric.stopToPasteCommand == 1 && metric.pasteOutcome == "pasted" && metric.stopToModelReady == nil)
             let again = try recordRecorderSession(transcription: transcription, model: nil, in: context)
             assert(again == nil, "one metric per dictation")
         }
