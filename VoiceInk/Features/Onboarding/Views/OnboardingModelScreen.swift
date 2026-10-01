@@ -34,6 +34,7 @@ struct OnboardingModelScreen: View {
     }
 
     private var isPrimaryEnabled: Bool {
+        guard !isApplyingRecommended else { return false }
         switch setupKind {
         case .recommended:
             return (isSetupReady || !trimmedRecommendedKey.isEmpty) && !isApplyingRecommended
@@ -47,12 +48,14 @@ struct OnboardingModelScreen: View {
     }
 
     private func continueTapped() {
+        guard !isApplyingRecommended else { return }
         guard setupKind == .recommended || setupKind == .yapCloud else { return onContinue() }
         let key = trimmedRecommendedKey
+        let requestedSetup = setupKind
         isApplyingRecommended = true
         recommendedError = nil
         Task {
-            let error = setupKind == .yapCloud
+            let error = requestedSetup == .yapCloud
                 ? await onContinueYapCloud()
                 : await onContinueRecommended(key.isEmpty ? nil : key)
             isApplyingRecommended = false
@@ -89,7 +92,7 @@ struct OnboardingModelScreen: View {
         } bottomBar: {
             OnboardingBottomBar(
                 leadingTitle: "Back",
-                primaryTitle: "Continue",
+                primaryTitle: isApplyingRecommended ? String(localized: "Applying setup…", table: "SetupCopy") : "Continue",
                 isPrimaryEnabled: isPrimaryEnabled,
                 onLeading: onBack,
                 onPrimary: continueTapped,
@@ -97,6 +100,7 @@ struct OnboardingModelScreen: View {
                 onSecondary: onRequestSkip
             )
         }
+        .disabled(isApplyingRecommended)
         .alert("Set up transcription later?", isPresented: $isShowingSkipWarning) {
             Button("Go Back", role: .cancel) {}
             Button("Set It Up Later") {
@@ -106,5 +110,6 @@ struct OnboardingModelScreen: View {
             Text("Dictation won't work until you choose a transcription model. The practice steps will be skipped. You can set it up anytime in Settings or in ~/.config/yap/config.json.")
         }
         .onChange(of: recommendedAPIKey) { _, _ in recommendedError = nil }
+        .onChange(of: setupKind) { _, _ in recommendedError = nil }
     }
 }

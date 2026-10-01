@@ -23,6 +23,7 @@ struct OnboardingTranscriptionSetupCard: View {
     @ObservedObject private var yapCloud = YapCloud.shared
     @State private var apiKey = ""
     @State private var isVerifying = false
+    @State private var verificationAttemptID: UUID?
     @State private var verificationMessage: String?
     @State private var verificationDetailMessage: String?
     @State private var verificationSucceeded = false
@@ -76,11 +77,18 @@ struct OnboardingTranscriptionSetupCard: View {
             handleProviderChange()
         }
         .onChange(of: apiKey) { _, _ in
-            guard !apiKey.isEmpty else { return }
+            guard !apiKey.isEmpty || !isSelectedProviderConnected else { return }
+            invalidateVerificationAttempt()
             verificationSucceeded = false
             verificationMessage = nil
             verificationDetailMessage = nil
         }
+        .onChange(of: setupKind) { _, _ in
+            invalidateVerificationAttempt()
+            verificationMessage = nil
+            verificationDetailMessage = nil
+        }
+        .onDisappear { invalidateVerificationAttempt() }
         .task(id: "\(setupKind.rawValue):\(selectedProviderKey)") {
             await loadOpenRouterModelsIfNeeded()
         }
@@ -242,7 +250,15 @@ struct OnboardingTranscriptionSetupCard: View {
                 YapCloudSignInForm()
             }
 
-            if let recommendedError {
+            if isApplyingRecommended {
+                HStack(spacing: AppTheme.Spacing.x2) {
+                    ProgressView().controlSize(.small)
+                    Text("Applying your transcription and enhancement settings…", tableName: "SetupCopy")
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .font(AppTheme.font(.footnote))
+                .foregroundColor(AppTheme.Text.secondary)
+            } else if let recommendedError {
                 Text(recommendedError)
                     .font(AppTheme.font(.footnote, .medium))
                     .foregroundColor(AppTheme.Status.error)
@@ -341,7 +357,7 @@ struct OnboardingTranscriptionSetupCard: View {
                 .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(AppTheme.Status.error)
 
-            Text("Large v3 Turbo is not available.")
+            Text("Large v3 Turbo is unavailable. Choose a cloud option, or set up a local model later in Models.", tableName: "SetupCopy")
                 .font(AppTheme.font(.footnote, .medium))
                 .foregroundColor(AppTheme.Text.secondary)
 
@@ -498,7 +514,7 @@ struct OnboardingTranscriptionSetupCard: View {
                 .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(AppTheme.Status.positive)
 
-            Text("Connection verified.")
+            Text("API key saved.", tableName: "SetupCopy")
                 .font(AppTheme.font(.footnote, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
 
@@ -567,7 +583,13 @@ struct OnboardingTranscriptionSetupCard: View {
         }
     }
 
+    private func invalidateVerificationAttempt() {
+        verificationAttemptID = nil
+        isVerifying = false
+    }
+
     private func handleProviderChange() {
+        invalidateVerificationAttempt()
         apiKey = ""
         isVerifying = false
         isSwitchingProvider = false
@@ -577,8 +599,10 @@ struct OnboardingTranscriptionSetupCard: View {
 
     private func verifyAPIKey() {
         let key = trimmedAPIKey
-        guard let selectedProvider, !key.isEmpty else { return }
+        guard let selectedProvider, !key.isEmpty, !isVerifying else { return }
 
+        let attemptID = UUID()
+        verificationAttemptID = attemptID
         isVerifying = true
         verificationMessage = nil
         verificationDetailMessage = nil
@@ -589,13 +613,15 @@ struct OnboardingTranscriptionSetupCard: View {
             let result = await selectedProvider.verifyAPIKey(key)
 
             await MainActor.run {
+                // Editing the key, leaving this card, or changing provider invalidates this result.
+                // Check identity before changing the busy state: an older request must not clear a newer one.
+                guard verificationAttemptID == attemptID,
+                    setupKind == .cloud,
+                    self.selectedProvider?.providerKey == providerKey,
+                    trimmedAPIKey == key
+                else { return }
+                verificationAttemptID = nil
                 isVerifying = false
-
-                guard self.selectedProvider?.providerKey == providerKey else {
-                    refreshVerificationState()
-                    onVerificationChanged()
-                    return
-                }
 
                 verificationSucceeded = result.isValid
 
