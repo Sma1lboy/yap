@@ -696,9 +696,17 @@
           "$ref": "#/$defs/shortcut",
           "description": "Press, say how to change the text Yap pasted last, press again: it is rewritten in place."
         },
+        "copyLastTranscriptionShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Copy the last result (enhanced if there is one) to the clipboard without pasting."
+        },
+        "openScratchpadShortcut": {
+          "$ref": "#/$defs/shortcut",
+          "description": "Open or close the Scratchpad, a small floating note that keeps its text on this Mac. Unset by default."
+        },
         "meetingRecordingShortcut": {
           "$ref": "#/$defs/shortcut",
-          "description": "Start or stop a meeting recording. cmd+space means the right ⌘ only (the left one is Spotlight's)."
+          "description": "Start a meeting recording (only ✓ in the meeting panel stops it). cmd+space means the right ⌘ only (the left one is Spotlight's)."
         },
         "primaryRecordingShortcutRawValue": {
           "enum": [

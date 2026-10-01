@@ -10,7 +10,7 @@
 
 Yap is an open-source dictation app for macOS, released under the GPL-3.0. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up the filler and punctuation, and pastes the text into whatever app you're in. Modes pick a different prompt or model per app (email, code review, chat), and a dictionary keeps names and terms spelled your way.
 
-Yap is a fork of [VoiceInk](https://github.com/Beingpax/VoiceInk) by Prakash Joshi Pax. All credit for the app goes to the original author — if you want the official, notarized build, [buy VoiceInk](https://tryvoiceink.com/). Website: [yap.sma1lboy.me](https://yap.sma1lboy.me).
+Yap is a fork of [VoiceInk](https://github.com/Beingpax/VoiceInk) by Prakash Joshi Pax. All credit for the app goes to the original author — if you want the official build, [buy VoiceInk](https://tryvoiceink.com/). Website: [yap.sma1lboy.me](https://yap.sma1lboy.me). Icons: [Phosphor](https://phosphoricons.com) (MIT, license in `VoiceInk/Resources/Licenses/`).
 
 ## Choosing where your voice goes
 
@@ -31,7 +31,7 @@ The script installs the app with Homebrew (or downloads the latest release), cop
 
 Just the app: `brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew install --cask sma1lboy/yap/yap`. After that, Yap updates itself (Check for Updates… in the app menu) or with `brew upgrade --cask yap`.
 
-**Build it yourself.** With Xcode installed, `make local` in the cloned repository builds Yap and copies `Yap.app` to your Downloads folder. Releases are signed with a self-signed certificate and not notarized; the [site's FAQ](https://yap.sma1lboy.me/#faq) explains the one-time "can't verify the developer" step for a downloaded zip; `xattr -dr com.apple.quarantine /Applications/Yap.app` in Terminal does the same.
+**Build it yourself.** With Xcode installed, `make local` in the cloned repository builds Yap and copies `Yap.app` to your Downloads folder.
 
 ## How Yap differs from VoiceInk
 
@@ -59,7 +59,7 @@ Yap Cloud is one of the three ways to run Yap: an optional account that pays for
 
 ## Config & Sync
 
-All of Yap's settings can live in one file, `~/.config/yap/config.json` (or `$XDG_CONFIG_HOME/yap/config.json`), and can sync between your Macs through Yap Cloud. Everything below is under **Settings → Config & Sync**.
+All of Yap's settings can live in one file, `~/.config/yap/config.json` (or `$XDG_CONFIG_HOME/yap/config.json`), and can sync between your Macs through Yap Cloud. The config file buttons are under **Settings → Config File**; signing in and the sync switch are at the top of **Settings**, in **Account**.
 
 ### The config file
 
@@ -89,7 +89,7 @@ Schema v2 (`"version": 2`) describes all settings. It uses the same JSON shapes 
 
 | Field (v2) | Meaning |
 |---|---|
-| `version` | `2`. Omitted means v1. A higher number (file from a newer Yap) still loads; Settings → Config & Sync notes that unknown fields were ignored. |
+| `version` | `2`. Omitted means v1. A higher number (file from a newer Yap) still loads; Settings → Config File notes that unknown fields were ignored. |
 | `modes` | Array of modes, same objects as `modeConfigs` in an export. Merged by `id`: a mode in the file replaces the app's mode with the same id; modes only in the app stay. |
 | `modeShortcuts` | `{ "<mode id>": <shortcut> }`, same as the export's `modeShortcuts`. Ids not in `modes` are ignored. A shortcut (here and in `general`) can be written as `{ "shortcut": "cmd+shift+space" }`: modifiers `cmd` `shift` `opt` `ctrl` `fn`, keys by US-layout name (`a`, `5`, `/`, `space`, `return`, `f13`, `left`…), or one modifier key alone like `right-opt` or `fn`. Yap writes both this and the raw `kind`/`keyCode`/`modifierFlagsRawValue` fields; the raw fields win when both are present. Mouse buttons and keys without a name are written as raw fields only. |
 | `prompts` | Array of `{ id, title, promptText, useSystemInstructions }`. Merged by `id` like `modes`. |
@@ -113,17 +113,17 @@ Turn on **Keep Config File in Sync** (off by default) to do this automatically a
 
 ### Syncing between Macs
 
-1. Sign in to Yap Cloud on each Mac (see above).
-2. Turn on **Sync via Yap Cloud**. Yap also offers this once, right after you first sign in.
+1. Sign in on each Mac, in **Settings → Account** (or on the Yap Cloud page, see above).
+2. In the same **Account** section, turn on **Sync Settings Across Macs**. Yap also offers this once, right after you first sign in.
 
-From then on Yap pulls the synced settings at launch, when you switch back to Yap, when the Mac wakes from sleep and every 15 minutes, and pushes local changes a couple of seconds after you make them. A pull that finds nothing new changes nothing. If two Macs changed settings at the same time, Yap merges them by entry: each Mac keeps the modes, prompts, shortcuts and dictionary entries it changed. If they still can't be merged, the section shows the conflict with **Use Cloud Version** and **Keep This Mac's Settings**; nothing is overwritten until you choose. A network or server error shows its reason and **Retry** instead.
+From then on Yap pulls the synced settings at launch, when you switch back to Yap, when the Mac wakes from sleep and every 15 minutes, and pushes local changes a couple of seconds after you make them. A pull that finds nothing new changes nothing. **Sync Now** pulls and pushes immediately, and **Version History…** lists earlier versions. If two Macs changed settings at the same time, Yap merges them by entry: each Mac keeps the modes, prompts, shortcuts and dictionary entries it changed. If they still can't be merged, the Account section shows the conflict with **Use Cloud Version** and **Keep This Mac's Settings**; nothing is overwritten until you choose. A network or server error shows its reason and **Retry** instead.
 
 If your config's `enhancement.prompt` points to a file such as `prompt.md`, the cloud gets the file's text, because other Macs don't have that file. A Mac whose own config also points to a prompt file writes the text into that file (keeping the old one as `prompt.md.bak`); otherwise the text goes into its config.json.
 
 ### Setting up a new Mac
 
 1. On the first onboarding screen, click **Sign In and Restore Settings** and sign in with the same email.
-2. Check the summary (number of modes, prompts, dictionary entries and shortcuts) and click **Restore**. Yap applies the settings, writes config.json and turns on **Sync via Yap Cloud**.
+2. Check the summary (number of modes, prompts, dictionary entries and shortcuts) and click **Restore**. Yap applies the settings, writes config.json and turns on **Sync Settings Across Macs**.
 3. Grant the permissions and pick a microphone as usual. If the restored settings already choose a transcription model, onboarding skips the model and practice steps.
 4. If a provider in your settings needs an API key that this Mac doesn't have yet, the key step appears with that provider already selected. Paste the key to continue. Yap Cloud needs no key once you're signed in.
 
@@ -131,7 +131,7 @@ If the account hasn't synced any settings yet, the sheet says so and just leaves
 
 ### Moving from VoiceInk
 
-If VoiceInk has run on this Mac, **Import from VoiceInk…** in Config & Sync reads its modes, prompts, dictionary, shortcuts, general settings and custom model/provider definitions, shows how many of each it found, and imports them after you confirm. Entries with the same id replace Yap's; the rest of Yap's settings stay. API keys, the license, history and downloaded models are not copied; imported custom models and providers show **API key needed** until you add their keys. It only runs when you click it; on a Mac without VoiceInk the button is disabled.
+If VoiceInk has run on this Mac, **Import from VoiceInk…** in Settings → Config File reads its modes, prompts, dictionary, shortcuts, general settings and custom model/provider definitions, shows how many of each it found, and imports them after you confirm. Entries with the same id replace Yap's; the rest of Yap's settings stay. API keys, the license, history and downloaded models are not copied; imported custom models and providers show **API key needed** until you add their keys. It only runs when you click it; on a Mac without VoiceInk the button is disabled.
 
 ### Deleted items
 
@@ -144,6 +144,32 @@ API keys are never written to config.json or sent to Yap Cloud. Yap only reads t
 ### Recommended models
 
 Current picks (Sept 2026): transcription `microsoft/mai-transcribe-2` ($0.10/h; 80/82 key terms on an earlier, uncommitted bench, 59/82 on the harder set in `setup/asr/`, see [docs/dictation-accuracy.md](docs/dictation-accuracy.md)), cleanup `deepseek/deepseek-v4.1-flash` (23–24 of 25 cases, ~0.5 s, see [docs/cloud-models.md](docs/cloud-models.md)). Onboarding's "Your OpenRouter Key" option applies exactly this setup with your own OpenRouter key; usage is billed by OpenRouter. Re-run `setup/bench.py` after editing `VoiceInk/Resources/RecommendedPrompt.md`.
+
+## Use your Yap data in Claude Code / Cursor / Codex
+
+Yap ships a small read-only MCP server inside the app, `Yap.app/Contents/Helpers/yap-mcp`. Your agent starts it as a subprocess and talks to it over stdin/stdout: it opens no network port, sends nothing anywhere, and works whether or not Yap is running. It reads a private copy of Yap's local database, copied again whenever Yap has written since the last call; Yap's own files are only copied, never opened by SQLite.
+
+It's **off** until you turn it on in **Settings › Agent Access (MCP)**:
+
+- **Let Agents Read Yap's Data**: meetings (notes and transcripts) and your dictionary. While it's off, agents can connect but every read is an error that tells them where the switch is.
+- **Include Dictation History**: your dictations too. Off by default, because dictations often hold passwords, private messages and drafts.
+
+The helper rereads both switches on every call, so turning one off applies to the agent's next request.
+
+Tools: `list_meetings`, `get_meeting`, `search_history` (substring search across dictations and meetings, Chinese and English), `get_dictation`, `get_dictionary`. The same Settings section copies the commands below with the path of your copy of Yap.
+
+```sh
+claude mcp add yap -- /Applications/Yap.app/Contents/Helpers/yap-mcp     # Claude Code
+codex mcp add yap -- /Applications/Yap.app/Contents/Helpers/yap-mcp      # Codex
+```
+
+Cursor, in `~/.cursor/mcp.json`:
+
+```json
+{ "mcpServers": { "yap": { "type": "stdio", "command": "/Applications/Yap.app/Contents/Helpers/yap-mcp" } } }
+```
+
+Then ask, for example: "Summarize the action items from this week's meetings", "What did I dictate about the CI migration last month?" (needs dictation history), "Check this README against the spellings in my Yap dictionary". Details, tool arguments and limits: [docs/mcp.md](docs/mcp.md).
 
 ## Development
 

@@ -265,7 +265,7 @@ private struct ProviderListRow: View {
 
                 ProviderStatusBadge(title: statusText, color: statusColor)
 
-                Image(systemName: "chevron.right")
+                Image(yapIcon: "chevron.right")
                     .font(AppTheme.font(.footnote, .semibold))
                     .foregroundStyle(.secondary)
             }
@@ -317,7 +317,7 @@ private struct YapCloudProviderRow: View {
                     title: cloud.isSignedIn ? "Connected" : "Not connected",
                     color: cloud.isSignedIn ? AppTheme.Status.positive : .secondary)
 
-                Image(systemName: "chevron.right")
+                Image(yapIcon: "chevron.right")
                     .font(AppTheme.font(.footnote, .semibold))
                     .foregroundStyle(.secondary)
             }

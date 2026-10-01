@@ -221,6 +221,8 @@ class ImportExportService {
             meetingRecordingShortcut: ShortcutStore.shortcut(for: .meetingRecording).map(ShortcutBackup.init),
             undoLastPasteShortcut: ShortcutStore.shortcut(for: .undoLastPaste).map(ShortcutBackup.init),
             rewriteLastPasteShortcut: ShortcutStore.shortcut(for: .rewriteLastPaste).map(ShortcutBackup.init),
+            copyLastTranscriptionShortcut: ShortcutStore.shortcut(for: .copyLastTranscription).map(ShortcutBackup.init),
+            openScratchpadShortcut: ShortcutStore.shortcut(for: .openScratchpad).map(ShortcutBackup.init),
             primaryRecordingShortcutRawValue: recordingShortcutManager.primaryRecordingShortcut.rawValue,
             secondaryRecordingShortcutRawValue: recordingShortcutManager.secondaryRecordingShortcut.rawValue,
             primaryRecordingShortcutModeRawValue: recordingShortcutManager.primaryRecordingShortcutMode.rawValue,

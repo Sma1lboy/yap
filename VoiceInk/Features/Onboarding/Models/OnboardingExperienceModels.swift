@@ -74,7 +74,7 @@ struct OnboardingExperienceStep: Identifiable {
     let title: String
     let subtitle: String
     let sampleLabel: String
-    let sampleText: String
+    let sampleText: LocalizedStringResource
     let fieldPlaceholder: String
     let initialFieldText: String
     let shortcutIntroTitle: String?
@@ -104,7 +104,7 @@ struct OnboardingExperienceStep: Identifiable {
         title: String,
         subtitle: String,
         sampleLabel: String = "Read this",
-        sampleText: String,
+        sampleText: LocalizedStringResource,
         fieldPlaceholder: String,
         initialFieldText: String = "",
         shortcutIntroTitle: String? = nil,

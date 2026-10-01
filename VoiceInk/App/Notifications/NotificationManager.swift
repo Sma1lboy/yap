@@ -11,12 +11,17 @@ final class NotificationManager {
 
     private init() {}
 
+    /// A notification is on screen. Prompts that mustn't replace one (MeetingCallDetector) wait for
+    /// `.appNotificationDismissed` instead.
+    var isShowingNotification: Bool { notificationWindow != nil }
+
     func showNotification(
         title: String,
         type: AppNotificationView.NotificationType,
         duration: TimeInterval = 3.0,
         onTap: (() -> Void)? = nil,
-        actionButton: (label: String, action: () -> Void)? = nil
+        actionButton: (label: String, action: () -> Void)? = nil,
+        secondaryButton: (label: String, action: () -> Void)? = nil
     ) {
         dismissTimer?.invalidate()
         dismissTimer = nil
@@ -32,6 +37,9 @@ final class NotificationManager {
         if type == .error {
             SoundManager.shared.playEscSound()
         }
+        if type == .error || type == .warning {
+            DictationAnnouncer.announce(title)
+        }
 
         let notificationView = AppNotificationView(
             title: title,
@@ -43,10 +51,11 @@ final class NotificationManager {
                 }
             },
             onTap: onTap,
-            actionButton: actionButton
+            actionButton: actionButton,
+            secondaryButton: secondaryButton
         )
         let hostingController = NSHostingController(rootView: notificationView)
-        let size = hostingController.view.fittingSize
+        let size = Self.size(of: hostingController)
 
         let panel = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
@@ -85,6 +94,15 @@ final class NotificationManager {
         }
     }
 
+    /// The notification's size: as wide as its message on one line, and when that reaches the widest a
+    /// notification gets, as tall as the message wrapped at that width (three lines at most), so a long message
+    /// (a meeting that couldn't be saved, and why) isn't cut off after one line.
+    static func size(of controller: NSHostingController<AppNotificationView>) -> CGSize {
+        let oneLine = controller.view.fittingSize
+        guard oneLine.width >= AppNotificationView.maxWidth else { return oneLine }
+        return controller.sizeThatFits(in: CGSize(width: AppNotificationView.maxWidth, height: .greatestFiniteMagnitude))
+    }
+
     private func positionWindow(_ window: NSWindow) {
         let activeScreen = NSApp.keyWindow?.screen ?? NSScreen.main ?? NSScreen.screens[0]
         let screenRect = activeScreen.visibleFrame
@@ -119,8 +137,8 @@ final class NotificationManager {
             },
             completionHandler: {
                 window.close()
-
             })
+        NotificationCenter.default.post(name: .appNotificationDismissed, object: nil)
     }
 
     private func dismissNotification(ifCurrent notificationID: UUID) {

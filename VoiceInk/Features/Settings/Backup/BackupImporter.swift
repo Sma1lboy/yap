@@ -119,6 +119,12 @@ enum BackupImporter {
         if let undoShortcut = general.undoLastPasteShortcut {
             ShortcutStore.setShortcut(undoShortcut.shortcut, for: .undoLastPaste)
         }
+        if let copyShortcut = general.copyLastTranscriptionShortcut {
+            ShortcutStore.setShortcut(copyShortcut.shortcut, for: .copyLastTranscription)
+        }
+        if let scratchpadShortcut = general.openScratchpadShortcut {
+            ShortcutStore.setShortcut(scratchpadShortcut.shortcut, for: .openScratchpad)
+        }
         if let rewriteShortcut = general.rewriteLastPasteShortcut {
             ShortcutStore.setShortcut(rewriteShortcut.shortcut, for: .rewriteLastPaste)
         }

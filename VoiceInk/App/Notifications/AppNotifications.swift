@@ -23,4 +23,6 @@ extension Notification.Name {
     static let autoLearnReviewProposalsDidChange = Notification.Name("autoLearnReviewProposalsDidChange")
     static let openFileForTranscription = Notification.Name("openFileForTranscription")
     static let recordingDeviceChangeRequired = Notification.Name("recordingDeviceChangeRequired")
+    /// NotificationManager's notification went away (timed out or closed), not replaced by another.
+    static let appNotificationDismissed = Notification.Name("appNotificationDismissed")
 }

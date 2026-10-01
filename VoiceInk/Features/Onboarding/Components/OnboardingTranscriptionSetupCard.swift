@@ -104,7 +104,7 @@ struct OnboardingTranscriptionSetupCard: View {
             onSelectSetupKind(kind)
         } label: {
             HStack(spacing: AppTheme.Spacing.x2) {
-                Image(systemName: systemImage)
+                Image(yapIcon: systemImage)
                     .font(AppTheme.font(.footnote, .semibold))
 
                 Text(kind.title)
@@ -144,7 +144,7 @@ struct OnboardingTranscriptionSetupCard: View {
 
             if hasStoredOpenRouterKey && recommendedAPIKey.isEmpty && recommendedError == nil {
                 HStack(alignment: .center, spacing: AppTheme.Spacing.x2) {
-                    Image(systemName: "checkmark.circle.fill")
+                    Image(yapIcon: "checkmark.circle.fill")
                         .font(AppTheme.font(.callout, .semibold))
                         .foregroundColor(AppTheme.Status.positive)
                     Text("OpenRouter key found. Continue to use it.")
@@ -163,7 +163,7 @@ struct OnboardingTranscriptionSetupCard: View {
                         } label: {
                             HStack(spacing: AppTheme.Spacing.x1) {
                                 Text("Get API key")
-                                Image(systemName: "arrow.up.right")
+                                Image(yapIcon: "arrow.up.right")
                                     .font(AppTheme.font(.micro, .semibold))
                             }
                             .font(AppTheme.font(.caption, .semibold))
@@ -210,7 +210,7 @@ struct OnboardingTranscriptionSetupCard: View {
 
             if yapCloud.isSignedIn {
                 HStack(alignment: .center, spacing: AppTheme.Spacing.x2) {
-                    Image(systemName: "checkmark.circle.fill")
+                    Image(yapIcon: "checkmark.circle.fill")
                         .font(AppTheme.font(.callout, .semibold))
                         .foregroundColor(AppTheme.Status.positive)
                     Text(yapCloudSignedInLine)
@@ -283,7 +283,7 @@ struct OnboardingTranscriptionSetupCard: View {
             .foregroundColor(AppTheme.Text.secondary)
         } else if let recommendedError {
             HStack(alignment: .top, spacing: AppTheme.Spacing.x2) {
-                Image(systemName: "exclamationmark.circle.fill")
+                Image(yapIcon: "exclamationmark.circle.fill")
                     .font(AppTheme.font(.footnote, .semibold))
                     .padding(.top, AppTheme.Spacing.half)
                 Text(recommendedError)
@@ -337,7 +337,7 @@ struct OnboardingTranscriptionSetupCard: View {
 
     private var missingModelPanel: some View {
         HStack(spacing: AppTheme.Spacing.x3) {
-            Image(systemName: "exclamationmark.triangle.fill")
+            Image(yapIcon: "exclamationmark.triangle.fill")
                 .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(AppTheme.Status.error)
 
@@ -411,7 +411,7 @@ struct OnboardingTranscriptionSetupCard: View {
                 } label: {
                     HStack(spacing: AppTheme.Spacing.x2) {
                         Text("Switch provider")
-                        Image(systemName: isSwitchingProvider ? "chevron.up" : "chevron.down")
+                        Image(yapIcon: isSwitchingProvider ? "chevron.up" : "chevron.down")
                             .font(AppTheme.font(.micro, .semibold))
                     }
                     .font(AppTheme.font(.caption, .semibold))
@@ -448,7 +448,7 @@ struct OnboardingTranscriptionSetupCard: View {
                     } label: {
                         HStack(spacing: AppTheme.Spacing.x1) {
                             Text("Get API key")
-                            Image(systemName: "arrow.up.right")
+                            Image(yapIcon: "arrow.up.right")
                                 .font(AppTheme.font(.micro, .semibold))
                         }
                         .font(AppTheme.font(.caption, .semibold))
@@ -494,7 +494,7 @@ struct OnboardingTranscriptionSetupCard: View {
 
     private var verifiedProviderSummary: some View {
         HStack(alignment: .center, spacing: AppTheme.Spacing.x2) {
-            Image(systemName: "checkmark.circle.fill")
+            Image(yapIcon: "checkmark.circle.fill")
                 .font(AppTheme.font(.callout, .semibold))
                 .foregroundColor(AppTheme.Status.positive)
 
@@ -511,7 +511,7 @@ struct OnboardingTranscriptionSetupCard: View {
     private var statusLine: some View {
         if let verificationMessage {
             HStack(alignment: .top, spacing: AppTheme.Spacing.x2) {
-                Image(systemName: verificationSucceeded ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                Image(yapIcon: verificationSucceeded ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
                     .font(AppTheme.font(.footnote, .semibold))
                     .foregroundColor(verificationSucceeded ? AppTheme.Status.positive : AppTheme.Status.error)
                     .padding(.top, AppTheme.Spacing.half)
@@ -709,7 +709,7 @@ private struct TranscriptionProviderChoiceButton: View {
                 Spacer(minLength: 0)
 
                 if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
+                    Image(yapIcon: "checkmark.circle.fill")
                         .font(AppTheme.font(.body, .semibold))
                         .foregroundColor(AppTheme.Text.secondary)
                 }

@@ -44,20 +44,50 @@ struct VoiceInkApp: App {
         #if DEBUG
             // make ui-snapshots: render fake-data screens to /tmp/yap-ui/snapshots and exit.
             UISnapshots.runIfRequested()
+            // make meeting-call-check: print who uses the microphone and exit, before anything writes settings.
+            MeetingCallCheck.runIfRequested()
+            // make mcp-check: write a data folder for yap-mcp and the expected exports, and exit, before anything
+            // writes settings.
+            MCPFixture.runIfRequested()
         #endif
         // Before onboarding can complete in this session, so a fresh install isn't mistaken for an update.
         ReleaseNotesPresenter.shared.showsOnNextMainWindow = ReleaseNotes.recordLaunch()
         #if DEBUG
             ReleaseNotes.selfCheck()
+            TrustBody.selfCheck()
             WhisperChunking.selfCheck()
             TimedSegments.selfCheck()
             PCMResampler.selfCheck()
+            MicrophoneLevelProbe.selfCheck()
+            MoveToApplicationsPrompt.selfCheck()
             RecordedAudioIssue.selfCheck()
+            VisualizerMotion.selfCheck()
+            DictationAnnouncer.selfCheck()
+            RecordingRecovery.selfCheck()
+            TranscriptionOutputFilter.selfCheck()
+            CancelConfirmation.selfCheck()
+            DefaultShortcuts.selfCheck()
+            SettingsGroup.selfCheck()
             ClipboardManager.selfCheck()
             LastPasteEditor.selfCheck()
+            PromptTemplates.selfCheck()
+            HomeShortcutsCard.selfCheck()
+            CursorPaster.selfCheck()
+            ScratchpadStore.selfCheck()
+            StarterModeCatalog.selfCheck()
+            TranscriptionLanguageSupport.selfCheck()
             CursorContextReader.selfCheck()
+            YapIconCheck.selfCheck()
             MeetingChunker.selfCheck()
             MeetingNotes.selfCheck()
+            MeetingEdits.selfCheck()
+            MeetingEcho.selfCheck()
+            MeetingRecorder.shortcutSelfCheck()
+            MeetingRecorder.speakersSelfCheck()
+            MeetingRecorder.recoverySelfCheck()
+            MeetingSummarizer.selfCheck()
+            MeetingStatusLine.selfCheck()
+            MeetingCallPolicy.selfCheck()
             OpenAICompatibleChat.selfCheck()
             ModelFileDownloader.selfCheck()
             ReplacementText.selfCheck()
@@ -71,6 +101,12 @@ struct VoiceInkApp: App {
             Task.detached {
                 do { try SessionMetricRecorder.selfCheck() } catch { assertionFailure("SessionMetric selfCheck: \(error)") }
             }
+            ModelResidency.selfCheck()
+            YapCloud.modeNamesSelfCheck()
+            RecordingContextSnapshot.selfCheck()
+            HistoryQuery.selfCheck()
+            AgentAccess.selfCheck()
+            AgentConnection.selfCheck()
         #endif
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
@@ -82,13 +118,7 @@ struct VoiceInkApp: App {
         #endif
 
         let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "Initialization")
-        // Keep existing model order stable; append new models after synced entities.
-        let schema = Schema([
-            Transcription.self,
-            VocabularyWord.self,
-            WordReplacement.self,
-            SessionMetric.self,
-        ])
+        let schema = YapStores.schema
         let resolvedContainer: ModelContainer
 
         // Attempt 1: Try persistent storage
@@ -178,6 +208,7 @@ struct VoiceInkApp: App {
         recorderUIManager.configure(engine: engine, recorder: engine.recorder)
         engine.recorderUIManager = recorderUIManager
         MeetingRecorder.shared.configure(engine: engine)
+        MeetingCallDetector.shared.configure(engine: engine)
         // Once; a shortcut the user cleared stays cleared.
         ShortcutStore.seedShortcut(.rightCommandSpace, for: .meetingRecording)
 
@@ -248,6 +279,21 @@ struct VoiceInkApp: App {
         Task { @MainActor in
             await statsMigrationTask?.value
             TranscriptionAutoCleanupService.shared.startMonitoring(modelContext: mainContext)
+            let offeredDictation = RecordingRecovery.offerAtLaunch(modelContext: mainContext, engine: engine)
+            // In the background, so the rest of launch isn't held up by a long transcription. Its "recovering"
+            // note would replace dictation's offer, so it's left out then.
+            Task { @MainActor in
+                let recovered = await MeetingRecorder.shared.recoverInterruptedMeetings(announceStart: !offeredDictation)
+                #if DEBUG
+                    MeetingFilesCheck.reportRecovery(recovered)  // scripts/meeting-files-check.sh only
+                    await MeetingFilesCheck.runEditCheck(engine: engine)  // scripts/meeting-files-check.sh only
+                #endif
+                // Meetings saved while their speakers were still being told apart, when the app quit.
+                let resumed = await MeetingRecorder.shared.resumeSpeakers()
+                #if DEBUG
+                    MeetingFilesCheck.reportSpeakersResume(resumed, engine: engine)  // scripts/meeting-long-check.sh only
+                #endif
+            }
 
             let tokenBackfillTask = SessionMetricMigrationService.shared.runEnhancementTokenBackfillIfNeeded(
                 modelContainer: resolvedContainer)
@@ -281,9 +327,12 @@ struct VoiceInkApp: App {
         return lines.joined(separator: "\n")
     }
 
-    private static func createPersistentContainer(schema: Schema, logger: Logger) throws -> ModelContainer {
-        let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    /// The app's stores in `directory` (Yap's Application Support folder; `make mcp-check`'s fixture passes its own).
+    static func createPersistentContainer(
+        schema: Schema, logger: Logger,
+        directory appSupportURL: URL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent(AppIdentity.supportDirectoryName, isDirectory: true)
+    ) throws -> ModelContainer {
 
         try? FileManager.default.createDirectory(at: appSupportURL, withIntermediateDirectories: true)
 
@@ -291,15 +340,8 @@ struct VoiceInkApp: App {
         let dictionaryStoreURL = appSupportURL.appendingPathComponent("dictionary.store")
         let statsStoreURL = appSupportURL.appendingPathComponent("stats.store")
 
-        let transcriptSchema = Schema([Transcription.self])
-        let transcriptConfig = ModelConfiguration(
-            "default",
-            schema: transcriptSchema,
-            url: defaultStoreURL,
-            cloudKitDatabase: .none
-        )
+        let transcriptConfig = YapStores.historyConfiguration(url: defaultStoreURL)
 
-        let dictionarySchema = Schema([VocabularyWord.self, WordReplacement.self])
         // Dev shares the local stores but must never connect to CloudKit.
         #if DEBUG || LOCAL_BUILD
             let dictionaryCloudKit: ModelConfiguration.CloudKitDatabase = .none
@@ -307,12 +349,7 @@ struct VoiceInkApp: App {
             let dictionaryCloudKit: ModelConfiguration.CloudKitDatabase = .private(
                 "iCloud.com.prakashjoshipax.VoiceInk")
         #endif
-        let dictionaryConfig = ModelConfiguration(
-            "dictionary",
-            schema: dictionarySchema,
-            url: dictionaryStoreURL,
-            cloudKitDatabase: dictionaryCloudKit
-        )
+        let dictionaryConfig = YapStores.dictionaryConfiguration(url: dictionaryStoreURL, cloudKitDatabase: dictionaryCloudKit)
 
         let statsSchema = Schema([SessionMetric.self])
         let statsConfig = ModelConfiguration(
@@ -399,8 +436,6 @@ struct VoiceInkApp: App {
                             }
                         )
                         .onDisappear {
-                            whisperModelManager.unloadModel()
-
                             // Stop the automatic audio cleanup process
                             audioCleanupManager.stopAutomaticCleanup()
                         }

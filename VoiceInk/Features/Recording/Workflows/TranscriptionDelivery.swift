@@ -190,6 +190,7 @@ final class TranscriptionDelivery {
         return Task { @MainActor in
             let pasteOutcome = await pasteTask.value
             timeline?.pasteFinished(pasteOutcome.result.timelineOutcome, commandAt: pasteOutcome.commandTime)
+            if pasteOutcome.result.didPostPasteCommand { DictationAnnouncer.pasted() }
 
             if finishAndSendKey.isEnabled && pasteOutcome.result.didPostPasteCommand {
                 try? await Task.sleep(nanoseconds: 150_000_000)
@@ -207,6 +208,7 @@ extension CursorPaster.PasteResult {
         switch self {
         case .commandPosted: return .pasted
         case .leftOnClipboard: return .clipboardOnly
+        case .sentToScratchpad: return .scratchpad
         case .commandNotPosted: return .failed
         }
     }

@@ -243,6 +243,8 @@ class RecordingShortcutManager: ObservableObject {
             LastTranscriptionService.pasteLastTranscription(from: engine.modelContext)
         case .pasteLastEnhancement:
             LastTranscriptionService.pasteLastEnhancement(from: engine.modelContext)
+        case .copyLastTranscription:
+            LastTranscriptionService.copyLastTranscription(from: engine.modelContext)
         case .retryLastTranscription:
             LastTranscriptionService.retryLastTranscription(
                 from: engine.modelContext,
@@ -252,6 +254,8 @@ class RecordingShortcutManager: ObservableObject {
             )
         case .openQuickHistory:
             QuickHistoryController.shared.show(modelContext: engine.modelContext, engine: engine)
+        case .openScratchpad:
+            ScratchpadController.shared.toggle()
         case .quickAddToDictionary:
             DictionaryQuickAddManager.shared.toggle(modelContainer: engine.modelContext.container)
         case .meetingRecording:

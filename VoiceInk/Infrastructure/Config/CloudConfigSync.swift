@@ -206,6 +206,10 @@ final class CloudConfigSync: ObservableObject {
         status = .synced(Date())
     }
 
+    #if DEBUG
+        func applySnapshotSynced() { status = .synced(Date()) }
+    #endif
+
     /// Conflict resolution from Settings: take the cloud copy, or put this Mac's settings over it.
     func resolveConflict(keepLocal: Bool) async {
         await run { store, local in

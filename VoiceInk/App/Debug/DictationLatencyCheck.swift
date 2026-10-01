@@ -26,18 +26,18 @@
                 CursorPaster.dryRun = true
                 let restorePasteboard = OfflineCheck.savePasteboard()
 
-                await engine.preloadTranscriptionModel()
+                await engine.loadCurrentModel()
                 _ = await engine.dictateFile(files[0])
                 for round in 1...rounds {
                     for file in files {
-                        await engine.preloadTranscriptionModel()
+                        await engine.loadCurrentModel()
                         let transcription = await engine.dictateFile(file, measured: true)
                         report(transcription, clip: file.deletingPathExtension().lastPathComponent, round: round,
                             in: engine.modelContext)
                     }
                 }
 
-                await engine.whisperModelManager.cleanupResources()  // ggml asserts at exit with Metal buffers left
+                await engine.releaseModels()  // ggml asserts at exit() while any Metal buffer is still allocated
                 restorePasteboard()
                 fflush(stdout)
                 exit(0)  // NSApp.terminate is turned into "hide to the menu bar"

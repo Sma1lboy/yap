@@ -196,8 +196,8 @@ final class WordReplacementService {
 }
 
 /// Replacement text is stored as typed. `\n` in it means a line break so a rule like
-/// "new paragraph" → `\n\n` can insert paragraphs (upstream #975); the text field is one line and
-/// all-whitespace replacements were trimmed away.
+/// "new paragraph" → `\n\n` can insert paragraphs (upstream #975); a real line break typed in the
+/// multi-line field works too. All-whitespace replacements were trimmed away.
 enum ReplacementText {
     /// `\n` → line break, `\t` → tab, `\\` → one backslash; any other backslash stays as typed.
     static func expand(_ text: String) -> String {
@@ -228,8 +228,22 @@ enum ReplacementText {
         text.replacingOccurrences(of: "[ \t]*\n[ \t]*", with: "\n", options: .regularExpression)
     }
 
+    /// A multi-line replacement (snippet) as one list line: its first line, plus "…" when more follows.
+    static func oneLine(_ text: String) -> String {
+        let lines = text.split(whereSeparator: \.isNewline)
+        guard let first = lines.first, lines.count > 1 || text.last?.isNewline == true else { return text }
+        return first + "…"
+    }
+
     #if DEBUG
         static func selfCheck() {
+            let snippet = "Best regards,\nJackson"
+            assert(expand(snippet) == snippet, "a real line break survives expand")
+            assert(absorbingSpacesAroundLineBreaks("hi " + snippet) == "hi " + snippet)
+            let json = try! JSONSerialization.data(withJSONObject: ["sig": snippet])
+            assert((try! JSONSerialization.jsonObject(with: json) as! [String: String])["sig"] == snippet)
+            assert(oneLine(snippet) == "Best regards,…" && oneLine("one line") == "one line")
+            assert(oneLine("a\n\nb") == "a…")
             assert(expand(#"\n\n"#) == "\n\n")
             assert(expand(#"a\tb"#) == "a\tb")
             assert(expand(#"C:\\path"#) == #"C:\path"#)

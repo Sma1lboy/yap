@@ -5,11 +5,15 @@ enum ShortcutAction: Hashable {
     case secondaryRecording
     case pasteLastTranscription
     case pasteLastEnhancement
+    /// Copies the last result (enhanced if present) to the clipboard without pasting.
+    case copyLastTranscription
     case retryLastTranscription
     case cancelRecorder
     case openQuickHistory
+    /// Opens or closes the floating Scratchpad. Unset by default.
+    case openScratchpad
     case quickAddToDictionary
-    /// Starts or stops a meeting recording (MeetingRecorder). Default: right ⌘ + Space.
+    /// Starts a meeting recording (MeetingRecorder); only ✓ in the meeting panel stops it. Default: right ⌘ + Space.
     case meetingRecording
     /// Removes the last paste (LastPasteEditor).
     case undoLastPaste
@@ -43,12 +47,16 @@ enum ShortcutAction: Hashable {
             return "pasteLastTranscription"
         case .pasteLastEnhancement:
             return "pasteLastEnhancement"
+        case .copyLastTranscription:
+            return "copyLastTranscription"
         case .retryLastTranscription:
             return "retryLastTranscription"
         case .cancelRecorder:
             return "cancelRecorder"
         case .openQuickHistory:
             return "openHistoryWindow"
+        case .openScratchpad:
+            return "openScratchpad"
         case .quickAddToDictionary:
             return "quickAddToDictionary"
         case .meetingRecording:
@@ -78,12 +86,16 @@ enum ShortcutAction: Hashable {
             return String(localized: "Paste Last Transcription")
         case .pasteLastEnhancement:
             return String(localized: "Paste Last Enhanced Transcription")
+        case .copyLastTranscription:
+            return String(localized: "Copy Last Transcription")
         case .retryLastTranscription:
             return String(localized: "Retry Last Transcription")
         case .cancelRecorder:
             return String(localized: "Cancel Recording")
         case .openQuickHistory:
             return String(localized: "Open Quick History")
+        case .openScratchpad:
+            return String(localized: "Open Scratchpad")
         case .quickAddToDictionary:
             return String(localized: "Quick Add to Dictionary")
         case .meetingRecording:
@@ -114,8 +126,10 @@ enum ShortcutAction: Hashable {
     static let globalUtilityActions: [Self] = [
         .pasteLastTranscription,
         .pasteLastEnhancement,
+        .copyLastTranscription,
         .retryLastTranscription,
         .openQuickHistory,
+        .openScratchpad,
         .quickAddToDictionary,
         .undoLastPaste,
         .rewriteLastPaste,

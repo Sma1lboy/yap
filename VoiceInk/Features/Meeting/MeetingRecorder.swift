@@ -26,21 +26,53 @@ final class MeetingRecorder: ObservableObject {
 
     struct MeetingResult: Equatable {
         let transcriptionID: UUID
-        let notes: String?
-        let transcript: String
+        var notes: String?
+        /// Updated when the speakers are told apart after saving.
+        var transcript: String
         /// Why there are no notes (Yap Refine, no AI provider, the request failed); nil when there are.
-        let notesProblem: String?
-        let markdown: String
+        var notesProblem: String?
+        var markdown: String
         /// The AI model that wrote the notes.
-        let notesModel: String?
+        var notesModel: String?
+        /// Where the meeting's audio is (mic.wav, system.wav, mix.wav).
+        var folder: URL? = nil
+        /// Pieces that couldn't be transcribed; each keeps a marked line in the transcript.
+        var failedPieces = 0
+        /// Why the remote lines are plain "Others"; nil when they were told apart or nobody remote spoke.
+        var speakersSkipped: SpeakerSplitSkip? = nil
+        /// "Me" pieces the other side's voice was taken out of (MeetingEcho), whole or in part.
+        var echoRemoved = 0
+        /// The History entry couldn't be saved (the folder stays, and the next launch recovers it).
+        var saveError: String? = nil
+        /// A recovered meeting saved with its audio only, not transcribed.
+        var audioOnly = false
+        /// The last "Export Markdown…" from the panel couldn't write the file.
+        var exportError: String? = nil
+        /// "Regenerate Notes" is writing them; `regenerateProblem` says why the last try left the notes as they were.
+        var isRegenerating = false
+        var regenerateProblem: String? = nil
+        /// The meeting is saved and its remote speakers are still being told apart in the background: what that's
+        /// doing now ("Telling speakers apart…", the model download). nil once done or when not needed.
+        var speakersPending: String? = nil
+        /// The speakers were told apart after the meeting was saved: the transcript has them, the notes don't.
+        var speakersLabeledLater = false
+
+        /// Only a saved, transcribed meeting in which something was said has notes that can be written again.
+        var canRegenerate: Bool { saveError == nil && !audioOnly && !transcript.isEmpty }
     }
 
     @Published private(set) var phase: Phase = .idle
 
     static let consentShownKey = "meetingRecordingConsentShown"
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "MeetingRecorder")
-    private weak var engine: VoiceInkEngine?
+    weak var engine: VoiceInkEngine?
     private var session: Session?
+    /// Folders of meetings being recorded, finished or recovered right now: never taken for interrupted ones.
+    var activeFolders: Set<String> = []
+    /// Speakers being told apart after their meeting was saved (MeetingSpeakers.swift), by History entry.
+    var speakerJobs: [UUID: Task<Void, Never>] = [:]
+    /// Where each running diarization's progress goes, by meeting folder: the "finishing" panel, then the result.
+    var speakerProgress: [String: @MainActor (String) -> Void] = [:]
 
     func configure(engine: VoiceInkEngine) {
         self.engine = engine
@@ -48,21 +80,38 @@ final class MeetingRecorder: ObservableObject {
 
     // MARK: - Start / stop
 
-    /// The shortcut and the menu: starts, or stops a running recording. The first time, the consent note comes
-    /// first and recording starts from its button.
-    func toggle() {
+    /// What the meeting shortcut does in each phase. A running meeting is never stopped from the keyboard (a
+    /// stray right ⌘ + Space ended one): the shortcut only brings the panel forward with a reminder to click ✓.
+    enum ShortcutAction: Equatable { case start, showConsent, cancelConsent, remindToClickStop, ignore }
+
+    static func shortcutAction(for phase: Phase, consentShown: Bool) -> ShortcutAction {
         switch phase {
-        case .recording: Task { await stop() }
-        case .finishing: return
-        case .idle, .done:
-            if UserDefaults.standard.bool(forKey: Self.consentShownKey) {
-                Task { await start() }
-            } else {
-                phase = .consent
-                MeetingPanelController.shared.show()
-            }
-        case .consent:
+        case .recording: return .remindToClickStop
+        case .finishing: return .ignore
+        case .idle, .done: return consentShown ? .start : .showConsent
+        case .consent: return .cancelConsent
+        }
+    }
+
+    /// Until when the recording panel shows "click ✓ to end the meeting" after the shortcut was pressed.
+    @Published private(set) var stopReminderUntil: Date?
+
+    /// The meeting shortcut. Starts a meeting (the first time, the consent note comes first and recording starts
+    /// from its button); during a meeting it doesn't stop it. Stopping is a click on ✓ in the panel.
+    func toggle() {
+        switch Self.shortcutAction(for: phase, consentShown: UserDefaults.standard.bool(forKey: Self.consentShownKey)) {
+        case .start:
+            Task { await start() }
+        case .showConsent:
+            phase = .consent
+            MeetingPanelController.shared.show()
+        case .cancelConsent:
             cancelConsent()
+        case .remindToClickStop:
+            stopReminderUntil = Date().addingTimeInterval(4)
+            MeetingPanelController.shared.show()
+        case .ignore:
+            return
         }
     }
 
@@ -76,9 +125,45 @@ final class MeetingRecorder: ObservableObject {
         MeetingPanelController.shared.close()
     }
 
+    /// "Export Markdown…" in the panel: a failed write shows in the panel instead of being dropped.
+    func exportMarkdown() {
+        guard case .done(var result) = phase else { return }
+        result.exportError = MeetingExport.saveMarkdown(result.markdown)
+        phase = .done(result)
+    }
+
+    /// "Regenerate Notes" in the panel: the same as in History; the old notes stay if it fails.
+    func regenerateNotes() async {
+        guard case .done(var result) = phase, result.canRegenerate, !result.isRegenerating, let engine else { return }
+        let id = result.transcriptionID
+        guard let transcription = try? engine.modelContext.fetch(
+            FetchDescriptor<Transcription>(predicate: #Predicate { $0.id == id })).first
+        else { return }
+        result.isRegenerating = true
+        result.regenerateProblem = nil
+        phase = .done(result)
+        let problem = await MeetingEdits.regenerateNotes(for: transcription, engine: engine)
+        guard case .done(var current) = phase, current.transcriptionID == id else { return }
+        current.isRegenerating = false
+        current.regenerateProblem = problem
+        if problem == nil {
+            current.notes = transcription.enhancedText
+            current.notesProblem = nil
+            current.notesModel = transcription.aiEnhancementModelName
+            current.markdown = MeetingNotes.markdown(for: transcription)
+            current.speakersLabeledLater = false  // the new notes have the speakers
+        }
+        phase = .done(current)
+    }
+
     func dismissResult() {
         if case .done = phase { phase = .idle }
         MeetingPanelController.shared.close()
+    }
+
+    /// A newer result for the meeting the panel shows (MeetingSpeakers.swift, when the speakers arrive).
+    func setResult(_ result: MeetingResult) {
+        phase = .done(result)
     }
 
     func start() async {
@@ -100,6 +185,7 @@ final class MeetingRecorder: ObservableObject {
             let session = try Session(
                 folder: folder, started: started, transcriber: Transcriber(engine: engine, configuration: configuration))
             self.session = session
+            activeFolders.insert(folder.lastPathComponent)
             try session.startMicrophone(deviceID: micDevice)
             do {
                 try session.startSystemAudio()
@@ -110,6 +196,7 @@ final class MeetingRecorder: ObservableObject {
         } catch {
             session?.stopCapture()
             session = nil
+            activeFolders.remove(folder.lastPathComponent)
             return notify(String(format: String(localized: "Meeting recording couldn't start: %@"), error.localizedDescription))
         }
         phase = .recording(started: started)
@@ -140,19 +227,77 @@ final class MeetingRecorder: ObservableObject {
         await complete(session)
     }
 
-    /// After capture: waits for the transcription, writes notes, saves the History entry, shows the result.
+    /// After capture: finishes the meeting with progress in the panel, then shows the result.
     @discardableResult
     private func complete(_ session: Session) async -> MeetingResult? {
         guard let engine else { return nil }
-        phase = .finishing(String(localized: "Transcribing the last part…"))
-        let (segments, failures) = await session.finish()
+        let result = await finishMeeting(session, engine: engine) { [weak self] message in self?.phase = .finishing(message) }
+        phase = .done(result)
+        MeetingPanelController.shared.show()
+        return result
+    }
+
+    /// Everything after capture, without touching the panel (recovery runs it in the background): waits for the
+    /// transcription, takes the speakers' echo out of "Me", tells remote speakers apart, writes notes, saves the
+    /// History entry. Telling speakers apart is waited for up to `speakerWait` seconds (`MeetingRecorder.speakerWait`
+    /// when nil); past that the meeting is saved with plain "Others" and the speakers are filled in when they're
+    /// ready (`continueSpeakers`).
+    func finishMeeting(
+        _ session: Session, engine: VoiceInkEngine, timestamp: Date? = nil, speakerWait: TimeInterval? = nil,
+        progress: @escaping @MainActor @Sendable (String) -> Void
+    ) async -> MeetingResult {
+        defer { activeFolders.remove(session.folder.lastPathComponent) }
+        progress(String(localized: "Transcribing the last part…"))
+        let transcribing = Date()
+        var (segments, failures) = await session.finish()
         if failures > 0 {
             logger.error("\(failures, privacy: .public) meeting pieces failed to transcribe")
         }
+        #if DEBUG
+            if MeetingFilesCheck.isRequested {
+                let elapsed = String(format: "%.1f", Date().timeIntervalSince(transcribing))
+                print("meeting-check: transcribed in \(elapsed) s; \(segments.count) pieces, \(Int(session.duration)) s per channel")
+            }
+        #endif
+        // Echo: the other side heard through the speakers, transcribed again as "Me". Reads both channels' files.
+        let folder = session.folder
+        let deduplicated = await Task.detached { [segments] in MeetingEcho.removeEcho(from: segments, folder: folder) }.value
+        let echoRemoved = deduplicated.filter(\.hadEcho).count
+        if echoRemoved > 0 {
+            segments = deduplicated
+            try? JSONEncoder().encode(segments).write(to: folder.appendingPathComponent("segments.json"), options: .atomic)
+            logger.notice("Echo taken out of \(echoRemoved, privacy: .public) of the microphone's pieces")
+        }
+        #if DEBUG
+            if MeetingFilesCheck.isRequested { print("meeting-check: echo-removed \(echoRemoved)") }
+        #endif
+        var speakersSkipped: SpeakerSplitSkip? = nil
+        var speakerJob: SpeakerJob? = nil
+        if segments.contains(where: { $0.speaker == .others && !$0.isFailed }) {
+            if session.duration < MeetingDiarizer.minimumDuration {
+                speakersSkipped = .tooShort
+            } else {
+                progress(String(localized: "Telling speakers apart…"))
+                speakerProgress[folder.lastPathComponent] = progress
+                let job = speakerTurns(folder: folder, duration: session.duration, engine: engine)
+                if let turns = await Self.value(of: job, within: speakerWait ?? Self.speakerWait) {
+                    speakerProgress[folder.lastPathComponent] = nil
+                    let labeled: [MeetingSegment]
+                    (labeled, speakersSkipped) = Self.labeled(segments, turns)
+                    if labeled != segments {
+                        segments = labeled
+                        try? JSONEncoder().encode(segments).write(to: folder.appendingPathComponent("segments.json"), options: .atomic)
+                    }
+                } else {
+                    speakerJob = job
+                }
+            }
+        }
 
-        phase = .finishing(String(localized: "Writing notes…"))
+        progress(String(localized: "Writing notes…"))
         let transcript = MeetingNotes.transcript(segments)
-        let summary = await MeetingSummarizer(engine: engine).notes(for: transcript)
+        // Notes from what was understood; the failed pieces' markers are left out.
+        let summary = await MeetingSummarizer(engine: engine).notes(for: MeetingNotes.transcript(segments.filter { !$0.isFailed }))
 
         let transcription = Transcription(
             text: transcript.isEmpty ? String(localized: "(Nothing was said in this meeting.)") : transcript,
@@ -167,20 +312,47 @@ final class MeetingRecorder: ObservableObject {
             modeEmoji: session.transcriber.configuration.metadata.emoji,
             transcriptionStatus: .completed)
         transcription.kind = Transcription.meetingKind
-        engine.modelContext.insert(transcription)
-        try? engine.modelContext.save()
-        NotificationCenter.default.post(name: .transcriptionCreated, object: transcription)
+        transcription.meetingFailedPieces = failures > 0 ? failures : nil
+        transcription.meetingSpeakerStatus = speakerJob == nil ? nil : SpeakerSplitSkip.pendingStatus
+        if let timestamp { transcription.timestamp = timestamp }
+        let saveError = save(transcription, engine: engine)
 
         let markdown = MeetingNotes.markdown(
-            title: String(localized: "Meeting"), date: session.started, duration: session.duration,
-            notes: summary.notes, transcript: transcript)
-        let result = MeetingResult(
-            transcriptionID: transcription.id, notes: summary.notes, transcript: transcript,
-            notesProblem: summary.problem, markdown: markdown, notesModel: summary.modelName)
-        phase = .done(result)
-        MeetingPanelController.shared.show()
+            date: session.started, duration: session.duration, notes: summary.notes, transcript: transcript)
         logger.notice("Meeting saved: \(segments.count, privacy: .public) segments, notes \(summary.notes != nil, privacy: .public)")
+        var result = MeetingResult(
+            transcriptionID: transcription.id, notes: summary.notes, transcript: transcript,
+            notesProblem: summary.problem, markdown: markdown, notesModel: summary.modelName,
+            folder: session.folder, failedPieces: failures, speakersSkipped: speakersSkipped, echoRemoved: echoRemoved,
+            saveError: saveError)
+        if let speakerJob {
+            // Without an entry there's nothing to update; the next launch recovers the folder from the start.
+            if saveError == nil {
+                result.speakersPending = String(localized: "Telling speakers apart…")
+                continueSpeakers(speakerJob, id: transcription.id, folder: folder)
+            } else {
+                speakerProgress[folder.lastPathComponent] = nil
+            }
+        }
         return result
+    }
+
+    /// Saves a new History entry; returns the error instead of dropping it. A failed entry isn't left pending in
+    /// the context, so its folder stays without an entry and the next launch recovers it.
+    func save(_ transcription: Transcription, engine: VoiceInkEngine) -> String? {
+        engine.modelContext.insert(transcription)
+        do {
+            #if DEBUG
+                if MeetingFilesCheck.failsSave { throw CocoaError(.fileWriteNoPermission) }
+            #endif
+            try engine.modelContext.save()
+            NotificationCenter.default.post(name: .transcriptionCreated, object: transcription)
+            return nil
+        } catch {
+            engine.modelContext.delete(transcription)
+            logger.error("Meeting not saved: \(error.localizedDescription, privacy: .public)")
+            return error.localizedDescription
+        }
     }
 
     #if DEBUG
@@ -195,9 +367,10 @@ final class MeetingRecorder: ObservableObject {
             guard let session = try? Session(
                 folder: folder, started: Date(), transcriber: Transcriber(engine: engine, configuration: configuration))
             else { return nil }
+            activeFolders.insert(folder.lastPathComponent)
             phase = .recording(started: session.started)
-            session.feed(PCM16WAVWriter.samples(from: (try? Data(contentsOf: microphone)) ?? Data()), as: .me)
-            session.feed(PCM16WAVWriter.samples(from: (try? Data(contentsOf: system)) ?? Data()), as: .others)
+            session.feed(file: microphone, as: .me)
+            session.feed(file: system, as: .others)
             return await complete(session).map { ($0, folder) }
         }
     #endif
@@ -265,23 +438,25 @@ final class MeetingRecorder: ObservableObject {
             }
         }
 
-        #if DEBUG
-            /// A whole recorded channel at once, in one-second blocks, without the wall clock.
-            func feed(_ samples: [Int16], as speaker: MeetingSegment.Speaker) {
-                queue.sync {
-                    guard let channel = channels[speaker] else { return }
-                    var index = 0
-                    while index < samples.count {
-                        let block = Array(samples[index..<min(index + 16_000, samples.count)])
-                        index += block.count
-                        let elapsed = TimeInterval(channel.writer.sampleCount + block.count) / MeetingChunker.sampleRate
-                        for piece in channel.append(block, elapsedAtEnd: elapsed) {
-                            transcriber.enqueue(piece, speaker: speaker, folder: folder)
-                        }
+        /// A whole recorded channel from a 16 kHz mono PCM16 WAV, in one-second blocks, without the wall clock.
+        /// Reads from byte 44 to the end, so a file whose header was never finished (a crash) works too.
+        // ponytail: pieces queue up in memory faster than they're transcribed (~1 MB per piece); fine for hours,
+        // feed with backpressure if recovered meetings get much longer.
+        func feed(file: URL, as speaker: MeetingSegment.Speaker) {
+            guard let handle = try? FileHandle(forReadingFrom: file) else { return }
+            defer { try? handle.close() }
+            try? handle.seek(toOffset: 44)
+            queue.sync {
+                guard let channel = channels[speaker] else { return }
+                while let data = try? handle.read(upToCount: 32_000), !data.isEmpty {
+                    let block = PCM16WAVWriter.samples(from: Data(count: 44) + data)
+                    let elapsed = TimeInterval(channel.writer.sampleCount + block.count) / MeetingChunker.sampleRate
+                    for piece in channel.append(block, elapsedAtEnd: elapsed) {
+                        transcriber.enqueue(piece, speaker: speaker, folder: folder)
                     }
                 }
             }
-        #endif
+        }
 
         func stopCapture() {
             microphone.stopRecording()
@@ -348,9 +523,17 @@ final class MeetingRecorder: ObservableObject {
         private var failures = 0
         private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "MeetingRecorder")
 
+        #if DEBUG
+            /// `--meeting-fail-pieces N`: the first N pieces fail, for scripts/meeting-files-check.sh.
+            private var failuresToInject = 0
+        #endif
+
         @MainActor init(engine: VoiceInkEngine, configuration: TranscriptionRuntimeConfiguration) {
             self.registry = engine.serviceRegistry
             self.configuration = configuration
+            #if DEBUG
+                failuresToInject = MeetingFilesCheck.failPieces
+            #endif
         }
 
         func enqueue(_ piece: MeetingChunker.Piece, speaker: MeetingSegment.Speaker, folder: URL) {
@@ -376,6 +559,13 @@ final class MeetingRecorder: ObservableObject {
         private func transcribe(_ piece: MeetingChunker.Piece, speaker: MeetingSegment.Speaker, folder: URL) async {
             let url = folder.appendingPathComponent("pieces/\(speaker.rawValue)-\(Int(piece.start * 1000)).wav")
             do {
+                #if DEBUG
+                    lock.lock()
+                    let inject = failuresToInject > 0
+                    if inject { failuresToInject -= 1 }
+                    lock.unlock()
+                    if inject { throw CocoaError(.fileReadUnknown) }
+                #endif
                 try PCM16WAVWriter.write(piece.samples, to: url)
                 defer { try? FileManager.default.removeItem(at: url) }
                 let raw = try await registry.transcribe(
@@ -387,8 +577,10 @@ final class MeetingRecorder: ObservableObject {
                 lock.unlock()
             } catch {
                 logger.error("Meeting piece at \(piece.start, privacy: .public)s failed: \(error.localizedDescription, privacy: .public)")
+                // The piece keeps a line in the transcript, marked as not transcribed.
                 lock.lock()
                 failures += 1
+                segments.append(MeetingSegment(speaker: speaker, start: piece.start, end: piece.end, text: "", failed: true))
                 lock.unlock()
             }
         }
@@ -403,12 +595,19 @@ struct MeetingSummarizer {
 
     struct Summary {
         var notes: String?
+        /// Why there are no notes, as the panel says it after a meeting (`setupHint`, or a failed request).
         var problem: String?
+        /// The failed request's own error, which Regenerate Notes words its way.
+        var failure: String?
         var modelName: String?
         var duration: TimeInterval?
+        /// What the final request sent (the prompt with the speakers' names, the transcript or part notes).
+        var systemMessage: String?
+        var userMessage: String?
     }
 
-    func notes(for transcript: String) async -> Summary {
+    /// `names`: the speakers' real names, when the user gave any; the prompt then says who is who.
+    func notes(for transcript: String, names: MeetingSpeakerNames = [:]) async -> Summary {
         guard !transcript.isEmpty else { return Summary() }
         guard let service = engine.enhancementService, let aiService = service.getAIService() else {
             return Summary(problem: Self.setupHint)
@@ -418,15 +617,22 @@ struct MeetingSummarizer {
             base.replacingPrompt(CustomPrompt(title: MeetingNotes.promptTitle, promptText: prompt, useSystemInstructions: false))
         }
         // Checked with the notes prompt in place: the mode's own prompt selection doesn't matter here.
-        guard let provider = base.provider, provider != .voiceInkRefine,
+        // The mode's AI enhancement switch decides: without it, a fresh install would fall back to whatever local
+        // model is around (Ollama) for every meeting.
+        guard base.isEnabled, let provider = base.provider, provider != .voiceInkRefine,
             service.isConfigured(for: withPrompt(MeetingNotes.prompt))
         else {
             return Summary(problem: Self.setupHint)
         }
+        var last: AIEnhancementResult?
         func ask(_ text: String, prompt: String) async throws -> String {
-            let configuration = withPrompt(prompt)
+            #if DEBUG
+                if MeetingFilesCheck.takeNotesFailure() { throw EnhancementError.enhancementFailed }
+            #endif
+            let configuration = withPrompt(MeetingNotes.named(prompt, names: names))
             let result = try await service.enhance(
                 text, configuration: configuration, timeout: MeetingNotes.timeout(forCharacters: text.count))
+            last = result
             return result.text.trimmingCharacters(in: .whitespacesAndNewlines)
         }
 
@@ -444,15 +650,38 @@ struct MeetingSummarizer {
             let notes = try await ask(input, prompt: MeetingNotes.prompt)
             return Summary(
                 notes: notes.isEmpty ? nil : notes, modelName: base.modelName ?? provider.defaultModel,
-                duration: Date().timeIntervalSince(started))
+                duration: Date().timeIntervalSince(started), systemMessage: last?.systemMessage,
+                userMessage: last?.userMessage)
         } catch {
-            return Summary(problem: EnhancementFailureFormatter.message(for: error))
+            let failure = Self.failureDescription(for: error)
+            return Summary(
+                problem: String(format: String(localized: "The notes couldn't be written: %@"), failure),
+                failure: failure)
         }
     }
 
-    static var setupHint: String {
-        String(localized: "No notes: this mode has no AI provider for them (Yap Refine can't write notes). Choose one in the mode for your next meeting; the transcript is saved in History.")
+    /// Why the notes request failed. A timeout gets its own words: the shared one names dictation cleanup ("润色")
+    /// and its timeout setting, which notes don't use (`MeetingNotes.timeout`).
+    static func failureDescription(for error: Error) -> String {
+        if case .timeout? = error as? EnhancementError {
+            return String(localized: "The request timed out. Check your connection and try again.")
+        }
+        return EnhancementFailureFormatter.description(for: error)
     }
+
+    static var setupHint: String {
+        String(localized: "No notes: AI enhancement is off in this mode, or it has no AI provider for them (Yap Refine can't write notes). Turn it on and choose a provider in the mode for your next meeting; the transcript is saved in History.")
+    }
+
+    #if DEBUG
+        static func selfCheck() {
+            let timeout = failureDescription(for: EnhancementError.timeout)
+            assert(timeout == String(localized: "The request timed out. Check your connection and try again."))
+            assert(timeout != EnhancementFailureFormatter.description(for: EnhancementError.timeout), "not dictation cleanup's words")
+            let other = EnhancementError.rateLimitExceeded
+            assert(failureDescription(for: other) == EnhancementFailureFormatter.description(for: other))
+        }
+    #endif
 }
 
 /// Adds 16 kHz mono PCM16 WAV files into one (the History player's audio), clipping, in blocks.
@@ -478,3 +707,18 @@ enum MeetingMixer {
         }
     }
 }
+
+#if DEBUG
+    extension MeetingRecorder {
+        /// The keyboard never ends a running meeting.
+        static func shortcutSelfCheck() {
+            for consent in [true, false] {
+                assert(shortcutAction(for: .recording(started: Date()), consentShown: consent) == .remindToClickStop)
+                assert(shortcutAction(for: .finishing("x"), consentShown: consent) == .ignore)
+                assert(shortcutAction(for: .consent, consentShown: consent) == .cancelConsent)
+            }
+            assert(shortcutAction(for: .idle, consentShown: true) == .start)
+            assert(shortcutAction(for: .idle, consentShown: false) == .showConsent)
+        }
+    }
+#endif

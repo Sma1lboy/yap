@@ -63,7 +63,7 @@ struct VocabularyView: View {
                 Button {
                     showInfoPopover.toggle()
                 } label: {
-                    Image(systemName: "info.circle")
+                    Image(yapIcon: "info.circle")
                 }
                 .buttonStyle(.borderless)
                 .help("Vocabulary examples")
@@ -91,7 +91,7 @@ struct VocabularyView: View {
                                 .font(AppTheme.font(.footnote, .medium))
                                 .foregroundColor(.secondary)
 
-                            Image(systemName: sortIconName)
+                            Image(yapIcon: sortIconName)
                                 .font(AppTheme.font(.caption))
                                 .foregroundColor(.secondary)
                         }
@@ -184,7 +184,7 @@ struct DictionaryEmptyState: View {
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.x3) {
-            Image(systemName: systemImage)
+            Image(yapIcon: systemImage)
                 .font(AppTheme.font(.display))
                 .foregroundColor(.secondary.opacity(0.6))
 

@@ -27,6 +27,28 @@ struct CursorContext: Equatable {
     }
 }
 
+/// When and who: local date, weekday, time, time zone and the macOS account's full name, so "today's date" or
+/// "sign it with my name" come out right. Sent with the cursor context, so it follows the same mode switch.
+enum UserContext {
+    static func promptBlock(now: Date = Date(), timeZone: TimeZone = .current, fullName: String = NSFullUserName()) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = timeZone
+        func format(_ pattern: String) -> String {
+            formatter.dateFormat = pattern
+            return formatter.string(from: now)
+        }
+        var lines = [
+            "Date: \(format("yyyy-MM-dd")) (\(format("EEEE")))",
+            "Time: \(format("HH:mm"))",
+            "Time zone: \(timeZone.identifier) (\(format("'GMT'xxx")))",
+        ]
+        let name = fullName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !name.isEmpty { lines.append("Name: \(name)") }
+        return "<USER_CONTEXT>\n" + lines.joined(separator: "\n") + "\n</USER_CONTEXT>"
+    }
+}
+
 enum CursorContextReader {
     /// About 3,000 characters in all, weighted to what comes before the cursor.
     static let charactersBefore = 2_000
@@ -102,6 +124,16 @@ enum CursorContextReader {
                 Ship it[CURSOR]
                 </CURSOR_CONTEXT>
                 """)
+            let noon = Date(timeIntervalSince1970: 1_790_000_000)  // 2026-09-21 14:13 UTC
+            assert(UserContext.promptBlock(now: noon, timeZone: TimeZone(identifier: "Asia/Shanghai")!, fullName: " Jackson C ") == """
+                <USER_CONTEXT>
+                Date: 2026-09-21 (Monday)
+                Time: 22:13
+                Time zone: Asia/Shanghai (GMT+08:00)
+                Name: Jackson C
+                </USER_CONTEXT>
+                """)
+            assert(!UserContext.promptBlock(fullName: "").contains("Name:"), "no name, no line")
             assert(CursorContext(appName: "Mail").promptBlock == "<CURSOR_CONTEXT>\nApp: Mail\n</CURSOR_CONTEXT>")
             assert(CursorContext().promptBlock == nil && !CursorContext(appName: "Mail").hasText)
         }

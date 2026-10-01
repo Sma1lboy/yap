@@ -189,3 +189,23 @@ p { margin: 0 0 var(--space-3); }
 .stack > *, .split > * { min-width: 0; }
 .gh-stars { font-variant-numeric: tabular-nums; color: var(--text-2); padding-left: var(--space-2); margin-left: var(--space-1); border-left: 1px solid var(--border); }
 .plans--three { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+
+/* ---------- Subpages (changelog, troubleshooting) ---------- */
+.page { padding-block: var(--space-12) var(--space-16); border-top: 0; }
+.page h1 { font-size: var(--font-title); line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 var(--space-3); }
+.page .intro { margin-bottom: var(--space-8); }
+.site-nav a[aria-current="page"] { color: var(--text); }
+.release { padding-block: var(--space-8); border-top: 1px solid var(--border); max-width: 760px; }
+.release h2 { font-size: var(--font-title); margin-bottom: var(--space-1); }
+.notes h3 { font-size: var(--font-callout); margin: var(--space-5) 0 var(--space-2); }
+.notes ul { margin: 0 0 var(--space-3); padding-left: var(--space-5); display: grid; gap: var(--space-2); color: var(--text-2); }
+.notes p { color: var(--text-2); }
+.notes strong { color: var(--text); font-weight: 600; }
+.notes code, .fix code { font-size: 0.9em; background: var(--sunken); border-radius: var(--radius-sm); padding: 0 var(--space-1); overflow-wrap: anywhere; }
+.toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: var(--space-2) var(--space-6); margin-bottom: var(--space-8); max-width: 760px; }
+.toc a { padding-block: var(--space-1); }
+.fix { padding-block: var(--space-6); border-top: 1px solid var(--border); max-width: 760px; }
+.fix h2 { font-size: var(--font-headline); margin-bottom: var(--space-3); }
+.fix ol { margin: 0 0 var(--space-3); padding-left: var(--space-5); display: grid; gap: var(--space-2); color: var(--text-2); }
+.fix p { color: var(--text-2); }
+#features .points { margin-top: var(--space-8); }

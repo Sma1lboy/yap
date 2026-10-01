@@ -4,6 +4,515 @@
         <title>Yap</title>
         <link>https://github.com/Sma1lboy/yap</link>
         <item>
+            <title>Yap 1.11.0</title>
+            <pubDate>Thu, 01 Oct 2026 02:13:12 GMT</pubDate>
+            <sparkle:version>1206</sparkle:version>
+            <sparkle:shortVersionString>1.11.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.11.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.11.0</h1>
+<p dir="auto">Changes since 1.10.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Use your Yap data in Claude Code / Cursor / Codex</h2>
+<ul dir="auto">
+<li>Yap now ships a small read-only MCP server inside the app, <code class="notranslate">Yap.app/Contents/Helpers/yap-mcp</code>. Your agent starts it as a subprocess and talks to it over stdin/stdout. It reads Yap's data on this Mac only, opens no network port and sends nothing anywhere. Yap doesn't need to be running.</li>
+<li>Each call copies Yap's local database, reads the copy and deletes it. Yap's own files are only copied: the helper never opens them as a database and never changes them.</li>
+<li>Agents can list your meetings and read one (notes and transcript, the same Markdown as History › Export Markdown), search your dictations and meetings, read a single dictation, and read your dictionary (words and replacement rules). Search matches the words as you typed them, ignoring case and accents, with Chinese and English in one query. It returns 20 results by default and up to 50 when the agent asks, newest first.</li>
+<li>Nothing can be read until you turn it on in the new <strong>Settings › Agent Access (MCP)</strong>. Both of its switches are off on a new install and after this update.</li>
+<li><strong>Let Agents Read Yap's Data</strong> lets agents read meetings and the dictionary. While it's off, agents can still connect, but every read is an error that tells them which switch to turn on and where.</li>
+<li><strong>Include Dictation History</strong> adds your dictations. It is a separate switch because dictations go into any app and often hold passwords, private messages and drafts, while meeting notes are written to be shared. It can only be turned on while the first switch is on. While it's off, a search covers meetings only and says that dictations were left out.</li>
+<li>The switches are read again on every call, so turning one off applies to the agent's next request; nothing needs a restart.</li>
+<li>To connect an agent, open the <strong>Connect an Agent</strong> section under the switches. It shows where the helper is in your copy of Yap (with <strong>Show in Finder</strong>), <strong>Copy Command</strong> for Claude Code and Codex, and <strong>Copy JSON</strong> for Cursor's <code class="notranslate">~/.cursor/mcp.json</code>, all with the right path. <strong>Learn More</strong> opens the full documentation. Searching Settings for "MCP", "Claude Code", "Codex" or "Cursor" finds it.</li>
+<li>Then ask, for example: "Summarize the action items from this week's meetings", "What did I dictate about the CI migration last month?" (needs Include Dictation History), or "Check this README against the spellings in my Yap dictionary".</li>
+</ul>
+<h2 dir="auto">Languages</h2>
+<ul dir="auto">
+<li>In French, the onboarding line about recording meetings now says "Paramètres", the name the Settings page uses, instead of "Réglages".</li>
+</ul>
+<h2 dir="auto">Known limits</h2>
+<ul dir="auto">
+<li>Read-only: an agent can't change anything in Yap, for example add a word to the dictionary.</li>
+<li>No meaning-based (vector) search. A search finds the words as they were written: "release" doesn't find a dictation that only says "ship it".</li>
+<li>The agent's app has to support MCP servers that run as a local command (the stdio transport). Clients that can only reach servers over the network can't use it.</li>
+<li>Clients that speak only the newest MCP revision (2026-07-28, which drops the <code class="notranslate">initialize</code> handshake) can't connect yet. Clients that fall back to <code class="notranslate">initialize</code> work; Claude Code 2.1.284 uses it.</li>
+<li>The switches are the only gate. With "Let Agents Read Yap's Data" on, any program running as you can start the helper and read your meetings and dictionary, just as it could read Yap's files directly. The switches decide what the agents you connected may read; they're not a sandbox.</li>
+<li>Not yet tried on real data: reading a real recorded meeting (only test meetings so far), and a dictionary synced through iCloud.</li>
+</ul>
+<h1 dir="auto">Yap 1.11.0（中文）</h1>
+<p dir="auto">1.10.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">在 Claude Code / Cursor / Codex 里用 Yap 的数据</h2>
+<ul dir="auto">
+<li>Yap 现在在 app 里带了一个只读的 MCP server：<code class="notranslate">Yap.app/Contents/Helpers/yap-mcp</code>。agent 把它当子进程启动，通过 stdin/stdout 跟它通信。它只在这台 Mac 上读 Yap 的数据，不开网络端口，不往任何地方发数据。Yap 开不开着都能用。</li>
+<li>每次调用先把 Yap 的本地数据库拷一份，读拷贝，读完删掉。Yap 自己的文件只被复制：辅助程序从不把它们当数据库打开，也从不改动它们。</li>
+<li>agent 能列出你的会议并读其中一场（纪要和转写，和“历史记录 › 导出 Markdown”导出的一样），在听写和会议里搜索，读某一条听写，以及读你的词典（词和替换规则）。搜索按你写下的字匹配，不分大小写和重音，一句里可以中英混搭。默认返回 20 条，agent 要的话最多 50 条，新的在前。</li>
+<li>在新的 <strong>设置 › Agent 访问（MCP）</strong> 里打开之前，什么都读不到。新装和这次更新后，这里的两个开关都是关的。</li>
+<li><strong>让 agent 读取 Yap 的数据</strong>：允许 agent 读会议和词典。关着时 agent 也能连上，但每次读取都会报错，并告诉它该打开哪个开关、在哪。</li>
+<li><strong>包括听写历史</strong>：再加上你的听写。它单独一个开关，因为听写会打进任何 app，里面常有密码、私信和草稿；会议纪要本来就是写给别人看的。第一个开关打开时才能打开它。关着时搜索只搜会议，并说明听写没有包括在内。</li>
+<li>每次调用都重新读这两个开关，所以关掉之后 agent 的下一次请求就读不到了，不用重启任何东西。</li>
+<li>连接 agent：开关下面的 <strong>连接 agent</strong> 分组显示你这份 Yap 里辅助程序的位置（带“在 Finder 中显示”），Claude Code 和 Codex 有“复制命令”，Cursor 的 <code class="notranslate">~/.cursor/mcp.json</code> 有“复制 JSON”，路径都已经填好。“了解更多”打开完整文档。在设置里搜“MCP”“Claude Code”“Codex”或“Cursor”都能找到这里。</li>
+<li>然后可以问：“总结一下这周会议里的待办”“上个月我听写过哪些关于 CI 迁移的内容？”（需要打开“包括听写历史”）“按我 Yap 词典里的拼写检查这份 README”。</li>
+</ul>
+<h2 dir="auto">语言</h2>
+<ul dir="auto">
+<li>法语界面下，引导里关于录制会议的那句现在写“Paramètres”（设置页面在法语里的名字），不再是“Réglages”。</li>
+</ul>
+<h2 dir="auto">已知限制</h2>
+<ul dir="auto">
+<li>只读：agent 不能改 Yap 里的任何东西，比如往词典里加词。</li>
+<li>没有按意思（向量）搜索。搜索只找写下来的字：搜“发布”找不到只说了“上线”的听写。</li>
+<li>agent 所在的 app 要支持以本机命令方式运行的 MCP server（stdio 传输）。只能通过网络连接 server 的客户端用不了。</li>
+<li>只支持最新 MCP 协议版本（2026-07-28，去掉了 <code class="notranslate">initialize</code> 握手）的客户端暂时连不上。会退回用 <code class="notranslate">initialize</code> 的客户端可以；Claude Code 2.1.284 用的就是它。</li>
+<li>开关是唯一的关口。打开“让 agent 读取 Yap 的数据”后，以你的身份运行的任何程序都能启动辅助程序，读你的会议和词典，就像它本来也能直接读 Yap 的文件一样。开关管的是你连上的 agent 能读什么，它不是沙盒。</li>
+<li>还没在真实数据上试过：读一场真实录制的会议（目前只用测试会议试过），以及通过 iCloud 同步的词典。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.11.0/Yap.zip" sparkle:edSignature="3WGvexcWzWUPQC9Wn5c/1sVw9ju0sWGRhd/1BhxX1U2GFGimYot7a7ElvHsioRye6E4gX0v5uAWgIm6kmU1SCQ==" length="48021897" type="application/octet-stream" />
+        </item>
+        <item>
+            <title>Yap 1.10.0</title>
+            <pubDate>Thu, 01 Oct 2026 00:05:13 GMT</pubDate>
+            <sparkle:version>1199</sparkle:version>
+            <sparkle:shortVersionString>1.10.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.10.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.10.0</h1>
+<p dir="auto">Changes since 1.9.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Meetings</h2>
+<ul dir="auto">
+<li>Yap now notices calls. When Zoom, Microsoft Teams, Webex, Slack, Discord, FaceTime, Skype, Feishu, Lark, Tencent Meeting, VooV Meeting, DingTalk or a browser (Chrome, Safari, Arc, Edge, Firefox, Brave) has used the microphone for 5 seconds, a notification asks "Zoom is on a call. Record this meeting?" with a Record Meeting button. For a browser it says "Google Chrome is using the microphone. Record this meeting?", since Yap can't tell that a browser is in a meeting. It asks once per call; a call counts as over once the app has been off the microphone for 10 seconds.</li>
+<li>While a meeting records, once every call app that was on the microphone has been off it for 10 seconds, a notification says "The call seems to have ended. Click ✓ to end the meeting and save it." with a Show Meeting Panel button.</li>
+<li>Yap never starts or stops a recording by itself: only ✓ in the meeting panel ends a meeting. Neither notification appears while you dictate or while another notification is on screen; they wait until then.</li>
+<li>The switch is "Remind Me to Record When a Call Starts" in the new Settings › Meetings section. It is on if you have recorded a meeting before and off if you only dictate. Settings › Meetings also holds the Record Meeting shortcut, which moved out of Additional Shortcuts.</li>
+<li>Without headphones, the other side's voice no longer shows up a second time under "Me". After the meeting, Yap compares your microphone with the other apps' sound, and lines or parts of lines that are the other side coming out of your speakers are taken out of the transcript, the notes and the Markdown export. The panel says "Removed N echoes: your microphone picked up the other side from the speakers." With headphones nothing is changed.</li>
+<li>A long meeting no longer waits for its speakers to be told apart. If that isn't done 10 seconds after you click ✓, the meeting is saved with plain "Others", the notes are written and the result is shown. The panel and the History row show "Telling speakers apart…"; when it's done the transcript gets "Others 1", "Others 2"…, and the panel tells you to click Regenerate Notes if you want the notes to use them. If Yap quits first, it finishes at the next launch. Measured on an Apple M4 Pro with the speaker model already downloaded, telling speakers apart takes 31 to 36 seconds for an hour of meeting.</li>
+<li>When telling speakers apart fails, the History row shows "Speakers not told apart" with the reason as its tooltip.</li>
+<li>History showed a meeting's transcript as one run-on paragraph, with each timestamped line running into the next. It now shows one line per piece.</li>
+<li>A meeting in History has the tabs Transcript and Notes instead of Original and Enhanced, and its row has a "Meeting" tag. In Chinese the notes heading of the Markdown export now says 纪要 (it said 备忘录).</li>
+<li>The result panel lists its status lines in one order: errors first, then warnings, then information. A speaker split that failed or timed out is now a warning, not grey text.</li>
+<li>For a meeting where nothing was said, the panel shows "(Nothing was said in this meeting.)" without Copy Transcript or Regenerate Notes, and its History row has no Regenerate Notes or Speaker Names….</li>
+<li>When a meeting couldn't be saved, the panel no longer offers Open History. A failed Markdown export no longer shows the meeting folder and Show in Finder.</li>
+<li>When the notes can't be written, the panel says "The notes couldn't be written: …" instead of "Enhancement failed: …".</li>
+<li>In German and French, the recording panel's title and the consent note's buttons are no longer cut off.</li>
+</ul>
+<h2 dir="auto">Notifications</h2>
+<ul dir="auto">
+<li>Notifications longer than one line were cut off after the first line, which hid the reason a recovered meeting couldn't be saved and the end of the German and French call notifications. Every notification now wraps to up to three lines.</li>
+</ul>
+<h2 dir="auto">Known limits</h2>
+<ul dir="auto">
+<li>Call detection hasn't been tried in a real call yet. Most of the listed apps' IDs were taken from published lists, not from installed apps.</li>
+<li>Any use of the microphone by a browser, Slack or Discord looks like a call, so you may be asked when you aren't in a meeting. An app that lets go of the microphone while you're muted can make a long mute look like the end of the call.</li>
+<li>Echo is taken out after the meeting, from the recording. When you talk over the other side, some of your own words in that stretch can be cut, and echo that was transcribed differently on each side can stay.</li>
+<li>Yap doesn't turn on macOS echo cancellation for meetings: it would change how your microphone sounds and lower other apps' audio for the whole meeting.</li>
+<li>Speaker names belong to one meeting. The names you give in one meeting are not carried to the next.</li>
+</ul>
+<h1 dir="auto">Yap 1.10.0（中文）</h1>
+<p dir="auto">1.9.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">会议</h2>
+<ul dir="auto">
+<li>Yap 现在能发现通话。Zoom、Microsoft Teams、Webex、Slack、Discord、FaceTime、Skype、飞书、Lark、腾讯会议、VooV Meeting、钉钉或浏览器（Chrome、Safari、Arc、Edge、Firefox、Brave）用麦克风满 5 秒时，会弹通知“Zoom 正在通话。要录这场会议吗？”，带“录制会议”按钮。浏览器的通知写的是“Google Chrome 正在使用麦克风。要录这场会议吗？”，因为 Yap 看不出浏览器是不是在开会。每次通话只问一次；这个 app 离开麦克风满 10 秒，才算这次通话结束。</li>
+<li>会议录制中，开始时在用麦克风的通话 app 全都离开麦克风满 10 秒后，会弹通知“通话好像结束了。点 ✓ 结束会议并保存。”，带“显示会议面板”按钮。</li>
+<li>Yap 从不自己开始或停止录制：结束会议只能点会议面板上的 ✓。听写进行中、或者屏幕上已经有别的通知时，这两条通知都不弹，等到之后再弹。</li>
+<li>开关是设置里新的“会议”分组中的“检测到通话时提醒我录制”。录过会议的用户默认打开，只听写的用户默认关闭。“录制会议”快捷键也从“其他快捷键”挪到了“会议”分组。</li>
+<li>不戴耳机时，对方的声音不会再在“我”下面重复出现一遍。会议结束后，Yap 对比麦克风和其他 app 的声音，把扬声器外放进麦克风的对方的话从转写、纪要和导出的 Markdown 里去掉，整行或行里的一部分。面板上会写“去掉了 N 段扬声器回声：麦克风录进了外放的对方声音。”戴耳机时什么都不改。</li>
+<li>长会议不再等说话人区分完。点 ✓ 后 10 秒还没区分完，会议先按“对方”保存，写好纪要，显示结果。面板和历史记录这一行显示“正在区分对方的说话人…”；区分完后转写里会标出“对方 1”“对方 2”…，面板会提示想让纪要也用上这些标签就点“重新生成纪要”。区分完之前 Yap 退出了，下次启动会接着做。在 Apple M4 Pro 上实测（说话人模型已下载好），一小时的会议区分说话人要 31 到 36 秒。</li>
+<li>区分说话人失败时，历史记录这一行显示“未区分说话人”，鼠标悬停显示原因。</li>
+<li>历史记录里会议的转写以前挤成一段，每行带时间的发言连在一起。现在一行一句。</li>
+<li>历史记录里会议的两个标签页叫“转写”和“纪要”，不再是“原文”和“已润色”；这一行上有“会议”标签。导出 Markdown 里纪要的标题也改成了“纪要”（以前是“备忘录”）。</li>
+<li>结果面板上的状态行按一个顺序排：先错误，再警告，最后是说明。区分说话人失败或超时现在算警告，不再是灰字。</li>
+<li>会议里没说话时，面板显示“（这场会议里没有识别到说话内容。）”，不提供“复制转写”和“重新生成纪要”；历史记录里这一行也没有“重新生成纪要”和“说话人名字…”。</li>
+<li>会议没能存进历史记录时，面板不再提供“打开历史记录”。导出 Markdown 失败时，不再显示会议文件夹和“在 Finder 中显示”。</li>
+<li>纪要没能生成时，面板写“没能生成纪要：…”，不再是“润色失败：…”。</li>
+<li>德语和法语界面下，录制面板的标题和录制告知的按钮不再被截断。</li>
+</ul>
+<h2 dir="auto">通知</h2>
+<ul dir="auto">
+<li>超过一行的应用内通知以前只显示第一行：恢复会议没能保存的原因、德语和法语的通话提示后半截都看不到。现在所有通知最多换行显示三行。</li>
+</ul>
+<h2 dir="auto">已知限制</h2>
+<ul dir="auto">
+<li>通话检测还没在真实通话里试过。列表里大部分 app 的标识来自公开资料，不是从装好的 app 里读的。</li>
+<li>浏览器、Slack 或 Discord 只要用了麦克风就会被当成通话，所以没在开会时也可能被问。静音时会放开麦克风的 app，长时间静音可能被当成通话结束。</li>
+<li>回声是会议结束后从录音里去掉的。你和对方同时说话时，那一段你自己的话可能被裁掉一部分；两边转写得不一样的回声可能留下。</li>
+<li>Yap 没有给会议打开 macOS 的回声消除：它会改变麦克风的声音，还会在整场会议期间压低其他 app 的音量。</li>
+<li>说话人名字只在这一场会议里有效，不会带到下一场会议。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.10.0/Yap.zip" sparkle:edSignature="jfm4jzpIj9Fr44uOV3xfFrzrhSFCR8GBYhLfymiVBZXjRZQQTUKfh2vN+FQQ+EILVKvK6t/vHHLefw1wksKJCA==" length="47752182" type="application/octet-stream" />
+        </item>
+        <item>
+            <title>Yap 1.9.0</title>
+            <pubDate>Wed, 30 Sep 2026 20:23:00 GMT</pubDate>
+            <sparkle:version>1188</sparkle:version>
+            <sparkle:shortVersionString>1.9.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.9.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.9.0</h1>
+<p dir="auto">Changes since 1.8.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Meetings</h2>
+<ul dir="auto">
+<li>A meeting is no longer lost when Yap quits or crashes during it. At the next launch Yap finishes it in the background, oldest first, one meeting at a time: it transcribes the saved audio, tells speakers apart, writes notes if AI enhancement is on in the mode, and saves one History entry dated when the meeting started. A notification tells you when it is in History. You can start a new meeting while this runs.</li>
+<li>When such a meeting can't be transcribed (the mode has no transcription model, or recovering it was cut off last time), it is saved to History with its audio only and the reason.</li>
+<li>A part of a meeting that fails to transcribe is no longer dropped. Its line reads "(This part couldn't be transcribed.)", the panel says how many parts are marked, and the History row shows an "N parts not transcribed" badge. Notes are written from the lines that did transcribe.</li>
+<li>When a meeting can't be saved to History, or its Markdown file can't be written, the panel shows the error, the path of the meeting's audio and a Show in Finder button. An unsaved meeting keeps its audio, and Yap tries again at the next launch. When Export Markdown fails from History, a notification shows the error.</li>
+<li>When the other side's lines stay "Others", the panel says why in one line: the meeting was too short, only one other person spoke, telling voices apart took too long, the speaker model couldn't be downloaded, or it failed.</li>
+<li>After the first-time speaker model download, the panel goes back to "Telling speakers apart…" instead of staying on "Downloading the speaker model… 99%".</li>
+<li>New "Regenerate Notes" button in the meeting panel and in an expanded meeting row in History. It writes the notes again with the meeting prompt and the mode's AI provider, showing "Writing notes…" while it runs. If it fails, it says why and keeps the previous notes.</li>
+<li>New "Speaker Names…" button in an expanded meeting row in History, with one field per speaker in the order they first speak. The names replace "Me" and "Others 1", "Others 2"… in the transcript and the Markdown export; an empty field goes back to the label. The notes keep the old names until you click Regenerate Notes, and the new notes use the names.</li>
+<li>The meeting panel shows notes as formatted Markdown: headings, lists and to-do boxes. Copy Notes and Export Markdown still give the Markdown source.</li>
+<li>The panel's buttons are in two rows, so "Export Markdown…" is no longer cut off.</li>
+<li>While a meeting is recording, the menu bar item reads "Show Meeting Panel", which is what it always did. You still end a meeting with ✓ in the panel.</li>
+<li>Meetings no longer offer Retranscribe or re-enhancing with a prompt, in History or in Quick History. Retranscribing would turn a meeting into one dictation without speakers or notes, and a prompt would replace the notes. Use Regenerate Notes instead.</li>
+</ul>
+<h2 dir="auto">Dictation and History</h2>
+<ul dir="auto">
+<li>"Skip short transcriptions" (Model Catalog → Model Settings) is now off by default, also on existing installs where you never changed it. Dictations of 3 words or fewer now go through AI enhancement like longer ones. Turn the setting on to skip them again.</li>
+<li>When AI enhancement failed for a dictation, copying it or pasting it again from History or Quick History now gives the original text, not the "Enhancement failed: …" message.</li>
+</ul>
+<h2 dir="auto">AI models</h2>
+<ul dir="auto">
+<li>OpenAI: gpt-6-luna and gpt-6-sol are added. gpt-6-luna is the OpenAI model if you never picked one.</li>
+<li>Cerebras: qwen-3.8-27b is the Cerebras model if you never picked one.</li>
+<li>Parakeet V2, V3 and Ultra now also download the voice activity model they need, and count as downloaded only when it is there. An existing Parakeet model without it shows as not downloaded until you download it again. Cancelling a Parakeet re-download no longer deletes the model files already on disk.</li>
+</ul>
+<h2 dir="auto">Known limits</h2>
+<ul dir="auto">
+<li>Recovering a meeting transcribes it again from the start, so it takes about as long as finishing the meeting did. Parts transcribed before Yap quit are not reused.</li>
+<li>Speaker names belong to one meeting. The names you give in one meeting are not carried to the next.</li>
+<li>"Speaker Names…" appears only while the meeting's recording folder is still on disk.</li>
+<li>How long telling speakers apart takes for an hour-long meeting has not been measured yet.</li>
+</ul>
+<h1 dir="auto">Yap 1.9.0（中文）</h1>
+<p dir="auto">1.8.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">会议</h2>
+<ul dir="auto">
+<li>会议中 Yap 退出或崩溃，会议不会再丢。下次启动时 Yap 在后台把它做完，从最早的开始，一次一场：转写保存下来的录音、区分说话人、模式打开了 AI 增强时写纪要，然后存成一条历史记录，时间是会议开始的时间。存进历史记录后会有通知。这期间可以开始新的会议。</li>
+<li>这样的会议没法转写时（模式里没有选转写模型，或者上次恢复到一半中断了），会只带录音和原因存进历史记录。</li>
+<li>会议里转写失败的片段不再被丢掉。那一行写着“（这段没有转写成功。）”，面板上会说有几段已标出，历史记录的这一行会显示“N 段没有转写成功”。纪要按转写成功的行来写。</li>
+<li>会议没能存进历史记录，或者 Markdown 文件没能写入时，面板会显示错误、会议录音的路径和“在 Finder 中显示”按钮。没存上的会议录音会保留，Yap 下次启动时会再试一次。在历史记录里导出 Markdown 失败时，会用通知显示错误。</li>
+<li>对方的发言都还是“对方”时，面板会用一行说明原因：会议太短、对方只有一个人说话、区分说话人超时、说话人模型没能下载，或者区分出错。</li>
+<li>第一次下载说话人模型之后，面板会回到“正在区分对方的说话人…”，不再一直停在“正在下载说话人模型… 99%”。</li>
+<li>会议面板和历史记录里展开的会议行新增“重新生成纪要”按钮。它用会议纪要提示词和当前模式的 AI 服务商重新写一遍纪要，进行中显示“正在整理纪要…”。失败时会说明原因，原来的纪要保留不变。</li>
+<li>历史记录里展开的会议行新增“说话人名字…”按钮，每个说话人一个输入框，按第一次开口的顺序排列。名字会替换转写和导出的 Markdown 里的“我”和“对方 1”“对方 2”…；留空就回到原来的标签。纪要里还是原来的称呼，点“重新生成纪要”后，新纪要会用上这些名字。</li>
+<li>会议面板把纪要按 Markdown 排版显示：标题、列表和待办框。“复制纪要”和“导出 Markdown…”得到的还是 Markdown 原文。</li>
+<li>面板上的按钮分成两行，“导出 Markdown…”不再被截断。</li>
+<li>会议录制中，菜单栏里这一项现在叫“显示会议面板”，它一直做的就是这件事。结束会议还是点面板上的 ✓。</li>
+<li>会议不再提供“重新转写”和用提示词重新润色，历史记录和快速历史记录里都一样。重新转写会把会议变成一条没有说话人和纪要的普通听写，提示词会替换掉纪要。要更新纪要请用“重新生成纪要”。</li>
+</ul>
+<h2 dir="auto">听写和历史记录</h2>
+<ul dir="auto">
+<li>“跳过简短转写”（模型目录 → 模型设置）现在默认关闭，老用户只要没改过这个设置也一样。3 个词及以下的听写现在也会和长的一样经过 AI 增强。想继续跳过，把这个设置打开。</li>
+<li>某条听写 AI 增强失败时，在历史记录或快速历史记录里复制它、再次粘贴它，得到的是原文，不再是“润色失败：…”这条提示。</li>
+</ul>
+<h2 dir="auto">AI 模型</h2>
+<ul dir="auto">
+<li>OpenAI：新增 gpt-6-luna 和 gpt-6-sol。没选过模型时，OpenAI 用 gpt-6-luna。</li>
+<li>Cerebras：没选过模型时，用 qwen-3.8-27b。</li>
+<li>Parakeet V2、V3 和 Ultra 现在会一起下载它们需要的语音活动检测模型，并且只有这个模型也在时才算下载完成。已经装好、但缺这个模型的 Parakeet 会显示为未下载，重新下载一次即可。取消 Parakeet 的重新下载，不会再删掉已经在磁盘上的模型文件。</li>
+</ul>
+<h2 dir="auto">已知限制</h2>
+<ul dir="auto">
+<li>恢复会议会从头重新转写，所以耗时和正常结束会议差不多。Yap 退出前已经转写好的片段不会复用。</li>
+<li>说话人名字只在这一场会议里有效，不会带到下一场会议。</li>
+<li>只有会议的录音文件夹还在磁盘上时，才会出现“说话人名字…”按钮。</li>
+<li>一小时的会议区分说话人要多久，还没有测过。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.9.0/Yap.zip" sparkle:edSignature="1u6SADHRO3yE+SIQX+w8Wvc3h6j9lQ62B+l6vDUS1iimTWoDAxvtP65qIitU2fDD+6mDiip6+RJM8doZhmqIAA==" length="47612240" type="application/octet-stream" />
+        </item>
+        <item>
+            <title>Yap 1.8.0</title>
+            <pubDate>Wed, 30 Sep 2026 08:34:17 GMT</pubDate>
+            <sparkle:version>1178</sparkle:version>
+            <sparkle:shortVersionString>1.8.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.8.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.8.0</h1>
+<p dir="auto">Changes since 1.7.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Meetings</h2>
+<ul dir="auto">
+<li>Meeting transcripts now tell the other side's speakers apart: their lines are labeled "Others 1", "Others 2" and so on, numbered in the order they first speak. Your own lines stay "Me".</li>
+<li>It runs on this Mac, offline, after the meeting ends, while the panel shows "Telling speakers apart…". The first time, Yap downloads a speaker model into its own folder first, and the panel shows "Downloading the speaker model…" with a percentage.</li>
+<li>Labels appear only when at least two people on the other side each spoke for a few seconds and the meeting is at least 15 seconds long. Otherwise, or if it fails or takes too long, the lines stay "Others".</li>
+<li>Meeting notes are now written only when AI enhancement is on in the mode. With it off (the default on a fresh install), the transcript is saved with a hint and no model is started, local ones included. Before, a fresh install could fall back to a local Ollama model for the notes.</li>
+</ul>
+<h2 dir="auto">Known limits</h2>
+<ul dir="auto">
+<li>Speakers are numbered, not named, and "Others 1" in one meeting has nothing to do with "Others 1" in the next.</li>
+<li>Transcript lines are pieces of 20–28 seconds cut at pauses. When two remote speakers talk in one piece, the whole piece gets the label of the one who spoke longer.</li>
+<li>Speed: on a 49-second test recording, telling speakers apart took 14.5 s and 32 s in two cold runs that included downloading the model. How long it takes for an hour-long meeting with the model already downloaded has not been measured yet.</li>
+</ul>
+<h1 dir="auto">Yap 1.8.0（中文）</h1>
+<p dir="auto">1.7.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">会议</h2>
+<ul dir="auto">
+<li>会议转写现在能区分对方的不同说话人：对方的每一行标成“对方 1”“对方 2”，按第一次开口的顺序编号。你自己的行还是“我”。</li>
+<li>区分在会议结束后、在这台 Mac 上离线进行，面板上显示“正在区分对方的说话人…”。第一次会先把说话人模型下载到 Yap 自己的文件夹里，面板上显示“正在下载说话人模型…”和百分比。</li>
+<li>只有对方至少两个人各说了几秒、且会议不短于 15 秒时才会标号。其他情况，或者区分失败、超时，这些行还是“对方”。</li>
+<li>会议纪要现在只在模式打开了 AI 增强时才生成。关着时（新装的默认），只保存转写并给出提示，不会启动任何模型，本机模型也不会。以前新装的 Yap 可能会退回用本机的 Ollama 模型写纪要。</li>
+</ul>
+<h2 dir="auto">已知限制</h2>
+<ul dir="auto">
+<li>说话人只有编号没有名字，这次会议的“对方 1”和下次会议的“对方 1”没有关系。</li>
+<li>转写按停顿切成 20–28 秒一段。对方两个人在同一段里都说了话时，整段标成说得更久的那个人。</li>
+<li>速度：一段 49 秒的测试录音，两次冷启动（含下载模型）区分说话人分别用了 14.5 秒和 32 秒。模型已下载时，一小时的会议要多久还没有测过。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.8.0/Yap.zip" sparkle:edSignature="XvH6qNsvxw1VbyToh/1LbBWFs5mYgvpUYcizb6NQ5f1acIHMIwIZcBh9sZnAQss967HR+Lm1N12N2x5UHTUEBg==" length="47490447" type="application/octet-stream" />
+        </item>
+        <item>
+            <title>Yap 1.7.0</title>
+            <pubDate>Wed, 30 Sep 2026 01:30:47 GMT</pubDate>
+            <sparkle:version>1171</sparkle:version>
+            <sparkle:shortVersionString>1.7.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.7.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.7.0</h1>
+<p dir="auto">Changes since 1.6.1. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Meetings</h2>
+<ul dir="auto">
+<li>A stray key can no longer end a meeting. While a meeting is recording, pressing the meeting shortcut only brings the meeting panel forward and reminds you: "Still recording. Click ✓ to end the meeting."</li>
+<li>The panel's Stop button is now a ✓ button, "End Meeting and Save". Ending a meeting always saves it; there is no discard.</li>
+<li>Quitting with ⌘Q during a meeting asks first. The default button is Keep Recording, so a stray Return does not end it. "End Meeting and Quit" saves the transcript and notes, then quits.</li>
+<li>The tips in Settings, the recording consent note and the onboarding line now tell you to click ✓ to stop.</li>
+</ul>
+<h2 dir="auto">Scratchpad</h2>
+<ul dir="auto">
+<li>New Scratchpad: a small floating note that stays on top and stays open when you click elsewhere, so you can dictate into it from any app. It remembers its position and size.</li>
+<li>Open it from the menu bar, or set a shortcut in Settings (no shortcut is set by default). The shortcut opens it, or closes it if it is already in front.</li>
+<li>When a dictation finds no text field to paste into, the text is added to the Scratchpad with the time. The notice offers an Open Scratchpad button.</li>
+<li>The text stays on this Mac and is included in backups.</li>
+</ul>
+<h1 dir="auto">Yap 1.7.0（中文）</h1>
+<p dir="auto">1.6.1 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">会议</h2>
+<ul dir="auto">
+<li>误按键不会再结束会议。会议录制中按会议快捷键，只会把会议面板带到前面，并提示“仍在录制。点 ✓ 结束会议。”</li>
+<li>面板上的停止按钮换成了 ✓ 按钮，“结束会议并保存”。结束会议一定会保存，没有放弃选项。</li>
+<li>会议中按 ⌘Q 会先确认。默认按钮是“继续录制”，误按回车不会结束会议。“结束会议并退出”会保存转写和笔记，然后退出。</li>
+<li>设置里的提示、录制同意说明和引导文案现在都写明点 ✓ 停止。</li>
+</ul>
+<h2 dir="auto">记事板</h2>
+<ul dir="auto">
+<li>新增记事板（Scratchpad）：一个置顶的小浮窗，点别处也不会关，可以在任何 app 里往里听写。它会记住位置和大小。</li>
+<li>从菜单栏打开，或在设置里设一个快捷键（默认不设）。快捷键会打开它，已经在最前面时则关闭。</li>
+<li>听写找不到可粘贴的输入框时，文字会带上时间加进记事板。提示里有“打开记事板”按钮。</li>
+<li>文字只存在这台 Mac 上，并包含在备份里。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.7.0/Yap.zip" sparkle:edSignature="IFoyLhQGPjIDMYEsQQvA26GUKDaTsWnfA89WfzzmTc/xyk1CbiIb6mASfCe5eNRnYyRiGS3/ShmHYa6sk3nyCQ==" length="47467322" type="application/octet-stream" />
+        </item>
+        <item>
+            <title>Yap 1.6.1</title>
+            <pubDate>Tue, 29 Sep 2026 20:46:02 GMT</pubDate>
+            <sparkle:version>1164</sparkle:version>
+            <sparkle:shortVersionString>1.6.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.6.1</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.6.1</h1>
+<p dir="auto">Changes since 1.6.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Meetings</h2>
+<ul dir="auto">
+<li>The feature tour has a new Record Meeting card that shows the meeting shortcut.</li>
+<li>The last onboarding screen now mentions meeting recording. If you have set a meeting shortcut it shows the shortcut; otherwise it points you to Settings to set one.</li>
+</ul>
+<h2 dir="auto">Website</h2>
+<ul dir="auto">
+<li>New changelog page: <a href="https://yap.sma1lboy.me/changelog.html" rel="nofollow">https://yap.sma1lboy.me/changelog.html</a></li>
+<li>New troubleshooting page: <a href="https://yap.sma1lboy.me/help.html" rel="nofollow">https://yap.sma1lboy.me/help.html</a></li>
+<li>The download section shows the latest version, file size and system requirements.</li>
+</ul>
+<h1 dir="auto">Yap 1.6.1（中文）</h1>
+<p dir="auto">1.6.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">会议</h2>
+<ul dir="auto">
+<li>功能导览新增“录制会议”卡片，显示会议录制的快捷键。</li>
+<li>引导的最后一屏现在会介绍会议录制。如果你已经设置了会议快捷键，会显示该快捷键；没有的话，会提示你去设置里设一个。</li>
+</ul>
+<h2 dir="auto">官网</h2>
+<ul dir="auto">
+<li>新增更新日志页：<a href="https://yap.sma1lboy.me/changelog.html" rel="nofollow">https://yap.sma1lboy.me/changelog.html</a></li>
+<li>新增排障页：<a href="https://yap.sma1lboy.me/help.html" rel="nofollow">https://yap.sma1lboy.me/help.html</a></li>
+<li>下载区显示最新版本、文件大小和系统要求。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.6.1/Yap.zip" sparkle:edSignature="QSO8adIAByT1rqRkQ1y+aYmtoCzGrj0Fyehgf+Gcp9J+eWRjMyTB1zzwskPc5pFw/4EMquwyIs3wa7pcKXyIDg==" length="47427621" type="application/octet-stream" />
+        </item>
+        <item>
+            <title>Yap 1.6.0</title>
+            <pubDate>Tue, 29 Sep 2026 18:24:52 GMT</pubDate>
+            <sparkle:version>1157</sparkle:version>
+            <sparkle:shortVersionString>1.6.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.6.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.6.0</h1>
+<p dir="auto">Changes since 1.5.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Language</h2>
+<ul dir="auto">
+<li>Yap's interface is now available in Traditional Chinese (繁體中文, with Taiwan terms), alongside English, German, French and Simplified Chinese. Pick it in the app language setting.</li>
+</ul>
+<h2 dir="auto">Accessibility</h2>
+<ul dir="auto">
+<li>With Reduce Motion on, the recorder shows steady level bars, with no spinner, dot chase or spring animation.</li>
+<li>With Increase Contrast on, borders, secondary text and selections get higher-contrast colors.</li>
+<li>With VoiceOver on, Yap announces the dictation state as it changes: Recording, Transcribing, Enhancing, Pasted, and the title of a failure.</li>
+</ul>
+<h2 dir="auto">Local models</h2>
+<ul dir="auto">
+<li>New Models › Advanced › Keep model loaded: After Each Dictation (default), 5 minutes, 15 minutes, 1 hour, or Always. A local model stays in memory for that long after a dictation.</li>
+<li>Under memory pressure a model is released sooner, but never during a recording or a transcription.</li>
+<li>Pressing the shortcut starts loading the model while you begin to speak.</li>
+</ul>
+<h1 dir="auto">Yap 1.6.0（中文）</h1>
+<p dir="auto">1.5.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">语言</h2>
+<ul dir="auto">
+<li>Yap 的界面现在有繁体中文（繁體中文，用台湾的用词），和英文、德文、法文、简体中文并列。在 app 语言设置里选择。</li>
+</ul>
+<h2 dir="auto">辅助功能</h2>
+<ul dir="auto">
+<li>开启“减少动态效果”时，录音条的音量条保持平稳，没有转圈、圆点追逐和弹簧动画。</li>
+<li>开启“提高对比度”时，边框、次要文字和选中状态使用对比度更高的颜色。</li>
+<li>开启旁白（VoiceOver）时，Yap 会在听写状态变化时播报：正在录音、正在转写、正在润色、已粘贴，以及失败的标题。</li>
+</ul>
+<h2 dir="auto">本地模型</h2>
+<ul dir="auto">
+<li>新增 模型 › 高级 › 保持模型载入：每次听写后（默认）、5 分钟、15 分钟、1 小时或始终。听写结束后，本地模型会在内存里保留这么久。</li>
+<li>内存吃紧时模型会更早释放，但录音和转写过程中不会释放。</li>
+<li>按下快捷键时就开始载入模型，和你开口说话同时进行。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.6.0/Yap.zip" sparkle:edSignature="fE0wrD1AlQ9dZIg+D/XOFXtg2Yt2ePgby3x1Ks61TB25PGUQ0Xvc5rIydWWOZMhbPcsdrw3zuWh96TsIwAyMDA==" length="47422500" type="application/octet-stream" />
+        </item>
+        <item>
+            <title>Yap 1.5.0</title>
+            <pubDate>Tue, 29 Sep 2026 13:43:00 GMT</pubDate>
+            <sparkle:version>1149</sparkle:version>
+            <sparkle:shortVersionString>1.5.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.5.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.5.0</h1>
+<p dir="auto">Changes since 1.4.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">Settings</h2>
+<ul dir="auto">
+<li>New Account section at the top of Settings. Signed out, it explains Yap Cloud and lets you sign in. Signed in, it shows your email, a switch to sync settings across Macs, sync status with Retry and Sync Now, Version History, Manage Yap Cloud, and Sign Out.</li>
+<li>Config &amp; Sync is now Config File and holds only the config-file rows and VoiceInk import.</li>
+<li>A search field at the top of Settings filters sections by title or row name, and says when nothing matches.</li>
+<li>Settings › Shortcuts has Restore Default Shortcuts…, which lists each change and asks before applying. Your modes are untouched.</li>
+</ul>
+<h2 dir="auto">Shortcuts and recording</h2>
+<ul dir="auto">
+<li>New Copy Last Transcription shortcut (unset by default) copies the cleaned-up text, or the original if there is none. It is included in settings backup and config.json.</li>
+<li>Cancelling a recording of 15 seconds or more asks first: press the cancel key again within 3 seconds to discard it. With Esc, long recordings show "Press Esc again to discard".</li>
+</ul>
+<h2 dir="auto">When something goes wrong</h2>
+<ul dir="auto">
+<li>A recording that is too quiet is no longer transcribed. The notification names the input device you are using and opens Audio Settings.</li>
+<li>If a transcript is only one of Whisper's made-up phrases (English or Chinese), it isn't pasted. History keeps the text with a Filtered status, and Yap tells you it didn't catch anything.</li>
+<li>If Yap quit in the middle of a recording, the audio (up to 3 days old) is kept, and the next launch offers to transcribe it with your current mode or discard it.</li>
+</ul>
+<h1 dir="auto">Yap 1.5.0（中文）</h1>
+<p dir="auto">1.4.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">设置</h2>
+<ul dir="auto">
+<li>设置顶部新增“账户”分区。未登录时说明 Yap Cloud 并可以直接登录；登录后显示邮箱、“跨 Mac 同步设置”开关、同步状态（可重试、立即同步）、版本历史、管理 Yap Cloud 和退出登录。</li>
+<li>“配置与同步”改名为“配置文件”，只保留配置文件相关的行和 VoiceInk 导入。</li>
+<li>设置顶部有搜索框，按分区标题或设置项名称过滤，没有匹配时会提示。</li>
+<li>设置 › 快捷键 新增“恢复默认快捷键…”，会先列出每一项改动再让你确认。模式不受影响。</li>
+</ul>
+<h2 dir="auto">快捷键和录音</h2>
+<ul dir="auto">
+<li>新增“复制上一次转写”快捷键（默认未设置），复制清理后的文字，没有的话复制原文。已包含在设置备份和 config.json 里。</li>
+<li>取消 15 秒或更长的录音时会先确认：3 秒内再按一次取消键才会丢弃。用 Esc 取消时，长录音会显示“再按一次 Esc 丢弃”。</li>
+</ul>
+<h2 dir="auto">出问题的时候</h2>
+<ul dir="auto">
+<li>太安静的录音不再转写。通知里会写出当前使用的输入设备，并可以打开音频设置。</li>
+<li>如果转写结果整句都是 Whisper 编造的常见短语（中文或英文），不会粘贴。历史记录里保留文字并标为“已过滤”，Yap 会告诉你没有听到内容。</li>
+<li>如果 Yap 在录音过程中退出了，3 天内的录音会保留，下次启动时可以选择用当前模式转写，或者丢弃。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.5.0/Yap.zip" sparkle:edSignature="U749lUE97nrwOXpDGRibh2MF+3WsJMouHISEtGCKO5jleghdmeWcdbVxR85AsnIaR/Zf+E/saCMcDxtwgxlkAA==" length="47345230" type="application/octet-stream" />
+        </item>
+        <item>
+            <title>Yap 1.4.0</title>
+            <pubDate>Tue, 29 Sep 2026 09:41:44 GMT</pubDate>
+            <sparkle:version>1140</sparkle:version>
+            <sparkle:shortVersionString>1.4.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.4.0</link>
+            <description><![CDATA[<h1 dir="auto">Yap 1.4.0</h1>
+<p dir="auto">Changes since 1.3.0. 中文在下面。</p>
+<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
+<h2 dir="auto">History</h2>
+<ul dir="auto">
+<li>Each dictation records the app it went into, shown in the list rows and the info panel.</li>
+<li>Filter by app, mode or meetings, combined with search.</li>
+<li>Sort by newest, oldest, longest or most words.</li>
+<li>Right-click a row: copy, copy original, paste again, retranscribe, info, delete.</li>
+</ul>
+<h2 dir="auto">Dictation</h2>
+<ul dir="auto">
+<li>If no text field is focused when you finish, the dictation stays on the clipboard and Yap tells you so, instead of pasting nowhere.</li>
+<li>Word replacements accept multi-line text, and list rows show the first line.</li>
+<li>New starter mode: Translate to English.</li>
+<li>The menu bar has a Language submenu that sets the active mode's dictation language.</li>
+<li>Cleanup also sees the date, time, time zone and your account name.</li>
+</ul>
+<h2 dir="auto">Editing and rewriting</h2>
+<ul dir="auto">
+<li>Undo Last Paste puts back the text the paste replaced, instead of just deleting.</li>
+<li>Rewrite mode with nothing selected tells you to select text first, instead of pasting nothing.</li>
+<li>Home and the feature tour list Edit Selected Text, which uses the Rewrite mode.</li>
+</ul>
+<h2 dir="auto">App polish</h2>
+<ul dir="auto">
+<li>Icons: the sidebar and the most used icons are now Phosphor, gray, with a duck-yellow selected item.</li>
+<li>Onboarding: the microphone step shows a live input level on the highlighted device, and the practice sentences are translated (中文, Deutsch, Français).</li>
+<li>Yap offers to move itself into Applications when a downloaded copy runs from another folder.</li>
+<li>The site and README no longer say Yap isn't notarized, and answer the permission reset after 1.3.0.</li>
+</ul>
+<h1 dir="auto">Yap 1.4.0（中文）</h1>
+<p dir="auto">1.3.0 之后的改动。</p>
+<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键，用中文、英文或者一句话里中英混着说，松开：Yap 转写、清理，然后粘贴。可以用本机模型、你自己的服务商 key，或者 Yap Cloud。</p>
+<h2 dir="auto">历史记录</h2>
+<ul dir="auto">
+<li>每条听写会记下它输入到了哪个 app，列表行和详情面板里都能看到。</li>
+<li>可以按 app、模式或会议筛选，并且能和搜索一起用。</li>
+<li>可以按最新、最早、最长或字数最多排序。</li>
+<li>右键一行：复制、复制原文、再次粘贴、重新转写、详情、删除。</li>
+</ul>
+<h2 dir="auto">听写</h2>
+<ul dir="auto">
+<li>结束时如果没有聚焦的文本框，听写结果会留在剪贴板里，并提示你，而不是粘贴到空处。</li>
+<li>词语替换支持多行文本，列表里显示第一行。</li>
+<li>新增起步模式：翻译成英文。</li>
+<li>菜单栏新增“语言”子菜单，用来设置当前模式的听写语言。</li>
+<li>清理时还会参考日期、时间、时区和你的账户名。</li>
+</ul>
+<h2 dir="auto">编辑和改写</h2>
+<ul dir="auto">
+<li>撤销上次粘贴会把被这次粘贴替换掉的文字放回去，而不是只删除。</li>
+<li>没有选中文字时使用改写模式，会提示先选中文字，而不是粘贴一段空内容。</li>
+<li>主页和功能导览新增“编辑选中文字”，它用的是改写模式。</li>
+</ul>
+<h2 dir="auto">界面细节</h2>
+<ul dir="auto">
+<li>图标：侧边栏和最常用的图标换成了 Phosphor，灰色，选中项是鸭黄色。</li>
+<li>新手引导：麦克风一步会在高亮的设备上显示实时输入电平，练习句子有中文、德语、法语翻译。</li>
+<li>从其他文件夹运行下载的 Yap 时，会提示把它移到“应用程序”。</li>
+<li>网站和 README 不再写“未公证”，并补上了 1.3.0 之后权限需要重新授权的说明。</li>
+</ul>]]></description>
+            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.4.0/Yap.zip" sparkle:edSignature="oYYQv5it4kpIIg7vSVC1HqCHJNgRF/9KYd6Yi8rKCeJLr6WQ6FtTsKPSIpBRE1dMOudxz0/35aWIy+bO35CrBg==" length="47259137" type="application/octet-stream" />
+        </item>
+        <item>
             <title>Yap 1.3.0</title>
             <pubDate>Tue, 29 Sep 2026 01:47:51 GMT</pubDate>
             <sparkle:version>1123</sparkle:version>
@@ -97,172 +606,6 @@
 <li>打开 模型 › 高级 之后，可以用 Apple 智能在本机做清理。在和 Yap Refine 对比测过之前，它会一直放在这个开关后面。</li>
 </ul>]]></description>
             <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.3.0/Yap.zip" sparkle:edSignature="0+wfzZ/tMPaRMLVKrMtXUnDIkWM1QfcaZjayC9RB2lFcaJoC5uPu8tHXPPVM1q3Oua1wnaNgC4Vh63K2FbInDQ==" length="46920184" type="application/octet-stream" />
-        </item>
-        <item>
-            <title>Yap 1.2.0</title>
-            <pubDate>Mon, 28 Sep 2026 21:54:50 GMT</pubDate>
-            <sparkle:version>1103</sparkle:version>
-            <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.2.0</link>
-            <description><![CDATA[<h1 dir="auto">Yap 1.2.0</h1>
-<p dir="auto">Changes since 1.1.0. 中文在下面。</p>
-<p dir="auto">Yap is an open-source (GPL-3.0) dictation app for macOS, forked from VoiceInk. Hold a shortcut, talk in English, Chinese or both in one sentence, and let go: Yap transcribes, cleans up, and pastes. Run it on a local model, with your own provider key, or through Yap Cloud.</p>
-<h2 dir="auto">Mixed Chinese and English</h2>
-<ul dir="auto">
-<li>Whisper now decodes each language stretch of a recording in its own language. Before, a recording that started in English could come out with its Chinese half translated into English.</li>
-<li>Recordings longer than 30 seconds are decoded in windows cut at pauses, so sentences no longer go missing from long dictations.</li>
-<li>Recording at 44.1 or 48 kHz is resampled with a proper filter, so hiss and fan or keyboard noise no longer fold into the speech. Transcripts of sibilant-heavy speech and noisy rooms are cleaner.</li>
-<li>The Local option in onboarding now downloads Whisper Large v3 Turbo (Quantized), 547 MB, instead of Parakeet V3, which has no Chinese. It runs fully offline: a dictation with a local model and cleanup off makes no network connection. <code class="notranslate">docs/local-models.md</code> has the numbers for every local model and which to pick on an 8 GB Mac.</li>
-<li><code class="notranslate">setup/</code> has benchmark scripts and 11 code-switched test clips, so you can compare models on your own Mac.</li>
-</ul>
-<h2 dir="auto">Three ways to run it</h2>
-<ul dir="auto">
-<li>Onboarding lists them side by side: a local model on this Mac, your own OpenRouter or other provider key, or Yap Cloud if you'd rather not get a key. You can change it later under Models, per mode if you like.</li>
-<li>Your first dictation happens on the third screen. Onboarding is 6 screens instead of 9 (7 if you have more than one microphone).</li>
-<li>A shortcut (Right Option) is set for you, and you can change it on the practice screen. Only one microphone? That screen is skipped. Onboarding continues by itself once permissions are granted, and practice steps after the first can be skipped.</li>
-<li>"Set It Up Later" leaves you with a working mode and shortcut instead of a hotkey that does nothing.</li>
-</ul>
-<h2 dir="auto">Settings in a file, synced across Macs</h2>
-<ul dir="auto">
-<li><code class="notranslate">~/.config/yap/config.json</code> now covers modes, prompts, dictionary, shortcuts, general settings, custom models and custom enhancement providers. Shortcuts are written in a readable form, like <code class="notranslate">"cmd+shift+space"</code>.</li>
-<li>Settings &gt; Config &amp; Sync can write your current settings back to the file.</li>
-<li>Signed in to Yap Cloud, turn on Sync via Yap Cloud to keep the same config on every Mac. Changes from different Macs are merged; entries you delete stay deleted. API keys are never uploaded.</li>
-<li>Setting up a new Mac? The first onboarding screen can sign in and restore your settings from Yap Cloud.</li>
-<li>Version History lists earlier synced versions of your config and can restore one.</li>
-</ul>
-<h2 dir="auto">Dictation fixes</h2>
-<ul dir="auto">
-<li>Empty recordings and taps shorter than 0.3 seconds stop before anything is sent, instead of failing with a Retry that can't work.</li>
-<li>Long dictations are no longer cut off mid-sentence by the cleanup model (Groq, Cerebras, OpenAI, Mistral, custom providers). If the output still hits its limit, Yap pastes the raw transcript with a warning instead of half a cleanup. gpt-5 and Azure deployments that reject the temperature setting work again.</li>
-<li>A rewrite mode with text selected cleans up short instructions again instead of pasting your spoken words over the selection.</li>
-<li>Dictionary replacements can insert a line break (<code class="notranslate">\n</code>); <code class="notranslate">$</code> and <code class="notranslate">\</code> in a replacement are kept as typed.</li>
-<li>Two dictations in a row into Screen Sharing or a VM paste the right text.</li>
-<li>The microphone keeps working after another app changes its sample rate (a DAW, switching AirPods).</li>
-<li>With "pause media while recording", media resumes reliably after a recording that was canceled right away.</li>
-</ul>
-<h2 dir="auto">Clearer errors</h2>
-<ul dir="auto">
-<li>A failed transcription shows why and offers Retry; the recording is kept.</li>
-<li>If Yap can't paste (Accessibility not allowed), the text stays on your clipboard and Yap tells you how to fix it.</li>
-<li>Missing microphone permission, a missing or unusable model, and a rejected API key are caught before recording starts, with a button to the right place.</li>
-<li>Failed model downloads, custom commands and sync show the reason and a way to retry.</li>
-</ul>
-<h2 dir="auto">Accessibility and polish</h2>
-<ul dir="auto">
-<li>VoiceOver labels for icon buttons, menus and switches; History, mode and prompt lists work with the keyboard; the info (i) buttons can be opened with the keyboard.</li>
-<li>Better contrast in light mode, a resizable main window with the window buttons in the sidebar, Settings… (⌘,) in the app menu, and an About section with version and Check for Updates.</li>
-<li>A new duck icon in the menu bar that follows light and dark mode, and a duck-yellow accent with consistent spacing and text sizes throughout the app.</li>
-<li>Yap has a website: <a href="https://yap.sma1lboy.me" rel="nofollow">https://yap.sma1lboy.me</a>.</li>
-</ul>
-<h2 dir="auto">Yap Cloud (optional)</h2>
-<p dir="auto">Yap Cloud is one of the providers, for people who'd rather not get an API key: it runs the same models as the "Your OpenRouter Key" setup, and you pay per use from a prepaid balance. Everything is on its page under Models › Cloud › Yap Cloud.</p>
-<ul dir="auto">
-<li>Sign in with your email and a 6-digit code. New accounts get $1 of free credit, so you can start dictating before adding funds.</li>
-<li>Add funds ($5, $10, $20 or a custom amount up to $500). Checkout opens in your browser; the balance updates when you come back to Yap, and each top-up has a receipt link.</li>
-<li>The page shows your balance, what you spent this month and on which models, and how long the balance lasts at your current pace. Home and the menu bar only bring it up when you need to act: when the balance runs low or runs out.</li>
-<li>Set a monthly spending cap ($0 to $10,000). When you reach it, Yap Cloud stops charging until next month or until you raise it.</li>
-<li>See the Macs signed in to your account and sign out any of them remotely. If this Mac was signed out from elsewhere, Yap notices on its next request and asks you to sign in again.</li>
-<li>Export your whole Yap Cloud history (charges and top-ups, with receipt links) as a CSV file. If the Yap team adjusts your balance (for example a refund), Recent Activity shows the reason.</li>
-<li>If Yap Cloud can't be reached, Yap says so in one sentence and recovers on its own. A failed call is retried once, only when it can't have been billed.</li>
-<li>Cleanup through Yap Cloud is faster: reasoning is turned off and the fastest provider is picked, so cleaning up a 40-second dictation went from about 8 s to 0.6 s.</li>
-<li>You can delete your Yap Cloud account from its page; you type your email to confirm, and any remaining balance is not refunded.</li>
-<li>Terms and privacy policy: <a href="https://cloud.yap.sma1lboy.me" rel="nofollow">https://cloud.yap.sma1lboy.me</a>.</li>
-</ul>
-<h2 dir="auto">Cleanup</h2>
-<ul dir="auto">
-<li>Removed what was left of upstream VoiceInk: licensing and trial screens, the announcements fetcher, the change log sheet, and VoiceInk names in the UI. Custom command scripts get <code class="notranslate">YAP_*</code> environment variables; <code class="notranslate">VOICEINK_*</code> still work.</li>
-<li>Includes the latest upstream fix for case-only word replacements.</li>
-</ul>
-<hr>
-<h1 dir="auto">Yap 1.2.0（中文）</h1>
-<p dir="auto">自 1.1.0 以来的更新。</p>
-<p dir="auto">Yap 是一个开源（GPL-3.0）的 macOS 听写 app，fork 自 VoiceInk。按住快捷键说话，英文、中文或者一句话里中英混着说都行，松开后 Yap 转写、润色并粘贴。可以用本地模型、自带服务商的 key，或者 Yap Cloud。</p>
-<h2 dir="auto">中英混说</h2>
-<ul dir="auto">
-<li>Whisper 现在按语言分段解码，每段用它自己的语言。以前一段以英文开头的录音，后面的中文可能被翻译成英文输出。</li>
-<li>超过 30 秒的录音按停顿切成小段解码，长听写不会再丢句子。</li>
-<li>44.1 或 48 kHz 的录音在降采样时加了滤波，齿音、风扇和键盘噪声不会再混进语音频段，嘈杂环境和齿音多的话转写更干净。</li>
-<li>引导流程里的「本地」选项改为下载 Whisper Large v3 Turbo（量化版，547 MB），不再是不支持中文的 Parakeet V3。它可以完全离线运行：用本地模型、关闭润色时，一次听写不会发起任何网络连接。各个本地模型的测试数据、以及 8 GB 内存的 Mac 该选哪个，见 <code class="notranslate">docs/local-models.md</code>。</li>
-<li><code class="notranslate">setup/</code> 里有测试脚本和 11 段中英混说的测试音频，可以在自己的 Mac 上比较模型。</li>
-</ul>
-<h2 dir="auto">三种用法</h2>
-<ul dir="auto">
-<li>引导流程把三种方式并列：在这台 Mac 上跑本地模型、用自己的 OpenRouter 或其他服务商的 key，或者不想申请 key 时用 Yap Cloud。之后可以在「模型」里更改，也可以每个模式分别设置。</li>
-<li>第一次听写在第 3 屏。引导流程从 9 屏缩短到 6 屏（有多个麦克风时是 7 屏）。</li>
-<li>快捷键默认设为右 Option，可以在练习页更改。只有一个麦克风时跳过选择麦克风那一屏。授予权限后自动进入下一步，第一个之后的练习步骤可以跳过。</li>
-<li>选「稍后设置」也会有可用的模式和快捷键，不会出现按了快捷键没反应的情况。</li>
-</ul>
-<h2 dir="auto">用配置文件管理设置，并在多台 Mac 间同步</h2>
-<ul dir="auto">
-<li><code class="notranslate">~/.config/yap/config.json</code> 现在涵盖模式、提示词、词典、快捷键、通用设置、自定义模型和自定义润色服务商。快捷键用易读的写法，例如 <code class="notranslate">"cmd+shift+space"</code>。</li>
-<li>「设置 &gt; 配置与同步」可以把当前设置写回配置文件。</li>
-<li>登录 Yap Cloud 后打开「通过 Yap Cloud 同步」，每台 Mac 都使用同一份配置。不同 Mac 上的改动会自动合并，删掉的条目不会再回来。API key 永远不会上传。</li>
-<li>在新 Mac 上？引导流程的第一屏就可以登录 Yap Cloud 并恢复你的设置。</li>
-<li>「版本历史」列出同步过的配置的旧版本，可以恢复其中任意一个。</li>
-</ul>
-<h2 dir="auto">听写修复</h2>
-<ul dir="auto">
-<li>空录音和短于 0.3 秒的误触会在发送前就停下，不再显示一个点了也没用的「重试」。</li>
-<li>长听写不会再被润色模型截断在半句（Groq、Cerebras、OpenAI、Mistral 和自定义服务商）。如果输出仍然达到上限，Yap 会粘贴原始转写并提示你，而不是粘贴润色了一半的文字。不接受 temperature 参数的 gpt-5 和 Azure 部署也能正常润色了。</li>
-<li>选中文字时用改写类模式说一句简短的指令，会重新走润色，不会再把你说的原话直接覆盖选中的文字。</li>
-<li>词典替换可以插入换行（<code class="notranslate">\n</code>）；替换内容里的 <code class="notranslate">$</code> 和 <code class="notranslate">\</code> 按原样保留。</li>
-<li>连续两次往「屏幕共享」或虚拟机里听写，粘贴的是正确的文字。</li>
-<li>其他 app 改了麦克风采样率之后（音频软件、切换 AirPods），麦克风仍然能正常录音。</li>
-<li>开启「录音时暂停媒体」时，刚开始就取消的录音之后，媒体也能可靠地恢复播放。</li>
-</ul>
-<h2 dir="auto">错误提示更清楚</h2>
-<ul dir="auto">
-<li>转写失败时说明原因并提供「重试」，录音会保留。</li>
-<li>无法粘贴（没有辅助功能权限）时，文字会留在剪贴板里，并告诉你怎么解决。</li>
-<li>麦克风权限缺失、模型缺失或不可用、API key 被拒绝，会在开始录音前就发现，并提供直达相应页面的按钮。</li>
-<li>模型下载失败、自定义命令失败和同步失败都会说明原因，并提供重试的入口。</li>
-</ul>
-<h2 dir="auto">可访问性与细节</h2>
-<ul dir="auto">
-<li>图标按钮、菜单和开关都有 VoiceOver 标签；历史记录、模式和提示词列表可以用键盘操作；信息（i）按钮可以用键盘打开。</li>
-<li>浅色模式下对比度更好；主窗口可以调整大小，窗口按钮移到了侧边栏里；应用菜单里有「设置…」（⌘,）；设置里新增「关于」，显示版本号和「检查更新」。</li>
-<li>菜单栏换成了新的小鸭子图标，会跟随浅色/深色模式；整个应用换上鸭子黄的主色，间距和字号也统一了。</li>
-<li>Yap 有了官网：<a href="https://yap.sma1lboy.me%E3%80%82" rel="nofollow">https://yap.sma1lboy.me。</a></li>
-</ul>
-<h2 dir="auto">Yap Cloud（可选）</h2>
-<p dir="auto">Yap Cloud 是服务商之一，给不想自己申请 API key 的人用：它跑的模型和「自带 OpenRouter Key」一样，按量付费，从预充值的余额里扣。所有相关内容都在「模型 › 云端 › Yap Cloud」页面。</p>
-<ul dir="auto">
-<li>用邮箱和 6 位验证码登录。新账户赠送 $1 额度，充值之前就能开始听写。</li>
-<li>充值（$5、$10、$20，或自定义金额，最高 $500）。付款在浏览器里完成，回到 Yap 余额会自动更新，每笔充值都有收据链接。</li>
-<li>页面上显示余额、本月花费及主要模型，以及按当前用量余额还能用多久。首页和菜单栏只在需要你处理时才提到余额：余额不足或用完的时候。</li>
-<li>可以设置每月消费上限（$0 到 $10,000）。达到上限后，Yap Cloud 当月不再扣费，直到下个月或你调高上限。</li>
-<li>可以查看已登录账户的所有 Mac，并远程让其中任意一台退出登录。如果这台 Mac 在别处被退出登录，Yap 会在下一次请求时发现，并请你重新登录。</li>
-<li>可以把全部 Yap Cloud 记录（扣费和充值，含收据链接）导出为 CSV 文件。Yap 团队调整你的余额时（例如退款），「最近记录」里会写明原因。</li>
-<li>Yap Cloud 连不上时，Yap 会用一句话说明，并自动恢复。失败的请求只在确定没有扣费时自动重试一次。</li>
-<li>通过 Yap Cloud 润色更快了：关闭了推理，并选择最快的服务商，润色一段 40 秒的听写从约 8 秒缩短到 0.6 秒。</li>
-<li>可以在 Yap Cloud 页面删除账户：需要输入邮箱确认，剩余余额不予退还。</li>
-<li>服务条款和隐私政策：<a href="https://cloud.yap.sma1lboy.me%E3%80%82" rel="nofollow">https://cloud.yap.sma1lboy.me。</a></li>
-</ul>
-<h2 dir="auto">清理</h2>
-<ul dir="auto">
-<li>去掉了上游 VoiceInk 的残留：授权和试用界面、公告拉取、更新日志弹窗，以及界面里的 VoiceInk 名称。自定义命令脚本可以使用 <code class="notranslate">YAP_*</code> 环境变量，<code class="notranslate">VOICEINK_*</code> 仍然可用。</li>
-<li>包含上游最新的修复：仅大小写不同的词语替换不再被误判为循环。</li>
-</ul>]]></description>
-            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.2.0/Yap.zip" sparkle:edSignature="8uSBHD2Tg8l+XQ/g5G7AuOGg2us9Ax6vJXK4KqthHCrTdY9Su9nIvgneLeh5svgXWMnrBImNhBY12IEXD1weBQ==" length="46734759" type="application/octet-stream" />
-        </item>
-        <item>
-            <title>Yap 1.1.0</title>
-            <pubDate>Fri, 25 Sep 2026 17:35:43 GMT</pubDate>
-            <sparkle:version>1015</sparkle:version>
-            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.1.0</link>
-            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.1.0/Yap.zip" sparkle:edSignature="wWTfEK/y7nScxrM69a/IvbYcpZZqNmy19KTT6KiuqDRf2N69ckTipth0C4+QNnr/d5uKXXco1DlEw3e8txWCAw==" length="45487529" type="application/octet-stream" />
-        </item>
-        <item>
-            <title>Yap 1.0.0</title>
-            <pubDate>Fri, 25 Sep 2026 05:49:36 GMT</pubDate>
-            <sparkle:version>1005</sparkle:version>
-            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-            <link>https://github.com/Sma1lboy/yap/releases/tag/v1.0.0</link>
-            <enclosure url="https://github.com/Sma1lboy/yap/releases/download/v1.0.0/Yap.zip" sparkle:edSignature="/CeumSi+lIDrLODZo8LYzw+reeWWcAADav3kopYJcu1uEA6qTV7xztgZPgrVBCRx8NL9zNjwzMqH9vUki+htAA==" length="45048163" type="application/octet-stream" />
         </item>
     </channel>
 </rss>

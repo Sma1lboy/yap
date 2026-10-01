@@ -66,7 +66,7 @@ struct AudioTranscribeView: View {
                     .animation(.easeInOut(duration: 0.15), value: isDropTargeted)
 
                 VStack(spacing: AppTheme.Spacing.x4) {
-                    Image(systemName: "arrow.down.doc")
+                    Image(yapIcon: "arrow.down.doc")
                         .font(AppTheme.font(.display))
                         .foregroundColor(isDropTargeted ? AppTheme.Accent.text : AppTheme.Text.secondary)
 
@@ -152,7 +152,7 @@ struct AudioTranscribeView: View {
                 selectFiles()
             } label: {
                 HStack(spacing: AppTheme.Spacing.x1) {
-                    Image(systemName: "plus")
+                    Image(yapIcon: "plus")
                         .font(AppTheme.font(.footnote, .medium))
                     Text("Add")
                         .font(AppTheme.font(.footnote, .medium))
@@ -177,7 +177,7 @@ struct AudioTranscribeView: View {
                     transcriptionManager.cancelProcessing()
                 } label: {
                     HStack(spacing: AppTheme.Spacing.x1) {
-                        Image(systemName: "stop.fill")
+                        Image(yapIcon: "stop.fill")
                             .font(AppTheme.font(.micro, .medium))
                         Text("Cancel")
                             .font(AppTheme.font(.footnote, .medium))
@@ -197,7 +197,7 @@ struct AudioTranscribeView: View {
                     startProcessing()
                 } label: {
                     HStack(spacing: AppTheme.Spacing.x1) {
-                        Image(systemName: "play.fill")
+                        Image(yapIcon: "play.fill")
                             .font(AppTheme.font(.micro, .medium))
                         Text("Start")
                             .font(AppTheme.font(.footnote, .semibold))
@@ -224,7 +224,7 @@ struct AudioTranscribeView: View {
                 }
             } label: {
                 HStack(spacing: AppTheme.Spacing.x1) {
-                    Image(systemName: "xmark.bin")
+                    Image(yapIcon: "xmark.bin")
                         .font(AppTheme.font(.footnote, .medium))
                     Text("Clear")
                         .font(AppTheme.font(.footnote, .medium))
@@ -269,7 +269,7 @@ struct AudioTranscribeView: View {
                             .font(AppTheme.font(.footnote, .medium))
                             .lineLimit(1)
                             .truncationMode(.tail)
-                        Image(systemName: "chevron.up.chevron.down")
+                        Image(yapIcon: "chevron.up.chevron.down")
                             .font(AppTheme.font(.micro, .semibold))
                             .foregroundColor(.secondary)
                     }

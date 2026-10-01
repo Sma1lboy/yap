@@ -52,6 +52,8 @@ final class DictationTimeline: @unchecked Sendable {
         case pasted
         /// No Accessibility permission: the text was left on the clipboard and a notification says so.
         case clipboardOnly
+        /// No editable field had focus: the text went to the Scratchpad (and the clipboard).
+        case scratchpad
         /// The clipboard couldn't be set, or the key events / AppleScript couldn't be sent.
         case failed
     }

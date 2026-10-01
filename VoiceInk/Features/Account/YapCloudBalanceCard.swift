@@ -15,7 +15,7 @@ struct YapCloudBalanceCard: View {
     private var card: some View {
         if cloud.isSignedIn, cloud.isLowBalance, let balance = cloud.balanceMicros {
             HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
-                Image(systemName: "exclamationmark.triangle.fill")
+                Image(yapIcon: "exclamationmark.triangle.fill")
                     .font(AppTheme.font(.headline, .medium))
                     .foregroundStyle(AppTheme.Status.warningStrong)
                     .frame(width: 34, height: 34)
@@ -50,7 +50,7 @@ struct YapCloudTrialNudgeBanner: View {
     var body: some View {
         if let nudge = cloud.trialNudge {
             HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
-                Image(systemName: "gift")
+                Image(yapIcon: "gift")
                     .font(AppTheme.font(.headline, .medium))
                     .foregroundStyle(AppTheme.Status.warningStrong)
                     .frame(width: 34, height: 34)
@@ -64,7 +64,7 @@ struct YapCloudTrialNudgeBanner: View {
                 Button {
                     cloud.dismissTrialNudge()
                 } label: {
-                    Image(systemName: "xmark")
+                    Image(yapIcon: "xmark")
                 }
                 .buttonStyle(.borderless)
                 .help("Don't show this again")

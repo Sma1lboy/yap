@@ -19,6 +19,7 @@
             let arguments = CommandLine.arguments
             guard let index = arguments.firstIndex(of: argument), arguments.indices.contains(index + 1) else { return }
             let file = URL(fileURLWithPath: arguments[index + 1])
+            if arguments.contains("--residency-check") { return runResidency(engine: engine, file: file) }
             if let modelIndex = arguments.firstIndex(of: firstRunArgument), arguments.indices.contains(modelIndex + 1) {
                 return runFirstRun(engine: engine, modelName: arguments[modelIndex + 1], file: file)
             }
@@ -53,6 +54,46 @@
                     pairs.forEach { item.setData($0.1, forType: $0.0) }
                     return item
                 })
+            }
+        }
+
+        /// `--residency-check` (scripts/model-residency-check.sh): dictates the clip against a model that is never
+        /// loaded, kept, released by ModelResidency (the script sets a few seconds of "keep loaded"), reloaded
+        /// without a preload, released again, and reloaded with a preload started 3 s before the dictation, as the
+        /// shortcut press does while you speak. The script samples the process's footprint between the markers.
+        private static func runResidency(engine: VoiceInkEngine, file: URL) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(10))
+                let restorePasteboard = savePasteboard()
+                let keep = UserDefaults.standard.integer(forKey: ModelResidency.keepSecondsKey)
+                func mark(_ name: String) {
+                    print("residency: mark \(name) \(Date().timeIntervalSince1970)")
+                    fflush(stdout)
+                }
+                func dictate(_ name: String) async {
+                    let t = Date()
+                    let transcription = await engine.dictateFile(file)
+                    print("residency: dictation \(name) total \(String(format: "%.2f", Date().timeIntervalSince(t))) s, transcription \(String(format: "%.2f", transcription.transcriptionDuration ?? 0)) s")
+                    mark("after " + name)
+                }
+                mark("baseline")
+                try? await Task.sleep(for: .seconds(3))
+                await dictate("never loaded")
+                try? await Task.sleep(for: .seconds(3))
+                await dictate("kept loaded")
+                mark("idle, loaded")
+                try? await Task.sleep(for: .seconds(Double(keep) + 8))
+                mark("idle, released")
+                await dictate("released, no preload")
+                try? await Task.sleep(for: .seconds(Double(keep) + 8))
+                mark("idle, released again")
+                engine.preloadCurrentModel()
+                try? await Task.sleep(for: .seconds(3))
+                await dictate("released, preload 3 s earlier")
+                await engine.releaseModels()  // ggml asserts at exit() while any Metal buffer is still allocated
+                restorePasteboard()
+                fflush(stdout)
+                exit(0)
             }
         }
 

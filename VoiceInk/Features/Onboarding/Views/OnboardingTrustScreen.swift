@@ -53,7 +53,7 @@ private struct OnboardingTrustContent: View {
 private struct TrustHeader: View {
     var body: some View {
         VStack(spacing: AppTheme.Spacing.x4) {
-            Image(systemName: "lock.shield")
+            Image(yapIcon: "lock.shield")
                 .font(AppTheme.font(.title, .semibold))
                 .foregroundColor(AppTheme.Text.primary)
                 .frame(width: 56, height: 56)
@@ -72,13 +72,28 @@ private struct TrustHeader: View {
     }
 }
 
-private struct TrustBody: View {
+struct TrustBody: View {
     @Query(TrySayingCard.anyTranscription) private var existingTranscriptions: [Transcription]
 
     /// Only for someone who hasn't dictated yet (e.g. after "Set It Up Later"). The card takes the decorative
     /// map's place: squeezed smaller, the map draws past its frame into the headline and text.
     private var showsTrySaying: Bool { existingTranscriptions.isEmpty }
     @State private var showsPrivacyDetails = false
+
+    static func meetingLine(shortcut: Shortcut?) -> String {
+        if let shortcut {
+            return String(localized: "Yap can also record meetings: press \(shortcut.displayString) to start, then click ✓ in its panel to stop.")
+        }
+        return String(localized: "Yap can also record meetings. Set a shortcut for it in Settings.")
+    }
+
+    #if DEBUG
+        static func selfCheck() {
+            // Points to the Settings page by the name the sidebar shows, in whatever language the app runs in.
+            assert(meetingLine(shortcut: nil).contains(String(localized: "Settings")))
+            assert(meetingLine(shortcut: .rightCommandSpace).contains(Shortcut.rightCommandSpace.displayString))
+        }
+    #endif
 
     var body: some View {
         VStack(spacing: 0) {
@@ -101,7 +116,7 @@ private struct TrustBody: View {
                 } label: {
                     HStack(spacing: AppTheme.Spacing.x1) {
                         Text("Privacy details")
-                        Image(systemName: "chevron.down")
+                        Image(yapIcon: "chevron.down")
                             .rotationEffect(.degrees(showsPrivacyDetails ? 180 : 0))
                     }
                     .font(AppTheme.font(.footnote, .medium))
@@ -121,6 +136,13 @@ private struct TrustBody: View {
                 }
 
                 Text("Yap picks a mode for the app you're in. Press Option 1-9 while recording to switch, and edit modes anytime.")
+                    .font(AppTheme.font(.body))
+                    .foregroundColor(AppTheme.Text.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 610)
+
+                Text(Self.meetingLine(shortcut: ShortcutStore.shortcut(for: .meetingRecording)))
                     .font(AppTheme.font(.body))
                     .foregroundColor(AppTheme.Text.secondary)
                     .multilineTextAlignment(.center)
@@ -209,7 +231,7 @@ private struct TrustPill: View {
 
     var body: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Image(systemName: systemImage)
+            Image(yapIcon: systemImage)
                 .font(AppTheme.font(.body, .semibold))
                 .foregroundColor(AppTheme.Text.secondary)
 
@@ -234,7 +256,7 @@ private struct TrustPill: View {
 private struct TrustShield: View {
     var body: some View {
         ZStack {
-            Image(systemName: "shield.fill")
+            Image(yapIcon: "shield.fill")
                 .font(AppTheme.font(.display, .regular))
                 .foregroundStyle(
                     LinearGradient(
@@ -247,7 +269,7 @@ private struct TrustShield: View {
                     )
                 )
                 .overlay(
-                    Image(systemName: "shield")
+                    Image(yapIcon: "shield")
                         .font(AppTheme.font(.display, .regular))
                         .foregroundColor(AppTheme.Border.control)
                 )

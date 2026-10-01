@@ -165,13 +165,14 @@ enum AppDefaults {
             AppAppearancePreference.userDefaultsKey: AppAppearancePreference.system.rawValue,
             AppLanguagePreference.userDefaultsKey: AppLanguagePreference.systemValue,
             // Enhancement
-            "SkipShortEnhancement": true,
+            "SkipShortEnhancement": false,
             "ShortEnhancementWordThreshold": 3,
             EnhancementRequestSettings.timeoutKey: EnhancementRequestSettings.defaultTimeoutSeconds,
             EnhancementRequestSettings.retryOnTimeoutKey: EnhancementRequestSettings.defaultRetryOnTimeout,
 
             // Model
             "PrewarmModelOnWake": true,
+            ModelResidency.keepSecondsKey: ModelResidency.defaultKeepSeconds,
 
         ])
 

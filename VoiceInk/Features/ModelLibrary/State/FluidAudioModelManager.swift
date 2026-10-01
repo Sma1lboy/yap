@@ -165,6 +165,7 @@ class FluidAudioModelManager: ObservableObject {
             }
         case .parakeet(let version):
             return AsrModels.modelsExist(at: cacheDirectory(for: version), version: version)
+                && Self.vadModelFilesExist()
         }
     }
 
@@ -236,7 +237,7 @@ class FluidAudioModelManager: ObservableObject {
         let progressHandler: ProgressHandler = { progress in
             progressContinuation.yield(progress)
         }
-        var isPreparingModel = false
+        var preserveModelFiles = false
 
         do {
             switch Self.modelKind(for: modelName) {
@@ -249,7 +250,7 @@ class FluidAudioModelManager: ObservableObject {
                     progressHandler: Self.downloadOnlyProgressHandler(forwarding: progressHandler)
                 )
                 try Task.checkCancellation()
-                isPreparingModel = true
+                preserveModelFiles = true
                 beginModelPreparation(for: modelName, downloadID: downloadID)
                 try await Self.optimizeParakeetUnifiedRealtimeModel()
                 try Task.checkCancellation()
@@ -262,7 +263,7 @@ class FluidAudioModelManager: ObservableObject {
                     progressHandler: progressHandler
                 )
                 try Task.checkCancellation()
-                isPreparingModel = true
+                preserveModelFiles = true
                 beginModelPreparation(for: modelName, downloadID: downloadID)
                 let manager = StreamingNemotronMultilingualAsrManager()
                 do {
@@ -278,6 +279,7 @@ class FluidAudioModelManager: ObservableObject {
                     throw AsrModelsError.loadingFailed("Unsupported Parakeet model version.")
                 }
                 let cacheDirectory = AsrModels.defaultCacheDirectory(for: version)
+                preserveModelFiles = AsrModels.modelsExist(at: cacheDirectory, version: version)
                 try await ModelHub.download(
                     repo,
                     to: cacheDirectory.deletingLastPathComponent(),
@@ -285,8 +287,13 @@ class FluidAudioModelManager: ObservableObject {
                     additionalModelNames: [ModelNames.ASR.vocabularyFile],
                     progressHandler: Self.downloadOnlyProgressHandler(forwarding: progressHandler)
                 )
+                preserveModelFiles = true
                 try Task.checkCancellation()
-                isPreparingModel = true
+                try await ModelHub.download(
+                    .vad,
+                    to: Self.fluidAudioModelsRootDirectory()
+                )
+                try Task.checkCancellation()
                 beginModelPreparation(for: modelName, downloadID: downloadID)
                 _ = try await AsrModels.load(
                     from: cacheDirectory,
@@ -294,12 +301,14 @@ class FluidAudioModelManager: ObservableObject {
                     encoderPrecision: .int8
                 )
                 try Task.checkCancellation()
+                _ = try await VadManager()
+                try Task.checkCancellation()
             }
             try Task.checkCancellation()
             modelStateRevision += 1
         } catch {
             if error is CancellationError || Task.isCancelled {
-                if !isPreparingModel {
+                if !preserveModelFiles {
                     try? FileManager.default.removeItem(at: cacheDirectory(for: model))
                 }
                 modelStateRevision += 1
@@ -403,6 +412,17 @@ class FluidAudioModelManager: ObservableObject {
             .union([parakeetUnifiedStreamingEncoderFile])
     }
 
+    nonisolated private static func vadModelFilesExist() -> Bool {
+        let directory = fluidAudioModelsRootDirectory()
+            .appendingPathComponent(Repo.vad.folderName, isDirectory: true)
+        return ModelNames.VAD.requiredModels.allSatisfy {
+            FileManager.default.fileExists(
+                atPath: directory.appendingPathComponent($0)
+                    .appendingPathComponent("coremldata.bin").path
+            )
+        }
+    }
+
     nonisolated private static func nemotronRequiredFilesExist(in directory: URL) -> Bool {
         let requiredFiles = [
             ModelNames.NemotronMultilingualStreaming.metadata,
@@ -465,12 +485,16 @@ class FluidAudioModelManager: ObservableObject {
         }
     }
 
-    private func beginModelPreparation(for modelName: String, downloadID: UUID) {
+    private func beginModelPreparation(
+        for modelName: String,
+        downloadID: UUID,
+        message: String = String(localized: "Optimizing model for your device")
+    ) {
         guard activeDownloadIDs[modelName] == downloadID else { return }
         activeNetworkProgressIDs[modelName] = nil
         downloadStatuses[modelName] = FluidAudioDownloadStatus(
             fractionCompleted: 1.0,
-            message: String(localized: "Optimizing model for your device"),
+            message: message,
             isIndeterminate: true
         )
     }

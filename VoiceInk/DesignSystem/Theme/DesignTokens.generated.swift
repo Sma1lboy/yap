@@ -4,19 +4,20 @@ import AppKit
 import SwiftUI
 
 enum DesignTokens {
-    /// Light and dark values switch with the window's appearance.
+    /// Light and dark values switch with the window's appearance; colors with an HC pair also switch when macOS
+    /// Increase Contrast is on (docs/DESIGN.md, "增强对比度").
     enum Palette {
         static let bg = dynamic(light: 0xF3F3F5, dark: 0x1B1B1F)
         static let surface = dynamic(light: 0xFFFFFF, dark: 0x26262B)
         static let sunken = dynamic(light: 0xEAEAED, dark: 0x151518)
-        static let border = dynamic(light: 0xDCDCE1, dark: 0x37373E)
+        static let border = dynamic(light: 0xDCDCE1, dark: 0x37373E, lightHC: 0x74747E, darkHC: 0x8C8C96)
         static let text = dynamic(light: 0x1F1F23, dark: 0xF2F2F4)
-        static let text2 = dynamic(light: 0x5E5E66, dark: 0xA8A8B0)
-        static let text3 = dynamic(light: 0x6F6F77, dark: 0x8E8E96)
+        static let text2 = dynamic(light: 0x5E5E66, dark: 0xA8A8B0, lightHC: 0x4A4A52, darkHC: 0xC4C4CC)
+        static let text3 = dynamic(light: 0x6F6F77, dark: 0x8E8E96, lightHC: 0x55555D, darkHC: 0xB4B4BC)
         static let accent = dynamic(light: 0xFFD84D, dark: 0xF7C83A)
         static let accentPress = dynamic(light: 0xF7C83A, dark: 0xE9B92C)
         static let onAccent = dynamic(light: 0x2A2320, dark: 0x2A2320)
-        static let accentSubtle = dynamic(light: 0xFFF5CC, dark: 0x3A3322)
+        static let accentSubtle = dynamic(light: 0xFFF5CC, dark: 0x3A3322, lightHC: 0xFFE98A, darkHC: 0x52461F)
         static let link = dynamic(light: 0x1F1F23, dark: 0xFFD84D)
         static let focus = dynamic(light: 0x2A2320, dark: 0xFFD84D)
         static let success = dynamic(light: 0x1A7340, dark: 0x6FD39A)
@@ -63,10 +64,20 @@ enum DesignTokens {
         static let x16: CGFloat = 64
     }
 
-    private static func dynamic(light: UInt32, dark: UInt32) -> Color {
+    /// ui-snapshots sets this to render the Increase Contrast look without touching the system setting.
+    static var forceIncreasedContrast = false
+
+    private static func dynamic(light: UInt32, dark: UInt32, lightHC: UInt32? = nil, darkHC: UInt32? = nil) -> Color {
         Color(nsColor: NSColor(name: nil) { appearance in
-            let isDark = appearance.bestMatch(from: [.darkAqua, .vibrantDark, .aqua, .vibrantLight])
-            let hex = (isDark == .darkAqua || isDark == .vibrantDark) ? dark : light
+            let match = appearance.bestMatch(from: [
+                .accessibilityHighContrastDarkAqua, .accessibilityHighContrastAqua, .darkAqua, .vibrantDark, .aqua,
+                .vibrantLight,
+            ])
+            let isDark = match == .darkAqua || match == .vibrantDark || match == .accessibilityHighContrastDarkAqua
+            // SwiftUI doesn't always hand the provider a high-contrast appearance, so read the system setting too.
+            let increased = match == .accessibilityHighContrastDarkAqua || match == .accessibilityHighContrastAqua
+                || forceIncreasedContrast || NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
+            let hex = increased ? (isDark ? (darkHC ?? dark) : (lightHC ?? light)) : (isDark ? dark : light)
             return NSColor(
                 srgbRed: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
                 blue: CGFloat(hex & 0xFF) / 255, alpha: 1)

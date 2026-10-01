@@ -6,6 +6,8 @@ enum TranscriptionStatus: String, Codable {
     case completed
     case failed
     case canceled
+    /// The transcript was a known Whisper hallucination on near-silence; kept in History, never pasted.
+    case filtered
 }
 
 @Model
@@ -37,17 +39,25 @@ final class Transcription {
     @Attribute(originalName: "powerModeEmoji")
     var modeEmoji: String?
     var transcriptionStatus: String?
+    /// The app that was frontmost when the dictation started (nil for older rows, meetings and imported files).
+    var sourceAppName: String?
+    var sourceAppBundleID: String?
     /// Timed segments of a transcribed file (JSON `[TimedSegment]`), for subtitle export. Only local Whisper
     /// transcriptions of imported files have them.
     var segmentsJSON: String?
-
-    var timedSegments: [TimedSegment] { TimedSegments.decode(segmentsJSON) }
 
     /// nil for a dictation; `meetingKind` for a meeting recording (MeetingRecorder): notes in `enhancedText`,
     /// the timestamped transcript in `text`, the mix of both channels in `audioFileURL`.
     var kind: String?
     static let meetingKind = "meeting"
     var isMeeting: Bool { kind == Self.meetingKind }
+    /// A meeting's pieces that couldn't be transcribed (each is a marked line in `text`); nil when none.
+    var meetingFailedPieces: Int?
+    /// A meeting's speaker names (JSON `MeetingSpeakerNames`, "Others 1" → "Reed"); nil when none were given.
+    var meetingSpeakerNamesJSON: String?
+    /// A meeting whose remote speakers are still being told apart in the background: "pending"
+    /// (`SpeakerSplitSkip.pendingStatus`); why that failed (a `SpeakerSplitSkip` raw value); nil otherwise.
+    var meetingSpeakerStatus: String?
 
     init(
         text: String,
@@ -107,8 +117,11 @@ extension Transcription {
     /// Deletes a recording. A meeting's `audioFileURL` is the mix in its own folder (Recordings/meetings/<id>/);
     /// the whole folder goes, with both channels and the segments.
     static func removeAudio(at url: URL) throws {
-        let folder = url.deletingLastPathComponent()
-        let isMeeting = folder.deletingLastPathComponent().lastPathComponent == "meetings"
-        try FileManager.default.removeItem(at: isMeeting ? folder : url)
+        try FileManager.default.removeItem(at: isMeetingAudio(url) ? url.deletingLastPathComponent() : url)
+    }
+
+    /// A file in a meeting's own folder (Recordings/meetings/<id>/).
+    static func isMeetingAudio(_ url: URL) -> Bool {
+        url.deletingLastPathComponent().deletingLastPathComponent().lastPathComponent == "meetings"
     }
 }

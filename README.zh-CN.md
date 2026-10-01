@@ -10,7 +10,7 @@
 
 Yap 是 macOS 上的开源听写 app，以 GPL-3.0 发布。按住快捷键说话，中文、英文或者一句话里混着说都行，松开后 Yap 转写、去掉口头禅、补好标点，再粘贴进你正在用的 app。「模式」可以按 app 用不同的提示词或模型（邮件、代码评审、聊天），「词典」让人名和术语按你的写法拼。
 
-Yap 是 Prakash Joshi Pax 的 [VoiceInk](https://github.com/Beingpax/VoiceInk) 的一个分支。应用本身的功劳都属于原作者；如果你想要官方签名公证的版本，请[购买 VoiceInk](https://tryvoiceink.com/)。官网：[yap.sma1lboy.me](https://yap.sma1lboy.me)。
+Yap 是 Prakash Joshi Pax 的 [VoiceInk](https://github.com/Beingpax/VoiceInk) 的一个分支。应用本身的功劳都属于原作者；如果你想要官方版本，请[购买 VoiceInk](https://tryvoiceink.com/)。官网：[yap.sma1lboy.me](https://yap.sma1lboy.me)。图标：[Phosphor](https://phosphoricons.com)（MIT，许可证在 `VoiceInk/Resources/Licenses/`）。
 
 ## 声音交给谁处理
 
@@ -31,7 +31,7 @@ git clone https://github.com/Sma1lboy/yap && cd yap
 
 只装应用：`brew tap sma1lboy/yap https://github.com/Sma1lboy/yap && brew install --cask sma1lboy/yap/yap`。之后 Yap 会自己更新（应用菜单里的「检查更新…」），也可以用 `brew upgrade --cask yap`。
 
-**自己编译。** 装好 Xcode 后，在克隆下来的仓库里运行 `make local`，会编译 Yap 并把 `Yap.app` 复制到“下载”文件夹。发布版用自签名证书签名、没有经过 Apple 公证；直接下载 zip 第一次打开时提示“无法验证开发者”，处理方法见[官网 FAQ](https://yap.sma1lboy.me/#faq)，或者在终端运行 `xattr -dr com.apple.quarantine /Applications/Yap.app`。
+**自己编译。** 装好 Xcode 后，在克隆下来的仓库里运行 `make local`，会编译 Yap 并把 `Yap.app` 复制到“下载”文件夹。
 
 ## 和 VoiceInk 有什么不同
 
@@ -59,7 +59,7 @@ Yap Cloud 是三种用法之一：一个可选的账户，转写和润色的费�
 
 ## 配置与同步
 
-Yap 的全部设置可以写在一个文件里：`~/.config/yap/config.json`（或 `$XDG_CONFIG_HOME/yap/config.json`），并且可以通过 Yap Cloud 在你的几台 Mac 之间同步。下面提到的按钮都在 **设置 → 配置与同步**。
+Yap 的全部设置可以写在一个文件里：`~/.config/yap/config.json`（或 `$XDG_CONFIG_HOME/yap/config.json`），并且可以通过 Yap Cloud 在你的几台 Mac 之间同步。配置文件相关的按钮在 **设置 → 配置文件**；登录和同步开关在 **设置** 最上面的 **账户** 里。
 
 ### 配置文件
 
@@ -89,7 +89,7 @@ Schema v2（`"version": 2`）可以描述全部设置。它和 **设置 → 备�
 
 | 字段（v2） | 含义 |
 |---|---|
-| `version` | `2`。不写就是 v1。更大的数字（来自更新版本 Yap 的文件）照样能读，**设置 → 配置与同步** 会提示不认识的字段已忽略。 |
+| `version` | `2`。不写就是 v1。更大的数字（来自更新版本 Yap 的文件）照样能读，**设置 → 配置文件** 会提示不认识的字段已忽略。 |
 | `modes` | 模式数组，和导出文件里 `modeConfigs` 的对象相同。按 `id` 合并：文件里的模式替换应用里同 id 的模式，只存在于应用里的模式保留。 |
 | `modeShortcuts` | `{ "<模式 id>": <快捷键> }`，和导出文件里的 `modeShortcuts` 相同。`modes` 里没有的 id 会被忽略。快捷键（这里和 `general` 里）可以写成 `{ "shortcut": "cmd+shift+space" }`：修饰键 `cmd` `shift` `opt` `ctrl` `fn`，按键用美式键盘上的名字（`a`、`5`、`/`、`space`、`return`、`f13`、`left`…），也可以单独一个修饰键，比如 `right-opt` 或 `fn`。Yap 写出时会同时写这个字符串和原始的 `kind`/`keyCode`/`modifierFlagsRawValue` 字段；两者都有时以原始字段为准。鼠标按键和没有名字的按键只写原始字段。 |
 | `prompts` | `{ id, title, promptText, useSystemInstructions }` 数组。和 `modes` 一样按 `id` 合并。 |
@@ -113,17 +113,17 @@ Schema v2（`"version": 2`）可以描述全部设置。它和 **设置 → 备�
 
 ### 在几台 Mac 之间同步
 
-1. 在每台 Mac 上登录 Yap Cloud（见上文）。
-2. 打开 **通过 Yap Cloud 同步**。第一次登录后，Yap 也会问你一次要不要开启。
+1. 在每台 Mac 的 **设置 → 账户** 里登录（或在 Yap Cloud 页面，见上文）。
+2. 在同一个 **账户** 区打开 **在多台 Mac 间同步设置**。第一次登录后，Yap 也会问你一次要不要开启。
 
-之后 Yap 会在启动时、切回 Yap 时、Mac 从睡眠唤醒时以及每 15 分钟拉取一次同步的设置，本地改动在几秒后推送上去。拉取时如果云端没有新内容，什么都不会改。如果两台 Mac 同时改了设置，Yap 会按条目合并：每台 Mac 改过的模式、提示词、快捷键和词典条目都会保留。如果还是合并不了，这一段会显示冲突，并给出 **使用云端版本** 和 **保留这台 Mac 的设置** 两个选项；你选之前什么都不会被覆盖。如果是网络或服务端出错，会显示原因和 **重试**。
+之后 Yap 会在启动时、切回 Yap 时、Mac 从睡眠唤醒时以及每 15 分钟拉取一次同步的设置，本地改动在几秒后推送上去。拉取时如果云端没有新内容，什么都不会改。如果两台 Mac 同时改了设置，Yap 会按条目合并：每台 Mac 改过的模式、提示词、快捷键和词典条目都会保留。如果还是合并不了，账户区会显示冲突，并给出 **使用云端版本** 和 **保留这台 Mac 的设置** 两个选项；你选之前什么都不会被覆盖。如果是网络或服务端出错，会显示原因和 **重试**。
 
 如果配置里的 `enhancement.prompt` 指向一个文件（比如 `prompt.md`），上传到云端的是文件内容，因为别的 Mac 上没有这个文件。拉取的那台 Mac 如果自己的配置也指向一个提示词文件，文本会写进那个文件（旧文件保留为 `prompt.md.bak`）；否则文本直接写进它的 config.json。
 
 ### 在新 Mac 上恢复设置
 
 1. 在引导流程的第一屏点 **登录并恢复设置**，用同一个邮箱登录。
-2. 看一眼摘要（模式、提示词、词典条目和快捷键各有多少），点 **恢复**。Yap 会应用这些设置、写入 config.json，并打开 **通过 Yap Cloud 同步**。
+2. 看一眼摘要（模式、提示词、词典条目和快捷键各有多少），点 **恢复**。Yap 会应用这些设置、写入 config.json，并打开 **在多台 Mac 间同步设置**。
 3. 照常授予权限、选择麦克风。如果恢复的设置里已经选好了转写模型，引导流程会跳过模型和练习这几步。
 4. 如果设置里用到的某个服务商需要 API key、而这台 Mac 上还没有，会出现 key 那一步，并且已经选好了这个服务商。粘贴 key 就能继续。登录了 Yap Cloud 的话，Yap Cloud 本身不需要 key。
 
@@ -131,7 +131,7 @@ Schema v2（`"version": 2`）可以描述全部设置。它和 **设置 → 备�
 
 ### 从 VoiceInk 迁移
 
-如果这台 Mac 上运行过 VoiceInk，配置与同步里的 **从 VoiceInk 导入…** 会读取它的模式、提示词、词典、快捷键、通用设置以及自定义模型和服务商的定义，显示各有多少，你确认后再导入。id 相同的条目会替换 Yap 里的，其余的 Yap 设置保留。API key、许可证、历史记录和下载的模型都不会复制；导入的自定义模型和服务商会标注 **需要填 API key**，直到你填好。它只在你点击时运行；没装过 VoiceInk 的 Mac 上这个按钮是灰的。
+如果这台 Mac 上运行过 VoiceInk，**设置 → 配置文件** 里的 **从 VoiceInk 导入…** 会读取它的模式、提示词、词典、快捷键、通用设置以及自定义模型和服务商的定义，显示各有多少，你确认后再导入。id 相同的条目会替换 Yap 里的，其余的 Yap 设置保留。API key、许可证、历史记录和下载的模型都不会复制；导入的自定义模型和服务商会标注 **需要填 API key**，直到你填好。它只在你点击时运行；没装过 VoiceInk 的 Mac 上这个按钮是灰的。
 
 ### 删除记录
 
@@ -144,6 +144,32 @@ API key 永远不会写进 config.json，也不会上传到 Yap Cloud。Yap 只�
 ### 推荐模型
 
 当前选择（2026 年 9 月）：转写用 `microsoft/mai-transcribe-2`（$0.10/小时；82 个关键词里对 80 个是旧 bench 的数字，那套录音没有保存，不能直接对比；`setup/asr/` 里更难的那套 bench 上是 59/82，见 [docs/dictation-accuracy.md](docs/dictation-accuracy.md)），润色用 `deepseek/deepseek-v4.1-flash`（25 个用例里过 23–24 个，约 0.5 秒，见 [docs/cloud-models.md](docs/cloud-models.md)）。引导流程里的「自带 OpenRouter Key」选项用你自己的 OpenRouter key 应用这套配置，费用直接付给 OpenRouter。修改 `VoiceInk/Resources/RecommendedPrompt.md` 后请重新跑 `setup/bench.py`。
+
+## 在 Claude Code / Cursor / Codex 里用 Yap 的数据
+
+Yap 在 app 里带了一个只读的 MCP server：`Yap.app/Contents/Helpers/yap-mcp`。agent 把它当子进程启动，通过 stdin/stdout 跟它通信：不开网络端口，不往任何地方发数据，Yap 开不开着都能用。它读的是 Yap 本地数据库的一份私有拷贝，上次调用之后 Yap 写过数据就重新拷贝；Yap 自己的文件只被复制，SQLite 从不打开它们。
+
+在 **设置 › Agent 访问（MCP）** 里打开之前，它什么都读不到：
+
+- **让 agent 读取 Yap 的数据**：会议（纪要和转写）和词典。关着时 agent 能连上，但每次读取都会报错，并告诉它开关在哪。
+- **包括听写历史**：连听写一起。默认关，因为听写里常有密码、私信和草稿。
+
+辅助程序每次调用都重新读这两个开关，所以关掉之后 agent 的下一次请求就读不到了。
+
+工具：`list_meetings`、`get_meeting`、`search_history`（在听写和会议里按子串搜索，中文英文都行）、`get_dictation`、`get_dictionary`。同一个设置分组里可以直接复制下面的命令，路径是你这份 Yap 的实际位置。
+
+```sh
+claude mcp add yap -- /Applications/Yap.app/Contents/Helpers/yap-mcp     # Claude Code
+codex mcp add yap -- /Applications/Yap.app/Contents/Helpers/yap-mcp      # Codex
+```
+
+Cursor，写在 `~/.cursor/mcp.json` 里：
+
+```json
+{ "mcpServers": { "yap": { "type": "stdio", "command": "/Applications/Yap.app/Contents/Helpers/yap-mcp" } } }
+```
+
+然后可以问：“总结一下这周会议里的待办”“上个月我听写过哪些关于 CI 迁移的内容？”（需要打开听写历史）“按我 Yap 词典里的拼写检查这份 README”。工具参数、细节和已知限制见 [docs/mcp.md](docs/mcp.md)。
 
 ## 开发
 

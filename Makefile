@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check first-run-check dictation-latency ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-echo-check meeting-long-check meeting-call-check mcp-check mcp-agent-eval mcp-perf first-run-check model-residency-check dictation-latency ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -184,6 +184,7 @@ design-tokens:
 
 design-check:
 	@python3 scripts/design-tokens.py --check
+	@python3 scripts/check-i18n.py
 
 # Run the Debug app with fake data (signed in, 20 transcripts, 5 modes…), offline, in its own settings domain
 # (me.sma1lboy.yap.mock). Everything it created is deleted on quit. See scripts/mock.sh.
@@ -199,6 +200,38 @@ offline-check: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh scripts/offline-check.sh "$$APP_DIR" "$(MODEL)"
+
+# Yap's memory while a local Whisper model is loaded vs released, and how long the first dictation after the release
+# waits, without and with the shortcut-press preload (scripts/model-residency-check.sh). KEEP=<seconds> (default 5).
+model-residency-check: build
+	@test -n "$(MODEL)" || { echo "usage: make model-residency-check MODEL=/path/to/ggml-*.bin"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/model-residency-check.sh "$$APP_DIR" "$(MODEL)"
+
+# yap-mcp, the read-only MCP server in Yap.app/Contents/Helpers (docs/mcp.md), over stdio against fixture data written
+# by the mock app: protocol, tools, get_meeting byte for byte the History export (English and Chinese), data files'
+# SHA-256 unchanged, no network socket. See scripts/mcp-check.sh.
+mcp-check: build
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/mcp-check.sh "$$APP_DIR"
+
+# Real agents (Codex CLI; Claude Code when it isn't over its limit) answer ten questions about a month of fixture data
+# through yap-mcp, with the agent-access switches on, half on and off. Needs the network and a signed-in CLI; skips a
+# CLI that's missing. LABEL names the results folder, /tmp/yap-mcp-eval/<LABEL>. See scripts/mcp-agent-eval.sh.
+mcp-agent-eval: build
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/mcp-agent-eval.sh "$$APP_DIR" "$(or $(LABEL),run)"
+
+# How long yap-mcp's tools take on two years of heavy use (20,000 dictations, 200 hour-long meetings): each tool cold
+# (a new helper process) and warm, p50 and p95, with the copy / open / read split. The data stays in
+# /tmp/yap-mcp-perf/data between runs (FRESH=1 writes it again). See scripts/mcp-perf.sh.
+mcp-perf: build
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/mcp-perf.sh "$$APP_DIR"
 
 # A new user's first local dictation: fresh mock install, download the default model, preflight mid-download, cold and
 # warm dictation times (scripts/first-run-check.sh). Needs the network; never touches the dev or release app's data.
@@ -224,8 +257,32 @@ meeting-files-check: build
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh scripts/meeting-files-check.sh "$$APP_DIR" "$(MODEL)" $(NOTES)
 
+# A meeting without headphones: the other side's voice reaches the microphone through the speakers (30 ms / 12 dB and
+# 80 ms / 20 dB). Checks that echo is taken out of "Me" and nothing the user said is. See scripts/meeting-echo-check.sh.
+meeting-echo-check: build
+	@test -n "$(MODEL)" || { echo "usage: make meeting-echo-check MODEL=/path/to/ggml-large-v3-turbo-q5_0.bin"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/meeting-echo-check.sh "$$APP_DIR" "$(MODEL)"
+
+# An 11-minute meeting with three remote voices: how long transcribing and telling speakers apart take at the end,
+# with the speaker models downloaded (cold) and cached (warm). See scripts/meeting-long-check.sh.
+meeting-long-check: build
+	@test -n "$(MODEL)" || { echo "usage: make meeting-long-check MODEL=/path/to/ggml-*.bin"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/meeting-long-check.sh "$$APP_DIR" "$(MODEL)"
+
+# Which processes use the microphone right now and what call detection makes of each (a call app, a browser, Yap
+# itself, nothing), after the detector's self-check. Reads Core Audio only and exits before touching any settings.
+# Run it during a real Zoom / FaceTime / browser call to check the detection by hand (docs/meeting-recording.md).
+meeting-call-check: build
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh "$$APP_DIR/VoiceInk Dev.app/Contents/MacOS/VoiceInk Dev" --meeting-call-check
+
 # Render every page, Settings group, onboarding screen and sheet in light and dark, plus the main ones in Chinese
-# (-zh), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots
+# (-zh, and -zht for Traditional), German (-de) and French (-fr), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots
 # (scripts/ui-snapshots.sh), so its fake modes and providers go to a throwaway defaults domain, never the dev app's;
 # dev-defaults-guard.sh fails the run if the dev app's settings changed anyway. No window, no focus change; the
 # sandbox profile denies network access.

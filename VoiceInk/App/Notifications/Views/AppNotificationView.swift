@@ -7,9 +7,14 @@ struct AppNotificationView: View {
     let onClose: () -> Void
     let onTap: (() -> Void)?
     var actionButton: (label: String, action: () -> Void)? = nil
+    /// A second choice shown before `actionButton`, e.g. Discard next to Transcribe.
+    var secondaryButton: (label: String, action: () -> Void)? = nil
 
     @State private var progress: Double = 1.0
     @State private var timer: Timer?
+
+    /// The widest a notification gets; a longer message wraps, up to three lines (NotificationManager.size).
+    static let maxWidth: CGFloat = 750
 
     enum NotificationType {
         case error
@@ -40,7 +45,7 @@ struct AppNotificationView: View {
         ZStack {
             HStack(alignment: .center, spacing: AppTheme.Spacing.x3) {
                 // Type icon
-                Image(systemName: type.iconName)
+                Image(yapIcon: type.iconName)
                     .font(AppTheme.font(.headline, .medium))
                     .foregroundColor(type.iconColor)
                     .frame(width: 20, height: 20)
@@ -50,17 +55,17 @@ struct AppNotificationView: View {
                     .font(AppTheme.font(.footnote))
                     .fontWeight(.medium)
                     .foregroundColor(.white)  // design-exempt: HUD, always dark
-                    .lineLimit(2)
+                    .lineLimit(3)
                     .multilineTextAlignment(.leading)
 
                 Spacer()
 
-                if let actionButton {
+                ForEach([secondaryButton, actionButton].compactMap { $0 }, id: \.label) { button in
                     Button(action: {
-                        actionButton.action()
+                        button.action()
                         onClose()
                     }) {
-                        Text(actionButton.label)
+                        Text(button.label)
                             .font(AppTheme.font(.caption, .semibold))
                             .foregroundColor(.white)  // design-exempt: HUD, always dark
                             .padding(.horizontal, AppTheme.Spacing.x2)
@@ -72,7 +77,7 @@ struct AppNotificationView: View {
                 }
 
                 Button(action: onClose) {
-                    Image(systemName: "xmark")
+                    Image(yapIcon: "xmark")
                         .font(AppTheme.font(.micro, .medium))
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -84,7 +89,7 @@ struct AppNotificationView: View {
             .padding(.horizontal, AppTheme.Spacing.x4)
             .padding(.vertical, AppTheme.Spacing.x3)
         }
-        .frame(minWidth: 220, maxWidth: 750, minHeight: 44)
+        .frame(minWidth: 220, maxWidth: Self.maxWidth, minHeight: 44)
         .background(
             RoundedRectangle(cornerRadius: AppTheme.Radius.card, style: .continuous)
                 .fill(.clear)

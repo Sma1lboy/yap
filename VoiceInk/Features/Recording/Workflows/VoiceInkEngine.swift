@@ -99,8 +99,12 @@ class VoiceInkEngine: NSObject, ObservableObject {
         }
     }
 
-    @Published var recordingState: RecordingState = .idle
+    @Published var recordingState: RecordingState = .idle {
+        didSet { DictationAnnouncer.stateChanged(from: oldValue, to: recordingState) }
+    }
     @Published var shouldCancelRecording = false
+    /// Set when the state becomes .recording; read only while recording.
+    private(set) var recordingStartedAt: Date?
     @Published var partialTranscript: String = ""
     var currentSession: TranscriptionSession?
     private var currentSessionTranscriptionConfiguration: TranscriptionRuntimeConfiguration?
@@ -168,6 +172,10 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
         super.init()
 
+        ModelResidency.shared.configure(
+            isBusy: { [weak self] in (self?.recordingState ?? .idle) != .idle },
+            release: { [weak self] in await self?.releaseModels() }
+        )
         setupNotifications()
         createRecordingsDirectoryIfNeeded()
     }
@@ -249,6 +257,10 @@ class VoiceInkEngine: NSObject, ObservableObject {
                 assistantSession.reset()
             }
 
+            // Loading a released model takes seconds; start it now so it overlaps permission, preflight and the
+            // recording itself instead of waiting for the transcription.
+            preloadCurrentModel()
+
             requestRecordPermission { [self] granted in
                 if granted {
                     Task { @MainActor [self] in
@@ -294,6 +306,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
                             }
 
                             self.recordingState = .recording
+                            self.recordingStartedAt = Date()
 
                             // Only retire the previous paste session once recording
                             // has actually started. Preflight/permission failures
@@ -380,9 +393,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
                             self.scheduleVoiceInkRefinePreparation(for: startID)
 
-                            Task { @MainActor [weak self] in
-                                await self?.preloadTranscriptionModel()
-                            }
+                            // The mode may have changed the model since the shortcut press started the preload.
+                            self.preloadCurrentModel()
 
                         } catch {
                             activeModeTask.cancel()
@@ -421,8 +433,16 @@ class VoiceInkEngine: NSObject, ObservableObject {
         }
     }
 
-    /// Loads the current mode's local model while the user speaks, so it's ready when they stop.
-    func preloadTranscriptionModel() async {
+    /// Loads the selected local model in the background (no-op when it is loaded or loading, or the model is cloud).
+    func preloadCurrentModel() {
+        ModelResidency.shared.touch()
+        Task { @MainActor [weak self] in
+            await self?.loadCurrentModel()
+        }
+    }
+
+    /// The work of preloadCurrentModel, for a caller that waits for it (`make dictation-latency`).
+    func loadCurrentModel() async {
         let currentModel = ModeRuntimeResolver.transcriptionConfiguration(
             transcriptionModelManager: transcriptionModelManager
         )?.model
@@ -770,6 +790,12 @@ class VoiceInkEngine: NSObject, ObservableObject {
 
     // MARK: - Cancellation
 
+    /// Seconds the current recording has run; 0 outside .recording.
+    var recordingElapsed: TimeInterval {
+        guard recordingState == .recording, let start = recordingStartedAt else { return 0 }
+        return Date().timeIntervalSince(start)
+    }
+
     func cancelRecording() async {
         let shouldFinishSessionImmediately: Bool
         switch recordingState {
@@ -865,7 +891,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
     ) -> Transcription {
         let modeMetadata = currentModeMetadata()
 
-        return Transcription(
+        let transcription = Transcription(
             text: text,
             duration: duration,
             audioFileURL: audioURL.absoluteString,
@@ -876,6 +902,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
             modeEmoji: modeMetadata.emoji,
             transcriptionStatus: transcriptionStatus
         )
+        transcription.setSourceApp(from: activeRecordingContextStore?.snapshot)
+        return transcription
     }
 
     private func currentModeMetadata() -> (name: String?, emoji: String?) {
@@ -975,13 +1003,20 @@ class VoiceInkEngine: NSObject, ObservableObject {
     }
 
     func cleanupResources() async {
-        logger.notice("cleanupResources: releasing model resources")
+        logger.notice("cleanupResources: finishing the session")
         activeRecordingStartID = nil
         activeRecordingUseCase = .newSession
         await finishRecorderSession()
-        await whisperModelManager.cleanupResources()
-        await serviceRegistry.cleanup()
+        // Models stay loaded for the "Keep model loaded" time (Models > Advanced); ModelResidency releases them.
+        await ModelResidency.shared.sessionEnded()
         logger.notice("cleanupResources: completed")
+    }
+
+    /// The idle or memory-pressure release: every local model out of memory.
+    func releaseModels() async {
+        logger.notice("releaseModels: releasing local models")
+        await whisperModelManager.cleanupResources()
+        await serviceRegistry.releaseAll()
     }
 
     // MARK: - Notification Handling
@@ -1016,6 +1051,46 @@ enum AudioFileMetadata {
     }
 }
 
+extension VoiceInkEngine {
+    /// Runs a recording found after a crash (RecordingRecovery) through the normal pipeline with the current mode.
+    /// It creates the History entry the crashed session never got.
+    func transcribeRecoveredRecording(_ audioURL: URL) async {
+        guard recordingState == .idle else {
+            NotificationManager.shared.showNotification(
+                title: String(localized: "Finish the current recording first, then transcribe the recovered one."),
+                type: .warning)
+            return
+        }
+        await transcribeRecordedFile(audioURL)
+    }
+
+    /// The steps `toggleRecord` runs once a recording stops, on a file that is already in Recordings/. With
+    /// `timedFrom`, the dictation gets a timeline: the context capture a recording starts with finishes first (it runs
+    /// while the user speaks), then the stop is now. Returns once the paste, if any, has sent ⌘V.
+    @discardableResult
+    fileprivate func transcribeRecordedFile(
+        _ audioURL: URL, timedFrom stopSource: DictationTimeline.StopSource? = nil
+    ) async -> Transcription {
+        startRecordingContextCapture()
+        var timeline: DictationTimeline?
+        if let stopSource {
+            for task in activeRecordingContextTasks { await task.value }
+            timeline = DictationTimeline(stop: .now(stopSource))
+        }
+        recordingState = .transcribing
+        let transcription = makeRecordingTranscription(
+            for: audioURL, text: "", duration: 0, transcriptionStatus: .pending)
+        modelContext.insert(transcription)
+        try? modelContext.save()
+        NotificationCenter.default.post(name: .transcriptionCreated, object: transcription)
+        let pasteTask = await runPipeline(
+            on: transcription, audioURL: audioURL, contextStore: activeRecordingContextStore, sendAfterPaste: false,
+            timeline: timeline)
+        await pasteTask?.value
+        return transcription
+    }
+}
+
 #if DEBUG
     extension VoiceInkEngine {
         /// `make offline-check` (OfflineCheck): the steps `toggleRecord` runs once a recording stops, on a WAV file
@@ -1026,21 +1101,7 @@ enum AudioFileMetadata {
         func dictateFile(_ file: URL, measured: Bool = false) async -> Transcription {
             let audioURL = recordingsDirectory.appendingPathComponent("\(UUID().uuidString).wav")
             try? FileManager.default.copyItem(at: file, to: audioURL)
-            startRecordingContextCapture()
-            if measured {
-                for task in activeRecordingContextTasks { await task.value }
-            }
-            recordingState = .transcribing
-            let timeline = measured ? DictationTimeline(stop: .now(.file)) : nil
-            let transcription = makeRecordingTranscription(
-                for: audioURL, text: "", duration: 0, transcriptionStatus: .pending)
-            modelContext.insert(transcription)
-            try? modelContext.save()
-            let pasteTask = await runPipeline(
-                on: transcription, audioURL: audioURL, contextStore: activeRecordingContextStore, sendAfterPaste: false,
-                timeline: timeline)
-            await pasteTask?.value
-            return transcription
+            return await transcribeRecordedFile(audioURL, timedFrom: measured ? .file : nil)
         }
     }
 #endif

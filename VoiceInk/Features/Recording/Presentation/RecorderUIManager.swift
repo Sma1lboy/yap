@@ -283,6 +283,12 @@ class RecorderUIManager: ObservableObject, RecorderPanelPresenting {
         engine.assistantSession.reset()
     }
 
+    /// True while a recording long enough that a cancel press should ask first.
+    var isLongRecording: Bool {
+        guard let engine else { return false }
+        return CancelConfirmation.isLong(isRecording: engine.recordingState == .recording, elapsed: engine.recordingElapsed)
+    }
+
     func cancelRecording() async {
         guard let engine = engine else { return }
         await engine.cancelRecording()

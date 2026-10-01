@@ -30,6 +30,9 @@ class WhisperTranscriptionService: TranscriptionService {
 
         logger.notice("Initiating local transcription for model: \(model.displayName, privacy: .public)")
 
+        // A preload started by the shortcut press may still be running; wait for it instead of loading twice.
+        await modelProvider?.finishPendingLoad()
+
         // Check if the required model is already loaded in the model provider
         if let provider = modelProvider,
             await provider.isModelLoaded,

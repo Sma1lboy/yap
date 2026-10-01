@@ -8,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         menuBarManager?.applyActivationPolicy()
         YapCloud.shared.scheduleBalanceRefresh()
+        DispatchQueue.main.async { MoveToApplicationsPrompt.showIfNeeded() }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -27,6 +28,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
+    }
+
+    /// ⌘Q during a meeting would cut it off: ask first. The default button keeps recording, so a stray Return
+    /// can't end it either; ending the meeting finishes and saves it before Yap quits.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard MeetingRecorder.isRecordingMeeting else { return .terminateNow }
+        let alert = NSAlert()
+        alert.messageText = String(localized: "A meeting is recording")
+        alert.informativeText = String(localized: "Quitting now would cut it off. End the meeting to save its transcript and notes first, or keep recording.")
+        alert.addButton(withTitle: String(localized: "Keep Recording"))
+        alert.addButton(withTitle: String(localized: "End Meeting and Quit"))
+        guard alert.runModal() == .alertSecondButtonReturn else { return .terminateCancel }
+        Task { @MainActor in
+            await MeetingRecorder.shared.stop()
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
     }
 
     // Stash URL when app cold-starts to avoid spawning a new window/tab

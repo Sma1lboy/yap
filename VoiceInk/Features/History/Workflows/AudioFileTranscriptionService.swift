@@ -19,11 +19,17 @@ class AudioTranscriptionService: ObservableObject {
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "AudioTranscriptionService")
     private let serviceRegistry: TranscriptionServiceRegistry
 
-    enum TranscriptionError: Error {
+    enum TranscriptionError: Error, LocalizedError {
         case noAudioFile
         case transcriptionFailed
         case modelNotLoaded
         case invalidAudioFormat
+        case meeting
+
+        var errorDescription: String? {
+            self == .meeting
+                ? String(localized: "A meeting can't be retranscribed: its speakers and notes would be lost.") : nil
+        }
     }
 
     init(modelContext: ModelContext, engine: VoiceInkEngine) {
@@ -49,6 +55,9 @@ class AudioTranscriptionService: ObservableObject {
         guard FileManager.default.fileExists(atPath: url.path) else {
             throw TranscriptionError.noAudioFile
         }
+        // A meeting's mix has lost its two channels: as one dictation it would come back without speakers,
+        // timeline or notes. History doesn't offer it for meetings; this covers every caller.
+        guard !Transcription.isMeetingAudio(url) else { throw TranscriptionError.meeting }
 
         await MainActor.run {
             isTranscribing = true
