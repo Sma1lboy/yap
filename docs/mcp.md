@@ -98,11 +98,14 @@ Then ask the agent something like "summarize the action items from my meetings t
     | /Applications/Yap.app/Contents/Helpers/yap-mcp
   ```
 
-  On 2026-09-30, the Debug build's helper read a store last written by Yap 1.9.0 (141 History entries, none a meeting). It listed both tools, returned 0 meetings without an error, and left no temporary copy behind.
+  On 2026-09-30, the Debug build's helper read a store last written by Yap 1.9.0 (141 History entries, none a meeting) while that Yap was running. It listed both tools, returned 0 meetings without an error, and left no temporary copy behind. Claude Code 2.1.284 registered with `claude mcp add` showed `✔ Connected`.
 
 ## Known limits
 
 - **Meetings only.** No dictation history, dictionary or settings yet (M2.2), and no MCP resources or prompts. Nothing writes.
+- **Handshake-based clients only.** A client that speaks only the 2026-07-28 revision (no `initialize`) can't connect. Dual-era clients fall back to `initialize`; Claude Code 2.1.284 and the clients above use it.
+- **Untested paths.** `make mcp-check` has no writer running during the session, so the copy-again loop (Yap writing mid-copy) isn't exercised there; the only run next to a live Yap is the real-data one above. `get_meeting` on a real meeting hasn't been run here (the Mac's History has no meetings yet); the fixture's meetings go through the app's own save and rename code.
+- **Version bumps touch six lines.** The helper has its own `MARKETING_VERSION` (Debug and Release) next to the app's and the XPC service's; a release bump must change all six, and `make mcp-check` fails when the helper's and the app's differ. Tag builds in CI pass `MARKETING_VERSION` on the command line, which sets every target.
 - **No switch in Yap.** Any process running as the user can start the helper, just as it could read the store itself. The privacy switch comes with the Settings screen in M2.2.
 - **Entitlements.** Local and CI builds sign every target with the app's entitlements file (the Makefile passes `CODE_SIGN_ENTITLEMENTS` on the command line), so the helper carries the app's entitlements too. Outside the App Sandbox they don't change what it can do; it opens no socket.
 - **Debug builds.** A Debug build's helper reads the real data folder (`me.sma1lboy.yap`, shared with the dev app) unless `--data-dir` says otherwise.
