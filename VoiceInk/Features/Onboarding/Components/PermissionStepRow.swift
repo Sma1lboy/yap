@@ -37,7 +37,7 @@ struct PermissionStepRow: View {
                 }
             }
 
-            if isActive && !isLocked && showsRestartHint {
+            if !isLocked && showsRestartHint {
                 restartHint
                     .padding(.leading, AppTheme.Spacing.x12)
             }
@@ -92,7 +92,7 @@ struct PermissionStepRow: View {
     }
 
     private var statusBadge: some View {
-        Text(isLocked ? LocalizedStringKey("Locked") : LocalizedStringKey(status.label))
+        Text(isLocked ? String(localized: "Finish earlier permissions first", table: "PermissionCopy") : status.label)
             .font(AppTheme.font(.footnote, .semibold))
             .foregroundColor(isLocked ? AppTheme.Text.muted : statusTone)
             .padding(.horizontal, AppTheme.Spacing.x3)
@@ -112,13 +112,15 @@ struct PermissionStepRow: View {
 
     private var restartHint: some View {
         HStack(spacing: AppTheme.Spacing.x2) {
-            Text("Restart Yap after enabling Screen Recording.")
+            Text("If macOS asks you to restart, quit Yap and open it again. You can also continue without Screen Recording.", tableName: "PermissionCopy")
                 .font(AppTheme.font(.footnote))
                 .foregroundColor(AppTheme.Text.muted)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Button("Quit") {
+            Button {
                 onQuit()
+            } label: {
+                Text("Quit Yap", tableName: "PermissionCopy")
             }
             .font(AppTheme.font(.footnote, .semibold))
             .buttonStyle(.plain)
