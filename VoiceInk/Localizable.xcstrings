@@ -41310,6 +41310,34 @@
         }
       }
     },
+    "The request timed out. Check your connection and try again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeitüberschreitung der Anfrage. Überprüfe deine Verbindung und versuche es erneut."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La requête a expiré. Vérifiez votre connexion et réessayez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请求超时。请检查网络连接后重试。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請求逾時。請檢查網路連線後再試一次。"
+          }
+        }
+      }
+    },
     "The selected language is not supported by SpeechAnalyzer." : {
       "localizations" : {
         "de" : {

@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-echo-check meeting-long-check meeting-call-check mcp-check first-run-check model-residency-check ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-echo-check meeting-long-check meeting-call-check mcp-check mcp-agent-eval mcp-perf first-run-check model-residency-check ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -216,6 +216,22 @@ mcp-check: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh scripts/mcp-check.sh "$$APP_DIR"
+
+# Real agents (Codex CLI; Claude Code when it isn't over its limit) answer ten questions about a month of fixture data
+# through yap-mcp, with the agent-access switches on, half on and off. Needs the network and a signed-in CLI; skips a
+# CLI that's missing. LABEL names the results folder, /tmp/yap-mcp-eval/<LABEL>. See scripts/mcp-agent-eval.sh.
+mcp-agent-eval: build
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/mcp-agent-eval.sh "$$APP_DIR" "$(or $(LABEL),run)"
+
+# How long yap-mcp's tools take on two years of heavy use (20,000 dictations, 200 hour-long meetings): each tool cold
+# (a new helper process) and warm, p50 and p95, with the copy / open / read split. The data stays in
+# /tmp/yap-mcp-perf/data between runs (FRESH=1 writes it again). See scripts/mcp-perf.sh.
+mcp-perf: build
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/mcp-perf.sh "$$APP_DIR"
 
 # A new user's first local dictation: fresh mock install, download the default model, preflight mid-download, cold and
 # warm dictation times (scripts/first-run-check.sh). Needs the network; never touches the dev or release app's data.

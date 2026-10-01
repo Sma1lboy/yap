@@ -168,6 +168,12 @@
             UserDefaults.standard.set(true, forKey: AgentAccess.enabledKey)
             UserDefaults.standard.set(true, forKey: AgentAccess.dictationsKey)
             shot("settings-agent-access-on", main: true, fullPage: true, titled: true) { ContentView() }
+            // Installed somewhere with a long path and spaces: the path and the commands are cut in the middle,
+            // the buttons stay.
+            AgentAccessSettingsSection.snapshotHelperPath =
+                "/Users/tingting.zhang/Applications/Yap Builds/Yap 1.11 (Beta 3).app/Contents/Helpers/yap-mcp"
+            shot("settings-agent-access-long-path", main: true, fullPage: true, titled: true) { ContentView() }
+            AgentAccessSettingsSection.snapshotHelperPath = nil
             UserDefaults.standard.removeObject(forKey: AgentAccess.enabledKey)
             UserDefaults.standard.removeObject(forKey: AgentAccess.dictationsKey)
             SettingsView.snapshotQuery = ""
@@ -302,7 +308,7 @@
             MeetingRowTools.snapshotSpeakers = nil
             let toolStates: [(String, Bool, String?, Bool)] = [
                 ("regenerating", true, nil, false),
-                ("regenerate-failed", false, MeetingSummarizer.setupHint, false),
+                ("regenerate-failed", false, MeetingSummarizer.failureDescription(for: EnhancementError.timeout), false),
                 ("renamed", false, nil, true),
             ]
             for (name, regenerating, problem, renamed) in toolStates {
@@ -466,7 +472,7 @@
                 ("regenerate-failed", .done(.init(
                     transcriptionID: UUID(), notes: meetingNotes, transcript: meetingTranscript, notesProblem: nil,
                     markdown: "", notesModel: nil,
-                    regenerateProblem: EnhancementFailureFormatter.description(for: EnhancementError.timeout))), true),
+                    regenerateProblem: MeetingSummarizer.failureDescription(for: EnhancementError.timeout))), true),
                 // Echo taken out of "Me"; then an hour-long meeting saved before its speakers were told apart, and
                 // the same once they arrived.
                 ("echo-removed", .done(.init(
@@ -485,7 +491,7 @@
                     markdown: "", notesModel: nil, folder: meetingFolder, failedPieces: 3, speakersSkipped: .timedOut,
                     echoRemoved: 2, saveError: CocoaError(.fileWriteOutOfSpace).localizedDescription,
                     exportError: CocoaError(.fileWriteNoPermission).localizedDescription,
-                    regenerateProblem: EnhancementFailureFormatter.description(for: EnhancementError.timeout),
+                    regenerateProblem: MeetingSummarizer.failureDescription(for: EnhancementError.timeout),
                     speakersPending: String(localized: "Telling speakers apart…"), speakersLabeledLater: true)), true),
             ]
             for (name, phase, main) in meetingStates {

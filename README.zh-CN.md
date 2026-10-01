@@ -147,14 +147,14 @@ API key 永远不会写进 config.json，也不会上传到 Yap Cloud。Yap 只�
 
 ## 在 Claude Code / Cursor / Codex 里用 Yap 的数据
 
-Yap 在 app 里带了一个只读的 MCP server：`Yap.app/Contents/Helpers/yap-mcp`。agent 把它当子进程启动，通过 stdin/stdout 跟它通信：不开网络端口，不往任何地方发数据，Yap 开不开着都能用。每次调用先把 Yap 的本地数据库拷一份再读拷贝，Yap 自己的文件只被复制，SQLite 从不打开它们。
+Yap 在 app 里带了一个只读的 MCP server：`Yap.app/Contents/Helpers/yap-mcp`。agent 把它当子进程启动，通过 stdin/stdout 跟它通信：不开网络端口，不往任何地方发数据，Yap 开不开着都能用。它读的是 Yap 本地数据库的一份私有拷贝，上次调用之后 Yap 写过数据就重新拷贝；Yap 自己的文件只被复制，SQLite 从不打开它们。
 
 在 **设置 › Agent 访问（MCP）** 里打开之前，它什么都读不到：
 
 - **让 agent 读取 Yap 的数据**：会议（纪要和转写）和词典。关着时 agent 能连上，但每次读取都会报错，并告诉它开关在哪。
 - **包括听写历史**：连听写一起。默认关，因为听写里常有密码、私信和草稿。
 
-helper 每次调用都重新读这两个开关，所以关掉之后 agent 的下一次请求就读不到了。
+辅助程序每次调用都重新读这两个开关，所以关掉之后 agent 的下一次请求就读不到了。
 
 工具：`list_meetings`、`get_meeting`、`search_history`（在听写和会议里按子串搜索，中文英文都行）、`get_dictation`、`get_dictionary`。同一个设置分组里可以直接复制下面的命令，路径是你这份 Yap 的实际位置。
 
