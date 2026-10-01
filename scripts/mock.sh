@@ -7,6 +7,7 @@
 # It runs under a sandbox profile that denies all IP network traffic, and the fake data is seeded on every launch
 # (MockEnvironment). Everything it created is deleted when it quits, so the next run starts from the same state.
 set -euo pipefail
+source "$(dirname "$0")/mock-lock.sh"
 
 APP_DIR="$1"                                  # BUILT_PRODUCTS_DIR of the Debug build
 ID=me.sma1lboy.yap.mock

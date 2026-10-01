@@ -13,6 +13,7 @@
 # the model loads once per press when it was released first, and a failed paste still lands in History. The dev and
 # release apps' settings are never read or written.
 set -euo pipefail
+source "$(dirname "$0")/mock-lock.sh"
 
 APP_DIR="$1"
 MODEL="${2:?usage: dictation-latency.sh <app dir> <ggml-*.bin> [rounds] [language] [latency|all]}"

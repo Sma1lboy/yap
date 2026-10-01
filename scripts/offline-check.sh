@@ -11,6 +11,7 @@
 # The dev and release apps' settings are never read or written. Delivery copies the text to the pasteboard;
 # OfflineCheck puts the previous contents back.
 set -euo pipefail
+source "$(dirname "$0")/mock-lock.sh"
 
 APP_DIR="$1"                                  # BUILT_PRODUCTS_DIR of the Debug build
 MODEL="${2:?usage: offline-check.sh <app dir> <ggml-*.bin>}"
