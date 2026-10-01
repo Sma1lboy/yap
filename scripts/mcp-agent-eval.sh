@@ -23,6 +23,7 @@ cleanup() {
 		rm -rf "$HOME/Library/Application Support/$(domain "$state")"
 	done
 	rm -rf "$WORK/apps"
+	rm -f "$OUT"/codex-home/*/auth.json   # the copies of ~/.codex/auth.json Codex signed in with
 }
 trap cleanup EXIT
 cleanup
