@@ -57,6 +57,20 @@ class PrivacyCopyTests(unittest.TestCase):
                 with self.subTest(key=key, language=language):
                     self.assertTrue(self.catalog.get(key, {}).get('localizations', {}).get(language, {}).get('stringUnit', {}).get('value'))
 
+    def test_offline_language_guidance_matches_available_model_choices(self):
+        self.assertNotIn("Parakeet models are faster but English only", self.site)
+        self.assertNotIn("Parakeet 模型更快，但只支持英文", self.site)
+        self.assertIn("Check language support in Models.", self.site)
+        registry = (ROOT / 'VoiceInk/Features/ModelLibrary/Models/TranscriptionModelRegistry.swift').read_text()
+        self.assertIn('name: "parakeet-tdt-0.6b-v3"', registry)
+        self.assertIn('Parakeet V3 with English and 25 European language support', registry)
+
+    def test_expanded_privacy_keeps_navigation_clear(self):
+        self.assertIn('if showsTrySaying && !showsPrivacyDetails', self.trust)
+        self.assertIn('if !showsTrySaying && !showsPrivacyDetails', self.trust)
+        scroll = self.trust.split('private struct OnboardingTrustContent')[1].split('private struct TrustHeader')[0]
+        self.assertLess(scroll.index('.scrollIndicators'), scroll.index('.padding(.bottom, 100)'))
+
     def test_upstream_credit_and_license_remain(self):
         self.assertIn('Yap is a fork of', self.site)
         self.assertIn('https://github.com/Beingpax/VoiceInk', self.site)

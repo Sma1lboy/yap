@@ -34,18 +34,19 @@ struct OnboardingTrustScreen: View {
 private struct OnboardingTrustContent: View {
     var body: some View {
         // Stacked, not overlaid: at the 750pt minimum height the centered body used to run into the header.
-        // Scrolls when the window is short; the bottom padding clears the overlaid Back / Start bar.
+        // Reserve space outside the scroll viewport so text never scrolls behind Back / Start.
         ScrollView {
             VStack(spacing: AppTheme.Spacing.x8) {
                 TrustHeader()
                 TrustBody()
             }
             .padding(.top, AppTheme.Spacing.x12)
-            .padding(.bottom, 100)  // design-exempt: layout offset, not spacing
+            .padding(.bottom, AppTheme.Spacing.x6)
             .frame(maxWidth: .infinity)
         }
         .scrollIndicators(.automatic)
         .padding(.horizontal, AppTheme.Spacing.x8)
+        .padding(.bottom, 100)  // design-exempt: reserve viewport space for the overlaid navigation bar
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
@@ -97,7 +98,7 @@ struct TrustBody: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if !showsTrySaying {
+            if !showsTrySaying && !showsPrivacyDetails {
                 TrustMapView()
                     .frame(height: 230)
                     .padding(.bottom, AppTheme.Spacing.x6)
@@ -163,7 +164,7 @@ struct TrustBody: View {
                     .frame(maxWidth: 610)
             }
 
-            if showsTrySaying {
+            if showsTrySaying && !showsPrivacyDetails {
                 TrySayingCard()
                     .padding(.top, AppTheme.Spacing.x5)
             }
