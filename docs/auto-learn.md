@@ -117,7 +117,10 @@ paste, until focus left it. An edit after that isn't seen.
   field: the card only reads stats.store.
 
 A late outcome (up to 60 s after the paste) is saved on the metric and then posts `sessionEditOutcomeDidChange`, so
-Home reloads without waiting for its 60 s refresh. `make home-feedback-check` covers the filter and the boundaries.
+Home reloads without waiting for its 60 s refresh. `make home-feedback-check` covers the filter and the boundaries;
+`make home-feedback-perf` checks on 20,000 metrics that the reload comes after the outcome is saved, that a dictation
+and its outcome within 500 ms are one fetch, and that turning Auto Learn off fetches nothing
+([dictation-latency.md](dictation-latency.md#a-long-history)).
 
 ## Recently Learned
 

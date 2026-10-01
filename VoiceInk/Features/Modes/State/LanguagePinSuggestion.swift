@@ -89,12 +89,13 @@ enum LanguagePinSuggestion {
         seconds.formatted(.number.precision(.fractionLength(1)).locale(appLocale))
     }
 
-    /// The language's name in the app's language ("Chinese", "中文", "Chinesisch").
+    /// The language's name in the app's language, as it reads inside a sentence ("Chinese", "chinois", "中文"); the
+    /// pickers show the same name (TranscriptionLanguageSupport.displayName).
     static func languageName(_ code: String) -> String {
         appLocale.localizedString(forLanguageCode: code) ?? LanguageDictionary.all[code] ?? code
     }
 
-    private static var appLocale: Locale { Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en") }
+    private static var appLocale: Locale { TranscriptionLanguageSupport.appLocale }
 
     /// After a dictation was pasted and saved. Shows the suggestion when the rule says so and no other notification
     /// is on screen (that dictation's turn is skipped; the next one asks again).

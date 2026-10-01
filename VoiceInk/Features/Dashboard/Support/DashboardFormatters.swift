@@ -47,24 +47,39 @@ enum Formatters {
         return formatter
     }
 
+    /// "3 hr, 5 min", "3小时5分钟", "3 Std., 5 Min.": in the app's language, like the text around it, never a bare
+    /// "5m" or "5分". Under a minute it's seconds ("27 sec"), so a few short dictations don't read as none.
     static func formattedCompactHoursAndMinutes(_ interval: TimeInterval) -> String {
-        let totalMinutes = max(0, Int((interval / 60).rounded()))
-        let hours = totalMinutes / 60
-        let minutes = totalMinutes % 60
-
+        let hours = max(0, Int((interval / 60).rounded())) / 60
         if hours >= 1000 {
             return "\(formattedCompactNumber(hours)) h"
         }
+        return durationFormatter(.short, for: interval).string(from: displayed(interval)) ?? "\(hours) h"
+    }
 
-        if hours > 0, minutes > 0 {
-            return "\(hours)h \(minutes)m"
-        }
+    /// The same, written out for VoiceOver: "3 hours, 5 minutes".
+    static func spokenHoursAndMinutes(_ interval: TimeInterval) -> String {
+        durationFormatter(.full, for: interval).string(from: displayed(interval)) ?? formattedCompactHoursAndMinutes(interval)
+    }
 
-        if hours > 0 {
-            return "\(hours)h"
-        }
+    /// Whole minutes, or whole seconds between 1 and 59; nothing at all reads "0 min".
+    private static func displayed(_ interval: TimeInterval) -> TimeInterval {
+        let interval = max(0, interval)
+        return inSeconds(interval) ? interval.rounded() : (interval / 60).rounded() * 60
+    }
 
-        return "\(minutes)m"
+    private static func inSeconds(_ interval: TimeInterval) -> Bool { (1..<60).contains(interval.rounded()) }
+
+    private static func durationFormatter(_ style: DateComponentsFormatter.UnitsStyle, for interval: TimeInterval)
+        -> DateComponentsFormatter
+    {
+        let formatter = DateComponentsFormatter()
+        formatter.unitsStyle = style
+        formatter.allowedUnits = inSeconds(max(0, interval)) ? [.second] : [.hour, .minute]
+        var calendar = Calendar.current
+        calendar.locale = TranscriptionLanguageSupport.appLocale
+        formatter.calendar = calendar
+        return formatter
     }
 
     static func formattedSavedTime(_ interval: TimeInterval) -> String {

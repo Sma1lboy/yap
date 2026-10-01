@@ -31,22 +31,37 @@ enum TranscriptionLanguageSupport {
         }.first ?? "en"
     }
 
-    /// Picker order: Auto-detect first, then by name.
+    /// Picker order: Auto-detect first, then by name, with names in the app's language ("Chinese", "Chinois", "中文"),
+    /// the same names Yap's suggestion to fix the language uses.
     static func sortedForMenu(_ languages: [String: String]) -> [(code: String, name: String)] {
         languages
+            .map { (code: $0.key, name: displayName($0.key, catalogName: $0.value)) }
             .sorted {
-                if $0.key == "auto" { return true }
-                if $1.key == "auto" { return false }
-                return $0.value < $1.value
+                if $0.code == "auto" { return true }
+                if $1.code == "auto" { return false }
+                return $0.name.localizedStandardCompare($1.name) == .orderedAscending
             }
-            .map { (code: $0.key, name: $0.value) }
     }
+
+    /// A language's name in the app's language, starting with a capital as a menu item does; the catalog's English
+    /// name for a code Foundation doesn't know.
+    static func displayName(_ code: String, catalogName: String? = nil) -> String {
+        if code == "auto" { return String(localized: "Auto-detect") }
+        guard let name = appLocale.localizedString(forIdentifier: code) else {
+            return catalogName ?? LanguageDictionary.all[code] ?? code
+        }
+        return name.prefix(1).uppercased(with: appLocale) + name.dropFirst()
+    }
+
+    /// The app's language, which can differ from the Mac's.
+    static var appLocale: Locale { Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en") }
 
     #if DEBUG
         static func selfCheck() {
             let menu = sortedForMenu(["fr": "French", "auto": "Auto-detect", "de": "German", "en": "English"])
             assert(menu.first?.code == "auto")
-            assert(menu.dropFirst().map(\.name) == ["English", "French", "German"], "by name after Auto-detect")
+            let names = menu.dropFirst().map(\.name)
+            assert(names == names.sorted { $0.localizedStandardCompare($1) == .orderedAscending }, "by name after Auto-detect")
         }
     #endif
 }

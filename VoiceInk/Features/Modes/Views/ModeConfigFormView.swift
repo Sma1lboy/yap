@@ -349,15 +349,8 @@ struct ModeConfigFormView: View {
                     }
 
                     Picker("", selection: languageBinding) {
-                        ForEach(
-                            availableLanguages(for: modelInfo).sorted(by: {
-                                if $0.key == "auto" { return true }
-                                if $1.key == "auto" { return false }
-                                return $0.value < $1.value
-                            }), id: \.key
-                        ) { key, value in
-                            // The line below names it; the catalog's names are English.
-                            Text(key == "auto" ? String(localized: "Auto-detect") : value).tag(key as String?)
+                        ForEach(TranscriptionLanguageSupport.sortedForMenu(availableLanguages(for: modelInfo)), id: \.code) {
+                            Text(verbatim: $0.name).tag($0.code as String?)
                         }
                     }
                     .labelsHidden()
