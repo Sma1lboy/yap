@@ -97,7 +97,9 @@ actor WordReplacementStore {
                                     ?? candidate.originalText,
                                 correctedVocabularyTerm: correctedVocabularyTerm,
                                 replacementSourceWasAdded: mutation.created || mutation.updated,
-                                vocabularyCreationDate: vocabularyCreationDate
+                                vocabularyCreationDate: vocabularyCreationDate,
+                                sourceOriginal: candidate.originalText,
+                                sourceCorrected: candidate.correctedText
                             )
                         )
                     }
@@ -152,7 +154,8 @@ actor WordReplacementStore {
                 )
                 let vocabulary = try modelContext.fetch(FetchDescriptor<VocabularyWord>())
                 if let entry = vocabulary.first(where: {
-                    $0.dateAdded == creationDate
+                    // The date may have been through JSON (AutoLearnLearnedLog); match to the millisecond.
+                    abs($0.dateAdded.timeIntervalSince(creationDate)) < 0.001
                         && WordReplacementVariants.key(for: $0.word) == vocabularyKey
                 }) {
                     modelContext.delete(entry)

@@ -104,6 +104,10 @@ struct VoiceInkApp: App {
             Task { @MainActor in
                 do { try SessionEditRecorder.selfCheck() } catch { assertionFailure("SessionEditRecorder selfCheck: \(error)") }
             }
+            Task.detached {
+                do { try await AutoLearnLearnedLog.selfCheck() } catch { assertionFailure("AutoLearnLearnedLog selfCheck: \(error)") }
+            }
+            RecentlyLearnedSection.selfCheck()
             Task { @MainActor in await RecordingShortcutModeHandler.selfCheck() }
             Task { @MainActor in await WhisperModelManager.selfCheck() }
             Task.detached {

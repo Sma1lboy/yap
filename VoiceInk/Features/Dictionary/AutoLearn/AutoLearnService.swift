@@ -10,6 +10,7 @@ actor AutoLearnService {
     private let focusObserver = AutoLearnFocusObserver()
     private let pendingQueue = AutoLearnPendingQueue()
     private let reviewProposalStore = AutoLearnReviewProposalStore()
+    private let learnedLog = AutoLearnLearnedLog()
 
     private var replacementStore: WordReplacementStore?
     private var reviewer: AutoLearnAIReviewer?
@@ -18,10 +19,10 @@ actor AutoLearnService {
     private var activeToken: AutoLearnPasteToken?
     private var activeGeneration: UInt64?
     private var activeProcessID: pid_t?
-    private var deadlineTask: Task<Void, Never>?
     /// The dictation of the paste being watched (or about to be), whose SessionMetric gets the edit outcome. Nil for
     /// pastes that aren't a dictation (Scratchpad, History, Rewrite).
     private var watchedDictationID: UUID?
+    private var deadlineTask: Task<Void, Never>?
     private var focusFinalizationTask: Task<Void, Never>?
     private var reviewTask: Task<Void, Never>?
     private var reviewGeneration: UInt64 = 0
@@ -169,7 +170,7 @@ actor AutoLearnService {
             await MainActor.run {
                 NotificationCenter.default.post(name: .wordReplacementsDidChange, object: nil)
             }
-            await showLearnedNotification(for: summary)
+            await didLearn(summary)
         }
         return summary
     }
@@ -228,8 +229,8 @@ actor AutoLearnService {
         // Finalize the previous session after Command-V so Accessibility and
         // SwiftData work do not delay the paste.
         let previousToken = activeToken
-        lifecycleGeneration &+= 1
         let previousDictationID = watchedDictationID
+        lifecycleGeneration &+= 1
         let generation = lifecycleGeneration
         deadlineTask?.cancel()
         deadlineTask = nil
@@ -239,8 +240,8 @@ actor AutoLearnService {
         activeToken = nil
         activeGeneration = nil
         activeProcessID = nil
-
         watchedDictationID = dictationID
+
         guard lifecycleGeneration == generation, AutoLearnSettings.isEnabled else { return nil }
 
         deadlineTask = Task { [weak self] in
@@ -262,9 +263,9 @@ actor AutoLearnService {
     func cancelForAutoSend(generation: UInt64) async {
         guard AutoLearnSettings.isEnabled else { return }
         guard lifecycleGeneration == generation else { return }
-        lifecycleGeneration &+= 1
         AutoLearnUnobservableCounts.record(.autoSent)
         await record(.unobservable(.autoSent), for: watchedDictationID)
+        lifecycleGeneration &+= 1
         await discardActiveSession()
     }
 
@@ -336,8 +337,8 @@ actor AutoLearnService {
         activeToken = nil
         activeGeneration = nil
         activeProcessID = nil
-        if let token {
         watchedDictationID = nil
+        if let token {
             await accessibilityRuntime.discard(token: token)
         } else {
             await accessibilityRuntime.discard()
@@ -346,13 +347,13 @@ actor AutoLearnService {
 
     private func completeSession(token: AutoLearnPasteToken, persist: Bool) async {
         guard activeToken == token, activeGeneration != nil else { return }
-        deadlineTask?.cancel()
         let dictationID = watchedDictationID
+        deadlineTask?.cancel()
         activeToken = nil
         activeGeneration = nil
         activeProcessID = nil
-        deadlineTask = nil
         watchedDictationID = nil
+        deadlineTask = nil
         focusFinalizationTask?.cancel()
         focusFinalizationTask = nil
         focusObserver.stop()
@@ -432,7 +433,6 @@ actor AutoLearnService {
         }
     }
 
-    private func schedulePendingReview() async {
     private func record(_ outcome: AutoLearnEditOutcome, for dictationID: UUID?) async {
         guard let dictationID else { return }
         await MainActor.run {
@@ -440,6 +440,7 @@ actor AutoLearnService {
         }
     }
 
+    private func schedulePendingReview() async {
         guard reviewTask == nil,
             AutoLearnSettings.isEnabled,
             replacementStore != nil,
@@ -595,7 +596,7 @@ actor AutoLearnService {
                 await MainActor.run {
                     NotificationCenter.default.post(name: .wordReplacementsDidChange, object: nil)
                 }
-                await showLearnedNotification(for: summary)
+                await didLearn(summary)
             } else {
                 logger.notice("Auto Learn apply completed without dictionary changes")
             }
@@ -677,56 +678,78 @@ actor AutoLearnService {
         }
     }
 
-    private func showLearnedNotification(for summary: AutoLearnMutationSummary) async {
-        let corrections = summary.learnedCorrections
-        guard !corrections.isEmpty else { return }
-
-        if corrections.count == 1, let correction = corrections.first {
-            let notificationTitle: String
-            if correction.vocabularyCreationDate != nil {
-                notificationTitle = String(
-                    localized: "Added “\(correction.correctedVocabularyTerm)” to Dictionary"
-                )
-            } else {
-                notificationTitle = String(
-                    localized: "Learned “\(correction.incorrectTextToReplace)” → “\(correction.correctedVocabularyTerm)”"
-                )
-            }
-            await MainActor.run {
-                NotificationManager.shared.showNotification(
-                    title: notificationTitle,
-                    type: .success,
-                    duration: 4,
-                    actionButton: (
-                        label: String(localized: "Undo"),
-                        action: {
-                            Task {
-                                await AutoLearnService.shared.undo(correction)
-                            }
-                        }
-                    )
-                )
-            }
-        } else {
-            await MainActor.run {
-                NotificationManager.shared.showNotification(
-                    title: String(localized: "Learned \(corrections.count) corrections"),
-                    type: .success
-                )
-            }
+    /// The rules Auto Learn added in the last week, newest first (Dictionary › Recently Learned).
+    func recentlyLearned() async -> [AutoLearnLearnedEntry] {
+        do {
+            return try await learnedLog.recent()
+        } catch {
+            log(error, message: "Failed to read recently learned Auto Learn rules")
+            return []
         }
     }
 
-    private func undo(_ correction: AutoLearnAppliedCorrection) async {
-        guard let replacementStore else { return }
+    /// Takes the rules out of the dictionary (only what Auto Learn added) and off the Recently Learned list.
+    func undoLearned(_ entries: [AutoLearnLearnedEntry]) async {
+        guard let replacementStore, !entries.isEmpty else { return }
         do {
-            try await replacementStore.undo(correction)
-            await MainActor.run {
-                NotificationCenter.default.post(name: .wordReplacementsDidChange, object: nil)
+            for entry in entries {
+                try await replacementStore.undo(entry.correction)
             }
+            try await learnedLog.remove(Set(entries.map(\.id)))
         } catch {
             log(error, message: "Failed to undo Auto Learn correction")
         }
+        await MainActor.run {
+            NotificationCenter.default.post(name: .wordReplacementsDidChange, object: nil)
+            NotificationCenter.default.post(name: .autoLearnRecentlyLearnedDidChange, object: nil)
+        }
+    }
+
+    private func didLearn(_ summary: AutoLearnMutationSummary) async {
+        let corrections = summary.learnedCorrections
+        guard !corrections.isEmpty else { return }
+        let entries: [AutoLearnLearnedEntry]
+        do {
+            entries = try await learnedLog.append(corrections)
+        } catch {
+            log(error, message: "Failed to record recently learned Auto Learn rules")
+            entries = corrections.map { AutoLearnLearnedEntry(id: UUID(), learnedAt: Date(), correction: $0) }
+        }
+        let title = Self.learnedNotificationTitle(for: corrections)
+        await MainActor.run {
+            NotificationCenter.default.post(name: .autoLearnRecentlyLearnedDidChange, object: nil)
+            NotificationManager.shared.showNotification(
+                title: title,
+                type: .success,
+                duration: corrections.count == 1 ? 4 : 6,
+                actionButton: (
+                    label: String(localized: "Undo"),
+                    action: {
+                        Task {
+                            await AutoLearnService.shared.undoLearned(entries)
+                        }
+                    }
+                )
+            )
+        }
+    }
+
+    /// One rule: what it is. Several: how many, the first two (three when there are three), and how many more.
+    static func learnedNotificationTitle(for corrections: [AutoLearnAppliedCorrection]) -> String {
+        if corrections.count == 1, let correction = corrections.first {
+            if correction.vocabularyCreationDate != nil {
+                return String(localized: "Added “\(correction.correctedVocabularyTerm)” to Dictionary")
+            }
+            return String(
+                localized: "Learned “\(correction.incorrectTextToReplace)” → “\(correction.correctedVocabularyTerm)”")
+        }
+        let shown = corrections.count == 3 ? 3 : 2
+        var items = corrections.prefix(shown).map(\.displayPair)
+        if corrections.count > shown {
+            items.append(String(localized: "\(corrections.count - shown) more"))
+        }
+        let list = items.formatted(.list(type: .and).locale(Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")))
+        return String(localized: "Learned \(corrections.count) corrections: \(list)")
     }
 
     private func log(_ error: Error, message: String) {

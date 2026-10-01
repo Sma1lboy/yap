@@ -94,3 +94,18 @@ text is stored with it, only the numbers and the reason. Nothing in the app show
 
 The correction rate is then, over pasted dictations: the share with `editObserved == false` (couldn't be watched),
 and among the rest, the share with `editChanged == true` and the mean `editDistance`.
+
+## Recently Learned
+
+When Auto Learn adds rules, the notification names them: one rule as before, several as the first two (three when
+there are three) and how many more. Undo in the notification takes back the whole batch.
+
+Dictionary › Recently Learned lists what Auto Learn added in the last 7 days (50 at most), newest first, with the edit
+each came from (the candidate pair it reviewed: the changed words and up to three words either side, before → after)
+and when. Undo removes just what Auto Learn added: the learned source from its replacement (the replacement itself
+if that was its only source) and the vocabulary word it created. A rule you removed from the dictionary yourself
+isn't listed.
+
+The list is kept in `auto-learn-recently-learned.json` in Yap's Application Support folder, on this Mac only, and
+entries drop out after 7 days. Those before → after snippets are the same text that was already queued in
+`auto-learn-pending-corrections.json` and sent for review.

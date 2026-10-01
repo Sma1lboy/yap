@@ -2,7 +2,7 @@
     import Foundation
 
     /// `make edit-rate-check`: prints what Auto Learn records for each paste fixture (FinalSnapshotDiffEngine.fixtures)
-    /// and runs the correction-rate self-checks, then exits. Nothing is read from any app; the
+    /// and runs the correction-rate and Recently Learned self-checks, then exits. Nothing is read from any app; the
     /// fixtures are field contents written out in the code.
     enum EditRateCheck {
         static let argument = "--edit-rate-check"
@@ -41,7 +41,22 @@
             MainActor.assumeIsolated {
                 do { try SessionEditRecorder.selfCheck() } catch { fatalError("SessionEditRecorder: \(error)") }
                 print("edit-rate-check: SessionEditRecorder.selfCheck ok")
+                RecentlyLearnedSection.selfCheck()
+                print("edit-rate-check: RecentlyLearnedSection.selfCheck ok")
             }
+            let done = DispatchSemaphore(value: 0)
+            Task.detached {
+                do { try await AutoLearnLearnedLog.selfCheck() } catch { fatalError("AutoLearnLearnedLog: \(error)") }
+                done.signal()
+            }
+            done.wait()
+            print("edit-rate-check: AutoLearnLearnedLog.selfCheck ok")
+            let three = [("Jon", "John", true), ("Parakeet", "Parakeet", false), ("why app", "Yap", true)].map {
+                AutoLearnAppliedCorrection(
+                    incorrectTextToReplace: $0.0, correctedVocabularyTerm: $0.1, replacementSourceWasAdded: $0.2,
+                    vocabularyCreationDate: $0.2 ? nil : Date(), sourceOriginal: $0.0, sourceCorrected: $0.1)
+            }
+            print("edit-rate-check: toast for 3 rules: \(AutoLearnService.learnedNotificationTitle(for: three))")
             fflush(stdout)
             exit(0)
         }
