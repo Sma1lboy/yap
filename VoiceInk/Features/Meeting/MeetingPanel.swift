@@ -11,38 +11,16 @@ final class MeetingPanelController {
     private var panel: NSPanel?
 
     func show() {
-        let panel = self.panel ?? makePanel()
+        let panel =
+            self.panel ?? .floating(width: 380, height: 120, content: MeetingPanelView(recorder: MeetingRecorder.shared))
+        panel.isMovableByWindowBackground = true
         self.panel = panel
-        position(panel)
+        panel.moveToTopRightOfPointerScreen()
         panel.orderFrontRegardless()
     }
 
     func close() {
         panel?.orderOut(nil)
-    }
-
-    private func makePanel() -> NSPanel {
-        let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 380, height: 120),
-            styleMask: [.nonactivatingPanel, .fullSizeContentView, .borderless], backing: .buffered, defer: false)
-        panel.isFloatingPanel = true
-        panel.level = .floating
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        panel.isMovableByWindowBackground = true
-        panel.backgroundColor = .clear
-        panel.hasShadow = true
-        panel.becomesKeyOnlyIfNeeded = true
-        let host = NSHostingView(rootView: MeetingPanelView(recorder: MeetingRecorder.shared))
-        host.sizingOptions = [.preferredContentSize]
-        panel.contentView = host
-        return panel
-    }
-
-    private func position(_ panel: NSPanel) {
-        let mouse = NSEvent.mouseLocation
-        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(mouse) }) ?? NSScreen.main else { return }
-        let frame = screen.visibleFrame
-        panel.setFrameTopLeftPoint(NSPoint(x: frame.maxX - panel.frame.width - 16, y: frame.maxY - 16))
     }
 }
 

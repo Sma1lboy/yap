@@ -56,6 +56,14 @@ final class ModelTurns: @unchecked Sendable {
         }
     }
 
+    /// `take(cancellable: true)` for a transcription, reported to LocalModelActivity as a wait until the turn comes
+    /// (or the request leaves the queue).
+    func takeForTranscription() async throws {
+        let wait = LocalModelActivity.shared.beginWait(LocalModelActivity.requester)
+        defer { wait.end() }
+        try await take(cancellable: true)
+    }
+
     func give() {
         let next = lock.withLock { () -> CheckedContinuation<Void, Error>? in
             guard !waiting.isEmpty else {

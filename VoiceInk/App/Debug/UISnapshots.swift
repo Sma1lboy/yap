@@ -512,35 +512,56 @@
             UserDefaults.standard.removeObject(forKey: MeetingCallDetector.enabledKey)
 
             // Recorder panels mid-dictation, on a dark desktop-like backdrop.
+            func miniRecorder() -> some View {
+                MiniRecorderView(
+                    stateProvider: app.engine, recorder: app.engine.recorder,
+                    assistantSession: app.engine.assistantSession,
+                    onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
+            }
+            func notchRecorder() -> some View {
+                NotchRecorderView(
+                    stateProvider: app.engine, recorder: app.engine.recorder,
+                    assistantSession: app.engine.assistantSession,
+                    onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
+            }
             app.engine.recordingState = .recording
             app.engine.partialTranscript = "so the standup 改到 Friday morning"
-            shot("recorder-mini", size: CGSize(width: 420, height: 160)) {
-                MiniRecorderView(
-                    stateProvider: app.engine, recorder: app.engine.recorder,
-                    assistantSession: app.engine.assistantSession,
-                    onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
-            }
-            shot("recorder-notch", size: CGSize(width: 520, height: 160)) {
-                NotchRecorderView(
-                    stateProvider: app.engine, recorder: app.engine.recorder,
-                    assistantSession: app.engine.assistantSession,
-                    onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
-            }
+            shot("recorder-mini", size: CGSize(width: 420, height: 160)) { miniRecorder() }
+            shot("recorder-notch", size: CGSize(width: 520, height: 160)) { notchRecorder() }
             // The same two with Reduce Motion on: steady level bars, no springs.
             shot("recorder-mini-reduce-motion", size: CGSize(width: 420, height: 160)) {
-                MiniRecorderView(
-                    stateProvider: app.engine, recorder: app.engine.recorder,
-                    assistantSession: app.engine.assistantSession,
-                    onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
-                .environment(\.reduceMotionOverride, true)
+                miniRecorder().environment(\.reduceMotionOverride, true)
             }
             shot("recorder-notch-reduce-motion", size: CGSize(width: 520, height: 160)) {
-                NotchRecorderView(
-                    stateProvider: app.engine, recorder: app.engine.recorder,
-                    assistantSession: app.engine.assistantSession,
-                    onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
-                .environment(\.reduceMotionOverride, true)
+                notchRecorder().environment(\.reduceMotionOverride, true)
             }
+
+            // A dictation queued for its local model: behind a cancelled dictation still detecting the language
+            // (a step that can't stop), and behind the audio import's decode; then the same dictation once its own
+            // transcription runs (no line). And the Quit panel: waiting for a cancelled dictation, then with
+            // nothing left but freeing the models.
+            app.engine.recordingState = .transcribing
+            app.engine.partialTranscript = ""
+            let activity = LocalModelActivity.shared
+            let waitStates: [(String, LocalModelActivity.Snapshot)] = [
+                ("cancelled", .init(
+                    id: 1, kind: .transcription(.dictation), stage: .languageDetection,
+                    stageStarted: Date().addingTimeInterval(-12), cancelled: true, interruptible: false)),
+                ("import", .init(
+                    id: 2, kind: .transcription(.fileImport), stage: .decoding,
+                    stageStarted: Date().addingTimeInterval(-48), cancelled: false, interruptible: true)),
+            ]
+            for (name, work) in waitStates {
+                activity.setSnapshot(
+                    works: [work], waits: [.init(requester: .dictation, since: Date().addingTimeInterval(-20))])
+                shot("recorder-wait-mini-\(name)", size: CGSize(width: 420, height: 200)) { miniRecorder() }
+                shot("recorder-wait-notch-\(name)", size: CGSize(width: 560, height: 200)) { notchRecorder() }
+                shot("quit-wait-\(name)", size: CGSize(width: 380, height: 200)) { QuitWaitView(activity: activity) }
+            }
+            activity.setSnapshot(works: [], waits: [])
+            shot("recorder-wait-mini-done", size: CGSize(width: 420, height: 200)) { miniRecorder() }
+            shot("recorder-wait-notch-done", size: CGSize(width: 560, height: 200)) { notchRecorder() }
+            shot("quit-wait-freeing", size: CGSize(width: 380, height: 160)) { QuitWaitView(activity: activity) }
             app.engine.recordingState = .idle
             app.engine.partialTranscript = ""
 

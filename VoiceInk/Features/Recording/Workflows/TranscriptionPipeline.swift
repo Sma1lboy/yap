@@ -124,20 +124,23 @@ class TranscriptionPipeline {
             let transcriptionStart = Date()
             var text: String
             let billed = YapCloud.GenerationCollector()
-            // In a task of its own (it inherits the task locals) so that cancelTranscription can stop it.
-            let step = Task { [serviceRegistry] in
-                if let session {
-                    return try await DictationTimeline.$current.withValue(timeline) {
-                        try await session.transcribe(audioURL: audioURL)
+            // In a task of its own (it inherits the task locals, the requester among them: a dictation queued behind
+            // other local work shows what it waits for) so that cancelTranscription can stop it.
+            let step = LocalModelActivity.$requester.withValue(.dictation) {
+                Task { [serviceRegistry] in
+                    if let session {
+                        return try await DictationTimeline.$current.withValue(timeline) {
+                            try await session.transcribe(audioURL: audioURL)
+                        }
                     }
-                }
-                return try await YapCloud.$generationCollector.withValue(billed) {
-                    try await DictationTimeline.$current.withValue(timeline) {
-                        try await serviceRegistry.transcribe(
-                            audioURL: audioURL,
-                            model: model,
-                            context: transcriptionConfiguration.requestContext
-                        )
+                    return try await YapCloud.$generationCollector.withValue(billed) {
+                        try await DictationTimeline.$current.withValue(timeline) {
+                            try await serviceRegistry.transcribe(
+                                audioURL: audioURL,
+                                model: model,
+                                context: transcriptionConfiguration.requestContext
+                            )
+                        }
                     }
                 }
             }

@@ -118,11 +118,15 @@ final class OfflineTranscribeCppService: TranscriptionService, @unchecked Sendab
         try beginRun()
         defer { endRun() }
         let startedAt = ContinuousClock.now
-        // The model is passed, not kept in a local here, so this transcription's last reference to it is gone by
-        // the time endRun lets Quit go on: Model.deinit frees its Metal buffers before exit().
-        let chunkTranscripts = try await transcribeChunks(
-            samples, language: language, artifact: artifact,
-            on: try await keptModel(for: transcribeCppModel, artifact: artifact))
+        // The model is only held inside the closure, so this transcription's last reference to it is gone by the
+        // time endRun lets Quit go on: Model.deinit frees its Metal buffers before exit().
+        let chunkTranscripts = try await LocalModelActivity.shared.run(
+            .transcription(LocalModelActivity.requester), stage: .loading, interruptible: false
+        ) {
+            let model = try await keptModel(for: transcribeCppModel, artifact: artifact)
+            LocalModelActivity.current?.stage(.decoding)
+            return try await transcribeChunks(samples, language: language, artifact: artifact, on: model)
+        }
 
         logger.notice(
             "\(transcribeCppModel.displayName, privacy: .public) completed in \(startedAt.duration(to: .now).formatted(.units(allowed: [.seconds], width: .narrow)), privacy: .public) for \(samples.count, privacy: .public) samples"

@@ -143,7 +143,9 @@ class FluidAudioTranscriptionService: TranscriptionService {
             await self.turns.take()
             defer { self.turns.give() }
             guard !self.turns.isClosed else { throw CancellationError() }
-            try await self.loadManagers(for: model)
+            try await LocalModelActivity.shared.run(.load, stage: .loading, interruptible: false) {
+                try await self.loadManagers(for: model)
+            }
         }
         managerLoad = (model.name, task)
         defer { if managerLoad?.name == model.name { managerLoad = nil } }
@@ -164,13 +166,24 @@ class FluidAudioTranscriptionService: TranscriptionService {
         try await ensureModelsLoaded(for: version(for: model))
     }
 
+    /// Reported to LocalModelActivity as not interruptible: only the start of a decode checks for a cancel.
     func transcribe(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext) async throws
         -> String
     {
         // A preload asked first runs first; cancelled while waiting, this leaves the queue without decoding.
-        try await turns.take(cancellable: true)
+        try await turns.takeForTranscription()
         defer { turns.give() }
         guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
+        return try await LocalModelActivity.shared.run(
+            .transcription(LocalModelActivity.requester), stage: .decoding, interruptible: false
+        ) {
+            try await transcribeInTurn(audioURL: audioURL, model: model, context: context)
+        }
+    }
+
+    private func transcribeInTurn(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext)
+        async throws -> String
+    {
         if FluidAudioModelManager.isParakeetUnifiedModel(named: model.name) {
             let wasLoaded = unifiedAsrManager != nil
             try await ensureUnifiedModelsLoaded()
@@ -324,10 +337,12 @@ class FluidAudioTranscriptionService: TranscriptionService {
     func releaseAll() async {
         await turns.take()
         defer { turns.give() }
-        loadingTask?.task.cancel()
-        loadingTask = nil
-        await cleanupLoadedManagers()
-        cachedModels = nil
+        await LocalModelActivity.shared.run(.release, stage: .unloading, interruptible: false) {
+            loadingTask?.task.cancel()
+            loadingTask = nil
+            await cleanupLoadedManagers()
+            cachedModels = nil
+        }
     }
 
     /// Quit: no transcription or preload starts from now on (those still waiting fail without running), then

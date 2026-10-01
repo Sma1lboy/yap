@@ -9,6 +9,8 @@ struct MiniRecorderView<S: RecorderStateProvider & ObservableObject>: View {
     let onCloseTapped: () -> Void
     let onAssistantFollowUp: (String) -> Void
     @AppStorage(RecorderDisplaySettingsKeys.showLiveTranscript) private var showLiveTranscript = true
+    @ObservedObject private var activity = LocalModelActivity.shared
+    @State private var now = Date()
 
     // MARK: - Layout Constants
 
@@ -24,6 +26,10 @@ struct MiniRecorderView<S: RecorderStateProvider & ObservableObject>: View {
         showLiveTranscript
             && stateProvider.recordingState == .recording
             && !stateProvider.partialTranscript.isEmpty
+    }
+
+    private var modelWait: LocalModelActivity.Snapshot? {
+        stateProvider.recordingState == .transcribing ? activity.dictationWait(at: now) : nil
     }
 
     private var hasAssistantResponse: Bool {
@@ -76,6 +82,9 @@ struct MiniRecorderView<S: RecorderStateProvider & ObservableObject>: View {
             if hasLiveTranscript {
                 LiveTranscriptView(text: stateProvider.partialTranscript)
                 Divider().background(Color.white.opacity(0.15))
+            } else if let modelWait {
+                RecorderWaitLine(wait: modelWait, now: now)
+                Divider().background(Color.white.opacity(0.15))
             }
         }
     }
@@ -94,15 +103,21 @@ struct MiniRecorderView<S: RecorderStateProvider & ObservableObject>: View {
             }
             controlBar
         }
-        .frame(width: hasAssistantResponse ? assistantWidth : (hasLiveTranscript ? expandedWidth : compactWidth))
+        .frame(
+            width: hasAssistantResponse
+                ? assistantWidth : (hasLiveTranscript || modelWait != nil ? expandedWidth : compactWidth)
+        )
         .background(Color.black)
         .clipShape(
             RoundedRectangle(
-                cornerRadius: hasLiveTranscript || hasAssistantResponse ? expandedCornerRadius : compactCornerRadius,
+                cornerRadius: hasLiveTranscript || hasAssistantResponse || modelWait != nil
+                    ? expandedCornerRadius : compactCornerRadius,
                 style: .continuous)
         )
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: hasLiveTranscript)
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: hasAssistantResponse)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: modelWait != nil)
+        .onReceive(Timer.publish(every: 1, on: .main, in: .common).autoconnect()) { now = $0 }
         .gesture(WindowDragGesture())
         .allowsWindowActivationEvents()
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
