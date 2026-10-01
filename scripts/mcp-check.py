@@ -179,6 +179,9 @@ def tools(helper, folder, version, domain):
           and "untranscribed_parts" not in pending, "pending meeting: %r" % pending)
     check(failed["speaker_separation"] == "failed" and failed["has_notes"], "failed meeting: %r" % failed)
     check(all(m["title"] for m in meetings), "a meeting without a title")
+    # The notes' first line that isn't a heading, without its list marker; none without notes.
+    check(renamed.get("summary") == "Ship on Friday." and failed.get("summary") == "Budget approved."
+          and "summary" not in pending, "summaries: %r" % [m.get("summary") for m in meetings])
 
     one = s.ok("list_meetings", limit=1)
     check([m["id"] for m in one["meetings"]] == [roles["pending"]] and one["more"] is True, "limit 1: %r" % one)

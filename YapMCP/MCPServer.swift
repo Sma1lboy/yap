@@ -130,12 +130,14 @@ enum Tools {
                 List the meetings recorded with Yap (a dictation and meeting-notes app) on this Mac, newest first. \
                 Read-only, from Yap's local history; nothing leaves the Mac. For each meeting: id (pass it to \
                 get_meeting), started_at (ISO 8601 with the Mac's UTC offset), duration_seconds, title (Yap's \
-                meetings have no titles, so this is the start date and time as Yap shows it), speakers (the names \
-                the user gave in Yap, else "Me" for the person who recorded and "Others" / "Others 1", "Others 2" \
-                for the people on the call), has_notes (Yap wrote AI notes), speaker_separation ("done"; \
-                "pending": the remote speakers are still being told apart, so the transcript may say just \
+                meetings have no titles, so this is the start date and time as Yap shows it), summary (the first \
+                line of Yap's AI notes, usually the first point of their summary; only when it has notes), speakers \
+                (the names the user gave in Yap, else "Me" for the person who recorded and "Others" / "Others 1", \
+                "Others 2" for the people on the call), has_notes (Yap wrote AI notes), speaker_separation \
+                ("done"; "pending": the remote speakers are still being told apart, so the transcript may say just \
                 "Others"; "failed") and untranscribed_parts (pieces that couldn't be transcribed, only when there \
-                are any). "more" is true when the date range holds more meetings than "limit".
+                are any). "more" is true when the date range holds more meetings than "limit". To find a meeting by \
+                its topic, read the summaries here or search its words with search_history.
                 """,
             "inputSchema": [
                 "type": "object",
@@ -173,6 +175,7 @@ enum Tools {
                                 "started_at": ["type": "string"],
                                 "duration_seconds": ["type": "integer"],
                                 "title": ["type": "string"],
+                                "summary": ["type": "string"],
                                 "speakers": ["type": "array", "items": ["type": "string"]],
                                 "has_notes": ["type": "boolean"],
                                 "speaker_separation": ["type": "string", "enum": ["done", "pending", "failed"]],
@@ -426,6 +429,7 @@ enum Tools {
                     "has_notes": meeting.hasNotes,
                     "speaker_separation": meeting.speakerStatus.map { $0 == "pending" ? "pending" : "failed" } ?? "done",
                 ]
+                if let gist = meeting.gist { item["summary"] = gist }
                 if let parts = meeting.untranscribedParts, parts > 0 { item["untranscribed_parts"] = parts }
                 return item
             }

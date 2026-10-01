@@ -25,6 +25,8 @@ struct YapLibrary {
         let duration: TimeInterval
         let speakers: [String]
         let hasNotes: Bool
+        /// `gist(ofNotes:)`, list_meetings' `summary`; nil without notes.
+        let gist: String?
         /// nil (done or not needed), `SpeakerSplitSkip.pendingStatus`, or why it failed.
         let speakerStatus: String?
         let untranscribedParts: Int?
@@ -75,11 +77,27 @@ struct YapLibrary {
                 Summary(
                     id: meeting.id, started: meeting.timestamp, duration: meeting.duration,
                     speakers: MeetingNotes.speakers(inTranscript: meeting.text),
-                    hasNotes: !(meeting.enhancedText ?? "").isEmpty, speakerStatus: meeting.meetingSpeakerStatus,
-                    untranscribedParts: meeting.meetingFailedPieces)
+                    hasNotes: !(meeting.enhancedText ?? "").isEmpty, gist: Self.gist(ofNotes: meeting.enhancedText),
+                    speakerStatus: meeting.meetingSpeakerStatus, untranscribedParts: meeting.meetingFailedPieces)
             }
             return (Array(meetings), found.count > limit)
         }
+    }
+
+    /// The first line of the notes that isn't a heading, without its list marker, at most 200 characters: Yap's
+    /// notes prompt opens with summary bullets, so it's the first of them.
+    static func gist(ofNotes notes: String?) -> String? {
+        guard let notes else { return nil }
+        for line in notes.split(whereSeparator: \.isNewline) {
+            var text = line.trimmingCharacters(in: .whitespaces)
+            guard !text.isEmpty, !text.hasPrefix("#") else { continue }
+            for marker in ["- [ ] ", "- [x] ", "- ", "* ", "• "] where text.hasPrefix(marker) {
+                text = String(text.dropFirst(marker.count))
+                break
+            }
+            return text.count > 200 ? text.prefix(199) + "…" : text
+        }
+        return nil
     }
 
     /// The meeting as History's Export Markdown writes it, or nil when there's no meeting with that id.
@@ -182,7 +200,6 @@ struct YapLibrary {
     private func withStore<T>(
         _ name: String, _ configuration: (URL) -> ModelConfiguration, _ body: (ModelContext?) throws -> T
     ) throws -> T {
-        let fileManager = FileManager.default
         let store = dataDirectory.appendingPathComponent(name)
         guard FileManager.default.fileExists(atPath: store.path) else { return try body(nil) }
         let clock = ContinuousClock()
@@ -260,6 +277,7 @@ struct YapLibrary {
     /// APFS), and again if Yap changed either meanwhile, so the copy is one moment's state. Returns that moment's
     /// stamps.
     private static func copyConsistently(_ store: URL, to copy: URL) throws -> [String] {
+        let fileManager = FileManager.default
         let wal = URL(fileURLWithPath: store.path + "-wal"), walCopy = URL(fileURLWithPath: copy.path + "-wal")
         for _ in 0..<20 {
             let before = stamps(of: store)
