@@ -85,6 +85,7 @@ struct VoiceInkApp: App {
             MeetingRecorder.shortcutSelfCheck()
             MeetingRecorder.speakersSelfCheck()
             MeetingRecorder.recoverySelfCheck()
+            MeetingSummarizer.selfCheck()
             MeetingStatusLine.selfCheck()
             MeetingCallPolicy.selfCheck()
             OpenAICompatibleChat.selfCheck()

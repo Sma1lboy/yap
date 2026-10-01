@@ -653,16 +653,35 @@ struct MeetingSummarizer {
                 duration: Date().timeIntervalSince(started), systemMessage: last?.systemMessage,
                 userMessage: last?.userMessage)
         } catch {
-            let failure = EnhancementFailureFormatter.description(for: error)
+            let failure = Self.failureDescription(for: error)
             return Summary(
                 problem: String(format: String(localized: "The notes couldn't be written: %@"), failure),
                 failure: failure)
         }
     }
 
+    /// Why the notes request failed. A timeout gets its own words: the shared one names dictation cleanup ("润色")
+    /// and its timeout setting, which notes don't use (`MeetingNotes.timeout`).
+    static func failureDescription(for error: Error) -> String {
+        if case .timeout? = error as? EnhancementError {
+            return String(localized: "The request timed out. Check your connection and try again.")
+        }
+        return EnhancementFailureFormatter.description(for: error)
+    }
+
     static var setupHint: String {
         String(localized: "No notes: AI enhancement is off in this mode, or it has no AI provider for them (Yap Refine can't write notes). Turn it on and choose a provider in the mode for your next meeting; the transcript is saved in History.")
     }
+
+    #if DEBUG
+        static func selfCheck() {
+            let timeout = failureDescription(for: EnhancementError.timeout)
+            assert(timeout == String(localized: "The request timed out. Check your connection and try again."))
+            assert(timeout != EnhancementFailureFormatter.description(for: EnhancementError.timeout), "not dictation cleanup's words")
+            let other = EnhancementError.rateLimitExceeded
+            assert(failureDescription(for: other) == EnhancementFailureFormatter.description(for: other))
+        }
+    #endif
 }
 
 /// Adds 16 kHz mono PCM16 WAV files into one (the History player's audio), clipping, in blocks.
