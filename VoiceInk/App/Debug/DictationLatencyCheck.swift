@@ -128,6 +128,8 @@
             if let metric {
                 line["stopSource"] = metric.stopSource
                 line["pasteOutcome"] = metric.pasteOutcome
+                line["languages"] = metric.detectedLanguages
+                line["languageDetection"] = metric.languageDetectionDuration
                 let offsets: [(String, TimeInterval?)] = [
                     ("recorderStopped", metric.stopToRecorderStopped), ("modelReady", metric.stopToModelReady),
                     ("transcribed", metric.stopToTranscribed), ("processed", metric.stopToProcessed),
