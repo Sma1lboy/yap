@@ -213,7 +213,7 @@ Unresolved: cancelling during Whisper's speech detection or a running Nemotron d
 | 5 s | loaded | released (9 s later) |
 | After each dictation | loaded | released (36 s later: these aren't dictations, so the 30 s grace applies) |
 
-A memory-pressure warning one second into a meeting (with Always): 0 failed pieces, the model released 1.7 s after the meeting ended, the next request loaded it again.
+A memory-pressure warning one second into a meeting (with Always): the final `lifecycle.log` residency suite recorded 0 failed pieces and a successful release about 1.72 s after the meeting ended (`lifecycle/residency.txt`: `releasedAfterMeeting: true`, `releaseSeconds: 1.72265`); the next request loaded the model again. The earlier `lc-wr` run reached its 15.02 s observation limit with `releasedAfterMeeting: false` and failed the check. That 15 s was a failed wait, not a successful release delay. These are fixture measurements, not a fixed release deadline.
 
 `make lifecycle-check MODEL=<ggml-*.bin> MODEL2=<another ggml-*.bin>` (`scripts/lifecycle-check.sh`, `LifecycleCheck.swift`, `scripts/lifecycle-check.py`) runs these as the mock identity, one launch per suite: `whisper` (the cancels above, then the live-preview final alone and with a MODEL2 request in the middle of the recording), `residency`, `tcpp` (SenseVoice Small from the catalog URL, checked against its size and SHA-256, in `/tmp/yap-test-models`) and `fluid` (Nemotron Multilingual, downloaded once by the app's own download into `/tmp/yap-test-models/fluidaudio`; FluidAudio's shared folder stayed absent). The meetings' speaker models are downloaded once into `/tmp/yap-speaker-models` and copied in after that (isolation-check uses the same cache).
 
