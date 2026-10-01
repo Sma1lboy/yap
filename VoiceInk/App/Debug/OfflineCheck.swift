@@ -23,6 +23,9 @@
             if let stateIndex = arguments.firstIndex(of: QuitCheck.argument), arguments.indices.contains(stateIndex + 1) {
                 return QuitCheck.run(engine: engine, file: file, state: arguments[stateIndex + 1])
             }
+            if let isolationIndex = arguments.firstIndex(of: IsolationCheck.argument) {
+                return IsolationCheck.run(engine: engine, clipA: file, arguments: Array(arguments[(isolationIndex + 1)...]))
+            }
             if let modelIndex = arguments.firstIndex(of: firstRunArgument), arguments.indices.contains(modelIndex + 1) {
                 return runFirstRun(engine: engine, modelName: arguments[modelIndex + 1], file: file)
             }

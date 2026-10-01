@@ -11,8 +11,6 @@ class WhisperTranscriptionService: TranscriptionService {
     private weak var modelProvider: (any WhisperModelProvider)?
     /// Source of dictionary words for the prompt; nil means no dictionary.
     private let modelContainer: ModelContainer?
-    /// The last transcription's timed segments (seconds from the start of the audio), for subtitle export.
-    private(set) var lastSegments: [TimedSegment] = []
 
     init(modelsDirectory: URL, modelProvider: (any WhisperModelProvider)? = nil, modelContext: ModelContext? = nil) {
         self.modelsDirectory = modelsDirectory
@@ -20,52 +18,46 @@ class WhisperTranscriptionService: TranscriptionService {
         self.modelContainer = modelContext?.container
     }
 
-    /// Nothing here waits for the main actor when the model is loaded: right after a stop it is busy with the recorder
-    /// and History for about 20 ms.
     func transcribe(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext) async throws
         -> String
     {
-        lastSegments = []
+        try await transcribeWithSegments(audioURL: audioURL, model: model, context: context).text
+    }
+
+    /// The text and its timed segments (seconds from the start of the audio, for subtitle export), both from this
+    /// request's decode. Nothing here waits for the main actor when the model is loaded: right after a stop it is busy
+    /// with the recorder and History for about 20 ms.
+    func transcribeWithSegments(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext)
+        async throws -> (text: String, segments: [TimedSegment])
+    {
         guard model.provider == .whisper, let modelProvider else {
             throw VoiceInkEngineError.modelLoadFailed
         }
 
         logger.notice("Initiating local transcription for model: \(model.displayName, privacy: .public)")
 
-        // The shared context: the preload the shortcut press started is waited for, never loaded a second time.
-        let whisperContext: WhisperContext
-        if let loaded = modelProvider.loadedContext(named: model.name) {
-            whisperContext = loaded
-        } else {
-            do {
-                let ready = try await modelProvider.context(forModelNamed: model.name)
-                whisperContext = ready.context
-                if ready.waited { DictationTimeline.modelDidLoad() }
-            } catch {
-                logger.error("❌ Failed to load model: \(model.name, privacy: .public) - \(error, privacy: .public)")
-                throw VoiceInkEngineError.modelLoadFailed
+        let samples = try Self.readAudioSamples(audioURL)
+        let prompt = WhisperPrompt.withVocabulary(context.prompt ?? "", words: dictionaryWords())
+        // The shared context, in this request's turn: the preload the shortcut press started is waited for, never
+        // loaded a second time, and the language and prompt go with this decode only.
+        let transcript: WhisperContext.Transcript?
+        do {
+            transcript = try await modelProvider.withContext(named: model.name) { whisperContext, loaded in
+                if loaded { DictationTimeline.modelDidLoad() }
+                return await whisperContext.transcribe(samples: samples, language: context.language, prompt: prompt)
             }
+        } catch {
+            logger.error("❌ Failed to load model: \(model.name, privacy: .public) - \(error, privacy: .public)")
+            throw VoiceInkEngineError.modelLoadFailed
         }
-
-        let data = try Self.readAudioSamples(audioURL)
-
-        await whisperContext.setLanguage(context.language)
-        await whisperContext.setPrompt(WhisperPrompt.withVocabulary(context.prompt ?? "", words: dictionaryWords()))
-
-        let success = await whisperContext.fullTranscribe(samples: data)
-
-        guard success else {
+        guard let transcript else {
             logger.error("❌ Core transcription engine failed (whisper_full).")
             throw VoiceInkEngineError.whisperCoreFailed
         }
-
-        let text = await whisperContext.getTranscription()
-        lastSegments = await whisperContext.getSegments()
-        let detection = await whisperContext.getLanguageDetection()
-        DictationTimeline.languagesDetected(detection.languages, seconds: detection.seconds)
+        DictationTimeline.languagesDetected(transcript.detectedLanguages, seconds: transcript.languageDetectionTime)
 
         logger.notice("Whisper transcription completed successfully.")
-        return text
+        return (transcript.text, transcript.segments)
     }
 
     /// Read through a context of its own on this thread; the main context would wait for the main actor.

@@ -39,9 +39,7 @@ final class WhisperModelWarmupCoordinator: ObservableObject {
             whisperModelManager.whisperContext == nil || whisperModelManager.loadedWhisperModel?.name != model.name
         else { return }
         // A context of its own, freed right after: the model just downloaded must not replace the one dictation uses.
-        let context = try await WhisperContext.createContext(path: file.url.path)
-        _ = await context.fullTranscribe(samples: try WhisperTranscriptionService.readAudioSamples(sampleURL))
-        await context.releaseResources()
+        try await whisperModelManager.warmUp(file, samples: try WhisperTranscriptionService.readAudioSamples(sampleURL))
     }
 
     private func warmupSampleURL() -> URL? {

@@ -100,11 +100,11 @@ class WhisperModelManager: ObservableObject {
     // MARK: - Model Loading
 
     /// One load at a time: the shortcut-press preload, the load after the mode is applied and a transcription
-    /// (`context(forModelNamed:)`) share it.
+    /// (`withContext`) share it.
     func loadModel(_ model: WhisperModelFile) async throws {
         if let loadTask { return try await loadTask.value }
         guard whisperContext == nil else { return }
-        guard !isClosed else { throw VoiceInkEngineError.modelLoadFailed }
+        guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
 
         // Cleared by the load itself, so whoever waits on it sees it gone as soon as it finishes.
         let task = Task {
@@ -129,17 +129,69 @@ class WhisperModelManager: ObservableObject {
     }
     private nonisolated let loadedSnapshot = LoadedSnapshot()
 
-    /// The context when the model named `name` is loaded, without waiting for the main actor, which is busy with the
-    /// recorder and History right after a stop (~20 ms). Nil otherwise: then `context(forModelNamed:)`.
-    nonisolated func loadedContext(named name: String) -> WhisperContext? {
-        loadedSnapshot.context(named: name)
+    /// Whisper work on the loaded model, one at a time in the order it asked: each transcription (with the switch to
+    /// its model when another one is loaded) and each release (idle, memory pressure, Quit). Decodes on one context
+    /// already ran one at a time; the turn also keeps a release or another model's load from freeing the context
+    /// between a transcription getting it and getting its result, and lets a meeting piece and a dictation that use
+    /// different models take turns instead of failing. Lock-based so a loaded model is used without waiting for the
+    /// main actor.
+    private final class Turns: @unchecked Sendable {
+        private let lock = NSLock()
+        private var busy = false
+        private var waiting: [CheckedContinuation<Void, Never>] = []
+        private var closed = false
+
+        /// Set by Quit: every turn from then on fails without touching a model.
+        var isClosed: Bool { lock.withLock { closed } }
+        func close() { lock.withLock { closed = true } }
+
+        func take() async {
+            await withCheckedContinuation { (turn: CheckedContinuation<Void, Never>) in
+                let now = lock.withLock { () -> Bool in
+                    guard busy else {
+                        busy = true
+                        return true
+                    }
+                    waiting.append(turn)
+                    return false
+                }
+                if now { turn.resume() }
+            }
+        }
+
+        func give() {
+            let next = lock.withLock { () -> CheckedContinuation<Void, Never>? in
+                guard !waiting.isEmpty else {
+                    busy = false
+                    return nil
+                }
+                return waiting.removeFirst()
+            }
+            next?.resume()
+        }
+    }
+    private nonisolated let turns = Turns()
+
+    /// Runs `body` on the context holding the model named `name`, in its turn: no other transcription, release or
+    /// model switch runs until `body` returns, so its context is neither freed nor replaced in the middle. A model
+    /// already loaded is used without waiting for the main actor, which is busy with the recorder and History right
+    /// after a stop (~20 ms). `loaded` (passed to `body`) is true when the model had to be loaded or a load waited for.
+    /// Throws when the model can't be loaded, and after Quit.
+    nonisolated func withContext<T>(
+        named name: String, _ body: (_ context: WhisperContext, _ loaded: Bool) async throws -> T
+    ) async throws -> T {
+        await turns.take()
+        defer { turns.give() }
+        guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
+        if let context = loadedSnapshot.context(named: name) { return try await body(context, false) }
+        let ready = try await context(forModelNamed: name)
+        return try await body(ready.context, ready.waited)
     }
 
-    /// The shared context holding the model named `name`, for a transcription. A load already running (the
-    /// shortcut-press preload) is waited for instead of started again, and a different loaded model is released
-    /// before this one loads, so a dictation never holds two copies. `waited` is true when the transcription had to
-    /// wait for a load.
-    func context(forModelNamed name: String) async throws -> (context: WhisperContext, waited: Bool) {
+    /// The shared context holding the model named `name`, in a turn. A load already running (the shortcut-press
+    /// preload) is waited for instead of started again, and a different loaded model is released before this one
+    /// loads, so there is never more than one copy. `waited` is true when it had to wait for a load.
+    private func context(forModelNamed name: String) async throws -> (context: WhisperContext, waited: Bool) {
         var waited = false
         while true {
             if let loadTask {
@@ -155,7 +207,7 @@ class WhisperModelManager: ObservableObject {
                     throw VoiceInkEngineError.modelLoadFailed
                 }
                 waited = true
-                if whisperContext != nil { await cleanupResources() }
+                if whisperContext != nil { await releaseContext() }
                 try await loadModel(model)
             }
         }
@@ -167,10 +219,6 @@ class WhisperModelManager: ObservableObject {
 
         do {
             whisperContext = try await makeContext(model)
-
-            let currentPrompt =
-                UserDefaults.standard.string(forKey: "TranscriptionPrompt") ?? whisperPrompt.transcriptionPrompt
-            await whisperContext?.setPrompt(currentPrompt)
 
             isModelLoaded = true
             loadedWhisperModel = model
@@ -400,9 +448,17 @@ class WhisperModelManager: ObservableObject {
 
     // MARK: - Resource Management
 
-    /// Releases the WhisperContext and resets model-loaded state.
-    /// Does NOT call serviceRegistry.cleanup() — that is VoiceInkEngine's responsibility.
+    /// The idle or memory-pressure release: frees the WhisperContext in its turn, so after the transcriptions that
+    /// asked before it and never under one. Does NOT call serviceRegistry.cleanup() — that is VoiceInkEngine's
+    /// responsibility.
     func cleanupResources() async {
+        await turns.take()
+        defer { turns.give() }
+        await releaseContext()
+    }
+
+    /// Frees the WhisperContext; only in a turn (a release, or a transcription switching models).
+    private func releaseContext() async {
         logger.notice("WhisperModelManager.cleanupResources: releasing whisper context")
         await finishPendingLoad()
         // Cleared before the release finishes: a preload that starts meanwhile then loads a fresh copy instead of
@@ -415,14 +471,31 @@ class WhisperModelManager: ObservableObject {
         logger.notice("WhisperModelManager.cleanupResources: completed")
     }
 
-    /// Set by Quit: a load asked for after it fails, so nothing loads a model again between the release and exit().
-    private var isClosed = false
+    /// The warm-up right after a download (WhisperModelWarmupCoordinator): decodes `samples` once with the model just
+    /// downloaded, in a context of its own so the one dictation uses stays loaded, and frees it. Not in a turn (it can
+    /// take ~16 s and dictation shouldn't wait for it), but Quit waits for it and none starts after Quit.
+    func warmUp(_ model: WhisperModelFile, samples: [Float]) async throws {
+        guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
+        let previous = warmup
+        let task = Task {
+            _ = try? await previous?.value
+            guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
+            let context = try await WhisperContext.createContext(path: model.url.path)
+            _ = await context.transcribe(samples: samples, language: nil, prompt: nil)
+            await context.releaseResources()
+        }
+        warmup = task
+        try await task.value
+    }
+    private var warmup: Task<Void, Error>?
 
-    /// Quit: no load starts from now on, and the loaded model is freed once a load or a decode in flight has finished
-    /// (`releaseResources` queues behind the decode on the WhisperContext actor). ggml frees its Metal device in a
-    /// static destructor during exit() and aborts if a model's buffers are still allocated then.
+    /// Quit: every turn and load from now on fails, and the loaded model is freed once the transcription in its turn,
+    /// a load in flight and a warm-up have finished. Transcriptions still waiting for a turn fail without decoding.
+    /// ggml frees its Metal device in a static destructor during exit() and aborts if a model's buffers are still
+    /// allocated then.
     func closeForQuit() async {
-        isClosed = true
+        turns.close()
+        _ = try? await warmup?.value
         await cleanupResources()
     }
 
@@ -481,12 +554,16 @@ extension WhisperModelManager: WhisperModelProvider {}
 #if DEBUG
     extension WhisperModelManager {
         /// Loads are counted with placeholder contexts (no model file is read): a dictation stopped while the press's
-        /// preload is still loading waits for it, a press during a release still preloads, a dictation needing a
-        /// different model releases the loaded one first, and Quit during a preload frees it once loaded, after which
-        /// nothing loads.
+        /// preload is still loading waits for it, a press during a release still preloads, a transcription needing a
+        /// different model waits for the one using the loaded model and then releases it first, transcriptions and
+        /// releases go in the order they asked, and Quit during a preload frees it once loaded, after which nothing
+        /// loads and transcriptions still waiting fail without running.
         static func selfCheck() async {
-            final class Loads { var names: [String] = [] }
-            let loads = Loads()
+            final class Log {
+                var loads: [String] = []
+                var uses: [String] = []
+            }
+            let log = Log()
             let directory = FileManager.default.temporaryDirectory.appendingPathComponent("yap-model-load-\(UUID())")
             try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             defer { try? FileManager.default.removeItem(at: directory) }
@@ -496,54 +573,91 @@ extension WhisperModelManager: WhisperModelProvider {}
             let manager = WhisperModelManager(modelsDirectory: directory)
             manager.availableModels = files
             manager.makeContext = { file in
-                loads.names.append(file.name)
+                log.loads.append(file.name)
                 try await Task.sleep(for: .milliseconds(30))
                 return WhisperContext.placeholder()
             }
-            func ready(_ name: String) async -> (context: WhisperContext, waited: Bool)? {
-                try? await manager.context(forModelNamed: name)
+            /// A transcription of `milliseconds` on model `name`; nil when it couldn't get the model.
+            func use(_ name: String, _ label: String, milliseconds: Int = 0) async -> (context: WhisperContext, loaded: Bool)? {
+                try? await manager.withContext(named: name) { @MainActor context, loaded in
+                    log.uses.append("start \(label)")
+                    try? await Task.sleep(for: .milliseconds(milliseconds))
+                    // Still loaded when the decode ends: no release or other model's load freed it meanwhile.
+                    precondition(
+                        manager.whisperContext === context && manager.loadedWhisperModel?.name == name,
+                        "\(label) lost its context: \(log.uses), loads \(log.loads)")
+                    log.uses.append("end \(label)")
+                    return (context, loaded)
+                }
+            }
+            func started(_ label: String) async {
+                while !log.uses.contains("start \(label)") { await Task.yield() }
             }
 
             // Stopped while the press's preload is loading: that load is waited for, not repeated.
             let preload = Task { try? await manager.loadModel(files[0]) }
             await Task.yield()
-            let stopped = await ready("a")
+            let stopped = await use("a", "stopped")
             await preload.value
-            precondition(loads.names == ["a"] && stopped?.waited == true, "one load, waited for: \(loads.names)")
-            precondition(stopped?.context === manager.whisperContext)
-            let again = await ready("a")
-            precondition(again?.waited == false && loads.names == ["a"], "loaded: used as is")
+            precondition(log.loads == ["a"] && stopped?.loaded == true, "one load, waited for: \(log.loads)")
+            let again = await use("a", "again")
+            precondition(again?.loaded == false && again?.context === stopped?.context && log.loads == ["a"])
 
             // The next press comes while the last dictation's release is still running: it loads a fresh copy.
             let release = Task { await manager.cleanupResources() }
+            while manager.whisperContext != nil { await Task.yield() }
             let nextPress = Task { try? await manager.loadModel(files[0]) }
             await release.value
             await nextPress.value
-            precondition(manager.whisperContext != nil && loads.names == ["a", "a"], "preloaded: \(loads.names)")
-            let afterPress = await ready("a")
-            precondition(afterPress?.waited == false && loads.names == ["a", "a"])
+            precondition(manager.whisperContext != nil && log.loads == ["a", "a"], "preloaded: \(log.loads)")
+            let afterPress = await use("a", "after press")
+            precondition(afterPress?.loaded == false && log.loads == ["a", "a"])
 
-            // The mode wants another model: the loaded one goes first, so there is only ever one.
-            let other = await ready("b")
-            precondition(other?.waited == true && loads.names == ["a", "a", "b"])
-            precondition(manager.loadedWhisperModel?.name == "b" && other?.context === manager.whisperContext)
-            // The off-main lookup follows: only the loaded model, gone once the release starts.
-            precondition(manager.loadedContext(named: "b") === manager.whisperContext)
-            precondition(manager.loadedContext(named: "a") == nil)
-            let missing = await ready("missing")
-            precondition(missing == nil && loads.names == ["a", "a", "b"])
+            // A meeting piece decodes with "a" when a dictation on "b" and the next piece ask: the dictation waits for
+            // the piece and then switches, the next piece waits for the dictation. Nothing fails, one model at a time.
+            log.uses = []
+            let piece = Task { await use("a", "piece 1", milliseconds: 40) }
+            await started("piece 1")
+            let dictation = Task { await use("b", "dictation") }
+            await Task.yield()
+            let nextPiece = Task { await use("a", "piece 2") }
+            let results = [await piece.value, await dictation.value, await nextPiece.value]
+            precondition(results.allSatisfy { $0 != nil }, "\(log.uses)")
+            precondition(
+                log.uses == ["start piece 1", "end piece 1", "start dictation", "end dictation", "start piece 2", "end piece 2"],
+                "in the order asked: \(log.uses)")
+            precondition(log.loads == ["a", "a", "b", "a"] && results[1]?.loaded == true, "\(log.loads)")
+
+            // The idle release asked during a decode frees the model after it, not under it.
+            let decode = Task { await use("a", "decode", milliseconds: 40) }
+            await started("decode")
             await manager.cleanupResources()
-            precondition(manager.loadedContext(named: "b") == nil)
+            let decoded = await decode.value
+            precondition(decoded != nil && manager.whisperContext == nil && log.uses.last == "end decode")
 
-            // Quit while the press's preload is loading: the load finishes and is freed; a dictation after Quit fails
-            // instead of loading the model again before exit().
+            // A model that isn't there fails; the next transcription still loads and runs.
+            let missing = await use("missing", "missing")
+            precondition(missing == nil && !log.uses.contains("start missing"))
+            let afterFailure = await use("a", "after failure")
+            precondition(afterFailure?.loaded == true && log.loads == ["a", "a", "b", "a", "a"])
+            await manager.cleanupResources()
+
+            // Quit while the press's preload is loading and a transcription waits for it, another one behind: the
+            // first decodes and is freed after; the one behind fails without running, and nothing loads after Quit.
             let preloadAtQuit = Task { try? await manager.loadModel(files[0]) }
+            await Task.yield()
+            let atQuit = Task { await use("a", "at quit", milliseconds: 40) }
+            await started("at quit")
+            let behind = Task { await use("a", "behind") }
             await Task.yield()
             await manager.closeForQuit()
             await preloadAtQuit.value
-            precondition(loads.names == ["a", "a", "b", "a"] && manager.whisperContext == nil, "\(loads.names)")
-            let afterQuit = await ready("a")
-            precondition(afterQuit == nil && loads.names == ["a", "a", "b", "a"] && manager.whisperContext == nil)
+            let (ranAtQuit, ranBehind) = (await atQuit.value, await behind.value)
+            precondition(ranAtQuit != nil && ranBehind == nil && !log.uses.contains("start behind"))
+            precondition(log.loads == ["a", "a", "b", "a", "a", "a"] && manager.whisperContext == nil, "\(log.loads)")
+            let afterQuit = await use("a", "after quit")
+            let loadAfterQuit: Void? = try? await manager.loadModel(files[0])
+            precondition(afterQuit == nil && loadAfterQuit == nil && log.loads.count == 6 && manager.whisperContext == nil)
         }
     }
 #endif

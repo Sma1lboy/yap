@@ -103,9 +103,9 @@ final class ModelResidency {
                 {
                     self.pressureWhileBusy = false
                     self.timer = nil
-                    // ponytail: a use that begins between this check and the free can get a context that is then
-                    // freed; needs the timer to fire within milliseconds of a new use. Its transcription fails
-                    // once and the next dictation reloads.
+                    // ponytail: a use that begins between this check and the free still runs: Whisper's release
+                    // waits for its turn (WhisperModelManager.withContext) and the model is loaded again after it;
+                    // FluidAudio and transcribe.cpp take no turns and could lose their model mid-transcription.
                     self.logger.notice("releasing local models after \(Int(idle), privacy: .public) s idle")
                     await self.release?()
                     return

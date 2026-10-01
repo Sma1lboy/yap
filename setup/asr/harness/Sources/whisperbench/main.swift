@@ -19,8 +19,7 @@ VADModelManager.shared.path = a[2]
 let t0 = Date()
 let context = try await WhisperContext.createContext(path: a[1])
 FileHandle.standardError.write("load \(Date().timeIntervalSince(t0))\n".data(using: .utf8)!)
-await context.setLanguage(a[3] == "auto" ? nil : a[3])
-await context.setPrompt(a[4])
+let language = a[3] == "auto" ? nil : a[3]
 /// CPU seconds and energy (joules) this process has used so far.
 func usage() -> (cpu: Double, joules: Double) {
     var info = rusage_info_v6()
@@ -40,6 +39,7 @@ let live = ProcessInfo.processInfo.environment["LIVE"]
 for p in a[5...] {
     let pcm = try samples(p)
     var extra: [String: Any] = [:]
+    var transcript: WhisperContext.Transcript?
     if let live {
         let before = usage()
         let recordingStart = Date()
@@ -63,7 +63,7 @@ for p in a[5...] {
         }
         preview?.stop()
         let t = Date()
-        _ = await context.fullTranscribe(samples: pcm)
+        transcript = await context.transcribe(samples: pcm, language: language, prompt: a[4])
         let finalSecs = Date().timeIntervalSince(t)
         let after = usage()
         extra = ["final": finalSecs, "cpu": after.cpu - before.cpu, "joules": after.joules - before.joules,
@@ -71,10 +71,10 @@ for p in a[5...] {
                  "previewSecs": preview?.stats.seconds ?? 0]
     }
     let t = Date()
-    if live == nil { _ = await context.fullTranscribe(samples: pcm) }
-    let text = await context.getTranscription().trimmingCharacters(in: .whitespacesAndNewlines)
+    if live == nil { transcript = await context.transcribe(samples: pcm, language: language, prompt: a[4]) }
+    let text = (transcript?.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
     // Timed segments (seconds in the whole file, window offsets added back), as subtitle export sees them.
-    let segments = TimedSegments.tidy(await context.getSegments()).map { [$0.start, $0.end, $0.text] as [Any] }
+    let segments = TimedSegments.tidy(transcript?.segments ?? []).map { [$0.start, $0.end, $0.text] as [Any] }
     let row: [String: Any] = ["file": p, "text": text, "secs": (extra["final"] as? Double) ?? Date().timeIntervalSince(t),
                               "segments": segments]
         .merging(extra) { a, _ in a }

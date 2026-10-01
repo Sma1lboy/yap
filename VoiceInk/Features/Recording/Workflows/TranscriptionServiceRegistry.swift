@@ -10,7 +10,7 @@ class TranscriptionServiceRegistry {
     private let modelContext: ModelContext
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "TranscriptionServiceRegistry")
 
-    private(set) lazy var localTranscriptionService = WhisperTranscriptionService(
+    private lazy var localTranscriptionService = WhisperTranscriptionService(
         modelsDirectory: modelsDirectory,
         modelProvider: modelProvider,
         modelContext: modelContext
@@ -53,12 +53,24 @@ class TranscriptionServiceRegistry {
     func transcribe(
         audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext = .currentDefaults
     ) async throws -> String {
+        try await transcribeWithSegments(audioURL: audioURL, model: model, context: context).text
+    }
+
+    /// As `transcribe`, plus the timed segments of the same decode: local Whisper's; empty for other providers.
+    func transcribeWithSegments(
+        audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext
+    ) async throws -> (text: String, segments: [TimedSegment]) {
         let service = service(for: model.provider)
         logger.debug(
             "Transcribing with \(model.displayName, privacy: .public) using \(String(describing: type(of: service)), privacy: .public)"
         )
+        let context = context.scoped(to: model)
         return try await ModelResidency.shared.withUse {
-            try await service.transcribe(audioURL: audioURL, model: model, context: context.scoped(to: model))
+            if model.provider == .whisper {
+                return try await localTranscriptionService.transcribeWithSegments(
+                    audioURL: audioURL, model: model, context: context)
+            }
+            return (try await service.transcribe(audioURL: audioURL, model: model, context: context), [])
         }
     }
 

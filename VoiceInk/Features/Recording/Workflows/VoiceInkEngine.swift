@@ -176,7 +176,6 @@ class VoiceInkEngine: NSObject, ObservableObject {
             isBusy: { [weak self] in (self?.recordingState ?? .idle) != .idle },
             release: { [weak self] in await self?.releaseModels() }
         )
-        setupNotifications()
         createRecordingsDirectoryIfNeeded()
     }
 
@@ -1023,28 +1022,6 @@ class VoiceInkEngine: NSObject, ObservableObject {
     func closeLocalModels() async {
         await whisperModelManager.closeForQuit()
         await serviceRegistry.releaseAll()
-    }
-
-    // MARK: - Notification Handling
-
-    func setupNotifications() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handlePromptChange),
-            name: .promptDidChange,
-            object: nil
-        )
-    }
-
-    @objc func handlePromptChange() {
-        Task {
-            let currentPrompt =
-                UserDefaults.standard.string(forKey: "TranscriptionPrompt")
-                ?? whisperModelManager.whisperPrompt.transcriptionPrompt
-            if let context = whisperModelManager.whisperContext {
-                await context.setPrompt(currentPrompt)
-            }
-        }
     }
 }
 
