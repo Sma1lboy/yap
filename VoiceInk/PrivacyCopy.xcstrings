@@ -1,0 +1,202 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "If you enable Agent Access (MCP), connected agents can read allowed history and dictionary data. Their own privacy policies apply.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wenn du Agentenzugriff (MCP) aktivierst, können verbundene Agenten freigegebene Verlaufs- und Wörterbuchdaten lesen. Es gelten ihre eigenen Datenschutzrichtlinien."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si tu actives l’accès des agents (MCP), les agents connectés peuvent lire l’historique et le dictionnaire autorisés. Leurs propres politiques de confidentialité s’appliquent."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启 Agent 访问（MCP）后，已连接的 agent 可以读取你允许的历史记录和词典数据，适用其各自的隐私政策。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開啟 Agent 存取（MCP）後，已連線的 agent 可以讀取你允許的歷史記錄和字典資料，適用其各自的隱私權政策。"
+          }
+        }
+      }
+    },
+    "Local models process audio or text on this Mac. Choose local transcription and local enhancement for on-device processing.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lokale Modelle verarbeiten Audio oder Text auf diesem Mac. Wähle lokale Transkription und lokale Textverbesserung für die Verarbeitung auf dem Gerät."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les modèles locaux traitent l’audio ou le texte sur ce Mac. Choisis la transcription et l’amélioration locales pour un traitement sur l’appareil."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本地模型在这台 Mac 上处理音频或文字。如需在本机处理，请同时选择本地转写和本地增强。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本機模型在這台 Mac 上處理音訊或文字。如需在本機處理，請同時選擇本機轉錄和本機增強。"
+          }
+        }
+      }
+    },
+    "Optional cloud sync stores modes, prompts, dictionary, shortcuts and custom models on Yap's server, without your API keys.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die optionale Cloud-Synchronisierung speichert Modi, Prompts, Wörterbuch, Kurzbefehle und eigene Modelle auf dem Yap-Server, ohne deine API-Schlüssel."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La synchronisation cloud facultative stocke les modes, prompts, dictionnaire, raccourcis et modèles personnalisés sur le serveur de Yap, sans tes clés API."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可选的云端同步会在 Yap 的服务器上保存模式、提示词、词典、快捷键和自定义模型，不包含 API key。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選用的雲端同步會在 Yap 的伺服器上儲存模式、提示詞、字典、快速鍵和自訂模型，不包含 API key。"
+          }
+        }
+      }
+    },
+    "The helper reads data locally. Connected agents may send it to their own services.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Hilfsprogramm liest Daten lokal. Verbundene Agenten können sie an ihre eigenen Dienste senden."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L’utilitaire lit les données localement. Les agents connectés peuvent les envoyer à leurs propres services."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辅助程序在本机读取数据。已连接的 agent 可能会将数据发送给其自身的服务。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "輔助程式在本機讀取資料。已連線的 agent 可能會將資料傳送給其自身的服務。"
+          }
+        }
+      }
+    },
+    "With your own API key, cloud models receive the audio, text and enabled context needed for the request.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mit deinem eigenen API-Schlüssel erhalten Cloud-Modelle das Audio, den Text und den aktivierten Kontext für die Anfrage."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avec ta propre clé API, les modèles cloud reçoivent l’audio, le texte et le contexte activé nécessaires à la requête."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用自己的 API key 时，云端模型会收到请求所需的音频、文字和已启用的上下文。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用自己的 API key 時，雲端模型會收到請求所需的音訊、文字和已啟用的上下文。"
+          }
+        }
+      }
+    },
+    "Yap Cloud sends requests through Yap's server to model providers and records the model and cost for billing.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yap Cloud leitet Anfragen über den Yap-Server an Modellanbieter weiter und erfasst Modell und Kosten für die Abrechnung."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yap Cloud transmet les requêtes aux fournisseurs via le serveur de Yap et enregistre le modèle et le coût pour la facturation."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yap Cloud 通过 Yap 的服务器将请求转发给模型提供商，并记录模型和费用用于计费。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yap Cloud 透過 Yap 的伺服器將請求轉送給模型供應商，並記錄模型和費用以供計費。"
+          }
+        }
+      }
+    },
+    "Yap saves history on this Mac. Cloud processing sends audio or text to your chosen services.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yap speichert den Verlauf auf diesem Mac. Cloud-Verarbeitung sendet Audio oder Text an die von dir gewählten Dienste."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yap enregistre l’historique sur ce Mac. Le traitement cloud envoie l’audio ou le texte aux services choisis."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yap 将历史记录保存在这台 Mac 上。云端处理会将音频或文字发送给你选择的服务。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yap 將歷史記錄儲存在這台 Mac 上。雲端處理會將音訊或文字傳送給你選擇的服務。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.1"
+}
