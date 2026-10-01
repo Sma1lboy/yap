@@ -5,6 +5,10 @@ import SwiftData
 /// opened by SQLite, so they stay byte for byte the same while Yap keeps running and writing.
 struct YapLibrary {
     let dataDirectory: URL
+    /// `--log-timing`: each store read logs how long the copy, opening it and reading took (`scripts/mcp-perf.py`).
+    var logsTiming = false
+    /// The copies the calls read, kept between calls while Yap's files are unchanged.
+    let copies = Copies()
 
     enum Failure: LocalizedError {
         case busy
@@ -172,42 +176,93 @@ struct YapLibrary {
         try withStore("default.store", { YapStores.historyConfiguration(url: $0) }, body)
     }
 
-    /// Runs `body` on a fresh copy of the store `name` (nil when Yap has none yet), deleted afterwards. A copy per
-    /// call, so a long agent session sees what Yap recorded after it started.
+    /// Runs `body` on a private copy of the store `name` (nil when Yap has none yet). The copy is made when Yap's
+    /// store or its `-wal` has changed since the last one (`Copies`), so a long agent session sees what Yap
+    /// recorded after it started and reads nothing older.
     private func withStore<T>(
         _ name: String, _ configuration: (URL) -> ModelConfiguration, _ body: (ModelContext?) throws -> T
     ) throws -> T {
         let fileManager = FileManager.default
         let store = dataDirectory.appendingPathComponent(name)
-        guard fileManager.fileExists(atPath: store.path) else { return try body(nil) }
-        let folder = fileManager.temporaryDirectory.appendingPathComponent("yap-mcp-\(UUID().uuidString)", isDirectory: true)
-        try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
-        defer { try? fileManager.removeItem(at: folder) }
-        let copy = folder.appendingPathComponent(name)
-        try Self.copyConsistently(store, to: copy)
-        // The app's whole model (YapStores). The copy may be migrated, which the original never is: the store can
-        // come from another build of Yap (an update installed but not launched yet; a store last written by Yap
-        // 1.9.0 has other entity hashes than later builds). Nothing here saves. A Release dictionary store was
-        // written with CloudKit; its copy is opened without.
-        let container = try ModelContainer(for: YapStores.schema, configurations: configuration(copy))
-        return try body(ModelContext(container))
+        guard FileManager.default.fileExists(atPath: store.path) else { return try body(nil) }
+        let clock = ContinuousClock()
+        let start = clock.now
+        let container: ModelContainer
+        var copied = start
+        if let kept = copies.kept[name], kept.stamps == Self.stamps(of: store) {
+            container = kept.container
+        } else {
+            copies.remove(name)
+            let folder = FileManager.default.temporaryDirectory
+                .appendingPathComponent("yap-mcp-\(UUID().uuidString)", isDirectory: true)
+            do {
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                let copy = folder.appendingPathComponent(name)
+                let stamps = try Self.copyConsistently(store, to: copy)
+                copied = clock.now
+                // The app's whole model (YapStores). The copy may be migrated, which the original never is: the store
+                // can come from another build of Yap (an update installed but not launched yet; a store last written
+                // by Yap 1.9.0 has other entity hashes than later builds). Nothing here saves. A Release dictionary
+                // store was written with CloudKit; its copy is opened without.
+                container = try ModelContainer(for: YapStores.schema, configurations: configuration(copy))
+                copies.kept[name] = Copies.Copy(stamps: stamps, folder: folder, container: container)
+            } catch {
+                try? FileManager.default.removeItem(at: folder)
+                throw error
+            }
+        }
+        let opened = clock.now
+        // A new context each call: nothing read for an earlier call is kept.
+        let result = try body(ModelContext(container))
+        if logsTiming {
+            func ms(_ duration: Duration) -> String { String(format: "%.1f", duration / .milliseconds(1)) }
+            log("timing \(name): copy \(ms(copied - start)) ms, open \(ms(opened - copied)) ms, read \(ms(clock.now - opened)) ms"
+                + (copied == start ? ", copy reused" : ""))
+        }
+        return result
+    }
+
+    /// Deletes the copies. The server calls it before it exits.
+    func removeCopies() {
+        for name in Array(copies.kept.keys) { copies.remove(name) }
+    }
+
+    /// The copy of each store and the container open on it, kept while Yap's files are unchanged: opening a copy
+    /// makes SQLite rebuild the WAL's index (the `-shm`, which isn't copied), about 90 ms for a 4 MB WAL, and a
+    /// session's calls usually come seconds apart while Yap writes nothing.
+    final class Copies {
+        struct Copy {
+            let stamps: [String]
+            let folder: URL
+            let container: ModelContainer
+        }
+
+        var kept: [String: Copy] = [:]
+
+        func remove(_ name: String) {
+            guard let copy = kept.removeValue(forKey: name) else { return }
+            try? FileManager.default.removeItem(at: copy.folder)
+        }
+    }
+
+    /// The store's and its `-wal`'s file number, size and modification time (to the nanosecond): any write by Yap
+    /// changes one of them.
+    private static func stamps(of store: URL) -> [String] {
+        [store.path, store.path + "-wal"].map { path in
+            var info = stat()
+            guard stat(path, &info) == 0 else { return "none" }
+            return "\(info.st_ino) \(info.st_size) \(info.st_mtimespec.tv_sec).\(info.st_mtimespec.tv_nsec)"
+        }
     }
 
     /// The store is SQLite in WAL mode: the database and its `-wal` together are the data (`-shm` is only an index
     /// SQLite rebuilds from the WAL, and a live one can be ahead of the files). They're copied as a pair (clones on
-    /// APFS), and again if Yap changed either meanwhile, so the copy is one moment's state.
-    private static func copyConsistently(_ store: URL, to copy: URL) throws {
-        let fileManager = FileManager.default
+    /// APFS), and again if Yap changed either meanwhile, so the copy is one moment's state. Returns that moment's
+    /// stamps.
+    private static func copyConsistently(_ store: URL, to copy: URL) throws -> [String] {
         let wal = URL(fileURLWithPath: store.path + "-wal"), walCopy = URL(fileURLWithPath: copy.path + "-wal")
-        func stamps() -> [String] {
-            [store, wal].map { url in
-                guard let attributes = try? fileManager.attributesOfItem(atPath: url.path) else { return "none" }
-                let modified = (attributes[.modificationDate] as? Date)?.timeIntervalSinceReferenceDate ?? 0
-                return "\(attributes[.size] ?? 0) \(modified)"
-            }
-        }
         for _ in 0..<20 {
-            let before = stamps()
+            let before = stamps(of: store)
             for file in [copy, walCopy] { try? fileManager.removeItem(at: file) }
             var copyError: Error?
             do {
@@ -216,10 +271,10 @@ struct YapLibrary {
             } catch {
                 copyError = error
             }
-            if stamps() == before {
+            if stamps(of: store) == before {
                 // Nothing changed meanwhile: either a good copy, or a failure that isn't Yap writing.
                 if let copyError { throw copyError }
-                return
+                return before
             }
             log("\(store.lastPathComponent) changed while it was copied; copying again")
             usleep(50_000)

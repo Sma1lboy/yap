@@ -78,11 +78,15 @@ final class MCPServer {
             guard params["arguments"] == nil || params["arguments"] is [String: Any] else {
                 return send(error: -32602, "Invalid params: arguments must be an object", id: id)
             }
+            let started = ContinuousClock.now
             guard
                 let result = Tools.call(
                     name, arguments: params["arguments"] as? [String: Any] ?? [:], library: library, access: access)
             else {
                 return send(error: -32602, "Unknown tool: \(name)", id: id)
+            }
+            if library.logsTiming {
+                log("timing \(name): \(String(format: "%.1f", (ContinuousClock.now - started) / .milliseconds(1))) ms")
             }
             send(result: result, id: id)
         default:
@@ -106,6 +110,7 @@ final class MCPServer {
             try output.write(contentsOf: data)
         } catch {
             log("can't write to stdout (\(error.localizedDescription)), quitting")
+            library.removeCopies()
             exit(0)
         }
     }

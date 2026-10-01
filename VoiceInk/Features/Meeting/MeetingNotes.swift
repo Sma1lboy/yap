@@ -207,6 +207,8 @@ extension MeetingNotes {
             assert(speakers(inTranscript: text) == [me, others])
             assert(speakers(inTranscript: String(localized: "(Nothing was said in this meeting.)")).isEmpty)
             assert(speakers(inTranscript: "Yap quit during this meeting [00:01] x: y").isEmpty)
+            assert(speakers(inTranscript: "[0:05] A: x\n[00:5] B: x\n[1:02:03] C: x\n[00:05]D: x\n[00:05] E:x\n[10:00:1] F: x")
+                == ["A", "C"])
 
             // The default shortcut: right ⌘ + Space fires, left ⌘ + Space (Spotlight) doesn't.
             let command = NSEvent.ModifierFlags.command.rawValue

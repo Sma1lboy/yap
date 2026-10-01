@@ -16,14 +16,16 @@ func log(_ message: String) {
 }
 
 let usage = """
-    usage: yap-mcp [--data-dir <path>]
+    usage: yap-mcp [--data-dir <path>] [--log-timing]
 
     Yap's read-only MCP server over stdio. Agents start it themselves; see docs/mcp.md.
-    --data-dir  Yap's data folder (default: ~/Library/Application Support/\(AppIdentity.supportDirectoryName))
-    --version   print the version and exit
+    --data-dir    Yap's data folder (default: ~/Library/Application Support/\(AppIdentity.supportDirectoryName))
+    --log-timing  log how long each tool call and each store read take, to stderr
+    --version     print the version and exit
     """
 
 var dataDirectory = EnclosingApp.defaultDataDirectory
+var logsTiming = false
 var arguments = CommandLine.arguments.dropFirst()
 while let argument = arguments.popFirst() {
     switch argument {
@@ -33,6 +35,8 @@ while let argument = arguments.popFirst() {
             exit(2)
         }
         dataDirectory = URL(fileURLWithPath: (path as NSString).expandingTildeInPath, isDirectory: true)
+    case "--log-timing":
+        logsTiming = true
     case "--version":
         try? protocolOutput.write(contentsOf: Data("yap-mcp \(EnclosingApp.version)\n".utf8))
         exit(0)
@@ -48,4 +52,6 @@ while let argument = arguments.popFirst() {
 EnclosingApp.adoptLanguage()
 let language = EnclosingApp.strings.preferredLocalizations.first ?? "?"
 log("\(EnclosingApp.version), data in \(dataDirectory.path), \(language) strings from \(EnclosingApp.strings.bundlePath)")
-MCPServer(library: YapLibrary(dataDirectory: dataDirectory), output: protocolOutput, access: EnclosingApp.agentAccess).run()
+let library = YapLibrary(dataDirectory: dataDirectory, logsTiming: logsTiming)
+MCPServer(library: library, output: protocolOutput, access: EnclosingApp.agentAccess).run()
+library.removeCopies()
