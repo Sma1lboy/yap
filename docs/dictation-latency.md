@@ -39,6 +39,12 @@ with a notification), `scratchpad` (no editable field had focus: the text went t
 `failed` (clipboard couldn't be set or the key events couldn't be sent). Nil when the text wasn't pasted: a response
 in the recorder, a custom command, "scratch that".
 
+With the mode's language on Auto-detect and a local Whisper model, the SessionMetric also has `detectedLanguages`
+(the languages Whisper decoded the dictation in, in order, comma-separated: `zh`, `en`, `en,zh`) and
+`languageDetectionDuration` (seconds the detection passes took). Every metric has `modeID`, the mode whose language
+setting the transcription used. All three are nil with a fixed language, on cloud models and Parakeet, and for
+meetings, imported files and the live preview, which run outside a dictation's DictationTimeline.
+
 Metrics from before these fields existed read nil (optional attributes, SwiftData lightweight migration). Home and
 Insights don't show any of this yet. The History entry and the SessionMetric are saved once, after ⌘V (or after the
 paste failed); without a paste (a response, a custom command, a failure) before the pipeline returns.
@@ -61,15 +67,22 @@ by far most often; everything that involves Yap's own windows or Accessibility k
 ## Measuring it
 
 ```bash
-make dictation-latency MODEL=~/path/to/ggml-large-v3-turbo-q5_0.bin [ROUNDS=12]
+make dictation-latency MODEL=~/path/to/ggml-large-v3-turbo-q5_0.bin [ROUNDS=12] [LANGUAGE=auto] [CLIPS=latency]
 ```
 
 `scripts/dictation-latency.sh` runs the Debug app as the mock identity (its own defaults, Application Support and
-keychain, as `make offline-check`) with one mode: MODEL, language auto, no AI cleanup. `DictationLatencyCheck` then
-dictates five clips ROUNDS times each: `security`, `standup` and `perf` from `setup/asr/clips` (Chinese with English
-terms, 5–8 s) and two English sentences made with `say -v Samantha` (7 s). Before each dictation it loads the model
+keychain, as `make offline-check`) with one mode: MODEL, LANGUAGE (auto, or a Whisper code such as `zh` or `en`), no
+AI cleanup. `DictationLatencyCheck` then dictates five clips ROUNDS times each: `security`, `standup` and `perf` from
+`setup/asr/clips` (Chinese with English terms, 5–8 s) and two English sentences made with `say -v Samantha` (7 s).
+`CLIPS=all` dictates all eleven Chinese clips, three English sentences and four code-switched recordings (a whole
+English sentence and a whole Chinese one, 0.5 s apart: three of 13–16 s, one of 7 s), and scores round 1's text per
+kind: character error rate (letters, digits and CJK characters; case, spaces and punctuation ignored) and key terms
+(`setup/asr/bench.py`'s `hits`). Before each dictation it loads the model
 the way a press does while the user speaks and lets the recording's context capture finish; after it, the times are
 read back from the SessionMetric. One untimed dictation goes first.
+
+Every script that runs the app as the mock identity takes `/tmp/yap-mock.flock` first (`scripts/mock-lock.sh`), so
+two worktrees on one Mac take turns instead of deleting each other's store.
 
 The path after the stop is the real one (`runPipeline` → `TranscriptionPipeline` → `TranscriptionDelivery` →
 `CursorPaster`), including the stop sound, the panel dismissal, the clipboard and every wait; the stop counts as a
@@ -95,6 +108,74 @@ Not covered:
 - **The focused-field check and the selection read before ⌘V.** Both run before the wait starts or during it; ⌘V
   waits for the selection read. It reads only the selected text (`AutoLearnAXTextReader.focusedSelection`), no longer
   the whole field. Real dictations include both.
+
+## Auto-detect or a fixed language
+
+Mac16,7 (M4 Pro, 48 GB), macOS 15.1, Debug build, Large v3 Turbo (Quantized), 2026-10-01. `make dictation-latency
+CLIPS=all ROUNDS=3` with LANGUAGE auto, zh and en run back to back, three times over. Latency is the median of the three
+runs' stop → ⌘V p50 (one auto run was slowed by other work on the Mac: 1501 / 1713 / 3147 ms against about 1200 /
+1150 / 2735 in the other two). Accuracy is round 1's text and came out the same in all three runs.
+
+| clips | auto | fixed Chinese (`zh`) | fixed English (`en`) |
+|---|---|---|---|
+| Chinese with English terms (11) | 1230 ms, CER 22.4 %, 44/82 terms | **756 ms**, 24.4 %, 45/82 | 764 ms, 34.5 %, 36/82 |
+| English (3) | 1153 ms, 1.3 %, 10/10 | 715 ms, 32.3 %, 7/10 | **695 ms**, 0.3 %, 10/10 |
+| Code-switched, whole sentences (4) | 2735 ms, **14.6 %**, 25/41 | 862 ms, 61.5 %, 19/41 | 825 ms, 33.9 %, 22/41 |
+
+On M3.2's five clips (`CLIPS=latency ROUNDS=12`, two runs each): auto 1200 / 1186 ms, zh 746 / 738 ms, en 725 / 731
+ms. That is 0.45 s less per dictation, −45 % against M3.1's 1343 ms. The language detection Yap now records took
+475–477 ms p50 in every auto run. What a fixed language saves is that pass and nothing else.
+
+- **One main language (Chinese with English terms, or English):** fixing it is about 0.45 s faster and no worse. In
+  Chinese, 45 instead of 44 key terms and 2 points more character errors (the zh prompt); in English, fewer errors.
+  The English terms in Chinese sentences come through with `zh`: that is what the `zh` column of the first row
+  measures.
+- **Whole sentences in both languages:** a fixed language breaks them. With `zh` the English sentence comes out as
+  Chinese (61.5 % errors), with `en` the Chinese one as English (33.9 %). Auto splits a recording of 12 s or more at
+  the switch and decodes each piece in its language (`LibWhisper.languagePieces`), which is why it takes 2.7 s here.
+- **Short code-switched recordings** (7 s, an English phrase then a Chinese sentence): auto decodes them in one
+  language and drops the other half ("Sounds good. Let's ship it." with the Chinese gone), the same as a fixed `en`
+  would. Not changed here.
+
+New installs keep auto: onboarding sets the first mode to Auto-detect, and a fixed default is a product decision.
+For the record, by these numbers a Chinese-locale default of `zh` would save 0.45 s per dictation for one-language
+users and cost a code-switching user most of their English sentences until they change it.
+
+### Fixing the language
+
+`LanguagePinSuggestion`. After a dictation is pasted and saved, when the mode's language is auto and its model is local
+Whisper, Yap looks at that mode's last 20 dictations with a recorded language (`SessionMetric.modeID`,
+`detectedLanguages`). It suggests fixing the language once, in a notification (15 s), when:
+
+- all 20 were decoded in one language and nothing else (an `en,zh` dictation counts against it);
+- that language is one the model can be set to;
+- none of their transcripts in History holds a whole sentence in another script: four or more words without CJK in a
+  Chinese, Japanese or Korean dictation, or four or more CJK characters in another. Terms and short phrases don't
+  count; a dictation deleted from History counts against it;
+- the mode hasn't said No Thanks, and no other notification is on screen (then the next dictation asks).
+
+The text gives this Mac's own number: the median detection time of those 20 dictations, rounded to 0.1 s. "English
+terms are still recognized" is added for Chinese only, where it was measured.
+
+- **Set to Chinese** fixes the mode's language, as the menu bar's language menu does. A confirmation follows with
+  **Back to Auto-detect**, which puts auto back and stops the suggestion for that mode.
+- **No Thanks** stops it for that mode. Either is stored per mode on this Mac (UserDefaults
+  `LanguagePinSuggestionDeclinedModes`), not in config.json, so it doesn't sync.
+- **Ignored:** it is asked again only after 20 more dictations (`LanguagePinSuggestionShownAt`).
+
+Why 20: the code-switched clips above show what a mixed speaker's dictations look like to the rule. Every recording
+long enough to split records two languages, and a short one in the other language records that language. Either one
+ends the run of 20. Someone who switches whole sentences in one dictation out of ten gets 20 clean ones in a row 12 %
+of the time, in one out of five 1 %. A one-language user sees the suggestion after about a day of dictating, having
+waited about 9 s for detection by then.
+
+Cloud models, Parakeet, Apple Speech, meetings, imported files and the live preview never record a language, so they
+never trigger it.
+
+In the mode's settings, under the language picker while it is on Auto-detect with a local Whisper model: "On this
+Mac, Auto-detect adds about 0.5 s to every dictation with this model. A fixed language skips it." The number is the
+median of this Mac's last 20 recorded detections with that model. Before there are any, the line says the same
+without a number. Cloud and Parakeet modes don't show it.
 
 ## Results
 
@@ -194,12 +275,11 @@ Two other ways to skip the 476 ms language detection:
   that needs a whisper.cpp change, and the framework is built from upstream whisper.cpp head (`make whisper`), cached
   in CI under a key in `.github/`.
 
-What would make the decode itself shorter is a product decision, not done here:
+What would make the decode itself shorter, as M3.2 found it:
 
-- **A language in the mode.** With Chinese (or English) set instead of auto there is no detection pass: decode p50
-  0.66 s against 1.12 s on the bench (`whisper-ggml-large-v3-turbo-q5_0.bin` vs `…-auto` in `setup/asr/results`),
-  45 against 44 key terms. A user who speaks one language (or Chinese with English terms, which the zh prompt handles)
-  would wait about 0.46 s less per dictation.
+- **A language in the mode.** With Chinese (or English) set instead of auto there is no detection pass: about 0.45 s
+  less per dictation. Yap now suggests it to users whose dictations are all in one language, and the mode's language
+  picker says what auto costs; see "Auto-detect or a fixed language" above.
 - **Large v3 Turbo unquantized** (1.6 GB against 547 MB): p50 0.60 s against 0.66 s on the bench with language zh,
   46 against 45 key terms. It also has a Core ML encoder, which wasn't measured.
 

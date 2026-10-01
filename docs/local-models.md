@@ -45,6 +45,8 @@ Real-time factor is processing time ÷ audio length: 0.11 means a 6 s clip takes
 
 Whisper here is the app's `LibWhisper.swift` (setup/asr/harness `whisperbench`) on Metal, linked against the whisper.xcframework `make whisper` builds. An earlier version of this table used `whisper-cli`, which defaults to 5-beam search where the app decodes greedily: key terms matched within one on every model except tiny (7 vs 10), but it took about twice as long. The app also downloads a Core ML encoder for the non-quantized models (not for q5_0), so Large v3 / v2 / Turbo may run somewhat faster in the app than the table shows.
 
+The table's Whisper rows use language `zh`. With a mode on Auto-detect, Whisper first spends a full encoder pass detecting the language: about 0.48 s per dictation on Large v3 Turbo (Quantized), M4 Pro. Fixing the language skips it; Yap suggests that after 20 dictations all in one language, and the mode's language picker shows this Mac's own number ([dictation-latency.md](dictation-latency.md#auto-detect-or-a-fixed-language)).
+
 ## Live text while recording
 
 Whisper can't stream, so with "Live Text Display" on (Settings → Interface, on by default) a local Whisper model re-decodes the recording every 1.5 s once there's at least 1 s of new audio (`WhisperLivePreview`). The recorder shows that text. When you release the key, the preview stops and the whole recording goes through the normal path: windows, language detection and VAD. That final text is what gets pasted.
