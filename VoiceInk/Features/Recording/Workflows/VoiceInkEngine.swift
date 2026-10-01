@@ -1020,12 +1020,16 @@ enum AudioFileMetadata {
     extension VoiceInkEngine {
         /// `make offline-check` (OfflineCheck): the steps `toggleRecord` runs once a recording stops, on a WAV file
         /// instead of the microphone, so a dictation can run without a hotkey or microphone permission. `measured`
-        /// (`make dictation-latency`): the dictation gets a timeline whose stop is taken once the file is in place, and
-        /// this returns only after the paste has sent ⌘V (CursorPaster.dryRun) and the SessionMetric has its times.
+        /// (`make dictation-latency`): the context capture a recording starts with finishes first, as it would while the
+        /// user speaks; then the dictation gets a timeline whose stop is now, and this returns only after the paste
+        /// has sent ⌘V (CursorPaster.dryRun) and the SessionMetric has its times.
         func dictateFile(_ file: URL, measured: Bool = false) async -> Transcription {
             let audioURL = recordingsDirectory.appendingPathComponent("\(UUID().uuidString).wav")
             try? FileManager.default.copyItem(at: file, to: audioURL)
             startRecordingContextCapture()
+            if measured {
+                for task in activeRecordingContextTasks { await task.value }
+            }
             recordingState = .transcribing
             let timeline = measured ? DictationTimeline(stop: .now(.file)) : nil
             let transcription = makeRecordingTranscription(

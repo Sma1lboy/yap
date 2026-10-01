@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check first-run-check ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check first-run-check dictation-latency ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -206,6 +206,15 @@ first-run-check: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh scripts/first-run-check.sh "$$APP_DIR" $(MODEL)
+
+# Release-to-paste time per step (stop → transcribed → filters → ⌘V) with local Whisper MODEL warm, no AI cleanup,
+# ROUNDS rounds (default 12) of five Chinese and English clips; paste is a dry run, nothing is typed anywhere.
+# p50/p95 per step. See scripts/dictation-latency.sh and docs/dictation-latency.md.
+dictation-latency: build
+	@test -n "$(MODEL)" || { echo "usage: make dictation-latency MODEL=/path/to/ggml-large-v3-turbo-q5_0.bin [ROUNDS=12]"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/dictation-latency.sh "$$APP_DIR" "$(MODEL)" $(ROUNDS)
 
 # Meeting recording from two local files, end to end (chunking, transcription with MODEL, notes with NOTES=1,
 # History entry), without microphone or system audio permission. See scripts/meeting-files-check.sh.
