@@ -7,6 +7,9 @@
 # YAP_UI_SNAPSHOTS_OUT=<dir> writes there instead, so a run in another worktree can't replace the shots before
 # they're copied. Runs on one Mac take turns (lock below): they share the bundle id and its defaults.
 set -euo pipefail
+# The Home feedback shots write SessionMetric fixtures (HomeFeedbackFixture); like every fixture launch they run
+# under /tmp/yap-mock.flock, waited for, never broken. Their stores are in memory, in this run's own identity.
+source "$(dirname "$0")/mock-lock.sh"
 
 APP_DIR="$1"                                  # BUILT_PRODUCTS_DIR of the Debug build
 ID=me.sma1lboy.yap.snapshots

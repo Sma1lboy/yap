@@ -14,8 +14,6 @@ enum LanguagePinSuggestion {
     private static let declinedKey = "LanguagePinSuggestionDeclinedModes"
     /// Mode id → when the suggestion was last shown; only dictations after that count for the next one.
     private static let shownKey = "LanguagePinSuggestionShownAt"
-    /// The languages "English terms are still recognized" was measured for (Chinese clips with English terms).
-    nonisolated private static let measuredWithEnglishTerms: Set<String> = ["zh"]
 
     struct Dictation {
         let date: Date
@@ -140,18 +138,13 @@ enum LanguagePinSuggestion {
         show(suggestion, modeID: modeID)
     }
 
+    /// The saving and its cost: with a fixed language, whole sentences in another language come out wrong
+    /// (docs/dictation-latency.md: 61.5 % character errors with `zh` on code-switched clips, 14.6 % on auto).
     static func message(for suggestion: Suggestion) -> String {
-        let name = languageName(suggestion.language)
-        let seconds = formatted(suggestion.seconds)
-        let format =
-            measuredWithEnglishTerms.contains(suggestion.language)
-            ? String(
-                localized: "You've spoken %1$@ in your last %2$lld dictations. Set this mode to %1$@ and each one is about %3$@ s faster; English terms are still recognized."
-            )
-            : String(
-                localized: "You've spoken %1$@ in your last %2$lld dictations. Set this mode to %1$@ and each one is about %3$@ s faster."
-            )
-        return String(format: format, name, window, seconds)
+        String(
+            format: String(
+                localized: "You've spoken %1$@ in your last %2$lld dictations. Set to %1$@, each is about %3$@ s faster, but whole sentences in another language, or a switch mid-dictation, may come out wrong. You can go back to Auto-detect any time."
+            ), languageName(suggestion.language), window, formatted(suggestion.seconds))
     }
 
     static func setButtonTitle(_ language: String) -> String {

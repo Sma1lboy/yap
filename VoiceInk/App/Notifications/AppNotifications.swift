@@ -18,6 +18,9 @@ extension Notification.Name {
     static let transcriptionCompleted = Notification.Name("transcriptionCompleted")
     static let transcriptionDeleted = Notification.Name("transcriptionDeleted")
     static let sessionMetricsDidChange = Notification.Name("sessionMetricsDidChange")
+    /// Auto Learn's outcome was saved on an already saved SessionMetric (up to 60 s after the paste). Home's week
+    /// panel reloads; Insights doesn't use it.
+    static let sessionEditOutcomeDidChange = Notification.Name("sessionEditOutcomeDidChange")
     static let wordReplacementsDidChange = Notification.Name("wordReplacementsDidChange")
     static let autoLearnQueueDidChange = Notification.Name("autoLearnQueueDidChange")
     static let autoLearnReviewProposalsDidChange = Notification.Name("autoLearnReviewProposalsDidChange")

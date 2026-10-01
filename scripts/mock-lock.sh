@@ -1,6 +1,7 @@
 # Sourced first thing by every script that runs the Debug app as me.sma1lboy.yap.mock: mock, offline-check,
 # mcp-check, first-run-check, model-residency-check, dictation-latency and the meeting checks (through
-# meeting-check-common.sh). Each wipes that identity's defaults, Application Support, keychain and its /tmp folder
+# meeting-check-common.sh); and by ui-snapshots, whose Home feedback shots write SessionMetric fixtures. Each mock run
+# wipes that identity's defaults, Application Support, keychain and its /tmp folder
 # before and after, so two at once (two worktrees on one Mac) delete each other's store and model mid-run.
 #
 # The lock is a flock(2) on $MOCK_LOCK through fd 9, which the script and everything it starts keep open: it is held

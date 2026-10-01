@@ -292,10 +292,13 @@ struct DashboardContent: View {
     }
 
     private var selectedTimeSavedSummary: DashboardTimeSavedSummary {
+        let totals = selectedTotals
         return DashboardTimeSavedSummary(
-            timeSaved: DashboardTimeSaving.timeSaved(words: selectedTotals.words, duration: selectedTotals.duration),
-            wordCount: selectedTotals.words,
-            sessionCount: selectedTotals.count
+            timeSaved: DashboardTimeSaving.timeSaved(
+                words: totals.words, duration: totals.duration, measuredPasteWait: totals.measuredPastes.seconds),
+            wordCount: totals.words,
+            sessionCount: totals.count,
+            timedPastes: totals.measuredPastes.count
         )
     }
 

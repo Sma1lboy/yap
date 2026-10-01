@@ -293,6 +293,15 @@ edit-rate-check: build
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh "$$APP_DIR/VoiceInk Dev.app/Contents/MacOS/VoiceInk Dev" --edit-rate-check
 
+# Home's stop-to-paste median and unchanged-after-paste share on fixed weeks of SessionMetrics (with data, only older
+# dictations, too few, Auto Learn off, few watched, nothing last week): each written to an in-memory store, read back
+# through WeekStatsLoader and checked, one JSON line per week; then the aggregation and late-edit-refresh self-checks.
+# Reads no app; exits before any settings are touched (docs/dictation-latency.md, "On Home").
+home-feedback-check: build
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh "$$APP_DIR/VoiceInk Dev.app/Contents/MacOS/VoiceInk Dev" --home-feedback-check
+
 # Render every page, Settings group, onboarding screen and sheet in light and dark, plus the main ones in Chinese
 # (-zh, and -zht for Traditional), German (-de) and French (-fr), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots
 # (scripts/ui-snapshots.sh), so its fake modes and providers go to a throwaway defaults domain, never the dev app's;

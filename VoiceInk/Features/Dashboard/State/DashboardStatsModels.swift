@@ -127,6 +127,19 @@ struct DashboardMetricTotals: Codable, Equatable, Sendable {
     var count: Int = 0
     var words: Int = 0
     var duration: TimeInterval = 0
+    var measuredPastes = DashboardMeasuredPastes()
+}
+
+/// Real ⌘V pastes with a measured stop → ⌘V time (SessionMetric.measuredPasteWait): how many, and their total seconds.
+struct DashboardMeasuredPastes: Codable, Equatable, Sendable {
+    var count = 0
+    var seconds: TimeInterval = 0
+
+    mutating func add(_ metric: SessionMetric) {
+        guard let wait = metric.measuredPasteWait else { return }
+        count += 1
+        seconds += wait
+    }
 }
 
 struct DashboardProductivityPoint: Codable, Equatable, Identifiable, Sendable {
@@ -277,18 +290,25 @@ struct DashboardStatsSummary: Codable, Equatable, Sendable {
     var lastThirtyDayPeakHours: DashboardPeakHoursSummary = .empty
     var thisYearPeakHours: DashboardPeakHoursSummary = .empty
     var allTimePeakHours: DashboardPeakHoursSummary = .empty
+    var totalMeasuredPastes = DashboardMeasuredPastes()
+    var todayMeasuredPastes = DashboardMeasuredPastes()
+    var recentSevenDayMeasuredPastes = DashboardMeasuredPastes()
+    var lastThirtyDayMeasuredPastes = DashboardMeasuredPastes()
+    var thisYearMeasuredPastes = DashboardMeasuredPastes()
 }
 
 extension DashboardStatsSummary {
     var total: DashboardMetricTotals {
-        DashboardMetricTotals(count: totalCount, words: totalWords, duration: totalDuration)
+        DashboardMetricTotals(
+            count: totalCount, words: totalWords, duration: totalDuration, measuredPastes: totalMeasuredPastes)
     }
 
     var recentSevenDays: DashboardMetricTotals {
         DashboardMetricTotals(
             count: recentSevenDayCount,
             words: recentSevenDayWords,
-            duration: recentSevenDayDuration
+            duration: recentSevenDayDuration,
+            measuredPastes: recentSevenDayMeasuredPastes
         )
     }
 
@@ -306,7 +326,8 @@ extension DashboardStatsSummary {
             return DashboardMetricTotals(
                 count: todayCount,
                 words: todayWords,
-                duration: todayDuration
+                duration: todayDuration,
+                measuredPastes: todayMeasuredPastes
             )
         case .lastSevenDays:
             return recentSevenDays
@@ -314,13 +335,15 @@ extension DashboardStatsSummary {
             return DashboardMetricTotals(
                 count: lastThirtyDayCount,
                 words: lastThirtyDayWords,
-                duration: lastThirtyDayDuration
+                duration: lastThirtyDayDuration,
+                measuredPastes: lastThirtyDayMeasuredPastes
             )
         case .thisYear:
             return DashboardMetricTotals(
                 count: thisYearCount,
                 words: thisYearWords,
-                duration: thisYearDuration
+                duration: thisYearDuration,
+                measuredPastes: thisYearMeasuredPastes
             )
         case .allTime:
             return total
@@ -404,6 +427,8 @@ extension DashboardStatsSummary {
     }
 }
 
+/// Time saved, shared by Home and Insights: an estimate, typing at 40 wpm, less the time spent recording and the stop →
+/// ⌘V waits that were measured (SessionMetric.measuredPasteWait). An unmeasured wait isn't counted as anything.
 enum DashboardTimeSaving {
     private static let averageTypingSpeedWordsPerMinute: Double = 40
 
@@ -412,8 +437,16 @@ enum DashboardTimeSaving {
         return estimatedTypingTimeInMinutes * 60
     }
 
-    static func timeSaved(words: Int, duration: TimeInterval) -> TimeInterval {
-        max(estimatedTypingTime(words: words) - duration, 0)
+    static func timeSaved(words: Int, duration: TimeInterval, measuredPasteWait: TimeInterval) -> TimeInterval {
+        max(estimatedTypingTime(words: words) - duration - measuredPasteWait, 0)
+    }
+
+    /// What the estimate assumes, with how many of the dictations had a measured wait.
+    static func explanation(timedPastes: Int, dictations: Int) -> String {
+        String(
+            format: String(
+                localized: "Time saved is an estimate: typing at 40 wpm, minus recording time and the measured wait from stop to paste (%1$lld of %2$lld dictations timed). Editing time isn't counted, and Chinese word counts don't compare directly with English typing speed."
+            ), timedPastes, dictations)
     }
 }
 

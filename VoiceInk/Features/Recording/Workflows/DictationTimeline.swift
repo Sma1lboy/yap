@@ -6,7 +6,7 @@ import Foundation
 /// shortcut events (ShortcutMonitor). Stored only in this Mac's stats.store, on the dictation's SessionMetric
 /// (docs/dictation-latency.md).
 final class DictationTimeline: @unchecked Sendable {
-    enum StopSource: String {
+    enum StopSource: String, CaseIterable {
         /// Push-to-talk, a held hybrid press, the second tap of a double tap, Rewrite Last Dictation: the key went up.
         case shortcutRelease
         /// Toggle mode, or hybrid after a short tap: the second press.

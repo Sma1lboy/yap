@@ -88,6 +88,13 @@ struct DashboardEditorialSummaryCard: View {
                     copy: "words per average session"
                 )
             }
+
+            if summary.hasData {
+                Text(verbatim: summary.explanation)
+                    .font(AppTheme.font(.caption))
+                    .foregroundStyle(AppTheme.Text.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .padding(AppTheme.Spacing.x6)
         .frame(maxWidth: .infinity, alignment: .leading)
