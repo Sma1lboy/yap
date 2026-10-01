@@ -31,9 +31,11 @@ def main():
          if page.locator('html').get_attribute('data-lang') != lang:
           page.locator('#lang-toggle').click()
          assert page.locator('html').get_attribute('data-lang') == lang
-         section=page.locator('#privacy');section.scroll_into_view_if_needed()
+         section=page.locator('#privacy')
+         # Capture document coordinates from scroll-top so the sticky header cannot cover a tall mobile section.
+         page.evaluate('window.scrollTo(0, 0)')
          label=f'{phase}-privacy-{lang}-{viewport["width"]}'
-         section.screenshot(path=str(OUT/f'{label}.png'),animations='disabled')
+         page.screenshot(path=str(OUT/f'{label}.png'),full_page=True,clip=section.bounding_box(),animations='disabled')
          text=section.inner_text()
          if phase=='after':
           assert 'Yap collects no usage data' not in text
@@ -47,7 +49,8 @@ def main():
          assert page.locator('html').get_attribute('data-lang') == lang
          offline=page.locator('details').filter(has=page.get_by_text('Does it work offline?' if lang=='en' else '能离线用吗？',exact=True))
          offline.locator('summary').click();assert offline.get_attribute('open') is not None
-         offline.screenshot(path=str(OUT/f'{phase}-offline-{lang}-{viewport["width"]}.png'))
+         page.evaluate('window.scrollTo(0, 0)')
+         page.screenshot(path=str(OUT/f'{phase}-offline-{lang}-{viewport["width"]}.png'),full_page=True,clip=offline.bounding_box(),animations='disabled')
          results.append({'phase':phase,'language':lang,'viewport':viewport,'source':str(args.before if phase == 'before' else args.after),'privacy_screenshot':f'{label}.png','horizontal_overflow':False,'javascript_errors':errors,'language_toggle_roundtrip':'pass','offline_faq_expansion':'pass'})
          ctx.close()
       browser.close()
