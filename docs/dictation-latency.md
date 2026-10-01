@@ -104,17 +104,17 @@ the longest block. It also saves 20 late edit outcomes through `SessionEditRecor
 the real `HomeWeekPanel` in an offscreen window to count its fetches. The week it loads is the same before and after
 (1209 dictations this week, 823 pasted, 786 timed, 469 watched, a 61-day streak).
 
-Mac16,7 (M4 Pro, 48 GB), macOS 15.1, Debug build, 2026-10-01, with the release build idle (load average 4–5 from
-other work); before is 3 launches, after 10:
+Mac16,7 (M4 Pro, 48 GB), macOS 15.1, Debug build, 2026-10-01, with the release build idle (load average 3–5 from
+other work). Before is 3 launches of the 60-day fetch; after is `make home-feedback-perf ROUNDS=10` on the final code:
 
 | | before (60 days fetched) | after |
 |---|---|---|
 | open the store | 8–10 ms | p50 10 ms |
-| first load in a new process | 2741–2755 ms | p50 540 / p95 547 ms |
-| later loads (p50 of 30) | 2720–2737 ms | p50 518 / p95 522 ms |
-| main thread, longest block | 13 ms | 25 ms (opening), 13 ms (loads) |
-| a late edit outcome saved on the main thread | p50 2.1–2.2 ms | p50 2.1, p95 2.8 ms |
-| the mode editor's detection-time look-up | 4 ms | 4 ms |
+| first load in a new process | 2741–2755 ms | p50 528 / p95 547 ms |
+| later loads (p50 of 30) | 2720–2737 ms | p50 507 / p95 511 ms |
+| main thread, longest block | 13 ms | 24 ms (opening), 14 ms (loads) |
+| a late edit outcome saved on the main thread | p50 2.1–2.2 ms | p50 2.2, p95 3.5 ms |
+| the mode editor's detection-time look-up | 4 ms | 3.9 ms |
 | Home updated after a dictation and its outcome 300 ms later | not within 1.5 s | 1 fetch, with the outcome |
 
 The load ran off the main thread before too, so Home didn't freeze; it was late. A SwiftData fetch costs about 0.1 ms a
