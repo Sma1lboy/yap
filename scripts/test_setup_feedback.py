@@ -4,7 +4,9 @@ import json
 from pathlib import Path
 import sys
 import unittest
-ROOT = Path(sys.argv.pop(1)) if len(sys.argv) > 1 else Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1]
+if __name__ == "__main__" and len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
+    ROOT = Path(sys.argv.pop(1))
 
 class SetupFeedbackTests(unittest.TestCase):
     def setUp(self):
