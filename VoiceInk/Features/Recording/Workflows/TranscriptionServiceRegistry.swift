@@ -111,14 +111,18 @@ class TranscriptionServiceRegistry {
             && UserDefaults.standard.bool(forKey: RecorderDisplaySettingsKeys.showLiveTranscript)
     }
 
-    func cleanup() async {
-        await fluidAudioTranscriptionService.cleanup()
-        cachedTranscribeCppTranscriptionService?.cleanup()
-    }
-
-    /// `cleanup()` plus FluidAudio's cached Core ML models: the idle release.
+    /// The idle or memory-pressure release of FluidAudio and transcribe.cpp. Each waits for its transcription in
+    /// flight (FluidAudio's turn; transcribe.cpp unloads after its last running transcription).
     func releaseAll() async {
         await fluidAudioTranscriptionService.releaseAll()
         cachedTranscribeCppTranscriptionService?.cleanup()
+    }
+
+    /// Quit: as `releaseAll`, but nothing starts after it, and it returns once each backend's transcription in flight
+    /// has ended and its model is freed (transcribe.cpp links its own ggml, which asserts at exit() while a Metal
+    /// buffer is allocated).
+    func closeForQuit() async {
+        await fluidAudioTranscriptionService.close()
+        await cachedTranscribeCppTranscriptionService?.close()
     }
 }

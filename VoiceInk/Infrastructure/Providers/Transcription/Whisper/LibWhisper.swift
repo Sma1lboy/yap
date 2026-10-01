@@ -56,13 +56,26 @@ actor WhisperContext {
         let languageDetectionTime: TimeInterval
     }
 
+    /// Stops a `transcribe` in flight: whisper.cpp checks it before each graph computation (`abort_callback`), and
+    /// the window loop before each window. Set from any thread (a cancelled request's cancellation handler).
+    final class Abort: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value = false
+        var isSet: Bool { lock.withLock { value } }
+        func set() { lock.withLock { value = true } }
+    }
+    private var abort: Abort?
+
     /// One whole transcription with this request's language and prompt. A single synchronous actor call, so no other
     /// request on this context can change the language or prompt between setting them and decoding, or reset the
-    /// results before they're returned. Nil when whisper_full fails or the model has been released.
-    func transcribe(samples: [Float], language: String?, prompt: String?) -> Transcript? {
+    /// results before they're returned. Nil when whisper_full fails, `abort` is set, or the model has been released;
+    /// an aborted decode leaves the context usable for the next one.
+    func transcribe(samples: [Float], language: String?, prompt: String?, abort: Abort? = nil) -> Transcript? {
         self.language = language
         self.prompt = prompt
-        guard fullTranscribe(samples: samples) else { return nil }
+        self.abort = abort
+        defer { self.abort = nil }
+        guard fullTranscribe(samples: samples), abort?.isSet != true else { return nil }
         return Transcript(
             text: transcription, segments: segments, detectedLanguages: detectedLanguages,
             languageDetectionTime: languageDetectionTime)
@@ -102,6 +115,7 @@ actor WhisperContext {
                 WhisperChunking.canaries(windows.count).map(detection), threshold: Self.singleLanguageThreshold)
             : nil
         for (index, window) in windows.enumerated() {
+            if abort?.isSet == true { return false }
             let runs: [(range: Range<Int>, language: String)]
             if let recordingLanguage {
                 runs = [(window, recordingLanguage)]
@@ -248,6 +262,13 @@ actor WhisperContext {
             params.vad_params = vadParams()
         } else {
             params.vad = false
+        }
+        if let abort {
+            params.abort_callback = { userData in
+                guard let userData else { return false }
+                return Unmanaged<Abort>.fromOpaque(userData).takeUnretainedValue().isSet
+            }
+            params.abort_callback_user_data = Unmanaged.passUnretained(abort).toOpaque()
         }
 
         var success = true

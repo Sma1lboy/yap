@@ -16,9 +16,12 @@ MODEL2="${3:?usage: isolation-check.sh <app dir> <ggml-*.bin> <another ggml-*.bi
 NOTES=""
 OUT="${OUT:-/tmp/yap-isolation-check}"
 WORK="$OUT/work"
+# Speaker models for the meetings' diarization: downloaded by the first run, reused from here after.
+SPEAKER_CACHE="${SPEAKER_CACHE:-/tmp/yap-speaker-models}"
 mkdir -p "$OUT"
 source "$(dirname "$0")/meeting-check-common.sh"
 cp -c "$MODEL2" "$SUPPORT/WhisperModels/" 2>/dev/null || cp "$MODEL2" "$SUPPORT/WhisperModels/"
+restore_speaker_models
 
 # The meeting: "me" and "others" take turns, one second apart, about 54 s per channel (six pieces).
 python3 - "$WORK" <<'PY'
@@ -54,6 +57,8 @@ while [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; do
 done
 status=0
 wait "$app" || status=$?
+save_speaker_models "$OUT/err.txt"
+speaker_models_source "$OUT/err.txt"
 [ "$status" = 0 ] || { echo "FAIL: app exited with $status"; grep -v '^\s*$' "$OUT/err.txt" | tail -5; exit 1; }
 grep -q '^isolation: .*"event":"done"' "$OUT/out.txt" || { echo "FAIL: the check didn't finish"; exit 1; }
 

@@ -6,14 +6,21 @@
     /// brings its local Whisper model to `state` and then quits through `NSApplication.terminate`, with nothing
     /// released first: `dictated` after a dictation of the file (loaded or not per "Keep model loaded"); `preloaded`
     /// after the shortcut-press preload has finished; `loading` while that preload is still loading; `decoding` while
-    /// a dictation of the file is being transcribed; `twice` preloaded, then Quit twice in a row; `menubar` and
-    /// `appmenu` preloaded, then the real "Quit Yap" item of the menu bar icon's menu or of the app menu (⌘Q) is
-    /// performed, which runs the app's own action.
+    /// a dictation of the file is being transcribed; `importing` one second into the import of a long file
+    /// (`--quit-import-file`); `twice` preloaded, then Quit twice in a row; `menubar` and `appmenu` preloaded, then the
+    /// real "Quit Yap" item of the menu bar icon's menu or of the app menu (⌘Q) is performed, which runs the app's own
+    /// action; `warmup` while the post-download warm-up runs; `previewing` three seconds into a recording with the
+    /// live preview on; `meeting` while a meeting fed from `--quit-meeting-files <mic.wav> <system.wav>` records,
+    /// answering "End Meeting and Quit".
     /// Prints `quit-check:` marker lines with Unix times; the script checks the exit status and the crash reports.
     @MainActor
     enum QuitCheck {
         static let argument = "--quit-check"
+        /// The `meeting` case: AppDelegate's "A meeting is recording" question answers "End Meeting and Quit".
+        nonisolated static var endsMeetingOnQuit: Bool { CommandLine.arguments.contains("--quit-meeting-files") }
         private static var loadingObserver: AnyCancellable?
+        private static var warmupObserver: AnyCancellable?
+        private static var meetingObserver: AnyCancellable?
 
         static func run(engine: VoiceInkEngine, file: URL, state: String) {
             let manager = engine.whisperModelManager
@@ -109,6 +116,92 @@
                         mark("dictation finished: \(transcription.text)")
                     }
                     await waitForLoad()
+                case "warmup":
+                    // The warm-up a download starts (WhisperModelWarmupCoordinator, a context of its own), with the
+                    // mode's model as the one just downloaded: Quit as soon as it is warming up.
+                    guard let model = TranscriptionModelRegistry.models.lazy.compactMap({ $0 as? WhisperModel })
+                        .first(where: { $0.name == manager.availableModels.first?.name })
+                    else {
+                        print("quit-check: no WhisperModel for \(manager.availableModels.map(\.name))")
+                        exit(2)
+                    }
+                    let coordinator = WhisperModelWarmupCoordinator.shared
+                    coordinator.scheduleWarmup(for: model, whisperModelManager: manager)
+                    warmupObserver = coordinator.$warmingModels.dropFirst().first { $0.isEmpty }.sink { _ in
+                        mark("warm-up finished, context freed")
+                    }
+                    try? await Task.sleep(for: .milliseconds(100))  // into createContext or the decode
+                    mark("warming up, \(coordinator.isWarming(modelNamed: model.name))")
+                case "importing":
+                    // A long file in the audio import queue (`--quit-import-file`), Quit one second into its decode.
+                    let arguments = CommandLine.arguments
+                    guard let index = arguments.firstIndex(of: "--quit-import-file"), arguments.indices.contains(index + 1),
+                        let mode = ModeManager.shared.currentEffectiveConfiguration
+                    else {
+                        print("quit-check: no file to import")
+                        exit(2)
+                    }
+                    let queue = AudioTranscriptionManager.shared
+                    queue.addToQueue(urls: [URL(fileURLWithPath: arguments[index + 1])])
+                    queue.startProcessing(modelContext: engine.modelContext, engine: engine, mode: mode)
+                    while true {
+                        if case .processing(.transcribing) = queue.queue.last?.status { break }
+                        try? await Task.sleep(for: .milliseconds(10))
+                    }
+                    try? await Task.sleep(for: .seconds(1))
+                    mark("importing, \(queue.isProcessingQueue)")
+                case "previewing":
+                    // The live preview decoding while the file is "recorded" in real time; Quit three seconds in.
+                    UserDefaults.standard.set(true, forKey: RecorderDisplaySettingsKeys.showLiveTranscript)
+                    guard let configuration = ModeRuntimeResolver.transcriptionConfiguration(
+                        transcriptionModelManager: engine.transcriptionModelManager),
+                        let data = try? Data(contentsOf: file)
+                    else {
+                        print("quit-check: no preview")
+                        exit(2)
+                    }
+                    engine.preloadCurrentModel()
+                    var previews = 0
+                    let session = engine.serviceRegistry.createSession(for: configuration) { _ in previews += 1 }
+                    let feed = try? await session.prepare(configuration: configuration)
+                    let pcm = data.subdata(in: WhisperTranscriptionService.pcmDataOffset(data)..<data.count)
+                    let started = Date()
+                    var offset = 0
+                    while Date().timeIntervalSince(started) < 3, offset < pcm.count {
+                        let next = min(pcm.count, offset + 3_200)
+                        feed?(pcm.subdata(in: offset..<next))
+                        offset = next
+                        try? await Task.sleep(for: .milliseconds(100))
+                    }
+                    mark("previewing, \(type(of: session)) \(previews) previews")
+                case "meeting":
+                    let arguments = CommandLine.arguments
+                    /// The menu bar item's width: the duck alone, or with the meeting's "● 00:02" next to it.
+                    func statusItemWidth() -> Int {
+                        Int(NSApp.windows.first { String(describing: type(of: $0)) == "NSStatusBarWindow" }?.frame.width ?? 0)
+                    }
+                    let idleWidth = statusItemWidth()
+                    guard let index = arguments.firstIndex(of: "--quit-meeting-files"), arguments.indices.contains(index + 2),
+                        MeetingRecorder.shared.startFromFiles(
+                            microphone: URL(fileURLWithPath: arguments[index + 1]),
+                            system: URL(fileURLWithPath: arguments[index + 2])) != nil
+                    else {
+                        print("quit-check: the meeting didn't start")
+                        exit(2)
+                    }
+                    meetingObserver = MeetingRecorder.shared.$phase.first { if case .done = $0 { true } else { false } }
+                        .sink { phase in
+                            guard case .done(let result) = phase else { return }
+                            mark("meeting saved, failed pieces \(result.failedPieces), save error \(result.saveError ?? "none")")
+                        }
+                    try? await Task.sleep(for: .seconds(2))  // the first pieces are transcribing
+                    // How long a hop to the main actor takes while the meeting records (the pieces need it too).
+                    let lag = await Task.detached { () -> TimeInterval in
+                        let asked = Date()
+                        await MainActor.run {}
+                        return Date().timeIntervalSince(asked)
+                    }.value
+                    mark("meeting recording, \(MeetingRecorder.isRecordingMeeting), menu bar item \(idleWidth) → \(statusItemWidth()) pt, main actor hop \(String(format: "%.3f", lag)) s")
                 default:
                     print("quit-check: unknown state \(state)")
                     exit(2)

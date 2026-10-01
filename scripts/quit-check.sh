@@ -38,6 +38,25 @@ for nested in "$APP"/Contents/Frameworks/*.framework "$APP"/Contents/XPCServices
 done
 codesign --force --sign - "$APP" >/dev/null 2>&1
 afconvert -f WAVE -d LEI16@16000 -c 1 "$ROOT/setup/asr/clips/security.m4a" "$WORK/clip.wav"
+# `importing`: every clip, three times over (~3 min); `meeting`: "me" and "others" taking turns, 54 s per channel.
+for clip in "$ROOT"/setup/asr/clips/*.m4a; do afconvert -f WAVE -d LEI16@16000 -c 1 "$clip" "$WORK/$(basename "$clip" .m4a).part.wav"; done
+python3 - "$WORK" <<'PY'
+import glob, sys, wave
+work = sys.argv[1]
+def frames(name):
+    with wave.open(f"{work}/{name}.part.wav") as w:
+        return w.readframes(w.getnframes())
+silence = lambda seconds: b"\0\0" * int(16000 * seconds)
+names = sorted(p.split("/")[-1][:-len(".part.wav")] for p in glob.glob(f"{work}/*.part.wav"))
+mic, system = b"", b""
+for me_clip, other_clip in [("deploy", "standup"), ("bug", "infra"), ("perf", "ml"), ("meeting", "product")]:
+    a, b = frames(me_clip), frames(other_clip)
+    mic += a + silence(1) + silence(len(b) / 32000) + silence(1)
+    system += silence(len(a) / 32000) + silence(1) + b + silence(1)
+for name, data in [("long", b"".join(frames(n) for n in names) * 3), ("mic", mic), ("system", system)]:
+    with wave.open(f"{work}/{name}.wav", "wb") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000); w.writeframes(data)
+PY
 name=$(basename "$MODEL" .bin)
 cat >"$WORK/config/yap/config.json" <<EOF
 { "modes": [ { "id": "0FF11E00-0000-4000-8000-000000000001", "name": "Offline", "isDefault": true,
@@ -54,7 +73,7 @@ EOF
 
 version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
 # Keep model loaded (seconds; 0 Always, -1 After each dictation) and the state Quit comes in.
-CASES="${CASES:-0:dictated 900:dictated -1:dictated -1:preloaded 0:loading 0:decoding 0:twice 0:menubar 0:appmenu 0:appleevent}"
+CASES="${CASES:-0:dictated 900:dictated -1:dictated -1:preloaded 0:loading 0:decoding 0:twice 0:menubar 0:appmenu 0:appleevent 0:warmup 0:importing 0:previewing 0:meeting}"
 failed=0
 for case in $CASES; do
 	keep=${case%%:*} state=${case#*:} dir="$OUT/keep${keep}-$state"
@@ -66,12 +85,15 @@ for case in $CASES; do
 	# This version already launched once: no release-notes sheet. AppKit ignores terminate: while a sheet is attached.
 	defaults write "$ID" lastLaunchedVersion "$version"
 	defaults write "$ID" ModelKeepLoadedSeconds -int "$keep"
-	# The launch-time prewarm loads the model by itself; `loading` needs it unloaded until its own preload.
-	if [ "$state" = loading ]; then defaults write "$ID" PrewarmModelOnWake -bool false; fi
+	# The launch-time prewarm loads the model by itself; `loading` needs it unloaded until its own preload, and the
+	# post-download warm-up skips a model that is already loaded.
+	if [ "$state" = loading ] || [ "$state" = warmup ]; then defaults write "$ID" PrewarmModelOnWake -bool false; fi
 	start=$(date '+%Y-%m-%d %H:%M:%S') && touch "$dir/started"
 	status=0
 	XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --dictate-file "$WORK/clip.wav" \
-		--quit-check "$state" >"$dir/out.txt" 2>"$dir/err.txt" &
+		--quit-check "$state" --quit-import-file "$WORK/long.wav" \
+		$([ "$state" = meeting ] && echo --quit-meeting-files "$WORK/mic.wav" "$WORK/system.wav" --meeting-speaker-wait 0) \
+		>"$dir/out.txt" 2>"$dir/err.txt" &
 	pid=$!
 	# Not `timeout`: a Quit that hangs is itself the failure, reported as such.
 	sent=""
@@ -126,11 +148,27 @@ marks = [l.split(",")[0].split(":")[1].strip() for l in out.splitlines() if l.st
 finished = next((i for i, m in enumerate(marks) if m == "dictation finished"), None)
 if state == "decoding" and "will terminate" in marks and (finished is None or finished > marks.index("will terminate")):
     problems.append("exited before the decode in flight finished")
+if state == "warmup" and not ("warm-up finished" in marks and "will terminate" in marks
+                              and marks.index("warm-up finished") < marks.index("will terminate")):
+    problems.append("exited before the warm-up's context was freed")
+if state == "warmup" and "quit-check: warming up, true" not in out: problems.append("Quit didn't come during the warm-up")
 if state == "twice" and "terminate again" not in " ".join(marks): problems.append("second Quit never sent")
+if state == "meeting":
+    if not ("meeting saved" in marks and "will terminate" in marks and marks.index("meeting saved") < marks.index("will terminate")):
+        problems.append("exited before End Meeting and Quit saved the meeting")
+    elif "meeting saved, failed pieces 0, save error none" not in out:
+        problems.append("the meeting was saved with failed pieces or a save error")
+if state == "importing" and "quit-check: importing, true" not in out: problems.append("Quit didn't come during the import")
+times = {}
+for m, l in zip(marks, [l for l in out.splitlines() if l.startswith("quit-check:")]):
+    try: times[m] = float(l.split()[-1])
+    except ValueError: pass  # `text …` lines have no time
 verdict = "ok" if not problems else "FAIL: " + "; ".join(problems)
 print(f"keep {keep:>4} {state:10} {verdict}")
 for line in out.splitlines():
     if line.startswith("quit-check:"): print("    " + line)
+if "terminate" in times and "will terminate" in times:
+    print(f"    Quit took {times['will terminate'] - times['terminate']:.2f} s")
 if (d / "sender.txt").exists(): print("    sender: " + (d / "sender.txt").read_text().strip())
 sys.exit(1 if problems else 0)
 PY

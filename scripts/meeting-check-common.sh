@@ -31,6 +31,26 @@ for clip in "$ROOT"/setup/asr/clips/*.m4a; do
 	afconvert -f WAVE -d LEI16@16000 -c 1 "$clip" "$WORK/clips/$(basename "$clip" .m4a).wav"
 done
 
+# With SPEAKER_CACHE set (a test folder): restore_speaker_models copies speaker models a run downloaded before into
+# the support folder, so a meeting's diarization doesn't download them again; save_speaker_models <stderr file> keeps
+# them once FluidAudio logged that they loaded (the download runs in the background and may not have finished when
+# the app exits). speaker_models_source <stderr file> says which happened.
+restore_speaker_models() {
+	[ -n "${SPEAKER_CACHE:-}" ] && [ -f "$SPEAKER_CACHE/.complete" ] || return 0
+	mkdir -p "$SUPPORT/SpeakerModels" && cp -Rc "$SPEAKER_CACHE/." "$SUPPORT/SpeakerModels/"
+}
+save_speaker_models() {
+	[ -n "${SPEAKER_CACHE:-}" ] && [ ! -f "$SPEAKER_CACHE/.complete" ] || return 0
+	grep -q "Offline diarization models ready" "$1" 2>/dev/null || return 0
+	rm -rf "$SPEAKER_CACHE" && mkdir -p "$SPEAKER_CACHE" && cp -Rc "$SUPPORT/SpeakerModels/." "$SPEAKER_CACHE/" \
+		&& touch "$SPEAKER_CACHE/.complete"
+}
+speaker_models_source() {
+	if grep -q "Downloading speaker-diarization" "$1" 2>/dev/null; then echo "speaker models: downloaded"
+	elif grep -q "Found speaker-diarization locally" "$1" 2>/dev/null; then echo "speaker models: reused, no download"
+	else echo "speaker models: not used"; fi
+}
+
 # say_clip <name> <voice> <text>: a line spoken with a macOS voice, as $WORK/clips/<name>.wav.
 say_clip() {
 	say -v "$2" -r 230 -o "$WORK/clips/$1.aiff" "$3"

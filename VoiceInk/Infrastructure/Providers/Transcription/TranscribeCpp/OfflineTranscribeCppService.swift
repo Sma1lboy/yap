@@ -30,6 +30,16 @@ final class OfflineTranscribeCppService: TranscriptionService, @unchecked Sendab
     private var loadedState: LoadedState?
     private var loadingState: LoadingState?
     private var activeTranscriptionCount = 0
+    /// An unload asked for while transcriptions ran (idle, memory pressure, model change): done after the last one.
+    private var unloadWhenIdle = false
+    /// Set by Quit (`close`): no transcription or load starts from then on.
+    private var closed = false
+    /// `close` waiting for the running transcriptions to end.
+    private var idleWaiters: [CheckedContinuation<Void, Never>] = []
+    #if DEBUG
+        /// `make lifecycle-check`: whether a model is loaded.
+        var isModelLoaded: Bool { stateLock.withLock { loadedState != nil } }
+    #endif
     private var notificationObservers: [NSObjectProtocol] = []
     private var memoryPressureSource: DispatchSourceMemoryPressure?
     private let audioConverter = AudioConverter()
@@ -101,13 +111,30 @@ final class OfflineTranscribeCppService: TranscriptionService, @unchecked Sendab
             )
         }
         let artifact = try resolveArtifact(for: transcribeCppModel)
-
-        let nativeModel = try await getOrLoadModel(for: transcribeCppModel, artifact: artifact)
-        retainModel(nativeModel, named: transcribeCppModel.name)
-        defer { releaseModel(named: transcribeCppModel.name) }
-
         let samples = try audioConverter.resampleAudioFile(audioURL)
         let language = selectedLanguage(context.language, for: transcribeCppModel)
+
+        // Counted from before the load: an unload asked for meanwhile waits for this transcription to end.
+        try beginRun()
+        defer { endRun() }
+        let startedAt = ContinuousClock.now
+        // The model is passed, not kept in a local here, so this transcription's last reference to it is gone by
+        // the time endRun lets Quit go on: Model.deinit frees its Metal buffers before exit().
+        let chunkTranscripts = try await transcribeChunks(
+            samples, language: language, artifact: artifact,
+            on: try await keptModel(for: transcribeCppModel, artifact: artifact))
+
+        logger.notice(
+            "\(transcribeCppModel.displayName, privacy: .public) completed in \(startedAt.duration(to: .now).formatted(.units(allowed: [.seconds], width: .narrow)), privacy: .public) for \(samples.count, privacy: .public) samples"
+        )
+        return joinedText(from: chunkTranscripts)
+    }
+
+    /// Every chunk on one model. A cancelled task aborts the native run in flight (Session.run bridges task
+    /// cancellation to transcribe.cpp's abort callback, checked between decode steps) and throws CancellationError.
+    private func transcribeChunks(
+        _ samples: [Float], language: String?, artifact: TranscribeCppModelArtifact, on nativeModel: Model
+    ) async throws -> [(text: String, language: String?)] {
         let options = RunOptions(
             timestamps: .none,
             itn: artifact.enablesInverseTextNormalization ? .on : .default,
@@ -124,26 +151,26 @@ final class OfflineTranscribeCppService: TranscriptionService, @unchecked Sendab
             energyWindowCount: artifact.boundaryEnergyWindowSamples
         )
 
-        let startedAt = ContinuousClock.now
         var chunkTranscripts: [(text: String, language: String?)] = []
         chunkTranscripts.reserveCapacity(chunks.count)
-
         for chunk in chunks {
             try Task.checkCancellation()
             let session = try nativeModel.session()
-            let transcript = try await session.run(chunk, options: options)
+            let transcript: Transcript
+            do {
+                transcript = try await session.run(chunk, options: options)
+            } catch where Task.isCancelled {
+                throw CancellationError()
+            }
             let text = transcript.text.trimmingCharacters(in: .whitespacesAndNewlines)
             if !text.isEmpty {
                 chunkTranscripts.append((text: text, language: transcript.language ?? language))
             }
         }
-
-        logger.notice(
-            "\(transcribeCppModel.displayName, privacy: .public) completed in \(startedAt.duration(to: .now).formatted(.units(allowed: [.seconds], width: .narrow)), privacy: .public) for \(samples.count, privacy: .public) samples"
-        )
-        return joinedText(from: chunkTranscripts)
+        return chunkTranscripts
     }
 
+    /// The idle or memory-pressure release: unloads now, or after the last running transcription.
     func cleanup() {
         unloadModel()
     }
@@ -152,11 +179,27 @@ final class OfflineTranscribeCppService: TranscriptionService, @unchecked Sendab
         unloadModel { _ in true }
     }
 
+    /// Quit: no transcription or load starts from now on, and this returns once the running ones have ended (as
+    /// Whisper's Quit, it waits for them rather than losing a dictation) and the model is unloaded.
+    func close() async {
+        stateLock.withLock { closed = true }
+        await withCheckedContinuation { (idle: CheckedContinuation<Void, Never>) in
+            let now = stateLock.withLock { () -> Bool in
+                guard activeTranscriptionCount > 0 else { return true }
+                idleWaiters.append(idle)
+                return false
+            }
+            if now { idle.resume() }
+        }
+        unloadModel()
+    }
+
     private func getOrLoadModel(
         for model: TranscribeCppModel,
         artifact: TranscribeCppModelArtifact
     ) async throws -> Model {
-        let resolvedState: LoadResolution = stateLock.withLock {
+        let resolvedState: LoadResolution = try stateLock.withLock {
+            if closed { throw CancellationError() }
             if let loadedState, loadedState.modelName == model.name {
                 return .loaded(loadedState.model)
             }
@@ -255,9 +298,12 @@ final class OfflineTranscribeCppService: TranscriptionService, @unchecked Sendab
     private func unloadModel(where shouldUnload: (String) -> Bool) {
         let didUnload = stateLock.withLock {
             guard let activeModelName = loadedState?.modelName ?? loadingState?.modelName,
-                shouldUnload(activeModelName),
-                activeTranscriptionCount == 0
+                shouldUnload(activeModelName)
             else {
+                return false
+            }
+            guard activeTranscriptionCount == 0 else {
+                unloadWhenIdle = true
                 return false
             }
             loadingState?.task.cancel()
@@ -270,33 +316,46 @@ final class OfflineTranscribeCppService: TranscriptionService, @unchecked Sendab
         }
     }
 
-    private func retainModel(_ model: Model, named modelName: String) {
-        stateLock.withLock {
-            // Restore an acquired model after a racing unload and cancel its replacement load.
-            loadingState?.task.cancel()
-            loadingState = nil
-            loadedState = LoadedState(modelName: modelName, model: model)
+    /// A transcription starts: counted until `endRun`. After Quit, none does.
+    private func beginRun() throws {
+        try stateLock.withLock {
+            if closed { throw CancellationError() }
             activeTranscriptionCount += 1
         }
     }
 
-    private func releaseModel(named modelName: String) {
-        let didUnload = stateLock.withLock {
-            guard activeTranscriptionCount > 0 else { return false }
-            activeTranscriptionCount -= 1
-            guard activeTranscriptionCount == 0,
-                loadedState?.modelName == modelName || loadingState?.modelName == modelName
-            else {
-                return false
+    /// The loaded model, loading it if needed; restores it as the loaded one after an unload raced the load.
+    private func keptModel(for model: TranscribeCppModel, artifact: TranscribeCppModelArtifact) async throws -> Model {
+        let nativeModel = try await getOrLoadModel(for: model, artifact: artifact)
+        stateLock.withLock {
+            if loadedState == nil {
+                loadingState?.task.cancel()
+                loadingState = nil
+                loadedState = LoadedState(modelName: model.name, model: nativeModel)
             }
+        }
+        return nativeModel
+    }
+
+    /// A transcription ended. The model stays loaded (ModelResidency decides when to release it) unless an unload
+    /// was asked for while it ran; `close` goes on once the last one has ended.
+    private func endRun() {
+        let (didUnload, waiters) = stateLock.withLock { () -> (Bool, [CheckedContinuation<Void, Never>]) in
+            activeTranscriptionCount -= 1
+            guard activeTranscriptionCount == 0 else { return (false, []) }
+            let waiters = idleWaiters
+            idleWaiters = []
+            guard unloadWhenIdle else { return (false, waiters) }
+            unloadWhenIdle = false
             loadingState?.task.cancel()
             loadingState = nil
             loadedState = nil
-            return true
+            return (true, waiters)
         }
         if didUnload {
-            logger.notice("transcribe.cpp runtime unloaded")
+            logger.notice("transcribe.cpp runtime unloaded after the last transcription")
         }
+        waiters.forEach { $0.resume() }
     }
 
     private func resolveArtifact(for model: TranscribeCppModel) throws -> TranscribeCppModelArtifact {

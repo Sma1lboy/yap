@@ -103,9 +103,9 @@ final class ModelResidency {
                 {
                     self.pressureWhileBusy = false
                     self.timer = nil
-                    // ponytail: a use that begins between this check and the free still runs: Whisper's release
-                    // waits for its turn (WhisperModelManager.withContext) and the model is loaded again after it;
-                    // FluidAudio and transcribe.cpp take no turns and could lose their model mid-transcription.
+                    // A use that begins between this check and the free still runs: Whisper's and
+                    // FluidAudio's releases wait for their turn (ModelTurns) and the model is loaded again after it;
+                    // transcribe.cpp unloads after its last running transcription. Only the cost of a reload is lost.
                     self.logger.notice("releasing local models after \(Int(idle), privacy: .public) s idle")
                     await self.release?()
                     return
@@ -122,6 +122,9 @@ final class ModelResidency {
     }
 
     #if DEBUG
+        /// `make lifecycle-check`: the memory-pressure warning the system would send.
+        func simulateMemoryPressure() { memoryPressure() }
+
         static func selfCheck() {
             let keep = 900
             precondition(!shouldRelease(keepSeconds: keep, idleFor: 899, isBusy: false, memoryPressure: false))

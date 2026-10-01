@@ -260,6 +260,7 @@ class FluidAudioModelManager: ObservableObject {
                 let modelDirectory = try await StreamingNemotronMultilingualAsrManager.downloadVariant(
                     languageCode: variant.downloadLanguageCode,
                     chunkMs: Self.nemotronChunkMs,
+                    to: Self.fluidAudioModelsRootDirectory(),
                     progressHandler: progressHandler
                 )
                 try Task.checkCancellation()
@@ -456,8 +457,16 @@ class FluidAudioModelManager: ObservableObject {
             .appendingPathComponent(Repo.parakeetUnified.folderName, isDirectory: true)
     }
 
-    // Matches the cache root used by FluidAudio's Unified managers.
+    // Matches the cache root used by FluidAudio's Unified managers. Passed to every download that takes one, so the
+    // DEBUG checks can point it at a test folder (`--fluidaudio-models <dir>`) instead of the one shared with every
+    // FluidAudio app on the Mac. Parakeet's (AsrModels.defaultCacheDirectory) and VAD's don't follow it.
     nonisolated private static func fluidAudioModelsRootDirectory() -> URL {
+        #if DEBUG
+            let arguments = CommandLine.arguments
+            if let index = arguments.firstIndex(of: "--fluidaudio-models"), arguments.indices.contains(index + 1) {
+                return URL(fileURLWithPath: arguments[index + 1], isDirectory: true)
+            }
+        #endif
         let fileManager = FileManager.default
         if let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
             return
