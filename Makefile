@@ -302,6 +302,14 @@ home-feedback-check: build
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh "$$APP_DIR/VoiceInk Dev.app/Contents/MacOS/VoiceInk Dev" --home-feedback-check
 
+# Home's week panel on a heavy user's last 60 days: 20,000 SessionMetrics in a stats.store on disk, written once to
+# /tmp/yap-home-perf/data (FRESH=1 again). ROUNDS launches (default 10): fetch cold and warm, main-thread blocking, a
+# late edit outcome's save, and the panel's fetches per dictation. See scripts/home-feedback-perf.sh.
+home-feedback-perf: build
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/home-feedback-perf.sh "$$APP_DIR" "$(or $(ROUNDS),10)"
+
 # Render every page, Settings group, onboarding screen and sheet in light and dark, plus the main ones in Chinese
 # (-zh, and -zht for Traditional), German (-de) and French (-fr), with fake data to /tmp/yap-ui/snapshots. A copy of the Debug build re-identified as me.sma1lboy.yap.snapshots
 # (scripts/ui-snapshots.sh), so its fake modes and providers go to a throwaway defaults domain, never the dev app's;

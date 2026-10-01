@@ -660,13 +660,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 字"
+            "value" : "%@ 个词"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 字"
+            "value" : "%@ 個詞"
           }
         }
       }
@@ -15564,13 +15564,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "听写字数图表"
+            "value" : "听写词数图表"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "聽寫字數圖表"
+            "value" : "聽寫詞數圖表"
           }
         }
       }
@@ -18535,13 +18535,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "估算 · 每分钟打 40 字"
+            "value" : "估算 · 每分钟打 40 个词"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "估算 · 每分鐘打 40 字"
+            "value" : "估算 · 每分鐘打 40 個詞"
           }
         }
       }
@@ -25338,13 +25338,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "字数最多"
+            "value" : "词数最多"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "字數最多"
+            "value" : "詞數最多"
           }
         }
       }
@@ -26697,13 +26697,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "此时间段内还没有听写字数"
+            "value" : "此时间段内还没有听写的词"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "此時間段內還沒有聽寫字數"
+            "value" : "此時間段內還沒有聽寫的詞"
           }
         }
       }
@@ -27460,6 +27460,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "無可用模式"
+          }
+        }
+      }
+    },
+    "No number yet" : {
+      "comment" : "VoiceOver: a Home card shows – because nothing is measured yet.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch kein Wert"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas encore de valeur"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无数值"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暫無數值"
           }
         }
       }
@@ -43259,13 +43288,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "节省时间是估算：按每分钟打 40 字，减去录音时间和测得的停止到粘贴的等待（%2$lld 次听写中 %1$lld 次有计时）。没算修改花的时间；中文按字计，不能直接和英文打字速度对比。"
+            "value" : "节省时间是估算：按每分钟打 40 个词，减去录音时间和测得的停止到粘贴的等待（%2$lld 次听写中 %1$lld 次有计时）。没算修改花的时间。中文按分词计数，一个词常是两三个字，不能直接和英文打字速度对比。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "節省時間是估算：按每分鐘打 40 字，減去錄音時間和測得的停止到貼上的等待（%2$lld 次聽寫中 %1$lld 次有計時）。沒算修改花的時間；中文按字計，不能直接和英文打字速度對比。"
+            "value" : "節省時間是估算：按每分鐘打 40 個詞，減去錄音時間和測得的停止到貼上的等待（%2$lld 次聽寫中 %1$lld 次有計時）。沒算修改花的時間。中文按分詞計數，一個詞常是兩三個字，不能直接和英文打字速度對比。"
           }
         }
       }
@@ -46934,13 +46963,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "本周每日字数"
+            "value" : "本周每日词数"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "本週每日字數"
+            "value" : "本週每日詞數"
           }
         }
       }
@@ -50253,13 +50282,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "字"
+            "value" : "个词"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "字"
+            "value" : "個詞"
           }
         }
       }
@@ -50311,13 +50340,13 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "字/分钟"
+            "value" : "词/分钟"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "字/分鐘"
+            "value" : "詞/分鐘"
           }
         }
       }

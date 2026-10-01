@@ -3,6 +3,18 @@
 What the user waits for after a dictation: from the moment they stop it to the ⌘V that puts the text in front of
 them. Yap records this for every dictation on this Mac; `make dictation-latency` measures it without a microphone.
 
+M3 in four lines (M4 Pro, Debug build, local Large v3 Turbo (Quantized); details below):
+
+- **Default, language on Auto-detect:** stop → ⌘V p50 went from 1343 to 1181 ms, −12 % ("Results"). Transcripts
+  didn't change. This is what every user gets.
+- **A fixed language, opt-in** (the mode's picker, or Yap's suggestion after 20 one-language dictations): about
+  0.45 s less again, but at a cost. Chinese character errors go from 22.4 % to 24.4 %, and a whole sentence in the other
+  language comes out wrong (61.5 % errors with `zh` on code-switched recordings, against 14.6 % on auto). Fixed English
+  is faster and more accurate for English-only speech (1.3 → 0.3 %). See "Auto-detect or a fixed language".
+- **Home** shows this Mac's stop → ⌘V median: the time to Yap sending ⌘V, not to the text appearing in the app.
+- **Not measured:** a paste arriving in a real app, the recorder's stop with a real microphone, and Auto Learn's reads
+  in real apps. The checks here dry-run the paste and read no app.
+
 ## What every dictation records
 
 `DictationTimeline` follows one dictation; `SessionMetricRecorder` copies it onto the dictation's `SessionMetric` in
@@ -71,12 +83,50 @@ nothing confirms the insert, and no desktop paste success rate has been measured
 **Time saved** (Home's tile and Insights, one formula, `DashboardTimeSaving.timeSaved`) is an estimate:
 `words / 40 wpm − recording time − sum of the measured stop → ⌘V waits`, never below 0. Dictations without a measured
 wait take nothing off for it; the line under the panel (and under Insights' summary) says how many of the dictations
-were timed, that editing time isn't counted, and that Chinese word counts (`WordCounter`, `NLTokenizer` words) don't compare directly
-with an English typing speed. Insights' snapshot cache (`dashboard-stats-snapshot.json`) went to version 3 for the
-new totals; an older one is dropped and recomputed. stats.store itself is unchanged.
+were timed, that editing time isn't counted, and that Chinese word counts don't compare directly with an English
+typing speed. Words are `WordCounter`'s: `NLTokenizer` words, so Chinese is counted in segmented words, not characters
+("我们今天下午三点开会" is 5 words, 10 characters). The Chinese interface says 词 (word) for these counts, and 40 wpm is 40
+词 a minute, not 40 字. Insights' snapshot cache (`dashboard-stats-snapshot.json`) went to version 3 for the new totals;
+an older one is dropped and recomputed. stats.store itself is unchanged.
 
 `make home-feedback-check` writes six fixed weeks of SessionMetrics to an in-memory store, loads each through
 `WeekStatsLoader` and checks the numbers; `make ui-snapshots` renders them (`home-feedback-*`).
+
+### A long history
+
+`make home-feedback-perf` (`HomeFeedbackPerf`) writes 20,000 SessionMetrics over the 60 days before a fixed Thursday
+to a stats.store on disk, built the way the app builds it, with the same random seed every time: 15 % from versions
+before the timeline, the rest across four modes, 10 % on a fixed language and the others with detected languages
+(`zh`, `en`, `en,zh`), Scratchpad, clipboard-only and failed pastes, missing stop → ⌘V times, and every kind of edit
+outcome including none and incomplete ones. Each of ROUNDS launches copies the file, opens it in a new process and
+loads the week through `WeekStatsLoader` (cold), then 30 more times (warm), with a 5 ms main-thread timer measuring
+the longest block. It also saves 20 late edit outcomes through `SessionEditRecorder` on the main context, and puts
+the real `HomeWeekPanel` in an offscreen window to count its fetches. The week it loads is the same before and after
+(1209 dictations this week, 823 pasted, 786 timed, 469 watched, a 61-day streak).
+
+Mac16,7 (M4 Pro, 48 GB), macOS 15.1, Debug build, 2026-10-01, with the release build idle (load average 3–5 from
+other work). Before is 3 launches of the 60-day fetch; after is `make home-feedback-perf ROUNDS=10` on the final code:
+
+| | before (60 days fetched) | after |
+|---|---|---|
+| open the store | 8–10 ms | p50 10 ms |
+| first load in a new process | 2741–2755 ms | p50 528 / p95 547 ms |
+| later loads (p50 of 30) | 2720–2737 ms | p50 507 / p95 511 ms |
+| main thread, longest block | 13 ms | 24 ms (opening), 14 ms (loads) |
+| a late edit outcome saved on the main thread | p50 2.1–2.2 ms | p50 2.2, p95 3.5 ms |
+| the mode editor's detection-time look-up | 4 ms | 3.9 ms |
+| Home updated after a dictation and its outcome 300 ms later | not within 1.5 s | 1 fetch, with the outcome |
+
+The load ran off the main thread before too, so Home didn't freeze; it was late. A SwiftData fetch costs about 0.1 ms a
+row whether `propertiesToFetch` lists 3 properties or 10 (2.3 s for 20,000 rows in a standalone build, the same at
+`-O`), so the 60 days were 2.7 s of work after every dictation, every Auto Learn outcome and every minute Home was
+open, and the panel showed the old week for that long. The loader now fetches from last week's Monday (what the
+numbers use) and asks earlier days only for a count, one day at a time while the streak lasts (`fetchCount`, ~1 ms).
+What's left is this fixture's ~3,500 rows since last Monday; at 333 dictations a day it is the extreme case.
+
+The panel waits 500 ms after the last change: a dictation and its Auto Learn outcome within that are one fetch, read
+after the outcome is saved; an outcome 2 s later is a second fetch. Turning Auto Learn off fetches nothing (the card
+just says new pastes aren't watched). No cache was added.
 
 ## The wait before ⌘V
 
@@ -152,8 +202,9 @@ runs' stop → ⌘V p50 (one auto run was slowed by other work on the Mac: 1501 
 | Code-switched, whole sentences (4) | 2735 ms, **14.6 %**, 25/41 | 862 ms, 61.5 %, 19/41 | 825 ms, 33.9 %, 22/41 |
 
 On M3.2's five clips (`CLIPS=latency ROUNDS=12`, two runs each): auto 1200 / 1186 ms, zh 746 / 738 ms, en 725 / 731
-ms. That is 0.45 s less per dictation, −45 % against M3.1's 1343 ms. The language detection Yap now records took
-475–477 ms p50 in every auto run. What a fixed language saves is that pass and nothing else.
+ms. That is 0.45 s less per dictation than auto. Against M3.1's 1343 ms it would be −45 %, but only for a user who
+opts in and accepts the accuracy cost below; the default's gain is the −12 % in "Results". The language detection Yap
+now records took 475–477 ms p50 in every auto run. What a fixed language saves is that pass and nothing else.
 
 - **One main language (Chinese with English terms, or English):** fixing it is about 0.45 s faster. In English it is
   also more accurate (0.3 % character errors instead of 1.3 %). In Chinese it is not free: character errors go from

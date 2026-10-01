@@ -513,8 +513,8 @@
             ]
         }
 
-        /// The same numbers on every run.
-        private struct SplitMix {
+        /// The same numbers on every run (also HomeFeedbackPerf's data).
+        struct SplitMix {
             var state: UInt64
             init(seed: UInt64) { state = seed }
             mutating func next(_ bound: Int) -> Int {

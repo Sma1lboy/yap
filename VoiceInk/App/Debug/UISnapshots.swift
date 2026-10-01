@@ -124,17 +124,41 @@
             // Something the pages above render (likely the mock config sync) resets them; set them again.
             setSnapshotShortcuts()
             MainWindowNavigation.shared.selectedView = .dashboard
-            shot("page-home-empty", titled: true) { ContentView().modelContainer(empty) }
+            shot("page-home-empty", main: true, titled: true) { ContentView().modelContainer(empty) }
             // Home's week panel on each HomeFeedbackFixture week (with data, only older dictations, too few, Auto Learn
-            // off, few pastes watched, nothing last week), each loaded through WeekStatsLoader and checked first.
+            // off, few pastes watched, nothing last week), each loaded through WeekStatsLoader and checked first. At
+            // 760 pt, and the longer-text weeks again at 620 pt, about what the panel gets in the smallest window.
             for scenario in HomeFeedbackFixture.scenarios() {
                 let week = HomeFeedbackFixture.load(scenario)
-                shot("home-feedback-\(scenario.name)", main: true, fit: true) {
+                let narrow = ["data", "few", "auto-learn-off", "low-coverage"].contains(scenario.name)
+                for (suffix, width) in [("", 760.0)] + (narrow ? [("-narrow", 620.0)] : []) {
+                    shot("home-feedback-\(scenario.name)\(suffix)", main: true, fit: true) {
+                        HomeWeekPanelContent(
+                            stats: week, modeSummary: "⌥ · Dictation · Large v3 Turbo (Quantized)",
+                            isAutoLearnEnabled: scenario.isAutoLearnEnabled
+                        )
+                        .frame(width: width)
+                        .padding(AppTheme.Spacing.x6)
+                    }
+                }
+            }
+            // Big numbers and a long mode summary in the narrow width: a year-long streak's worth of words, hours of
+            // audio, a mode with a long name on a custom model.
+            if let data = HomeFeedbackFixture.scenarios().first {
+                var week = HomeFeedbackFixture.load(data)
+                week.words = 1_284_337
+                week.sessions = 12_408
+                week.audioDuration = 131 * 3_600 + 47 * 60
+                week.streakDays = 61
+                week.previousWordsToDate = 1_096_000
+                week.dailyWords = [212_004, 318_920, 297_113, 456_300, 0, 0, 0]
+                shot("home-feedback-long", main: true, fit: true) {
                     HomeWeekPanelContent(
-                        stats: week, modeSummary: "⌥ · Dictation · Large v3 Turbo (Quantized)",
-                        isAutoLearnEnabled: scenario.isAutoLearnEnabled
+                        stats: week,
+                        modeSummary: "⌃⌥⌘ Space · Customer Support Replies (Formal) · openai/gpt-4o-transcribe-2026-09-preview",
+                        isAutoLearnEnabled: true
                     )
-                    .frame(width: 760)
+                    .frame(width: 620)
                     .padding(AppTheme.Spacing.x6)
                 }
             }
@@ -214,7 +238,8 @@
             ModeView.snapshotEditsEnhancedMode = false
             ModeConfigFormView.snapshotExpandsContext = false
             // The first mode on local Whisper with Auto-detect: under the language, this Mac's detection time from
-            // its last dictations with that model; with a model it hasn't dictated with, the sentence without one.
+            // its last dictations with that model; with a model it hasn't dictated with, the sentence without one;
+            // then fixed to Chinese, as the suggestion leaves it (the picker shows how to get back to Auto-detect).
             if let first = ModeManager.shared.configurations.first {
                 let turbo = "ggml-large-v3-turbo-q5_0"
                 app.whisperModelManager.availableModels = [turbo, "ggml-base"].map {
@@ -233,9 +258,11 @@
                 }
                 try? full.mainContext.save()
                 var local = first
-                local.selectedLanguage = "auto"
-                for (name, model) in [("local-auto", turbo), ("local-auto-new", "ggml-base")] {
+                for (name, model, language) in [
+                    ("local-auto", turbo, "auto"), ("local-auto-new", "ggml-base", "auto"), ("local-fixed", turbo, "zh"),
+                ] {
                     local.selectedTranscriptionModelName = model
+                    local.selectedLanguage = language
                     ModeManager.shared.updateConfiguration(local)
                     shot("sheet-mode-editor-\(name)", main: true, fullPage: true, titled: true) { ContentView() }
                 }
