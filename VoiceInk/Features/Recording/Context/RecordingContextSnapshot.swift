@@ -11,6 +11,13 @@ struct RecordingContextSnapshot {
     var appBundleID: String?
 }
 
+extension Transcription {
+    func setSourceApp(from snapshot: RecordingContextSnapshot?) {
+        sourceAppName = snapshot?.appName
+        sourceAppBundleID = snapshot?.appBundleID
+    }
+}
+
 @MainActor
 final class RecordingContextSnapshotStore {
     private(set) var snapshot = RecordingContextSnapshot()

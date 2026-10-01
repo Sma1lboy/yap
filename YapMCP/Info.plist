@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Yap.app's languages. With them the helper picks the same language from AppleLanguages as the app and gets
+	     the same Locale.current, so get_meeting's dates and headings match History's export. mcp-check fails when
+	     this list and the app's .lproj folders differ. -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>de</string>
+		<string>fr</string>
+		<string>zh-Hans</string>
+		<string>zh-Hant</string>
+	</array>
+</dict>
+</plist>

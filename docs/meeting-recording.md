@@ -23,6 +23,8 @@ One shortcut (right ⌘ + Space by default) starts a long recording of the micro
 
 Permission: `NSAudioCaptureUsageDescription` ("System Audio Recording Only"). macOS asks the first time the tap is used. There's no API to query the answer: when it's denied, the tap still runs but delivers only zeros. If system audio is all zeros 8 s in, Yap says so, with a button to the Privacy settings. The message allows for the call simply not having started.
 
+Agents (Claude Code, Cursor, Codex…) can read saved meetings through Yap's local, read-only MCP server, `Yap.app/Contents/Helpers/yap-mcp`: a list, and each meeting as the same Markdown as History's export (`MeetingMarkdown.swift`, compiled into both). See `docs/mcp.md`.
+
 ## Verified here
 
 `make meeting-files-check MODEL=<ggml-large-v3-turbo-q5_0.bin> [NOTES=1]` runs the whole pipeline without any capture permission. It builds a one-minute test meeting from `setup/asr/clips`: the Tingting clips are "Me", the Reed clips "Others", taking turns. It launches the mock identity with `--meeting-files mic.wav system.wav` and prints the result. Results on 2026-09-26 (M4 Pro):
@@ -55,7 +57,7 @@ Long meetings, 2026-09-30, `make meeting-long-check MODEL=<ggml-large-v3-turbo-q
 Self-checks at launch cover:
 - call detection (`MeetingCallPolicy`, a pure function of timed microphone snapshots and Yap's state): the 5 s debounce, once per call and again after 10 s off, not while recording, in the consent note, finishing or dictating, a notification on screen defers the prompt without dropping it, Yap's own process and unknown bundle IDs never count, helpers and WebKit's GPU process by their responsible app, whole bundle IDs only, the browser's wording, the meeting app named before the browser, the 10 s end debounce, once per end, apps that join during the recording, nothing after the meeting ended;
 - cutting and dropping pieces, the timeline, and the WAV writer;
-- the transcript and Markdown format, splitting long transcripts, the timeout;
+- the transcript and Markdown format (also without the transcript, as yap-mcp's `include_transcript: false` gives it), the speakers read back from a saved transcript (yap-mcp's `list_meetings`), splitting long transcripts, the timeout;
 - mapping diarizer turns to `Others n` (order, noise speakers, one speaker, no overlap, no number for a speaker who wins no piece, old `segments.json`);
 - echo (`MeetingEcho`): the user's frames only 6 dB above the predicted echo and above the noise floor; the noise floor; shared text in Chinese and English (width, case and punctuation folded; 4 CJK characters or 8 letters; a misheard word between two runs), cutting it without dangling punctuation; each decision boundary (0.5 s of echo, 0.5 s and 3 s of the user, half the text, nothing left); the delay and gain found in a synthetic echo and none with headphones; the transcript without echo pieces; `echo` / `textWithEcho` read back and an old `segments.json` without them;
 - speakers after saving: turns to labels or the reason, which reasons are kept on the entry as failures, the stored status read back;

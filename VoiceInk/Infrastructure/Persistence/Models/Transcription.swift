@@ -46,8 +46,6 @@ final class Transcription {
     /// transcriptions of imported files have them.
     var segmentsJSON: String?
 
-    var timedSegments: [TimedSegment] { TimedSegments.decode(segmentsJSON) }
-
     /// nil for a dictation; `meetingKind` for a meeting recording (MeetingRecorder): notes in `enhancedText`,
     /// the timestamped transcript in `text`, the mix of both channels in `audioFileURL`.
     var kind: String?
@@ -60,8 +58,6 @@ final class Transcription {
     /// A meeting whose remote speakers are still being told apart in the background: "pending"
     /// (`SpeakerSplitSkip.pendingStatus`); why that failed (a `SpeakerSplitSkip` raw value); nil otherwise.
     var meetingSpeakerStatus: String?
-
-    var meetingSpeakerNames: MeetingSpeakerNames { .decode(meetingSpeakerNamesJSON) }
 
     init(
         text: String,
@@ -95,11 +91,6 @@ final class Transcription {
         self.modeName = modeName
         self.modeEmoji = modeEmoji
         self.transcriptionStatus = transcriptionStatus.rawValue
-    }
-
-    func setSourceApp(from snapshot: RecordingContextSnapshot?) {
-        sourceAppName = snapshot?.appName
-        sourceAppBundleID = snapshot?.appBundleID
     }
 
     func markAsCanceledTranscription(

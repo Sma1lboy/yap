@@ -390,7 +390,7 @@ struct HistoryView<Header: View>: View {
 
             if selectedTranscriptions.count == 1, let meeting = selectedTranscriptions.first, meeting.isMeeting {
                 Button(action: {
-                    if let error = MeetingExport.saveMarkdown(MeetingEdits.markdown(for: meeting)) {
+                    if let error = MeetingExport.saveMarkdown(MeetingNotes.markdown(for: meeting)) {
                         NotificationManager.shared.showNotification(
                             title: String(format: String(localized: "The Markdown file couldn't be written: %@"), error),
                             type: .error)
@@ -1154,7 +1154,7 @@ struct HistoryCardRow: View {
     /// text ("原文", "已润色"): the words the meeting panel uses.
     private func tabTitle(_ tab: TranscriptionTab) -> Text {
         guard transcription.isMeeting else { return Text(LocalizedStringKey(tab.rawValue)) }
-        return tab == .enhanced ? Text(MeetingNotes.notesTitle) : Text("Transcript")
+        return tab == .enhanced ? Text(MeetingNotes.notesTitle()) : Text("Transcript")
     }
 
     private var expandedContent: some View {

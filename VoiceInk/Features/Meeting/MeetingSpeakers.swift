@@ -140,7 +140,7 @@ extension MeetingRecorder {
             result.speakersSkipped = skip
             result.speakersLabeledLater = labeled != segments
             result.transcript = transcription.text
-            result.markdown = MeetingEdits.markdown(for: transcription)
+            result.markdown = MeetingNotes.markdown(for: transcription)
         }
     }
 
