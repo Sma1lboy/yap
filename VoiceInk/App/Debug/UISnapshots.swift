@@ -138,6 +138,14 @@
                     .padding(AppTheme.Spacing.x6)
                 }
             }
+            // Insights' summary with the same time-saved estimate and its explanation (12 of 38 dictations timed).
+            shot("insights-summary", main: true, fit: true) {
+                DashboardEditorialSummaryCard(
+                    summary: DashboardTimeSavedSummary(timeSaved: 20 * 60, wordCount: 1_562, sessionCount: 38, timedPastes: 12)
+                )
+                .frame(width: 760)
+                .padding(AppTheme.Spacing.x6)
+            }
 
             for state in YapCloud.SnapshotState.allCases where state != .funded {
                 YapCloud.shared.applySnapshotState(state)

@@ -59,8 +59,9 @@ nothing confirms the insert, and no desktop paste success rate has been measured
 - **What counts** (`SessionMetric.isRealPaste`, `measuredPasteWait`): `source` `recorder`, a `stopSource` other than
   `file` (so not `make dictation-latency`, and not older metrics or recovered recordings, which have none),
   `pasteOutcome` `pasted`, and a `stopToPasteCommand` that is there, finite and ≥ 0. Scratchpad, clipboard-only and
-  failed pastes, responses and commands don't count. Meetings and imported files never get a SessionMetric. A
-  missing time is left out, never taken as 0.
+  failed pastes, responses and commands don't count. New metrics come only from the dictation pipeline (meetings and
+  the Transcribe Audio page don't run it); metrics the stats migration rebuilt from History have no `stopSource`, so
+  they don't count either. A missing time is left out, never taken as 0.
 - **Week**: Monday 00:00 to now on the dashboard calendar (this Mac's time zone). Last week is cut at the same weekday
   and time.
 - **At least 5**: with fewer than 5 timed pastes the card shows how many so far and that it needs 5, no median. Only
@@ -70,7 +71,7 @@ nothing confirms the insert, and no desktop paste success rate has been measured
 **Time saved** (Home's tile and Insights, one formula, `DashboardTimeSaving.timeSaved`) is an estimate:
 `words / 40 wpm − recording time − sum of the measured stop → ⌘V waits`, never below 0. Dictations without a measured
 wait take nothing off for it; the line under the panel (and under Insights' summary) says how many of the dictations
-were timed, that editing time isn't counted, and that Chinese word counts (one per character) don't compare directly
+were timed, that editing time isn't counted, and that Chinese word counts (`WordCounter`, `NLTokenizer` words) don't compare directly
 with an English typing speed. Insights' snapshot cache (`dashboard-stats-snapshot.json`) went to version 3 for the
 new totals; an older one is dropped and recomputed. stats.store itself is unchanged.
 
