@@ -168,6 +168,12 @@
             UserDefaults.standard.set(true, forKey: AgentAccess.enabledKey)
             UserDefaults.standard.set(true, forKey: AgentAccess.dictationsKey)
             shot("settings-agent-access-on", main: true, fullPage: true, titled: true) { ContentView() }
+            // Installed somewhere with a long path and spaces: the path and the commands are cut in the middle,
+            // the buttons stay.
+            AgentAccessSettingsSection.snapshotHelperPath =
+                "/Users/tingting.zhang/Applications/Yap Builds/Yap 1.11 (Beta 3).app/Contents/Helpers/yap-mcp"
+            shot("settings-agent-access-long-path", main: true, fullPage: true, titled: true) { ContentView() }
+            AgentAccessSettingsSection.snapshotHelperPath = nil
             UserDefaults.standard.removeObject(forKey: AgentAccess.enabledKey)
             UserDefaults.standard.removeObject(forKey: AgentAccess.dictationsKey)
             SettingsView.snapshotQuery = ""

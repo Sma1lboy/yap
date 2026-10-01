@@ -5,7 +5,13 @@ import SwiftUI
 struct AgentAccessSettingsSection: View {
     @AppStorage(AgentAccess.enabledKey) private var isEnabled = false
     @AppStorage(AgentAccess.dictationsKey) private var includesDictations = false
-    private let helperPath = AgentConnection.helperURL().path
+    #if DEBUG
+        /// make ui-snapshots: a helper path to show instead of this copy's (a long one, to see how it's cut).
+        @MainActor static var snapshotHelperPath: String?
+        private let helperPath = snapshotHelperPath ?? AgentConnection.helperURL().path
+    #else
+        private let helperPath = AgentConnection.helperURL().path
+    #endif
 
     var body: some View {
         Section {

@@ -147,7 +147,7 @@ Current picks (Sept 2026): transcription `microsoft/mai-transcribe-2` ($0.10/h; 
 
 ## Use your Yap data in Claude Code / Cursor / Codex
 
-Yap ships a small read-only MCP server inside the app, `Yap.app/Contents/Helpers/yap-mcp`. Your agent starts it as a subprocess and talks to it over stdin/stdout: it opens no network port, sends nothing anywhere, and works whether or not Yap is running. Each call copies Yap's local database and reads the copy; Yap's own files are only copied, never opened by SQLite.
+Yap ships a small read-only MCP server inside the app, `Yap.app/Contents/Helpers/yap-mcp`. Your agent starts it as a subprocess and talks to it over stdin/stdout: it opens no network port, sends nothing anywhere, and works whether or not Yap is running. It reads a private copy of Yap's local database, copied again whenever Yap has written since the last call; Yap's own files are only copied, never opened by SQLite.
 
 It's **off** until you turn it on in **Settings › Agent Access (MCP)**:
 
