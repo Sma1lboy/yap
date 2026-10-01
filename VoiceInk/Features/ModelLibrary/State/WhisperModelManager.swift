@@ -118,6 +118,22 @@ class WhisperModelManager: ObservableObject {
         try? await loadTask?.value
     }
 
+    /// The loaded model and its context, readable off the main actor: set once a load has finished, cleared when the
+    /// release starts.
+    private final class LoadedSnapshot: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value: (name: String, context: WhisperContext)?
+        func set(_ new: (name: String, context: WhisperContext)?) { lock.withLock { value = new } }
+        func context(named name: String) -> WhisperContext? { lock.withLock { value?.name == name ? value?.context : nil } }
+    }
+    private nonisolated let loadedSnapshot = LoadedSnapshot()
+
+    /// The context when the model named `name` is loaded, without waiting for the main actor, which is busy with the
+    /// recorder and History right after a stop (~20 ms). Nil otherwise: then `context(forModelNamed:)`.
+    nonisolated func loadedContext(named name: String) -> WhisperContext? {
+        loadedSnapshot.context(named: name)
+    }
+
     /// The shared context holding the model named `name`, for a transcription. A load already running (the
     /// shortcut-press preload) is waited for instead of started again, and a different loaded model is released
     /// before this one loads, so a dictation never holds two copies. `waited` is true when the transcription had to
@@ -157,6 +173,7 @@ class WhisperModelManager: ObservableObject {
 
             isModelLoaded = true
             loadedWhisperModel = model
+            if let whisperContext { loadedSnapshot.set((model.name, whisperContext)) }
         } catch {
             throw VoiceInkEngineError.modelLoadFailed
         }
@@ -392,6 +409,7 @@ class WhisperModelManager: ObservableObject {
         let releasing = whisperContext
         whisperContext = nil
         isModelLoaded = false
+        loadedSnapshot.set(nil)
         await releasing?.releaseResources()
         logger.notice("WhisperModelManager.cleanupResources: completed")
     }
@@ -496,9 +514,13 @@ extension WhisperModelManager: WhisperModelProvider {}
             let other = await ready("b")
             precondition(other?.waited == true && loads.names == ["a", "a", "b"])
             precondition(manager.loadedWhisperModel?.name == "b" && other?.context === manager.whisperContext)
+            // The off-main lookup follows: only the loaded model, gone once the release starts.
+            precondition(manager.loadedContext(named: "b") === manager.whisperContext)
+            precondition(manager.loadedContext(named: "a") == nil)
             let missing = await ready("missing")
             precondition(missing == nil && loads.names == ["a", "a", "b"])
             await manager.cleanupResources()
+            precondition(manager.loadedContext(named: "b") == nil)
         }
     }
 #endif

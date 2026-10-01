@@ -1,4 +1,5 @@
 import AVFoundation
+import Accelerate
 import Foundation
 import SwiftData
 import os
@@ -9,16 +10,18 @@ class WhisperTranscriptionService: TranscriptionService {
     private let modelsDirectory: URL
     private weak var modelProvider: (any WhisperModelProvider)?
     /// Source of dictionary words for the prompt; nil means no dictionary.
-    private let modelContext: ModelContext?
+    private let modelContainer: ModelContainer?
     /// The last transcription's timed segments (seconds from the start of the audio), for subtitle export.
     private(set) var lastSegments: [TimedSegment] = []
 
     init(modelsDirectory: URL, modelProvider: (any WhisperModelProvider)? = nil, modelContext: ModelContext? = nil) {
         self.modelsDirectory = modelsDirectory
         self.modelProvider = modelProvider
-        self.modelContext = modelContext
+        self.modelContainer = modelContext?.container
     }
 
+    /// Nothing here waits for the main actor when the model is loaded: right after a stop it is busy with the recorder
+    /// and History for about 20 ms.
     func transcribe(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext) async throws
         -> String
     {
@@ -31,20 +34,23 @@ class WhisperTranscriptionService: TranscriptionService {
 
         // The shared context: the preload the shortcut press started is waited for, never loaded a second time.
         let whisperContext: WhisperContext
-        do {
-            let ready = try await modelProvider.context(forModelNamed: model.name)
-            whisperContext = ready.context
-            if ready.waited { DictationTimeline.modelDidLoad() }
-        } catch {
-            logger.error("❌ Failed to load model: \(model.name, privacy: .public) - \(error, privacy: .public)")
-            throw VoiceInkEngineError.modelLoadFailed
+        if let loaded = modelProvider.loadedContext(named: model.name) {
+            whisperContext = loaded
+        } else {
+            do {
+                let ready = try await modelProvider.context(forModelNamed: model.name)
+                whisperContext = ready.context
+                if ready.waited { DictationTimeline.modelDidLoad() }
+            } catch {
+                logger.error("❌ Failed to load model: \(model.name, privacy: .public) - \(error, privacy: .public)")
+                throw VoiceInkEngineError.modelLoadFailed
+            }
         }
 
         let data = try Self.readAudioSamples(audioURL)
 
         await whisperContext.setLanguage(context.language)
-        await whisperContext.setPrompt(
-            WhisperPrompt.withVocabulary(context.prompt ?? "", words: await dictionaryWords()))
+        await whisperContext.setPrompt(WhisperPrompt.withVocabulary(context.prompt ?? "", words: dictionaryWords()))
 
         let success = await whisperContext.fullTranscribe(samples: data)
 
@@ -60,28 +66,40 @@ class WhisperTranscriptionService: TranscriptionService {
         return text
     }
 
-    private func dictionaryWords() async -> [(word: String, dateAdded: Date)] {
-        guard let modelContext else { return [] }
-        return await MainActor.run {
-            ((try? modelContext.fetch(FetchDescriptor<VocabularyWord>())) ?? []).map { ($0.word, $0.dateAdded) }
-        }
+    /// Read through a context of its own on this thread; the main context would wait for the main actor.
+    private func dictionaryWords() -> [(word: String, dateAdded: Date)] {
+        guard let modelContainer else { return [] }
+        let words = (try? ModelContext(modelContainer).fetch(FetchDescriptor<VocabularyWord>())) ?? []
+        return words.map { ($0.word, $0.dateAdded) }
     }
 
     static func readAudioSamples(_ url: URL) throws -> [Float] {
         samples(fromWAV: try Data(contentsOf: url))
     }
 
-    /// 16-bit PCM from `pcmDataOffset` on, scaled to -1...1. One pass over the bytes: slicing `Data` per sample took
-    /// 8 ms for an 8 s recording, between the stop and the decode.
+    /// Every Int16 sample's float, scaled as the decode always has (÷ 32767, clamped to -1...1). vDSP's own division
+    /// differs in the last bit for some values, so it looks these up instead.
+    private static let scaledSamples: [Float] = (0..<65_536).map { max(-1.0, min(Float($0 - 32_768) / 32767.0, 1.0)) }
+
+    /// 16-bit little-endian PCM from `pcmDataOffset` on, scaled to -1...1, in vDSP passes (the per-sample read it
+    /// replaced took 8 ms for 8 s of audio, between the stop and the decode).
     static func samples(fromWAV data: Data) -> [Float] {
         let start = pcmDataOffset(data)
         let count = max(0, (data.count - start) / 2)
-        return data.withUnsafeBytes { raw in
-            (0..<count).map { index in
-                let short = Int16(littleEndian: raw.loadUnaligned(fromByteOffset: start + 2 * index, as: Int16.self))
-                return max(-1.0, min(Float(short) / 32767.0, 1.0))
-            }
+        guard count > 0 else { return [] }
+        var shorts = [Int16](repeating: 0, count: count)
+        let bytes = data.startIndex + start..<data.startIndex + start + 2 * count
+        _ = shorts.withUnsafeMutableBytes { data.copyBytes(to: $0, from: bytes) }
+        var indices = [Float](repeating: 0, count: count)
+        var floats = [Float](repeating: 0, count: count)
+        var offset: Float = 32_768
+        let length = vDSP_Length(count)
+        indices.withUnsafeMutableBufferPointer { index in
+            vDSP_vflt16(shorts, 1, index.baseAddress!, 1, length)
+            vDSP_vsadd(index.baseAddress!, 1, &offset, index.baseAddress!, 1, length)
         }
+        vDSP_vindex(scaledSamples, indices, 1, &floats, 1, length)
+        return floats
     }
 
     /// Where the samples start. Apple's writers put a FLLR padding chunk before `data`, so the recorder's
