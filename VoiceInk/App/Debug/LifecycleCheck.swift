@@ -547,12 +547,13 @@
                 queued.cancel()
                 record("cancel-queued", "A", await queued.value)
                 record("cancel-queued", "long", await running.value)
-                // Cancelled 0.7 s into its decode step (for Nemotron, often still before the SDK's decode starts) and
-                // 3 s in (inside it; the 22-minute file takes transcribe.cpp ~7 s), each followed by a request that
-                // must come out as alone.
+                // Cancelled 0.7 s into its decode step and well inside it (10 s into Nemotron's ~39 s, 3 s into
+                // transcribe.cpp's ~7 s), each followed by a request that must come out as alone.
                 record("cancel-decoding", "long", await cancel(start(big), in: .decoding, after: 0.7))
                 record("cancel-after", "A", await transcribe(a))
-                record("cancel-decoding-late", "long", await cancel(start(big), in: .decoding, after: 3))
+                let late: Double = configuration.model.provider == .fluidAudio ? 10 : 3
+                record("cancel-decoding-late", "long",
+                       (await cancel(start(big), in: .decoding, after: late)).merging(["offset": late]) { $1 })
                 record("cancel-after", "A", await transcribe(a))
 
                 // Quit one second into a transcription, through NSApplication.terminate from the run loop.
@@ -562,7 +563,12 @@
                     forName: NSApplication.willTerminateNotification, object: nil, queue: .main
                 ) { _ in
                     MainActor.assumeIsolated {
-                        IsolationCheck.emit(["event": "will terminate", "loaded": self.loaded])
+                        // Work still running at the exit: Quit didn't wait for it. (The in-flight request's own result
+                        // is recorded from a main-actor task that may not run again before the exit.)
+                        IsolationCheck.emit([
+                            "event": "will terminate", "loaded": self.loaded,
+                            "running": LocalModelActivity.shared.runningCount,
+                        ])
                     }
                 }
                 Task { @MainActor in

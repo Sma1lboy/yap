@@ -167,22 +167,22 @@ else:  # tcpp, fluid: the backend suite
     for r in by("cancel-queued", "long"):
         check(r.get("ok") is True, f"the long request beside a cancelled one failed: {show(r)}")
     for r in by("cancel-decoding", "long") + by("cancel-decoding-late", "long"):
+        # Both stop on a cancel: transcribe.cpp between decode steps (its abort callback), Nemotron at its next Core ML
+        # prediction (the async API throws for a cancelled task). The step is shown as one that stops.
         check(r.get("cancelled") is True, f"{r['phase']}: decoding request wasn't cancelled: {show(r)}")
-        if suite == "fluid":
-            # Nemotron's decode doesn't stop on a cancel: the wait is shown as a step that can't be stopped, and the
-            # request still ends cancelled (nothing published). How long it took is reported only.
-            check(r.get("interruptibleAtCancel") is False and r.get("markedCancelled") is True,
-                  f"{r['phase']}: FluidAudio's decode not shown as cancelled and unstoppable: {show(r)}")
-            print(f"  {r['phase']}: the cancel took {r.get('afterCancel', 0):.2f} s (Nemotron's decode can't be stopped)")
-        else:
-            check(r.get("afterCancel", 1e9) <= 2.0, f"{r['phase']}: transcribe.cpp took {r.get('afterCancel', 0):.2f} s to stop")
+        check(r.get("reachedStage") is True and r.get("stageAtCancel") == "decoding",
+              f"{r['phase']}: the cancel didn't come during the decode: {show(r)}")
+        check(r.get("interruptibleAtCancel") is True and r.get("markedCancelled") is True,
+              f"{r['phase']}: not shown as a cancelled step that stops: {show(r)}")
+        check(r.get("afterCancel", 1e9) <= 2.0, f"{r['phase']}: took {r.get('afterCancel', 0):.2f} s to stop (limit 2 s)")
     events = [l.get("event") for l in lines if "event" in l]
     check("terminate" in events and "will terminate" in events, "no Quit through NSApplication")
     quit_at = next((l["t"] for l in lines if l.get("event") == "terminate"), None)
     will = next((l for l in lines if l.get("event") == "will terminate"), {})
     check(will.get("loaded") is False, "model still loaded at willTerminate")
+    check(will.get("running") == 0, f"{will.get('running')} local work still running at willTerminate")
     in_flight = by("quit-in-flight", "long")
-    check(bool(in_flight) and in_flight[0]["t"] <= will.get("t", 0), "Quit didn't wait for the transcription in flight")
+    check(not in_flight or in_flight[0].get("ok") is True, f"the transcription in flight at Quit failed: {in_flight}")
     waits = [l for l in lines if l.get("event") == "quit-wait" and l["t"] <= will.get("t", 0)]
     if quit_at and will:
         took = will["t"] - quit_at

@@ -166,7 +166,9 @@ class FluidAudioTranscriptionService: TranscriptionService {
         try await ensureModelsLoaded(for: version(for: model))
     }
 
-    /// Reported to LocalModelActivity as not interruptible: only the start of a decode checks for a cancel.
+    /// Reported to LocalModelActivity as a decode that stops on a cancel for Nemotron (its chunks run Core ML's async
+    /// `prediction(from:)`, which throws when the task is cancelled: a cancel 10 s into a ~39 s decode returned in
+    /// 0.02 s in `make lifecycle-check`), and as one that may not for the other FluidAudio models (not run).
     func transcribe(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext) async throws
         -> String
     {
@@ -175,7 +177,8 @@ class FluidAudioTranscriptionService: TranscriptionService {
         defer { turns.give() }
         guard !turns.isClosed else { throw VoiceInkEngineError.modelLoadFailed }
         return try await LocalModelActivity.shared.run(
-            .transcription(LocalModelActivity.requester), stage: .decoding, interruptible: false
+            .transcription(LocalModelActivity.requester), stage: .decoding,
+            interruptible: FluidAudioModelManager.isNemotronModel(named: model.name)
         ) {
             try await transcribeInTurn(audioURL: audioURL, model: model, context: context)
         }
@@ -221,7 +224,7 @@ class FluidAudioTranscriptionService: TranscriptionService {
             if speechAudio.count + trailingSilenceSamples <= maxSingleChunkSamples {
                 speechAudio += [Float](repeating: 0, count: trailingSilenceSamples)
             }
-            // Nemotron's process/finish don't stop for a cancelled task; check before starting the decode.
+            // Also checked here, before the decode starts (the language and reset above don't check).
             try Task.checkCancellation()
             _ = try await nemotronAsrManager.process(samples: speechAudio)
             let text = try await nemotronAsrManager.finish()

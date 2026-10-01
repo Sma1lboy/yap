@@ -167,5 +167,9 @@ final class LocalModelActivity: ObservableObject, @unchecked Sendable {
             self.works = works
             self.waits = waits
         }
+
+        /// make lifecycle-check: the work running right now, not waiting for the main-actor copy (read at
+        /// willTerminate, after which nothing more runs on the main actor).
+        var runningCount: Int { lock.withLock { running.count } }
     #endif
 }

@@ -102,7 +102,7 @@ machine_state() {
 		pmset -g therm
 		sysctl vm.swapusage
 		vm_stat
-		top -l 1 -n 12 -o cpu -stats pid,command,cpu,threads,state
+		top -l 2 -s 1 -n 12 -o cpu -stats pid,command,cpu,threads,state  # the second sample has the CPU use
 	} >"$1" 2>&1
 }
 
