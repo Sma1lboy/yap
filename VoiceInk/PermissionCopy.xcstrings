@@ -1,0 +1,202 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Allow Microphone and Accessibility to continue. Screen Recording is optional for dictation.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erlaube Mikrofon und Bedienungshilfen, um fortzufahren. Bildschirmaufnahme ist für Diktate optional."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorise le microphone et l’accessibilité pour continuer. L’enregistrement de l’écran est facultatif pour dicter."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许麦克风和辅助功能权限后即可继续。听写不要求屏幕录制权限。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允許麥克風和輔助使用權限後即可繼續。聽寫不要求螢幕錄製權限。"
+          }
+        }
+      }
+    },
+    "Screen Recording (optional)": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bildschirmaufnahme (optional)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrement de l’écran (facultatif)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屏幕录制（可选）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "螢幕錄製（選用）"
+          }
+        }
+      }
+    },
+    "Used for screen context and meeting audio from other apps. You can allow it later in Settings.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Für Bildschirmkontext und Meeting-Audio aus anderen Apps. Du kannst dies später in den Einstellungen erlauben."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour le contexte à l’écran et l’audio des réunions provenant d’autres apps. Tu peux l’autoriser plus tard dans les réglages."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用于读取屏幕上下文和录制会议中其他 app 的声音。也可以稍后在设置中允许。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用於讀取螢幕上下文和錄製會議中其他 app 的聲音。也可以稍後在設定中允許。"
+          }
+        }
+      }
+    },
+    "Finish earlier permissions first": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuerst vorherige Berechtigungen erlauben"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autorise d’abord les permissions précédentes"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请先完成前面的权限设置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請先完成前面的權限設定"
+          }
+        }
+      }
+    },
+    "If macOS asks you to restart, quit Yap and open it again. You can also continue without Screen Recording.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wenn macOS einen Neustart verlangt, beende Yap und öffne es erneut. Du kannst auch ohne Bildschirmaufnahme fortfahren."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si macOS demande un redémarrage, quitte Yap et rouvre-le. Tu peux aussi continuer sans l’enregistrement de l’écran."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果 macOS 要求重启，请退出 Yap 后重新打开。也可以不启用屏幕录制，直接继续。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果 macOS 要求重新啟動，請結束 Yap 後重新開啟。也可以不啟用螢幕錄製，直接繼續。"
+          }
+        }
+      }
+    },
+    "Quit Yap": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yap beenden"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitter Yap"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退出 Yap"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "結束 Yap"
+          }
+        }
+      }
+    },
+    "Waiting": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wartet"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "待设置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "待設定"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.1"
+}

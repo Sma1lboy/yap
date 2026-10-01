@@ -50,7 +50,7 @@ enum OnboardingStage: String, CaseIterable {
     var subtitle: String {
         switch self {
         case .permissions:
-            return String(localized: "Allow Yap to work across all your apps.")
+            return String(localized: "Allow Microphone and Accessibility to continue. Screen Recording is optional for dictation.", table: "PermissionCopy")
         case .microphone:
             return String(localized: "Pick the microphone Yap should use for recordings.")
         case .model:
@@ -102,9 +102,9 @@ enum OnboardingPermissionKind: String, CaseIterable, Identifiable {
 
         case .screenRecording:
             return OnboardingPermissionDescriptor(
-                title: String(localized: "Screen Recording"),
+                title: String(localized: "Screen Recording (optional)", table: "PermissionCopy"),
                 subtitle: String(
-                    localized: "Yap reads visible screen content to improve the accuracy of transcripts.")
+                    localized: "Used for screen context and meeting audio from other apps. You can allow it later in Settings.", table: "PermissionCopy")
             )
         }
     }

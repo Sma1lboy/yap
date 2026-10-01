@@ -83,8 +83,10 @@ final class OnboardingPermissionController {
         switch permission {
         case .microphone:
             return permissionStatus.requiresSettings ? String(localized: "Open Settings") : String(localized: "Allow")
-        case .accessibility, .screenRecording:
-            return String(localized: "Allow")
+        case .accessibility:
+            return String(localized: "Open Settings")
+        case .screenRecording:
+            return coordinator.hasRequestedScreenRecording ? String(localized: "Open Settings") : String(localized: "Allow")
         }
     }
 
@@ -162,6 +164,12 @@ final class OnboardingPermissionController {
     }
 
     private func requestScreenRecording() {
+        if coordinator.hasRequestedScreenRecording {
+            openPrivacySettings(.screenRecording)
+            startPollingPermissionStatus()
+            return
+        }
+
         coordinator.hasRequestedScreenRecording = true
         startPollingPermissionStatus()
 
