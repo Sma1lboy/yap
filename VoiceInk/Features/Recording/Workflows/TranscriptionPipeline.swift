@@ -149,8 +149,7 @@ class TranscriptionPipeline {
             text = try await step.value
             if session == nil { transcription.yapCloudTranscriptionGenerationID = billed.last }
             timeline?.mark(.transcribed)
-            text = TranscriptionOutputFilter.filter(text)
-            text = ChineseCleanup.apply(text, options: ChineseCleanup.currentOptions)
+            text = DictationText.clean(text, chinese: ChineseCleanup.currentOptions)
             if TranscriptionOutputFilter.isKnownHallucination(text) { throw RecordedAudioIssue.hallucinated(text) }
             let transcriptionDuration = Date().timeIntervalSince(transcriptionStart)
 
@@ -175,11 +174,8 @@ class TranscriptionPipeline {
                     ?? resolvedOutputConfiguration.mode ?? transcriptionConfiguration.mode
             )
 
-            if formattingConfiguration.isTextFormattingEnabled {
-                text = ParagraphFormatter.format(text)
-            }
-
-            text = WordReplacementService.shared.applyReplacements(to: text, using: modelContext)
+            text = DictationText.finish(
+                text, paragraphs: formattingConfiguration.isTextFormattingEnabled, replacementsIn: modelContext)
             let cleanedText = text
             timeline?.mark(.processed)
 
