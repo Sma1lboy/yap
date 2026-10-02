@@ -25,17 +25,19 @@ Text the user said stays as recognized:
 - Paths and names that start with punctuation: `./scripts/build.sh`, `../src/main.swift`, `.env`,
   `.github/workflows/ci.yml`, `:wq`, at the start of the text, of a line, or after a spoken 换行.
 - Flags (`--amend`, `-v`), calls (`foo.bar(userId)`, `console.log("hi")`), indexes (`items[0]`, `map[key]`), JSON,
-  inline tags (`用 <b>粗体</b> 表示`), generics (`Map<String, Int>`), `yyyy-mm-dd`.
+  inline tags (`用 <b>粗体</b> 表示`), generics (`Map<String, Int>`), `yyyy-mm-dd`, Markdown links
+  (`[the docs](https://…)`) and task boxes (`- [x] done`).
 - Asides in brackets inside a sentence: 我明天(周三)有空, "The meeting (with Bob) is at 3pm.", 我觉得(笑)可以.
 - Line breaks. Runs of spaces become one space; three or more line breaks become one blank line. Paragraph formatting
   splits each line on its own and keeps the breaks between them.
 
 ## What is taken out
 
-- A word or words in square brackets, wherever they are, unless attached to the word before: `[Music]`,
-  `[BLANK_AUDIO]`, `Hello [inaudible] world`.
-- A parenthesized or braced annotation, or a `<tag>…</tag>` block, on a line of its own or as the whole transcript:
-  `(upbeat music)`, a `(laughs)` line between two sentences. The line goes with it.
+- Two or more letters in square brackets, wherever they are, unless attached to the word before or followed by `(`
+  (a link): `[Music]`, `[BLANK_AUDIO]`, `Hello [inaudible] world`.
+- A parenthesized or braced annotation, or a `<tag>…</tag>` block on one line, on a line of its own or as the whole
+  transcript: `(upbeat music)`, a `(laughs)` line between two sentences, `<div>hello</div>` alone. The line goes with
+  it.
 - Filler words as words of their own (`um, so…`), not inside another token (the `mm` in `yyyy-mm-dd`).
 - Punctuation left at the start of the text or a line with nothing attached: `。。好的` → 好的, `...` → empty.
 
@@ -44,12 +46,14 @@ Text the user said stays as recognized:
 Before, the output filter removed everything in `()`, `[]` and `{}` and every `<tag>…</tag>` block, and collapsed line
 breaks into spaces; Chinese cleanup removed any punctuation at the start of a line; paragraph formatting joined lines.
 `foo.bar(userId)` came out as `foo.bar`, `./build.sh` as `/build.sh`, a JSON object as nothing. The rule now is
-by shape and position, not a list of identifiers. One intended change: an annotation in parentheses inside a sentence,
-such as `I think (laughs) it works`, now stays; a stray annotation can be deleted, a lost word can't be recovered.
+by shape and position, not a list of identifiers. Intended changes: an annotation in parentheses inside a sentence,
+such as `(laughs) So anyway` or 我觉得(笑)可以, now stays (a stray annotation can be deleted, a lost word can't be
+recovered); a tag block spanning several lines is no longer removed. Imported audio files and meeting segments get the
+same filter, so an inline `(laughs)` in a meeting transcript now stays too.
 
 ## Checking it
 
-`make text-fidelity-check` runs these same functions on 63 fixed inputs (no model, recording, clipboard or text field;
+`make text-fidelity-check` runs these same functions on 65 fixed inputs (no model, recording, clipboard or text field;
 mock identity under the mock lock), prints every step's output per case, and compares the final text with
 `scripts/text-fidelity-check.py`. It also runs the self-checks of the output filter, Chinese cleanup, paragraph
 formatter and replacement text. This says what the rules do to text that's already recognized; it says nothing about
