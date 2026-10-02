@@ -53,6 +53,16 @@ EXPECTED = {
     "aside-chinese": {"filter": "我明天(周三)有空", "output": "我明天(周三)有空"},
     "aside-english": {"filter": "The meeting (with Bob) is at 3pm.", "output": "The meeting (with Bob) is at 3pm."},
     "aside-laugh-inline": {"output": "我觉得(笑)可以"},
+    # Brackets whose words aren't known noise: kept wherever they are.
+    "bracket-word-alone": {"filter": "[options]", "output": "[options]"},
+    "bracket-placeholder": {"filter": "Use [projectName] here", "output": "Use [projectName] here"},
+    "bracket-line-start-chinese": {"output": "[待办] 明天交周报"},
+    "paren-word-alone": {"filter": "(Tuesday)", "output": "(Tuesday)"},
+    "paren-line-start": {"output": "(Tuesday) works for me"},
+    "paren-own-line": {"filter": "Dates:\n(Tuesday)\nor Friday", "output": "Dates:\n(Tuesday)\nor Friday"},
+    "paren-chinese-line-start": {"output": "(周三)有空"},
+    "tag-alone": {"filter": "<div>hello</div>", "output": "<div>hello</div>"},
+    "brace-word-alone": {"filter": "{name}", "output": "{name}"},
     # Spacing and lines.
     "repeated-spaces": {"output": "a b c"},
     "line-break": {"output": "第一行\n第二行"},
@@ -61,6 +71,8 @@ EXPECTED = {
     # Noise and hallucinations: still taken out.
     "noise-music": {"output": ""},
     "noise-blank-audio": {"output": ""},
+    "blank-audio-inline": {"output": "Hello world"},
+    "blank-audio-own-line": {"output": "Okay.\nSo anyway"},
     "noise-paren-alone": {"output": ""},
     "noise-inline-square": {"output": "Hello world"},
     "noise-leading-square": {"output": "Hello there"},

@@ -56,6 +56,16 @@
             Case(name: "aside-chinese", input: "我明天(周三)有空"),
             Case(name: "aside-english", input: "The meeting (with Bob) is at 3pm."),
             Case(name: "aside-laugh-inline", input: "我觉得(笑)可以"),
+            // Brackets whose words aren't known noise: same shape as [Music] or (laughs), but text the user said.
+            Case(name: "bracket-word-alone", input: "[options]"),
+            Case(name: "bracket-placeholder", input: "Use [projectName] here"),
+            Case(name: "bracket-line-start-chinese", input: "[待办] 明天交周报"),
+            Case(name: "paren-word-alone", input: "(Tuesday)"),
+            Case(name: "paren-line-start", input: "(Tuesday) works for me"),
+            Case(name: "paren-own-line", input: "Dates:\n(Tuesday)\nor Friday"),
+            Case(name: "paren-chinese-line-start", input: "(周三)有空"),
+            Case(name: "tag-alone", input: "<div>hello</div>"),
+            Case(name: "brace-word-alone", input: "{name}"),
             // Spacing and lines.
             Case(name: "repeated-spaces", input: "a  b   c"),
             Case(name: "line-break", input: "第一行\n第二行"),
@@ -64,6 +74,8 @@
             // Noise and hallucinations, which stay handled.
             Case(name: "noise-music", input: "[Music]"),
             Case(name: "noise-blank-audio", input: "[BLANK_AUDIO]"),
+            Case(name: "blank-audio-inline", input: "Hello [BLANK_AUDIO] world"),
+            Case(name: "blank-audio-own-line", input: "Okay.\n[BLANK_AUDIO]\nSo anyway"),
             Case(name: "noise-paren-alone", input: "(upbeat music)"),
             Case(name: "noise-inline-square", input: "Hello [inaudible] world"),
             Case(name: "noise-leading-square", input: "[Music] Hello there"),
