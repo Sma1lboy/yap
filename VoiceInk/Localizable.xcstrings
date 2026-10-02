@@ -977,6 +977,88 @@
         }
       }
     },
+    "%lld already in the folder with the same content; nothing added for them." : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld liegt schon mit gleichem Inhalt im Ordner; dafür wurde nichts hinzugefügt."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld liegen schon mit gleichem Inhalt im Ordner; dafür wurde nichts hinzugefügt."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld already in the folder with the same content; nothing added for it."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld already in the folder with the same content; nothing added for them."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fichier déjà présent avec le même contenu ; rien n’a été ajouté."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld fichiers déjà présents avec le même contenu ; rien n’a été ajouté."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 个已在文件夹里且内容相同，没有再添加。"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 個已在資料夾裡且內容相同，沒有再新增。"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld Apps" : {
       "localizations" : {
         "de" : {
@@ -1052,6 +1134,88 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld 個應用"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld couldn't be saved:" : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld konnte nicht gesichert werden:"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld konnten nicht gesichert werden:"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld couldn't be saved:"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld couldn't be saved:"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld n’a pas pu être enregistré :"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld n’ont pas pu être enregistrés :"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 个没能保存："
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 個沒能儲存："
                 }
               }
             }
@@ -1142,6 +1306,88 @@
         }
       }
     },
+    "%lld meetings, one Markdown file each, as Export Markdown writes them." : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Meeting als Markdown-Datei, genau wie „Als Markdown exportieren“ sie schreibt."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Meetings, je eine Markdown-Datei, genau wie „Als Markdown exportieren“ sie schreibt."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld meeting, as a Markdown file, as Export Markdown writes it."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld meetings, one Markdown file each, as Export Markdown writes them."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld réunion, dans un fichier Markdown, tel qu’« Exporter en Markdown » l’écrit."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld réunions, un fichier Markdown chacune, tel qu’« Exporter en Markdown » les écrit."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 场会议，每场一个 Markdown 文件，内容和“导出 Markdown”一样。"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 場會議，每場一個 Markdown 檔案，內容和「匯出 Markdown」一樣。"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld more" : {
       "comment" : "Last item of the list of learned rules in the notification: how many more were learned.",
       "localizations" : {
@@ -1167,6 +1413,170 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "另外 %lld 條"
+          }
+        }
+      }
+    },
+    "%lld new files saved." : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld neue Datei gesichert."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld neue Dateien gesichert."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld new file saved."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld new files saved."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld nouveau fichier enregistré."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld nouveaux fichiers enregistrés."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "已保存 %lld 个新文件。"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "已儲存 %lld 個新檔案。"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld not saved: something else has the same name, and it was left as it is." : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld nicht gesichert: Unter demselben Namen liegt schon etwas anderes; es bleibt unverändert."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld nicht gesichert: Unter denselben Namen liegt schon etwas anderes; es bleibt unverändert."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld not saved: something else has the same name, and it was left as it is."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld not saved: something else has the same name, and it was left as it is."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld non enregistré : un autre élément porte le même nom et a été laissé tel quel."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld non enregistrés : d’autres éléments portent les mêmes noms et ont été laissés tels quels."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 个没有保存：同名位置已有别的东西，保持原样没动。"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 個沒有儲存：同名位置已有別的東西，保持原樣沒動。"
+                }
+              }
+            }
           }
         }
       }
@@ -1328,6 +1738,88 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld 段沒有轉錄成功"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld selected dictations aren't included: only meetings are saved." : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ausgewähltes Diktat ist nicht dabei: Es werden nur Meetings gesichert."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ausgewählte Diktate sind nicht dabei: Es werden nur Meetings gesichert."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld selected dictation isn't included: only meetings are saved."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld selected dictations aren't included: only meetings are saved."
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld dictée sélectionnée n’est pas incluse : seules les réunions sont enregistrées."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld dictées sélectionnées ne sont pas incluses : seules les réunions sont enregistrées."
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "选中的 %lld 条听写不包括在内：只保存会议。"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "選取的 %lld 筆聽寫不包括在內：只儲存會議。"
                 }
               }
             }
@@ -4599,6 +5091,62 @@
         }
       }
     },
+    "a file with other content (perhaps an edited copy)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "eine Datei mit anderem Inhalt (vielleicht eine bearbeitete Kopie)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "un fichier au contenu différent (peut-être une copie modifiée)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内容不同的文件（可能是改过的副本）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "內容不同的檔案（可能是改過的副本）"
+          }
+        }
+      }
+    },
+    "a folder or another item" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ein Ordner oder ein anderes Objekt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "un dossier ou un autre élément"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件夹或其他项目"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "資料夾或其他項目"
+          }
+        }
+      }
+    },
     "A meeting can't be retranscribed: its speakers and notes would be lost." : {
       "localizations" : {
         "de" : {
@@ -4877,6 +5425,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "一個懸浮的小便箋。可以直接對它聽寫；聽寫時找不到輸入框，Yap 會把內容連同時間加到這裡，不會遺失。內容只保存在這台 Mac 上。"
+          }
+        }
+      }
+    },
+    "a symbolic link" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ein symbolischer Link"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "un lien symbolique"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "符号链接"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "符號連結"
           }
         }
       }
@@ -10231,6 +10807,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "繼續即表示你同意%1$@和%2$@。"
+          }
+        }
+      }
+    },
+    "Choose a folder for the Markdown files." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle einen Ordner für die Markdown-Dateien."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez un dossier pour les fichiers Markdown."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择存放 Markdown 文件的文件夹。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇存放 Markdown 檔案的資料夾。"
+          }
+        }
+      }
+    },
+    "Choose Folder…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordner wählen…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir un dossier…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择文件夹…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇資料夾…"
           }
         }
       }
@@ -20256,6 +20888,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "檔案裡填寫的欄位在啟動時生效，會覆蓋在應用裡改過的同一項設定。"
+          }
+        }
+      }
+    },
+    "Files already in the folder are never replaced. When a meeting has changed since it was last saved there (speaker names, notes, Yap's language or time zone), a new file is added next to the old one, which stays as it was." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateien, die schon im Ordner liegen, werden nie ersetzt. Hat sich ein Meeting seit dem letzten Sichern dort geändert (Namen der Sprecher, Notizen, Sprache von Yap oder Zeitzone), kommt eine neue Datei neben die alte; die alte bleibt, wie sie ist."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les fichiers déjà présents dans le dossier ne sont jamais remplacés. Si une réunion a changé depuis son dernier enregistrement (noms des intervenants, notes, langue de Yap ou fuseau horaire), un nouveau fichier s’ajoute à côté de l’ancien, qui reste tel quel."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件夹里已有的文件不会被替换。会议在上次保存到这里之后有变化（说话人名字、纪要、Yap 的语言或时区），会在旧文件旁边新增一个文件，旧文件保持原样。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "資料夾裡已有的檔案不會被取代。會議在上次儲存到這裡之後有變化（說話者名字、紀要、Yap 的語言或時區），會在舊檔案旁邊新增一個檔案，舊檔案保持原樣。"
           }
         }
       }
@@ -35245,6 +35905,88 @@
         }
       }
     },
+    "Save %lld Meetings…" : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Meeting sichern…"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Meetings sichern…"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Save %lld Meeting…"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Save %lld Meetings…"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Enregistrer %lld réunion…"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Enregistrer %lld réunions…"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "保存 %lld 场会议…"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "儲存 %lld 場會議…"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Save & Select" : {
       "localizations" : {
         "de" : {
@@ -35297,6 +36039,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "儲存更改"
+          }
+        }
+      }
+    },
+    "Save Here" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier sichern"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer ici"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存到这里"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存到這裡"
+          }
+        }
+      }
+    },
+    "Save Meetings to Folder" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meetings in Ordner sichern"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer des réunions dans un dossier"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将会议存到文件夹"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將會議存到資料夾"
           }
         }
       }
@@ -35465,6 +36263,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在儲存"
+          }
+        }
+      }
+    },
+    "Saving…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird gesichert…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrement…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在保存…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在儲存…"
           }
         }
       }
@@ -41586,6 +42412,34 @@
         }
       }
     },
+    "The folder isn't there anymore, and Yap doesn't create it again. Choose a folder again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Ordner ist nicht mehr da, und Yap legt ihn nicht neu an. Wähle erneut einen Ordner."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le dossier n’existe plus, et Yap ne le recrée pas. Choisissez de nouveau un dossier."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件夹已经不在了，Yap 不会重新创建它。请重新选择文件夹。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "資料夾已經不在了，Yap 不會重新建立它。請重新選擇資料夾。"
+          }
+        }
+      }
+    },
     "The imported settings file (version %@) is from a different version than your application (version %@). Proceeding with import, but be aware of potential incompatibilities." : {
       "localizations" : {
         "de" : {
@@ -42532,6 +43386,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "這些估算Token只是對Token使用量的粗略估計，並非精確的Token數量，也不是供應商報告的計費用量。"
+          }
+        }
+      }
+    },
+    "These files are separate from History: deleting a meeting there, or History deleting it after the retention period, doesn't remove them. Any app that can open the folder can read them, and a folder that syncs (iCloud Drive, Dropbox…) uploads them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Dateien sind unabhängig vom Verlauf: Wenn du dort ein Meeting löschst oder der Verlauf es nach Ablauf der Aufbewahrungsfrist löscht, bleiben sie erhalten. Jede App, die den Ordner öffnen kann, kann sie lesen, und ein synchronisierter Ordner (iCloud Drive, Dropbox…) lädt sie hoch."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ces fichiers sont indépendants de l’historique : supprimer une réunion dans l’historique, ou sa suppression après la période de conservation, ne les supprime pas. Toute app qui peut ouvrir le dossier peut les lire, et un dossier synchronisé (iCloud Drive, Dropbox…) les envoie en ligne."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这些文件和历史记录分开：在历史记录里删除会议，或历史记录过了保留期自动删除，都不会删掉它们。能打开这个文件夹的任何 app 都能读到它们；会同步的文件夹（iCloud 云盘、Dropbox…）会把它们上传。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這些檔案和歷史記錄分開：在歷史記錄裡刪除會議，或歷史記錄過了保留期自動刪除，都不會刪掉它們。能打開這個資料夾的任何 app 都能讀到它們；會同步的資料夾（iCloud 雲碟、Dropbox…）會把它們上傳。"
           }
         }
       }
@@ -47734,6 +48616,34 @@
         }
       }
     },
+    "Yap can't read the file with this name to compare it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap kann die Datei mit diesem Namen nicht lesen, um sie zu vergleichen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap ne peut pas lire le fichier portant ce nom pour le comparer."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 读不了这个同名文件，没法比较。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 讀不了這個同名檔案，沒法比較。"
+          }
+        }
+      }
+    },
     "Yap Cloud" : {
       "localizations" : {
         "de" : {
@@ -47982,6 +48892,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 使用分析"
+          }
+        }
+      }
+    },
+    "Yap isn't allowed to write to this folder." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap darf in diesen Ordner nicht schreiben."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap n’a pas le droit d’écrire dans ce dossier."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 没有权限写入这个文件夹。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 沒有權限寫入這個資料夾。"
           }
         }
       }
