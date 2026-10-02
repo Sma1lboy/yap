@@ -323,7 +323,7 @@ final class MeetingRecorder: ObservableObject {
         transcription.meetingFailedPieces = failures > 0 ? failures : nil
         transcription.meetingSpeakerStatus = speakerJob == nil ? nil : SpeakerSplitSkip.pendingStatus
         if let timestamp { transcription.timestamp = timestamp }
-        let saveError = save(transcription, engine: engine)
+        let saveError = save(transcription, in: engine.modelContext)
 
         let markdown = MeetingNotes.markdown(
             date: session.started, duration: session.duration, notes: summary.notes, transcript: transcript)
@@ -346,18 +346,16 @@ final class MeetingRecorder: ObservableObject {
     }
 
     /// Saves a new History entry; returns the error instead of dropping it. A failed entry isn't left pending in
-    /// the context, so its folder stays without an entry and the next launch recovers it.
-    func save(_ transcription: Transcription, engine: VoiceInkEngine) -> String? {
-        engine.modelContext.insert(transcription)
+    /// the context, so its folder stays without an entry and the next launch recovers it. Auto-archive takes its
+    /// snapshot inside `MeetingEdits.save`, before `transcriptionCreated` is posted.
+    func save(_ transcription: Transcription, in context: ModelContext) -> String? {
+        context.insert(transcription)
         do {
-            #if DEBUG
-                if MeetingFilesCheck.failsSave { throw CocoaError(.fileWriteNoPermission) }
-            #endif
-            try engine.modelContext.save()
+            try MeetingEdits.save(transcription, in: context)
             NotificationCenter.default.post(name: .transcriptionCreated, object: transcription)
             return nil
         } catch {
-            engine.modelContext.delete(transcription)
+            context.delete(transcription)
             logger.error("Meeting not saved: \(error.localizedDescription, privacy: .public)")
             return error.localizedDescription
         }

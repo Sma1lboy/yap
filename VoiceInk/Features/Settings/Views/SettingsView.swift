@@ -269,7 +269,7 @@ struct SettingsView: View {
                 }
             }
 
-            // The meeting shortcut and the call reminder in one place: both are only about meetings.
+            // The meeting shortcut, the call reminder and saving meetings to a folder: all only about meetings.
             if visibleGroups.contains(.meetings) {
                 Section("Meetings") {
                     LabeledContent {
@@ -292,6 +292,8 @@ struct SettingsView: View {
                             InfoTip("When Zoom, Teams, FaceTime, a browser or another call app has used the microphone for 5 seconds, Yap offers to record the meeting; while recording, it tells you when the call seems to have ended. It never starts or stops a recording by itself.")
                         }
                     }
+
+                    MeetingAutoArchiveSettings()
                 }
             }
 

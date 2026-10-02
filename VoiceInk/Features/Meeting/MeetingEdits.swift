@@ -25,6 +25,18 @@ enum MeetingEdits {
         }
     }
 
+    /// Every saved change to a meeting goes through here: a new meeting, its speakers arriving later, new names,
+    /// new notes. Only once the save succeeded is the meeting handed to `MeetingAutoArchive`, synchronously and
+    /// before the caller posts anything, so a cleanup reacting to a notification can't delete it first. A failed
+    /// save throws and hands nothing on; the caller rolls its change back.
+    static func save(_ transcription: Transcription, in context: ModelContext) throws {
+        #if DEBUG
+            if MeetingFilesCheck.failsSave { throw CocoaError(.fileWriteNoPermission) }
+        #endif
+        try context.save()
+        MeetingAutoArchive.shared.saved(transcription)
+    }
+
     /// Stores the names and rewrites the transcript with them; timestamps, pieces and `segments.json` stay as
     /// they are. The notes aren't touched (regenerate them for the new names). Returns why it couldn't be saved.
     static func rename(_ transcription: Transcription, names: MeetingSpeakerNames, in context: ModelContext) -> String? {
@@ -36,7 +48,7 @@ enum MeetingEdits {
         transcription.meetingSpeakerNamesJSON = names.json
         if !segments.isEmpty { transcription.text = MeetingNotes.transcript(segments, names: names) }
         do {
-            try context.save()
+            try save(transcription, in: context)
             return nil
         } catch {
             (transcription.text, transcription.meetingSpeakerNamesJSON) = (oldText, oldNames)
@@ -59,6 +71,13 @@ enum MeetingEdits {
             }
             return summary.failure ?? String(localized: "The AI provider returned no notes.")
         }
+        return saveNotes(notes, from: summary, to: transcription, in: engine.modelContext)
+    }
+
+    /// Stores new notes written for the meeting; on a failed save the old ones are put back and the error returned.
+    static func saveNotes(
+        _ notes: String, from summary: MeetingSummarizer.Summary, to transcription: Transcription, in context: ModelContext
+    ) -> String? {
         let old = (transcription.enhancedText, transcription.aiEnhancementModelName, transcription.promptName,
             transcription.enhancementDuration, transcription.aiRequestSystemMessage, transcription.aiRequestUserMessage)
         transcription.enhancedText = notes
@@ -68,7 +87,7 @@ enum MeetingEdits {
         transcription.aiRequestSystemMessage = summary.systemMessage
         transcription.aiRequestUserMessage = summary.userMessage
         do {
-            try engine.modelContext.save()
+            try save(transcription, in: context)
             return nil
         } catch {
             (transcription.enhancedText, transcription.aiEnhancementModelName, transcription.promptName,

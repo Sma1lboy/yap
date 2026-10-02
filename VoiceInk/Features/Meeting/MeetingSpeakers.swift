@@ -92,7 +92,7 @@ extension MeetingRecorder {
         let task = Task { [weak self] in
             let result = await job.value
             guard let self else { return }
-            applySpeakers(result, to: id)
+            if let context = engine?.modelContext { applySpeakers(result, to: id, in: context) }
             speakerProgress[name] = nil
             speakerJobs[id] = nil
         }
@@ -101,22 +101,29 @@ extension MeetingRecorder {
     }
 
     /// Puts the speakers found after saving into the meeting: segments.json first (written whole, atomically),
-    /// then the transcript and the status in one save. If that save fails, segments.json is put back, so the file
-    /// and the entry never disagree and the next launch tries again. A meeting deleted meanwhile is left alone; one
-    /// whose folder is gone is marked as failed.
-    func applySpeakers(_ result: Result<[SpeakerTurn], Error>, to id: UUID) {
-        guard let engine, let transcription = try? engine.modelContext.fetch(
+    /// then the transcript and the status in one save. If that save fails, segments.json and the entry are put
+    /// back, so the file and the entry never disagree and the next launch tries again. A meeting deleted meanwhile
+    /// (by hand, or by the retention cleanup) is left alone; one whose folder is gone is marked as failed.
+    func applySpeakers(_ result: Result<[SpeakerTurn], Error>, to id: UUID, in context: ModelContext) {
+        guard let transcription = try? context.fetch(
             FetchDescriptor<Transcription>(predicate: #Predicate { $0.id == id })).first
         else { return }
+        let oldStatus = transcription.meetingSpeakerStatus
         guard let segments = MeetingEdits.segments(of: transcription), let url = MeetingEdits.segmentsURL(of: transcription)
         else {
             transcription.meetingSpeakerStatus = SpeakerSplitSkip.failed.rawValue
-            try? engine.modelContext.save()
+            do {
+                try MeetingEdits.save(transcription, in: context)
+            } catch {
+                transcription.meetingSpeakerStatus = oldStatus
+                Self.speakersLogger.error("Speakers' status not saved: \(error.localizedDescription, privacy: .public)")
+                return
+            }
             updateResult(id) { $0.speakersPending = nil; $0.speakersSkipped = .failed }
             return
         }
         let (labeled, skip) = Self.labeled(segments, result)
-        let old = (text: transcription.text, status: transcription.meetingSpeakerStatus, file: try? Data(contentsOf: url))
+        let old = (text: transcription.text, file: try? Data(contentsOf: url))
         if labeled != segments {
             do {
                 try JSONEncoder().encode(labeled).write(to: url, options: .atomic)
@@ -128,9 +135,9 @@ extension MeetingRecorder {
         }
         transcription.meetingSpeakerStatus = skip.flatMap { $0.isFailure ? $0.rawValue : nil }
         do {
-            try engine.modelContext.save()
+            try MeetingEdits.save(transcription, in: context)
         } catch {
-            (transcription.text, transcription.meetingSpeakerStatus) = (old.text, old.status)
+            (transcription.text, transcription.meetingSpeakerStatus) = (old.text, oldStatus)
             if labeled != segments { try? old.file?.write(to: url, options: .atomic) }
             Self.speakersLogger.error("Speakers not saved: \(error.localizedDescription, privacy: .public)")
             return

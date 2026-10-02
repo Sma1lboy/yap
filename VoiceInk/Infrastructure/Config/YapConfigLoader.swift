@@ -719,3 +719,30 @@ final class YapConfigLoader: ObservableObject {
         }
     #endif
 }
+
+#if DEBUG
+    extension YapConfigLoader {
+        /// make meeting-archive-check: the backup Settings › Export Settings writes, with this app's services.
+        func makeBackupForCheck() async -> BackupFile? {
+            guard let enhancementService, let recordingShortcutManager, let menuBarManager, let recorderUIManager,
+                let modelContext
+            else { return nil }
+            return await ImportExportService.shared.makeBackup(
+                enhancementService: enhancementService, recordingShortcutManager: recordingShortcutManager,
+                menuBarManager: menuBarManager, mediaController: .shared, playbackController: .shared,
+                recorderUIManager: recorderUIManager, modelContext: modelContext)
+        }
+
+        /// make meeting-archive-check: a backup applied as Settings › Import Settings applies it, every category.
+        func applyBackupForCheck(_ backup: BackupFile) async throws {
+            guard let enhancementService, let recordingShortcutManager, let menuBarManager, let recorderUIManager,
+                let modelContext, let transcriptionModelManager
+            else { throw CocoaError(.featureUnsupported) }
+            try await BackupImporter.apply(
+                backup, categories: Set(BackupCategory.allCases), enhancementService: enhancementService,
+                recordingShortcutManager: recordingShortcutManager, menuBarManager: menuBarManager,
+                mediaController: .shared, playbackController: .shared, recorderUIManager: recorderUIManager,
+                modelContext: modelContext, transcriptionModelManager: transcriptionModelManager)
+        }
+    }
+#endif
