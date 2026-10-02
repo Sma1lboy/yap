@@ -20,7 +20,12 @@ enum AudioInputMode: String, CaseIterable {
 class AudioDeviceManager: ObservableObject {
     let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "AudioDeviceManager")
     @Published var availableDevices: [(id: AudioDeviceID, uid: String, name: String)] = []
-    @Published var selectedDeviceID: AudioDeviceID?
+    @Published var selectedDeviceID: AudioDeviceID? {
+        didSet { selectedDeviceIsFallback = false }
+    }
+    /// `selectedDeviceID` was picked by `fallbackToDefaultDevice` because the user's choice isn't there: it isn't
+    /// saved, and a recording treats it like any other automatic fallback (never a virtual or aggregate input).
+    private(set) var selectedDeviceIsFallback = false
     @Published var inputMode: AudioInputMode = .custom
     @Published var prioritizedDevices: [PrioritizedDevice] = []
 
@@ -166,6 +171,7 @@ class AudioDeviceManager: ObservableObject {
 
     private func activateDevice(id: AudioDeviceID) {
         selectedDeviceID = id
+        selectedDeviceIsFallback = true
         notifyDeviceChange()
     }
 
@@ -336,10 +342,10 @@ class AudioDeviceManager: ObservableObject {
         case .systemDefault:
             break
         case .custom:
+            // Nothing chosen yet: a fallback until the user picks one (the first device in Core Audio's list could
+            // be a virtual input, and saving it would make it look chosen).
             if selectedDeviceID == nil {
-                if let firstDevice = availableDevices.first {
-                    selectDevice(id: firstDevice.id)
-                }
+                fallbackToDefaultDevice()
             }
         case .prioritized:
             if selectedDeviceID == nil {

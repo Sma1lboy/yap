@@ -12,6 +12,7 @@
     ///   then what the app would record from with the saved setting and with a saved device that isn't there. The
     ///   system default device isn't changed and nothing is recorded.
     /// Lines start with `mic-check: `.
+    @MainActor
     enum MicFallbackCheck {
         static let argument = "--mic-fallback-check"
 
@@ -61,7 +62,12 @@
         private static func report(_ label: String, _ manager: AudioDeviceManager) {
             let resolution = manager.resolveCurrentRecordingDevice()
             let saved = UserDefaults.standard.selectedAudioDeviceUID ?? "none"
-            print("mic-check: \(label) selected \(name(manager.selectedDeviceID, in: manager)) | records \(name(resolution.deviceID, in: manager)) | lid-blocked \(resolution.internalMicrophoneBlockedByClosedLid) | saved \(saved) | prioritized \(manager.prioritizedDevices.map(\.id).joined(separator: ","))")
+            let message = resolution.deviceID == nil
+                ? " | message " + AudioInputFailurePresentation.noUsableMicrophone(
+                    internalMicrophoneBlockedByClosedLid: resolution.internalMicrophoneBlockedByClosedLid,
+                    onlyUnchosenInputsLeft: resolution.onlyUnchosenInputsLeft).title
+                : ""
+            print("mic-check: \(label) selected \(name(manager.selectedDeviceID, in: manager)) | records \(name(resolution.deviceID, in: manager)) | lid-blocked \(resolution.internalMicrophoneBlockedByClosedLid) | unchosen-left \(resolution.onlyUnchosenInputsLeft) | saved \(saved) | prioritized \(manager.prioritizedDevices.map(\.id).joined(separator: ","))\(message)")
         }
 
         private static func start(_ label: String, _ devices: [Device], default defaultInput: AudioDeviceID? = nil, lid: Bool = false) -> AudioDeviceManager {
@@ -87,7 +93,7 @@
             manager.fixtureHardwareChanged(.init(devices: devices, defaultInput: nil, lidClosed: false))
             settle()
             NotificationCenter.default.removeObserver(observer)
-            print("mic-check: \(label) request \(request == nil ? "none" : "sent") | switch to \(name(request?.fallbackDeviceID, in: manager)) | saved \(UserDefaults.standard.selectedAudioDeviceUID ?? "none")")
+            print("mic-check: \(label) request \(request == nil ? "none" : "sent") | switch to \(name(request?.fallbackDeviceID, in: manager)) | unchosen-left \(request?.onlyUnchosenInputsLeft ?? false) | saved \(UserDefaults.standard.selectedAudioDeviceUID ?? "none")")
             manager.recordingDidStop()
         }
 
@@ -147,7 +153,7 @@
             settle()
             for device in manager.availableDevices {
                 let transport = manager.getUInt32DeviceProperty(deviceID: device.id, selector: kAudioDevicePropertyTransportType)
-                print("mic-check: device \(device.id) \(fourCC(transport)) internal-mic \(manager.isInternalMicrophone(device.id)) \(device.name)")
+                print("mic-check: device \(device.id) \(fourCC(transport)) internal-mic \(manager.isInternalMicrophone(device.id)) automatic-fallback \(manager.isAutomaticFallbackInput(device.id)) \(device.name)")
             }
             print("mic-check: system default \(name(manager.getSystemDefaultDevice(), in: manager)) | lid closed \(manager.isClamshellClosed)")
             report("saved-setting", manager)

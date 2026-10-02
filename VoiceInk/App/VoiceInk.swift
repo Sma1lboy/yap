@@ -97,6 +97,7 @@ struct VoiceInkApp: App {
             Task { @MainActor in await MeetingAutoArchive.selfCheck() }
             MeetingEdits.selfCheck()
             MeetingEcho.selfCheck()
+            AudioDeviceManager.fallbackSelfCheck()
             MeetingRecorder.shortcutSelfCheck()
             MeetingRecorder.speakersSelfCheck()
             MeetingRecorder.recoverySelfCheck()

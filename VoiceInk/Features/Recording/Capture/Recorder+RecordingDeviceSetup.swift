@@ -60,7 +60,7 @@ extension Recorder {
         guard let request = notification.object as? RecordingDeviceChangeRequest else { return }
         guard let fallbackDeviceID = request.fallbackDeviceID else {
             deviceManager.recordingDeviceChangeFinished()
-            showNoFallbackNotification(reason: request.reason)
+            showNoFallbackNotification(request)
             return
         }
         guard let recorder else {
@@ -102,9 +102,10 @@ extension Recorder {
         }
     }
 
-    private func showNoFallbackNotification(reason: RecordingDeviceChangeReason) {
+    private func showNoFallbackNotification(_ request: RecordingDeviceChangeRequest) {
         let presentation = AudioInputFailurePresentation.noUsableMicrophone(
-            internalMicrophoneBlockedByClosedLid: reason == .closedLid
+            internalMicrophoneBlockedByClosedLid: request.reason == .closedLid,
+            onlyUnchosenInputsLeft: request.onlyUnchosenInputsLeft
         )
         NotificationManager.shared.showNotification(
             title: presentation.title,

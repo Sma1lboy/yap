@@ -556,6 +556,17 @@
                         title: title, type: type, duration: 15, onClose: {}, onTap: nil, actionButton: (label: action, action: {}),
                         secondaryButton: secondary.map { (label: $0, action: {}) }))
             }
+            // No microphone to record from (AudioInputFailurePresentation): the lid closed, only inputs Yap doesn't
+            // switch to on its own (virtual, aggregate) left, nothing at all.
+            for (name, lid, unchosen) in [("lid", true, false), ("unchosen-only", false, true), ("none", false, false)] {
+                let presentation = AudioInputFailurePresentation.noUsableMicrophone(
+                    internalMicrophoneBlockedByClosedLid: lid, onlyUnchosenInputsLeft: unchosen)
+                notificationShot(
+                    "no-microphone-\(name)",
+                    AppNotificationView(
+                        title: presentation.title, type: .error, duration: 7, onClose: {}, onTap: nil,
+                        actionButton: (label: presentation.actionLabel, action: {})))
+            }
             // Settings › Meetings with the call reminder on, found by searching for it.
             UserDefaults.standard.set(true, forKey: MeetingCallDetector.enabledKey)
             SettingsView.snapshotQuery = String(localized: "Meetings")
