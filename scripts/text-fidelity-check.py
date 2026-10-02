@@ -43,6 +43,8 @@ EXPECTED = {
     "index-names": {"filter": "args[i] = map[key]", "output": "args[i] = map[key]"},
     "json": {"filter": "{\"name\": \"yap\", \"tags\": [1, 2]}", "output": "{\"name\": \"yap\", \"tags\": [1, 2]}"},
     "inline-tag": {"filter": "用 <b>粗体</b> 表示", "output": "用 <b>粗体</b> 表示"},
+    "markdown-link": {"filter": "see [the docs](https://x.dev)", "output": "see [the docs](https://x.dev)"},
+    "task-list": {"filter": "- [x] done", "output": "- [x] done"},
     "generic": {"output": "Map<String, Int>"},
     "code-if": {"filter": "if (a > b) { return a }", "output": "if (a > b) { return a }"},
     "date-format": {"filter": "date format yyyy-mm-dd", "output": "date format yyyy-mm-dd"},

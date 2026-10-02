@@ -3,12 +3,13 @@ import Foundation
 /// Takes out what a model writes in place of speech, and the user's English filler words. Text the user said stays,
 /// brackets and all: `foo.bar(userId)`, `items[0]`, JSON, `<b>粗体</b>`, "我明天(周三)有空".
 struct TranscriptionOutputFilter {
-    /// An annotation is words only: letters, marks, spaces, `_ ' -`. Starts with a letter.
-    private static let words = #"\p{L}[\p{L}\p{M} _'-]*"#
+    /// An annotation is words only: letters, marks, spaces, `_ ' -`. Starts with a letter, at least two characters.
+    private static let words = #"\p{L}[\p{L}\p{M} _'-]+"#
 
-    /// `[Music]`, `[BLANK_AUDIO]`, `[inaudible]` anywhere, unless attached to the word before it (`items[i]`).
+    /// `[Music]`, `[BLANK_AUDIO]`, `[inaudible]` anywhere, unless attached to the word before it (`items[i]`) or a
+    /// link label (`[the docs](https://…)`).
     private static let squareAnnotation = try! NSRegularExpression(
-        pattern: #"(?<![\p{L}\p{N}_.\])])\[\#(words)\]"#)
+        pattern: #"(?<![\p{L}\p{N}_.\])])\[\#(words)\](?!\()"#)
 
     /// `(laughs)`, `{music}` or a `<tag>…</tag>` block on a line of its own (or the whole transcript), with the line.
     private static let lineAnnotation = try! NSRegularExpression(

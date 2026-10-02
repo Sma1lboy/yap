@@ -49,6 +49,8 @@
             Case(name: "generic", input: "Map<String, Int>"),
             Case(name: "code-if", input: "if (a > b) { return a }"),
             Case(name: "date-format", input: "date format yyyy-mm-dd"),
+            Case(name: "markdown-link", input: "see [the docs](https://x.dev)"),
+            Case(name: "task-list", input: "- [x] done"),
             // Ordinary speech.
             Case(name: "mixed-prose", input: "我用 React 写了 3 个组件, 然后 deploy 到 Vercel."),
             Case(name: "aside-chinese", input: "我明天(周三)有空"),
