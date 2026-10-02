@@ -27023,7 +27023,7 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aucun vrai micro n’est connecté, et Yap ne bascule pas de lui-même vers une entrée virtuelle ou agrégée. Choisissez-en une ci-dessus pour enregistrer avec."
+            "value" : "Aucun vrai micro n’est connecté, et Yap ne bascule pas de lui-même vers une entrée virtuelle ou agrégée. Pour enregistrer depuis l’une d’elles, choisissez-la ci-dessus."
           }
         },
         "zh-Hans" : {
