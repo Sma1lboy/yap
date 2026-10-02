@@ -35,7 +35,7 @@ struct MeetingAutoArchiveSettings: View {
                 .foregroundStyle(AppTheme.Text.secondary)
             }
             note("Only meetings saved from now on. Meetings already in History aren't copied; select them in History and use Save Meetings… for that. A meeting whose speakers are still being told apart is saved when it ends and again once they're in.")
-            note("Any app that can open the folder can read these files, and a folder that syncs (iCloud Drive, Dropbox…) uploads them.")
+            note("These files are separate from History: deleting a meeting there, or History deleting it after the retention period, doesn't remove them. Any app that can open the folder can read them, and a folder that syncs (iCloud Drive, Dropbox…) uploads them.")
             if archive.isEnabled { status }
         }
     }

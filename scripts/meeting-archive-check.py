@@ -18,9 +18,11 @@ Every export leaves History's entries and the meetings' audio exactly as they we
    default, no backfill, a new meeting, duplicates, rename, notes saved and failed, pending speakers (arrived, failed,
    folder gone, entry deleted), deleted right after saving, an edited copy, turned off and folder changed with a file in
    flight and one queued, a folder gone or read-only; then settings export (config.json, cloud, backup) and import
-   neither carry nor change the switch and folder. Prints how many files each meeting got.
+   neither carry nor change the switch and folder; choosing a folder (Choose Folder… or the switch's own picker,
+   chosen or cancelled, on or off) turns it on only from the switch; one meeting's whole life, step by step, with the
+   lines that change in each new version. Prints how many files each meeting got.
 """
-import glob, hashlib, json, os, re, shutil, subprocess, sys, time
+import difflib, glob, hashlib, json, os, re, shutil, subprocess, sys, time
 
 APP, WORK = sys.argv[1], sys.argv[2]
 DATA = os.path.join(WORK, "data")
@@ -218,8 +220,8 @@ print("History entries unchanged by every export; audio SHA-256 unchanged; no te
 
 # 7. Saving to a folder automatically (Settings › Meetings). Each `auto` launch is a restart: the switch and folder
 # are read from this identity's defaults again. In English, so the speaker labels are "Others 1", "Others 2".
-def auto(*args, flags=()):
-    lines = run("en", "auto", *args, *flags)
+def auto(*args, flags=(), lang="en"):
+    lines = run(lang, "auto", *args, *flags)
     state = next(l for l in lines if l.startswith("auto enabled "))
     last = next(l for l in lines if l.startswith("auto last ")).split(" ", 4)[2:]
     created = [l.split()[1] for l in lines if l.startswith("created ")]
@@ -447,6 +449,35 @@ _, _, last, (o3,) = auto("create")
 check(len(versions(E, o3)) == 1 and md_files(E) == versions(E, o3), "first time on: %s %r" % (last, md_files(E)))
 print("7l. no folder yet: the switch's picker cancelled -> off, no folder; a folder chosen there -> on, the next meeting "
       "written (%d file, nothing older)" % len(md_files(E)))
+
+# 7m. One meeting's whole life with saving on: created with its speakers pending, speakers arrive, renamed, notes
+# regenerated, then saved again after Yap's language changed (zh-Hans; `resave` hands it on twice, so the second of
+# those finds the first), and saved again unchanged. After each step: how many files the meeting has, the file the
+# step named, and the lines that differ from the version before.
+F = os.path.join(WORK, "AutoLife")
+os.mkdir(F)
+auto("choose", F)
+_, _, last, (life,) = auto("create", "pending")
+steps = [("saved, speakers pending", last, len(versions(F, life)))]
+for label, args, lang in [("speakers arrived", ("speakers", life, "two"), "en"),
+                          ("renamed (Others 1 = Reed)", ("rename", life, "others-1=Reed"), "en"),
+                          ("notes regenerated", ("notes", life, "- Ship on Friday; Reed owns the CI."), "en"),
+                          ("saved again in Chinese", ("resave", life), "zh"),
+                          ("saved again in Chinese, unchanged", ("resave", life), "zh")]:
+    _, _, last, _ = auto(*args, lang=lang)
+    steps.append((label, last, len(versions(F, life))))
+print("7m. one meeting, step by step (%s):" % life)
+previous = None
+for label, (mid, outcome, name), count in steps:
+    text = body(F, name).splitlines()
+    changed = [] if previous is None or previous[0] == name else \
+        [l for l in difflib.unified_diff(previous[1], text, lineterm="", n=0) if l[:1] in "+-" and l[:3] not in ("+++", "---")]
+    print("   %-36s files %d  last %-6s %s" % (label, count, outcome, name))
+    for line in changed[:10]:
+        print("        %s" % line)
+    previous = (name, text)
+check([s[2] for s in steps] == [1, 2, 3, 4, 5, 5], "life: %r" % steps)
+print("   %d files for this meeting in the folder" % len(versions(F, life)))
 
 print("7. files per meeting:")
 for case, meeting, files in per_meeting:

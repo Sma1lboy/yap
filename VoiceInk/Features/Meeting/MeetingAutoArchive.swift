@@ -101,19 +101,30 @@ final class MeetingAutoArchive: ObservableObject {
     /// Turns it on with `folder` (a folder the user just chose), or with the folder chosen before.
     func turnOn(folder chosen: URL? = nil) async {
         await switchDestination {
-            if let chosen {
-                self.folder = chosen
-                self.defaults.set(chosen.path, forKey: Self.folderKey)
-            }
+            if let chosen { self.remember(chosen) }
             self.isEnabled = self.folder != nil
             self.defaults.set(self.isEnabled, forKey: Self.enabledKey)
         }
     }
 
-    /// What Settings does with the folder picker's result: nil when it was cancelled.
+    /// What Settings does with the folder picker's result (nil: cancelled, nothing changes). `turningOn`: the picker
+    /// opened from the switch because there was no folder yet, so choosing one completes turning it on. Otherwise it
+    /// came from Choose Folder…: while on, the destination changes (queued saves for the old one are dropped, the file
+    /// in flight finishes first); while off, only the folder is remembered and it stays off.
     func folderChosen(_ chosen: URL?, turningOn: Bool) async {
         guard let chosen else { return }
-        await turnOn(folder: chosen)
+        if turningOn {
+            await turnOn(folder: chosen)
+        } else if isEnabled {
+            await switchDestination { self.remember(chosen) }
+        } else {
+            remember(chosen)
+        }
+    }
+
+    private func remember(_ chosen: URL) {
+        folder = chosen
+        defaults.set(chosen.path, forKey: Self.folderKey)
     }
 
     func turnOff() async {
@@ -201,6 +212,15 @@ final class MeetingAutoArchive: ObservableObject {
             archive.saved(meeting)
             await archive.drain()
             assert(files().count == 1, "saved while off")
+            // Choose Folder… while off: the folder changes, the switch stays off; cancelled: nothing changes. Then
+            // the original folder back, still off.
+            let elsewhere = root.appendingPathComponent("elsewhere", isDirectory: true)
+            await archive.folderChosen(elsewhere, turningOn: false)
+            assert(!archive.isEnabled && !defaults.bool(forKey: enabledKey) && defaults.string(forKey: folderKey) == elsewhere.path)
+            await archive.folderChosen(nil, turningOn: false)
+            assert(!archive.isEnabled && archive.folder == elsewhere)
+            await archive.folderChosen(root, turningOn: false)
+            assert(!archive.isEnabled && archive.folder == root)
 
             // On again with the folder chosen before: the next save is a new version next to the first.
             await archive.turnOn()
