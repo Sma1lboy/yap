@@ -16,6 +16,9 @@
 # Others 2 → Shelley; and Others → Reed on a segments.json in the old format, without speaker numbers) and
 # regenerates the notes: once with a failure (no AI provider, or with NOTES=1 an injected failed request), which must
 # keep the old notes, and with NOTES=1 once more, which must replace them with a prompt that has the names.
+# Saving meetings to a folder automatically is on throughout, into $WORK/archive: every History entry the run saves
+# must have its Markdown there, each change a new version, and the failed save none. SPEAKER_CACHE=<folder> reuses
+# speaker models kept by an earlier run (see meeting-check-common.sh) instead of downloading them.
 set -euo pipefail
 
 APP_DIR="$1"
@@ -23,6 +26,11 @@ MODEL="${2:?usage: meeting-files-check.sh <app dir> <ggml-*.bin> [notes]}"
 NOTES="${3:-}"
 WORK=/tmp/yap-meeting-check
 source "$(dirname "$0")/meeting-check-common.sh"
+restore_speaker_models
+ARCHIVE="$WORK/archive"
+mkdir -p "$ARCHIVE"
+defaults write "$ID" meetingAutoArchiveFolder "$ARCHIVE"
+defaults write "$ID" meetingAutoArchiveEnabled -bool true
 
 # A second remote voice (Shelley) speaks twice, so "others" holds two people: Reed (A) and Shelley (B).
 say_clip b1 "Shelley (Chinese (China mainland))" "我补充一点，[Kubernetes] 那边的 rollout 我已经在测试环境跑过了，没有问题。"
@@ -180,3 +188,18 @@ grep -q '^meeting-check: speakers \["me", "others"\]$' "$WORK/edit.txt" && grep 
 	&& block transcript | grep -q '^\[[0-9:]*\] Reed: ' && ! block transcript | grep -q '^\[[0-9:]*\] Others' \
 	|| { echo "FAIL: the old segments.json wasn't renamed"; exit 1; }
 echo "old segments.json: OK"
+
+# Saved to the folder automatically: nothing for the failed save; one file for each of the three meetings recovered
+# (two transcribed, one audio only), and a new version for each of the two renames (the failed regenerate added
+# nothing). File names carry the History entry's id, not the recording folder's, so versions are counted per id.
+speaker_models_source "$WORK/err.txt"
+python3 - "$ARCHIVE" <<'PY3'
+import collections, os, re, sys
+files = sorted(os.listdir(sys.argv[1]))
+for f in files:
+    print("archived: %s" % f)
+per = collections.Counter(re.search(r"meeting-([0-9a-f-]{36})-", f).group(1) for f in files if f.endswith(".md"))
+print("archive: %d files, versions per meeting %s" % (len(files), sorted(per.values())))
+sys.exit(0 if sorted(per.values()) == [1, 2, 2] and len(files) == 5 else 1)
+PY3
+echo "auto-archive: OK"

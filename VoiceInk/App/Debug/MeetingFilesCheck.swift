@@ -46,6 +46,8 @@
         /// Meeting pieces load the shared model, kept per Keep model loaded; ggml asserts at exit() while any Metal
         /// buffer is still allocated, so every exit after a transcription releases it first.
         private static func exitReleasingModels(_ engine: VoiceInkEngine?) async -> Never {
+            // The check reads the auto-archive folder afterwards; a real quit doesn't wait for it (docs: Known limits).
+            await MeetingAutoArchive.shared.drain()
             await engine?.releaseModels()
             fflush(stdout)
             exit(0)
