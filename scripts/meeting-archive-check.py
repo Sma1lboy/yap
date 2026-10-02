@@ -12,7 +12,7 @@ to folders as History's Save Meetings to Folder… does it, in these cases:
 4. A copy the user edited stays as edited and is reported; a symbolic link in a file's place is reported and neither it
    nor its target changes; a file Yap can't read fails alone while the other meeting is written.
 5. Notes regenerated: a new version for that meeting, the old file unchanged.
-6. A folder that's gone fails without being created again; a read-only folder fails.
+6. A folder that's gone fails without being created again; a read-only folder fails, except for a copy already in it.
 Every export leaves History's entries and the meetings' audio exactly as they were.
 """
 import glob, hashlib, os, re, subprocess, sys, time
@@ -190,17 +190,20 @@ print("5. regenerated notes: %s; %d files, older versions untouched" % (counts, 
 print("   the folder now: " + "\n                   ".join(md_files(out)))
 print("   %s:\n%s" % (names[meetings[0]], open(os.path.join(out, names[meetings[0]]), encoding="utf-8").read()))
 
-# 6. A folder that's gone; a read-only one.
+# 6. A folder that's gone; a read-only one that already holds the first meeting's current file.
+current = items[meetings[0]][1]
 gone = os.path.join(WORK, "Gone")
 items, counts = export("zh", gone)
 check(all(items[m][0] == "failed-folderMissing" for m in meetings) and not os.path.exists(gone), "gone: %r" % items)
 readonly = os.path.join(WORK, "ReadOnly")
 os.mkdir(readonly)
+open(os.path.join(readonly, current), "wb").write(expected("zh", meetings[0]))
 os.chmod(readonly, 0o555)
 items, counts = export("zh", readonly)
 os.chmod(readonly, 0o755)
-check(all(items[m][0] == "failed-notPermitted" for m in meetings) and os.listdir(readonly) == [], "read-only: %r" % items)
-print("6. folder gone: not created again; read-only folder: %s" % counts)
+check(items[meetings[0]] == ("there", current) and items[meetings[1]][0] == "failed-notPermitted"
+      and os.listdir(readonly) == [current], "read-only: %r" % items)
+print("6. folder gone: not created again; read-only folder: %s (the copy already there counts)" % counts)
 
 check(audio_hashes() == audio, "the meetings' audio changed")
 leftovers = [n for f in [out, linked, partial] for n in md_files(f) if "yap-tmp" in n]
