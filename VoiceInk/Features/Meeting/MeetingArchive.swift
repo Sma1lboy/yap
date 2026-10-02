@@ -49,7 +49,7 @@ enum MeetingArchive {
         case failed(Failure)
     }
 
-    struct Item: Sendable {
+    struct Item: Sendable, Equatable {
         let id: UUID
         let fileName: String
         let outcome: Outcome

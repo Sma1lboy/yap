@@ -92,6 +92,7 @@ struct VoiceInkApp: App {
             MeetingChunker.selfCheck()
             MeetingNotes.selfCheck()
             MeetingArchive.selfCheck()
+            Task { @MainActor in await MeetingAutoArchive.selfCheck() }
             MeetingEdits.selfCheck()
             MeetingEcho.selfCheck()
             MeetingRecorder.shortcutSelfCheck()
@@ -277,6 +278,7 @@ struct VoiceInkApp: App {
         #if DEBUG
             OfflineCheck.runIfRequested(engine: engine)  // make offline-check only
             MeetingFilesCheck.runIfRequested()  // scripts/meeting-files-check.sh only
+            MeetingArchiveSettingsCheck.runIfRequested()  // make meeting-archive-check only
         #endif
 
         let activeWindowService = ActiveWindowService.shared

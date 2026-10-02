@@ -118,7 +118,7 @@ extension MeetingRecorder {
             audioFileURL: mix.absoluteString, transcriptionStatus: .failed)
         transcription.kind = Transcription.meetingKind
         transcription.timestamp = started
-        let saveError = save(transcription, engine: engine)
+        let saveError = save(transcription, in: engine.modelContext)
         if saveError == nil { forgetAttempt(folder.lastPathComponent) }
         Self.recoveryLogger.notice("Saved meeting \(folder.lastPathComponent, privacy: .public) with audio only: \(reason, privacy: .public)")
         return MeetingResult(
