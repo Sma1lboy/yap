@@ -45,6 +45,7 @@ enum SettingsGroup: CaseIterable {
             return [
                 String(localized: "Meetings"), String(localized: "Record Meeting"),
                 String(localized: "Remind Me to Record When a Call Starts"),
+                String(localized: "Save Meetings to a Folder Automatically"),
             ]
         case .pasting:
             return [
@@ -104,8 +105,9 @@ enum SettingsGroup: CaseIterable {
             assert(!matches("zzz", terms: ["Paste Method"]))
             assert(visible(for: "zzzzqq").isEmpty)
             assert(visible(for: "config.json").contains(.config))
-            // Both meeting settings are in Meetings, not among the shortcuts.
+            // The meeting settings are in Meetings, not among the shortcuts.
             assert(visible(for: String(localized: "Remind Me to Record When a Call Starts")) == [.meetings])
+            assert(visible(for: String(localized: "Save Meetings to a Folder Automatically")) == [.meetings])
             let meeting = visible(for: String(localized: "Record Meeting"))
             assert(meeting.contains(.meetings) && !meeting.contains(.additionalShortcuts))
             // Agent access is found by its switches and by the clients' names.
