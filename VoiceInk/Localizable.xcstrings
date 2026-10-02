@@ -52471,6 +52471,396 @@
           }
         }
       }
+    },
+    "Save Meetings to a Folder Automatically" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meetings automatisch in einem Ordner sichern"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer automatiquement les réunions dans un dossier"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动将会议存到文件夹"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動將會議存到資料夾"
+          }
+        }
+      }
+    },
+    "Each meeting's Markdown, as Export Markdown writes it, is added to the folder every time the meeting is saved in History: when it ends, when its speakers have been told apart, after Speaker Names and after Regenerate Notes. Files are never replaced or deleted; a change adds a new file next to the old one, and the same content isn't added twice. A save that was still waiting when Yap quit isn't made up later. The folder and this switch stay on this Mac: settings backups, the config file and Yap Cloud sync don't include them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Markdown eines Meetings, wie „Als Markdown exportieren“ es schreibt, kommt jedes Mal in den Ordner, wenn das Meeting im Verlauf gesichert wird: wenn es endet, wenn die Sprecher unterschieden sind, nach „Namen der Sprecher“ und nach „Notizen neu erstellen“. Dateien werden nie ersetzt oder gelöscht; eine Änderung legt eine neue Datei neben die alte, und gleicher Inhalt kommt nicht zweimal hinzu. Was beim Beenden von Yap noch wartete, wird später nicht nachgeholt. Ordner und Schalter bleiben auf diesem Mac: Einstellungs-Backups, die Konfigurationsdatei und die Synchronisierung über Yap Cloud enthalten sie nicht."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le Markdown de chaque réunion, tel que l’écrit « Exporter en Markdown », est ajouté au dossier à chaque fois que la réunion est enregistrée dans l’historique : à la fin, quand les intervenants ont été identifiés, après « Noms des intervenants » et après « Régénérer les notes ». Aucun fichier n’est jamais remplacé ni supprimé ; un changement ajoute un nouveau fichier à côté de l’ancien, et le même contenu n’est pas ajouté deux fois. Un enregistrement encore en attente quand Yap a quitté n’est pas rattrapé ensuite. Le dossier et ce réglage restent sur ce Mac : les sauvegardes des réglages, le fichier de configuration et la synchronisation Yap Cloud ne les contiennent pas."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每次会议在历史记录里保存时（会议结束、区分完说话人、改说话人名字、重新生成纪要之后），都会把它的 Markdown（和“导出 Markdown”写出的一样）放进这个文件夹。文件从不替换或删除；内容变了就在旧文件旁边加一个新文件，相同的内容不会加两次。Yap 退出时还在排队的那次保存，之后不会补上。文件夹和这个开关只存在这台 Mac 上：设置备份、配置文件和 Yap Cloud 同步都不包含它们。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每次會議在歷史記錄裡儲存時（會議結束、區分完說話者、改說話者名字、重新產生紀要之後），都會把它的 Markdown（和「匯出 Markdown」寫出的一樣）放進這個資料夾。檔案從不取代或刪除；內容變了就在舊檔案旁邊加一個新檔案，相同的內容不會加兩次。Yap 結束時還在排隊的那次儲存，之後不會補上。資料夾和這個開關只存在這台 Mac 上：設定備份、設定檔和 Yap Cloud 同步都不包含它們。"
+          }
+        }
+      }
+    },
+    "Only meetings saved from now on. Meetings already in History aren't copied; select them in History and use Save Meetings… for that. A meeting whose speakers are still being told apart is saved when it ends and again once they're in." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Meetings, die ab jetzt gesichert werden. Meetings, die schon im Verlauf sind, werden nicht kopiert; dafür wähle sie im Verlauf aus und nutze „Meetings sichern…“. Ein Meeting, dessen Sprecher noch unterschieden werden, wird beim Ende gesichert und noch einmal, sobald die Sprecher feststehen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seulement les réunions enregistrées à partir de maintenant. Les réunions déjà dans l’historique ne sont pas copiées ; pour elles, sélectionnez-les dans l’historique et utilisez « Enregistrer des réunions… ». Une réunion dont les intervenants sont encore en cours d’identification est enregistrée à la fin, puis de nouveau une fois qu’ils sont identifiés."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只存从现在起保存的会议。历史记录里已有的会议不会被复制；需要的话在历史记录里选中它们，用“保存会议…”。还在区分说话人的会议，结束时先存一份，区分完后再存一份。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只存從現在起儲存的會議。歷史記錄裡已有的會議不會被複製；需要的話在歷史記錄裡選取它們，用「儲存會議…」。還在區分說話者的會議，結束時先存一份，區分完後再存一份。"
+          }
+        }
+      }
+    },
+    "Any app that can open the folder can read these files, and a folder that syncs (iCloud Drive, Dropbox…) uploads them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jede App, die den Ordner öffnen kann, kann diese Dateien lesen, und ein synchronisierter Ordner (iCloud Drive, Dropbox…) lädt sie hoch."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toute app qui peut ouvrir le dossier peut lire ces fichiers, et un dossier synchronisé (iCloud Drive, Dropbox…) les envoie en ligne."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "能打开这个文件夹的任何 app 都能读到这些文件；会同步的文件夹（iCloud 云盘、Dropbox…）会把它们上传。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "能打開這個資料夾的任何 app 都能讀到這些檔案；會同步的資料夾（iCloud 雲碟、Dropbox…）會把它們上傳。"
+          }
+        }
+      }
+    },
+    "%lld meetings waiting to be saved to the folder…" : {
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Meeting wartet darauf, im Ordner gesichert zu werden…"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Meetings warten darauf, im Ordner gesichert zu werden…"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld meeting waiting to be saved to the folder…"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld meetings waiting to be saved to the folder…"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld réunion en attente d’enregistrement dans le dossier…"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld réunions en attente d’enregistrement dans le dossier…"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 场会议正在排队存到文件夹…"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 場會議正在排隊存到資料夾…"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Saved at %@: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um %1$@ gesichert: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistré à %1$@ : %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 已保存：%2$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 已儲存：%2$@"
+          }
+        }
+      }
+    },
+    "At %@ the meeting was already in the folder with the same content; nothing was added." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um %@ lag das Meeting schon mit gleichem Inhalt im Ordner; es wurde nichts hinzugefügt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "À %@, la réunion était déjà dans le dossier avec le même contenu ; rien n’a été ajouté."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 这场会议已在文件夹里且内容相同，没有再添加。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 這場會議已在資料夾裡且內容相同，沒有再加入。"
+          }
+        }
+      }
+    },
+    "Not saved at %@: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um %1$@ nicht gesichert: %2$@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non enregistrée à %1$@ : %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 没有保存：%2$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 沒有儲存：%2$@"
+          }
+        }
+      }
+    },
+    "Nothing saved yet: the next meeting saved in History goes here." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch nichts gesichert: Das nächste Meeting, das im Verlauf gesichert wird, kommt hierher."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien d’enregistré pour l’instant : la prochaine réunion enregistrée dans l’historique ira ici."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有保存过：下一场在历史记录里保存的会议会放到这里。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "還沒有儲存過：下一場在歷史記錄裡儲存的會議會放到這裡。"
+          }
+        }
+      }
+    },
+    "Use This Folder" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diesen Ordner verwenden"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser ce dossier"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用这个文件夹"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用這個資料夾"
+          }
+        }
+      }
+    },
+    "Choose a folder for meetings saved from now on." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle einen Ordner für Meetings, die ab jetzt gesichert werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisissez un dossier pour les réunions enregistrées à partir de maintenant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "为从现在起保存的会议选择一个文件夹。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "為從現在起儲存的會議選擇一個資料夾。"
+          }
+        }
+      }
+    },
+    "Not saved at %@: %@ is already in the folder as %@; it was left as it is." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um %1$@ nicht gesichert: %2$@ liegt schon im Ordner, als %3$@; es wurde so gelassen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non enregistrée à %1$@ : %2$@ est déjà dans le dossier, sous forme de %3$@ ; laissé tel quel."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 没有保存：文件夹里已有 %2$@，是%3$@，保持原样没有动。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 沒有儲存：資料夾裡已有 %2$@，是%3$@，保持原樣沒有動。"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

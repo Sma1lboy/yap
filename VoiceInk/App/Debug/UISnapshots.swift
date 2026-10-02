@@ -561,6 +561,18 @@
             SettingsView.snapshotQuery = String(localized: "Meetings")
             MainWindowNavigation.shared.selectedView = .settings
             shot("settings-meetings", main: true, fullPage: true, titled: true) { ContentView() }
+            // Save Meetings to a Folder Automatically in each state, with the rest of Meetings (the shot above is off).
+            let autoFolder = URL(fileURLWithPath: "/Users/you/Documents/Meeting Notes", isDirectory: true)
+            let autoStates: [(String, Bool, Int, MeetingArchive.Outcome?)] = [
+                ("on", true, 0, nil), ("queued", true, 2, .written), ("written", true, 0, .written),
+                ("there", true, 0, .alreadyThere), ("conflict", true, 0, .conflict(.differentContent)),
+                ("folder-gone", true, 0, .failed(.folderMissing)), ("off-with-folder", false, 0, nil),
+            ]
+            for (name, enabled, queued, last) in autoStates {
+                MeetingAutoArchive.shared.setSnapshotState(enabled: enabled, folder: autoFolder, queued: queued, last: last)
+                shot("settings-meetings-auto-\(name)", main: true, fullPage: true, titled: true) { ContentView() }
+            }
+            MeetingAutoArchive.shared.setSnapshotState(enabled: false, folder: nil, last: nil)
             SettingsView.snapshotQuery = ""
             UserDefaults.standard.removeObject(forKey: MeetingCallDetector.enabledKey)
 

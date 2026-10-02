@@ -14,6 +14,11 @@ to folders as History's Save Meetings to Folder… does it, in these cases:
 5. Notes regenerated: a new version for that meeting, the old file unchanged.
 6. A folder that's gone fails without being created again; a read-only folder fails, except for a copy already in it.
 Every export leaves History's entries and the meetings' audio exactly as they were.
+7. Settings › Meetings › Save Meetings to a Folder Automatically (MeetingAutoArchive), each step a new launch: off by
+   default, no backfill, a new meeting, duplicates, rename, notes saved and failed, pending speakers (arrived, failed,
+   folder gone, entry deleted), deleted right after saving, an edited copy, turned off and folder changed with a file in
+   flight and one queued, a folder gone or read-only; then settings export (config.json, cloud, backup) and import
+   neither carry nor change the switch and folder. Prints how many files each meeting got.
 """
 import glob, hashlib, json, os, re, shutil, subprocess, sys, time
 

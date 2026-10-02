@@ -66,7 +66,7 @@ struct MeetingAutoArchiveSettings: View {
             case .alreadyThere:
                 line("info.circle", AppTheme.Status.info, String(localized: "At \(time) the meeting was already in the folder with the same content; nothing was added."))
             case .conflict:
-                line("exclamationmark.triangle", AppTheme.Status.warning, String(localized: "Not saved at \(time): the folder has something else named \(last.item.fileName) (\(MeetingArchiveSheet.reason(last.item.outcome))), and it was left as it is."))
+                line("exclamationmark.triangle", AppTheme.Status.warning, String(localized: "Not saved at \(time): \(last.item.fileName) is already in the folder as \(MeetingArchiveSheet.reason(last.item.outcome)); it was left as it is."))
             case .failed:
                 line("exclamationmark.triangle", AppTheme.Status.error, String(localized: "Not saved at \(time): \(MeetingArchiveSheet.reason(last.item.outcome))"))
             }
