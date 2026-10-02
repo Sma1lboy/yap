@@ -3028,9 +3028,21 @@
           }
         },
         "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld sélectionné"
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sélectionné"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld sélectionnés"
+                }
+              }
+            }
           }
         },
         "zh-Hans" : {
@@ -52552,34 +52564,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "只存從現在起儲存的會議。歷史記錄裡已有的會議不會被複製；需要的話在歷史記錄裡選取它們，用「儲存會議…」。還在區分說話者的會議，結束時先存一份，區分完後再存一份。"
-          }
-        }
-      }
-    },
-    "Any app that can open the folder can read these files, and a folder that syncs (iCloud Drive, Dropbox…) uploads them." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jede App, die den Ordner öffnen kann, kann diese Dateien lesen, und ein synchronisierter Ordner (iCloud Drive, Dropbox…) lädt sie hoch."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toute app qui peut ouvrir le dossier peut lire ces fichiers, et un dossier synchronisé (iCloud Drive, Dropbox…) les envoie en ligne."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "能打开这个文件夹的任何 app 都能读到这些文件；会同步的文件夹（iCloud 云盘、Dropbox…）会把它们上传。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "能打開這個資料夾的任何 app 都能讀到這些檔案；會同步的資料夾（iCloud 雲碟、Dropbox…）會把它們上傳。"
           }
         }
       }

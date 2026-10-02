@@ -26,8 +26,9 @@ struct MeetingAutoArchiveSettings: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                         .textSelection(.enabled)
+                        .help(folder.path)
                     Spacer(minLength: AppTheme.Spacing.x2)
-                    AppActionButton("Choose Folder…", action: chooseFolder)
+                    AppActionButton("Choose Folder…") { chooseFolder() }
                         .controlSize(.small)
                         .disabled(archive.isSwitching)
                 }
@@ -35,7 +36,7 @@ struct MeetingAutoArchiveSettings: View {
                 .foregroundStyle(AppTheme.Text.secondary)
             }
             note("Only meetings saved from now on. Meetings already in History aren't copied; select them in History and use Save Meetings… for that. A meeting whose speakers are still being told apart is saved when it ends and again once they're in.")
-            note("Any app that can open the folder can read these files, and a folder that syncs (iCloud Drive, Dropbox…) uploads them.")
+            note("These files are separate from History: deleting a meeting there, or History deleting it after the retention period, doesn't remove them. Any app that can open the folder can read them, and a folder that syncs (iCloud Drive, Dropbox…) uploads them.")
             if archive.isEnabled { status }
         }
     }
@@ -88,14 +89,14 @@ struct MeetingAutoArchiveSettings: View {
     /// On with the folder chosen before; without one, the folder is chosen first (cancelled: stays off).
     private func turnOn() async {
         if archive.folder == nil {
-            chooseFolder()
+            chooseFolder(turningOn: true)
         } else {
             await archive.turnOn()
         }
     }
 
-    /// Cancelled: nothing changes, neither the folder nor the switch.
-    private func chooseFolder() {
+    /// `turningOn`: picked from the switch, to turn it on; otherwise from Choose Folder….
+    private func chooseFolder(turningOn: Bool = false) {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
@@ -104,7 +105,7 @@ struct MeetingAutoArchiveSettings: View {
         panel.prompt = String(localized: "Use This Folder")
         panel.message = String(localized: "Choose a folder for meetings saved from now on.")
         NSApp.activate(ignoringOtherApps: true)
-        guard panel.runModal() == .OK, let folder = panel.url else { return }
-        Task { await archive.turnOn(folder: folder) }
+        let chosen = panel.runModal() == .OK ? panel.url : nil
+        Task { await archive.folderChosen(chosen, turningOn: turningOn) }
     }
 }

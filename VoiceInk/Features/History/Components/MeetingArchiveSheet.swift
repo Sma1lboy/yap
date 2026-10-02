@@ -62,6 +62,9 @@ struct MeetingArchiveSheet: View {
                 case .done(let report):
                     if report.items.contains(where: { $0.outcome != .failed(.folderMissing) }) {
                         AppActionButton("Show in Finder") { showInFinder(report) }
+                    } else {
+                        // The folder is gone: the way out is another one, for the same meetings.
+                        AppActionButton("Choose Folder…", action: chooseFolder)
                     }
                     AppActionButton("Done", kind: .primary, action: onClose)
                         .keyboardShortcut(.defaultAction)

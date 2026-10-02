@@ -572,6 +572,13 @@
                 MeetingAutoArchive.shared.setSnapshotState(enabled: enabled, folder: autoFolder, queued: queued, last: last)
                 shot("settings-meetings-auto-\(name)", main: true, fullPage: true, titled: true) { ContentView() }
             }
+            // Waiting for the file in flight while the folder changes (switch and Choose Folder… disabled), and a
+            // folder path and file name too long for one line.
+            MeetingAutoArchive.shared.setSnapshotState(enabled: true, folder: autoFolder, queued: 1, switching: true, last: .written)
+            shot("settings-meetings-auto-switching", main: true, fullPage: true, titled: true) { ContentView() }
+            let deepFolder = URL(fileURLWithPath: "/Users/you/Library/Mobile Documents/iCloud~md~obsidian/Documents/Work Vault/Meetings/2026/Quarterly Planning and Reviews", isDirectory: true)
+            MeetingAutoArchive.shared.setSnapshotState(enabled: true, folder: deepFolder, last: .conflict(.symbolicLink))
+            shot("settings-meetings-auto-long-path", main: true, fullPage: true, titled: true) { ContentView() }
             MeetingAutoArchive.shared.setSnapshotState(enabled: false, folder: nil, last: nil)
             SettingsView.snapshotQuery = ""
             UserDefaults.standard.removeObject(forKey: MeetingCallDetector.enabledKey)
