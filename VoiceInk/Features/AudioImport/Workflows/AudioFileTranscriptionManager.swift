@@ -8,6 +8,14 @@ import os
 class AudioTranscriptionManager: ObservableObject {
     static let shared = AudioTranscriptionManager()
 
+    /// Local Whisper's timed segments of an imported file: the same output filter and dictionary replacements as the
+    /// text (not paragraph formatting or AI cleanup, which can't keep the timing). make text-fidelity-check runs it.
+    static func cleanedSegments(_ segments: [TimedSegment], replacementsIn context: ModelContext) -> [TimedSegment] {
+        TimedSegments.tidy(segments) { segmentText in
+            WordReplacementService.shared.applyReplacements(to: TranscriptionOutputFilter.filter(segmentText), using: context)
+        }
+    }
+
     // MARK: - Published State
 
     @Published var queue: [AudioFileQueueItem] = []
@@ -176,12 +184,7 @@ class AudioTranscriptionManager: ObservableObject {
             }
             var text = transcribed.text
             let transcriptionDuration = Date().timeIntervalSince(transcriptionStart)
-            // Local Whisper also gives timed segments; they get the same filter and dictionary replacements as
-            // the text (not paragraph formatting or AI cleanup, which can't keep the timing).
-            let segments = TimedSegments.tidy(transcribed.segments) { segmentText in
-                WordReplacementService.shared.applyReplacements(
-                    to: TranscriptionOutputFilter.filter(segmentText), using: modelContext)
-            }
+            let segments = Self.cleanedSegments(transcribed.segments, replacementsIn: modelContext)
             text = TranscriptionOutputFilter.filter(text)
             text = text.trimmingCharacters(in: .whitespacesAndNewlines)
 

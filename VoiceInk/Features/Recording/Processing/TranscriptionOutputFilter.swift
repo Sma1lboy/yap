@@ -1,22 +1,18 @@
 import Foundation
 
-/// Takes out what a model writes in place of speech, and the user's English filler words. Text the user said stays,
-/// brackets and all: `foo.bar(userId)`, `items[0]`, JSON, `<b>粗体</b>`, "我明天(周三)有空".
+/// Takes out the marker a model is known to write in place of speech, and the user's English filler words. Every
+/// other bracket stays as recognized: `foo.bar(userId)`, `items[0]`, `[options]`, `(Tuesday)`, JSON, `<div>…</div>`.
+/// Whisper can also write annotations (OpenAI's tokenizer names `( SPEAKING FOREIGN LANGUAGE )` and a `[DAVID]`
+/// speaker tag as examples), but they're open-ended words in the same brackets a user dictates, so their shape doesn't
+/// tell them apart from what was said; they stay.
 struct TranscriptionOutputFilter {
-    /// An annotation is words only: letters, marks, spaces, `_ ' -`. Starts with a letter, at least two characters.
-    private static let words = #"\p{L}[\p{L}\p{M} _'-]+"#
-
-    /// `[Music]`, `[BLANK_AUDIO]`, `[inaudible]` anywhere, unless attached to the word before it (`items[i]`) or a
-    /// link label (`[the docs](https://…)`).
-    private static let squareAnnotation = try! NSRegularExpression(
-        pattern: #"(?<![\p{L}\p{N}_.\])])\[\#(words)\](?!\()"#)
-
-    /// `(laughs)`, `{music}` or a `<tag>…</tag>` block on a line of its own (or the whole transcript), with the line.
-    private static let lineAnnotation = try! NSRegularExpression(
-        pattern: #"(?m)^[^\S\n]*(?:\(\#(words)\)|\{\#(words)\}|<([A-Za-z][A-Za-z0-9:_-]*)[^>]*>[^\n]*?</\1>)[^\S\n]*(?:\n|$)"#)
+    /// `[BLANK_AUDIO]`, what whisper.cpp writes for a window without speech (its own example strips it,
+    /// examples/python/whisper_processor.py), with the spaces before it, or its whole line when it stands alone there.
+    private static let noSpeech = try! NSRegularExpression(
+        pattern: #"(?m)^[^\S\n]*\[BLANK_AUDIO\][^\S\n]*(?:\n|$)|[^\S\n]*\[BLANK_AUDIO\]"#)
 
     static func filter(_ text: String) -> String {
-        var filteredText = replacing(lineAnnotation, in: replacing(squareAnnotation, in: text))
+        var filteredText = replacing(noSpeech, in: text)
 
         // Configured filler words, as words of their own: not inside yyyy-mm-dd or a path. An empty list is a no-op.
         for fillerWord in FillerWordManager.shared.fillerWords {
@@ -84,17 +80,19 @@ struct TranscriptionOutputFilter {
             assert(!isKnownHallucination(""))
             assert(!isKnownHallucination("..."))
 
-            // Annotations go; brackets that are part of what was said stay. Inputs hold no filler word, so the
-            // user's list doesn't matter here.
+            // whisper.cpp's no-speech marker goes, with its line when alone; any other bracket stays, since its shape
+            // doesn't say whether it was said. Inputs hold no filler word, so the user's list doesn't matter here.
             func check(_ input: String, _ expected: String) {
                 let output = filter(input)
                 assert(output == expected, "TranscriptionOutputFilter: \(input) → \(output), expected \(expected)")
             }
             check("[BLANK_AUDIO]", "")
-            check("Hello [inaudible] world", "Hello world")
-            check("(upbeat music)", "")
-            check("Okay.\n(laughs)\nSo anyway", "Okay.\nSo anyway")
-            check("<noise>static</noise>", "")
+            check("Hello [BLANK_AUDIO] world", "Hello world")
+            check("Okay.\n[BLANK_AUDIO]\nSo anyway", "Okay.\nSo anyway")
+            check("[options]", "[options]")
+            check("Use [projectName] here", "Use [projectName] here")
+            check("Dates:\n(Tuesday)\nor Friday", "Dates:\n(Tuesday)\nor Friday")
+            check("<div>hello</div>", "<div>hello</div>")
             check("foo.bar(userId)", "foo.bar(userId)")
             check("args[i] = map[key]", "args[i] = map[key]")
             check("{\"name\": \"yap\", \"tags\": [1, 2]}", "{\"name\": \"yap\", \"tags\": [1, 2]}")

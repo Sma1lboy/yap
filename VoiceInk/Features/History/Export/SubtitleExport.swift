@@ -65,13 +65,15 @@ enum TimedSegments {
         return TimedSegment(start: start, end: end, text: text)
     }
 
-    /// Trims text, drops empty segments and Whisper's "[BLANK_AUDIO]"-style markers, and makes times
-    /// monotonic (each segment starts no earlier than the previous one ends) for players that require it.
+    /// Trims text, drops empty segments and whisper.cpp's no-speech marker ("[BLANK_AUDIO]"; any other bracketed
+    /// segment, `[options]` say, is text), and makes times monotonic (each segment starts no earlier than the previous
+    /// one ends) for players that require it.
     static func tidy(_ segments: [TimedSegment], text transform: (String) -> String = { $0 }) -> [TimedSegment] {
         var result: [TimedSegment] = []
         for segment in segments.sorted(by: { $0.start < $1.start }) {
             let text = transform(segment.text).trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !text.isEmpty, !(text.hasPrefix("[") && text.hasSuffix("]")) else { continue }
+            // The literal, not TranscriptionOutputFilter's: setup/asr/harness builds this file on its own.
+            guard !text.isEmpty, text != "[BLANK_AUDIO]" else { continue }
             let start = max(segment.start, result.last?.end ?? 0)
             result.append(TimedSegment(start: start, end: max(segment.end, start), text: text))
         }
@@ -117,6 +119,7 @@ enum TimedSegments {
             assert(SubtitleFormat.vtt.render(two).hasPrefix("WEBVTT\n\n00:00:01.500 --> 00:00:03.250\nHello\n"))
             assert(SubtitleFormat.markdown.render(two) == "**[0:01]** Hello\n\n**[1:01:01]** 你好\n")
             assert(tidy([TimedSegment(start: 0, end: 1, text: " [BLANK_AUDIO] "), TimedSegment(start: 1, end: 2, text: " ")]).isEmpty)
+            assert(tidy([TimedSegment(start: 0, end: 1, text: "[options]")]).map(\.text) == ["[options]"])
             assert(decode(encode(two)) == two && decode(nil).isEmpty && encode([]) == nil)
 
             // A segment spread over a window's silence is pulled in to its speech; one without speech stays.
