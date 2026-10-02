@@ -54,6 +54,8 @@ struct VoiceInkApp: App {
             MCPFixture.runIfRequested()
             // make meeting-archive-check: History's Save Meetings to Folder… on a store in a test folder, and exit.
             MeetingArchiveCheck.runIfRequested()
+            // make mic-fallback-check: microphone selection on fixture devices, or this Mac's devices read only; exits.
+            MicFallbackCheck.runIfRequested()
             // make edit-rate-check: print the correction-rate fixtures, run their self-checks, and exit.
             EditRateCheck.runIfRequested()
             // make home-feedback-check: Home's paste numbers on fixed weeks, through WeekStatsLoader, and exit.
