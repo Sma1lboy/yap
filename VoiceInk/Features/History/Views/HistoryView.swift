@@ -368,7 +368,7 @@ struct HistoryView<Header: View>: View {
 
     private var selectionBar: some View {
         HStack(spacing: AppTheme.Spacing.x4) {
-            Text(String(format: String(localized: "%lld selected"), Int64(selectedTranscriptions.count)))
+            Text(String(localized: "\(Int64(selectedTranscriptions.count)) selected"))
                 .font(AppTheme.font(.body, .medium))
                 .foregroundColor(.secondary)
                 .fixedSize()
