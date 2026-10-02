@@ -419,6 +419,59 @@
                 MeetingSpeakerNamesEditor(
                     speakers: meetingSpeakers, names: namedMeeting.meetingSpeakerNames, onCancel: {}, onSave: { _ in nil })
             }
+            // Save Meetings to Folder…: History with two meetings and a dictation selected (the button counts the
+            // meetings only), with dictations only (no button); the sheet before saving (meetings only, and with
+            // dictations), and after: all saved, partly (a copy the user edited, a link, an unreadable file, one already
+            // there), and the folder gone.
+            let archiveHistory = inMemoryContainer()
+            MockData.insertHistory(into: archiveHistory.mainContext, count: 4)
+            let archiveMeetings = [(0.0, 754.0), (-5 * 3_600.0, 125.0)].map { offset, duration in
+                let meeting = Transcription(
+                    text: namedMeeting.text, duration: duration, enhancedText: namedMeeting.enhancedText,
+                    transcriptionStatus: .completed)
+                meeting.kind = Transcription.meetingKind
+                meeting.timestamp = Date().addingTimeInterval(offset)
+                archiveHistory.mainContext.insert(meeting)
+                return meeting
+            }
+            try? archiveHistory.mainContext.save()
+            let firstDictation = MockData.history[0].original
+            MainWindowNavigation.shared.selectedView = .dashboard
+            HistorySnapshotSelection.selects = { $0.isMeeting || $0.text == firstDictation }
+            shot("history-archive-selection-mixed", main: true, titled: true) { ContentView().modelContainer(archiveHistory) }
+            HistorySnapshotSelection.selects = { !$0.isMeeting }
+            shot("history-archive-selection-dictations", main: true, titled: true) { ContentView().modelContainer(archiveHistory) }
+            // One meeting: Export Markdown… and Save 1 Meeting… side by side, the widest bar.
+            let newestMeeting = archiveMeetings[0].id
+            HistorySnapshotSelection.selects = { $0.id == newestMeeting }
+            shot("history-archive-selection-one", main: true, titled: true) { ContentView().modelContainer(archiveHistory) }
+            HistorySnapshotSelection.selects = nil
+            let archiveDictations = (0..<3).map { Transcription(text: MockData.history[$0].original, duration: 4) }
+            shot("history-archive-sheet", main: true, fit: true) {
+                MeetingArchiveSheet(selection: archiveMeetings, onClose: {})
+            }
+            shot("history-archive-sheet-mixed", main: true, fit: true) {
+                MeetingArchiveSheet(selection: archiveMeetings + archiveDictations, onClose: {})
+            }
+            let archiveFolder = URL(fileURLWithPath: "/Users/tingting/Documents/Obsidian/Work/Meetings", isDirectory: true)
+            let archiveNames = (0..<7).map { index in
+                MeetingArchive.fileName(for: MeetingArchive.Entry(
+                    id: UUID(), timestamp: Date(timeIntervalSince1970: 1_790_000_000 + Double(index) * 7_200),
+                    bytes: Data("\(index)".utf8)))
+            }
+            let archiveReports: [(String, [MeetingArchive.Outcome])] = [
+                ("done", [.written, .written]),
+                ("partial", [.written, .alreadyThere, .conflict(.differentContent), .conflict(.symbolicLink), .failed(.unreadable)]),
+                ("folder-gone", Array(repeating: .failed(.folderMissing), count: 7)),
+            ]
+            for (name, outcomes) in archiveReports {
+                let report = MeetingArchive.Report(
+                    folder: archiveFolder,
+                    items: outcomes.enumerated().map { MeetingArchive.Item(id: UUID(), fileName: archiveNames[$0.offset], outcome: $0.element) })
+                shot("history-archive-\(name)", main: true, fit: true) {
+                    MeetingArchiveSheet(selection: archiveMeetings, onClose: {}, phase: .done(report))
+                }
+            }
             shot("sheet-restore-settings", size: CGSize(width: 440, height: 200)) {
                 OnboardingCloudRestoreSheet { _ in }
             }
