@@ -194,6 +194,7 @@ def tools(helper, folder, version, domain):
         s.error("list_meetings", **bad)
 
     same = 0
+    archive = os.path.join(folder, "archive")
     for role in ["renamed", "pending", "failed"]:
         entry = roles[role]
         want = open(os.path.join(folder, "expected", entry + ".md"), "rb").read()
@@ -201,9 +202,14 @@ def tools(helper, folder, version, domain):
         check(got["isError"] is False and got["content"][0]["text"].encode() == want,
               "get_meeting %s isn't History's export:\n--- got\n%s\n--- want\n%s"
               % (role, got["content"][0]["text"], want.decode()))
+        # Save Meetings to Folder…: one file for this meeting, the same bytes.
+        saved = [n for n in os.listdir(archive) if "meeting-%s-" % entry.lower() in n]
+        check(len(saved) == 1 and open(os.path.join(archive, saved[0]), "rb").read() == want,
+              "the archived %s isn't History's export: %r" % (role, saved))
         notes = s.ok("get_meeting", id=entry.lower(), include_transcript=False)["content"][0]["text"]
         check(want.decode().startswith(notes[:-1] + "\n\n## ") and "**[" not in notes, "notes only, %s: %r" % (role, notes))
         same += 1
+    check(len(os.listdir(archive)) == 3, "the archive has a file per meeting and none for dictations: %r" % os.listdir(archive))
     renamed_md = open(os.path.join(folder, "expected", roles["renamed"] + ".md")).read()
     check("**[00:21] Reed**" in renamed_md and "Tingting" in renamed_md and "Others" not in renamed_md,
           "the export doesn't have the new names")
@@ -228,7 +234,7 @@ def tools(helper, folder, version, domain):
               "main switch only, %s: %r" % (name, message))
     dictionary = s.ok("get_dictionary")
     check(len(dictionary["words"]) == 3 and len(dictionary["replacements"]) == 2, "main switch only, dictionary")
-    print("%s: main switch only: list_meetings (%d meetings), get_meeting = History's export byte for byte for %d "
+    print("%s: main switch only: list_meetings (%d meetings), get_meeting = History's export = Save Meetings to Folder…'s file, byte for byte, for %d "
           "meetings, get_dictionary; search_history finds meetings only (dictations_excluded); dictations are tool "
           "errors naming \"%s\"" % (lang, len(meetings), same, titles["dictations"]))
 

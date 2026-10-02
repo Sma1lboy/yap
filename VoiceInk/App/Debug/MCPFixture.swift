@@ -169,6 +169,15 @@
             context.insert(typo)
             try context.save()
 
+            // History's Save Meetings to Folder… with the whole History selected, next to the expected folder:
+            // mcp-check compares its files with get_meeting and the export, byte for byte.
+            let archive = expected.deletingLastPathComponent().appendingPathComponent("archive", isDirectory: true)
+            try fileManager.createDirectory(at: archive, withIntermediateDirectories: true)
+            let selection = [renamed, pending, failed, dictation, mixed, long]
+            let report = MeetingArchive.export(MeetingArchive.entries(for: selection), to: archive)
+            guard report.written == 3 else {
+                throw CocoaError(.fileWriteUnknown, userInfo: [NSLocalizedDescriptionKey: "archive: \(report.items)"])
+            }
             for (role, entry) in [
                 ("renamed", renamed), ("pending", pending), ("failed", failed), ("dictation", dictation),
                 ("mixed", mixed), ("long", long),
