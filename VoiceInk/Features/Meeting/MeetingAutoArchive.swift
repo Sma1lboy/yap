@@ -41,6 +41,8 @@ final class MeetingAutoArchive: ObservableObject {
 
     private let defaults: UserDefaults
     private let queue = DispatchQueue(label: "me.sma1lboy.yap.meeting.auto-archive")
+    /// Snapshots of meetings saved while the destination was being switched; see `saved(_:)`.
+    private var heldDuringSwitch: [MeetingArchive.Entry] = []
     private let generation = OSAllocatedUnfairLock(initialState: 0)
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "MeetingAutoArchive")
 
@@ -58,12 +60,21 @@ final class MeetingAutoArchive: ObservableObject {
     }
 
     /// Called by `MeetingEdits.save` right after a meeting's change was saved, before any notification about it.
+    /// Saved while the folder is being changed: kept and written to the new folder once the switch is done (turning
+    /// off drops it, like everything queued then).
     func saved(_ transcription: Transcription) {
-        guard isEnabled, !isSwitching, let folder,
-            let entry = MeetingArchive.entries(for: [transcription]).first
-        else { return }
-        let current = generation.withLock { $0 }
+        guard isEnabled, folder != nil, let entry = MeetingArchive.entries(for: [transcription]).first else { return }
         queued += 1
+        if isSwitching {
+            heldDuringSwitch.append(entry)
+        } else {
+            enqueue(entry)
+        }
+    }
+
+    private func enqueue(_ entry: MeetingArchive.Entry) {
+        guard let folder else { return }
+        let current = generation.withLock { $0 }
         let generation = self.generation
         queue.async { [weak self] in
             // Off or another folder since this was queued: it doesn't start.
@@ -112,9 +123,12 @@ final class MeetingAutoArchive: ObservableObject {
         isSwitching = true
         await withCheckedContinuation { continuation in queue.async { continuation.resume() } }
         change()
-        queued = 0
+        let held = isEnabled ? heldDuringSwitch : []
+        heldDuringSwitch = []
+        queued = held.count
         lastResult = nil
         isSwitching = false
+        held.forEach(enqueue)
     }
 
     /// Waits until every save queued so far is done or dropped.

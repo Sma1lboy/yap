@@ -117,15 +117,18 @@
         /// - `on [folder]` / `off`: the switch, as Settings sets it (a folder: the one just chosen).
         /// - `create [pending]`: a new meeting saved as finishing one saves it, with a `segments.json` of two remote
         ///   pieces; `pending`: its speakers still being told apart.
-        /// - `create-cleanup`: the same, then deleted right away with its audio, as the retention cleanup does.
-        /// - `delete <id>`: that cleanup on a saved meeting.
+        /// - `create-cleanup`: the same, with History's retention set to "immediately": when `transcriptionCreated`
+        ///   arrives, the real cleanup sweep (`TranscriptionAutoCleanupService.runManualCleanup`) deletes it and its
+        ///   audio, before its file is written. Prints the order: what was queued when the notification came, whether
+        ///   the entry is gone after the sweep.
+        /// - `delete <id>`: a saved meeting deleted with its audio, as History's Delete or the cleanup does.
         /// - `speakers <id> two|fail|gone`: the speakers arriving after saving (two people; the diarizer timed out;
         ///   the recording folder deleted first).
         /// - `rename <id> <key=name,…>`, `notes <id> <text>`: Speaker Names and a Regenerate Notes that got notes
         ///   (`--meeting-fail-save`: their save fails).
         /// - `resave <id>`: the same saved meeting handed on twice more, unchanged.
         /// - `race-off`: two meetings saved, then turned off at once. `race-switch <folder>`: two meetings saved, the
-        ///   folder changed at once, then a third meeting saved.
+        ///   folder changed at once, a third meeting saved while the switch waits for the file in flight, a fourth after.
         private static func auto(_ context: ModelContext, data: URL, _ arguments: [String]) throws {
             let all = CommandLine.arguments
             if let index = all.firstIndex(of: "--auto-archive-delay"), all.indices.contains(index + 1) {
@@ -181,7 +184,27 @@
                     case "create":
                         _ = try create(pending: arguments.dropFirst().first == "pending")
                     case "create-cleanup":
-                        try cleanUp(try create(pending: false))
+                        let defaults = UserDefaults.standard
+                        defaults.set(true, forKey: CleanupSettingsKeys.isTranscriptionCleanupEnabled)
+                        defaults.set(0, forKey: CleanupSettingsKeys.transcriptionRetentionMinutes)
+                        defer {
+                            defaults.removeObject(forKey: CleanupSettingsKeys.isTranscriptionCleanupEnabled)
+                            defaults.removeObject(forKey: CleanupSettingsKeys.transcriptionRetentionMinutes)
+                        }
+                        var sweep: Task<Void, Never>?
+                        let observer = NotificationCenter.default.addObserver(forName: .transcriptionCreated, object: nil, queue: nil) { _ in
+                            MainActor.assumeIsolated {
+                                print("archive-check: order transcriptionCreated queued \(archive.queued) written \(archive.lastResult != nil)")
+                                sweep = Task { await TranscriptionAutoCleanupService.shared.runManualCleanup(modelContext: context) }
+                            }
+                        }
+                        let meeting = try create(pending: false)
+                        NotificationCenter.default.removeObserver(observer)
+                        let (id, audioURL) = (meeting.id, meeting.audioFileURL.flatMap(URL.init(string:)))
+                        await sweep?.value
+                        let left = try ModelContext(context.container).fetch(FetchDescriptor<Transcription>(predicate: #Predicate { $0.id == id }))
+                        let audio = audioURL.map { FileManager.default.fileExists(atPath: $0.path) } ?? false
+                        print("archive-check: order cleanup entry-left \(left.count) audio-left \(audio) written \(archive.lastResult != nil)")
                     case "delete":
                         try cleanUp(try entry(arguments[1]))
                     case "speakers":
@@ -220,7 +243,11 @@
                     case "race-switch":
                         _ = try create(pending: false)
                         _ = try create(pending: false)
-                        await archive.turnOn(folder: URL(fileURLWithPath: arguments[1], isDirectory: true))
+                        let switching = Task { await archive.turnOn(folder: URL(fileURLWithPath: arguments[1], isDirectory: true)) }
+                        await Task.yield()
+                        print("archive-check: switching \(archive.isSwitching)")
+                        _ = try create(pending: false)
+                        await switching.value
                         print("archive-check: switched-at \(Int64(Date().timeIntervalSince1970 * 1_000_000_000))")
                         _ = try create(pending: false)
                     default:

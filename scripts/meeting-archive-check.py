@@ -299,12 +299,16 @@ per_meeting.append(("pending, then deleted", p4, versions(A, p4)))
 print("7e. pending speakers: saved at once (1 file); two speakers later: +1 version with Others 1/2; diarization failed or "
       "recording folder gone: status saved, same bytes, there; entry deleted while pending: 1 file, later speakers report nothing")
 
-# 7f. Deleted right after saving, as the retention cleanup does, while the file waits 1 s: the snapshot was taken at
-# the save, so the file is still written.
+# 7f. History's retention set to "immediately": when transcriptionCreated arrives, the real cleanup sweep deletes the
+# entry and its audio while the file still waits 1 s. The snapshot was taken at the save, before the notification.
 lines, _, last, (c1,) = auto("create-cleanup", flags=("--auto-archive-delay", "1"))
-check(("deleted %s" % c1) in lines and last[0] == c1 and last[1] == "written" and len(versions(A, c1)) == 1, "cleanup: %s %r" % (last, lines))
-per_meeting.append(("deleted right after saving", c1, versions(A, c1)))
-print("7f. entry and audio deleted right after the save, before its file was written: the file is written from the snapshot")
+order = [l for l in lines if l.startswith("order ")]
+check(order == ["order transcriptionCreated queued 1 written false", "order cleanup entry-left 0 audio-left false written false"],
+      "save/notification/cleanup order: %r" % order)
+check(last[0] == c1 and last[1] == "written" and len(versions(A, c1)) == 1, "cleanup: %s %r" % (last, lines))
+per_meeting.append(("deleted by the retention sweep at once", c1, versions(A, c1)))
+print("7f. order: save -> snapshot queued (1) -> transcriptionCreated -> retention sweep deleted entry and audio -> file "
+      "written from the snapshot")
 
 # 7g. A copy the user edited: reported as a conflict and left as it is.
 _, _, _, (e1,) = auto("create")
@@ -330,16 +334,18 @@ print("7h. turned off with one file in flight and one queued: the one in flight 
       "queued one never started; a meeting saved while off: no file; the folder is kept for next time")
 
 # 7i. The folder changed with one file in flight and one queued: the first lands in the old folder, the queued one
-# nowhere, the next meeting in the new folder.
+# nowhere; a meeting saved while the switch waits goes to the new folder, as does the next one.
 B = os.path.join(WORK, "AutoB")
 os.mkdir(B)
 auto("on")
 before = set(md_files(A))
-lines, state, last, (y1, y2, y3) = auto("race-switch", B, flags=("--auto-archive-delay", "2"))
-check(state.startswith("auto enabled true folder %s" % B), "switch state: %s" % state)
+lines, state, last, (y1, y2, y3, y4) = auto("race-switch", B, flags=("--auto-archive-delay", "2"))
+check("switching true" in lines and state.startswith("auto enabled true folder %s" % B), "switch state: %s %r" % (state, lines))
 check(len(versions(A, y1)) == 1 and versions(A, y2) == [] and versions(B, y2) == [] and versions(B, y1) == [], "old destination: %r" % md_files(B))
-check(len(versions(B, y3)) == 1 and versions(A, y3) == [] and last[0] == y3 and last[1] == "written", "new folder: %s %r" % (last, md_files(B)))
-print("7i. folder changed with one file in flight and one queued: in flight -> old folder, queued -> nowhere, next -> new folder")
+check(len(versions(B, y3)) == 1 and len(versions(B, y4)) == 1 and versions(A, y3) == versions(A, y4) == []
+      and last[0] == y4 and last[1] == "written", "new folder: %s %r" % (last, md_files(B)))
+print("7i. folder changed with one file in flight and one queued: in flight -> old folder, queued -> nowhere; saved "
+      "during the switch and after -> new folder")
 
 # 7j. The folder disappears: failed, not created again; a read-only folder: failed; History keeps the meeting.
 shutil.rmtree(B)
