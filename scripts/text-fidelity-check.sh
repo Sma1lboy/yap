@@ -29,4 +29,5 @@ codesign --force --deep --sign - "$APP" >/dev/null 2>&1
 "$APP/Contents/MacOS/VoiceInk Dev" -AppleLanguages "(en)" --text-fidelity-check >"$WORK/out.txt" 2>"$WORK/err.txt" \
 	|| { echo "app exited with $?"; tail -5 "$WORK/err.txt"; exit 1; }
 python3 "$(dirname "$0")/text-fidelity-check.py" "$WORK/out.txt"
+grep '^text-check-selfchecks: ' "$WORK/out.txt" || { echo "self-checks didn't finish"; exit 1; }
 echo "text-fidelity-check: OK"

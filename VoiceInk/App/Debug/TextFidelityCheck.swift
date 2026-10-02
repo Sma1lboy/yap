@@ -130,6 +130,11 @@
                 print("text-check: \(String(decoding: json, as: UTF8.self))")
             }
             fillers.fillerWords = defaultFillers
+            TranscriptionOutputFilter.selfCheck()
+            ChineseCleanup.selfCheck()
+            ParagraphFormatter.selfCheck()
+            ReplacementText.selfCheck()
+            print("text-check-selfchecks: TranscriptionOutputFilter ChineseCleanup ParagraphFormatter ReplacementText ok")
             fflush(stdout)
             exit(0)
         }
