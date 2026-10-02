@@ -85,6 +85,11 @@ struct AudioSetupView: View {
         }
         .buttonStyle(.borderless)
         .help("Refresh Microphones")
+
+        Text("If the microphone you chose isn't connected, Yap switches only to another real microphone (built-in, USB, Bluetooth…). Virtual and aggregate inputs are used only when you choose them here.")
+            .font(AppTheme.font(.caption))
+            .foregroundStyle(AppTheme.Text.secondary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     @ViewBuilder

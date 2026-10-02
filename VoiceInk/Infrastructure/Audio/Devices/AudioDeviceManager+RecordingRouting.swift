@@ -6,6 +6,9 @@ struct RecordingDeviceResolution {
     let deviceID: AudioDeviceID?
     let internalMicrophoneBlockedByClosedLid: Bool
     let fellBackFromClosedInternalMicrophone: Bool
+    /// Nothing to record from, though inputs are connected that Yap never switches to on its own (virtual, aggregate,
+    /// unknown transport); the user can still choose one.
+    let onlyUnchosenInputsLeft: Bool
 }
 
 struct RecordingDeviceSession {
@@ -22,6 +25,7 @@ enum RecordingDeviceChangeReason: Equatable {
 struct RecordingDeviceChangeRequest {
     let fallbackDeviceID: AudioDeviceID?
     let reason: RecordingDeviceChangeReason
+    let onlyUnchosenInputsLeft: Bool
 }
 
 extension AudioDeviceManager {
@@ -52,13 +56,14 @@ extension AudioDeviceManager {
         recordingDeviceSession = RecordingDeviceSession()
     }
 
+    /// What a recording uses: the user's choice for the mode (custom device, priority list, or the system default,
+    /// whatever kind of input it is), else an automatic fallback (`fallbackRecordingDeviceIDs`), never one that's
+    /// excluded or blocked by a closed lid.
     func resolveCurrentRecordingDevice(
         excluding excludedDeviceID: AudioDeviceID? = nil
     ) -> RecordingDeviceResolution {
         let preferredCandidates = preferredRecordingDeviceIDs()
         let preferredAvailableDevice = preferredCandidates.first(where: isOperationalInputDevice)
-        let internalMicrophoneBlockedByClosedLid = isClamshellClosed
-            && preferredAvailableDevice.map(isInternalMicrophone) == true
 
         var seen = Set<AudioDeviceID>()
         let candidates = (preferredCandidates + fallbackRecordingDeviceIDs()).filter { deviceID in
@@ -66,12 +71,18 @@ extension AudioDeviceManager {
             return seen.insert(deviceID).inserted
         }
         let resolvedDeviceID = candidates.first(where: isDeviceUsableForRecording)
+        let remaining = availableDevices.map(\.id).filter { $0 != excludedDeviceID }
+        // The closed lid is why: the chosen device is the internal microphone, or nothing is left but it.
+        let internalMicrophoneBlockedByClosedLid = isClamshellClosed
+            && (preferredAvailableDevice.map(isInternalMicrophone) == true
+                || (resolvedDeviceID == nil && remaining.contains(where: isInternalMicrophone)))
 
         return RecordingDeviceResolution(
             deviceID: resolvedDeviceID,
             internalMicrophoneBlockedByClosedLid: internalMicrophoneBlockedByClosedLid,
             fellBackFromClosedInternalMicrophone: internalMicrophoneBlockedByClosedLid
-                && resolvedDeviceID != preferredAvailableDevice
+                && resolvedDeviceID != nil && resolvedDeviceID != preferredAvailableDevice,
+            onlyUnchosenInputsLeft: resolvedDeviceID == nil && remaining.contains { !isAutomaticFallbackInput($0) }
         )
     }
 
@@ -88,6 +99,26 @@ extension AudioDeviceManager {
             && !(isClamshellClosed && isInternalMicrophone(deviceID))
     }
 
+    /// Whether Yap may record from this input without the user having chosen it, when their choice isn't there.
+    /// Only inputs with a known physical transport. Virtual inputs (BlackHole, Loopback, a meeting app's own) and
+    /// aggregates (Yap's private system-audio tap during a meeting is one) carry other sounds than the user's voice,
+    /// and an input that doesn't report its transport can't be told apart from them. Decided by Core Audio's
+    /// transport type, not by name; a virtual driver that reports a physical transport isn't caught.
+    func isAutomaticFallbackInput(_ deviceID: AudioDeviceID) -> Bool {
+        Self.isAutomaticFallbackTransport(
+            getUInt32DeviceProperty(deviceID: deviceID, selector: kAudioDevicePropertyTransportType))
+    }
+
+    static func isAutomaticFallbackTransport(_ transport: UInt32?) -> Bool {
+        switch transport {
+        case nil, kAudioDeviceTransportTypeUnknown, kAudioDeviceTransportTypeVirtual, kAudioDeviceTransportTypeAggregate,
+            kAudioDeviceTransportTypeAutoAggregate:
+            return false
+        default:
+            return true
+        }
+    }
+
     private func preferredRecordingDeviceIDs() -> [AudioDeviceID] {
         switch inputMode {
         case .systemDefault:
@@ -96,7 +127,8 @@ extension AudioDeviceManager {
             let savedUID = UserDefaults.standard.selectedAudioDeviceUID ?? ""
             let savedModelUID = UserDefaults.standard.selectedAudioDeviceModelUID
             var candidates = findAvailableDevice(uid: savedUID, modelUID: savedModelUID).map { [$0.id] } ?? []
-            if let selectedDeviceID, !candidates.contains(selectedDeviceID) {
+            // A device picked by fallback isn't a choice: it stays subject to the fallback rules.
+            if let selectedDeviceID, !selectedDeviceIsFallback, !candidates.contains(selectedDeviceID) {
                 candidates.append(selectedDeviceID)
             }
             return candidates
@@ -107,9 +139,11 @@ extension AudioDeviceManager {
         }
     }
 
+    /// Inputs Yap may switch to on its own, built-in microphone first (last with the lid closed).
     private func fallbackRecordingDeviceIDs() -> [AudioDeviceID] {
-        let internalMicrophones = availableDevices.filter { isInternalMicrophone($0.id) }.map { $0.id }
-        let otherInputs = availableDevices.filter { !isInternalMicrophone($0.id) }.map { $0.id }
+        let allowed = availableDevices.map(\.id).filter(isAutomaticFallbackInput)
+        let internalMicrophones = allowed.filter(isInternalMicrophone)
+        let otherInputs = allowed.filter { !isInternalMicrophone($0) }
         return isClamshellClosed ? otherInputs + internalMicrophones : internalMicrophones + otherInputs
     }
 
@@ -142,9 +176,11 @@ extension AudioDeviceManager {
         }
 
         recordingDeviceSession.isDeviceChangePending = true
+        let resolution = resolveCurrentRecordingDevice(excluding: activeDeviceID)
         let request = RecordingDeviceChangeRequest(
-            fallbackDeviceID: resolveCurrentRecordingDevice(excluding: activeDeviceID).deviceID,
-            reason: reason
+            fallbackDeviceID: resolution.deviceID,
+            reason: reason,
+            onlyUnchosenInputsLeft: resolution.onlyUnchosenInputsLeft
         )
         NotificationCenter.default.post(
             name: .recordingDeviceChangeRequired,
@@ -152,3 +188,23 @@ extension AudioDeviceManager {
         )
     }
 }
+
+#if DEBUG
+    extension AudioDeviceManager {
+        /// Which transports Yap falls back to on its own. The selection around it is checked on device lists by
+        /// make mic-fallback-check.
+        static func fallbackSelfCheck() {
+            for physical in [kAudioDeviceTransportTypeBuiltIn, kAudioDeviceTransportTypeUSB, kAudioDeviceTransportTypeBluetooth,
+                kAudioDeviceTransportTypeBluetoothLE, kAudioDeviceTransportTypeThunderbolt, kAudioDeviceTransportTypePCI,
+                kAudioDeviceTransportTypeFireWire, kAudioDeviceTransportTypeHDMI, kAudioDeviceTransportTypeDisplayPort,
+                kAudioDeviceTransportTypeContinuityCaptureWired, kAudioDeviceTransportTypeContinuityCaptureWireless] {
+                assert(isAutomaticFallbackTransport(physical), "\(physical)")
+            }
+            for unchosen in [kAudioDeviceTransportTypeVirtual, kAudioDeviceTransportTypeAggregate,
+                kAudioDeviceTransportTypeAutoAggregate, kAudioDeviceTransportTypeUnknown] {
+                assert(!isAutomaticFallbackTransport(unchosen), "\(unchosen)")
+            }
+            assert(!isAutomaticFallbackTransport(nil), "a device that doesn't say isn't a fallback")
+        }
+    }
+#endif

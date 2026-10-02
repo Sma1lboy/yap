@@ -20,7 +20,12 @@ enum AudioInputMode: String, CaseIterable {
 class AudioDeviceManager: ObservableObject {
     let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "AudioDeviceManager")
     @Published var availableDevices: [(id: AudioDeviceID, uid: String, name: String)] = []
-    @Published var selectedDeviceID: AudioDeviceID?
+    @Published var selectedDeviceID: AudioDeviceID? {
+        didSet { selectedDeviceIsFallback = false }
+    }
+    /// `selectedDeviceID` was picked by `fallbackToDefaultDevice` because the user's choice isn't there: it isn't
+    /// saved, and a recording treats it like any other automatic fallback (never a virtual or aggregate input).
+    private(set) var selectedDeviceIsFallback = false
     @Published var inputMode: AudioInputMode = .custom
     @Published var prioritizedDevices: [PrioritizedDevice] = []
 
@@ -29,9 +34,50 @@ class AudioDeviceManager: ObservableObject {
 
     var isRecordingActive: Bool { recordingDeviceSession.isActive }
     var activeRecordingDeviceID: AudioDeviceID? { recordingDeviceSession.activeDeviceID }
-    var isClamshellClosed: Bool { clamshellStateMonitor?.isClosed == true }
+    var isClamshellClosed: Bool {
+        #if DEBUG
+            if let fixture { return fixture.lidClosed }
+        #endif
+        return clamshellStateMonitor?.isClosed == true
+    }
 
     static let shared = AudioDeviceManager()
+
+    #if DEBUG
+        /// make mic-fallback-check: a device list, each device's properties, the system default input and the lid,
+        /// in place of Core Audio's. Everything else (modes, saved preferences, the selection and fallback code) is
+        /// the app's own.
+        struct FixtureHardware {
+            struct Device {
+                let id: AudioDeviceID
+                let uid: String
+                let name: String
+                /// `kAudioDevicePropertyTransportType`; nil when the device doesn't answer.
+                let transport: UInt32?
+                var modelUID: String? = nil
+                /// `kAudioDevicePropertyDataSource` (internal or external microphone), when the driver has it.
+                var dataSource: UInt32? = nil
+            }
+            var devices: [Device]
+            var defaultInput: AudioDeviceID?
+            var lidClosed = false
+        }
+        var fixture: FixtureHardware?
+
+        /// No Core Audio listener or lid monitor; preferences come from UserDefaults.standard as at launch.
+        init(fixture: FixtureHardware) {
+            self.fixture = fixture
+            loadPrioritizedDevices()
+            inputMode = UserDefaults.standard.audioInputModeRawValue.flatMap(AudioInputMode.init(rawValue:)) ?? .systemDefault
+            loadAvailableDevices { [weak self] in self?.initializeSelectedDevice() }
+        }
+
+        /// The fixture's hardware changed (a device plugged in or out, the lid): what Core Audio's listener does.
+        func fixtureHardwareChanged(_ hardware: FixtureHardware) {
+            fixture = hardware
+            handleDeviceListChange()
+        }
+    #endif
 
     init() {
         loadPrioritizedDevices()
@@ -54,6 +100,9 @@ class AudioDeviceManager: ObservableObject {
     }
 
     func getSystemDefaultDevice() -> AudioDeviceID? {
+        #if DEBUG
+            if let fixture { return fixture.defaultInput }
+        #endif
         var deviceID = AudioDeviceID(0)
         var propertySize = UInt32(MemoryLayout<AudioDeviceID>.size)
         var address = AudioObjectPropertyAddress(
@@ -122,10 +171,17 @@ class AudioDeviceManager: ObservableObject {
 
     private func activateDevice(id: AudioDeviceID) {
         selectedDeviceID = id
+        selectedDeviceIsFallback = true
         notifyDeviceChange()
     }
 
     func loadAvailableDevices(completion: (() -> Void)? = nil) {
+        #if DEBUG
+            if let fixture {
+                applyDeviceList(fixture.devices.map { (id: $0.id, uid: $0.uid, name: $0.name) }, completion: completion)
+                return
+            }
+        #endif
         var propertySize: UInt32 = 0
         var address = AudioObjectPropertyAddress(
             mSelector: kAudioHardwarePropertyDevices,
@@ -169,6 +225,10 @@ class AudioDeviceManager: ObservableObject {
             return (id: deviceID, uid: uid, name: name)
         }
 
+        applyDeviceList(devices, completion: completion)
+    }
+
+    private func applyDeviceList(_ devices: [(id: AudioDeviceID, uid: String, name: String)], completion: (() -> Void)?) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.availableDevices = devices.map { ($0.id, $0.uid, $0.name) }
@@ -282,10 +342,10 @@ class AudioDeviceManager: ObservableObject {
         case .systemDefault:
             break
         case .custom:
+            // Nothing chosen yet: a fallback until the user picks one (the first device in Core Audio's list could
+            // be a virtual input, and saving it would make it look chosen).
             if selectedDeviceID == nil {
-                if let firstDevice = availableDevices.first {
-                    selectDevice(id: firstDevice.id)
-                }
+                fallbackToDefaultDevice()
             }
         case .prioritized:
             if selectedDeviceID == nil {
@@ -394,7 +454,7 @@ class AudioDeviceManager: ObservableObject {
         }
     }
 
-    private func handleDeviceListChange() {
+    func handleDeviceListChange() {
         loadAvailableDevices { [weak self] in
             guard let self = self else { return }
 
@@ -518,6 +578,17 @@ class AudioDeviceManager: ObservableObject {
         scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal
     ) -> CFString? {
         guard deviceID != 0 else { return nil }
+        #if DEBUG
+            if let fixture {
+                guard let device = fixture.devices.first(where: { $0.id == deviceID }) else { return nil }
+                switch selector {
+                case kAudioDevicePropertyDeviceUID: return device.uid as CFString
+                case kAudioDevicePropertyDeviceNameCFString: return device.name as CFString
+                case kAudioDevicePropertyModelUID: return device.modelUID as CFString?
+                default: return nil
+                }
+            }
+        #endif
 
         var address = createPropertyAddress(selector: selector, scope: scope)
         var propertySize = UInt32(MemoryLayout<CFString>.size)
@@ -548,6 +619,16 @@ class AudioDeviceManager: ObservableObject {
         scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal
     ) -> UInt32? {
         guard deviceID != 0 else { return nil }
+        #if DEBUG
+            if let fixture {
+                guard let device = fixture.devices.first(where: { $0.id == deviceID }) else { return nil }
+                switch selector {
+                case kAudioDevicePropertyTransportType: return device.transport
+                case kAudioDevicePropertyDataSource: return device.dataSource
+                default: return nil
+                }
+            }
+        #endif
 
         var address = createPropertyAddress(selector: selector, scope: scope)
         var propertySize = UInt32(MemoryLayout<UInt32>.size)

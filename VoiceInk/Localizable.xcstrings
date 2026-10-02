@@ -52845,6 +52845,62 @@
           }
         }
       }
+    },
+    "Your microphone isn't connected, and Yap doesn't switch to a virtual or aggregate input you haven't chosen. Choose a microphone in Audio Settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Mikrofon ist nicht verbunden, und Yap wechselt nicht von sich aus zu einem virtuellen oder zusammengesetzten Eingang, den du nicht gewählt hast. Wähle ein Mikrofon in den Audioeinstellungen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre micro n’est pas connecté, et Yap ne bascule pas de lui-même vers une entrée virtuelle ou agrégée que vous n’avez pas choisie. Choisissez un micro dans les Paramètres audio."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你选的麦克风没有连接，Yap 不会自动改用你没有选过的虚拟或聚合输入。请在“音频设置”里选择麦克风。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你選的麥克風沒有連接，Yap 不會自動改用你沒有選過的虛擬或聚合輸入。請在「音訊設定」裡選擇麥克風。"
+          }
+        }
+      }
+    },
+    "If the microphone you chose isn't connected, Yap switches only to another real microphone (built-in, USB, Bluetooth…). Virtual and aggregate inputs are used only when you choose them here." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ist das gewählte Mikrofon nicht verbunden, wechselt Yap nur zu einem anderen echten Mikrofon (eingebaut, USB, Bluetooth …). Virtuelle und zusammengesetzte Eingänge werden nur verwendet, wenn du sie hier wählst."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si le micro choisi n’est pas connecté, Yap ne bascule que vers un autre vrai micro (intégré, USB, Bluetooth…). Les entrées virtuelles et agrégées ne sont utilisées que si vous les choisissez ici."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你选的麦克风没有连接时，Yap 只会改用另一个真实的麦克风（内置、USB、蓝牙…）。虚拟和聚合输入只有在这里选中时才会使用。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你選的麥克風沒有連接時，Yap 只會改用另一個真實的麥克風（內建、USB、藍牙…）。虛擬和聚合輸入只有在這裡選取時才會使用。"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"
