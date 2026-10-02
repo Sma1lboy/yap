@@ -14,7 +14,10 @@ APP="$WORK/Yap Mock.app"
 
 cleanup() {
 	defaults delete "$ID" >/dev/null 2>&1 || true
-	rm -rf "$HOME/Library/Application Support/$ID"
+	# Case 7k launches the whole app once (settings export and import), which can leave these too.
+	while security delete-generic-password -s "$ID" >/dev/null 2>&1; do :; done
+	rm -rf "$HOME/Library/Application Support/$ID" "$HOME/Library/Caches/$ID" "$HOME/Library/HTTPStorages/$ID" \
+		"$HOME/Library/Saved Application State/$ID.savedState" "$HOME/Library/WebKit/$ID"
 	chmod -R u+rwx "$WORK" 2>/dev/null || true   # the read-only and unreadable cases
 }
 trap 'cleanup; rm -rf "$WORK"' EXIT

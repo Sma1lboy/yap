@@ -12,6 +12,11 @@
     ///   saved to `<folder>` the way History's Save Meetings to Folder… does (`MeetingArchive`); waits until the epoch
     ///   first, so two launches race. Each meeting's Export Markdown bytes go to `<expected folder>/<id>.md`.
     /// - `edit`: new notes for the first meeting, as a successful Regenerate Notes saves them.
+    /// - `auto <action> [arguments]`: Settings › Meetings › Save Meetings to a Folder Automatically
+    ///   (`MeetingAutoArchive.shared`, its switch and folder in this identity's defaults, so each launch is a restart),
+    ///   driven through the app's own save paths (`MeetingRecorder.save`, `applySpeakers`, `MeetingEdits.rename` and
+    ///   `saveNotes`); see `auto(_:data:_:)`. `--auto-archive-delay S` makes each file wait S seconds once allowed to
+    ///   start. Each action waits for the queue, then prints the switch, the folder and the last result.
     /// Prints `archive-check: …` lines, among them a SHA-256 of every entry's fields before and after the export.
     @MainActor
     enum MeetingArchiveCheck {
@@ -33,6 +38,7 @@
                 case "seed": try seed(context, data: data)
                 case "export": try export(context, rest)
                 case "edit": try edit(context)
+                case "auto": try auto(context, data: data, rest)
                 default: print("archive-check: unknown step")
                 }
             } catch {
@@ -105,6 +111,141 @@
             first.enhancedText = "## Summary\n- CI first, then the API.\n"
             try context.save()
             print("archive-check: edited \(first.id.uuidString.lowercased())")
+        }
+
+        /// The auto-archive actions:
+        /// - `on [folder]` / `off`: the switch, as Settings sets it (a folder: the one just chosen).
+        /// - `create [pending]`: a new meeting saved as finishing one saves it, with a `segments.json` of two remote
+        ///   pieces; `pending`: its speakers still being told apart.
+        /// - `create-cleanup`: the same, then deleted right away with its audio, as the retention cleanup does.
+        /// - `delete <id>`: that cleanup on a saved meeting.
+        /// - `speakers <id> two|fail|gone`: the speakers arriving after saving (two people; the diarizer timed out;
+        ///   the recording folder deleted first).
+        /// - `rename <id> <key=name,…>`, `notes <id> <text>`: Speaker Names and a Regenerate Notes that got notes
+        ///   (`--meeting-fail-save`: their save fails).
+        /// - `resave <id>`: the same saved meeting handed on twice more, unchanged.
+        /// - `race-off`: two meetings saved, then turned off at once. `race-switch <folder>`: two meetings saved, the
+        ///   folder changed at once, then a third meeting saved.
+        private static func auto(_ context: ModelContext, data: URL, _ arguments: [String]) throws {
+            let all = CommandLine.arguments
+            if let index = all.firstIndex(of: "--auto-archive-delay"), all.indices.contains(index + 1) {
+                MeetingAutoArchive.writerDelay = TimeInterval(all[index + 1]) ?? 0
+            }
+            let archive = MeetingAutoArchive.shared
+            func entry(_ id: String) throws -> Transcription {
+                guard let uuid = UUID(uuidString: id), let found = try context.fetch(
+                    FetchDescriptor<Transcription>(predicate: #Predicate { $0.id == uuid })).first
+                else { throw CocoaError(.fileNoSuchFile) }
+                return found
+            }
+            func create(pending: Bool) throws -> Transcription {
+                let id = UUID()
+                let folder = data.appendingPathComponent("Recordings/meetings/\(id.uuidString)", isDirectory: true)
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                let mix = folder.appendingPathComponent("mix.wav")
+                try Data(repeating: 7, count: 4_096).write(to: mix)
+                let segments = [
+                    MeetingSegment(speaker: .me, start: 0, end: 5, text: "Let's start with the CI."),
+                    MeetingSegment(speaker: .others, start: 6, end: 20, text: "The build is green."),
+                    MeetingSegment(speaker: .others, start: 22, end: 40, text: "Ship it on Friday then."),
+                ]
+                try JSONEncoder().encode(segments).write(to: folder.appendingPathComponent("segments.json"))
+                let meeting = Transcription(
+                    text: MeetingNotes.transcript(segments), duration: 40, enhancedText: "- Ship on Friday (\(id.uuidString.prefix(8))).",
+                    audioFileURL: mix.absoluteString, transcriptionStatus: .completed)
+                meeting.kind = Transcription.meetingKind
+                meeting.meetingSpeakerStatus = pending ? SpeakerSplitSkip.pendingStatus : nil
+                if let error = MeetingRecorder.shared.save(meeting, in: context) {
+                    throw CocoaError(.fileWriteUnknown, userInfo: [NSLocalizedDescriptionKey: error])
+                }
+                print("archive-check: created \(meeting.id.uuidString.lowercased())")
+                return meeting
+            }
+            /// What the retention cleanup does with an entry: its audio folder, then the entry.
+            func cleanUp(_ meeting: Transcription) throws {
+                if let url = meeting.audioFileURL.flatMap(URL.init(string:)) { try Transcription.removeAudio(at: url) }
+                let id = meeting.id.uuidString.lowercased()
+                context.delete(meeting)
+                try context.save()
+                print("archive-check: deleted \(id)")
+            }
+
+            var failure: Error?
+            spin {
+                do {
+                    switch arguments.first ?? "" {
+                    case "on":
+                        await archive.turnOn(folder: arguments.count > 1 ? URL(fileURLWithPath: arguments[1], isDirectory: true) : nil)
+                    case "off":
+                        await archive.turnOff()
+                    case "create":
+                        _ = try create(pending: arguments.dropFirst().first == "pending")
+                    case "create-cleanup":
+                        try cleanUp(try create(pending: false))
+                    case "delete":
+                        try cleanUp(try entry(arguments[1]))
+                    case "speakers":
+                        let meeting = try? entry(arguments[1])
+                        let result: Result<[SpeakerTurn], Error>
+                        switch arguments[2] {
+                        case "two": result = .success([SpeakerTurn(id: "A", start: 6, end: 20), SpeakerTurn(id: "B", start: 22, end: 40)])
+                        case "gone":
+                            if let url = meeting?.audioFileURL.flatMap(URL.init(string:)) { try Transcription.removeAudio(at: url) }
+                            result = .success([])
+                        default: result = .failure(MeetingDiarizer.Failure.timedOut(90))
+                        }
+                        MeetingRecorder.shared.applySpeakers(result, to: UUID(uuidString: arguments[1])!, in: context)
+                        print("archive-check: speaker-status \((try? entry(arguments[1])).map { $0.meetingSpeakerStatus ?? "none" } ?? "no-entry")")
+                    case "rename":
+                        var names: MeetingSpeakerNames = [:]
+                        for pair in arguments[2].split(separator: ",") {
+                            let parts = pair.split(separator: "=", maxSplits: 1).map(String.init)
+                            names[parts[0]] = parts[1]
+                        }
+                        print("archive-check: edit-error \(MeetingEdits.rename(try entry(arguments[1]), names: names, in: context) ?? "none")")
+                    case "notes":
+                        let summary = MeetingSummarizer.Summary(notes: arguments[2], modelName: "check")
+                        let meeting = try entry(arguments[1])
+                        print("archive-check: edit-error \(MeetingEdits.saveNotes(arguments[2], from: summary, to: meeting, in: context) ?? "none")")
+                        print("archive-check: notes-now \(meeting.enhancedText ?? "")")
+                    case "resave":
+                        let meeting = try entry(arguments[1])
+                        try MeetingEdits.save(meeting, in: context)
+                        try MeetingEdits.save(meeting, in: context)
+                    case "race-off":
+                        _ = try create(pending: false)
+                        _ = try create(pending: false)
+                        await archive.turnOff()
+                        print("archive-check: off-at \(Int64(Date().timeIntervalSince1970 * 1_000_000_000))")
+                    case "race-switch":
+                        _ = try create(pending: false)
+                        _ = try create(pending: false)
+                        await archive.turnOn(folder: URL(fileURLWithPath: arguments[1], isDirectory: true))
+                        print("archive-check: switched-at \(Int64(Date().timeIntervalSince1970 * 1_000_000_000))")
+                        _ = try create(pending: false)
+                    default:
+                        throw CocoaError(.featureUnsupported)
+                    }
+                } catch {
+                    failure = error
+                }
+                await archive.drain()
+            }
+            if let failure { throw failure }
+            let last = archive.lastResult.map { "\($0.item.id.uuidString.lowercased()) \(describe($0.item.outcome)) \($0.item.fileName)" } ?? "none"
+            print("archive-check: auto enabled \(archive.isEnabled) folder \(archive.folder?.path ?? "none") queued \(archive.queued)")
+            print("archive-check: auto last \(last)")
+        }
+
+        /// Runs `body` on the main actor and waits for it here, during the app's init, by running the main run loop.
+        private static func spin(_ body: @escaping @MainActor () async -> Void) {
+            final class Flag { var done = false }
+            let flag = Flag()
+            Task { @MainActor in
+                await body()
+                flag.done = true
+            }
+            while !flag.done { RunLoop.main.run(mode: .default, before: Date().addingTimeInterval(0.01)) }
         }
 
         private static func describe(_ outcome: MeetingArchive.Outcome) -> String {
