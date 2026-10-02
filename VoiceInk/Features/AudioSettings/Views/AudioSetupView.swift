@@ -3,11 +3,24 @@ import SwiftUI
 
 @MainActor
 struct AudioSetupView: View {
-    @ObservedObject private var audioDeviceManager = AudioDeviceManager.shared
+    @ObservedObject private var audioDeviceManager: AudioDeviceManager
     @ObservedObject private var mediaController = MediaController.shared
     @ObservedObject private var playbackController = PlaybackController.shared
     @State private var microphoneSourceBeforePriorityOrder: MicrophoneSourceSelection = .systemDefault
     @State private var refreshIconRotation = 0.0
+
+    #if DEBUG
+        /// make ui-snapshots: a manager on fixture devices instead of this Mac's.
+        @MainActor static var snapshotDeviceManager: AudioDeviceManager?
+    #endif
+
+    init() {
+        #if DEBUG
+            _audioDeviceManager = ObservedObject(wrappedValue: Self.snapshotDeviceManager ?? .shared)
+        #else
+            _audioDeviceManager = ObservedObject(wrappedValue: .shared)
+        #endif
+    }
 
     var body: some View {
         Form {
@@ -69,8 +82,21 @@ struct AudioSetupView: View {
                 ForEach(audioDeviceManager.availableDevices, id: \.uid) { device in
                     Text(device.name).tag(MicrophoneSourceSelection.device(device.uid))
                 }
+
+                // What the menu shows when no device in it is the user's choice; never offered otherwise.
+                if currentMicrophoneSource == .noneAvailable {
+                    (hasSavedMicrophone ? Text("Not connected") : Text("None chosen"))
+                        .tag(MicrophoneSourceSelection.noneAvailable)
+                }
             }
             .pickerStyle(.menu)
+
+            if let status = unavailableMicrophoneStatus {
+                Text(status)
+                    .font(AppTheme.font(.caption))
+                    .foregroundStyle(AppTheme.Text.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
 
         Button {
@@ -215,18 +241,42 @@ struct AudioSetupView: View {
         }
     }
 
+    /// The menu shows the user's choice, never a device Yap fell back to on its own (`noneAvailable` then, with what a
+    /// recording uses written under it).
     private var currentMicrophoneSource: MicrophoneSourceSelection {
         switch audioDeviceManager.inputMode {
         case .systemDefault:
             return .systemDefault
         case .custom:
-            if let selectedDeviceUID {
-                return .device(selectedDeviceUID)
-            }
-            return .systemDefault
+            return audioDeviceManager.chosenCustomDeviceUID.map { .device($0) } ?? .noneAvailable
         case .prioritized:
             return microphoneSourceBeforePriorityOrder
         }
+    }
+
+    private var hasSavedMicrophone: Bool {
+        UserDefaults.standard.selectedAudioDeviceUID != nil
+    }
+
+    /// Under the menu when it shows Not connected / None chosen: what a recording uses instead, or why nothing.
+    private var unavailableMicrophoneStatus: String? {
+        guard currentMicrophoneSource == .noneAvailable else { return nil }
+        let resolution = audioDeviceManager.resolveCurrentRecordingDevice()
+        if let deviceID = resolution.deviceID,
+            let name = audioDeviceManager.availableDevices.first(where: { $0.id == deviceID })?.name
+        {
+            if hasSavedMicrophone {
+                return String(format: String(localized: "Your microphone isn't connected. Recording uses %@ until it's back."), name)
+            }
+            return String(format: String(localized: "Recording uses %@ until you choose a microphone."), name)
+        }
+        if resolution.internalMicrophoneBlockedByClosedLid {
+            return String(localized: "No usable microphone is available. Open the lid or connect an external microphone.")
+        }
+        if resolution.onlyUnchosenInputsLeft {
+            return String(localized: "No real microphone is connected, and Yap doesn't switch to a virtual or aggregate input on its own. Choose one above to record from it.")
+        }
+        return String(localized: "No microphone is connected.")
     }
 
     private func selectMicrophoneSource(_ selection: MicrophoneSourceSelection) {
@@ -234,11 +284,16 @@ struct AudioSetupView: View {
         case .systemDefault:
             audioDeviceManager.selectInputMode(.systemDefault)
         case .device(let uid):
+            // Gone while the menu was open: nothing else is chosen in its place (the system default could be a
+            // virtual input); the menu is refreshed instead.
             guard let device = audioDeviceManager.availableDevices.first(where: { $0.uid == uid }) else {
-                audioDeviceManager.selectInputMode(.systemDefault)
+                audioDeviceManager.loadAvailableDevices()
                 return
             }
             audioDeviceManager.selectDeviceAndSwitchToCustomMode(id: device.id)
+        case .noneAvailable:
+            // Back from Priority Order to a choice that isn't connected: the saved device stays the choice.
+            audioDeviceManager.selectInputMode(.custom)
         }
     }
 
@@ -251,11 +306,6 @@ struct AudioSetupView: View {
             microphoneSourceBeforePriorityOrder = currentMicrophoneSource
         }
         audioDeviceManager.selectInputMode(.prioritized)
-    }
-
-    private var selectedDeviceUID: String? {
-        guard let selectedDeviceID = audioDeviceManager.selectedDeviceID else { return nil }
-        return audioDeviceManager.availableDevices.first { $0.id == selectedDeviceID }?.uid
     }
 
     private var systemDefaultSourceTitle: String {
@@ -334,6 +384,8 @@ struct AudioSetupView: View {
 private enum MicrophoneSourceSelection: Hashable {
     case systemDefault
     case device(String)
+    /// Selected Microphone with the chosen one not connected, or none chosen yet.
+    case noneAvailable
 }
 
 private enum InputRoute: Hashable {

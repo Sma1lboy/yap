@@ -100,6 +100,30 @@
             ModelManagementView.snapshotFilter = nil
             page("transcribe-audio", .transcribeAudio)
             page("audio", .audio)
+            // Audio Settings on MicFallbackCheck's fixture devices, Selected Microphone mode: the saved USB microphone
+            // unplugged (the built-in one is used), only virtual and aggregate inputs left, nothing chosen yet, the
+            // lid closed with only the built-in one left, a virtual input chosen, no input at all.
+            let defaults = UserDefaults.standard
+            let savedAudio = (defaults.audioInputModeRawValue, defaults.selectedAudioDeviceUID, defaults.selectedAudioDeviceModelUID)
+            let fixtureStates: [(String, String?, [MicFallbackCheck.Device], UInt32?, Bool)] = [
+                ("usb-unplugged", MicFallbackCheck.usb.uid, [MicFallbackCheck.virtual, MicFallbackCheck.builtIn], MicFallbackCheck.builtIn.id, false),
+                ("only-virtual", MicFallbackCheck.usb.uid, [MicFallbackCheck.virtual, MicFallbackCheck.aggregate], MicFallbackCheck.virtual.id, false),
+                ("none-chosen", nil, [MicFallbackCheck.virtual, MicFallbackCheck.builtIn], MicFallbackCheck.virtual.id, false),
+                ("lid-closed", MicFallbackCheck.usb.uid, [MicFallbackCheck.builtIn], MicFallbackCheck.builtIn.id, true),
+                ("virtual-chosen", MicFallbackCheck.virtual.uid, [MicFallbackCheck.builtIn, MicFallbackCheck.virtual], MicFallbackCheck.builtIn.id, false),
+                ("no-inputs", MicFallbackCheck.usb.uid, [], nil, false),
+            ]
+            for (name, saved, devices, defaultInput, lid) in fixtureStates {
+                defaults.audioInputModeRawValue = AudioInputMode.custom.rawValue
+                defaults.selectedAudioDeviceUID = saved
+                defaults.selectedAudioDeviceModelUID = nil
+                AudioSetupView.snapshotDeviceManager = AudioDeviceManager(
+                    fixture: .init(devices: devices, defaultInput: defaultInput, lidClosed: lid))
+                RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+                page("audio-\(name)", .audio)
+            }
+            AudioSetupView.snapshotDeviceManager = nil
+            (defaults.audioInputModeRawValue, defaults.selectedAudioDeviceUID, defaults.selectedAudioDeviceModelUID) = savedAudio
             // Recently Learned: empty on the plain Dictionary page, then with four rules from MockData's dictionary.
             RecentlyLearnedSection.snapshotEntries = []
             page("dictionary", .dictionary)

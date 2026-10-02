@@ -26900,6 +26900,34 @@
         }
       }
     },
+    "No microphone is connected." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es ist kein Mikrofon verbunden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun micro n’est connecté."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有连接麦克风。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有連接麥克風。"
+          }
+        }
+      }
+    },
     "No Modes" : {
       "localizations" : {
         "de" : {
@@ -26980,6 +27008,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "無可用提示詞"
+          }
+        }
+      }
+    },
+    "No real microphone is connected, and Yap doesn't switch to a virtual or aggregate input on its own. Choose one above to record from it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es ist kein echtes Mikrofon verbunden, und Yap wechselt nicht von sich aus zu einem virtuellen oder zusammengesetzten Eingang. Wähle oben einen, um darüber aufzunehmen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun vrai micro n’est connecté, et Yap ne bascule pas de lui-même vers une entrée virtuelle ou agrégée. Choisissez-en une ci-dessus pour enregistrer avec."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有连接真实的麦克风，Yap 不会自动改用虚拟或聚合输入。要用它们录音，请在上面选择。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有連接真實的麥克風，Yap 不會自動改用虛擬或聚合輸入。要用它們錄音，請在上面選取。"
           }
         }
       }
@@ -27750,34 +27806,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "沒有比對的轉錄"
-          }
-        }
-      }
-    },
-    "No microphone is available for the meeting recording." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Für die Meeting-Aufnahme ist kein Mikrofon verfügbar."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aucun micro n'est disponible pour l'enregistrement de la réunion."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "没有可用于会议录制的麦克风。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "沒有可用於會議錄製的麥克風。"
           }
         }
       }
@@ -28955,6 +28983,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "無"
+          }
+        }
+      }
+    },
+    "None chosen" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keins gewählt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun choisi"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未选择"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未選擇"
           }
         }
       }
@@ -33507,6 +33563,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "會議錄製中"
+          }
+        }
+      }
+    },
+    "Recording uses %@ until you choose a microphone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bis du ein Mikrofon wählst, wird mit „%@“ aufgenommen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’enregistrement utilise « %@ » jusqu’à ce que vous choisissiez un micro."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在你选择麦克风之前，录音使用“%@”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在你選擇麥克風之前，錄音使用「%@」。"
           }
         }
       }
@@ -50512,6 +50596,34 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "API 金鑰被拒絕，請在「模型」頁更新。"
+          }
+        }
+      }
+    },
+    "Your microphone isn't connected. Recording uses %@ until it's back." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dein Mikrofon ist nicht verbunden. Bis es wieder da ist, wird mit „%@“ aufgenommen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Votre micro n’est pas connecté. L’enregistrement utilise « %@ » jusqu’à son retour."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你选的麦克风没有连接。在它重新连接前，录音使用“%@”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你選的麥克風沒有連接。在它重新連接前，錄音使用「%@」。"
           }
         }
       }
