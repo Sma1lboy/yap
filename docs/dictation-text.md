@@ -59,7 +59,9 @@ What is known (checked 2026-10-02):
   would suppress brackets, `/`, `:` and `_` at decoding and damage paths and code.
 - **SenseVoice** (transcribe.cpp): Yap asks for its `<|…|>` tags to be left out (`keepSpecialTags: false`).
 - **Soniox** streaming: its `<fin>` end marker is dropped by the SDK.
-- **ElevenLabs**: batch requests set `tag_audio_events=false`; streaming requests don't set it.
+- **ElevenLabs**: batch requests set `tag_audio_events=false`, the parameter that tags "audio events like (laughter),
+  (footsteps)" (ElevenLabs' API reference). The realtime (streaming) API lists no such parameter, and its docs don't
+  say whether it writes event tags.
 - In the recorded benchmark outputs (`setup/asr/results`, 24 model and provider setups, 11 clips each) no bracket
   annotation, `<|…|>` tag or line break appears.
 
