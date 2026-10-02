@@ -2,7 +2,14 @@ import Foundation
 import NaturalLanguage
 
 struct ParagraphFormatter {
+    /// Splits long text into paragraphs of a few sentences. Line breaks already in the text (dictated "换行", or
+    /// written by the model) stay where they are; each line is split on its own.
     static func format(_ text: String) -> String {
+        guard text.contains("\n") else { return formatLine(text) }
+        return text.components(separatedBy: "\n").map(formatLine).joined(separator: "\n")
+    }
+
+    private static func formatLine(_ text: String) -> String {
         let TARGET_WORD_COUNT = 50
         let MAX_SENTENCES_PER_CHUNK = 4
         let MIN_WORDS_FOR_SIGNIFICANT_SENTENCE = 4
@@ -124,4 +131,17 @@ struct ParagraphFormatter {
 
         return finalFormattedText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+
+    #if DEBUG
+        static func selfCheck() {
+            assert(format("第一点是速度\n第二点是成本") == "第一点是速度\n第二点是成本")
+            assert(format("Line one.\n\nLine two.") == "Line one.\n\nLine two.")
+            let code = "Run ./scripts/build.sh first. Then call foo.bar(userId) again."
+            assert(format(code) == code)
+            let sentence = "The settings page loaded quickly and the shortcuts worked the way we expected them to. "
+            let long = String(repeating: sentence, count: 6).trimmingCharacters(in: .whitespaces)
+            let split = format(long)
+            assert(split.contains("\n\n") && split.split(whereSeparator: \.isWhitespace) == long.split(separator: " "))
+        }
+    #endif
 }
