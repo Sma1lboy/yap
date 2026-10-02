@@ -1,46 +1,41 @@
 import Foundation
 
+/// Takes out what a model writes in place of speech, and the user's English filler words. Text the user said stays,
+/// brackets and all: `foo.bar(userId)`, `items[0]`, JSON, `<b>粗体</b>`, "我明天(周三)有空".
 struct TranscriptionOutputFilter {
-    private static let hallucinationPatterns = [
-        #"\[.*?\]"#,  // []
-        #"\(.*?\)"#,  // ()
-        #"\{.*?\}"#,  // {}
-    ]
+    /// An annotation is words only: letters, marks, spaces, `_ ' -`. Starts with a letter, at least two characters.
+    private static let words = #"\p{L}[\p{L}\p{M} _'-]+"#
+
+    /// `[Music]`, `[BLANK_AUDIO]`, `[inaudible]` anywhere, unless attached to the word before it (`items[i]`) or a
+    /// link label (`[the docs](https://…)`).
+    private static let squareAnnotation = try! NSRegularExpression(
+        pattern: #"(?<![\p{L}\p{N}_.\])])\[\#(words)\](?!\()"#)
+
+    /// `(laughs)`, `{music}` or a `<tag>…</tag>` block on a line of its own (or the whole transcript), with the line.
+    private static let lineAnnotation = try! NSRegularExpression(
+        pattern: #"(?m)^[^\S\n]*(?:\(\#(words)\)|\{\#(words)\}|<([A-Za-z][A-Za-z0-9:_-]*)[^>]*>[^\n]*?</\1>)[^\S\n]*(?:\n|$)"#)
 
     static func filter(_ text: String) -> String {
-        var filteredText = text
+        var filteredText = replacing(lineAnnotation, in: replacing(squareAnnotation, in: text))
 
-        // Remove <TAG>...</TAG> blocks
-        let tagBlockPattern = #"<([A-Za-z][A-Za-z0-9:_-]*)[^>]*>[\s\S]*?</\1>"#
-        if let regex = try? NSRegularExpression(pattern: tagBlockPattern) {
-            let range = NSRange(filteredText.startIndex..., in: filteredText)
-            filteredText = regex.stringByReplacingMatches(in: filteredText, options: [], range: range, withTemplate: "")
-        }
-
-        // Remove bracketed hallucinations
-        for pattern in hallucinationPatterns {
-            if let regex = try? NSRegularExpression(pattern: pattern) {
-                let range = NSRange(filteredText.startIndex..., in: filteredText)
-                filteredText = regex.stringByReplacingMatches(
-                    in: filteredText, options: [], range: range, withTemplate: "")
-            }
-        }
-
-        // Remove configured filler words. An empty list is naturally a no-op.
+        // Configured filler words, as words of their own: not inside yyyy-mm-dd or a path. An empty list is a no-op.
         for fillerWord in FillerWordManager.shared.fillerWords {
-            let pattern = "\\b\(NSRegularExpression.escapedPattern(for: fillerWord))\\b[,.]?"
+            let escaped = NSRegularExpression.escapedPattern(for: fillerWord)
+            let pattern = #"(?<![\w\-/.])"# + escaped + #"(?![\w\-/]|\.\w)[,.]?"#
             if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
-                let range = NSRange(filteredText.startIndex..., in: filteredText)
-                filteredText = regex.stringByReplacingMatches(
-                    in: filteredText, options: [], range: range, withTemplate: "")
+                filteredText = replacing(regex, in: filteredText)
             }
         }
 
-        // Clean whitespace
-        filteredText = filteredText.replacingOccurrences(of: #"\s{2,}"#, with: " ", options: .regularExpression)
-        filteredText = filteredText.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Spaces left behind collapse; line breaks stay, three or more become a blank line.
+        filteredText = filteredText.replacingOccurrences(of: #"[^\S\n]{2,}"#, with: " ", options: .regularExpression)
+        filteredText = filteredText.replacingOccurrences(of: #"[^\S\n]*\n[^\S\n]*"#, with: "\n", options: .regularExpression)
+        filteredText = filteredText.replacingOccurrences(of: #"\n{3,}"#, with: "\n\n", options: .regularExpression)
+        return filteredText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 
-        return filteredText
+    private static func replacing(_ regex: NSRegularExpression, in text: String) -> String {
+        regex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "")
     }
 
     // MARK: - Whole-transcript hallucinations
@@ -88,6 +83,24 @@ struct TranscriptionOutputFilter {
             assert(!isKnownHallucination("Thank you"))
             assert(!isKnownHallucination(""))
             assert(!isKnownHallucination("..."))
+
+            // Annotations go; brackets that are part of what was said stay. Inputs hold no filler word, so the
+            // user's list doesn't matter here.
+            func check(_ input: String, _ expected: String) {
+                let output = filter(input)
+                assert(output == expected, "TranscriptionOutputFilter: \(input) → \(output), expected \(expected)")
+            }
+            check("[BLANK_AUDIO]", "")
+            check("Hello [inaudible] world", "Hello world")
+            check("(upbeat music)", "")
+            check("Okay.\n(laughs)\nSo anyway", "Okay.\nSo anyway")
+            check("<noise>static</noise>", "")
+            check("foo.bar(userId)", "foo.bar(userId)")
+            check("args[i] = map[key]", "args[i] = map[key]")
+            check("{\"name\": \"yap\", \"tags\": [1, 2]}", "{\"name\": \"yap\", \"tags\": [1, 2]}")
+            check("用 <b>粗体</b> 表示", "用 <b>粗体</b> 表示")
+            check("The meeting (with Bob) is at 3pm.", "The meeting (with Bob) is at 3pm.")
+            check("第一段。\n\n\n第二段  结束", "第一段。\n\n第二段 结束")
         }
     #endif
 }

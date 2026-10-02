@@ -56,6 +56,8 @@ struct VoiceInkApp: App {
             MeetingArchiveCheck.runIfRequested()
             // make mic-fallback-check: microphone selection on fixture devices, or this Mac's devices read only; exits.
             MicFallbackCheck.runIfRequested()
+            // make text-fidelity-check: fixed recognized text through the dictation text steps, printed; exits.
+            TextFidelityCheck.runIfRequested()
             // make edit-rate-check: print the correction-rate fixtures, run their self-checks, and exit.
             EditRateCheck.runIfRequested()
             // make home-feedback-check: Home's paste numbers on fixed weeks, through WeekStatsLoader, and exit.
@@ -110,6 +112,7 @@ struct VoiceInkApp: App {
             WhisperPrompt.selfCheck()
             WhisperTranscriptionService.selfCheck()
             ChineseCleanup.selfCheck()
+            ParagraphFormatter.selfCheck()
             WhisperLivePreview.selfCheck()
             DictationTimeline.selfCheck()
             LanguagePinSuggestion.selfCheck()

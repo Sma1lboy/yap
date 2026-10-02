@@ -48,6 +48,9 @@ enum ChineseCleanup {
 
     private static let clausePunctuation = "，。！？、；：,.!?;:"
     private static let han = "\\p{scx=Han}"
+    /// A clause mark left without its clause. ASCII marks right before a letter, digit, `_`, `/` or `~` belong to
+    /// what follows (`./build.sh`, `../src`, `.env`, `:wq`) and aren't orphans.
+    private static let orphanPunctuation = "(?:[，。！？、；：]|[,.!?;:](?![,.!?;:]*[A-Za-z0-9_/~]))"
 
     static func apply(_ text: String, options: Options) -> String {
         var s = text
@@ -83,18 +86,18 @@ enum ChineseCleanup {
 
     private static func applyingSpokenLineBreaks(_ text: String) -> String {
         let p = NSRegularExpression.escapedPattern(for: clausePunctuation)
+        let after = "(?:\(orphanPunctuation)|\\s)*"
         var s = text
-        s = replace(s, "[\(p)\\s]*(?:新段落|另起一段|新的一段)[\(p)\\s]*", "\n\n")
-        s = replace(s, "[\(p)\\s]*(?:换行(?!符)|新的一行|下一行)[\(p)\\s]*", "\n")
+        s = replace(s, "[\(p)\\s]*(?:新段落|另起一段|新的一段)\(after)", "\n\n")
+        s = replace(s, "[\(p)\\s]*(?:换行(?!符)|新的一行|下一行)\(after)", "\n")
         return s
     }
 
     /// Orphaned punctuation and spacing left behind by the removals.
     private static func tidy(_ text: String) -> String {
-        let p = NSRegularExpression.escapedPattern(for: clausePunctuation)
         var s = text
-        s = replace(s, "^[\(p)\\s]+", "")  // text starting with a comma
-        s = replace(s, "(?m)^[ \\t]*[\(p)]+[ \\t]*", "")  // a line starting with one
+        s = replace(s, "^(?:\(orphanPunctuation)|\\s)+", "")  // text starting with a comma
+        s = replace(s, "(?m)^[ \\t]*\(orphanPunctuation)+[ \\t]*", "")  // a line starting with one
         s = replace(s, "[，,、]+([。！？!?；;])", "$1")  // "，。" → "。"
         s = replace(s, "([，,、])[，,、]+", "$1")  // "，，" → "，"
         s = replace(s, "[ \\t]*\\n[ \\t]*", "\n")
@@ -133,6 +136,14 @@ enum ChineseCleanup {
             // Latin text is left alone.
             check("uh this is fine, OK", "uh this is fine, OK")
             assert(apply("", options: on) == "")
+            // Punctuation that starts a path or name isn't an orphan; orphans still go.
+            check("./scripts/build.sh", "./scripts/build.sh")
+            check("Steps:\n../build/run.sh", "Steps:\n../build/run.sh")
+            check(".env", ".env")
+            check("先运行换行./configure", "先运行\n./configure")
+            check("。。好的", "好的")
+            check("...", "")
+            check(", and then", "and then")
 
             assert(defaults(preferredLanguages: ["zh-Hant-TW", "en"])[Keys.traditionalToSimplified] as? Bool == false)
             assert(defaults(preferredLanguages: ["en-US", "zh-Hans-CN"])[Keys.traditionalToSimplified] as? Bool == true)
