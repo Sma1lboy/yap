@@ -26,6 +26,7 @@ struct HistoryView<Header: View>: View {
     @State private var expandedId: UUID?
     @State private var selectedTranscriptions: Set<Transcription> = []
     @State private var showDeleteConfirmation = false
+    @State private var isArchivingMeetings = false
     @State private var isPanelPresented = false
     @State private var panelMode: HistoryPanelMode = .info
     @State private var panelTranscriptionId: UUID?
@@ -149,6 +150,9 @@ struct HistoryView<Header: View>: View {
             )
         ) {
             panelContent
+        }
+        .sheet(isPresented: $isArchivingMeetings) {
+            MeetingArchiveSheet(selection: Array(selectedTranscriptions)) { isArchivingMeetings = false }
         }
         .alert("Delete Selected Items?", isPresented: $showDeleteConfirmation) {
             Button("Delete", role: .destructive) {
@@ -367,48 +371,66 @@ struct HistoryView<Header: View>: View {
             Text(String(format: String(localized: "%lld selected"), Int64(selectedTranscriptions.count)))
                 .font(AppTheme.font(.body, .medium))
                 .foregroundColor(.secondary)
+                .fixedSize()
 
             Spacer()
 
+            // German and French labels with a meeting's Markdown actions don't fit the smallest window: then those
+            // actions show their icons only, and if that's still too wide, every labelled action does (names in their
+            // help tags).
+            ViewThatFits(in: .horizontal) {
+                selectionActions(compactMeetingActions: false)
+                selectionActions(compactMeetingActions: true)
+                selectionActions(compactMeetingActions: true).labelStyle(.iconOnly)
+            }
+            .layoutPriority(1)
+        }
+        .padding(.horizontal, AppTheme.Spacing.x6)
+        .padding(.vertical, AppTheme.Spacing.x3)
+        .background(
+            AppTheme.Surface.window
+                .shadow(color: Color.black.opacity(0.1), radius: 3, y: -2)
+        )
+    }
+
+    private func selectionActions(compactMeetingActions: Bool) -> some View {
+        HStack(spacing: AppTheme.Spacing.x4) {
             Button(action: {
                 openPanel(mode: .analysis)
             }) {
                 Label("Analyze", yapIcon: "chart.bar.xaxis")
                     .font(AppTheme.font(.footnote, .medium))
+                    .fixedSize()
             }
             .buttonStyle(.plain)
             .foregroundColor(.secondary)
+            .help("Analyze")
 
             Button(action: {
                 exportService.exportTranscriptionsToCSV(transcriptions: Array(selectedTranscriptions))
             }) {
                 Label("Export", yapIcon: "square.and.arrow.up")
                     .font(AppTheme.font(.footnote, .medium))
+                    .fixedSize()
             }
             .buttonStyle(.plain)
             .foregroundColor(.secondary)
+            .help("Export")
 
-            if selectedTranscriptions.count == 1, let meeting = selectedTranscriptions.first, meeting.isMeeting {
-                Button(action: {
-                    if let error = MeetingExport.saveMarkdown(MeetingNotes.markdown(for: meeting)) {
-                        NotificationManager.shared.showNotification(
-                            title: String(format: String(localized: "The Markdown file couldn't be written: %@"), error),
-                            type: .error)
-                    }
-                }) {
-                    Label("Export Markdown…", yapIcon: "doc.text")
-                        .font(AppTheme.font(.footnote, .medium))
-                }
-                .buttonStyle(.plain)
-                .foregroundColor(.secondary)
+            if compactMeetingActions {
+                meetingActions.labelStyle(.iconOnly)
+            } else {
+                meetingActions
             }
 
             Button(action: { showDeleteConfirmation = true }) {
                 Label("Delete", yapIcon: "trash")
                     .font(AppTheme.font(.footnote, .medium))
+                    .fixedSize()
             }
             .buttonStyle(.plain)
             .foregroundColor(AppTheme.Status.error.opacity(0.80))
+            .help("Delete")
 
             Divider()
                 .frame(height: 16)
@@ -418,6 +440,7 @@ struct HistoryView<Header: View>: View {
                     selectedTranscriptions.removeAll()
                 }
                 .font(AppTheme.font(.footnote, .medium))
+                .fixedSize()
                 .buttonStyle(.plain)
                 .foregroundColor(.secondary)
             } else {
@@ -425,16 +448,37 @@ struct HistoryView<Header: View>: View {
                     Task { await selectAllTranscriptions() }
                 }
                 .font(AppTheme.font(.footnote, .medium))
+                .fixedSize()
                 .buttonStyle(.plain)
                 .foregroundColor(.secondary)
             }
         }
-        .padding(.horizontal, AppTheme.Spacing.x6)
-        .padding(.vertical, AppTheme.Spacing.x3)
-        .background(
-            AppTheme.Surface.window
-                .shadow(color: Color.black.opacity(0.1), radius: 3, y: -2)
-        )
+    }
+
+    /// The selected meeting's Export Markdown… (one meeting only) and Save N Meetings… (any meetings).
+    @ViewBuilder
+    private var meetingActions: some View {
+        if selectedTranscriptions.count == 1, let meeting = selectedTranscriptions.first, meeting.isMeeting {
+            Button(action: {
+                if let error = MeetingExport.saveMarkdown(MeetingNotes.markdown(for: meeting)) {
+                    NotificationManager.shared.showNotification(
+                        title: String(format: String(localized: "The Markdown file couldn't be written: %@"), error),
+                        type: .error)
+                }
+            }) {
+                Label("Export Markdown…", yapIcon: "doc.text")
+                    .font(AppTheme.font(.footnote, .medium))
+                    .fixedSize()
+            }
+            .buttonStyle(.plain)
+            .foregroundColor(.secondary)
+            .help("Export Markdown…")
+        }
+
+        let meetingCount = selectedTranscriptions.filter(\.isMeeting).count
+        if meetingCount > 0 {
+            MeetingArchiveButton(meetings: meetingCount) { isArchivingMeetings = true }
+        }
     }
 
     // MARK: - Empty State
@@ -639,6 +683,14 @@ struct HistoryView<Header: View>: View {
                 countWords(in: page)
                 hasMoreContent = ordered.count > pageSize
             }
+            #if DEBUG
+                if let selects = HistorySnapshotSelection.selects {
+                    // At once: the bar's slide-in would still be running when the shot is taken.
+                    var transaction = Transaction()
+                    transaction.disablesAnimations = true
+                    withTransaction(transaction) { selectedTranscriptions = Set(displayedTranscriptions.filter(selects)) }
+                }
+            #endif
         } catch {
             print("Error loading transcriptions: \(error)")
         }
@@ -1287,3 +1339,11 @@ struct CircularCheckboxStyle: ToggleStyle {
     .padding(AppTheme.Spacing.x6)
     .frame(width: 760)
 }
+
+#if DEBUG
+    /// make ui-snapshots: the rows History selects when it loads, to show its selection bar.
+    @MainActor
+    enum HistorySnapshotSelection {
+        static var selects: ((Transcription) -> Bool)?
+    }
+#endif

@@ -52,6 +52,8 @@ struct VoiceInkApp: App {
             // make mcp-check: write a data folder for yap-mcp and the expected exports, and exit, before anything
             // writes settings.
             MCPFixture.runIfRequested()
+            // make meeting-archive-check: History's Save Meetings to Folder… on a store in a test folder, and exit.
+            MeetingArchiveCheck.runIfRequested()
             // make edit-rate-check: print the correction-rate fixtures, run their self-checks, and exit.
             EditRateCheck.runIfRequested()
             // make home-feedback-check: Home's paste numbers on fixed weeks, through WeekStatsLoader, and exit.
@@ -89,6 +91,7 @@ struct VoiceInkApp: App {
             YapIconCheck.selfCheck()
             MeetingChunker.selfCheck()
             MeetingNotes.selfCheck()
+            MeetingArchive.selfCheck()
             MeetingEdits.selfCheck()
             MeetingEcho.selfCheck()
             MeetingRecorder.shortcutSelfCheck()

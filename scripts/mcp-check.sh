@@ -6,7 +6,8 @@
 # meeting, and quits. Then scripts/mcp-check.py feeds the copy's own Contents/Helpers/yap-mcp every tool with
 # Settings › Agent Access (MCP) all off, the main switch only, and both on (switched with `defaults write` in the
 # copy's defaults, mid-session), in English and with the app's language set to Chinese. It checks every answer:
-# every stdout line is JSON-RPC, only read-only tools are listed, get_meeting is byte for byte the app's export,
+# every stdout line is JSON-RPC, only read-only tools are listed, get_meeting is byte for byte the app's export and the
+# file History's Save Meetings to Folder… writes (same language, locale and TZ for both processes),
 # search_history / get_dictation / get_dictionary return the fixture's entries, each switch's errors name it, every
 # file in the data folder has the same SHA-256 afterwards, `lsof -a -p <pid> -i` shows no socket, and closing stdin
 # ends the process. Last, the copy launched with --mcp-fixture-writer keeps saving dictations while the helper
@@ -47,9 +48,12 @@ HELPER_LANGS=$(launchctl plist __TEXT,__info_plist "$HELPER" | sed -n '/CFBundle
 echo "languages: $APP_LANGS"
 # hashes <folder>: every file's SHA-256, by path.
 hashes() { (cd "$1" && find . -type f -print0 | sort -z | xargs -0 shasum -a 256); }
+# The time zone and locale change the Markdown's date line: set them, the same for the app and the helper.
+export TZ=America/Los_Angeles
 
 for lang in en zh-Hans; do
 	defaults write "$ID" AppleLanguages -array "$lang"
+	defaults write "$ID" AppleLocale "$([ "$lang" = en ] && echo en_US || echo zh_CN)"
 	dir="$WORK/$lang"
 	mkdir -p "$dir"
 	"$APP/Contents/MacOS/VoiceInk Dev" --mcp-fixture "$dir/data" "$dir/expected" >"$dir/fixture.txt" 2>"$dir/fixture-err.txt" \
