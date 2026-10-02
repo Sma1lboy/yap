@@ -156,10 +156,11 @@ final class MeetingAutoArchive: ObservableObject {
 
     #if DEBUG
         /// make ui-snapshots: the settings rows in a given state.
-        func setSnapshotState(enabled: Bool, folder: URL?, queued: Int = 0, last: MeetingArchive.Outcome?) {
+        func setSnapshotState(enabled: Bool, folder: URL?, queued: Int = 0, switching: Bool = false, last: MeetingArchive.Outcome?) {
             isEnabled = enabled
             self.folder = folder
             self.queued = queued
+            isSwitching = switching
             lastResult = last.map {
                 Result(item: MeetingArchive.Item(
                     id: UUID(), fileName: "2026-09-30 1405 meeting-3f2c8a10-6b1e-4d2a-9c3e-0a1b2c3d4e5f-8e1f4a2b9c0d.md",

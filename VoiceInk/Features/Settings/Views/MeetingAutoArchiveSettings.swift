@@ -26,6 +26,7 @@ struct MeetingAutoArchiveSettings: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                         .textSelection(.enabled)
+                        .help(folder.path)
                     Spacer(minLength: AppTheme.Spacing.x2)
                     AppActionButton("Choose Folder…") { chooseFolder() }
                         .controlSize(.small)
