@@ -114,7 +114,10 @@
         }
 
         /// The auto-archive actions:
-        /// - `on [folder]` / `off`: the switch, as Settings sets it (a folder: the one just chosen).
+        /// - `on`: the switch turned on with the folder chosen before. `on <folder|cancel>`: turned on without one, so
+        ///   the folder picker opens from the switch and returns that folder or is cancelled. `off`: turned off.
+        /// - `choose <folder|cancel>`: Choose Folder… next to the folder's path, the picker returning that folder or
+        ///   cancelled. Both go through `MeetingAutoArchive.folderChosen`, as Settings does with the picker's result.
         /// - `create [pending]`: a new meeting saved as finishing one saves it, with a `segments.json` of two remote
         ///   pieces; `pending`: its speakers still being told apart.
         /// - `create-cleanup`: the same, with History's retention set to "immediately": when `transcriptionCreated`
@@ -178,7 +181,15 @@
                 do {
                     switch arguments.first ?? "" {
                     case "on":
-                        await archive.turnOn(folder: arguments.count > 1 ? URL(fileURLWithPath: arguments[1], isDirectory: true) : nil)
+                        if arguments.count > 1 {
+                            let chosen = arguments[1] == "cancel" ? nil : URL(fileURLWithPath: arguments[1], isDirectory: true)
+                            await archive.folderChosen(chosen, turningOn: true)
+                        } else {
+                            await archive.turnOn()
+                        }
+                    case "choose":
+                        let chosen = arguments[1] == "cancel" ? nil : URL(fileURLWithPath: arguments[1], isDirectory: true)
+                        await archive.folderChosen(chosen, turningOn: false)
                     case "off":
                         await archive.turnOff()
                     case "create":
@@ -243,7 +254,7 @@
                     case "race-switch":
                         _ = try create(pending: false)
                         _ = try create(pending: false)
-                        let switching = Task { await archive.turnOn(folder: URL(fileURLWithPath: arguments[1], isDirectory: true)) }
+                        let switching = Task { await archive.folderChosen(URL(fileURLWithPath: arguments[1], isDirectory: true), turningOn: false) }
                         await Task.yield()
                         print("archive-check: switching \(archive.isSwitching)")
                         _ = try create(pending: false)

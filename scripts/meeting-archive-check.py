@@ -353,7 +353,7 @@ _, _, last, (g1,) = auto("create")
 check(last[0] == g1 and last[1] == "failed-folderMissing" and not os.path.exists(B), "folder gone: %s" % last)
 R = os.path.join(WORK, "AutoReadOnly")
 os.mkdir(R)
-auto("on", R)
+auto("choose", R)
 os.chmod(R, 0o555)
 _, _, last, (g2,) = auto("create")
 os.chmod(R, 0o755)
@@ -405,6 +405,48 @@ state = settings_step("import")
 check(state == "import enabled false folder %s" % R, "import changed it (off): %s" % state)
 print("7k. config.json, Yap Cloud's copy and Export Settings: neither the switch nor the folder; importing settings that "
       "name both: on stays on with this Mac's folder, off stays off")
+
+# 7l. Choosing a folder doesn't turn it on. Each case goes through MeetingAutoArchive.folderChosen, what Settings does
+# with the folder picker's result. It's off now, with R as its folder (7k).
+def stored(key):
+    p = subprocess.run(["defaults", "read", "me.sma1lboy.yap.mock", key], capture_output=True, text=True)
+    return p.stdout.strip() if p.returncode == 0 else "unset"
+
+
+C, D, E = (os.path.join(WORK, n) for n in ("AutoC", "AutoD", "AutoE"))
+for folder in (C, D, E):
+    os.mkdir(folder)
+_, state, _, _ = auto("choose", "cancel")
+check(state.startswith("auto enabled false folder %s queued" % R), "off, picker cancelled: %s" % state)
+_, state, _, _ = auto("choose", C)
+check(state.startswith("auto enabled false folder %s queued" % C) and stored("meetingAutoArchiveEnabled") == "0",
+      "off, another folder chosen: %s, stored %s" % (state, stored("meetingAutoArchiveEnabled")))
+_, state, last, (o1,) = auto("create")
+check(md_files(C) == [] and last == ["none"] and state.startswith("auto enabled false"), "saved while off after choosing: %r %s" % (md_files(C), state))
+print("7l. off: picker cancelled -> nothing changes; another folder chosen -> folder %s, still off (stored 0); "
+      "a meeting saved then -> %d files" % (os.path.basename(C), len(md_files(C))))
+# Turned on with that folder: History isn't copied; on, a cancelled picker changes nothing, another folder moves it.
+_, state, _, _ = auto("on")
+check(state.startswith("auto enabled true folder %s queued" % C) and md_files(C) == [], "turned on: %s %r" % (state, md_files(C)))
+_, state, _, _ = auto("choose", "cancel")
+check(state.startswith("auto enabled true folder %s queued" % C), "on, picker cancelled: %s" % state)
+_, state, _, _ = auto("choose", D)
+check(state.startswith("auto enabled true folder %s queued" % D) and stored("meetingAutoArchiveEnabled") == "1", "on, folder changed: %s" % state)
+_, _, last, (o2,) = auto("create")
+check(len(versions(D, o2)) == 1 and md_files(C) == [] and last[1] == "written", "on, after changing: %s" % last)
+print("7l. on: picker cancelled -> nothing changes; another folder -> still on, the next meeting goes there (%d file), "
+      "the old folder %d" % (len(versions(D, o2)), len(md_files(C))))
+# Never had a folder: the switch opens the picker; cancelled -> still off with none; a folder -> on with it.
+auto("off")
+subprocess.run(["defaults", "delete", "me.sma1lboy.yap.mock", "meetingAutoArchiveFolder"], check=True)
+_, state, _, _ = auto("on", "cancel")
+check(state.startswith("auto enabled false folder none") and stored("meetingAutoArchiveFolder") == "unset", "switch, picker cancelled: %s" % state)
+_, state, _, _ = auto("on", E)
+check(state.startswith("auto enabled true folder %s queued" % E) and stored("meetingAutoArchiveEnabled") == "1", "switch, folder: %s" % state)
+_, _, last, (o3,) = auto("create")
+check(len(versions(E, o3)) == 1 and md_files(E) == versions(E, o3), "first time on: %s %r" % (last, md_files(E)))
+print("7l. no folder yet: the switch's picker cancelled -> off, no folder; a folder chosen there -> on, the next meeting "
+      "written (%d file, nothing older)" % len(md_files(E)))
 
 print("7. files per meeting:")
 for case, meeting, files in per_meeting:

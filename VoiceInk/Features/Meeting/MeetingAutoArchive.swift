@@ -110,6 +110,12 @@ final class MeetingAutoArchive: ObservableObject {
         }
     }
 
+    /// What Settings does with the folder picker's result: nil when it was cancelled.
+    func folderChosen(_ chosen: URL?, turningOn: Bool) async {
+        guard let chosen else { return }
+        await turnOn(folder: chosen)
+    }
+
     func turnOff() async {
         await switchDestination {
             self.isEnabled = false

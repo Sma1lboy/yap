@@ -27,7 +27,7 @@ struct MeetingAutoArchiveSettings: View {
                         .truncationMode(.middle)
                         .textSelection(.enabled)
                     Spacer(minLength: AppTheme.Spacing.x2)
-                    AppActionButton("Choose Folder…", action: chooseFolder)
+                    AppActionButton("Choose Folder…") { chooseFolder() }
                         .controlSize(.small)
                         .disabled(archive.isSwitching)
                 }
@@ -88,14 +88,14 @@ struct MeetingAutoArchiveSettings: View {
     /// On with the folder chosen before; without one, the folder is chosen first (cancelled: stays off).
     private func turnOn() async {
         if archive.folder == nil {
-            chooseFolder()
+            chooseFolder(turningOn: true)
         } else {
             await archive.turnOn()
         }
     }
 
-    /// Cancelled: nothing changes, neither the folder nor the switch.
-    private func chooseFolder() {
+    /// `turningOn`: picked from the switch, to turn it on; otherwise from Choose Folder….
+    private func chooseFolder(turningOn: Bool = false) {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
@@ -104,7 +104,7 @@ struct MeetingAutoArchiveSettings: View {
         panel.prompt = String(localized: "Use This Folder")
         panel.message = String(localized: "Choose a folder for meetings saved from now on.")
         NSApp.activate(ignoringOtherApps: true)
-        guard panel.runModal() == .OK, let folder = panel.url else { return }
-        Task { await archive.turnOn(folder: folder) }
+        let chosen = panel.runModal() == .OK ? panel.url : nil
+        Task { await archive.folderChosen(chosen, turningOn: turningOn) }
     }
 }
