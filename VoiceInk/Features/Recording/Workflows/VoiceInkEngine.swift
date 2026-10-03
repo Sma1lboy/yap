@@ -1101,7 +1101,8 @@ extension VoiceInkEngine {
         /// from the app in front (no recording context: clipboard, selection, focused field, screen); the paste goes
         /// through the check outlets the caller installed (CursorPaster.Outlets.installCheck). `measured`
         /// (`make dictation-latency`): the dictation gets a timeline whose stop is now, and this returns only after the
-        /// paste would have sent ⌘V and the SessionMetric has its times.
+        /// paste would have sent ⌘V and the SessionMetric has its times. `rewriting`: the file is the spoken instruction
+        /// for that rewrite (Rewrite Last Dictation's second press), handed to the follow-up instead of pasted.
         func dictateFile(_ file: URL, measured: Bool = false, rewriting: LastPasteEditor.Rewrite? = nil) async -> Transcription {
             let audioURL = recordingsDirectory.appendingPathComponent("\(UUID().uuidString).wav")
             try? FileManager.default.copyItem(at: file, to: audioURL)

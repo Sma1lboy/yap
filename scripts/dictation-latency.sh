@@ -12,8 +12,10 @@
 # front (no recording context either), so nothing is typed into it and the user's clipboard is never read or written.
 # The times are read back from each dictation's
 # SessionMetric. Prints p50/p95 per step and for the total, and fails unless every History save came after its ⌘V,
-# the model loads once per press when it was released first, and a failed paste still lands in History. The dev and
-# release apps' settings are never read or written.
+# the model loads once per press when it was released first, a failed paste still lands in History, and Rewrite Last
+# Dictation through the engine (the first clip as the spoken instruction, the AI a check outlet that answers from the
+# scenario, no request sent) acts only on the paste its press selected: nine `dictation-rewrite:` scenarios, each must
+# pass. The dev and release apps' settings are never read or written.
 set -euo pipefail
 source "$(dirname "$0")/mock-lock.sh"
 
@@ -208,4 +210,16 @@ for r in loads:
 saved = [r["savedAfterPaste"] * 1000 for r in rows]
 print(f"\nHistory saved after ⌘V in every dictation: p50 {pct(saved, 50):.0f} ms, p95 {pct(saved, 95):.0f} ms later")
 print(f"Paste failed: outcome {failed[0]['pasteOutcome']}, in History: {failed[0]['inHistory']}")
+
+# Rewrite Last Dictation through the engine: each scenario's keys (what the board held at each ⌘V), what the AI was
+# asked to change, the last pastes selected, the Scratchpad and the notices, against what they should be.
+rewrites = [json.loads(l.split(": ", 1)[1]) for l in open(sys.argv[1]) if l.startswith("dictation-rewrite: ")]
+print(f"\nRewrite Last Dictation through the engine, instruction \"{rewrites[0]['instructions'][0] if rewrites and rewrites[0]['instructions'] else '?'}\":")
+for r in rewrites:
+    print(f"  {'ok  ' if r['pass'] else 'FAIL'} {r['scenario']}: ⌘V {r['keys']}, AI asked {r['aiAsked']}, selected"
+          f" {r['selected']}, Scratchpad {r['scratchpad']}, notices {r['notices']}, state at the AI {r['stateAtAI']}")
+    for f in r["failures"]:
+        print(f"         {f}")
+if len(rewrites) != 9 or not all(r["pass"] for r in rewrites):
+    sys.exit(f"FAIL: {sum(not r['pass'] for r in rewrites)} of {len(rewrites)} rewrite scenarios failed (9 expected)")
 PY
