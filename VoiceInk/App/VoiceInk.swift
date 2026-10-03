@@ -86,6 +86,7 @@ struct VoiceInkApp: App {
             DefaultShortcuts.selfCheck()
             SettingsGroup.selfCheck()
             ClipboardManager.selfCheck()
+            PasteClipboard.selfCheck()
             LastPasteEditor.selfCheck()
             PromptTemplates.selfCheck()
             HomeShortcutsCard.selfCheck()

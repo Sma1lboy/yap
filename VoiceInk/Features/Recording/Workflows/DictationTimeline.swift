@@ -56,6 +56,9 @@ final class DictationTimeline: @unchecked Sendable {
         case scratchpad
         /// The clipboard couldn't be set, or the key events / AppleScript couldn't be sent.
         case failed
+        /// The clipboard changed before ⌘V was due (the user copied, or another paste took it): no key was sent and
+        /// the text went to the Scratchpad.
+        case clipboardChanged
     }
 
     let stop: Stop

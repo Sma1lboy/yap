@@ -44,4 +44,5 @@ failed = sum(not r["pass"] for r in rows)
 print(done[0].strip())
 sys.exit(1 if failed else 0)
 PY
+grep '^paste-check-selfchecks: ' "$OUT" || { echo "self-checks didn't finish"; exit 1; }
 echo "paste-session-check: OK ($OUT)"

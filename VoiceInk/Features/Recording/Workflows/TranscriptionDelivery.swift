@@ -216,6 +216,7 @@ extension CursorPaster.PasteResult {
         case .leftOnClipboard: return .clipboardOnly
         case .sentToScratchpad: return .scratchpad
         case .commandNotPosted: return .failed
+        case .clipboardChanged: return .clipboardChanged
         }
     }
 }

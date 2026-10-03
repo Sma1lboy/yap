@@ -16,6 +16,10 @@
             guard CommandLine.arguments.contains(argument) else { return }
             let results = scenarios.map { $0() }
             let failed = results.filter { !$0 }.count
+            // Asserts: a failure ends the app before the next line.
+            ClipboardManager.selfCheck()
+            PasteClipboard.selfCheck()
+            print("paste-check-selfchecks: ClipboardManager PasteClipboard ok")
             print("paste-check-done: \(results.count) scenarios, \(failed) failed")
             fflush(stdout)
             exit(0)

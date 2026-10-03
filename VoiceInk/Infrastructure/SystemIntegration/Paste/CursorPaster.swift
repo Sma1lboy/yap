@@ -8,7 +8,12 @@ class CursorPaster {
 
     enum PasteResult: Equatable {
         case commandPosted
+        /// The key events / AppleScript couldn't be sent: the text stays on the clipboard for the user to paste.
+        /// Also a clipboard write that failed: the text goes to the Scratchpad and the clipboard is put back.
         case commandNotPosted
+        /// When ⌘V was due the clipboard no longer held this paste's text (the user copied something, or another
+        /// paste replaced it): no key was sent, the clipboard is left as it is, and the text goes to the Scratchpad.
+        case clipboardChanged
         /// No Accessibility permission: the text stays on the clipboard for the user to paste.
         case leftOnClipboard
         /// No editable element focused: the text stays on the clipboard and goes to the Scratchpad.
@@ -182,7 +187,9 @@ class CursorPaster {
         let timing = pasteTiming(frontmostBundleID: frontmost.bundleID, lead: lead)
         let restore = outlets.restoreSettings()
         guard let claim = clipboard.write(text, restoreLater: restore.enabled) else {
-            logger.error("Failed to prepare clipboard for paste")
+            // Not on the clipboard and not pasted: the Scratchpad keeps it.
+            logger.error("Failed to prepare clipboard for paste; text sent to the Scratchpad")
+            outlets.toScratchpad(text)
             return .finished(PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil))
         }
 
@@ -202,6 +209,14 @@ class CursorPaster {
         await waitBeforePaste(paste, outlets: outlets)
         let replaced = await paste.replaced?.value ?? ""
 
+        // ⌘V pastes whatever the clipboard holds now. If that isn't this paste's write any more, it would paste the
+        // user's new copy or another paste's text, so no key goes out and the clipboard is left alone.
+        guard outlets.clipboard.owns(paste.claim) else {
+            logger.notice("The clipboard changed before ⌘V; nothing sent, text sent to the Scratchpad")
+            outlets.clipboard.pasteNotSent(paste.claim)
+            outlets.toScratchpad(paste.text)
+            return PasteOutcome(result: .clipboardChanged, autoLearnGeneration: nil)
+        }
         let posted = await outlets.postPasteKeys()
         guard posted.result.didPostPasteCommand else {
             // A paste that never reached the app must not take the text back off the clipboard.
