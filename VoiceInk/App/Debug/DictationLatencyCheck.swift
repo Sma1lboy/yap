@@ -12,8 +12,17 @@
     /// times with the model released, as Keep model loaded: After Each Dictation does: three stopped while the press's
     /// preload is still loading, three pressed while the release is still running; their `loads` (model loads from the
     /// press to the paste) must be 1. Then once with a paste that fails: `inHistory` says it was saved all the same.
+    /// Last, Rewrite Last Dictation through the engine (`rewrites`): one `dictation-rewrite:` line per scenario.
     @MainActor
     enum DictationLatencyCheck {
+        /// When ⌘V would have gone out for the current dictation; what the next paste reports.
+        final class Paste {
+            var commandTime: TimeInterval?
+            var result = CursorPaster.PasteResult.commandPosted
+            /// What the private pasteboard held at each ⌘V, while the rewrites run (nil: not noted).
+            var keys: [String]?
+        }
+
         static let argument = "--dictation-latency"
 
         static func runIfRequested(engine: VoiceInkEngine) -> Bool {
@@ -28,14 +37,13 @@
 
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(10))  // launch-time work settles, as in offline-check
-                // When ⌘V would have gone out for the current dictation; what the next paste reports.
-                final class Paste {
-                    var commandTime: TimeInterval?
-                    var result = CursorPaster.PasteResult.commandPosted
-                }
                 let paste = Paste()
                 let closeClipboard = CursorPaster.Outlets.installCheck(
-                    result: { paste.result }, commandSent: { paste.commandTime = $0 })
+                    result: { paste.result },
+                    commandSent: {
+                        paste.commandTime = $0
+                        paste.keys?.append(CursorPaster.outlets.clipboard.pasteboard.string(forType: .string) ?? "<no text>")
+                    })
 
                 // When each dictation's History entry was saved, from its ⌘V: the save comes after the paste.
                 final class Saves { var afterPaste: [UUID: TimeInterval] = [:] }
@@ -109,6 +117,8 @@
                         && stored?.text.isEmpty == false
                 ])
 
+                paste.keys = []
+                await rewrites(engine: engine, instruction: files[0], other: files[files.count > 1 ? 1 : 0], paste: paste)
                 NotificationCenter.default.removeObserver(observer)
                 await engine.releaseModels()  // ggml asserts at exit() while any Metal buffer is still allocated
                 await closeClipboard()
@@ -116,6 +126,189 @@
                 exit(0)  // not NSApp.terminate, which can't finish from inside a Task (AppDelegate.applicationShouldTerminate)
             }
             return true
+        }
+
+        /// Rewrite Last Dictation through VoiceInkEngine, as its shortcut runs it: `prepareRewrite` (the first press),
+        /// then `instruction` transcribed by the model and handed to the engine's follow-up, which asks the AI and pastes
+        /// over the paste the press selected. Explicit outlets, none taken from `live`: the AI answers from the scenario
+        /// (no request leaves the Mac, no input field is read), the last paste is a made-up field 1 of a made-up app in
+        /// front, nothing is read through Accessibility, and the Scratchpad, notices and Delete are noted instead of
+        /// acted on. ⌘V stays the dictation checks' (the private pasteboard, `paste.keys`). Things that happen during
+        /// the AI's wait run inside it, before it answers: another dictation through the engine, a paste left waiting
+        /// for ⌘V, a second rewrite, the dictation cancelled. One `dictation-rewrite:` line per scenario.
+        private static func rewrites(engine: VoiceInkEngine, instruction: URL, other: URL, paste: Paste) async {
+            final class Seen {
+                var asked: [String] = [], instructions: [String] = [], stateAtAI: [String] = [], selected: [String] = []
+                var scratchpad: [String] = [], notices: [String] = [], boardAtReply: String?
+                /// Per question to the AI, in order: its answer, and what happens before it answers.
+                var replies: [(Result<String, LastPasteEditor.Failure>, (@MainActor () async -> Void)?)] = []
+            }
+            let seen = Seen()
+            let app: pid_t = 900_001  // above the system's limit: never a running app
+            let field = AXUIElementCreateApplication(910_001)  // a stand-in, only compared (CFEqual)
+            func record(_ text: String, replaced: String = "") -> LastPasteEditor.Record {
+                LastPasteEditor.Record(
+                    processID: app, appElement: AXUIElementCreateApplication(910_000), target: field,
+                    range: NSRange(location: 0, length: (text as NSString).length), text: text, replaced: replaced)
+            }
+            func part(_ tag: String, of input: String) -> String {
+                guard let start = input.range(of: "<\(tag)>\n"), let end = input.range(of: "\n</\(tag)>") else { return input }
+                return String(input[start.upperBound..<end.lowerBound])
+            }
+            let outlets = LastPasteEditor.Outlets(
+                capture: { text, _, replaced in record(text, replaced: replaced) },
+                select: { record in
+                    seen.selected.append(record.text)
+                    return .success(record)
+                },
+                rewrite: { input, _, _ in
+                    seen.asked.append(part("TEXT", of: input))
+                    seen.instructions.append(part("INSTRUCTION", of: input))
+                    seen.stateAtAI.append("\(engine.recordingState)")
+                    guard !seen.replies.isEmpty else { return .failure(.rewriteFailed("no reply set")) }
+                    let (reply, during) = seen.replies.removeFirst()
+                    await during?()
+                    try? await Task.sleep(for: .milliseconds(300))  // the provider's answer on its way
+                    seen.boardAtReply = CursorPaster.outlets.clipboard.pasteboard.string(forType: .string)
+                    return reply
+                },
+                notify: { seen.notices.append("edit:\($0)") })
+            CursorPaster.outlets.frontmostApp = { ("com.example.yap-check", app) }
+            CursorPaster.outlets.focusedElement = { _ in .element(field) }
+            CursorPaster.outlets.postDeleteKey = {
+                paste.keys?.append("⌫")
+                return true
+            }
+            CursorPaster.outlets.pasteSent = {
+                LastPasteEditor.shared.pasteDidFinish(text: $0.text, processID: $0.processID, replacing: $0.replaced)
+                return nil
+            }
+            CursorPaster.outlets.toScratchpad = { seen.scratchpad.append($0) }
+            CursorPaster.outlets.notify = { seen.notices.append(PasteSessionCheck.label($0)) }
+            let editor = LastPasteEditor.shared
+
+            /// Runs `body` from a fresh state (with `lastPaste`, unless nil: the one the scenario before left), then
+            /// prints what happened against `expected`.
+            func scenario(
+                _ name: String, lastPaste: String? = "dictation A",
+                replies: [(Result<String, LastPasteEditor.Failure>, (@MainActor () async -> Void)?)] = [],
+                expected: [String: [String]], _ body: () async -> Void
+            ) async {
+                if let lastPaste { editor.installCheck(outlets, record: record(lastPaste)) }
+                (seen.asked, seen.instructions, seen.stateAtAI, seen.selected) = ([], [], [], [])
+                (seen.scratchpad, seen.notices, seen.boardAtReply, seen.replies) = ([], [], nil, replies)
+                paste.keys = []
+                await body()
+                try? await Task.sleep(for: .milliseconds(100))  // the last paste read back
+                let observed: [String: [String]] = [
+                    "keys": paste.keys ?? [], "aiAsked": seen.asked, "selected": seen.selected,
+                    "scratchpad": seen.scratchpad, "notices": seen.notices, "stateAtAI": seen.stateAtAI,
+                    "boardAtReply": seen.boardAtReply.map { [$0] } ?? [],
+                ]
+                let failures = expected.compactMap { key, value in
+                    observed[key] == value ? nil : "\(key) \(observed[key] ?? []), expected \(value)"
+                }.sorted()
+                var line: [String: Any] = observed
+                line["scenario"] = name
+                line["pass"] = failures.isEmpty
+                line["failures"] = failures
+                line["instructions"] = seen.instructions
+                if let data = try? JSONSerialization.data(withJSONObject: line, options: [.sortedKeys]) {
+                    print("dictation-rewrite: \(String(decoding: data, as: UTF8.self))")
+                }
+            }
+            func dictate(_ rewrite: LastPasteEditor.Rewrite?) async {
+                guard let rewrite else { return }
+                _ = await engine.dictateFile(instruction, rewriting: rewrite)
+            }
+
+            await scenario(
+                "rewrite: the AI's text pasted over the paste the press selected",
+                replies: [(.success("rewritten A"), nil)],
+                expected: [
+                    "keys": ["rewritten A"], "aiAsked": ["dictation A"], "selected": ["dictation A", "dictation A"],
+                    "scratchpad": [], "notices": [], "stateAtAI": ["enhancing"],
+                ]
+            ) { await dictate(await editor.prepareRewrite()) }
+            await scenario(
+                "rewrite the rewrite, then Undo: each acts on the paste before it", lastPaste: nil,
+                replies: [(.success("rewritten twice"), nil)],
+                expected: [
+                    "keys": ["rewritten twice", "⌫"], "aiAsked": ["rewritten A"],
+                    "selected": ["rewritten A", "rewritten A", "rewritten twice"], "scratchpad": [], "notices": [],
+                ]
+            ) {
+                await dictate(await editor.prepareRewrite())
+                try? await Task.sleep(for: .milliseconds(100))
+                await editor.undoLastPaste()
+            }
+            await scenario(
+                "another dictation pasted while the AI works: it stays, the reply goes to the Scratchpad",
+                replies: [(.success("rewritten A"), { _ = await engine.dictateFile(other) })],
+                expected: [
+                    "aiAsked": ["dictation A"], "selected": ["dictation A"], "scratchpad": ["rewritten A"],
+                    "notices": ["superseded→scratchpad"],
+                ]
+            ) { await dictate(await editor.prepareRewrite()) }
+            final class Pending { var task: Task<CursorPaster.PasteOutcome, Never>? }
+            let pending = Pending()
+            await scenario(
+                "a paste waiting for ⌘V when the AI answers: its clipboard and ⌘V kept, the reply to the Scratchpad",
+                replies: [(.success("rewritten A"), { pending.task = CursorPaster.startPasteAtCursor("dictation B", lead: .other) })],
+                expected: [
+                    "keys": ["dictation B"], "aiAsked": ["dictation A"], "selected": ["dictation A"],
+                    "scratchpad": ["rewritten A"], "notices": ["superseded→scratchpad"], "boardAtReply": ["dictation B"],
+                ]
+            ) {
+                await dictate(await editor.prepareRewrite())
+                _ = await pending.task?.value
+            }
+            await scenario(
+                "a paste while the instruction is recorded: the AI isn't asked, nothing said",
+                replies: [(.success("rewritten B"), nil)],
+                expected: [
+                    "keys": ["dictation B"], "aiAsked": [], "selected": ["dictation A"], "scratchpad": [], "notices": [],
+                ]
+            ) {
+                let rewrite = await editor.prepareRewrite()
+                _ = await CursorPaster.startPasteAtCursor("dictation B", lead: .shortcut).value
+                await dictate(rewrite)
+            }
+            await scenario(
+                "a second rewrite during the first one's AI wait, answered first: it's pasted, the first to the Scratchpad",
+                replies: [
+                    (.success("rewritten 1"), { await dictate(await editor.prepareRewrite()) }),
+                    (.success("rewritten 2"), nil),
+                ],
+                expected: [
+                    "keys": ["rewritten 2"], "aiAsked": ["dictation A", "dictation A"],
+                    "selected": ["dictation A", "dictation A", "dictation A"], "scratchpad": ["rewritten 1"],
+                    "notices": ["superseded→scratchpad"],
+                ]
+            ) { await dictate(await editor.prepareRewrite()) }
+            await scenario(
+                "the dictation cancelled while the AI works: nothing pasted, the reply kept in the Scratchpad, nothing said",
+                replies: [(.success("rewritten A"), { await engine.cancelRecording() })],
+                expected: [
+                    "keys": [], "aiAsked": ["dictation A"], "selected": ["dictation A"], "scratchpad": ["rewritten A"],
+                    "notices": [], "stateAtAI": ["enhancing"],
+                ]
+            ) { await dictate(await editor.prepareRewrite()) }
+            await scenario(
+                "the AI fails: said why, nothing pasted or made up",
+                replies: [(.failure(.rewriteFailed("check: provider error")), nil)],
+                expected: [
+                    "keys": [], "scratchpad": [], "notices": ["edit:rewriteFailed(\"check: provider error\")"],
+                ]
+            ) { await dictate(await editor.prepareRewrite()) }
+            await scenario(
+                "the AI returns no text: said so, nothing pasted",
+                replies: [(.success(" \n"), nil)],
+                expected: [
+                    "keys": [], "scratchpad": [],
+                    "notices": ["edit:\(LastPasteEditor.Failure.rewriteFailed(String(localized: "The AI returned no text.")))"],
+                ]
+            ) { await dictate(await editor.prepareRewrite()) }
         }
 
         /// `extra` with `loads` or `inHistory` marks a scenario line, kept out of the timing table.

@@ -182,7 +182,8 @@ paste whose ⌘V was sent; `pasted` means the key events went out, not that the 
 `make paste-session-check` (scripts/paste-session-check.sh) runs `CursorPaster` itself on each of the cases above
 plus overlapping and late callbacks, every scenario on a private pasteboard (`NSPasteboard(name:)`) it releases at the
 end, with ⌘V recorded instead of sent, the field in front injected and time moved by the scenario. The general
-pasteboard, the keyboard and the app in front are never touched, and no app is activated.
+pasteboard, the keyboard and the app in front are never touched, and no app is activated. Its Rewrite scenarios run
+LastPasteEditor from the press to the paste, with the AI an outlet that answers when the scenario says.
 
 ## Where the paste goes
 
@@ -197,7 +198,7 @@ Yap's recorder panel can hold).
 | Dictation | the app in front when the paste starts, Yap itself included (History's search field, the Scratchpad). The recorder is a non-activating panel, so clicking it leaves the app the user dictates into in front. Until M7.3, Yap in front meant "the app in front after the wait"; that is gone: a different app in front by ⌘V is `targetChanged`, never the new target |
 | Paste Last Transcription / Enhancement | the app in front when the shortcut is pressed, Yap included. The request is taken then too; the paste waits its 0.15 s (the shortcut's keys coming up) after that, so a dictation that starts meanwhile supersedes it |
 | History › Paste Again, Quick History | the app the dictation came from (History: the running app with its bundle ID) or the one Quick History remembered. The request is taken when the user picks the row; the app is asked once to come to the front, then the paste waits until it is in front (checked every 20 ms, 1 s at most), so a slow app that comes up within the second is still pasted into. Not in front by then: `targetChanged`, the clipboard isn't touched. The app quits meanwhile: refused at once. A newer paste or Undo meanwhile: `superseded`. No app recorded or running (older rows, an app that was closed): the text goes to the Scratchpad with a notification, the clipboard isn't touched, and nothing is pasted into whatever is in front. Older rows used to hide Yap and paste into the app that came up |
-| Undo / Rewrite Last Paste | the app the last paste went to and the field LastPasteEditor has just checked and selected the paste in. That field is passed to the paste as its target (`Target` with the selected element), not read again when the paste starts: a field change between the selection and the paste, or during the wait, is `targetChanged` (the focus check below, against the selected field). Undo takes its request before it selects; Rewrite takes a new one after the AI call, before it selects the last paste again (a field change during the AI call is refused by that selection). A dictation's paste that starts while either is selecting supersedes it |
+| Undo / Rewrite Last Paste | the app the last paste went to and the field LastPasteEditor has just checked and selected the paste in. That field is passed to the paste as its target (`Target` with the selected element), not read again when the paste starts: a field change between the selection and the paste, or during the wait, is `targetChanged` (the focus check below, against the selected field). Undo takes its request before it selects. Rewrite takes its request on the first press, before it selects the last paste, and keeps it and that paste through the instruction's recording and transcription and the AI call (see Rewrite Last Dictation below); it selects that same paste again before pasting (a field change during the AI call is refused by that selection). A dictation's paste that starts while either is selecting supersedes it |
 
 The focused element is read once while the wait runs, before the selection read (which can turn a web view's
 accessibility on), and again right before ⌘V, after every wait. When the caller passes the field (Undo, Rewrite), the
@@ -257,6 +258,28 @@ restore and a copy the user made in between stay as they are), the text goes to 
 before the no-Accessibility and no-text-field returns, which would copy the text. The newer paste goes on as if the
 old one never came back: its ⌘V goes out once.
 
+**Rewrite Last Dictation** takes its request and the last paste (`LastPasteEditor.Rewrite`) on the first press,
+before it selects that paste, so a dictation's pending ⌘V isn't sent over the selection. The recording that follows
+carries them (`VoiceInkEngine.RecordingUseCase.editLastPaste`) to the follow-up that runs once the instruction is
+transcribed; that is not a paste, so the rewrite's own instruction doesn't replace its request. The AI is asked to
+change the text of the paste the press selected, not whatever is the last paste by then, and its text is pasted over
+that same paste, after selecting it again, under the press's request. Any paste, Undo or other rewrite started in
+between (a dictation started from the menu bar or the Shortcuts app while the AI works, History's Paste Again, Paste
+Last, Undo's shortcut) takes a newer request, and then:
+
+| When | What the old rewrite does |
+|---|---|
+| before the AI is asked (while the instruction is recorded or transcribed) | nothing: the AI isn't asked, nothing is said (`dropped`) |
+| the AI answers with text | nothing is selected; the paste is refused before the clipboard (`superseded`): the text goes to the Scratchpad with the "newer paste or Undo" notification. A newer paste still waiting for its ⌘V keeps its clipboard and goes out once |
+| the AI fails or answers with nothing | nothing is said (`dropped`); the newer request reports for itself |
+
+Cancelling the instruction's dictation while the AI works (the recorder's cancel; with the recorder already closed,
+the Shortcuts app's Dismiss Recorder) cancels the rewrite: a reply that still comes back goes to the Scratchpad with no
+notification and nothing is pasted, as for a cancelled Undo; a failure says nothing. Which paste it is decides, not its
+text: the same words pasted again in the same spot are a newer paste. Nothing retries. With nothing newer and nothing
+cancelled, a failure or an empty reply is said as before, and the rewrite becomes the last paste, so pressing Rewrite
+again rewrites the rewrite and Undo takes it back.
+
 **What the user is told.** Every paste that doesn't go out, and every Finish and Send key or Undo Delete that doesn't,
 gets one notification (`CursorPaster.Notice`, the warning style, 6 s; 8 s for Accessibility). For a paste it says
 where the text is, as checked after the refusal, not guessed from the reason: "Copied to clipboard.", "Added to your
@@ -275,7 +298,9 @@ app slower than that is refused, not pasted into later. Since macOS 14 activatio
 while Yap isn't the active app (Quick History's panel) may be declined by the system, and the paste is then refused
 after the second, as it would have been after 0.12 s before. No real app was pasted into for this: `make
 paste-session-check` runs the checks with the app in front, its focus, activations and every key recorded, never read
-from or sent to the desktop.
+from or sent to the desktop. A rewrite whose request was replaced still waits for its AI request, which isn't called
+off (only cancelling the dictation does that); its reply just isn't pasted. The rewrite was checked with an AI that
+answers from the scenario, never a real provider.
 
 ## Measuring it
 
@@ -313,7 +338,14 @@ After the rounds the script also checks, and fails otherwise:
 - six dictations with the model released first, as After Each Dictation does: three stopped while the press's preload
   is still loading, three pressed while the release is still running. Each must load the model once (`loads`);
 - a paste that fails (`installCheck(result:)` reports `commandNotPosted`) still leaves the dictation in History, saved
-  to the store.
+  to the store;
+- Rewrite Last Dictation through the engine, nine scenarios (`dictation-rewrite:` lines): `prepareRewrite` as the
+  first press, the first clip transcribed as the spoken instruction and handed to the engine's follow-up
+  (`dictateFile(rewriting:)`, what the second press's stop runs), the AI as an outlet that answers from the scenario
+  (no request sent, no field read), the paste into a made-up field of a made-up app in front. During the AI's wait:
+  another dictation through the engine, a paste waiting for its ⌘V, a second rewrite answered first, the dictation
+  cancelled; and a normal rewrite, a rewrite of the rewrite then Undo, a paste while the instruction is recorded, a
+  failure, an empty reply. Each must have the ⌘V, Scratchpad and notices of the table in Rewrite Last Dictation above.
 
 Not covered:
 

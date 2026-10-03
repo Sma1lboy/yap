@@ -205,6 +205,12 @@ class CursorPaster {
         return Request(number: latestRequest)
     }
 
+    /// No paste, Undo or rewrite has started since `request` was taken (Rewrite asks before and after its AI wait).
+    @MainActor
+    static func isLatest(_ request: Request) -> Bool {
+        request == latest
+    }
+
     /// History's Paste Again, Quick History and Paste Last: the paste is for `target`, the app the caller recorded.
     /// The request is taken now, before any wait, so a paste or Undo started meanwhile supersedes this one.
     /// `activate`: unless the app is in front already, it's asked once to come to the front. After `hold` (Paste
@@ -882,13 +888,13 @@ extension CursorPaster.Outlets {
         postDeleteKey: { CursorPaster.postDeleteKey() },
         autoSendWillPost: { await AutoLearnService.shared.cancelForAutoSend(generation: $0) },
         pasteSent: { paste in
-            let generation =
-                AutoLearnSettings.isEnabled
+            // First, with nothing awaited since ⌘V: an Undo or Rewrite pressed while Auto Learn is told must not act on
+            // the paste before this one.
+            LastPasteEditor.shared.pasteDidFinish(text: paste.text, processID: paste.processID, replacing: paste.replaced)
+            return AutoLearnSettings.isEnabled
                 ? await AutoLearnService.shared.pasteDidFinish(
                     text: paste.text, processID: paste.processID, commandPosted: true, dictationID: paste.dictationID)
                 : nil
-            LastPasteEditor.shared.pasteDidFinish(text: paste.text, processID: paste.processID, replacing: paste.replaced)
-            return generation
         },
         toScratchpad: { ScratchpadStore.shared.append(dictation: $0) },
         notify: { notice in
