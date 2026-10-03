@@ -153,6 +153,13 @@
             [(.string, Data("copied by the user".utf8)), (.init("com.example.yap-check.user"), Data([9]))]
         ]
 
+        /// Made-up process IDs, above the system's limit (99999): never a running app, never looked up.
+        static let app: pid_t = 900_001
+        static let otherApp: pid_t = 900_002
+        /// A stand-in focused element for the scenarios: an application element for a made-up process. Creating one
+        /// sends nothing anywhere; scenarios only compare them (CFEqual), and no Accessibility call is made with them.
+        static func field(_ number: Int32) -> AXUIElement { AXUIElementCreateApplication(910_000 + number) }
+
         static func contents(of pasteboard: NSPasteboard) -> [Item] {
             (pasteboard.pasteboardItems ?? []).map { item in
                 item.types.compactMap { type in item.data(forType: type).map { (type, $0) } }
@@ -208,11 +215,22 @@
             var restore = (enabled: true, delay: 0.0)
             var keyResult = CursorPaster.PasteResult.commandPosted
             var frontmost = "com.apple.TextEdit"
+            /// The app in front: a made-up process ID (above the system's limit), never looked up.
+            var processID: pid_t? = PasteSessionCheck.app
+            /// Its focused element, as the focus read reports it.
+            var focus = CursorPaster.Focus.element(PasteSessionCheck.field(1))
+            /// Pairs of fields where the first contains the second.
+            var containers: [(Int32, Int32)] = []
+            var canPostKeys = true
             var focusTakesText = true
+            /// Auto Learn's work before Finish and Send's key (cancelling its observation), in scenario seconds.
+            var autoSendDelay: TimeInterval = 0
+            /// ⌘V lists what the pasteboard held; Enter is "⏎ <key>", Delete "⌫".
             var keys: [String] = []
             var sent: [String] = []
             var scratchpad: [String] = []
             var outcomes: [String: String] = [:]
+            var tasks: [String: Task<CursorPaster.PasteOutcome, Never>] = [:]
             var notes: [String] = []
             var failures: [String] = []
             private var closed = false
@@ -222,16 +240,34 @@
                 clipboard = PasteClipboard(NSPasteboard(name: NSPasteboard.Name("me.sma1lboy.yap.paste-check.\(UUID().uuidString)")))
                 var outlets = CursorPaster.Outlets.check(clipboard)
                 let clock = self.clock
-                outlets.frontmostApp = { [unowned self] in (self.frontmost, nil) }
+                outlets.canPostKeys = { [unowned self] in self.canPostKeys }
+                outlets.frontmostApp = { [unowned self] in (self.frontmost, self.processID) }
+                outlets.focusedElement = { [unowned self] _ in self.focus }
+                outlets.encloses = { [unowned self] a, b in
+                    guard case .element(let a) = a, case .element(let b) = b else { return false }
+                    return self.containers.contains { outer, inner in
+                        let (o, i) = (PasteSessionCheck.field(outer), PasteSessionCheck.field(inner))
+                        return (CFEqual(o, a) && CFEqual(i, b)) || (CFEqual(o, b) && CFEqual(i, a))
+                    }
+                }
                 outlets.focusCanTakeText = { [unowned self] in self.focusTakesText }
                 outlets.postPasteKeys = { [unowned self] in
                     guard self.keyResult == .commandPosted else { return (self.keyResult, nil) }
                     self.keys.append(self.pasteboard.string(forType: .string) ?? "<no text>")
                     return (.commandPosted, clock.now)
                 }
+                outlets.postSubmitKey = { [unowned self] in
+                    self.keys.append("⏎ \($0.rawValue)")
+                    return true
+                }
+                outlets.postDeleteKey = { [unowned self] in
+                    self.keys.append("⌫")
+                    return true
+                }
+                outlets.autoSendWillPost = { [unowned self] _ in await clock.sleep(self.autoSendDelay) }
                 outlets.pasteSent = { [unowned self] in
                     self.sent.append($0.text)
-                    return nil
+                    return UInt64(self.sent.count)
                 }
                 outlets.toScratchpad = { [unowned self] in self.scratchpad.append($0) }
                 outlets.notify = { [unowned self] in self.notes.append("\($0)") }
@@ -255,10 +291,34 @@
                 settle()
             }
 
-            func paste(_ label: String, _ text: String, at time: TimeInterval, lead: CursorPaster.Lead = .shortcut) {
+            /// `target`: the process the caller chose (History, Undo); `submit`: Finish and Send's Enter after a ⌘V that
+            /// went out, as dictation sends it, its result under "<label>⏎".
+            func paste(
+                _ label: String, _ text: String, at time: TimeInterval, lead: CursorPaster.Lead = .shortcut,
+                target: pid_t? = nil, submit: Bool = false
+            ) {
                 advance(to: time)
-                let task = CursorPaster.startPasteAtCursor(text, lead: lead)
-                Task { @MainActor [unowned self] in self.outcomes[label] = "\(await task.value.result)" }
+                let task = CursorPaster.startPasteAtCursor(text, lead: lead, target: target)
+                tasks[label] = task
+                Task { @MainActor [unowned self] in
+                    let outcome = await task.value
+                    self.outcomes[label] = "\(outcome.result)"
+                    guard submit, outcome.result.didPostPasteCommand else { return }
+                    self.outcomes[label + "⏎"] = "\(await CursorPaster.submit(.enter, after: outcome))"
+                }
+                settle()
+            }
+
+            /// Undo Last Paste's Delete into `processID`.
+            func delete(_ label: String, in processID: pid_t, at time: TimeInterval) {
+                advance(to: time)
+                outcomes[label] = "\(CursorPaster.deleteSelection(in: processID))"
+                settle()
+            }
+
+            func cancel(_ label: String, at time: TimeInterval) {
+                advance(to: time)
+                tasks[label]?.cancel()
                 settle()
             }
 
@@ -299,16 +359,16 @@
             /// was written after the close, then releases the private pasteboard.
             func finish(
                 board final: Final, outcomes expectedOutcomes: [String: String], keys expectedKeys: [String],
-                scratchpad expectedScratchpad: [String] = []
+                scratchpad expectedScratchpad: [String] = [], notices expectedNotices: [String]? = nil
             ) -> Bool {
                 advance(to: clock.now)
                 expectBoard(final, "end")
                 if outcomes != expectedOutcomes { failures.append("outcomes \(outcomes), expected \(expectedOutcomes)") }
-                if keys != expectedKeys { failures.append("⌘V pasted \(keys), expected \(expectedKeys)") }
-                let expectedSent = expectedOutcomes.values.filter { $0 == "commandPosted" }.count
+                if keys != expectedKeys { failures.append("keys \(keys), expected \(expectedKeys)") }
+                let expectedSent = expectedOutcomes.filter { !$0.key.hasSuffix("⏎") && $0.value == "commandPosted" }.count
                 if sent.count != expectedSent { failures.append("Auto Learn / Last Paste heard of \(sent), expected \(expectedSent)") }
                 if scratchpad != expectedScratchpad { failures.append("Scratchpad got \(scratchpad), expected \(expectedScratchpad)") }
-
+                if let expectedNotices, notes != expectedNotices { failures.append("notices \(notes), expected \(expectedNotices)") }
                 let closedAt = pasteboard.changeCount
                 Task { @MainActor [unowned self] in
                     await self.clipboard.close()
@@ -387,7 +447,7 @@
                 run.paste("B", "dictation B", at: 0.005)
                 run.advance(to: 2)
                 return run.finish(
-                    board: .original, outcomes: ["A": "clipboardChanged", "B": "commandPosted"], keys: ["dictation B"],
+                    board: .original, outcomes: ["A": "superseded", "B": "commandPosted"], keys: ["dictation B"],
                     scratchpad: ["dictation A"])
             },
             {
@@ -443,7 +503,7 @@
                 run.paste("B", "dictation B", at: 0.012)
                 run.advance(to: 2)
                 return run.finish(
-                    board: .user, outcomes: ["A": "clipboardChanged", "B": "commandPosted"], keys: ["dictation B"],
+                    board: .user, outcomes: ["A": "superseded", "B": "commandPosted"], keys: ["dictation B"],
                     scratchpad: ["dictation A"])
             },
             {
@@ -550,6 +610,194 @@
                 return run.finish(
                     board: .text("dictation B", transient: false), outcomes: ["A": "commandPosted", "B": "sentToScratchpad"],
                     keys: ["dictation A"], scratchpad: ["dictation B"])
+            },
+        ] + targetScenarios
+
+        // MARK: - Target scenarios
+
+        /// Where the paste goes: the app in front and its focused field when the paste started, checked again after the
+        /// wait, right before ⌘V; Finish and Send's Enter and Undo's Delete checked the same way.
+        static let targetScenarios: [@MainActor () -> Bool] = [
+            {
+                let run = Run("same app and field: ⌘V, then Enter after the restore ran")
+                run.autoSendDelay = 0.2  // Enter 0.37 s in, the restore at 0.27 s
+                run.begin()
+                run.paste("A", "dictation A", at: 0, submit: true)
+                run.advance(to: 1)
+                return run.finish(
+                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "sent"], keys: ["dictation A", "⏎ enter"])
+            },
+            {
+                let run = Run("another app comes to the front before ⌘V")
+                run.begin()
+                run.paste("A", "dictation A", at: 0, submit: true)
+                run.advance(to: 0.01)
+                run.processID = otherApp
+                run.frontmost = "com.example.other"
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["targetChanged"])
+            },
+            {
+                let run = Run("same app, another field focused before ⌘V")
+                run.begin()
+                run.paste("A", "dictation A", at: 0)
+                run.advance(to: 0.01)
+                run.focus = .element(field(2))
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["targetChanged"])
+            },
+            {
+                let run = Run("the field loses focus before ⌘V, nothing focused in the app")
+                run.begin()
+                run.paste("A", "dictation A", at: 0)
+                run.advance(to: 0.01)
+                run.focus = .none
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["targetChanged"])
+            },
+            {
+                let run = Run("focus moves into the focused element (web view): same container, ⌘V sent")
+                run.containers = [(1, 3)]
+                run.begin()
+                run.paste("A", "dictation A", at: 0)
+                run.advance(to: 0.01)
+                run.focus = .element(field(3))
+                run.advance(to: 2)
+                return run.finish(board: .original, outcomes: ["A": "commandPosted"], keys: ["dictation A"])
+            },
+            {
+                let run = Run("remote desktop, Accessibility can't read its focus: same app is enough, 0.5 s / 5 s kept")
+                run.frontmost = "com.apple.ScreenSharing"
+                run.focus = .unreadable
+                run.begin()
+                run.paste("A", "dictation A", at: 0, submit: true)
+                run.advance(to: 0.45)
+                if !run.keys.isEmpty { run.failures.append("⌘V before 0.5 s") }
+                run.advance(to: 6)
+                return run.finish(
+                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "sent"], keys: ["dictation A", "⏎ enter"])
+            },
+            {
+                let run = Run("focus readable at the start, unreadable at ⌘V: not a known change, ⌘V sent")
+                run.begin()
+                run.paste("A", "dictation A", at: 0)
+                run.advance(to: 0.01)
+                run.focus = .unreadable
+                run.advance(to: 2)
+                return run.finish(board: .original, outcomes: ["A": "commandPosted"], keys: ["dictation A"])
+            },
+            {
+                let run = Run("Accessibility turned off before ⌘V")
+                run.begin()
+                run.paste("A", "dictation A", at: 0)
+                run.advance(to: 0.01)
+                run.canPostKeys = false
+                run.advance(to: 2)
+                return run.finish(
+                    board: .text("dictation A", transient: true), outcomes: ["A": "leftOnClipboard"], keys: [],
+                    notices: ["accessibilityMissing"])
+            },
+            {
+                let run = Run("paste cancelled before ⌘V")
+                run.begin()
+                run.paste("A", "dictation A", at: 0)
+                run.cancel("A", at: 0.01)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "superseded"], keys: [], scratchpad: ["dictation A"], notices: [])
+            },
+            {
+                let run = Run("Yap in front when the paste starts, the app back after the wait: pasted there")
+                run.processID = ProcessInfo.processInfo.processIdentifier
+                run.frontmost = "me.sma1lboy.yap.mock"
+                run.focus = .element(field(9))
+                run.begin()
+                run.paste("A", "dictation A", at: 0, lead: .other)
+                run.advance(to: 0.05)
+                run.processID = app
+                run.frontmost = "com.apple.TextEdit"
+                run.focus = .element(field(1))
+                run.advance(to: 2)
+                return run.finish(board: .original, outcomes: ["A": "commandPosted"], keys: ["dictation A"])
+            },
+            {
+                let run = Run("History / Undo target: the app it chose is in front")
+                run.begin()
+                run.paste("A", "dictation A", at: 0, lead: .other, target: app)
+                run.advance(to: 2)
+                return run.finish(board: .original, outcomes: ["A": "commandPosted"], keys: ["dictation A"])
+            },
+            {
+                let run = Run("History / Undo target: another app in front when the paste starts, clipboard untouched")
+                run.processID = otherApp
+                run.frontmost = "com.example.other"
+                run.begin()
+                let before = run.pasteboard.changeCount
+                run.paste("A", "dictation A", at: 0, lead: .other, target: app)
+                run.advance(to: 2)
+                if run.pasteboard.changeCount != before { run.failures.append("clipboard written") }
+                return run.finish(
+                    board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["targetChanged"])
+            },
+            {
+                let run = Run("Enter: another app comes to the front after ⌘V, before Enter")
+                run.begin()
+                run.paste("A", "dictation A", at: 0, submit: true)
+                run.advance(to: 0.1)
+                run.processID = otherApp
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "targetChanged"], keys: ["dictation A"])
+            },
+            {
+                let run = Run("Enter: another field focused after ⌘V, before Enter")
+                run.begin()
+                run.paste("A", "dictation A", at: 0, submit: true)
+                run.advance(to: 0.1)
+                run.focus = .element(field(2))
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "targetChanged"], keys: ["dictation A"])
+            },
+            {
+                let run = Run("Enter: a new paste starts between A's ⌘V and A's Enter")
+                run.begin()
+                run.paste("A", "dictation A", at: 0, submit: true)
+                run.paste("B", "dictation B", at: 0.1)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "superseded", "B": "commandPosted"],
+                    keys: ["dictation A", "dictation B"])
+            },
+            {
+                let run = Run("Undo's Delete into the recorded app")
+                run.begin()
+                run.delete("U", in: app, at: 0)
+                return run.finish(board: .original, outcomes: ["U": "sent"], keys: ["⌫"])
+            },
+            {
+                let run = Run("Undo's Delete with another app in front")
+                run.processID = otherApp
+                run.begin()
+                run.delete("U", in: app, at: 0)
+                return run.finish(board: .original, outcomes: ["U": "targetChanged"], keys: [])
+            },
+            {
+                let run = Run("Undo's Delete calls off a dictation's pending Enter")
+                run.begin()
+                run.paste("A", "dictation A", at: 0, submit: true)
+                run.delete("U", in: app, at: 0.1)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "superseded", "U": "sent"],
+                    keys: ["dictation A", "⌫"])
             },
         ]
     }

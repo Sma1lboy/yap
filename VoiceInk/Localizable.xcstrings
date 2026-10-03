@@ -5499,6 +5499,34 @@
         }
       }
     },
+    "Added to your Scratchpad. Another app or field was in front when Yap was about to paste, so it didn't." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dem Notizblock hinzugefügt. Als Yap einfügen wollte, war eine andere App oder ein anderes Feld aktiv, daher hat Yap nicht eingefügt."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouté au bloc-notes. Une autre app ou un autre champ était actif au moment de coller, Yap n’a donc rien collé."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已加进便签。Yap 要粘贴时，前台已换成别的 App 或输入框，所以没有粘贴。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已加進便箋。Yap 要貼上時，前景已換成別的 App 或輸入框，所以沒有貼上。"
+          }
+        }
+      }
+    },
     "After Each Dictation" : {
       "localizations" : {
         "de" : {

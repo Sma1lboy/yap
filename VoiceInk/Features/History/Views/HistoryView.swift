@@ -758,18 +758,21 @@ struct HistoryView<Header: View>: View {
     }
 
     /// Goes back to the app the dictation was made in (or, for older rows, hides Yap so the previous app is
-    /// frontmost again), then pastes.
+    /// frontmost again), then pastes. The app it activated is the target: if another one is in front by then, nothing
+    /// is pasted into it.
     private func pasteAgain(_ transcription: Transcription) {
         let text = transcription.preferredHistoryText
+        var target: pid_t?
         if let bundleID = transcription.sourceAppBundleID,
             let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first
         {
             app.activate(options: [.activateIgnoringOtherApps])
+            target = app.processIdentifier
         } else {
             NSApp.hide(nil)
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            CursorPaster.pasteAtCursor(text)
+            CursorPaster.pasteAtCursor(text, target: target)
         }
     }
 

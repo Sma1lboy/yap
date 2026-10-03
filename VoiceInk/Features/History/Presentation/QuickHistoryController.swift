@@ -147,6 +147,7 @@ final class QuickHistoryController: NSObject {
         performPaste(transcription)
     }
 
+    /// The app it activates is the target: if another one is in front when the paste starts, nothing goes into it.
     private func performPaste(_ transcription: Transcription) {
         let text = transcription.preferredHistoryText
         let targetApplication = resolvedTargetApplication() ?? targetApplication
@@ -154,8 +155,9 @@ final class QuickHistoryController: NSObject {
         dismiss()
 
         targetApplication?.activate(options: [.activateIgnoringOtherApps])
+        let target = targetApplication?.processIdentifier
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-            CursorPaster.pasteAtCursor(text)
+            CursorPaster.pasteAtCursor(text, target: target)
         }
     }
 

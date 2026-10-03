@@ -18,6 +18,12 @@ class CursorPaster {
         case leftOnClipboard
         /// No editable element focused: the text stays on the clipboard and goes to the Scratchpad.
         case sentToScratchpad
+        /// When ⌘V was due a different app or field was in front than the paste was for (or the app it was for wasn't
+        /// in front when it started): no key was sent, and the text goes to the Scratchpad.
+        case targetChanged
+        /// A newer paste (or Undo) started, or the paste was cancelled, before ⌘V: no key was sent, the text goes to
+        /// the Scratchpad.
+        case superseded
 
         var didPostPasteCommand: Bool {
             self == .commandPosted
@@ -29,6 +35,41 @@ class CursorPaster {
         let autoLearnGeneration: UInt64?
         /// System uptime when ⌘V went out: the V key-down, or when the AppleScript paste returned.
         var commandTime: TimeInterval?
+        /// Set when ⌘V went out: the request and target a key sent after it (Finish and Send) is checked against.
+        var sent: SentRequest?
+    }
+
+    /// A paste whose ⌘V went out: which request it was and where it went.
+    struct SentRequest {
+        let request: UInt64
+        let target: Target
+    }
+
+    /// Where a paste or key is meant to go: the app in front and its focused element when the request took it.
+    struct Target: @unchecked Sendable {
+        let processID: pid_t?
+        let focus: Focus
+    }
+
+    /// The target app's focused element as Accessibility reports it (kAXFocusedUIElementAttribute of the app).
+    enum Focus: @unchecked Sendable {
+        /// Compared with CFEqual, which is Accessibility's own identity: the same element of the same process.
+        case element(AXUIElement)
+        /// The app answered that nothing in it has focus.
+        case none
+        /// The query failed (unsupported, timed out, no app): this says nothing about the field.
+        case unreadable
+    }
+
+    /// A key sent on its own (Finish and Send's Enter, Undo's Delete).
+    enum KeyResult: Equatable {
+        case sent
+        /// The key events couldn't be made, or Accessibility isn't allowed.
+        case notSent
+        /// A different app or field is in front than the key was for.
+        case targetChanged
+        /// A newer paste or Undo started after the one this key belongs to.
+        case superseded
     }
 
     /// A paste that went out, for Auto Learn and Undo/Rewrite Last Paste.
@@ -41,7 +82,7 @@ class CursorPaster {
     }
 
     enum Notice {
-        case accessibilityMissing, noTextField
+        case accessibilityMissing, noTextField, targetChanged
     }
 
     /// Everything a paste touches outside its own logic: the pasteboard, the app in front and its focused field, the
@@ -53,12 +94,22 @@ class CursorPaster {
         var canPostKeys: () -> Bool
         var focusCanTakeText: () -> Bool
         var frontmostApp: () -> (bundleID: String?, processID: pid_t?)
+        /// The focused element of the app with this process ID, read off the main thread.
+        var focusedElement: @MainActor (pid_t) async -> Focus
+        /// Whether one of two elements contains the other (Accessibility parents), read off the main thread.
+        var encloses: @MainActor (Focus, Focus) async -> Bool
         /// The focused field's selection in that app, which the paste replaces; nil: not read.
         var selectedText: (@Sendable (pid_t) -> String)?
         /// Shift, Control, Option or Fn held (still down from the shortcut).
         var modifiersHeld: () -> Bool
         /// Sends ⌘V; the time is when V went down.
         var postPasteKeys: @MainActor () async -> (result: PasteResult, commandTime: TimeInterval?)
+        /// Sends Finish and Send's key; false when the events couldn't be made.
+        var postSubmitKey: @MainActor (FinishAndSendKey) -> Bool
+        /// Sends Delete; false when the events couldn't be made.
+        var postDeleteKey: @MainActor () -> Bool
+        /// Finish and Send is about to send its key after the paste with this Auto Learn generation.
+        var autoSendWillPost: @MainActor (UInt64) async -> Void
         /// After ⌘V went out; returns the Auto Learn generation.
         var pasteSent: @MainActor (SentPaste) async -> UInt64?
         var toScratchpad: @MainActor (String) -> Void
@@ -118,10 +169,12 @@ class CursorPaster {
         return (lead == .shortcut ? shortcutPrePasteDelay : prePasteDelay, minimumClipboardRestoreDelay)
     }
 
-    static func pasteAtCursor(_ text: String) {
+    /// `target`: the process the caller already chose (an app it activated, the one a record names); nil: the app in
+    /// front when the paste starts.
+    static func pasteAtCursor(_ text: String, target: pid_t? = nil) {
         Task {
             let pasteTask = await MainActor.run {
-                startPasteAtCursor(text)
+                startPasteAtCursor(text, target: target)
             }
             _ = await pasteTask.value
         }
@@ -133,7 +186,9 @@ class CursorPaster {
     /// the dictation being pasted, whose SessionMetric gets what Auto Learn sees become of it.
     @MainActor
     @discardableResult
-    static func startPasteAtCursor(_ text: String, lead: Lead = .other, dictationID: UUID? = nil) -> Task<PasteOutcome, Never> {
+    static func startPasteAtCursor(
+        _ text: String, lead: Lead = .other, dictationID: UUID? = nil, target: pid_t? = nil
+    ) -> Task<PasteOutcome, Never> {
         let outlets = Self.outlets
         switch preparePaste(text, lead: lead, dictationID: dictationID, outlets: outlets) {
         case .finished(let outcome):
@@ -142,6 +197,27 @@ class CursorPaster {
             return Task { @MainActor in await post(paste, outlets: outlets) }
         }
     }
+
+    /// Finish and Send: `key` after the paste in `outcome`, 150 ms after its ⌘V.
+    @MainActor
+    static func submit(_ key: FinishAndSendKey, after outcome: PasteOutcome) async -> KeyResult {
+        let outlets = Self.outlets
+        guard key.isEnabled, outcome.sent != nil else { return .notSent }
+        await outlets.sleep(submitDelay)
+        if let generation = outcome.autoLearnGeneration { await outlets.autoSendWillPost(generation) }
+        guard outlets.canPostKeys() else { return .notSent }
+        return outlets.postSubmitKey(key) ? .sent : .notSent
+    }
+
+    /// Undo Last Paste: deletes the selection it just set in `processID`'s focused field.
+    @MainActor
+    static func deleteSelection(in processID: pid_t) -> KeyResult {
+        let outlets = Self.outlets
+        guard outlets.canPostKeys() else { return .notSent }
+        return outlets.postDeleteKey() ? .sent : .notSent
+    }
+
+    private static let submitDelay: TimeInterval = 0.15
 
     private enum Preparation {
         case finished(PasteOutcome)
@@ -226,7 +302,9 @@ class CursorPaster {
         let autoLearnGeneration = await outlets.pasteSent(
             SentPaste(text: paste.text, processID: paste.targetProcessID, dictationID: paste.dictationID, replaced: replaced))
         outlets.clipboard.pasteSent(paste.claim, restoreAfter: paste.restoreDelay, sleep: outlets.sleep)
-        return PasteOutcome(result: .commandPosted, autoLearnGeneration: autoLearnGeneration, commandTime: posted.commandTime)
+        return PasteOutcome(
+            result: .commandPosted, autoLearnGeneration: autoLearnGeneration, commandTime: posted.commandTime,
+            sent: SentRequest(request: 0, target: Target(processID: paste.targetProcessID, focus: .unreadable)))
     }
 
     /// The pre-paste wait, counted from the clipboard write. After a shortcut stop the user may still be holding the
@@ -382,35 +460,78 @@ class CursorPaster {
 
     // MARK: - Send Key
 
-    /// Deletes the current selection (LastPasteEditor's undo, after it selected the last paste).
-    static func performDeleteKey() {
-        guard AXIsProcessTrusted() else { return }
+    /// Delete, for Undo Last Paste after it selected the last paste. Only through `outlets.postDeleteKey`.
+    @MainActor
+    fileprivate static func postDeleteKey() -> Bool {
         let source = CGEventSource(stateID: .privateState)
-        CGEvent(keyboardEventSource: source, virtualKey: 0x33, keyDown: true)?.post(tap: .cghidEventTap)
-        CGEvent(keyboardEventSource: source, virtualKey: 0x33, keyDown: false)?.post(tap: .cghidEventTap)
+        guard let down = CGEvent(keyboardEventSource: source, virtualKey: 0x33, keyDown: true),
+            let up = CGEvent(keyboardEventSource: source, virtualKey: 0x33, keyDown: false)
+        else { return false }
+        down.post(tap: .cghidEventTap)
+        up.post(tap: .cghidEventTap)
+        return true
     }
 
-    static func performSendKey(_ key: FinishAndSendKey) {
-        guard key.isEnabled else { return }
-        guard AXIsProcessTrusted() else { return }
-
+    /// Finish and Send's key. Only through `outlets.postSubmitKey`.
+    @MainActor
+    fileprivate static func postSubmitKey(_ key: FinishAndSendKey) -> Bool {
         let source = CGEventSource(stateID: .privateState)
-        let enterDown = CGEvent(keyboardEventSource: source, virtualKey: 0x24, keyDown: true)
-        let enterUp = CGEvent(keyboardEventSource: source, virtualKey: 0x24, keyDown: false)
+        guard key.isEnabled,
+            let enterDown = CGEvent(keyboardEventSource: source, virtualKey: 0x24, keyDown: true),
+            let enterUp = CGEvent(keyboardEventSource: source, virtualKey: 0x24, keyDown: false)
+        else { return false }
 
         switch key {
-        case .none: return
+        case .none: return false
         case .enter: break
         case .shiftEnter:
-            enterDown?.flags = .maskShift
-            enterUp?.flags = .maskShift
+            enterDown.flags = .maskShift
+            enterUp.flags = .maskShift
         case .commandEnter:
-            enterDown?.flags = .maskCommand
-            enterUp?.flags = .maskCommand
+            enterDown.flags = .maskCommand
+            enterUp.flags = .maskCommand
         }
 
-        enterDown?.post(tap: .cghidEventTap)
-        enterUp?.post(tap: .cghidEventTap)
+        enterDown.post(tap: .cghidEventTap)
+        enterUp.post(tap: .cghidEventTap)
+        return true
+    }
+
+    // MARK: - Target
+
+    private static let focusReadTimeout: Float = 0.25
+    /// Accessibility trees in web views run deep; past this many parents an element counts as unrelated.
+    private static let maximumParentWalk = 64
+
+    /// The app's own focused element (not the system-wide one, which Yap's recorder panel can hold).
+    nonisolated fileprivate static func readFocus(processID: pid_t) -> Focus {
+        let app = AXUIElementCreateApplication(processID)
+        AXUIElementSetMessagingTimeout(app, focusReadTimeout)
+        var focused: CFTypeRef?
+        let status = AXUIElementCopyAttributeValue(app, kAXFocusedUIElementAttribute as CFString, &focused)
+        if status == .success, let focused, CFGetTypeID(focused) == AXUIElementGetTypeID() {
+            return .element(focused as! AXUIElement)
+        }
+        return status == .noValue ? .none : .unreadable
+    }
+
+    /// Whether `a` is a parent (or further up) of `b`, or `b` of `a`.
+    nonisolated fileprivate static func encloses(_ a: Focus, _ b: Focus) -> Bool {
+        guard case .element(let a) = a, case .element(let b) = b else { return false }
+        func isAncestor(_ ancestor: AXUIElement, of element: AXUIElement) -> Bool {
+            var current = element
+            for _ in 0..<maximumParentWalk {
+                AXUIElementSetMessagingTimeout(current, focusReadTimeout)
+                var parent: CFTypeRef?
+                guard AXUIElementCopyAttributeValue(current, kAXParentAttribute as CFString, &parent) == .success,
+                    let parent, CFGetTypeID(parent) == AXUIElementGetTypeID()
+                else { return false }
+                current = parent as! AXUIElement
+                if CFEqual(current, ancestor) { return true }
+            }
+            return false
+        }
+        return isAncestor(a, of: b) || isAncestor(b, of: a)
     }
 }
 
@@ -423,9 +544,14 @@ extension CursorPaster.Outlets {
             let app = NSWorkspace.shared.frontmostApplication
             return (app?.bundleIdentifier, app?.processIdentifier)
         },
+        focusedElement: { processID in await Task.detached { CursorPaster.readFocus(processID: processID) }.value },
+        encloses: { a, b in await Task.detached { CursorPaster.encloses(a, b) }.value },
         selectedText: { LastPasteEditor.selectedText(processID: $0) },
         modifiersHeld: { !NSEvent.modifierFlags.intersection([.shift, .control, .option, .function]).isEmpty },
         postPasteKeys: { await CursorPaster.postPasteCommand() },
+        postSubmitKey: { CursorPaster.postSubmitKey($0) },
+        postDeleteKey: { CursorPaster.postDeleteKey() },
+        autoSendWillPost: { await AutoLearnService.shared.cancelForAutoSend(generation: $0) },
         pasteSent: { paste in
             let generation =
                 AutoLearnSettings.isEnabled
@@ -452,6 +578,13 @@ extension CursorPaster.Outlets {
                     duration: 6,
                     actionButton: (String(localized: "Open Scratchpad"), { ScratchpadController.shared.show() })
                 )
+            case .targetChanged:
+                NotificationManager.shared.showNotification(
+                    title: String(localized: "Added to your Scratchpad. Another app or field was in front when Yap was about to paste, so it didn't."),
+                    type: .warning,
+                    duration: 6,
+                    actionButton: (String(localized: "Open Scratchpad"), { ScratchpadController.shared.show() })
+                )
             }
         },
         restoreSettings: CursorPaster.Outlets.savedRestoreSettings,
@@ -472,36 +605,48 @@ extension CursorPaster.Outlets {
         /// The checks that dictate files (offline, latency, isolation, lifecycle, quit, residency, first run): a
         /// private pasteboard, an editable field always focused, no app in front (the usual timing), nothing read
         /// through Accessibility and no key sent. ⌘V takes as long as the real key events (three 10 ms waits) and
-        /// reports `result()`; `commandSent` gets the time V would have gone down. Nothing goes to Auto Learn, Last
-        /// Paste, the Scratchpad or a notification. Restore follows the mock identity's settings, on the private board.
+        /// reports `result()`; `commandSent` gets the time V would have gone down. No other key is sent (Enter and
+        /// Delete report they couldn't be). Nothing goes to Auto Learn, Last Paste, the Scratchpad or a notification.
+        /// Restore follows the mock identity's settings, on the private board. Every outlet is set here, none taken
+        /// from `live`, so a new outlet doesn't compile until the checks have their own.
         @MainActor
         static func check(
             _ clipboard: PasteClipboard,
             result: @escaping @MainActor () -> CursorPaster.PasteResult = { .commandPosted },
             commandSent: @escaping @MainActor (TimeInterval) -> Void = { _ in }
         ) -> Self {
-            var outlets = live
-            outlets.clipboard = clipboard
-            outlets.canPostKeys = { true }
-            outlets.focusCanTakeText = { true }
-            outlets.frontmostApp = { (nil, nil) }
-            outlets.selectedText = nil
-            outlets.modifiersHeld = { false }
-            let sleep = outlets.sleep
-            outlets.postPasteKeys = {
-                let result = result()
-                guard result == .commandPosted else { return (result, nil) }
-                await sleep(0.01)
-                let commandTime = ProcessInfo.processInfo.systemUptime
-                commandSent(commandTime)
-                await sleep(0.01)
-                await sleep(0.01)
-                return (.commandPosted, commandTime)
+            let sleep: (TimeInterval) async -> Void = { seconds in
+                guard seconds > 0 else { return }
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
             }
-            outlets.pasteSent = { _ in nil }
-            outlets.toScratchpad = { _ in }
-            outlets.notify = { _ in }
-            return outlets
+            return CursorPaster.Outlets(
+                clipboard: clipboard,
+                canPostKeys: { true },
+                focusCanTakeText: { true },
+                frontmostApp: { (nil, nil) },
+                focusedElement: { _ in .unreadable },
+                encloses: { _, _ in false },
+                selectedText: nil,
+                modifiersHeld: { false },
+                postPasteKeys: {
+                    let result = result()
+                    guard result == .commandPosted else { return (result, nil) }
+                    await sleep(0.01)
+                    let commandTime = ProcessInfo.processInfo.systemUptime
+                    commandSent(commandTime)
+                    await sleep(0.01)
+                    await sleep(0.01)
+                    return (.commandPosted, commandTime)
+                },
+                postSubmitKey: { _ in false },
+                postDeleteKey: { false },
+                autoSendWillPost: { _ in },
+                pasteSent: { _ in nil },
+                toScratchpad: { _ in },
+                notify: { _ in },
+                restoreSettings: savedRestoreSettings,
+                now: { ProcessInfo.processInfo.systemUptime },
+                sleep: sleep)
         }
 
         /// Installs `check` outlets on a new private pasteboard for a dictation check; call the returned closure when
