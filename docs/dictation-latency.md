@@ -46,16 +46,18 @@ Then, in seconds after the stop (nil when the step didn't happen):
 | `stopToEnhanced` | AI cleanup returned or failed |
 | `stopToPasteCommand` | the V key-down of ⌘V (AppleScript paste: when the script returned) |
 
-`pasteOutcome`: `pasted` (⌘V sent), `clipboardOnly` (no Accessibility permission: the text was left on the clipboard
-with a notification), `scratchpad` (no editable field had focus: the text went to the Scratchpad and the clipboard),
-`failed` (the clipboard couldn't be set, so the text went to the Scratchpad; or the key events couldn't be sent, so it
-stays on the clipboard), `clipboardChanged` (when ⌘V was due the clipboard no longer held the text, because the user
-or another app wrote to it: no key was sent, the clipboard was left alone and the text went to the Scratchpad),
-`targetChanged` (another app or field was in front when ⌘V was due than the paste was for: no key was sent and the
-text went to the Scratchpad, with a notification), `superseded` (a newer paste or Undo Last Paste started first: no
-key was sent and the text went to the Scratchpad). Only `pasted` counts as a paste in Home's numbers. Nil when the
-text wasn't pasted: a response in the recorder, a custom command, "scratch that". `pasted` means ⌘V was sent, not
-that the app in front inserted the text.
+`pasteOutcome`: `pasted` (⌘V sent), `clipboardOnly` (no Accessibility permission: the text was left on the clipboard),
+`scratchpad` (no editable field had focus: the text went to the Scratchpad, and to the clipboard if it could be put
+there), `failed` (the clipboard couldn't be set, so the text went to the Scratchpad; or the key events couldn't be
+sent, so it stays on the clipboard, or goes to the Scratchpad if the clipboard no longer holds it),
+`clipboardChanged` (when ⌘V was due the clipboard no longer held the text, because the user or another app wrote to
+it: no key was sent, the clipboard was left alone and the text went to the Scratchpad; also when Accessibility went
+away and the clipboard had changed), `targetChanged` (another app or field was in front when ⌘V was due than the
+paste was for: no key was sent and the text went to the Scratchpad), `superseded` (a newer paste or Undo Last Paste
+started first: no key was sent and the text went to the Scratchpad). Every one but `pasted` comes with a notification
+that says where the text is ("What the user is told" below). Only `pasted` counts as a paste in Home's numbers. Nil
+when the text wasn't pasted: a response in the recorder, a custom command, "scratch that". `pasted` means ⌘V was
+sent, not that the app in front inserted the text.
 
 With the mode's language on Auto-detect and a local Whisper model, the SessionMetric also has `detectedLanguages`
 (the languages Whisper decoded the dictation in, in order, comma-separated: `zh`, `en`, `en,zh`) and
@@ -163,13 +165,13 @@ the user copying the very same text with the same session data included, changes
 | The user copies after ⌘V, before the restore | `pasted` | the user's copy; the restore is skipped | sent |
 | The user (or another app) copies before ⌘V | `clipboardChanged` | left alone; the text goes to the Scratchpad | not sent: it would paste whatever is there now |
 | A newer paste starts before this one's ⌘V | `superseded` | the newer paste's (it inherits the original); the text goes to the Scratchpad | not sent; the newer one's is |
-| Another app or field is in front when ⌘V is due ("Where the paste goes") | `targetChanged` | the original, if this paste still holds the clipboard; the text goes to the Scratchpad | not sent |
+| Another app or field is in front when ⌘V is due ("Where the paste goes") | `targetChanged` | the original, if this paste still holds the clipboard (with restore off there is nothing to put back: the text stays); the text goes to the Scratchpad | not sent |
 | The user copies, then a new paste starts | `pasted` | the user's copy: the new paste takes it as the original, not the old one's | sent |
 | The clipboard was empty | `pasted` | empty again | sent |
 | Restore off | `pasted` | the text, not marked transient; nothing is kept to put back | sent |
 | The clipboard write fails | `failed` | the original again (if nobody else wrote meanwhile); the text goes to the Scratchpad | not sent |
-| ⌘V can't be sent (no key events, AppleScript error) | `failed` | the text stays for the user to paste; the original is let go | not sent |
-| No Accessibility permission / no text field focused | `clipboardOnly` / `scratchpad` | the text, not transient | not sent |
+| ⌘V can't be sent (no key events, AppleScript error) | `failed` | the text stays for the user to paste; the original is let go. If the clipboard no longer holds it, the Scratchpad gets it | not sent |
+| No Accessibility permission / no text field focused | `clipboardOnly` / `scratchpad` | the text, not transient. If that write fails: whatever the failed write left (nothing was kept to put back), and the text goes to the Scratchpad (`failed` / `scratchpad`) | not sent |
 
 The original is kept in memory only, until it is put back, the clipboard changes hands, or the paste fails; it is
 never logged or saved. A restore puts it back marked transient, so clipboard-history apps don't record it twice.
@@ -180,7 +182,7 @@ paste whose ⌘V was sent; `pasted` means the key events went out, not that the 
 `make paste-session-check` (scripts/paste-session-check.sh) runs `CursorPaster` itself on each of the cases above
 plus overlapping and late callbacks, every scenario on a private pasteboard (`NSPasteboard(name:)`) it releases at the
 end, with ⌘V recorded instead of sent, the field in front injected and time moved by the scenario. The general
-pasteboard, the keyboard and the app in front are never touched.
+pasteboard, the keyboard and the app in front are never touched, and no app is activated.
 
 ## Where the paste goes
 
@@ -192,12 +194,14 @@ Yap's recorder panel can hold).
 
 | Caller | Target |
 |---|---|
-| Dictation, Paste Last Transcription / Enhancement | the app in front when the paste starts (the shortcut's moment for Paste Last: it's taken before the 0.15 s wait). If that is Yap itself (History's window, a clicked recorder), the app in front after the wait, when focus is back |
-| History › Paste Again, Quick History | the app it activated (or remembered). Another app in front when the paste starts: `targetChanged`, the clipboard isn't touched |
+| Dictation | the app in front when the paste starts, Yap itself included (History's search field, the Scratchpad). The recorder is a non-activating panel, so clicking it leaves the app the user dictates into in front. Until M7.3, Yap in front meant "the app in front after the wait"; that is gone: a different app in front by ⌘V is `targetChanged`, never the new target |
+| Paste Last Transcription / Enhancement | the app in front when the shortcut is pressed, Yap included. The request is taken then too; the paste waits its 0.15 s (the shortcut's keys coming up) after that, so a dictation that starts meanwhile supersedes it |
+| History › Paste Again, Quick History | the app the dictation came from (History: the running app with its bundle ID) or the one Quick History remembered. The request is taken when the user picks the row; the app is asked once to come to the front, then the paste waits until it is in front (checked every 20 ms, 1 s at most), so a slow app that comes up within the second is still pasted into. Not in front by then: `targetChanged`, the clipboard isn't touched. The app quits meanwhile: refused at once. A newer paste or Undo meanwhile: `superseded`. No app recorded or running (older rows, an app that was closed): the text is copied, not pasted into whatever is in front |
 | Undo / Rewrite Last Paste | the app the last paste went to; LastPasteEditor has just checked its field and selected the paste in it |
 
 The focused element is read once while the wait runs, before the selection read (which can turn a web view's
-accessibility on), and again right before ⌘V, after every wait.
+accessibility on), and again right before ⌘V, after every wait. Yap's own windows aren't read through Accessibility:
+there only the process is checked.
 
 **Right before ⌘V.** The focus is read last (off the main thread). Then, with nothing awaited between these checks and
 the key: the request is still the latest one (no newer paste or Undo started, the paste wasn't cancelled),
@@ -207,9 +211,11 @@ first that fails decides:
 
 | Fails | Result | Text | Clipboard |
 |---|---|---|---|
-| a newer request, or cancelled | `superseded` | Scratchpad, no notification | the original back if this paste still holds it |
-| Accessibility turned off during the wait | `clipboardOnly` | stays on the clipboard, with the Accessibility notification; not in the Scratchpad | the text, still marked transient; its restore is called off |
-| another app in front, the focus moved, or it no longer takes text | `targetChanged` | Scratchpad, with a notification ("Another app or field was in front…") | the original back if this paste still holds it |
+| a newer request | `superseded` | Scratchpad | the original back if this paste still holds it |
+| cancelled, nothing newer (the app shutting down) | `superseded` | Scratchpad, no notification | the original back if this paste still holds it |
+| Accessibility turned off during the wait, the text still on the clipboard | `clipboardOnly` | stays on the clipboard; not in the Scratchpad | the text, still marked transient; its restore is called off |
+| Accessibility turned off, and the clipboard changed too | `clipboardChanged` | Scratchpad | left alone: the user's copy isn't replaced |
+| another app in front, the focus moved, or it no longer takes text | `targetChanged` | Scratchpad | the original back if this paste still holds it |
 | the clipboard changed | `clipboardChanged` | Scratchpad | left alone |
 
 A refused paste doesn't reach Auto Learn or Undo Last Paste, has no ⌘V time, and Finish and Send doesn't follow it.
@@ -220,28 +226,43 @@ the field's content is read for it. The focus counts as moved when it is now on 
 the first nor sits inside it (`AXParent`, up to 64 levels and 0.3 s for the whole walk; past that it counts as moved),
 or on nothing. Focus moving within one container (a web view moving focus from the document to the editable element
 inside it) is not a move: that is a same-container check, not proof of the same field. When the app doesn't answer (no
-Accessibility tree, unsupported, 0.25 s timeout), the
-focus is unknown, not unchanged: only the app is checked. The same holds when Yap was in front at the start and the
-target was taken after the wait: there is nothing earlier to compare with. Remote desktop, VM and XQuartz windows keep
-their 0.5 s / 5 s timing; whatever their app reports as focused is the local window's element, so a field change
-inside the remote machine isn't visible here. No real app was checked for which of these it answers.
+Accessibility tree, unsupported, 0.25 s timeout), the focus is unknown, not unchanged: only the app is checked; the same
+for Yap's own windows. Remote desktop, VM and XQuartz windows keep their 0.5 s / 5 s timing; whatever their app reports
+as focused is the local window's element, so a field change inside the remote machine isn't visible here. No real app
+was checked for which of these it answers.
 
-**Finish and Send** waits 150 ms after ⌘V as before, then checks the same request, app and focus as the paste, tells
-Auto Learn the key is going out (it stops watching the paste, `autoSent`), checks request and app again, and sends the
-key. A newer paste that started after A's ⌘V means A's Enter isn't sent (`superseded`); another app or field means
-`targetChanged`. Either way A's paste stays `pasted`: it went out. A restore of the clipboard doesn't count as a new
-request, so a same-target Enter after the restore still goes out. A newer paste starting while Auto Learn is being told
-stops the Enter, but Auto Learn has already stopped watching A.
+**Finish and Send** waits 150 ms after ⌘V as before, then reads the focus and checks the same request, app and focus
+as the paste; tells Auto Learn the key is going out (it stops watching the paste, `autoSent`); then reads the focus
+again and checks request, app and focus once more, with nothing awaited from there to the key. A newer paste that
+started after A's ⌘V means A's Enter isn't sent (`superseded`); another app or field, including a field change in
+the same app while Auto Learn was being told, means `targetChanged`. Either way A's paste stays `pasted`: it went out.
+A restore of the clipboard doesn't count as a new request, so a same-target Enter after the restore still goes out.
+`autoSent` is recorded before the last check, so it means "Finish and Send was about to press its key", not that the
+key went out: a key refused after it leaves A unwatched and uncounted (see auto-learn.md).
 
-**Undo Last Paste's Delete** (when the paste replaced nothing) counts as a new request, so a dictation's pending ⌘V
-or Enter isn't sent after it; it is sent only if Accessibility is allowed and the recorded app is in front. Its field
-and selection are LastPasteEditor's check, a moment before.
+**Undo Last Paste** takes its request when it starts, before LastPasteEditor reads and selects the last paste, so a
+dictation's pending ⌘V or Enter isn't sent after it, and of two Undos pressed close together only the later one's
+Delete goes out. The Delete (when the paste replaced nothing) is sent after the app's focus is read again: the request
+is still the latest, Accessibility is allowed, the recorded app is in front and its focus is on the field
+LastPasteEditor selected in (or an element inside or around it, as above; unreadable: only the app). When the paste
+had replaced a selection, Undo pastes that text back under the same request.
+
+**What the user is told.** Every paste that doesn't go out, and every Finish and Send key or Undo Delete that doesn't,
+gets one notification (`CursorPaster.Notice`, the warning style, 6 s; 8 s for Accessibility). For a paste it says
+where the text is, as checked after the refusal, not guessed from the reason: "Copied to clipboard.", "Added to your
+Scratchpad." or "Copied to clipboard and added to your Scratchpad.", then why. Open Scratchpad is offered whenever the
+text is there, Open Settings when Accessibility is the cause. A key skipped after a paste that went out says the text
+was pasted and the send key wasn't pressed (another app or field in front, a newer paste or Undo first, or the key
+couldn't be pressed); an Undo whose Delete didn't go out says the last dictation wasn't removed. A cancelled paste with
+nothing newer, and an Undo superseded by a newer one, say nothing. Nothing retries. `make ui-snapshots` renders each
+of them (`notification-paste-*`).
 
 **Not closed by any check.** The last check and the OS delivering the key are two steps: focus can move between them
-(key events: ⌘ goes down first, V 10 ms later). Activating an app takes time; if History's or Quick History's app isn't in front
-after 0.15 s / 0.12 s, that paste is now refused where it used to go to whatever was in front. No real app was pasted
-into for this: `make paste-session-check` runs the checks with the app in front, its focus and every key recorded,
-never read from or sent to the desktop.
+(key events: ⌘ goes down first, V 10 ms later). How long real apps take to come to the front after History's request
+wasn't measured; 1 s is a margin over the 0.12 / 0.15 s History and Quick History used to wait without checking, and an
+app slower than that is refused, not pasted into later. No real app was pasted into for this: `make
+paste-session-check` runs the checks with the app in front, its focus, activations and every key recorded, never read
+from or sent to the desktop.
 
 ## Measuring it
 
