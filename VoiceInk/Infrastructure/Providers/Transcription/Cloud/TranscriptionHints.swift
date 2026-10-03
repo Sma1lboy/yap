@@ -39,8 +39,9 @@ enum TranscriptionHints {
         case "openai/gpt-4o-transcribe", "openai/gpt-4o-mini-transcribe":
             return ["openai": ["prompt": prompt]]
         case "openai/whisper-large-v3":
-            // Served by whichever of these is up; each takes OpenAI's `prompt`. Whisper keeps only the prompt's last
-            // 224 tokens (Groq documents the limit), so the newest words go last, as in local Whisper's prompt.
+            // Served by whichever of these is up; each takes OpenAI's `prompt`. Newest last is our cautious order, not
+            // a verified provider rule: local whisper.cpp keeps a long prompt's last 223 tokens and OpenAI documents
+            // 224 for whisper-1, but how these three treat a long prompt isn't known.
             let prompt = terms.reversed().joined(separator: ", ")
             return ["groq": ["prompt": prompt], "deepinfra/us": ["prompt": prompt], "together": ["prompt": prompt]]
         default:
@@ -63,7 +64,7 @@ enum TranscriptionHints {
             assert(openAI["language"] == nil)
             let options = (openAI["provider"] as? [String: Any])?["options"] as? [String: [String: String]]
             assert(options == ["openai": ["prompt": "A, B"]])
-            // Whisper keeps a long prompt's tail: the first (newest) term is the last one written.
+            // whisper-large-v3 gets the first (newest) term written last, in case its provider keeps a long prompt's tail.
             var whisper: [String: Any] = [:]
             apply(to: &whisper, model: "openai/whisper-large-v3", language: nil, vocabulary: ["New", "Old"])
             let whisperOptions = (whisper["provider"] as? [String: Any])?["options"] as? [String: [String: String]]

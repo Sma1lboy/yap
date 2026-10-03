@@ -106,7 +106,7 @@ def check(line):
     if consumer.startswith("Speechmatics/") and case == "over-budget":
         terms = ["ZNewestName"] + OLDER  # takes the whole dictionary
     if consumer.endswith("/whisper-large-v3"):
-        terms = terms[::-1]  # Whisper keeps a long prompt's tail, so the newest go last
+        terms = terms[::-1]  # newest last, in case the provider keeps a long prompt's tail (our order, not verified)
     if consumer.endswith("/gemini-3.5-transcribe"):
         terms = None  # answers 400 to a prompt: only the language goes
     pairs = [(terms, sent(line))]
