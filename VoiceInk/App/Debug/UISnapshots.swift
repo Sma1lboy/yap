@@ -149,6 +149,9 @@
                         replacements: [DictionaryReplacementEntry(sources: ["why app"], replacement: "Yap", createdAt: nil)])),
                     onCancel: {}, onImported: { _ in })
             }
+            shot("sheet-dictionary-settings", size: CGSize(width: 480, height: 680), main: true) {
+                DictionarySettingsPanel(onDismiss: {}, onReviewNow: {})
+            }
             page("settings", .settings)
             page("account", .account)
 
