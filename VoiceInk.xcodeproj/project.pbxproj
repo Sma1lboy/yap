@@ -873,6 +873,7 @@
 		E1FA000E2FA7000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ARCHS = "$(ARCHS_STANDARD)";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -901,6 +902,7 @@
 		E1FA000F2FA7000000000001 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ARCHS = "$(ARCHS_STANDARD)";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -1048,7 +1050,7 @@
 			repositoryURL = "https://github.com/Beingpax/LLMkit.git";
 			requirement = {
 				kind = revision;
-				revision = 7cb532eb0af56b6b4d3c8049c0c0083f1b3cb2d6;
+				revision = 37100b22033674f183af0b6e18f81db071ea6320;
 			};
 		};
 		E1ADD45D2CC544F100303ECB /* XCRemoteSwiftPackageReference "Sparkle" */ = {
