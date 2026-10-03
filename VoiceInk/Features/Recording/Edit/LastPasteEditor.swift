@@ -169,7 +169,7 @@ final class LastPasteEditor {
     /// request is taken before the selection, as Undo's is, so a dictation that starts meanwhile goes out instead.
     @discardableResult
     func pasteRewrite(_ rewritten: String) async -> Edit {
-        let request: CursorPaster.Request? = nil
+        let request = CursorPaster.newRequest()
         switch await selectLastPaste() {
         case .failure(let failure):
             notify(failure)

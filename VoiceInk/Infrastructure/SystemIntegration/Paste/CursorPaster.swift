@@ -383,6 +383,17 @@ class CursorPaster {
     ) -> Preparation {
         let clipboard = outlets.clipboard
 
+        // A request taken before a wait (Undo's and Rewrite's, while they selected the text) that a newer paste or
+        // Undo replaced since, or whose caller was cancelled: refused before anything is written, so the newer paste's
+        // clipboard, its restore and the user's copy stay as they are.
+        if request != latest || Task.isCancelled {
+            logger.notice("A newer request started before this paste began; clipboard untouched, text sent to the Scratchpad")
+            outlets.toScratchpad(text)
+            // Cancelled with nothing newer: no notification, as after the wait.
+            if request != latest { outlets.notify(.notPasted(.superseded, text: .scratchpad)) }
+            return .finished(PasteOutcome(result: .superseded, autoLearnGeneration: nil))
+        }
+
         // Leave the text on the clipboard (no restore) so nothing is lost.
         guard outlets.canPostKeys() else {
             logger.error("Accessibility permission missing; leaving text on the clipboard")
