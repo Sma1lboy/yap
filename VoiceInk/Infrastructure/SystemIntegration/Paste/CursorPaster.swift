@@ -21,8 +21,7 @@ class CursorPaster {
         /// there.
         case sentToScratchpad
         /// When ⌘V was due a different app or field was in front than the paste was for (or the app it was for wasn't
-        /// in front when it started, quit, or there was none): no key was sent, and the text goes to the Scratchpad
-        /// (copied, when there was no app to paste into).
+        /// in front when it started, quit, or there was none): no key was sent, and the text goes to the Scratchpad.
         case targetChanged
         /// A newer paste (or Undo) started, or the paste was cancelled, before ⌘V: no key was sent, the text goes to
         /// the Scratchpad.
@@ -211,7 +210,8 @@ class CursorPaster {
     /// `activate`: unless the app is in front already, it's asked once to come to the front. After `hold` (Paste
     /// Last: its shortcut's keys coming up) the paste waits until the app is in front, checking every 20 ms for at
     /// most `activationTimeout`, then goes on as any paste does, which refuses it if the app still isn't in front.
-    /// An app that quit is refused at once. No target (nothing recorded): the text is copied, not pasted anywhere.
+    /// An app that quit is refused at once. No target (nothing recorded): the text goes to the Scratchpad, the
+    /// clipboard isn't touched and nothing is pasted into whatever is in front.
     @MainActor
     @discardableResult
     static func paste(
@@ -220,9 +220,10 @@ class CursorPaster {
         let outlets = Self.outlets
         let request = newRequest()
         guard let target else {
-            logger.notice("No app to paste into; the text is copied instead")
-            let outcome = keepUnpasted(text, .noTarget, result: .targetChanged, alsoScratchpad: false, outlets: outlets)
-            return Task { outcome }
+            logger.notice("No app to paste into; text sent to the Scratchpad")
+            outlets.toScratchpad(text)
+            outlets.notify(.notPasted(.noTarget, text: .scratchpad))
+            return Task { PasteOutcome(result: .targetChanged, autoLearnGeneration: nil) }
         }
         if activate, outlets.frontmostApp().processID != target { outlets.activate(target) }
         return Task { @MainActor in
@@ -419,7 +420,7 @@ class CursorPaster {
                 claim: claim))
     }
 
-    /// No paste at all (no Accessibility, no text field, no app to paste into): the text is left on the clipboard (not
+    /// No paste at all (no Accessibility, no text field): the text is left on the clipboard (not
     /// restored), and put in the Scratchpad too when `alsoScratchpad` or when the clipboard write failed. The
     /// notification says where it is. `result` when it was copied; a failed copy is `commandNotPosted` unless the
     /// Scratchpad was meant to get it anyway.

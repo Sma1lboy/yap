@@ -566,7 +566,7 @@
                 ("target-changed", .notPasted(.targetChanged, text: .scratchpad)),
                 ("target-changed-both", .notPasted(.targetChanged, text: .clipboardAndScratchpad)),
                 ("target-quit", .notPasted(.targetQuit, text: .scratchpad)),
-                ("no-target", .notPasted(.noTarget, text: .clipboard)),
+                ("no-target", .notPasted(.noTarget, text: .scratchpad)),
                 ("clipboard-changed", .notPasted(.clipboardChanged, text: .scratchpad)),
                 ("superseded", .notPasted(.superseded, text: .scratchpad)),
                 ("clipboard-write-failed", .notPasted(.clipboardWriteFailed, text: .scratchpad)),

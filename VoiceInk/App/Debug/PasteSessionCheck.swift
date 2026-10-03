@@ -1134,22 +1134,14 @@
                     activations: [app])
             },
             {
-                let run = Run("History paste with no app recorded: copied, not pasted into the app in front")
+                let run = Run("History paste with no app recorded: Scratchpad, not the app in front, clipboard untouched")
                 run.begin()
+                let before = run.pasteboard.changeCount
                 run.pasteInto("A", "dictation A", at: 0, target: nil)
                 run.advance(to: 2)
+                if run.pasteboard.changeCount != before { run.failures.append("clipboard written") }
                 return run.finish(
-                    board: .text("dictation A", transient: false), outcomes: ["A": "targetChanged"], keys: [],
-                    notices: ["noTarget→clipboard"])
-            },
-            {
-                let run = Run("History paste with no app recorded and the copy fails: Scratchpad")
-                run.begin()
-                run.clipboard.writeFails = true
-                run.pasteInto("A", "dictation A", at: 0, target: nil)
-                run.advance(to: 2)
-                return run.finish(
-                    board: .halfWritten, outcomes: ["A": "commandNotPosted"], keys: [], scratchpad: ["dictation A"],
+                    board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
                     notices: ["noTarget→scratchpad"])
             },
             {

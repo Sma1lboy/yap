@@ -196,8 +196,8 @@ Yap's recorder panel can hold).
 |---|---|
 | Dictation | the app in front when the paste starts, Yap itself included (History's search field, the Scratchpad). The recorder is a non-activating panel, so clicking it leaves the app the user dictates into in front. Until M7.3, Yap in front meant "the app in front after the wait"; that is gone: a different app in front by ⌘V is `targetChanged`, never the new target |
 | Paste Last Transcription / Enhancement | the app in front when the shortcut is pressed, Yap included. The request is taken then too; the paste waits its 0.15 s (the shortcut's keys coming up) after that, so a dictation that starts meanwhile supersedes it |
-| History › Paste Again, Quick History | the app the dictation came from (History: the running app with its bundle ID) or the one Quick History remembered. The request is taken when the user picks the row; the app is asked once to come to the front, then the paste waits until it is in front (checked every 20 ms, 1 s at most), so a slow app that comes up within the second is still pasted into. Not in front by then: `targetChanged`, the clipboard isn't touched. The app quits meanwhile: refused at once. A newer paste or Undo meanwhile: `superseded`. No app recorded or running (older rows, an app that was closed): the text is copied, not pasted into whatever is in front |
-| Undo / Rewrite Last Paste | the app the last paste went to; LastPasteEditor has just checked its field and selected the paste in it |
+| History › Paste Again, Quick History | the app the dictation came from (History: the running app with its bundle ID) or the one Quick History remembered. The request is taken when the user picks the row; the app is asked once to come to the front, then the paste waits until it is in front (checked every 20 ms, 1 s at most), so a slow app that comes up within the second is still pasted into. Not in front by then: `targetChanged`, the clipboard isn't touched. The app quits meanwhile: refused at once. A newer paste or Undo meanwhile: `superseded`. No app recorded or running (older rows, an app that was closed): the text goes to the Scratchpad with a notification, the clipboard isn't touched, and nothing is pasted into whatever is in front. Older rows used to hide Yap and paste into the app that came up |
+| Undo / Rewrite Last Paste | the app the last paste went to; LastPasteEditor has just checked its field and selected the paste in it. Rewrite's paste comes after the AI call and takes a new request then, after selecting the last paste again: a field change during the call is refused by that selection; one after it, by the paste's own focus check |
 
 The focused element is read once while the wait runs, before the selection read (which can turn a web view's
 accessibility on), and again right before ⌘V, after every wait. Yap's own windows aren't read through Accessibility:
@@ -260,7 +260,9 @@ of them (`notification-paste-*`).
 **Not closed by any check.** The last check and the OS delivering the key are two steps: focus can move between them
 (key events: ⌘ goes down first, V 10 ms later). How long real apps take to come to the front after History's request
 wasn't measured; 1 s is a margin over the 0.12 / 0.15 s History and Quick History used to wait without checking, and an
-app slower than that is refused, not pasted into later. No real app was pasted into for this: `make
+app slower than that is refused, not pasted into later. Since macOS 14 activation is cooperative: a request from Yap
+while Yap isn't the active app (Quick History's panel) may be declined by the system, and the paste is then refused
+after the second, as it would have been after 0.12 s before. No real app was pasted into for this: `make
 paste-session-check` runs the checks with the app in front, its focus, activations and every key recorded, never read
 from or sent to the desktop.
 

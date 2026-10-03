@@ -759,7 +759,7 @@ struct HistoryView<Header: View>: View {
 
     /// Goes back to the app the dictation was made in, then pastes there once it is in front (CursorPaster waits for
     /// it, briefly). Another app in front by then: nothing is pasted into it. No app recorded, or it isn't running:
-    /// the text is copied, not pasted into whatever happens to be in front.
+    /// the text goes to the Scratchpad, not into whatever happens to be in front.
     private func pasteAgain(_ transcription: Transcription) {
         let target = transcription.sourceAppBundleID.flatMap {
             NSRunningApplication.runningApplications(withBundleIdentifier: $0).first?.processIdentifier
