@@ -41,13 +41,20 @@ final class LastPasteEditor {
         }
     }
 
-    /// What Undo and Rewrite touch outside their own logic: checking and selecting the last paste through
-    /// Accessibility, and telling the user why it can't be changed. `live` is the app's; PasteSessionCheck installs its
-    /// own (`check`), with no Accessibility call and no notification.
+    /// What Undo and Rewrite touch outside their own logic: reading back where a paste landed, checking and selecting
+    /// the last paste through Accessibility, the AI provider that rewrites it, and telling the user why it can't be
+    /// changed. `live` is the app's; PasteSessionCheck installs its own (`check`), with no Accessibility call, no AI
+    /// request and no notification.
     struct Outlets {
+        /// A moment after a paste's ⌘V: where its text sits in the focused field of `processID`, nil when it can't be
+        /// found there.
+        var capture: @MainActor (_ text: String, _ processID: pid_t, _ replaced: String) async -> Record?
         /// The app in front is still the last paste's, its field is focused and holds the text at that spot, and the
         /// text is now selected there.
         var select: @MainActor (Record) async -> Result<Record, Failure>
+        /// Rewrite's request to the mode's AI provider (checked to be one that can rewrite first), with `rewriteInput`:
+        /// the text it returned, or why there is none.
+        var rewrite: @MainActor (_ input: String, AIEnhancementService?, AIService?) async -> Result<String, Failure>
         var notify: @MainActor (Failure) -> Void
     }
 
@@ -79,13 +86,9 @@ final class LastPasteEditor {
     func pasteDidFinish(text: String, processID: pid_t?, replacing replaced: String = "") {
         record = nil
         captureTask?.cancel()
-        guard let processID, !text.isEmpty, AXIsProcessTrusted(),
-            processID != ProcessInfo.processInfo.processIdentifier
-        else { return }
+        guard let processID, !text.isEmpty, processID != ProcessInfo.processInfo.processIdentifier else { return }
         captureTask = Task {
-            try? await Task.sleep(for: .milliseconds(300))
-            guard !Task.isCancelled else { return }
-            let captured = await Task.detached { Self.capture(text: text, processID: processID, replaced: replaced) }.value
+            let captured = await outlets.capture(text, processID, replaced)
             guard !Task.isCancelled else { return }
             record = captured
             if captured == nil { logger.notice("Last paste not located; undo and rewrite won't be offered for it") }
@@ -144,22 +147,12 @@ final class LastPasteEditor {
     func rewriteLastPaste(instruction: String, enhancementService: AIEnhancementService?, aiService: AIService?) async {
         let instruction = instruction.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !instruction.isEmpty, let record else { return notify(.nothingPasted) }
-        guard let enhancementService, let aiService else { return notify(.aiNotConfigured) }
-        let base = ModeRuntimeResolver.currentEnhancementConfiguration(
-            enhancementService: enhancementService, aiService: aiService)
-        let prompt = CustomPrompt(title: "Rewrite Last Dictation", promptText: Self.rewritePrompt, useSystemInstructions: false)
-        // Checked with the rewrite prompt in place: the mode's own prompt selection doesn't matter here.
-        guard base.provider != nil, base.provider != .voiceInkRefine,
-            enhancementService.isConfigured(for: base.replacingPrompt(prompt))
-        else { return notify(.aiNotConfigured) }
-
         let rewritten: String
-        do {
-            let result = try await enhancementService.enhance(
-                Self.rewriteInput(text: record.text, instruction: instruction), configuration: base.replacingPrompt(prompt))
-            rewritten = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        } catch {
-            return notify(.rewriteFailed(EnhancementFailureFormatter.description(for: error)))
+        switch await outlets.rewrite(Self.rewriteInput(text: record.text, instruction: instruction), enhancementService, aiService) {
+        case .failure(let failure):
+            return notify(failure)
+        case .success(let text):
+            rewritten = text.trimmingCharacters(in: .whitespacesAndNewlines)
         }
         guard !rewritten.isEmpty else { return notify(.rewriteFailed(String(localized: "The AI returned no text."))) }
         await pasteRewrite(rewritten)
@@ -286,11 +279,34 @@ extension LastPasteEditor.Record {
 
 extension LastPasteEditor.Outlets {
     @MainActor static let live = LastPasteEditor.Outlets(
+        capture: { text, processID, replaced in
+            // The field is read once the paste has landed.
+            guard AXIsProcessTrusted() else { return nil }
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return nil }
+            return await Task.detached { LastPasteEditor.capture(text: text, processID: processID, replaced: replaced) }.value
+        },
         select: { record in
             guard NSWorkspace.shared.frontmostApplication?.processIdentifier == record.processID else {
                 return .failure(.focusChanged)
             }
             return await Task.detached { LastPasteEditor.select(record) }.value
+        },
+        rewrite: { input, enhancementService, aiService in
+            guard let enhancementService, let aiService else { return .failure(.aiNotConfigured) }
+            let base = ModeRuntimeResolver.currentEnhancementConfiguration(
+                enhancementService: enhancementService, aiService: aiService)
+            let prompt = CustomPrompt(
+                title: "Rewrite Last Dictation", promptText: LastPasteEditor.rewritePrompt, useSystemInstructions: false)
+            // Checked with the rewrite prompt in place: the mode's own prompt selection doesn't matter here.
+            guard base.provider != nil, base.provider != .voiceInkRefine,
+                enhancementService.isConfigured(for: base.replacingPrompt(prompt))
+            else { return .failure(.aiNotConfigured) }
+            do {
+                return .success(try await enhancementService.enhance(input, configuration: base.replacingPrompt(prompt)).text)
+            } catch {
+                return .failure(.rewriteFailed(EnhancementFailureFormatter.description(for: error)))
+            }
         },
         notify: { NotificationManager.shared.showNotification(title: $0.message, type: .warning, duration: 5) })
 }
