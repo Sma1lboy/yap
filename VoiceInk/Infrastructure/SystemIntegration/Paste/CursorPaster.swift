@@ -85,6 +85,11 @@ class CursorPaster {
         case accessibilityMissing, noTextField, targetChanged
     }
 
+    /// `Notice.targetChanged`: the paste was refused because another app or field was in front.
+    static var targetChangedMessage: String {
+        String(localized: "Added to your Scratchpad. Another app or field was in front when Yap was about to paste, so it didn't.")
+    }
+
     /// Everything a paste touches outside its own logic: the pasteboard, the app in front and its focused field, the
     /// keyboard, the clock, Auto Learn and Last Paste, the Scratchpad and notifications. `live` is the app's; checks
     /// install their own, on a private pasteboard with no key sent (`check`, PasteSessionCheck).
@@ -694,7 +699,7 @@ extension CursorPaster.Outlets {
                 )
             case .targetChanged:
                 NotificationManager.shared.showNotification(
-                    title: String(localized: "Added to your Scratchpad. Another app or field was in front when Yap was about to paste, so it didn't."),
+                    title: CursorPaster.targetChangedMessage,
                     type: .warning,
                     duration: 6,
                     actionButton: (String(localized: "Open Scratchpad"), { ScratchpadController.shared.show() })
