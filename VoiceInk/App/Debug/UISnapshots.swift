@@ -500,7 +500,7 @@
                 OnboardingCloudRestoreSheet { _ in }
             }
 
-            // Scratchpad window (empty, with two dictations) and the notification when a dictation found no text field.
+            // Scratchpad window (empty, with two dictations); the notifications for a paste that didn't go out are below.
             let scratchpadURL = FileManager.default.temporaryDirectory.appendingPathComponent("yap-snapshot-scratchpad.txt")
             let scratchpad = ScratchpadStore(fileURL: scratchpadURL)
             shot("scratchpad-empty", size: CGSize(width: 380, height: 320), main: true) {
@@ -512,13 +512,6 @@
                 "Standup 改到 Friday morning。", to: scratchpad.text, at: Date(timeIntervalSince1970: 1_790_003_600))
             shot("scratchpad-text", size: CGSize(width: 380, height: 320), main: true) {
                 ScratchpadView(store: scratchpad)
-            }
-            shot("notification-scratchpad", size: CGSize(width: 620, height: 80), main: true) {
-                AppNotificationView(
-                    title: ScratchpadStore.noTextFieldMessage, type: .warning, duration: 6, onClose: {}, onTap: nil,
-                    actionButton: (String(localized: "Open Scratchpad"), {})
-                )
-                .padding(AppTheme.Spacing.x4)
             }
             // Meeting notifications, at the size the notification window takes: call detection (the prompt for a
             // meeting app and for a browser, the reminder when the call ends), then recovering a meeting Yap quit in
@@ -563,12 +556,41 @@
                         title: title, type: type, duration: 15, onClose: {}, onTap: nil,
                         actionButton: button.map { (label: $0, action: {}) }))
             }
-            // A paste refused because another app or field was in front (CursorPaster's Notice.targetChanged).
-            notificationShot(
-                "target-changed",
-                AppNotificationView(
-                    title: CursorPaster.targetChangedMessage, type: .warning, duration: 6, onClose: {}, onTap: nil,
-                    actionButton: (String(localized: "Open Scratchpad"), {})))
+            // A paste, Finish and Send's key or Undo's Delete that didn't go out (CursorPaster.Notice): each reason with
+            // where the text ended up as the paste checked it, and the keys skipped after a paste that went out.
+            let pasteNotices: [(String, CursorPaster.Notice)] = [
+                ("no-accessibility", .notPasted(.accessibilityMissing, text: .clipboard)),
+                ("no-accessibility-scratchpad", .notPasted(.accessibilityMissing, text: .scratchpad)),
+                ("no-text-field", .notPasted(.noTextField, text: .clipboardAndScratchpad)),
+                ("no-text-field-scratchpad", .notPasted(.noTextField, text: .scratchpad)),
+                ("target-changed", .notPasted(.targetChanged, text: .scratchpad)),
+                ("target-changed-both", .notPasted(.targetChanged, text: .clipboardAndScratchpad)),
+                ("target-quit", .notPasted(.targetQuit, text: .scratchpad)),
+                ("no-target", .notPasted(.noTarget, text: .clipboard)),
+                ("clipboard-changed", .notPasted(.clipboardChanged, text: .scratchpad)),
+                ("superseded", .notPasted(.superseded, text: .scratchpad)),
+                ("clipboard-write-failed", .notPasted(.clipboardWriteFailed, text: .scratchpad)),
+                ("paste-keys-failed", .notPasted(.pasteKeysFailed, text: .clipboard)),
+                ("send-skipped-target", .sendSkipped(.targetChanged)),
+                ("send-skipped-superseded", .sendSkipped(.superseded)),
+                ("send-skipped-not-sent", .sendSkipped(.notSent)),
+                ("undo-not-removed-target", .deleteSkipped(.targetChanged)),
+                ("undo-not-removed-not-sent", .deleteSkipped(.notSent)),
+            ]
+            for (name, notice) in pasteNotices {
+                let labels = notice.actions.map { action in
+                    switch action {
+                    case .openScratchpad: return String(localized: "Open Scratchpad")
+                    case .openAccessibilitySettings: return String(localized: "Open Settings")
+                    }
+                }
+                notificationShot(
+                    "paste-\(name)",
+                    AppNotificationView(
+                        title: notice.message, type: .warning, duration: 6, onClose: {}, onTap: nil,
+                        actionButton: labels.first.map { (label: $0, action: {}) },
+                        secondaryButton: labels.dropFirst().first.map { (label: $0, action: {}) }))
+            }
             // Fixing the mode's language (LanguagePinSuggestion): the suggestion for Chinese and for English, each with
             // what a fixed language costs, and the confirmation with Back to Auto-detect.
             let pinNotifications: [(String, String, AppNotificationView.NotificationType, String, String?)] = [

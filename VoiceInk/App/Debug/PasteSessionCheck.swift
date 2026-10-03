@@ -2,14 +2,15 @@
     import AppKit
 
     /// `scripts/paste-session-check.sh`: `--paste-session-check`, then quits. Each scenario runs CursorPaster's own
-    /// paste (prepare, wait, target and ownership checks, ⌘V, restore), Finish and Send's Enter and Undo's Delete on a
-    /// private pasteboard of its own (NSPasteboard(name:)), with outlets that record instead of acting: ⌘V notes what
-    /// the pasteboard held when it would have gone out, Enter and Delete are noted too, the app in front is a made-up
-    /// process ID and its focused element a stand-in the scenario sets (whether it takes text as well), Auto Learn /
-    /// Last Paste, the Scratchpad and notifications are lists, and time only moves when the scenario advances it. The
-    /// general pasteboard is never touched, no key is sent and nothing is read from the app in front. Prints one
-    /// `paste-check: {json}` line per scenario with what happened, what should have, and `pass`; then
-    /// `paste-check-done:`.
+    /// paste (prepare, wait, target and ownership checks, ⌘V, restore), History's and Paste Last's wait for their app,
+    /// Finish and Send's Enter and Undo's Delete on a private pasteboard of its own (NSPasteboard(name:)), with outlets
+    /// that record instead of acting: ⌘V notes what the pasteboard held when it would have gone out, Enter and Delete
+    /// are noted too, the app in front is a made-up process ID and its focused element a stand-in the scenario sets
+    /// (whether it takes text as well), activating an app is only noted, Auto Learn / Last Paste, the Scratchpad and
+    /// notifications are lists, and time only moves when the scenario advances it. The general pasteboard is never
+    /// touched, no key is sent, no app is activated and nothing is read from the app in front. Prints one
+    /// `paste-check: {json}` line per scenario with what happened (keys, outcomes, the board, Scratchpad, notices,
+    /// activations, Auto Learn), what should have, and `pass`; then `paste-check-done:`.
     @MainActor
     enum PasteSessionCheck {
         static let argument = "--paste-session-check"
@@ -204,6 +205,9 @@
             /// Exactly what the user wrote, captured when they did.
             case user
             case empty
+            /// What a failed write leaves when nothing was kept to put back (restore off, or a paste that only copies):
+            /// the half-written item `writeFails` makes, not the text and not what was there before.
+            case halfWritten
         }
 
         @MainActor
@@ -225,6 +229,9 @@
             var containers: [(Int32, Int32)] = []
             var canPostKeys = true
             var focusTakesText = true
+            /// Apps still running; the target of a History paste is looked up here. Activation is only noted.
+            var running: Set<pid_t> = [PasteSessionCheck.app, PasteSessionCheck.otherApp]
+            var activations: [pid_t] = []
             /// Auto Learn's work before Finish and Send's key (cancelling its observation), in scenario seconds.
             var autoSendDelay: TimeInterval = 0
             /// How often Auto Learn was told Finish and Send's key is going out (it then stops watching the paste).
@@ -277,7 +284,9 @@
                     return UInt64(self.sent.count)
                 }
                 outlets.toScratchpad = { [unowned self] in self.scratchpad.append($0) }
-                outlets.notify = { [unowned self] in self.notes.append("\($0)") }
+                outlets.notify = { [unowned self] in self.notes.append(PasteSessionCheck.label($0)) }
+                outlets.activate = { [unowned self] in self.activations.append($0) }
+                outlets.isRunning = { [unowned self] in self.running.contains($0) }
                 outlets.restoreSettings = { [unowned self] in self.restore }
                 outlets.now = { clock.now }
                 outlets.sleep = { await clock.sleep($0) }
@@ -316,10 +325,27 @@
                 settle()
             }
 
-            /// Undo Last Paste's Delete into `processID`.
-            func delete(_ label: String, in processID: pid_t, at time: TimeInterval) {
+            /// History's Paste Again / Quick History (`activate`) or Paste Last (`hold`) into `target`.
+            func pasteInto(
+                _ label: String, _ text: String, at time: TimeInterval, target: pid_t?, activate: Bool = true,
+                hold: TimeInterval = 0
+            ) {
                 advance(to: time)
-                outcomes[label] = "\(CursorPaster.deleteSelection(in: processID))"
+                let task = CursorPaster.paste(text, into: target, activate: activate, hold: hold)
+                tasks[label] = task
+                Task { @MainActor [unowned self] in self.outcomes[label] = "\(await task.value.result)" }
+                settle()
+            }
+
+            /// Undo Last Paste's Delete into field 1 of `processID`, for `request` (by default a new one, taken now as
+            /// Undo takes it when it starts).
+            func delete(_ label: String, in processID: pid_t, at time: TimeInterval, request: CursorPaster.Request? = nil) {
+                advance(to: time)
+                let request = request ?? CursorPaster.newRequest()
+                Task { @MainActor [unowned self] in
+                    self.outcomes[label] =
+                        "\(await CursorPaster.deleteSelection(in: processID, field: PasteSessionCheck.field(1), request: request))"
+                }
                 settle()
             }
 
@@ -353,6 +379,9 @@
                 case .original: ok = PasteSessionCheck.same(now, start)
                 case .user: ok = userWrote.map { PasteSessionCheck.same(now, $0) && now.count == $0.count } ?? false
                 case .empty: ok = now.isEmpty
+                case .halfWritten:
+                    ok = now.count == 1 && pasteboard.string(forType: .string) == nil
+                        && now[0].map(\.0.rawValue) == ["me.sma1lboy.yap.half-written"]
                 case .text(let text, let transient):
                     let types = Set(now.first?.map(\.0) ?? [])
                     ok = now.count == 1 && pasteboard.string(forType: .string) == text
@@ -365,10 +394,11 @@
             /// Closes the clipboard (cancelling its pending restores), lets every remaining sleep run out, checks nothing
             /// was written after the close, then releases the private pasteboard.
             /// `autoSent`: how often Auto Learn should have heard Enter was going out; by default once per Enter sent.
+            /// `activations`: the apps asked to come to the front; by default none.
             func finish(
                 board final: Final, outcomes expectedOutcomes: [String: String], keys expectedKeys: [String],
                 scratchpad expectedScratchpad: [String] = [], notices expectedNotices: [String]? = nil,
-                autoSent expectedAutoSent: Int? = nil
+                autoSent expectedAutoSent: Int? = nil, activations expectedActivations: [pid_t] = []
             ) -> Bool {
                 advance(to: clock.now)
                 expectBoard(final, "end")
@@ -381,6 +411,9 @@
                 let entersSent = outcomes.filter { $0.key.hasSuffix("⏎") && $0.value == "sent" }.count
                 if autoSent != (expectedAutoSent ?? entersSent) {
                     failures.append("Auto Learn told of \(autoSent) Enter(s), \(entersSent) sent")
+                }
+                if activations != expectedActivations {
+                    failures.append("activated \(activations), expected \(expectedActivations)")
                 }
                 let closedAt = pasteboard.changeCount
                 Task { @MainActor [unowned self] in
@@ -399,13 +432,23 @@
 
                 let line: [String: Any] = [
                     "scenario": name, "pass": failures.isEmpty, "failures": failures, "outcomes": outcomes,
-                    "keys": keys, "sentToAutoLearn": sent, "scratchpad": scratchpad, "notices": notes,
-                    "finalBoard": finalBoard, "expectedBoard": "\(final)",
+                    "keys": keys, "sentToAutoLearn": sent, "autoSent": autoSent, "scratchpad": scratchpad,
+                    "notices": notes, "activations": activations, "finalBoard": finalBoard, "expectedBoard": "\(final)",
                 ]
                 if let data = try? JSONSerialization.data(withJSONObject: line, options: [.sortedKeys]) {
                     print("paste-check: \(String(decoding: data, as: UTF8.self))")
                 }
                 return failures.isEmpty
+            }
+        }
+
+        /// A notification as the scenarios expect it: "<reason>→<where the text is>", "sendSkipped:<why>",
+        /// "deleteSkipped:<why>".
+        static func label(_ notice: CursorPaster.Notice) -> String {
+            switch notice {
+            case .notPasted(let reason, let destination): return "\(reason)→\(destination)"
+            case .sendSkipped(let result): return "sendSkipped:\(result)"
+            case .deleteSkipped(let result): return "deleteSkipped:\(result)"
             }
         }
 
@@ -461,7 +504,7 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .original, outcomes: ["A": "superseded", "B": "commandPosted"], keys: ["dictation B"],
-                    scratchpad: ["dictation A"])
+                    scratchpad: ["dictation A"], notices: ["superseded→scratchpad"])
             },
             {
                 let run = Run("user copies before ⌘V")
@@ -470,7 +513,8 @@
                 run.userCopies(userCopy, at: 0.01)
                 run.advance(to: 2)
                 return run.finish(
-                    board: .user, outcomes: ["A": "clipboardChanged"], keys: [], scratchpad: ["dictation A"])
+                    board: .user, outcomes: ["A": "clipboardChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["clipboardChanged→scratchpad"])
             },
             {
                 let run = Run("user copies after ⌘V, before the restore")
@@ -495,7 +539,8 @@
                 run.userRewrites(at: 0.01)
                 run.advance(to: 2)
                 return run.finish(
-                    board: .user, outcomes: ["A": "clipboardChanged"], keys: [], scratchpad: ["dictation A"])
+                    board: .user, outcomes: ["A": "clipboardChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["clipboardChanged→scratchpad"])
             },
             {
                 let run = Run("user copies, then a new paste")
@@ -517,7 +562,7 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .user, outcomes: ["A": "superseded", "B": "commandPosted"], keys: ["dictation B"],
-                    scratchpad: ["dictation A"])
+                    scratchpad: ["dictation A"], notices: ["superseded→scratchpad"])
             },
             {
                 let run = Run("clipboard empty before the paste")
@@ -557,7 +602,8 @@
                 run.paste("A", "dictation A", at: 0)
                 run.advance(to: 2)
                 return run.finish(
-                    board: .original, outcomes: ["A": "commandNotPosted"], keys: [], scratchpad: ["dictation A"])
+                    board: .original, outcomes: ["A": "commandNotPosted"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["clipboardWriteFailed→scratchpad"])
             },
             {
                 let run = Run("clipboard write fails for the second paste")
@@ -569,7 +615,7 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .original, outcomes: ["A": "commandPosted", "B": "commandNotPosted"], keys: ["dictation A"],
-                    scratchpad: ["dictation B"])
+                    scratchpad: ["dictation B"], notices: ["clipboardWriteFailed→scratchpad"])
             },
             {
                 let run = Run("⌘V can't be sent")
@@ -578,7 +624,8 @@
                 run.paste("A", "dictation A", at: 0)
                 run.advance(to: 2)
                 return run.finish(
-                    board: .text("dictation A", transient: true), outcomes: ["A": "commandNotPosted"], keys: [])
+                    board: .text("dictation A", transient: true), outcomes: ["A": "commandNotPosted"], keys: [],
+                    notices: ["pasteKeysFailed→clipboard"])
             },
             {
                 let run = Run("⌘V can't be sent for the second paste")
@@ -590,7 +637,7 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .text("dictation B", transient: true), outcomes: ["A": "commandPosted", "B": "commandNotPosted"],
-                    keys: ["dictation A"])
+                    keys: ["dictation A"], notices: ["pasteKeysFailed→clipboard"])
             },
             {
                 let run = Run("remote desktop in front: 0.5 s before ⌘V, 5 s before the restore")
@@ -622,9 +669,9 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .text("dictation B", transient: false), outcomes: ["A": "commandPosted", "B": "sentToScratchpad"],
-                    keys: ["dictation A"], scratchpad: ["dictation B"])
+                    keys: ["dictation A"], scratchpad: ["dictation B"], notices: ["noTextField→clipboardAndScratchpad"])
             },
-        ] + targetScenarios
+        ] + targetScenarios + receiptScenarios
 
         // MARK: - Target scenarios
 
@@ -650,7 +697,7 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
-                    notices: ["targetChanged"])
+                    notices: ["targetChanged→scratchpad"])
             },
             {
                 let run = Run("same app, another field focused before ⌘V")
@@ -661,7 +708,7 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
-                    notices: ["targetChanged"])
+                    notices: ["targetChanged→scratchpad"])
             },
             {
                 let run = Run("the field loses focus before ⌘V, nothing focused in the app")
@@ -672,7 +719,7 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
-                    notices: ["targetChanged"])
+                    notices: ["targetChanged→scratchpad"])
             },
             {
                 let run = Run("same field, but it stops taking text before ⌘V")
@@ -683,7 +730,7 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
-                    notices: ["targetChanged"])
+                    notices: ["targetChanged→scratchpad"])
             },
             {
                 let run = Run("focus moves into the focused element (web view): same container, ⌘V sent")
@@ -725,7 +772,7 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .text("dictation A", transient: true), outcomes: ["A": "leftOnClipboard"], keys: [],
-                    notices: ["accessibilityMissing"])
+                    notices: ["accessibilityMissing→clipboard"])
             },
             {
                 let run = Run("paste cancelled before ⌘V")
@@ -737,7 +784,9 @@
                     board: .original, outcomes: ["A": "superseded"], keys: [], scratchpad: ["dictation A"], notices: [])
             },
             {
-                let run = Run("Yap in front when the paste starts, the app back after the wait: pasted there")
+                // Until M7.3 the app in front after the wait became the target ("focus coming back"); nothing ever
+                // showed it was the app the dictation was for.
+                let run = Run("Yap in front when the paste starts, another app in front after the wait: not pasted there")
                 run.processID = ProcessInfo.processInfo.processIdentifier
                 run.frontmost = "me.sma1lboy.yap.mock"
                 run.focus = .element(field(9))
@@ -748,7 +797,9 @@
                 run.frontmost = "com.apple.TextEdit"
                 run.focus = .element(field(1))
                 run.advance(to: 2)
-                return run.finish(board: .original, outcomes: ["A": "commandPosted"], keys: ["dictation A"])
+                return run.finish(
+                    board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["targetChanged→scratchpad"])
             },
             {
                 let run = Run("History / Undo target: the app it chose is in front")
@@ -768,7 +819,7 @@
                 if run.pasteboard.changeCount != before { run.failures.append("clipboard written") }
                 return run.finish(
                     board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
-                    notices: ["targetChanged"])
+                    notices: ["targetChanged→scratchpad"])
             },
             {
                 let run = Run("Enter: another app comes to the front after ⌘V, before Enter")
@@ -778,7 +829,8 @@
                 run.processID = otherApp
                 run.advance(to: 2)
                 return run.finish(
-                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "targetChanged"], keys: ["dictation A"])
+                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "targetChanged"], keys: ["dictation A"],
+                    notices: ["sendSkipped:targetChanged"])
             },
             {
                 let run = Run("Enter: another field focused after ⌘V, before Enter")
@@ -788,7 +840,8 @@
                 run.focus = .element(field(2))
                 run.advance(to: 2)
                 return run.finish(
-                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "targetChanged"], keys: ["dictation A"])
+                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "targetChanged"], keys: ["dictation A"],
+                    notices: ["sendSkipped:targetChanged"])
             },
             {
                 // Auto Learn had already stopped watching A when B started: that is the only thing the late check
@@ -801,7 +854,7 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .original, outcomes: ["A": "commandPosted", "A⏎": "superseded", "B": "commandPosted"],
-                    keys: ["dictation A", "dictation B"], autoSent: 1)
+                    keys: ["dictation A", "dictation B"], notices: ["sendSkipped:superseded"], autoSent: 1)
             },
             {
                 let run = Run("Enter: a new paste starts between A's ⌘V and A's Enter")
@@ -811,20 +864,21 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .original, outcomes: ["A": "commandPosted", "A⏎": "superseded", "B": "commandPosted"],
-                    keys: ["dictation A", "dictation B"])
+                    keys: ["dictation A", "dictation B"], notices: ["sendSkipped:superseded"])
             },
             {
                 let run = Run("Undo's Delete into the recorded app")
                 run.begin()
                 run.delete("U", in: app, at: 0)
-                return run.finish(board: .original, outcomes: ["U": "sent"], keys: ["⌫"])
+                return run.finish(board: .original, outcomes: ["U": "sent"], keys: ["⌫"], notices: [])
             },
             {
                 let run = Run("Undo's Delete with another app in front")
                 run.processID = otherApp
                 run.begin()
                 run.delete("U", in: app, at: 0)
-                return run.finish(board: .original, outcomes: ["U": "targetChanged"], keys: [])
+                return run.finish(
+                    board: .original, outcomes: ["U": "targetChanged"], keys: [], notices: ["deleteSkipped:targetChanged"])
             },
             {
                 let run = Run("Undo's Delete calls off a dictation's pending Enter")
@@ -834,7 +888,288 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .original, outcomes: ["A": "commandPosted", "A⏎": "superseded", "U": "sent"],
-                    keys: ["dictation A", "⌫"])
+                    keys: ["dictation A", "⌫"], notices: ["sendSkipped:superseded"])
+            },
+        ]
+
+        // MARK: - Receipts and remaining target edges
+
+        /// What a refused paste, Enter or Delete leaves and says: the target checked after the last wait, where the text
+        /// ended up (clipboard, Scratchpad, both) and which notice tells the user so; History's and Paste Last's wait for
+        /// their app.
+        static let receiptScenarios: [@MainActor () -> Bool] = [
+            {
+                let run = Run("Enter: same app, another field focused while Auto Learn is told the key is going out")
+                run.autoSendDelay = 0.2
+                run.begin()
+                run.paste("A", "dictation A", at: 0, submit: true)
+                run.advance(to: 0.25)  // A's Enter is past its first check, waiting for Auto Learn
+                run.focus = .element(field(2))
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "targetChanged"], keys: ["dictation A"],
+                    notices: ["sendSkipped:targetChanged"], autoSent: 1)
+            },
+            {
+                let run = Run("Enter: the key events can't be made: receipt says the paste went out, the key didn't")
+                run.begin()
+                run.paste("A", "dictation A", at: 0, submit: true)
+                run.advance(to: 0.1)
+                run.canPostKeys = false
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "notSent"], keys: ["dictation A"],
+                    notices: ["sendSkipped:notSent"])
+            },
+            {
+                let run = Run("explicit target is Yap, another app comes to the front during the wait: refused")
+                let yap = ProcessInfo.processInfo.processIdentifier
+                run.processID = yap
+                run.frontmost = "me.sma1lboy.yap.mock"
+                run.begin()
+                run.paste("A", "dictation A", at: 0, lead: .other, target: yap)
+                run.advance(to: 0.05)
+                run.processID = app
+                run.frontmost = "com.apple.TextEdit"
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["targetChanged→scratchpad"])
+            },
+            {
+                let run = Run("Yap in front when the paste starts and still in front: pasted into Yap")
+                run.processID = ProcessInfo.processInfo.processIdentifier
+                run.frontmost = "me.sma1lboy.yap.mock"
+                run.begin()
+                run.paste("A", "dictation A", at: 0, lead: .other)
+                run.advance(to: 2)
+                return run.finish(board: .original, outcomes: ["A": "commandPosted"], keys: ["dictation A"], notices: [])
+            },
+            {
+                // The recorder is a non-activating panel: the app the user dictates into stays in front throughout.
+                let run = Run("recorder clicked, the app stays in front: pasted, no notice")
+                run.begin()
+                run.paste("A", "dictation A", at: 0, lead: .other, submit: true)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "sent"], keys: ["dictation A", "⏎ enter"],
+                    notices: [])
+            },
+            {
+                let run = Run("restore off, another app in front before ⌘V: the text is on the clipboard and in the Scratchpad")
+                run.restore.enabled = false
+                run.begin()
+                run.paste("A", "dictation A", at: 0)
+                run.advance(to: 0.01)
+                run.processID = otherApp
+                run.advance(to: 2)
+                return run.finish(
+                    board: .text("dictation A", transient: false), outcomes: ["A": "targetChanged"], keys: [],
+                    scratchpad: ["dictation A"], notices: ["targetChanged→clipboardAndScratchpad"])
+            },
+            {
+                let run = Run("Accessibility turned off and the user copied before ⌘V: the copy stays, text to the Scratchpad")
+                run.begin()
+                run.paste("A", "dictation A", at: 0)
+                run.userCopies(userCopy, at: 0.005)
+                run.canPostKeys = false
+                run.advance(to: 2)
+                return run.finish(
+                    board: .user, outcomes: ["A": "clipboardChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["accessibilityMissing→scratchpad"])
+            },
+            {
+                let run = Run("no Accessibility and the clipboard write fails: Scratchpad, not \"copied\"")
+                run.canPostKeys = false
+                run.begin()
+                run.clipboard.writeFails = true
+                run.paste("A", "dictation A", at: 0)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .halfWritten, outcomes: ["A": "commandNotPosted"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["accessibilityMissing→scratchpad"])
+            },
+            {
+                let run = Run("no text field and the clipboard write fails: Scratchpad only")
+                run.focusTakesText = false
+                run.begin()
+                run.clipboard.writeFails = true
+                run.paste("A", "dictation A", at: 0)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .halfWritten, outcomes: ["A": "sentToScratchpad"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["noTextField→scratchpad"])
+            },
+            {
+                let run = Run("Undo's Delete: same app, another field focused since the selection")
+                run.begin()
+                run.advance(to: 0.05)
+                run.focus = .element(field(2))
+                run.delete("U", in: app, at: 0.1)
+                return run.finish(
+                    board: .original, outcomes: ["U": "targetChanged"], keys: [], notices: ["deleteSkipped:targetChanged"])
+            },
+            {
+                let run = Run("Undo's Delete: focus moved inside the selected field (web view): sent")
+                run.containers = [(1, 3)]
+                run.focus = .element(field(3))
+                run.begin()
+                run.delete("U", in: app, at: 0)
+                return run.finish(board: .original, outcomes: ["U": "sent"], keys: ["⌫"], notices: [])
+            },
+            {
+                let run = Run("Undo's Delete can't be sent: receipt, not \"removed\"")
+                run.begin()
+                run.canPostKeys = false
+                run.delete("U", in: app, at: 0)
+                return run.finish(board: .original, outcomes: ["U": "notSent"], keys: [], notices: ["deleteSkipped:notSent"])
+            },
+            {
+                // The first Undo's selection read was slow; the second started meanwhile. One Delete, not two.
+                let run = Run("two Undos: the earlier one's Delete comes after the later one started, only one Delete")
+                run.begin()
+                let first = CursorPaster.newRequest()
+                run.delete("U2", in: app, at: 0.05)
+                run.delete("U1", in: app, at: 0.1, request: first)
+                return run.finish(board: .original, outcomes: ["U1": "superseded", "U2": "sent"], keys: ["⌫"], notices: [])
+            },
+            {
+                let run = Run("History paste, its app already in front: pasted, not activated again")
+                run.begin()
+                run.pasteInto("A", "dictation A", at: 0, target: app)
+                run.advance(to: 2)
+                return run.finish(board: .original, outcomes: ["A": "commandPosted"], keys: ["dictation A"], notices: [])
+            },
+            {
+                let run = Run("History paste, its app comes to the front 50 ms after it's asked: pasted there")
+                run.processID = ProcessInfo.processInfo.processIdentifier
+                run.frontmost = "me.sma1lboy.yap.mock"
+                run.begin()
+                run.pasteInto("A", "dictation A", at: 0, target: app)
+                run.advance(to: 0.05)
+                run.processID = app
+                run.frontmost = "com.apple.TextEdit"
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "commandPosted"], keys: ["dictation A"], notices: [],
+                    activations: [app])
+            },
+            {
+                let run = Run("History paste, its app takes 0.6 s (past the old fixed 0.15 s): still pasted there")
+                run.processID = ProcessInfo.processInfo.processIdentifier
+                run.begin()
+                run.pasteInto("A", "dictation A", at: 0, target: app)
+                run.advance(to: 0.59)
+                if !run.keys.isEmpty || run.outcomes["A"] != nil { run.failures.append("done before the app was in front") }
+                run.processID = app
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "commandPosted"], keys: ["dictation A"], notices: [],
+                    activations: [app])
+            },
+            {
+                let run = Run("History paste, its app never comes to the front: refused after 1 s, clipboard untouched")
+                run.processID = ProcessInfo.processInfo.processIdentifier
+                run.begin()
+                let before = run.pasteboard.changeCount
+                run.pasteInto("A", "dictation A", at: 0, target: app)
+                run.advance(to: 0.95)
+                if run.outcomes["A"] != nil { run.failures.append("gave up before 1 s") }
+                run.advance(to: 2)
+                if run.pasteboard.changeCount != before { run.failures.append("clipboard written") }
+                return run.finish(
+                    board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["targetChanged→scratchpad"], activations: [app])
+            },
+            {
+                let run = Run("History paste, a third app comes to the front instead: not pasted into it")
+                run.processID = ProcessInfo.processInfo.processIdentifier
+                run.begin()
+                run.pasteInto("A", "dictation A", at: 0, target: app)
+                run.advance(to: 0.05)
+                run.processID = otherApp
+                run.frontmost = "com.example.other"
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["targetChanged→scratchpad"], activations: [app])
+            },
+            {
+                let run = Run("History paste, its app quits while Yap waits: refused at once")
+                run.processID = ProcessInfo.processInfo.processIdentifier
+                run.begin()
+                run.pasteInto("A", "dictation A", at: 0, target: app)
+                run.advance(to: 0.2)
+                run.running.remove(app)
+                run.advance(to: 0.25)
+                if run.outcomes["A"] != "targetChanged" { run.failures.append("still waiting 50 ms after the app quit") }
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["targetQuit→scratchpad"], activations: [app])
+            },
+            {
+                // The request is taken when History's paste starts, so the dictation that starts during the wait wins.
+                let run = Run("History paste, a dictation's paste starts while Yap waits for the app: the dictation's goes")
+                run.processID = ProcessInfo.processInfo.processIdentifier
+                run.begin()
+                run.pasteInto("H", "from History", at: 0, target: app)
+                run.advance(to: 0.1)
+                run.processID = app
+                run.paste("B", "dictation B", at: 0.1)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["H": "superseded", "B": "commandPosted"], keys: ["dictation B"],
+                    scratchpad: ["from History"], notices: ["superseded→scratchpad"], activations: [app])
+            },
+            {
+                let run = Run("History paste cancelled while Yap waits for the app: nothing sent, no notice")
+                run.processID = ProcessInfo.processInfo.processIdentifier
+                run.begin()
+                run.pasteInto("A", "dictation A", at: 0, target: app)
+                run.cancel("A", at: 0.1)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "superseded"], keys: [], scratchpad: ["dictation A"], notices: [],
+                    activations: [app])
+            },
+            {
+                let run = Run("History paste with no app recorded: copied, not pasted into the app in front")
+                run.begin()
+                run.pasteInto("A", "dictation A", at: 0, target: nil)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .text("dictation A", transient: false), outcomes: ["A": "targetChanged"], keys: [],
+                    notices: ["noTarget→clipboard"])
+            },
+            {
+                let run = Run("History paste with no app recorded and the copy fails: Scratchpad")
+                run.begin()
+                run.clipboard.writeFails = true
+                run.pasteInto("A", "dictation A", at: 0, target: nil)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .halfWritten, outcomes: ["A": "commandNotPosted"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["noTarget→scratchpad"])
+            },
+            {
+                let run = Run("Paste Last: 0.15 s for its keys to come up, then pasted where it was pressed")
+                run.begin()
+                run.pasteInto("A", "last dictation", at: 0, target: app, activate: false, hold: 0.15)
+                run.advance(to: 0.2)
+                if !run.keys.isEmpty { run.failures.append("⌘V before 0.25 s") }
+                run.advance(to: 2)
+                return run.finish(board: .original, outcomes: ["A": "commandPosted"], keys: ["last dictation"], notices: [])
+            },
+            {
+                let run = Run("Paste Last: a dictation's paste starts during its 0.15 s: Paste Last isn't sent")
+                run.begin()
+                run.pasteInto("L", "last dictation", at: 0, target: app, activate: false, hold: 0.15)
+                run.paste("B", "dictation B", at: 0.05)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["L": "superseded", "B": "commandPosted"], keys: ["dictation B"],
+                    scratchpad: ["last dictation"], notices: ["superseded→scratchpad"])
             },
         ]
     }

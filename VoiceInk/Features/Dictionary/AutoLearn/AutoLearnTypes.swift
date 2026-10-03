@@ -224,7 +224,8 @@ enum AutoLearnUnobservableReason: String, CaseIterable {
     case pastedTextNotFound
     /// The field was empty at the end. A chat app empties it on send, so a send can't be told from a deletion.
     case fieldCleared
-    /// Finish and Send pressed Return right after the paste.
+    /// Finish and Send was about to press its key right after the paste, so watching stopped. Recorded before the key's
+    /// last target check: the key may then not have gone out (CursorPaster.submit). Not a confirmation it was sent.
     case autoSent
 }
 

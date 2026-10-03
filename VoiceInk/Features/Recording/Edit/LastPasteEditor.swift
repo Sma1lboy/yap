@@ -65,24 +65,28 @@ final class LastPasteEditor {
     // MARK: - Undo
 
     /// Takes the last paste back: puts the text it replaced there again, or just deletes it when it replaced nothing.
-    /// Shortcut, or a dictation that is only a scratch phrase ("scratch that", 删掉刚才那句).
+    /// Shortcut, or a dictation that is only a scratch phrase ("scratch that", 删掉刚才那句). Its request is taken
+    /// first, so a paste or Finish and Send key still waiting isn't sent after this, and an earlier Undo whose Delete
+    /// comes late doesn't delete as well. CursorPaster says so when the Delete doesn't go out.
     func undoLastPaste() async {
+        let request = CursorPaster.newRequest()
         switch await selectLastPaste() {
         case .failure(let failure):
             notify(failure)
         case .success(let record):
             if record.replaced.isEmpty {
-                let deleted = CursorPaster.deleteSelection(in: record.processID)
+                let deleted = await CursorPaster.deleteSelection(in: record.processID, field: record.target, request: request)
                 guard deleted == .sent else {
                     logger.notice("Undo didn't delete the last paste: \(String(describing: deleted), privacy: .public)")
-                    if deleted == .targetChanged { notify(.focusChanged) }
                     return
                 }
                 self.record = nil
                 logger.notice("Last paste removed (\(record.text.count, privacy: .public) characters)")
             } else {
                 // Becomes the new last paste, so undoing again brings the rewrite back.
-                let result = await CursorPaster.startPasteAtCursor(record.replaced, target: record.processID).value.result
+                let result = await CursorPaster.startPasteAtCursor(
+                    record.replaced, target: record.processID, request: request
+                ).value.result
                 logger.notice("Undo pasting the text the last paste replaced (\(record.replaced.count, privacy: .public) characters): \(String(describing: result), privacy: .public)")
             }
         }
