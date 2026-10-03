@@ -10,7 +10,7 @@ import os
 final class LastPasteEditor {
     static let shared = LastPasteEditor()
 
-    fileprivate struct Record: @unchecked Sendable {
+    struct Record: @unchecked Sendable {
         let processID: pid_t
         let appElement: AXUIElement
         let target: AXUIElement
@@ -41,9 +41,39 @@ final class LastPasteEditor {
         }
     }
 
+    /// What Undo and Rewrite touch outside their own logic: checking and selecting the last paste through
+    /// Accessibility, and telling the user why it can't be changed. `live` is the app's; PasteSessionCheck installs its
+    /// own (`check`), with no Accessibility call and no notification.
+    struct Outlets {
+        /// The app in front is still the last paste's, its field is focused and holds the text at that spot, and the
+        /// text is now selected there.
+        var select: @MainActor (Record) async -> Result<Record, Failure>
+        var notify: @MainActor (Failure) -> Void
+    }
+
+    /// What Undo or the paste after a rewrite did, for the log and the checks.
+    enum Edit: Equatable {
+        case refused(Failure)
+        case deleted(CursorPaster.KeyResult)
+        case pasted(CursorPaster.PasteResult)
+    }
+
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "LastPasteEditor")
+    private let outlets: Outlets
     private var record: Record?
     private var captureTask: Task<Void, Never>?
+
+    private init(outlets: Outlets = .live, record: Record? = nil) {
+        self.outlets = outlets
+        self.record = record
+    }
+
+    #if DEBUG
+        /// PasteSessionCheck: an editor of its own whose last paste is `record`, with `outlets` (never `.shared`).
+        static func check(_ outlets: Outlets, record: Record) -> LastPasteEditor {
+            LastPasteEditor(outlets: outlets, record: record)
+        }
+    #endif
 
     /// CursorPaster, once ⌘V was posted. The field is read a moment later, when the paste has landed.
     func pasteDidFinish(text: String, processID: pid_t?, replacing replaced: String = "") {
@@ -67,27 +97,32 @@ final class LastPasteEditor {
     /// Takes the last paste back: puts the text it replaced there again, or just deletes it when it replaced nothing.
     /// Shortcut, or a dictation that is only a scratch phrase ("scratch that", 删掉刚才那句). Its request is taken
     /// first, so a paste or Finish and Send key still waiting isn't sent after this, and an earlier Undo whose Delete
-    /// comes late doesn't delete as well. CursorPaster says so when the Delete doesn't go out.
-    func undoLastPaste() async {
+    /// or paste comes late doesn't go out as well. Both go to the field the last paste was selected in, and nowhere
+    /// else. CursorPaster says so when they don't go out.
+    @discardableResult
+    func undoLastPaste() async -> Edit {
         let request = CursorPaster.newRequest()
         switch await selectLastPaste() {
         case .failure(let failure):
             notify(failure)
+            return .refused(failure)
         case .success(let record):
             if record.replaced.isEmpty {
                 let deleted = await CursorPaster.deleteSelection(in: record.processID, field: record.target, request: request)
                 guard deleted == .sent else {
                     logger.notice("Undo didn't delete the last paste: \(String(describing: deleted), privacy: .public)")
-                    return
+                    return .deleted(deleted)
                 }
                 self.record = nil
                 logger.notice("Last paste removed (\(record.text.count, privacy: .public) characters)")
+                return .deleted(deleted)
             } else {
                 // Becomes the new last paste, so undoing again brings the rewrite back.
                 let result = await CursorPaster.startPasteAtCursor(
-                    record.replaced, target: record.processID, request: request
+                    record.replaced, target: record.pasteTarget, request: request
                 ).value.result
                 logger.notice("Undo pasting the text the last paste replaced (\(record.replaced.count, privacy: .public) characters): \(String(describing: result), privacy: .public)")
+                return .pasted(result)
             }
         }
     }
@@ -127,13 +162,22 @@ final class LastPasteEditor {
             return notify(.rewriteFailed(EnhancementFailureFormatter.description(for: error)))
         }
         guard !rewritten.isEmpty else { return notify(.rewriteFailed(String(localized: "The AI returned no text."))) }
+        await pasteRewrite(rewritten)
+    }
 
+    /// The rewrite came back: select the last paste again and paste `rewritten` over it, into that field only. The
+    /// request is taken before the selection, as Undo's is, so a dictation that starts meanwhile goes out instead.
+    @discardableResult
+    func pasteRewrite(_ rewritten: String) async -> Edit {
+        let request: CursorPaster.Request? = nil
         switch await selectLastPaste() {
         case .failure(let failure):
             notify(failure)
+            return .refused(failure)
         case .success(let record):
             // Replaces the selection; CursorPaster reports it back here, so it becomes the new last paste.
-            _ = await CursorPaster.startPasteAtCursor(rewritten, target: record.processID).value
+            return .pasted(
+                await CursorPaster.startPasteAtCursor(rewritten, target: record.pasteTarget, request: request).value.result)
         }
     }
 
@@ -166,15 +210,12 @@ final class LastPasteEditor {
 
     private func notify(_ failure: Failure) {
         logger.notice("Last paste edit refused: \(String(describing: failure), privacy: .public)")
-        NotificationManager.shared.showNotification(title: failure.message, type: .warning, duration: 5)
+        outlets.notify(failure)
     }
 
     private func selectLastPaste() async -> Result<Record, Failure> {
         guard let record else { return .failure(.nothingPasted) }
-        guard NSWorkspace.shared.frontmostApplication?.processIdentifier == record.processID else {
-            return .failure(.focusChanged)
-        }
-        return await Task.detached { Self.select(record) }.value
+        return await outlets.select(record)
     }
 
     nonisolated private static func select(_ record: Record) -> Result<Record, Failure> {
@@ -236,6 +277,22 @@ final class LastPasteEditor {
         let rest = NSRange(location: first.location + 1, length: field.length - first.location - 1)
         return field.range(of: pasted, options: .literal, range: rest).location == NSNotFound ? first : nil
     }
+}
+
+extension LastPasteEditor.Record {
+    /// The app and the field the last paste was selected in: a paste over it goes there or nowhere.
+    var pasteTarget: CursorPaster.Target { CursorPaster.Target(processID: processID, focus: .element(target)) }
+}
+
+extension LastPasteEditor.Outlets {
+    @MainActor static let live = LastPasteEditor.Outlets(
+        select: { record in
+            guard NSWorkspace.shared.frontmostApplication?.processIdentifier == record.processID else {
+                return .failure(.focusChanged)
+            }
+            return await Task.detached { LastPasteEditor.select(record) }.value
+        },
+        notify: { NotificationManager.shared.showNotification(title: $0.message, type: .warning, duration: 5) })
 }
 
 #if DEBUG

@@ -307,14 +307,17 @@
                 settle()
             }
 
-            /// `target`: the process the caller chose (History, Undo); `submit`: Finish and Send's Enter after a ⌘V that
-            /// went out, as dictation sends it, its result under "<label>⏎".
+            /// `target`: the process the caller chose, with field 1 as the field it is for (as Undo and Rewrite pass
+            /// the field they selected in); `submit`: Finish and Send's Enter after a ⌘V that went out, as dictation
+            /// sends it, its result under "<label>⏎".
             func paste(
                 _ label: String, _ text: String, at time: TimeInterval, lead: CursorPaster.Lead = .shortcut,
                 target: pid_t? = nil, submit: Bool = false
             ) {
                 advance(to: time)
-                let task = CursorPaster.startPasteAtCursor(text, lead: lead, target: target)
+                let task = CursorPaster.startPasteAtCursor(
+                    text, lead: lead,
+                    target: target.map { CursorPaster.Target(processID: $0, focus: .element(PasteSessionCheck.field(1))) })
                 tasks[label] = task
                 Task { @MainActor [unowned self] in
                     let outcome = await task.value
@@ -349,9 +352,57 @@
                 settle()
             }
 
+            /// How long LastPasteEditor's check and selection of the last paste takes (Accessibility, in scenario
+            /// seconds), and what changes the moment it has selected (the focus moving to another field, say).
+            var selectDelay: TimeInterval = 0
+            var afterSelect: (() -> Void)?
+            var editTasks: [String: Task<Void, Never>] = [:]
+
+            /// A LastPasteEditor of its own whose last paste is "rewritten" in field 1 of `app`, having replaced
+            /// `replaced`. Its selection is `selectDelay` long and always succeeds; nothing is read through Accessibility
+            /// and its refusals are notices ("edit:<why>").
+            func editor(replaced: String) -> LastPasteEditor {
+                let clock = self.clock
+                let record = LastPasteEditor.Record(
+                    processID: PasteSessionCheck.app, appElement: PasteSessionCheck.field(0),
+                    target: PasteSessionCheck.field(1), range: NSRange(location: 0, length: 9), text: "rewritten",
+                    replaced: replaced)
+                return LastPasteEditor.check(
+                    LastPasteEditor.Outlets(
+                        select: { [unowned self] record in
+                            if self.selectDelay > 0 { await clock.sleep(self.selectDelay) }
+                            self.afterSelect?()
+                            return .success(record)
+                        },
+                        notify: { [unowned self] in self.notes.append("edit:\($0)") }),
+                    record: record)
+            }
+
+            /// Undo Last Paste through LastPasteEditor: the text the last paste replaced is pasted back (or, with
+            /// nothing replaced, Delete).
+            func undo(_ label: String, at time: TimeInterval, replaced: String = "original words") {
+                advance(to: time)
+                let editor = editor(replaced: replaced)
+                editTasks[label] = Task { @MainActor [unowned self] in
+                    self.outcomes[label] = PasteSessionCheck.label(await editor.undoLastPaste())
+                }
+                settle()
+            }
+
+            /// Rewrite Last Paste once the AI's text came back (no AI call): selected again, `text` pasted over it.
+            func rewrite(_ label: String, _ text: String, at time: TimeInterval) {
+                advance(to: time)
+                let editor = editor(replaced: "")
+                editTasks[label] = Task { @MainActor [unowned self] in
+                    self.outcomes[label] = PasteSessionCheck.label(await editor.pasteRewrite(text))
+                }
+                settle()
+            }
+
             func cancel(_ label: String, at time: TimeInterval) {
                 advance(to: time)
                 tasks[label]?.cancel()
+                editTasks[label]?.cancel()
                 settle()
             }
 
@@ -449,6 +500,14 @@
             case .notPasted(let reason, let destination): return "\(reason)→\(destination)"
             case .sendSkipped(let result): return "sendSkipped:\(result)"
             case .deleteSkipped(let result): return "deleteSkipped:\(result)"
+            }
+        }
+
+        static func label(_ edit: LastPasteEditor.Edit) -> String {
+            switch edit {
+            case .refused(let failure): return "refused:\(failure)"
+            case .deleted(let result): return "\(result)"
+            case .pasted(let result): return "\(result)"
             }
         }
 
@@ -671,7 +730,7 @@
                     board: .text("dictation B", transient: false), outcomes: ["A": "commandPosted", "B": "sentToScratchpad"],
                     keys: ["dictation A"], scratchpad: ["dictation B"], notices: ["noTextField→clipboardAndScratchpad"])
             },
-        ] + targetScenarios + receiptScenarios
+        ] + targetScenarios + receiptScenarios + editScenarios
 
         // MARK: - Target scenarios
 
@@ -1162,6 +1221,172 @@
                 return run.finish(
                     board: .original, outcomes: ["L": "superseded", "B": "commandPosted"], keys: ["dictation B"],
                     scratchpad: ["last dictation"], notices: ["superseded→scratchpad"])
+            },
+        ]
+
+        // MARK: - Undo and Rewrite: their field and their request
+
+        /// Undo's paste of the text the last paste replaced, and Rewrite's paste, through LastPasteEditor: they go to the
+        /// field it selected in or nowhere, and a request a newer paste replaced while it selected is refused before the
+        /// clipboard is touched.
+        static let editScenarios: [@MainActor () -> Bool] = [
+            {
+                let run = Run("Undo puts back the replaced text into the field it selected in")
+                run.begin()
+                run.undo("U", at: 0)
+                run.advance(to: 2)
+                return run.finish(board: .original, outcomes: ["U": "commandPosted"], keys: ["original words"], notices: [])
+            },
+            {
+                let run = Run("Undo: same app, another field focused right after the selection: not pasted into it")
+                run.afterSelect = { run.focus = .element(field(2)) }
+                run.begin()
+                run.undo("U", at: 0)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["U": "targetChanged"], keys: [], scratchpad: ["original words"],
+                    notices: ["targetChanged→scratchpad"])
+            },
+            {
+                let run = Run("Undo: another field focused during the wait before ⌘V: refused")
+                run.begin()
+                run.undo("U", at: 0)
+                run.advance(to: 0.05)
+                run.focus = .element(field(2))
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["U": "targetChanged"], keys: [], scratchpad: ["original words"],
+                    notices: ["targetChanged→scratchpad"])
+            },
+            {
+                let run = Run("Undo: focus moved inside the selected field (web view): same container, pasted")
+                run.containers = [(1, 3)]
+                run.afterSelect = { run.focus = .element(field(3)) }
+                run.begin()
+                run.undo("U", at: 0)
+                run.advance(to: 2)
+                return run.finish(board: .original, outcomes: ["U": "commandPosted"], keys: ["original words"], notices: [])
+            },
+            {
+                // Unreadable is not a known move: only the app is checked, as for any paste.
+                let run = Run("Undo: the app's focus can't be read after the selection: pasted, only the app checked")
+                run.afterSelect = { run.focus = .unreadable }
+                run.begin()
+                run.undo("U", at: 0)
+                run.advance(to: 2)
+                return run.finish(board: .original, outcomes: ["U": "commandPosted"], keys: ["original words"], notices: [])
+            },
+            {
+                let run = Run("Rewrite: pasted over the last paste in the field it selected in")
+                run.begin()
+                run.rewrite("R", "rewritten again", at: 0)
+                run.advance(to: 2)
+                return run.finish(board: .original, outcomes: ["R": "commandPosted"], keys: ["rewritten again"], notices: [])
+            },
+            {
+                let run = Run("Rewrite: another field focused right after the selection: not pasted into it")
+                run.afterSelect = { run.focus = .element(field(2)) }
+                run.begin()
+                run.rewrite("R", "rewritten again", at: 0)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["R": "targetChanged"], keys: [], scratchpad: ["rewritten again"],
+                    notices: ["targetChanged→scratchpad"])
+            },
+            {
+                // Undo's request is taken before its 0.15 s selection; B starts at 0.1 and waits for ⌘V until 0.2.
+                let run = Run("Undo selects slowly, a dictation's paste starts meanwhile: Undo refused before writing, B pasted once")
+                run.selectDelay = 0.15
+                run.begin()
+                run.undo("U", at: 0)
+                run.paste("B", "dictation B", at: 0.1, lead: .other)
+                run.advance(to: 0.15)
+                run.expectBoard(.text("dictation B", transient: true), "when Undo came back")
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["U": "superseded", "B": "commandPosted"], keys: ["dictation B"],
+                    scratchpad: ["original words"], notices: ["superseded→scratchpad"])
+            },
+            {
+                let run = Run("Undo selects slowly, restore off, a dictation's paste starts meanwhile: B's text stays")
+                run.restore.enabled = false
+                run.selectDelay = 0.15
+                run.begin()
+                run.undo("U", at: 0)
+                run.paste("B", "dictation B", at: 0.1, lead: .other)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .text("dictation B", transient: false), outcomes: ["U": "superseded", "B": "commandPosted"],
+                    keys: ["dictation B"], scratchpad: ["original words"], notices: ["superseded→scratchpad"])
+            },
+            {
+                let run = Run("Undo selects slowly, a paste starts, then the user copies: Undo doesn't overwrite the copy")
+                run.selectDelay = 0.15
+                run.begin()
+                run.undo("U", at: 0)
+                run.paste("B", "dictation B", at: 0.1, lead: .other)
+                run.userCopies(userCopy, at: 0.12)
+                run.advance(to: 0.15)
+                run.expectBoard(.user, "when Undo came back")
+                run.advance(to: 2)
+                return run.finish(
+                    board: .user, outcomes: ["U": "superseded", "B": "clipboardChanged"], keys: [],
+                    scratchpad: ["original words", "dictation B"],
+                    notices: ["superseded→scratchpad", "clipboardChanged→scratchpad"])
+            },
+            {
+                // No text field focused just as Undo comes back: the early return copies, but only a current request.
+                let run = Run("Undo selects slowly, a paste starts, no text field as Undo comes back: B's clipboard kept")
+                run.selectDelay = 0.15
+                run.begin()
+                run.undo("U", at: 0)
+                run.paste("B", "dictation B", at: 0.1, lead: .other)
+                run.advance(to: 0.14)
+                run.focusTakesText = false
+                run.advance(to: 0.16)
+                run.focusTakesText = true
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["U": "superseded", "B": "commandPosted"], keys: ["dictation B"],
+                    scratchpad: ["original words"], notices: ["superseded→scratchpad"])
+            },
+            {
+                let run = Run("Undo selects slowly, Accessibility gone as it comes back, a paste waiting: B's clipboard kept")
+                run.selectDelay = 0.15
+                run.begin()
+                run.undo("U", at: 0)
+                run.paste("B", "dictation B", at: 0.1, lead: .other)
+                run.advance(to: 0.14)
+                run.canPostKeys = false
+                run.advance(to: 0.16)
+                run.canPostKeys = true
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["U": "superseded", "B": "commandPosted"], keys: ["dictation B"],
+                    scratchpad: ["original words"], notices: ["superseded→scratchpad"])
+            },
+            {
+                let run = Run("Rewrite selects slowly, a dictation's paste starts meanwhile: Rewrite refused before writing")
+                run.selectDelay = 0.15
+                run.begin()
+                run.rewrite("R", "rewritten again", at: 0)
+                run.paste("B", "dictation B", at: 0.1, lead: .other)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["R": "superseded", "B": "commandPosted"], keys: ["dictation B"],
+                    scratchpad: ["rewritten again"], notices: ["superseded→scratchpad"])
+            },
+            {
+                let run = Run("Undo cancelled while it selects, nothing newer: clipboard untouched, nothing sent, no notice")
+                run.selectDelay = 0.15
+                run.begin()
+                let before = run.pasteboard.changeCount
+                run.undo("U", at: 0)
+                run.cancel("U", at: 0.05)
+                run.advance(to: 2)
+                if run.pasteboard.changeCount != before { run.failures.append("clipboard written") }
+                return run.finish(
+                    board: .original, outcomes: ["U": "superseded"], keys: [], scratchpad: ["original words"], notices: [])
             },
         ]
     }

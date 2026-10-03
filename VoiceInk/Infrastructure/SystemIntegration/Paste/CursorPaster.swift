@@ -246,7 +246,7 @@ class CursorPaster {
                 outlets.notify(.notPasted(.targetQuit, text: .scratchpad))
                 return PasteOutcome(result: .targetChanged, autoLearnGeneration: nil)
             }
-            switch preparePaste(text, lead: .other, dictationID: nil, target: target, request: request, outlets: outlets) {
+            switch preparePaste(text, lead: .other, dictationID: nil, target: target, field: nil, request: request, outlets: outlets) {
             case .finished(let outcome): return outcome
             case .ready(let paste): return await post(paste, outlets: outlets)
             }
@@ -262,17 +262,23 @@ class CursorPaster {
     /// and ⌘V follow in the returned task. The wait counts from the clipboard write, so main-thread work queued ahead of
     /// that task (the recorder closing, the session cleanup) runs inside the wait instead of before it. `dictationID`:
     /// the dictation being pasted, whose SessionMetric gets what Auto Learn sees become of it. `target`: the process the
-    /// caller chose; nil takes the app in front now, Yap itself included. `request`: one the caller took earlier
-    /// (Undo, before it selected the text); nil takes a new one. A newer paste, or Undo, supersedes this one: its ⌘V
-    /// and its Finish and Send key are not sent after that.
+    /// caller chose, and with `.element` focus the field the paste is for (Undo and Rewrite Last Paste: the field
+    /// LastPasteEditor just selected in); nil takes the app in front now, Yap itself included. Without a known field the
+    /// app's focused element is read during the wait and the paste is checked against that. `request`: one the caller
+    /// took earlier (Undo, before it selected the text); nil takes a new one. A request that is no longer the latest
+    /// when the paste starts is refused before the clipboard is touched. A newer paste, or Undo, supersedes this one:
+    /// its ⌘V and its Finish and Send key are not sent after that.
     @MainActor
     @discardableResult
     static func startPasteAtCursor(
-        _ text: String, lead: Lead = .other, dictationID: UUID? = nil, target: pid_t? = nil, request: Request? = nil
+        _ text: String, lead: Lead = .other, dictationID: UUID? = nil, target: Target? = nil, request: Request? = nil
     ) -> Task<PasteOutcome, Never> {
         let outlets = Self.outlets
         let request = request ?? newRequest()
-        switch preparePaste(text, lead: lead, dictationID: dictationID, target: target, request: request, outlets: outlets) {
+        switch preparePaste(
+            text, lead: lead, dictationID: dictationID, target: target?.processID, field: nil, request: request,
+            outlets: outlets)
+        {
         case .finished(let outcome):
             return Task { outcome }
         case .ready(let paste):
@@ -361,15 +367,17 @@ class CursorPaster {
         /// The caller's target, or else the app in front when the paste started (nil only when there was none).
         let targetProcessID: pid_t?
         /// The target's focused element, then the text the paste is about to replace (what Undo Last Paste restores),
-        /// read in that order while the wait runs: the selection read can switch a web view's accessibility on. Nil
-        /// for Yap's own windows, which aren't read through Accessibility: only the process is checked there.
+        /// read in that order while the wait runs: the selection read can switch a web view's accessibility on. A field
+        /// the caller knows (Undo, Rewrite) is taken as it is, not read. Nil for Yap's own windows, which aren't read
+        /// through Accessibility: only the process is checked there.
         let read: Task<(focus: Focus, replaced: String), Never>?
         let claim: PasteClipboard.Claim
     }
 
     @MainActor
     private static func preparePaste(
-        _ text: String, lead: Lead, dictationID: UUID?, target: pid_t?, request: Request, outlets: Outlets
+        _ text: String, lead: Lead, dictationID: UUID?, target: pid_t?, field: AXUIElement?, request: Request,
+        outlets: Outlets
     ) -> Preparation {
         let clipboard = outlets.clipboard
 
@@ -416,7 +424,9 @@ class CursorPaster {
                 request: request, text: text, lead: lead, dictationID: dictationID, prePasteDelay: timing.prePaste,
                 restoreDelay: max(restore.delay, timing.minimumRestore), clipboardSetAt: outlets.now(),
                 targetProcessID: targetProcessID,
-                read: targetProcessID.flatMap { $0 == ownProcessID ? nil : read(in: $0, outlets: outlets) },
+                read: targetProcessID.flatMap {
+                    $0 == ownProcessID ? nil : read(in: $0, field: field, outlets: outlets)
+                },
                 claim: claim))
     }
 
@@ -438,10 +448,12 @@ class CursorPaster {
     private static let ownProcessID = ProcessInfo.processInfo.processIdentifier
 
     @MainActor
-    private static func read(in processID: pid_t, outlets: Outlets) -> Task<(focus: Focus, replaced: String), Never> {
+    private static func read(
+        in processID: pid_t, field: AXUIElement?, outlets: Outlets
+    ) -> Task<(focus: Focus, replaced: String), Never> {
         let selectedText = outlets.selectedText
         return Task { @MainActor in
-            let focus = await outlets.focusedElement(processID)
+            let focus = if let field { Focus.element(field) } else { await outlets.focusedElement(processID) }
             guard let selectedText else { return (focus, "") }
             return (focus, await Task.detached { selectedText(processID) }.value)
         }
