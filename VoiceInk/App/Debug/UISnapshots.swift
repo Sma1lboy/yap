@@ -133,6 +133,22 @@
             RecentlyLearnedSection.snapshotEntries = MockData.recentlyLearned(now: Date())
             page("dictionary-recently-learned", .dictionary)
             RecentlyLearnedSection.snapshotEntries = []
+            // The Vocabulary section, the words transcription gets as hints.
+            DictionarySettingsView.snapshotSection = .spellings
+            page("dictionary-vocabulary", .dictionary)
+            DictionarySettingsView.snapshotSection = nil
+            // Importing a dictionary file: its words, a duplicate of one already there, and a rule.
+            shot("sheet-dictionary-import", size: CGSize(width: 500, height: 390), main: true) {
+                DictionaryImportPreviewSheet(
+                    payload: DictionaryImportPayload(archive: DictionaryArchive(
+                        vocabulary: [
+                            DictionaryVocabularyEntry(term: "Kubernetes", createdAt: nil),
+                            DictionaryVocabularyEntry(term: "张三丰", createdAt: nil),
+                            DictionaryVocabularyEntry(term: MockData.vocabulary[0], createdAt: nil),
+                        ],
+                        replacements: [DictionaryReplacementEntry(sources: ["why app"], replacement: "Yap", createdAt: nil)])),
+                    onCancel: {}, onImported: { _ in })
+            }
             page("settings", .settings)
             page("account", .account)
 

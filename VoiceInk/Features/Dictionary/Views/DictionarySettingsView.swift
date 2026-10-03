@@ -8,6 +8,17 @@ struct DictionarySettingsView: View {
     private let dictionaryInfoMessage: LocalizedStringKey =
         "Word Replacements run after transcription. Vocabulary helps supported transcription models and AI enhancement recognize names, technical terms, and unique spellings."
 
+    #if DEBUG
+    /// ui-snapshots: open on this section instead of Word Replacements.
+    static var snapshotSection: DictionarySection?
+    #endif
+
+    init() {
+        #if DEBUG
+        if let section = Self.snapshotSection { _selectedSection = State(initialValue: section) }
+        #endif
+    }
+
     enum DictionarySection: String, CaseIterable, Hashable {
         case replacements = "Word Replacements"
         case spellings = "Vocabulary"
