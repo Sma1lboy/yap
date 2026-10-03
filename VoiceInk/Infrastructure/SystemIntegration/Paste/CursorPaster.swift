@@ -327,6 +327,17 @@ class CursorPaster {
         return sentKey
     }
 
+    /// Finish and Send after a custom command: the command delivered the text itself, so there is no paste to check
+    /// the app and field against. `key` goes 150 ms after the command finished, if Accessibility allows it.
+    @MainActor
+    static func submitAfterCommand(_ key: FinishAndSendKey) async -> KeyResult {
+        let outlets = Self.outlets
+        guard key.isEnabled else { return .notSent }
+        await outlets.sleep(submitDelay)
+        guard !Task.isCancelled, outlets.canPostKeys() else { return .notSent }
+        return outlets.postSubmitKey(key) ? .sent : .notSent
+    }
+
     /// Undo Last Paste: deletes the selection LastPasteEditor just set in `field` of `processID` (it checked that field
     /// and its text through Accessibility a moment before). `request`: taken when the Undo started, so a paste or key
     /// still waiting from before isn't sent. The app's focus is read again; then, with nothing awaited up to the key,

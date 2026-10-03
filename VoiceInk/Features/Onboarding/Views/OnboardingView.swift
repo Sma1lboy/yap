@@ -232,6 +232,24 @@ struct OnboardingView: View {
         .frame(minWidth: 820, minHeight: 680)
         // Same window as the app: no title bar, the strip under the traffic lights drags it.
         .windowDragArea(height: AppWindowLayout.titlebarHeight)
+        .overlay(alignment: .topTrailing) {
+            if showsSkipButton && coordinator.requiredPermissionsGranted {
+                Button("Skip") {
+                    coordinator.flow.skipOnboarding {
+                        hasCompletedOnboardingV2 = true
+                    }
+                }
+                .buttonStyle(.borderless)
+                .font(AppTheme.font(.body, .medium))
+                .foregroundStyle(AppTheme.Action.secondaryForeground)
+                .padding(AppTheme.Spacing.x2)
+                .contentShape(Rectangle())
+                .help("Skip the remaining onboarding steps")
+                .accessibilityLabel("Skip onboarding")
+                .padding(.trailing, AppTheme.Spacing.x6)
+                .padding(.top, AppTheme.Spacing.x5)
+            }
+        }
         .animation(.easeInOut(duration: 0.22), value: coordinator.stage)
         .onAppear {
             coordinator.flow.ensureDefaultOnboardingTranscriptionProvider()
@@ -288,6 +306,15 @@ struct OnboardingView: View {
         .onChange(of: coordinator.stage) { _, _ in
             coordinator.flow.activateExperienceModeForDemo()
             coordinator.flow.refreshExperienceModeState(enhancementService: enhancementService)
+        }
+    }
+
+    private var showsSkipButton: Bool {
+        switch coordinator.stage {
+        case .permissions, .microphone, .model, .api:
+            return false
+        case .experience, .contextAwareness, .trust:
+            return true
         }
     }
 
