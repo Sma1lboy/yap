@@ -60,6 +60,7 @@ text you changed before the watch ended (focus left the field, the next recordin
 | `editChanged` | When `true`: `editDistance > 0`. |
 
 All four stay nil when Auto Learn didn't watch: it's off, the text wasn't pasted with ⌘V (Scratchpad, clipboard only,
+a failed paste, the clipboard changed before ⌘V,
 a response), or the next dictation started within 120 ms of the paste. Turning Auto Learn off turns this off too:
 the correction rate needs the same reads of the field, and Yap doesn't read it for anything else.
 

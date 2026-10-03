@@ -7,8 +7,10 @@
 # stop → transcribe → deliver path. CLIPS=latency: five clips (three Chinese with English terms from setup/asr/clips,
 # two English made with `say`). CLIPS=all: all eleven Chinese clips, three English ones and four that switch between
 # an English and a Chinese sentence, plus each category's character error rate and key terms (setup/asr/bench.py's
-# scoring, on round 1's text). Paste is a dry run: the clipboard and every wait up to ⌘V are real, the key events are
-# not posted, so nothing is typed into the app in front. The times are read back from each dictation's
+# scoring, on round 1's text). Paste is a dry run (CursorPaster.Outlets.installCheck): the clipboard writes go to a
+# private pasteboard, every wait up to ⌘V is real, the key events are not posted and nothing is read from the app in
+# front (no recording context either), so nothing is typed into it and the user's clipboard is never read or written.
+# The times are read back from each dictation's
 # SessionMetric. Prints p50/p95 per step and for the total, and fails unless every History save came after its ⌘V,
 # the model loads once per press when it was released first, and a failed paste still lands in History. The dev and
 # release apps' settings are never read or written.

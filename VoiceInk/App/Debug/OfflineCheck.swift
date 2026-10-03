@@ -5,7 +5,8 @@
     /// `make offline-check` (scripts/offline-check.sh): launched with `--dictate-file <wav>`, the app waits for
     /// launch-time work to settle, runs one dictation of that file through the normal pipeline, prints the result
     /// between `offline-check:` marker lines (Unix times, for matching against the script's socket log) and quits.
-    /// The general pasteboard is put back afterwards, since delivery copies the text there.
+    /// Delivery pastes through CursorPaster's check outlets: a private pasteboard and no key sent, so the clipboard the
+    /// user copies to is never read or written.
     @MainActor
     enum OfflineCheck {
         static let argument = "--dictate-file"
@@ -34,7 +35,7 @@
             }
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(10))
-                let restorePasteboard = savePasteboard()
+                let closeClipboard = CursorPaster.Outlets.installCheck()
                 print("offline-check: start \(Date().timeIntervalSince1970)")
                 let transcription = await engine.dictateFile(file)
                 print("offline-check: end \(Date().timeIntervalSince1970)")
@@ -42,27 +43,11 @@
                 print("offline-check: enhanced \(transcription.enhancedText != nil)")
                 print("offline-check: seconds \(transcription.transcriptionDuration ?? 0)")
                 print("offline-check: text \(transcription.text)")
-                restorePasteboard()
+                await closeClipboard()
                 try? await Task.sleep(for: .seconds(5))
                 print("offline-check: quit \(Date().timeIntervalSince1970)")
                 fflush(stdout)
                 exit(0)  // not NSApp.terminate, which can't finish from inside a Task (AppDelegate.applicationShouldTerminate)
-            }
-        }
-
-        /// Delivery copies the text to the general pasteboard; call the returned closure to put back what's there now.
-        static func savePasteboard() -> () -> Void {
-            let pasteboard = NSPasteboard.general
-            let saved = pasteboard.pasteboardItems?.map { item in
-                item.types.compactMap { type in item.data(forType: type).map { (type, $0) } }
-            } ?? []
-            return {
-                pasteboard.clearContents()
-                pasteboard.writeObjects(saved.map { pairs in
-                    let item = NSPasteboardItem()
-                    pairs.forEach { item.setData($0.1, forType: $0.0) }
-                    return item
-                })
             }
         }
 
@@ -73,7 +58,7 @@
         private static func runResidency(engine: VoiceInkEngine, file: URL) {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(10))
-                let restorePasteboard = savePasteboard()
+                let closeClipboard = CursorPaster.Outlets.installCheck()
                 let keep = UserDefaults.standard.integer(forKey: ModelResidency.keepSecondsKey)
                 func mark(_ name: String) {
                     print("residency: mark \(name) \(Date().timeIntervalSince1970)")
@@ -100,7 +85,7 @@
                 try? await Task.sleep(for: .seconds(3))
                 await dictate("released, preload 3 s earlier")
                 await engine.releaseModels()  // ggml asserts at exit() while any Metal buffer is still allocated
-                restorePasteboard()
+                await closeClipboard()
                 fflush(stdout)
                 exit(0)
             }
@@ -164,7 +149,7 @@
                     print("first-run: unknown model \(modelName)")
                     exit(1)
                 }
-                let restorePasteboard = savePasteboard()
+                let closeClipboard = CursorPaster.Outlets.installCheck()
                 let start = Date()
                 manager.startDownload(model)
                 var reportedPreflight = false
@@ -206,7 +191,7 @@
                 }
                 // ggml asserts at exit() while any Metal buffer is still allocated.
                 await manager.cleanupResources()
-                restorePasteboard()
+                await closeClipboard()
                 fflush(stdout)
                 exit(0)
             }

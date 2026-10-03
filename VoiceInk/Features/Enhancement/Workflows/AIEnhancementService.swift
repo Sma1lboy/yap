@@ -449,10 +449,6 @@ class AIEnhancementService: ObservableObject {
         objectWillChange.send()
     }
 
-    func captureClipboardContext() {
-        lastCapturedClipboard = NSPasteboard.general.string(forType: .string)
-    }
-
     func clearCapturedContexts() {
         lastCapturedClipboard = nil
         screenCaptureService.lastCapturedText = nil

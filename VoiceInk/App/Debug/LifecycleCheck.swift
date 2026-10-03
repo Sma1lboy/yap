@@ -45,8 +45,7 @@
             let longer = arguments.count >= 6 ? URL(fileURLWithPath: arguments[5]) : nil
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(10))  // launch-time work settles, as in offline-check
-                CursorPaster.dryRun = true
-                let restorePasteboard = OfflineCheck.savePasteboard()
+                let closeClipboard = CursorPaster.Outlets.installCheck()
                 let manager = engine.whisperModelManager
                 let makeContext = manager.makeContext
                 manager.makeContext = { file in
@@ -66,13 +65,13 @@
                 case "residency": await checks.residency()
                 case "backend":
                     await checks.backend()
-                    restorePasteboard()
+                    await closeClipboard()
                     return  // ends with a real Quit
                 default:
                     print("lifecycle: unknown suite \(suite)")
                     exit(2)
                 }
-                restorePasteboard()
+                await closeClipboard()
                 await engine.closeLocalModels()  // ggml asserts at exit() while any Metal buffer is still allocated
                 IsolationCheck.emit(["event": "done"])
                 exit(0)

@@ -45,7 +45,7 @@ struct ScratchpadView: View {
     }
 
     private func copyAll() {
-        guard ClipboardManager.setClipboard(store.text, transient: false, sessionID: nil) else { return }
+        guard ClipboardManager.copyToClipboard(store.text) else { return }
         copied = true
         Task {
             try? await Task.sleep(nanoseconds: 1_500_000_000)

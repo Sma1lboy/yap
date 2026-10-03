@@ -1051,12 +1051,17 @@ extension VoiceInkEngine {
 
     /// The steps `toggleRecord` runs once a recording stops, on a file that is already in Recordings/. With
     /// `timedFrom`, the dictation gets a timeline: the context capture a recording starts with finishes first (it runs
-    /// while the user speaks), then the stop is now. Returns once the paste, if any, has sent ⌘V.
+    /// while the user speaks), then the stop is now. Returns once the paste, if any, has sent ⌘V. `capturesContext`
+    /// false (the checks): the clipboard, selection, focused field and screen of the app in front aren't read.
     @discardableResult
     fileprivate func transcribeRecordedFile(
-        _ audioURL: URL, timedFrom stopSource: DictationTimeline.StopSource? = nil
+        _ audioURL: URL, timedFrom stopSource: DictationTimeline.StopSource? = nil, capturesContext: Bool = true
     ) async -> Transcription {
-        startRecordingContextCapture()
+        if capturesContext {
+            startRecordingContextCapture()
+        } else {
+            clearActiveRecordingContext()
+        }
         var timeline: DictationTimeline?
         if let stopSource {
             for task in activeRecordingContextTasks { await task.value }
@@ -1079,14 +1084,15 @@ extension VoiceInkEngine {
 #if DEBUG
     extension VoiceInkEngine {
         /// `make offline-check` (OfflineCheck): the steps `toggleRecord` runs once a recording stops, on a WAV file
-        /// instead of the microphone, so a dictation can run without a hotkey or microphone permission. `measured`
-        /// (`make dictation-latency`): the context capture a recording starts with finishes first, as it would while the
-        /// user speaks; then the dictation gets a timeline whose stop is now, and this returns only after the paste
-        /// has sent ⌘V (CursorPaster.dryRun) and the SessionMetric has its times.
+        /// instead of the microphone, so a dictation can run without a hotkey or microphone permission. Nothing is read
+        /// from the app in front (no recording context: clipboard, selection, focused field, screen); the paste goes
+        /// through the check outlets the caller installed (CursorPaster.Outlets.installCheck). `measured`
+        /// (`make dictation-latency`): the dictation gets a timeline whose stop is now, and this returns only after the
+        /// paste would have sent ⌘V and the SessionMetric has its times.
         func dictateFile(_ file: URL, measured: Bool = false) async -> Transcription {
             let audioURL = recordingsDirectory.appendingPathComponent("\(UUID().uuidString).wav")
             try? FileManager.default.copyItem(at: file, to: audioURL)
-            return await transcribeRecordedFile(audioURL, timedFrom: measured ? .file : nil)
+            return await transcribeRecordedFile(audioURL, timedFrom: measured ? .file : nil, capturesContext: false)
         }
     }
 #endif

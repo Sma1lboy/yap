@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-archive-check mic-fallback-check text-fidelity-check meeting-echo-check meeting-long-check meeting-call-check edit-rate-check mcp-check mcp-agent-eval mcp-perf first-run-check model-residency-check quit-check isolation-check lifecycle-check dictation-latency ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-archive-check mic-fallback-check text-fidelity-check paste-session-check meeting-echo-check meeting-long-check meeting-call-check edit-rate-check mcp-check mcp-agent-eval mcp-perf first-run-check model-residency-check quit-check isolation-check lifecycle-check dictation-latency ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -308,6 +308,14 @@ text-fidelity-check: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh scripts/text-fidelity-check.sh "$$APP_DIR"
+
+# CursorPaster's clipboard handling: overlapping pastes, the user copying before or after ⌘V, restore off, failed
+# writes, ⌘V not sent, remote timing. Private pasteboards only; no key sent, the user's clipboard never touched.
+# See scripts/paste-session-check.sh.
+paste-session-check: build
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/paste-session-check.sh "$$APP_DIR"
 
 # A meeting without headphones: the other side's voice reaches the microphone through the speakers (30 ms / 12 dB and
 # 80 ms / 20 dB). Checks that echo is taken out of "Me" and nothing the user said is. See scripts/meeting-echo-check.sh.

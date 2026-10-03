@@ -58,6 +58,8 @@ struct VoiceInkApp: App {
             MicFallbackCheck.runIfRequested()
             // make text-fidelity-check: fixed recognized text through the dictation text steps, printed; exits.
             TextFidelityCheck.runIfRequested()
+            // make paste-session-check: CursorPaster's clipboard handling on private pasteboards, no key sent; exits.
+            PasteSessionCheck.runIfRequested()
             // make edit-rate-check: print the correction-rate fixtures, run their self-checks, and exit.
             EditRateCheck.runIfRequested()
             // make home-feedback-check: Home's paste numbers on fixed weeks, through WeekStatsLoader, and exit.
@@ -84,6 +86,7 @@ struct VoiceInkApp: App {
             DefaultShortcuts.selfCheck()
             SettingsGroup.selfCheck()
             ClipboardManager.selfCheck()
+            PasteClipboard.selfCheck()
             LastPasteEditor.selfCheck()
             PromptTemplates.selfCheck()
             HomeShortcutsCard.selfCheck()
