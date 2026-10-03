@@ -109,6 +109,7 @@ struct VoiceInkApp: App {
             MeetingRecorder.shortcutSelfCheck()
             MeetingRecorder.speakersSelfCheck()
             MeetingRecorder.recoverySelfCheck()
+            MeetingRetranscription.selfCheck()
             MeetingSummarizer.selfCheck()
             MeetingStatusLine.selfCheck()
             MeetingCallPolicy.selfCheck()
@@ -320,10 +321,13 @@ struct VoiceInkApp: App {
             // In the background, so the rest of launch isn't held up by a long transcription. Its "recovering"
             // note would replace dictation's offer, so it's left out then.
             Task { @MainActor in
+                // Work folders of a Transcribe Meeting the last quit cut off (the meetings' own files are untouched).
+                MeetingRetranscriber.removeLeftovers(recordings: engine.recordingsDirectory)
                 let recovered = await MeetingRecorder.shared.recoverInterruptedMeetings(announceStart: !offeredDictation)
                 #if DEBUG
                     await MeetingFilesCheck.reportRecovery(recovered, engine: engine)  // scripts/meeting-files-check.sh only
                     await MeetingFilesCheck.runEditCheck(engine: engine)  // scripts/meeting-files-check.sh only
+                    await MeetingFilesCheck.runRetranscribeCheck(engine: engine)  // scripts/meeting-files-check.sh only
                 #endif
                 // Meetings saved while their speakers were still being told apart, when the app quit.
                 let resumed = await MeetingRecorder.shared.resumeSpeakers()
