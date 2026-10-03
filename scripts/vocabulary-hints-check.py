@@ -30,6 +30,23 @@ LOCAL = {
     "oversized-newest": ["useEffect", "张三丰"],
 }
 
+# Yap Cloud with the small dictionary while paygate refuses some models (400 MODEL_NOT_ALLOWED): the outcome and, per
+# request in order, its model, its provider.options and its language. The one retry goes to the Recommended model,
+# mai-transcribe-2, and must carry that model's terms field, never the refused model's; a model without one gets none.
+MAI = "microsoft/mai-transcribe-2"
+GPT4O = "openai/gpt-4o-transcribe"
+QWEN = "qwen/qwen3-asr-flash-2026-02-10"
+AZURE = {"azure": {"phraseList": {"phrases": SMALL}}}
+OPENAI = {"openai": {"prompt": ", ".join(SMALL)}}
+FALLBACK = {
+    "fallback-from-gpt-4o": ("ok", [(GPT4O, OPENAI, "zh"), (MAI, AZURE, "zh")]),
+    "fallback-from-qwen": ("ok", [(QWEN, None, None), (MAI, AZURE, None)]),
+    # The retry is refused too: no third request, the error goes to the caller.
+    "fallback-also-refused": ("error", [(GPT4O, OPENAI, None), (MAI, AZURE, None)]),
+    # The Recommended model itself refused: nothing to fall back to, one request.
+    "recommended-refused": ("error", [(MAI, AZURE, None)]),
+}
+
 
 def options(line):
     return line["json"].get("provider", {}).get("options")
@@ -113,6 +130,7 @@ def main(path):
         failures += 1
     print(f"{len(lines)} requests, {failures} failed")
     failures += check_local(path)
+    failures += check_fallback(path)
     sys.exit(1 if failures else 0)
 
 
@@ -139,6 +157,43 @@ def check_local(path):
         print(f"FAIL expected local prompts for {sorted(LOCAL)}, got {[line['case'] for line in lines]}")
         failures += 1
     print(f"{len(lines)} local prompts, {failures} failed")
+    return failures
+
+
+def check_fallback(path):
+    """Yap Cloud's model fallback, every request; the number of cases that failed."""
+    lines = [json.loads(raw.split(": ", 1)[1]) for raw in open(path, encoding="utf-8")
+             if raw.startswith("vocabulary-hints-fallback: ")]
+    failures = 0
+    for case, (outcome, attempts) in FALLBACK.items():
+        got = sorted((line for line in lines if line["case"] == case), key=lambda line: line.get("attempt", 0))
+        problems = []
+        if len(got) != len(attempts) or any(line.get("requests") != len(attempts) for line in got):
+            problems.append(f"expected {len(attempts)} requests, got {[line.get('requests') for line in got]}")
+        for line, (model, provider_options, language) in zip(got, attempts):
+            body = line["json"]
+            actual = (body.get("model"), body.get("provider", {}).get("options"), body.get("language"))
+            if actual != (model, provider_options, language):
+                problems.append(f"request {line['attempt']}: expected {json.dumps((model, provider_options, language), ensure_ascii=False)}\n"
+                                f"           got {json.dumps(actual, ensure_ascii=False)}")
+            if line["url"] != "cloud.yap.sma1lboy.me/v1/audio/transcriptions":
+                problems.append(f"request {line['attempt']} went to {line['url']}")
+            if set(body) - {"model", "input_audio", "language", "provider"}:
+                problems.append(f"request {line['attempt']} has extra fields {sorted(set(body))}")
+        if len({json.dumps(line["json"].get("input_audio"), sort_keys=True) for line in got}) > 1:
+            problems.append("the retry's audio differs from the first request's")
+        if got and (got[0]["outcome"] == "ok") != (outcome == "ok"):
+            problems.append(f"outcome {got[0]['outcome']!r}, expected {outcome}")
+        sent_models = " → ".join(f"{(line['json'].get('model') or '').split('/')[-1]} "
+                                 f"{'+'.join(line['json'].get('provider', {}).get('options', {})) or 'no terms'}" for line in got)
+        print(f"{'FAIL' if problems else 'ok':4} {case:22} yapcloud-fallback   {sent_models}; {got[0]['outcome'][:40] if got else ''}")
+        for problem in problems:
+            print(f"     {problem}")
+        failures += bool(problems)
+    if sorted({line["case"] for line in lines}) != sorted(FALLBACK):
+        print(f"FAIL expected fallback cases {sorted(FALLBACK)}, got {sorted({line['case'] for line in lines})}")
+        failures += 1
+    print(f"{len(lines)} fallback requests, {failures} failed")
     return failures
 
 
