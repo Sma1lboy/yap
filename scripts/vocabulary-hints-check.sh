@@ -2,8 +2,10 @@
 # make vocabulary-hints-check: which dictionary words the cloud transcription requests carry when the dictionary holds
 # more than a provider takes, after a word is added or deleted, and with blanks, case duplicates, same-date and
 # CJK words; and the initial prompt local Whisper builds for a request against the same dictionaries, plus one whose
-# newest words are too long for its budget. Runs the Debug app's own code (VocabularyHintsCheck.swift) from a copy
-# re-identified as me.sma1lboy.yap.mock (see scripts/mock.sh) under the mock lock, with IP traffic denied
+# newest words are too long for its budget; Yap Cloud's fallback when paygate refuses the model (every request); the
+# words xAI, ElevenLabs and AssemblyAI get through LLMkit's per-word limits; a stream reconnected after an add. Runs
+# the Debug app's own code (VocabularyHintsCheck.swift) from a copy re-identified as me.sma1lboy.yap.mock (see
+# scripts/mock.sh) under the mock lock, with IP traffic denied
 # (scripts/offline.sb): every request is recorded in-process and answered there. In-memory dictionary, fake keys from
 # the environment, no model. Prints every request's terms and each local prompt's words, then fails if any differs
 # from scripts/vocabulary-hints-check.py.
@@ -29,7 +31,7 @@ ditto "$APP_DIR/VoiceInk Dev.app" "$APP"
 codesign --force --deep --sign - "$APP" >/dev/null 2>&1
 
 YAP_MOCK_API_KEY_DEEPGRAM=fixture YAP_MOCK_API_KEY_OPENROUTER=fixture YAP_MOCK_API_KEY_XAI=fixture \
-	YAP_MOCK_API_KEY_SPEECHMATICS=fixture \
+	YAP_MOCK_API_KEY_SPEECHMATICS=fixture YAP_MOCK_API_KEY_ASSEMBLYAI=fixture YAP_MOCK_API_KEY_ELEVENLABS=fixture \
 	sandbox-exec -f "$(dirname "$0")/offline.sb" "$APP/Contents/MacOS/VoiceInk Dev" -AppleLanguages "(en)" \
 	--vocabulary-hints-check >"$WORK/out.txt" 2>"$WORK/err.txt" \
 	|| { echo "app exited with $?"; tail -5 "$WORK/err.txt"; exit 1; }

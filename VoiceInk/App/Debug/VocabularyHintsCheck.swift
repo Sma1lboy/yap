@@ -10,7 +10,9 @@
     /// and answers it, so nothing leaves the Mac; the script also runs the app with IP traffic denied. Provider keys come
     /// from YAP_MOCK_API_KEY_*, Yap Cloud from its snapshot sign-in; the user's dictionary and keys are never read.
     /// For local Whisper it prints the initial prompt WhisperTranscriptionService builds for a request against the same
-    /// dictionary (no model is loaded). scripts/vocabulary-hints-check.py holds what each request should carry.
+    /// dictionary (no model is loaded). Also: Yap Cloud's MODEL_NOT_ALLOWED fallback (every request it sends), the
+    /// words LLMkit keeps for xAI, ElevenLabs and AssemblyAI's per-word limits, and a stream's next connection after
+    /// an add. scripts/vocabulary-hints-check.py holds what each request should carry.
     @MainActor
     enum VocabularyHintsCheck {
         static let argument = "--vocabulary-hints-check"
@@ -128,7 +130,7 @@
             }
             try! small.save()
             send(name: "under-budget", model: deepgram, context: small, audio: audio)
-            stream(name: "under-budget", context: small, language: "en")
+            stream(name: "under-budget", model: deepgram, provider: deepgramStream(small), language: "en")
             send(name: "under-budget", model: openRouter("openai/gpt-4o-transcribe"), context: small, audio: audio)
             local(name: "under-budget", service: localService(small))
 
@@ -167,6 +169,44 @@
             try! oversized.save()
             local(name: "oversized-newest", service: localService(oversized))
 
+            // 6. What LLMkit sends to providers with their own per-word limits, newest first: a 51-letter word (over
+            // 50), a 50-letter one, 7 and 6 words, 21 and 20 letters, then 120 short older words. Each consumer
+            // leaves out the words over its limits and fills its count from the older ones; ElevenLabs batch takes
+            // them all (the uncut control).
+            let limits = ModelContext(
+                try! ModelContainer(for: VocabularyWord.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
+            for index in 0..<120 {
+                limits.insert(VocabularyWord(word: String(format: "S%03d", index), dateAdded: start.addingTimeInterval(Double(index))))
+            }
+            for (offset, word) in [
+                String(repeating: "N", count: 20), String(repeating: "O", count: 21), "alpha beta gamma delta epsilon zeta",
+                "one two three four five six seven", String(repeating: "M", count: 50), String(repeating: "L", count: 51),
+            ].enumerated() {
+                limits.insert(VocabularyWord(word: word, dateAdded: start.addingTimeInterval(1_000 + Double(offset))))
+            }
+            try! limits.save()
+            send(
+                name: "provider-limits", model: CloudModel(name: "grok-voice-transcribe-2.0", displayName: "", description: "",
+                    provider: .xai, isMultilingual: true, supportedLanguages: [:]),
+                context: limits, audio: audio)
+            send(name: "provider-limits", model: elevenLabs, context: limits, audio: audio)
+            stream(name: "provider-limits", model: elevenLabs,
+                provider: ElevenLabsProvider().makeStreamingProvider(modelContext: limits)!, language: nil)
+            stream(name: "provider-limits", model: assemblyAI,
+                provider: AssemblyAIProvider().makeStreamingProvider(modelContext: limits)!, language: nil)
+
+            // 7. A stream reads the dictionary when it connects: the next connection of the same provider carries a
+            // word added after the last one.
+            let reconnect = ModelContext(
+                try! ModelContainer(for: VocabularyWord.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
+            reconnect.insert(VocabularyWord(word: "Kwyntel", dateAdded: start))
+            try! reconnect.save()
+            let assemblyAIStream = AssemblyAIProvider().makeStreamingProvider(modelContext: reconnect)!
+            stream(name: "reconnect-before", model: assemblyAI, provider: assemblyAIStream, language: nil)
+            reconnect.insert(VocabularyWord(word: "Zorvex", dateAdded: start.addingTimeInterval(1)))
+            try! reconnect.save()
+            stream(name: "reconnect-after", model: assemblyAI, provider: assemblyAIStream, language: nil)
+
             // Asserts: a failure ends the app before the line below.
             DictionaryTerms.selfCheck()
             TranscriptionHints.selfCheck()
@@ -179,6 +219,15 @@
         static let deepgram = CloudModel(
             name: "nova-3", displayName: "Nova 3", description: "", provider: .deepgram, isMultilingual: true,
             supportedLanguages: [:])
+        static let elevenLabs = CloudModel(
+            name: "scribe_v2", displayName: "", description: "", provider: .elevenLabs, isMultilingual: true, supportedLanguages: [:])
+        static let assemblyAI = CloudModel(
+            name: "universal-3-5-pro", displayName: "", description: "", provider: .assemblyAI, isMultilingual: true,
+            supportedLanguages: [:])
+
+        static func deepgramStream(_ context: ModelContext) -> any StreamingTranscriptionProvider {
+            DeepgramProvider().makeStreamingProvider(modelContext: context)!
+        }
 
         static func openRouter(_ name: String, provider: ModelProvider = .openRouter) -> CloudModel {
             CloudModel(name: name, displayName: name, description: "", provider: provider, isMultilingual: true, supportedLanguages: [:])
@@ -187,7 +236,7 @@
         /// Every capped consumer, plus ones that take the whole dictionary or no terms, against one dictionary.
         private static func sendAll(name: String, context: ModelContext, audio: URL) {
             send(name: name, model: deepgram, context: context, audio: audio)
-            stream(name: name, context: context, language: nil)
+            stream(name: name, model: deepgram, provider: deepgramStream(context), language: nil)
             send(name: name, model: openRouter("microsoft/mai-transcribe-2"), context: context, audio: audio, language: "zh-Hans")
             send(name: name, model: openRouter("openai/gpt-4o-transcribe"), context: context, audio: audio)
             send(name: name, model: openRouter("openai/whisper-large-v3"), context: context, audio: audio)
@@ -270,15 +319,16 @@
             fflush(stdout)
         }
 
-        /// A Deepgram stream as live dictation opens it; prints the websocket handshake's URL.
-        private static func stream(name: String, context: ModelContext, language: String?) {
+        /// A stream as live dictation opens it; prints the websocket handshake's URL.
+        private static func stream(
+            name: String, model: CloudModel, provider: any StreamingTranscriptionProvider, language: String?
+        ) {
             _ = Recorder.take()
-            let provider = DeepgramProvider().makeStreamingProvider(modelContext: context)!
             var done = false
             var outcome = ""
             Task {
                 do {
-                    try await provider.connect(model: deepgram, language: language)
+                    try await provider.connect(model: model, language: language)
                     outcome = "connected"
                 } catch {
                     outcome = "error: \(error.localizedDescription)"
@@ -292,7 +342,7 @@
                 done = true
             }
             wait { done }
-            report(name: name, consumer: "deepgram-stream/nova-3", outcome: outcome)
+            report(name: name, consumer: "\(model.provider.rawValue.lowercased())-stream/\(model.name)", outcome: outcome)
         }
 
         private static func wait(until done: () -> Bool) {
