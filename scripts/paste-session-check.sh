@@ -1,9 +1,11 @@
 #!/bin/bash
-# make paste-session-check: CursorPaster's clipboard handling (PasteSessionCheck.swift): overlapping pastes, the user
-# copying before or after ⌘V, a rewrite of the same text and paste session, an empty clipboard, restore off, a failed
-# clipboard write, ⌘V that can't be sent, remote-desktop timing, a close with a restore pending. Every scenario runs
-# on a private pasteboard of its own (NSPasteboard(name:)) that it releases at the end; the general pasteboard (what
-# the user copies to) is never read or written, no key is sent and nothing is read from the app in front. Runs from a
+# make paste-session-check: CursorPaster's clipboard handling and targets (PasteSessionCheck.swift): overlapping
+# pastes, the user copying before or after ⌘V, a rewrite of the same text and paste session, an empty clipboard,
+# restore off, a failed clipboard write, ⌘V that can't be sent, remote-desktop timing, a close with a restore pending;
+# another app or field in front before ⌘V or Finish and Send's Enter, a newer paste or Undo's Delete in between,
+# History's chosen app, Yap's own window in front. Every scenario runs on a private pasteboard of its own
+# (NSPasteboard(name:)) that it releases at the end; the general pasteboard (what the user copies to) is never read or
+# written, no key is sent and nothing is read from the app in front (made-up process IDs and elements). Runs from a
 # copy re-identified as me.sma1lboy.yap.mock (see scripts/mock.sh) under the mock lock. The raw lines are kept in
 # $OUT (default /tmp/yap-paste-session-check.txt); fails if any scenario does.
 set -euo pipefail

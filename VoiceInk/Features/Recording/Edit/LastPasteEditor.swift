@@ -72,12 +72,17 @@ final class LastPasteEditor {
             notify(failure)
         case .success(let record):
             if record.replaced.isEmpty {
-                CursorPaster.performDeleteKey()
+                let deleted = CursorPaster.deleteSelection(in: record.processID)
+                guard deleted == .sent else {
+                    logger.notice("Undo didn't delete the last paste: \(String(describing: deleted), privacy: .public)")
+                    if deleted == .targetChanged { notify(.focusChanged) }
+                    return
+                }
                 self.record = nil
                 logger.notice("Last paste removed (\(record.text.count, privacy: .public) characters)")
             } else {
                 // Becomes the new last paste, so undoing again brings the rewrite back.
-                let result = await CursorPaster.startPasteAtCursor(record.replaced).value.result
+                let result = await CursorPaster.startPasteAtCursor(record.replaced, target: record.processID).value.result
                 logger.notice("Undo pasting the text the last paste replaced (\(record.replaced.count, privacy: .public) characters): \(String(describing: result), privacy: .public)")
             }
         }
@@ -122,9 +127,9 @@ final class LastPasteEditor {
         switch await selectLastPaste() {
         case .failure(let failure):
             notify(failure)
-        case .success:
+        case .success(let record):
             // Replaces the selection; CursorPaster reports it back here, so it becomes the new last paste.
-            _ = await CursorPaster.startPasteAtCursor(rewritten).value
+            _ = await CursorPaster.startPasteAtCursor(rewritten, target: record.processID).value
         }
     }
 

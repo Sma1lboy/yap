@@ -199,11 +199,9 @@ final class TranscriptionDelivery {
             if pasteOutcome.result.didPostPasteCommand { DictationAnnouncer.pasted() }
 
             if finishAndSendKey.isEnabled && pasteOutcome.result.didPostPasteCommand {
-                try? await Task.sleep(nanoseconds: 150_000_000)
-                if let generation = pasteOutcome.autoLearnGeneration {
-                    await AutoLearnService.shared.cancelForAutoSend(generation: generation)
-                }
-                CursorPaster.performSendKey(finishAndSendKey)
+                // The paste went out either way; this is only about the key after it.
+                let submitted = await CursorPaster.submit(finishAndSendKey, after: pasteOutcome)
+                logger.notice("Finish and Send after the paste: \(String(describing: submitted), privacy: .public)")
             }
         }
     }
@@ -217,6 +215,8 @@ extension CursorPaster.PasteResult {
         case .sentToScratchpad: return .scratchpad
         case .commandNotPosted: return .failed
         case .clipboardChanged: return .clipboardChanged
+        case .targetChanged: return .targetChanged
+        case .superseded: return .superseded
         }
     }
 }

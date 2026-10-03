@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import SwiftData
 
@@ -67,9 +68,10 @@ class LastTranscriptionService: ObservableObject {
         }
 
         let textToPaste = lastTranscription.text
+        let target = pasteTarget()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            CursorPaster.pasteAtCursor(textToPaste)
+            CursorPaster.pasteAtCursor(textToPaste, target: target)
         }
     }
 
@@ -93,9 +95,19 @@ class LastTranscriptionService: ObservableObject {
             }
         }()
 
+        let target = pasteTarget()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            CursorPaster.pasteAtCursor(textToPaste)
+            CursorPaster.pasteAtCursor(textToPaste, target: target)
         }
+    }
+
+    /// The app in front when the shortcut was pressed, which the paste 0.15 s later must still go to. Nil when Yap
+    /// itself is in front: CursorPaster then takes the app in front after its wait.
+    private static func pasteTarget() -> pid_t? {
+        guard let app = NSWorkspace.shared.frontmostApplication,
+            app.processIdentifier != ProcessInfo.processInfo.processIdentifier
+        else { return nil }
+        return app.processIdentifier
     }
 
     static func retryLastTranscription(

@@ -563,6 +563,12 @@
                         title: title, type: type, duration: 15, onClose: {}, onTap: nil,
                         actionButton: button.map { (label: $0, action: {}) }))
             }
+            // A paste refused because another app or field was in front (CursorPaster's Notice.targetChanged).
+            notificationShot(
+                "target-changed",
+                AppNotificationView(
+                    title: CursorPaster.targetChangedMessage, type: .warning, duration: 6, onClose: {}, onTap: nil,
+                    actionButton: (String(localized: "Open Scratchpad"), {})))
             // Fixing the mode's language (LanguagePinSuggestion): the suggestion for Chinese and for English, each with
             // what a fixed language costs, and the confirmation with Back to Auto-detect.
             let pinNotifications: [(String, String, AppNotificationView.NotificationType, String, String?)] = [
