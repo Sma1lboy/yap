@@ -265,9 +265,9 @@ class CursorPaster {
     /// caller chose, and with `.element` focus the field the paste is for (Undo and Rewrite Last Paste: the field
     /// LastPasteEditor just selected in); nil takes the app in front now, Yap itself included. Without a known field the
     /// app's focused element is read during the wait and the paste is checked against that. `request`: one the caller
-    /// took earlier (Undo, before it selected the text); nil takes a new one. A request that is no longer the latest
-    /// when the paste starts is refused before the clipboard is touched. A newer paste, or Undo, supersedes this one:
-    /// its ⌘V and its Finish and Send key are not sent after that.
+    /// took earlier (Undo and Rewrite, before they selected the text); nil takes a new one. A request that is no longer
+    /// the latest when the paste starts is refused before the clipboard is touched. A newer paste, or Undo, supersedes
+    /// this one: its ⌘V and its Finish and Send key are not sent after that.
     @MainActor
     @discardableResult
     static func startPasteAtCursor(
@@ -859,7 +859,7 @@ extension CursorPaster.Notice.Reason {
             return String(localized: "The clipboard changed just before Yap pasted, so it didn't paste and left the clipboard as it was.")
         case .superseded: return String(localized: "A newer paste or Undo started before this one was pasted.")
         case .clipboardWriteFailed: return String(localized: "Yap couldn't put the text on the clipboard, so it didn't paste.")
-        case .pasteKeysFailed: return String(localized: "Yap couldn't send the paste keys (⌘V).")
+        case .pasteKeysFailed: return String(localized: "Yap couldn't send the paste shortcut (⌘V).")
         }
     }
 }

@@ -49216,30 +49216,30 @@
         }
       }
     },
-    "Yap couldn't send the paste keys (⌘V)." : {
+    "Yap couldn't send the paste shortcut (⌘V)." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap konnte die Einfüge-Tasten (⌘V) nicht senden."
+            "value" : "Yap konnte das Einfügekürzel (⌘V) nicht senden."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap n’a pas pu envoyer les touches de collage (⌘V)."
+            "value" : "Yap n’a pas pu envoyer le raccourci de collage (⌘V)."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap 没能发出粘贴按键（⌘V）。"
+            "value" : "Yap 没能发出粘贴快捷键（⌘V）。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap 沒能送出貼上按鍵（⌘V）。"
+            "value" : "Yap 沒能送出貼上快捷鍵（⌘V）。"
           }
         }
       }
