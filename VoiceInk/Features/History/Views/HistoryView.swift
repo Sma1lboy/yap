@@ -757,23 +757,14 @@ struct HistoryView<Header: View>: View {
         Button("Delete", role: .destructive) { requestDeletion(of: transcription) }
     }
 
-    /// Goes back to the app the dictation was made in (or, for older rows, hides Yap so the previous app is
-    /// frontmost again), then pastes. The app it activated is the target: if another one is in front by then, nothing
-    /// is pasted into it.
+    /// Goes back to the app the dictation was made in, then pastes there once it is in front (CursorPaster waits for
+    /// it, briefly). Another app in front by then: nothing is pasted into it. No app recorded, or it isn't running:
+    /// the text goes to the Scratchpad, not into whatever happens to be in front.
     private func pasteAgain(_ transcription: Transcription) {
-        let text = transcription.preferredHistoryText
-        var target: pid_t?
-        if let bundleID = transcription.sourceAppBundleID,
-            let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first
-        {
-            app.activate(options: [.activateIgnoringOtherApps])
-            target = app.processIdentifier
-        } else {
-            NSApp.hide(nil)
+        let target = transcription.sourceAppBundleID.flatMap {
+            NSRunningApplication.runningApplications(withBundleIdentifier: $0).first?.processIdentifier
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            CursorPaster.pasteAtCursor(text, target: target)
-        }
+        CursorPaster.paste(transcription.preferredHistoryText, into: target, activate: true)
     }
 
     /// The same action as the retranscribe button in the audio player: the current mode and its model.

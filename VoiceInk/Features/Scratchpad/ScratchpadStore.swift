@@ -28,11 +28,6 @@ final class ScratchpadStore: ObservableObject {
             .appendingPathComponent("Scratchpad.txt")
     }
 
-    /// Shown when a dictation found no text field and went to the Scratchpad instead.
-    static var noTextFieldMessage: String {
-        String(localized: "Copied to clipboard and added to your Scratchpad. No text field was focused, so Yap didn't paste.")
-    }
-
     func append(dictation: String, at date: Date = Date()) {
         text = Self.appending(dictation, to: text, at: date)
         save()

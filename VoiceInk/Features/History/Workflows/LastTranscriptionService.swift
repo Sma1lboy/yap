@@ -56,6 +56,7 @@ class LastTranscriptionService: ObservableObject {
         }
     }
 
+    @MainActor
     static func pasteLastTranscription(from modelContext: ModelContext) {
         guard let lastTranscription = getLastTranscription(from: modelContext) else {
             Task { @MainActor in
@@ -67,14 +68,10 @@ class LastTranscriptionService: ObservableObject {
             return
         }
 
-        let textToPaste = lastTranscription.text
-        let target = pasteTarget()
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            CursorPaster.pasteAtCursor(textToPaste, target: target)
-        }
+        CursorPaster.paste(lastTranscription.text, into: pasteTarget(), activate: false, hold: shortcutHold)
     }
 
+    @MainActor
     static func pasteLastEnhancement(from modelContext: ModelContext) {
         guard let lastTranscription = getLastTranscription(from: modelContext) else {
             Task { @MainActor in
@@ -95,19 +92,15 @@ class LastTranscriptionService: ObservableObject {
             }
         }()
 
-        let target = pasteTarget()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            CursorPaster.pasteAtCursor(textToPaste, target: target)
-        }
+        CursorPaster.paste(textToPaste, into: pasteTarget(), activate: false, hold: shortcutHold)
     }
 
-    /// The app in front when the shortcut was pressed, which the paste 0.15 s later must still go to. Nil when Yap
-    /// itself is in front: CursorPaster then takes the app in front after its wait.
+    /// The 0.15 s Paste Last always waited before pasting: its shortcut's keys coming up.
+    private static let shortcutHold: TimeInterval = 0.15
+
+    /// The app in front when the shortcut was pressed, Yap itself included: the paste goes there or nowhere.
     private static func pasteTarget() -> pid_t? {
-        guard let app = NSWorkspace.shared.frontmostApplication,
-            app.processIdentifier != ProcessInfo.processInfo.processIdentifier
-        else { return nil }
-        return app.processIdentifier
+        NSWorkspace.shared.frontmostApplication?.processIdentifier
     }
 
     static func retryLastTranscription(

@@ -37,8 +37,11 @@ The field is refused, with nothing read from it, when:
 Paste-side rejections are counted the same way: `accessibilityNotTrusted`, `targetIsYap`, `emptyPaste`,
 `pasteTooLong` (over 12,000 characters), `noReadableField` (no editable focused field, or the final read got no
 value), `pastedTextNotFound` (the pasted text isn't where the paste should have put it, or at the end the text around
-it no longer locates it), `fieldCleared` (the field was empty at the end) and `autoSent` (Finish and Send's key went
-out right after the paste; counted only once its target check passed, see dictation-latency.md, "Where the paste goes").
+it no longer locates it), `fieldCleared` (the field was empty at the end) and `autoSent` (Finish and Send was about to
+press its key right after the paste, so watching stopped). `autoSent` is recorded after the key's first target check
+and before its last one (see dictation-latency.md, "Where the paste goes"): it is not a confirmation the key went out.
+A key refused at that last check leaves the paste with `autoSent`, unwatched and, like every reason here, counted
+neither way in the correction rate; the user is told the send key wasn't pressed.
 
 For each refusal Yap keeps only a count per reason, in the `AutoLearnUnobservableCounts` user default, on this Mac.
 No text, app name or window title is stored or logged with it.

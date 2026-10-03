@@ -1,13 +1,15 @@
 #!/bin/bash
-# make paste-session-check: CursorPaster's clipboard handling and targets (PasteSessionCheck.swift): overlapping
-# pastes, the user copying before or after ⌘V, a rewrite of the same text and paste session, an empty clipboard,
-# restore off, a failed clipboard write, ⌘V that can't be sent, remote-desktop timing, a close with a restore pending;
-# another app or field in front before ⌘V or Finish and Send's Enter, a newer paste or Undo's Delete in between,
-# History's chosen app, Yap's own window in front. Every scenario runs on a private pasteboard of its own
-# (NSPasteboard(name:)) that it releases at the end; the general pasteboard (what the user copies to) is never read or
-# written, no key is sent and nothing is read from the app in front (made-up process IDs and elements). Runs from a
-# copy re-identified as me.sma1lboy.yap.mock (see scripts/mock.sh) under the mock lock. The raw lines are kept in
-# $OUT (default /tmp/yap-paste-session-check.txt); fails if any scenario does.
+# make paste-session-check: CursorPaster's clipboard handling, targets and receipts (PasteSessionCheck.swift):
+# overlapping pastes, the user copying before or after ⌘V, a rewrite of the same text and paste session, an empty
+# clipboard, restore off, a failed clipboard write, ⌘V that can't be sent, remote-desktop timing, a close with a restore
+# pending; another app or field in front before ⌘V, Finish and Send's Enter (also after Auto Learn's wait) or Undo's
+# Delete, a newer paste or Undo in between, History's and Paste Last's wait for their app (in front, late, never, quit,
+# superseded, cancelled, none recorded), Yap's own window in front; and the notification each refusal gives, with where
+# the text is. Every scenario runs on a private pasteboard of its own (NSPasteboard(name:)) that it releases at the end;
+# the general pasteboard (what the user copies to) is never read or written, no key is sent, no app is activated and
+# nothing is read from the app in front (made-up process IDs and elements). Runs from a copy re-identified as
+# me.sma1lboy.yap.mock (see scripts/mock.sh) under the mock lock. The raw lines are kept in $OUT (default
+# /tmp/yap-paste-session-check.txt); fails if any scenario does.
 set -euo pipefail
 source "$(dirname "$0")/mock-lock.sh"
 
