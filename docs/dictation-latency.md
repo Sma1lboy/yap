@@ -48,8 +48,11 @@ Then, in seconds after the stop (nil when the step didn't happen):
 
 `pasteOutcome`: `pasted` (⌘V sent), `clipboardOnly` (no Accessibility permission: the text was left on the clipboard
 with a notification), `scratchpad` (no editable field had focus: the text went to the Scratchpad and the clipboard),
-`failed` (clipboard couldn't be set or the key events couldn't be sent). Nil when the text wasn't pasted: a response
-in the recorder, a custom command, "scratch that".
+`failed` (the clipboard couldn't be set, so the text went to the Scratchpad; or the key events couldn't be sent, so it
+stays on the clipboard), `clipboardChanged` (when ⌘V was due the clipboard no longer held the text, because the user
+copied something or another paste took it: no key was sent, the clipboard was left alone and the text went to the
+Scratchpad). Only `pasted` counts as a paste in Home's numbers. Nil when the text wasn't pasted: a response in the
+recorder, a custom command, "scratch that". `pasted` means ⌘V was sent, not that the app in front inserted the text.
 
 With the mode's language on Auto-detect and a local Whisper model, the SessionMetric also has `detectedLanguages`
 (the languages Whisper decoded the dictation in, in order, comma-separated: `zh`, `en`, `en,zh`) and
@@ -142,6 +145,37 @@ no wait and its recorder still on screen, until caca8c4d (May 2026). The wait co
 
 No app was tested by pasting into it: that needs desktop automation. The shortcut case is the one dictation takes
 by far most often; everything that involves Yap's own windows or Accessibility kept its wait.
+
+## The clipboard during a paste
+
+`PasteClipboard` (Paste/PasteClipboard.swift) holds the paste's claim on the clipboard: the text, its paste session
+and the change count its own write left. The paste owns the clipboard while all three still match; any other write,
+the user copying the very same text with the same session data included, changes the count.
+
+| What happens | Result | Clipboard afterwards | ⌘V |
+|---|---|---|---|
+| One paste, restore on | `pasted` | what the user had (every item and type), 0.25 s after ⌘V at the earliest (5 s with a remote desktop in front) | sent |
+| A second (third…) paste starts before the last one's restore | `pasted` each | the original from before the first paste; the last one's restore is called off and the new one inherits it | sent each |
+| A paste starts after the last restore ran | `pasted` | the original (the restore had already put it back) | sent |
+| The user copies after ⌘V, before the restore | `pasted` | the user's copy; the restore is skipped | sent |
+| The user copies, or another paste writes, before ⌘V | `clipboardChanged` | left alone; the text goes to the Scratchpad | not sent: it would paste whatever is there now |
+| The user copies, then a new paste starts | `pasted` | the user's copy: the new paste takes it as the original, not the old one's | sent |
+| The clipboard was empty | `pasted` | empty again | sent |
+| Restore off | `pasted` | the text, not marked transient; nothing is kept to put back | sent |
+| The clipboard write fails | `failed` | the original again (if nobody else wrote meanwhile); the text goes to the Scratchpad | not sent |
+| ⌘V can't be sent (no key events, AppleScript error) | `failed` | the text stays for the user to paste; the original is let go | not sent |
+| No Accessibility permission / no text field focused | `clipboardOnly` / `scratchpad` | the text, not transient | not sent |
+
+The original is kept in memory only, until it is put back, the clipboard changes hands, or the paste fails; it is
+never logged or saved. A restore puts it back marked transient, so clipboard-history apps don't record it twice.
+What isn't possible: NSPasteboard has no compare-and-swap, so another app can write between the last ownership check
+and the ⌘V (about 10 ms, the ⌘ key-down first) or the restore's write. Only Auto Learn and Undo Last Paste hear of a
+paste whose ⌘V was sent; `pasted` means the key events went out, not that the app in front inserted the text.
+
+`make paste-session-check` (scripts/paste-session-check.sh) runs `CursorPaster` itself on each of the cases above
+plus overlapping and late callbacks, every scenario on a private pasteboard (`NSPasteboard(name:)`) it releases at the
+end, with ⌘V recorded instead of sent, the field in front injected and time moved by the scenario. The general
+pasteboard, the keyboard and the app in front are never touched.
 
 ## Measuring it
 
