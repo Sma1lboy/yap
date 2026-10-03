@@ -75,6 +75,7 @@ struct VoiceInkApp: App {
             ReleaseNotes.selfCheck()
             TrustBody.selfCheck()
             WhisperChunking.selfCheck()
+            DictionaryTerms.selfCheck()
             TimedSegments.selfCheck()
             PCMResampler.selfCheck()
             MicrophoneLevelProbe.selfCheck()

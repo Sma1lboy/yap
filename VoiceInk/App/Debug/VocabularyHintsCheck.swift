@@ -125,7 +125,10 @@
                 send(name: name, model: deepgram, context: sameDate, audio: audio)
             }
 
-            print("vocabulary-hints-done")
+            // Asserts: a failure ends the app before the line below.
+            DictionaryTerms.selfCheck()
+            TranscriptionHints.selfCheck()
+            print("vocabulary-hints-done: DictionaryTerms TranscriptionHints self-checks ok")
             fflush(stdout)
             exit(0)
         }

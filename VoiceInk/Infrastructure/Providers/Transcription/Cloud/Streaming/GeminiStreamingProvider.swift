@@ -37,7 +37,7 @@ final class GeminiStreamingProvider: StreamingTranscriptionProvider {
                 apiKey: apiKey,
                 model: model.name,
                 language: language,
-                customVocabulary: customVocabularyTerms()
+                customVocabulary: DictionaryTerms.newestFirst(in: modelContext)
             )
         } catch {
             forwardingTask?.cancel()
@@ -86,25 +86,6 @@ final class GeminiStreamingProvider: StreamingTranscriptionProvider {
                 }
             }
         }
-    }
-
-    private func customVocabularyTerms() -> [String] {
-        let descriptor = FetchDescriptor<VocabularyWord>(sortBy: [SortDescriptor(\.word)])
-        guard let vocabularyWords = try? modelContext.fetch(descriptor) else {
-            return []
-        }
-
-        var seen = Set<String>()
-        var unique: [String] = []
-        for word in vocabularyWords {
-            let trimmed = word.word.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else { continue }
-            let key = trimmed.lowercased()
-            guard seen.insert(key).inserted else { continue }
-            unique.append(trimmed)
-            if unique.count == 1_000 { break }
-        }
-        return unique
     }
 
     private func mapError(_ error: Error) -> Error {
