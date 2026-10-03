@@ -400,11 +400,20 @@
             MeetingRowTools.snapshotSpeakers = [
                 ("me", MeetingSegment.Speaker.me.label), ("others", MeetingSegment.Speaker.others.label),
             ].map { (key: $0.0, label: $0.1) }
+            // The audio-only meeting has its two channels in a meeting folder, so its row offers Transcribe Meeting.
+            let audioOnlyFolder = FileManager.default.temporaryDirectory
+                .appendingPathComponent("yap-snapshots-\(UUID().uuidString)/Recordings/meetings/\(UUID().uuidString)", isDirectory: true)
+            try? FileManager.default.createDirectory(at: audioOnlyFolder, withIntermediateDirectories: true)
+            let tone = (0..<16_000).map { Int16(3_000 * sin(Double($0) / 8)) }
+            for file in ["mic.wav", "system.wav", "mix.wav"] {
+                try? PCM16WAVWriter.write(tone, to: audioOnlyFolder.appendingPathComponent(file))
+            }
             for (name, text, status, speakerStatus) in expandedMeetings {
-                shot("history-row-meeting-\(name)", size: CGSize(width: 680, height: 260), main: true) {
+                shot("history-row-meeting-\(name)", size: CGSize(width: 680, height: name == "audio-only" ? 360 : 260), main: true) {
                     let item = Transcription(text: text, duration: 1_874, transcriptionStatus: status)
                     let _ = item.kind = Transcription.meetingKind
                     let _ = item.meetingSpeakerStatus = speakerStatus
+                    let _ = item.audioFileURL = name == "audio-only" ? audioOnlyFolder.appendingPathComponent("mix.wav").absoluteString : nil
                     HistoryCardRow(
                         transcription: item, wordCount: 14, isExpanded: true, isChecked: false, isSelecting: false,
                         onToggleExpand: {}, onToggleCheck: {}, onShowInfo: {}
@@ -412,6 +421,7 @@
                     .padding(AppTheme.Spacing.x4)
                 }
             }
+            try? FileManager.default.removeItem(at: audioOnlyFolder.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent())
             MeetingRowTools.snapshotSpeakers = nil
             // A meeting's History row on its notes tab (rendered Markdown), its tools in each state, the names editor.
             let meetingSpeakers = [
@@ -462,6 +472,51 @@
                 MeetingSpeakerNamesEditor(
                     speakers: meetingSpeakers, names: namedMeeting.meetingSpeakerNames, onCancel: {}, onSave: { _ in nil })
             }
+            // Transcribe Meeting on a meeting saved with its audio only: the button, what it asks before starting (a
+            // local and a cloud model), no model in the mode, entries it can't do, and each state of a run.
+            let audioOnly = Transcription(text: recoveredReason, duration: 1_874, transcriptionStatus: .failed)
+            audioOnly.kind = Transcription.meetingKind
+            let localPlan = MeetingTranscribeTools.Plan(
+                model: "Large v3 Turbo (Quantized)", language: TranscriptionLanguageSupport.displayName("auto"),
+                destination: String(localized: "A local model: the recording stays on this Mac."))
+            let cloudPlan = MeetingTranscribeTools.Plan(
+                model: "Whisper Large v3", language: TranscriptionLanguageSupport.displayName("zh"),
+                destination: String(format: String(localized: "With your own API key: the recording, in 20–28 s parts, goes only to %@."), "Groq"))
+            let sources = MeetingRetranscription.Sources(folder: URL(fileURLWithPath: "/m"), microphone: nil, system: nil)
+            func transcribedResult(
+                failedPieces: Int = 0, notesProblem: String? = nil, speakersSkipped: SpeakerSplitSkip? = nil
+            ) -> MeetingRecorder.MeetingResult {
+                MeetingRecorder.MeetingResult(
+                    transcriptionID: audioOnly.id, notes: notesProblem == nil ? "- notes" : nil, transcript: "",
+                    notesProblem: notesProblem, markdown: "", failedPieces: failedPieces, speakersSkipped: speakersSkipped)
+            }
+            let transcribeShots: [(String, MeetingRetranscription.Eligibility, MeetingTranscribeTools.Plan?, Bool, String?, MeetingRetranscriber.State?, CGFloat)] = [
+                ("eligible", .eligible(sources), nil, false, nil, nil, 70),
+                ("confirm-local", .eligible(sources), localPlan, false, nil, nil, 210),
+                ("confirm-cloud", .eligible(sources), cloudPlan, false, nil, nil, 210),
+                ("no-model", .eligible(sources), nil, true, nil, nil, 110),
+                ("busy", .eligible(sources), nil, false, String(localized: "Another meeting is being transcribed. Try again when it's done."), nil, 110),
+                ("mix-only", .mixOnly, nil, false, nil, nil, 90),
+                ("audio-gone", .audioGone, nil, false, nil, nil, 90),
+                ("running", .eligible(sources), nil, false, nil, .running(String(localized: "Telling speakers apart…")), 70),
+                ("canceling", .eligible(sources), nil, false, nil, .canceling, 70),
+                ("canceled", .eligible(sources), nil, false, nil, .canceled, 100),
+                ("failed", .eligible(sources), nil, false, nil, .failed(CocoaError(.fileWriteOutOfSpace).localizedDescription), 110),
+                ("done", .transcribed, nil, false, nil, .done(transcribedResult()), 70),
+                // Two parts failed, no AI provider for notes, only one other person.
+                ("done-problems", .transcribed, nil, false, nil, .done(transcribedResult(
+                    failedPieces: 2, notesProblem: MeetingSummarizer.setupHint, speakersSkipped: .oneSpeaker)), 170),
+            ]
+            for (name, eligibility, plan, noModel, refused, state, height) in transcribeShots {
+                MeetingRetranscriber.shared.setSnapshotState(state, for: audioOnly.id)
+                shot("history-meeting-transcribe-\(name)", size: CGSize(width: 620, height: height), main: true) {
+                    MeetingTranscribeTools(
+                        transcription: audioOnly, eligibility: eligibility, plan: plan, noModel: noModel, refused: refused
+                    )
+                    .padding(AppTheme.Spacing.x4)
+                }
+            }
+            MeetingRetranscriber.shared.setSnapshotState(nil, for: audioOnly.id)
             // Save Meetings to Folder…: History with two meetings and a dictation selected (the button counts the
             // meetings only), with dictations only (no button); the sheet before saving (meetings only, and with
             // dictations), and after: all saved, partly (a copy the user edited, a link, an unreadable file, one already

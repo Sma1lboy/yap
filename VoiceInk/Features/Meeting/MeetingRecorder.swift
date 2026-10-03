@@ -13,12 +13,13 @@ final class MeetingRecorder: ObservableObject {
     static let shared = MeetingRecorder()
     /// Read by the dictation Recorder, which must not mute the output or pause media during a meeting.
     static var isRecordingMeeting: Bool { shared.phase.isRecording }
-    /// Recording or finishing. ModelResidency counts it as busy, so an idle or memory-pressure release waits for the
-    /// meeting's end instead of freeing the model between two pieces, which would only load it again for the next one.
+    /// Recording or finishing, or a meeting transcribed from History. ModelResidency counts it as busy, so an idle or
+    /// memory-pressure release waits for the meeting's end instead of freeing the model between two pieces, which
+    /// would only load it again for the next one.
     static var isMeetingInProgress: Bool {
         switch shared.phase {
         case .recording, .finishing: return true
-        default: return false
+        default: return MeetingRetranscriber.shared.isRunning
         }
     }
 
@@ -254,6 +255,17 @@ final class MeetingRecorder: ObservableObject {
         return result
     }
 
+    /// What the steps after capture made of a meeting, before anything is saved.
+    struct Processed {
+        var segments: [MeetingSegment]
+        var failures: Int
+        var echoRemoved: Int
+        var speakersSkipped: SpeakerSplitSkip?
+        /// Still telling speakers apart after `speakerWait`: the meeting is saved without them, and they follow.
+        var speakerJob: SpeakerJob?
+        var summary: MeetingSummarizer.Summary
+    }
+
     /// Everything after capture, without touching the panel (recovery runs it in the background): waits for the
     /// transcription, takes the speakers' echo out of "Me", tells remote speakers apart, writes notes, saves the
     /// History entry. Telling speakers apart is waited for up to `speakerWait` seconds (`MeetingRecorder.speakerWait`
@@ -264,57 +276,11 @@ final class MeetingRecorder: ObservableObject {
         progress: @escaping @MainActor @Sendable (String) -> Void
     ) async -> MeetingResult {
         defer { activeFolders.remove(session.folder.lastPathComponent) }
-        progress(String(localized: "Transcribing the last part…"))
-        let transcribing = Date()
-        var (segments, failures) = await session.finish()
-        if failures > 0 {
-            logger.error("\(failures, privacy: .public) meeting pieces failed to transcribe")
-        }
-        #if DEBUG
-            if MeetingFilesCheck.isRequested {
-                let elapsed = String(format: "%.1f", Date().timeIntervalSince(transcribing))
-                print("meeting-check: transcribed in \(elapsed) s; \(segments.count) pieces, \(Int(session.duration)) s per channel")
-            }
-        #endif
-        // Echo: the other side heard through the speakers, transcribed again as "Me". Reads both channels' files.
+        // Not stoppable, so there's always a result.
+        let processed = await processMeeting(session, engine: engine, speakerWait: speakerWait, progress: progress)!
+        let (segments, failures, speakerJob, summary) = (processed.segments, processed.failures, processed.speakerJob, processed.summary)
         let folder = session.folder
-        let deduplicated = await Task.detached { [segments] in MeetingEcho.removeEcho(from: segments, folder: folder) }.value
-        let echoRemoved = deduplicated.filter(\.hadEcho).count
-        if echoRemoved > 0 {
-            segments = deduplicated
-            try? JSONEncoder().encode(segments).write(to: folder.appendingPathComponent("segments.json"), options: .atomic)
-            logger.notice("Echo taken out of \(echoRemoved, privacy: .public) of the microphone's pieces")
-        }
-        #if DEBUG
-            if MeetingFilesCheck.isRequested { print("meeting-check: echo-removed \(echoRemoved)") }
-        #endif
-        var speakersSkipped: SpeakerSplitSkip? = nil
-        var speakerJob: SpeakerJob? = nil
-        if segments.contains(where: { $0.speaker == .others && !$0.isFailed }) {
-            if session.duration < MeetingDiarizer.minimumDuration {
-                speakersSkipped = .tooShort
-            } else {
-                progress(String(localized: "Telling speakers apart…"))
-                speakerProgress[folder.lastPathComponent] = progress
-                let job = speakerTurns(folder: folder, duration: session.duration, engine: engine)
-                if let turns = await Self.value(of: job, within: speakerWait ?? Self.speakerWait) {
-                    speakerProgress[folder.lastPathComponent] = nil
-                    let labeled: [MeetingSegment]
-                    (labeled, speakersSkipped) = Self.labeled(segments, turns)
-                    if labeled != segments {
-                        segments = labeled
-                        try? JSONEncoder().encode(segments).write(to: folder.appendingPathComponent("segments.json"), options: .atomic)
-                    }
-                } else {
-                    speakerJob = job
-                }
-            }
-        }
-
-        progress(String(localized: "Writing notes…"))
         let transcript = MeetingNotes.transcript(segments)
-        // Notes from what was understood; the failed pieces' markers are left out.
-        let summary = await MeetingSummarizer(engine: engine).notes(for: MeetingNotes.transcript(segments.filter { !$0.isFailed }))
 
         let transcription = Transcription(
             text: transcript.isEmpty ? String(localized: "(Nothing was said in this meeting.)") : transcript,
@@ -340,8 +306,8 @@ final class MeetingRecorder: ObservableObject {
         var result = MeetingResult(
             transcriptionID: transcription.id, notes: summary.notes, transcript: transcript,
             notesProblem: summary.problem, markdown: markdown, notesModel: summary.modelName,
-            folder: session.folder, failedPieces: failures, speakersSkipped: speakersSkipped, echoRemoved: echoRemoved,
-            saveError: saveError)
+            folder: session.folder, failedPieces: failures, speakersSkipped: processed.speakersSkipped,
+            echoRemoved: processed.echoRemoved, saveError: saveError)
         if let speakerJob {
             // Without an entry there's nothing to update; the next launch recovers the folder from the start.
             if saveError == nil {
@@ -352,6 +318,82 @@ final class MeetingRecorder: ObservableObject {
             }
         }
         return result
+    }
+
+    /// The meeting steps after capture, in the session's folder, saving nothing to History: the transcription,
+    /// echo, speakers, notes. `segments.json` in the folder is kept up to date with them. `names` go into the notes
+    /// prompt; `notesMode` is the mode whose AI provider writes the notes (the current one when nil).
+    /// `stoppable`: the task running it can be cancelled (Transcribe Meeting in History); between steps, and while
+    /// waiting for the speakers, a cancel ends it with nil and no further requests. Otherwise never nil.
+    func processMeeting(
+        _ session: Session, engine: VoiceInkEngine, speakerWait: TimeInterval? = nil, names: MeetingSpeakerNames = [:],
+        notesMode: ModeConfig? = nil, stoppable: Bool = false,
+        transcribing message: String = String(localized: "Transcribing the last part…"),
+        progress: @escaping @MainActor @Sendable (String) -> Void
+    ) async -> Processed? {
+        func stopped() -> Bool { stoppable && Task.isCancelled }
+        progress(message)
+        let transcribing = Date()
+        var (segments, failures) = await session.finish()
+        if failures > 0 {
+            logger.error("\(failures, privacy: .public) meeting pieces failed to transcribe")
+        }
+        #if DEBUG
+            if MeetingFilesCheck.isRequested {
+                let elapsed = String(format: "%.1f", Date().timeIntervalSince(transcribing))
+                print("meeting-check: transcribed in \(elapsed) s; \(segments.count) pieces, \(Int(session.duration)) s per channel")
+            }
+        #endif
+        if stopped() { return nil }
+        // Echo: the other side heard through the speakers, transcribed again as "Me". Reads both channels' files.
+        let folder = session.folder
+        let deduplicated = await Task.detached { [segments] in MeetingEcho.removeEcho(from: segments, folder: folder) }.value
+        let echoRemoved = deduplicated.filter(\.hadEcho).count
+        if echoRemoved > 0 {
+            segments = deduplicated
+            try? JSONEncoder().encode(segments).write(to: folder.appendingPathComponent("segments.json"), options: .atomic)
+            logger.notice("Echo taken out of \(echoRemoved, privacy: .public) of the microphone's pieces")
+        }
+        #if DEBUG
+            if MeetingFilesCheck.isRequested { print("meeting-check: echo-removed \(echoRemoved)") }
+        #endif
+        var speakersSkipped: SpeakerSplitSkip? = nil
+        var speakerJob: SpeakerJob? = nil
+        if segments.contains(where: { $0.speaker == .others && !$0.isFailed }) {
+            if session.duration < MeetingDiarizer.minimumDuration {
+                speakersSkipped = .tooShort
+            } else {
+                progress(String(localized: "Telling speakers apart…"))
+                speakerProgress[folder.lastPathComponent] = progress
+                let job = speakerTurns(folder: folder, duration: session.duration, engine: engine)
+                let turns = await withTaskCancellationHandler {
+                    await Self.value(of: job, within: speakerWait ?? Self.speakerWait)
+                } onCancel: {
+                    if stoppable { job.cancel() }
+                }
+                if let turns {
+                    speakerProgress[folder.lastPathComponent] = nil
+                    let labeled: [MeetingSegment]
+                    (labeled, speakersSkipped) = Self.labeled(segments, turns)
+                    if labeled != segments {
+                        segments = labeled
+                        try? JSONEncoder().encode(segments).write(to: folder.appendingPathComponent("segments.json"), options: .atomic)
+                    }
+                } else {
+                    speakerJob = job
+                }
+            }
+        }
+        if stopped() { return nil }
+
+        progress(String(localized: "Writing notes…"))
+        // Notes from what was understood; the failed pieces' markers are left out.
+        let summary = await MeetingSummarizer(engine: engine, mode: notesMode).notes(
+            for: MeetingNotes.transcript(segments.filter { !$0.isFailed }, names: names), names: names)
+        if stopped() { return nil }
+        return Processed(
+            segments: segments, failures: failures, echoRemoved: echoRemoved, speakersSkipped: speakersSkipped,
+            speakerJob: speakerJob, summary: summary)
     }
 
     /// Saves a new History entry; returns the error instead of dropping it. A failed entry isn't left pending in
@@ -546,6 +588,8 @@ final class MeetingRecorder: ObservableObject {
         private var chain: Task<Void, Never>?
         private var segments: [MeetingSegment] = []
         private var failures = 0
+        /// Set by `cancel()`: pieces not started yet are dropped without a request.
+        private var isCancelled = false
         private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "MeetingRecorder")
 
         #if DEBUG
@@ -571,6 +615,13 @@ final class MeetingRecorder: ObservableObject {
             lock.unlock()
         }
 
+        /// Transcribe Meeting in History was canceled: the piece being transcribed finishes, the others are skipped.
+        func cancel() {
+            lock.lock()
+            isCancelled = true
+            lock.unlock()
+        }
+
         func finish() async -> (segments: [MeetingSegment], failures: Int) {
             lock.lock()
             let last = chain
@@ -584,6 +635,10 @@ final class MeetingRecorder: ObservableObject {
         private func transcribe(_ piece: MeetingChunker.Piece, speaker: MeetingSegment.Speaker, folder: URL) async {
             let url = folder.appendingPathComponent("pieces/\(speaker.rawValue)-\(Int(piece.start * 1000)).wav")
             do {
+                lock.lock()
+                let skip = isCancelled
+                lock.unlock()
+                if skip { return }
                 #if DEBUG
                     lock.lock()
                     let inject = failuresToInject > 0
@@ -594,7 +649,12 @@ final class MeetingRecorder: ObservableObject {
                 try PCM16WAVWriter.write(piece.samples, to: url)
                 defer { try? FileManager.default.removeItem(at: url) }
                 let raw = try await LocalModelActivity.$requester.withValue(.meeting) {
-                    try await registry.transcribe(
+                    #if DEBUG
+                        // Counts requests for scripts/meeting-files-check.sh; `--meeting-retranscribe-cancel-after N`
+                        // cancels right after the Nth, as a click on Cancel at that moment would.
+                        defer { if MeetingFilesCheck.pieceTranscribed() { self.cancel() } }
+                    #endif
+                    return try await registry.transcribe(
                         audioURL: url, model: configuration.model, context: configuration.requestContext)
                 }
                 let text = TranscriptionOutputFilter.filter(raw).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -619,6 +679,8 @@ final class MeetingRecorder: ObservableObject {
 @MainActor
 struct MeetingSummarizer {
     let engine: VoiceInkEngine
+    /// The mode whose AI provider writes the notes; the current one when nil.
+    var mode: ModeConfig? = nil
 
     struct Summary {
         var notes: String?
@@ -639,7 +701,7 @@ struct MeetingSummarizer {
         guard let service = engine.enhancementService, let aiService = service.getAIService() else {
             return Summary(problem: Self.setupHint)
         }
-        let base = ModeRuntimeResolver.currentEnhancementConfiguration(enhancementService: service, aiService: aiService)
+        let base = ModeRuntimeResolver.currentEnhancementConfiguration(mode: mode, enhancementService: service, aiService: aiService)
         func withPrompt(_ prompt: String) -> EnhancementRuntimeConfiguration {
             base.replacingPrompt(CustomPrompt(title: MeetingNotes.promptTitle, promptText: prompt, useSystemInstructions: false))
         }

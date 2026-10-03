@@ -5103,6 +5103,706 @@
         }
       }
     },
+    "A local model: the recording stays on this Mac." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地模型：录音留在这台 Mac 上。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地模型：錄音留在這台 Mac 上。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lokales Modell: Die Aufnahme bleibt auf diesem Mac."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modèle local : l’enregistrement reste sur ce Mac."
+          }
+        }
+      }
+    },
+    "A meeting is being recorded or recovered. Try again when it's done." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在录制或恢复一场会议，等它结束后再试。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在錄製或恢復一場會議，等它結束後再試。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerade wird ein Meeting aufgenommen oder wiederhergestellt. Versuche es erneut, wenn es fertig ist."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une réunion est en cours d’enregistrement ou de récupération. Réessayez une fois qu’elle est terminée."
+          }
+        }
+      }
+    },
+    "Another meeting is being transcribed. Try again when it's done." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另一场会议正在转写，等它完成后再试。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另一場會議正在轉錄，等它完成後再試。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerade wird ein anderes Meeting transkribiert. Versuche es erneut, wenn es fertig ist."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une autre réunion est en cours de transcription. Réessayez une fois qu’elle est terminée."
+          }
+        }
+      }
+    },
+    "Canceled. The entry and its recordings are unchanged." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已取消。这条记录和它的录音都没有改动。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已取消。這筆記錄和它的錄音都沒有改動。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abgebrochen. Der Eintrag und seine Aufnahmen sind unverändert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulé. L’entrée et ses enregistrements sont inchangés."
+          }
+        }
+      }
+    },
+    "Canceling… The part being transcribed finishes first." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在取消…正在转写的这一段会先完成。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在取消…正在轉錄的這一段會先完成。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird abgebrochen… Der Teil, der gerade transkribiert wird, läuft noch zu Ende."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulation… La partie en cours de transcription se termine d’abord."
+          }
+        }
+      }
+    },
+    "Its audio isn't in a meeting folder, so it can't be transcribed as a meeting." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的音频不在会议文件夹里，所以没法按会议转写。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的音訊不在會議資料夾裡，所以沒辦法按會議轉錄。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Audiodatei liegt nicht in einem Meeting-Ordner und kann daher nicht als Meeting transkribiert werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son audio n’est pas dans un dossier de réunion : il ne peut pas être transcrit comme une réunion."
+          }
+        }
+      }
+    },
+    "Its recordings are gone (deleted, or removed by the audio retention setting), so it can't be transcribed." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的录音已经不在了（被删除，或被音频保留设置清理），所以没法转写。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的錄音已經不在了（被刪除，或被音訊保留設定清理），所以沒辦法轉錄。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Aufnahmen sind nicht mehr da (gelöscht oder durch die Aufbewahrungseinstellung für Audio entfernt), daher kann nichts transkribiert werden."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses enregistrements n’existent plus (supprimés, ou effacés par le réglage de conservation de l’audio) : impossible de le transcrire."
+          }
+        }
+      }
+    },
+    "No transcription model is chosen in the current mode. Choose one in Modes, then transcribe the meeting." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前模式里没有选转写模型。先在「模式」里选一个，再转写会议。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前模式裡沒有選轉錄模型。先在「模式」裡選一個，再轉錄會議。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im aktuellen Modus ist kein Transkriptionsmodell gewählt. Wähle unter „Modi“ eines und transkribiere das Meeting dann."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun modèle de transcription n’est choisi dans le mode actuel. Choisissez-en un dans Modes, puis transcrivez la réunion."
+          }
+        }
+      }
+    },
+    "Only its audio was saved." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当时只保存了音频。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "當時只儲存了音訊。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur die Audiodatei wurde gespeichert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seul l’audio a été enregistré."
+          }
+        }
+      }
+    },
+    "Only the mixed audio is left. Without the separate microphone and system audio recordings, Yap can't tell you from the others, so it doesn't transcribe it as a meeting." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只剩下混音。没有单独的麦克风和系统音频录音，Yap 分不出哪些是你、哪些是其他人，所以不会按会议转写。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只剩下混音。沒有單獨的麥克風和系統音訊錄音，Yap 分不出哪些是你、哪些是其他人，所以不會按會議轉錄。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur die gemischte Audiodatei ist noch da. Ohne die getrennten Aufnahmen von Mikrofon und Systemaudio kann Yap dich nicht von den anderen unterscheiden und transkribiert sie daher nicht als Meeting."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il ne reste que l’audio mixé. Sans les enregistrements séparés du micro et de l’audio système, Yap ne peut pas vous distinguer des autres : il ne le transcrit donc pas comme une réunion."
+          }
+        }
+      }
+    },
+    "Open Modes" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开模式设置"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟模式設定"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modi öffnen"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir Modes"
+          }
+        }
+      }
+    },
+    "The meeting changed while it was being transcribed, so nothing was saved." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写期间这场会议被改动了，所以没有保存任何内容。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "轉錄期間這場會議被改動了，所以沒有儲存任何內容。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Meeting wurde während der Transkription geändert, deshalb wurde nichts gespeichert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réunion a changé pendant la transcription : rien n’a été enregistré."
+          }
+        }
+      }
+    },
+    "The meeting was deleted from History while it was being transcribed." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写期间这场会议已从历史记录中删除。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "轉錄期間這場會議已從歷史記錄中刪除。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Meeting wurde während der Transkription aus dem Verlauf gelöscht."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réunion a été supprimée de l’historique pendant la transcription."
+          }
+        }
+      }
+    },
+    "The meeting wasn't transcribed: %@ The entry and its recordings are unchanged." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会议没有转写成功：%@ 这条记录和它的录音都没有改动。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "會議沒有轉錄成功：%@ 這筆記錄和它的錄音都沒有改動。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Meeting wurde nicht transkribiert: %@ Der Eintrag und seine Aufnahmen sind unverändert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La réunion n’a pas été transcrite : %@ L’entrée et ses enregistrements sont inchangés."
+          }
+        }
+      }
+    },
+    "The recording, in 20–28 s parts, goes only to the endpoint you set up for %@." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录音分成 20–28 秒的片段，只发送到你为 %@ 设置的端点。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "錄音分成 20–28 秒的片段，只傳送到你為 %@ 設定的端點。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Aufnahme geht in Teilen von 20–28 s nur an den Endpunkt, den du für %@ eingerichtet hast."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’enregistrement, en parties de 20 à 28 s, va uniquement au point de terminaison que vous avez configuré pour %@."
+          }
+        }
+      }
+    },
+    "The whole recording is transcribed again, then speakers are told apart and notes are written by this mode's AI provider, if it has one. The entry stays as it is until that's done; canceling or a failure changes nothing. Each try is a new full run, so a cloud model is called again." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整段录音会从头转写，然后区分说话人，再由这个模式的 AI 提供商（如果有）整理纪要。完成之前这条记录保持原样，取消或失败都不会改动它。每次重试都是完整的一遍，云端模型会被再次调用。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "整段錄音會從頭轉錄，然後區分說話者，再由這個模式的 AI 供應商（如果有）整理紀要。完成之前這筆記錄保持原樣，取消或失敗都不會改動它。每次重試都是完整的一遍，雲端模型會被再次呼叫。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die ganze Aufnahme wird neu transkribiert, dann werden die Sprecher unterschieden und der KI-Anbieter dieses Modus (falls vorhanden) schreibt die Notizen. Bis dahin bleibt der Eintrag, wie er ist; Abbrechen oder ein Fehler ändern nichts. Jeder Versuch ist ein vollständiger neuer Durchlauf, ein Cloud-Modell wird also erneut aufgerufen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tout l’enregistrement est transcrit à nouveau, puis les intervenants sont distingués et le fournisseur d’IA de ce mode (s’il y en a un) rédige les notes. D’ici là, l’entrée reste telle quelle ; une annulation ou un échec ne change rien. Chaque essai est un passage complet : un modèle cloud est donc appelé à nouveau."
+          }
+        }
+      }
+    },
+    "This meeting already has its transcript." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这场会议已经有转写了。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這場會議已經有轉錄了。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Meeting hat sein Transkript schon."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cette réunion a déjà sa transcription."
+          }
+        }
+      }
+    },
+    "Transcribe Meeting…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转写会议…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "轉錄會議…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meeting transkribieren…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcrire la réunion…"
+          }
+        }
+      }
+    },
+    "Transcribe this meeting from its microphone and system audio recordings, with this mode's model." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用这个模式的模型，从麦克风和系统音频两段录音转写这场会议。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用這個模式的模型，從麥克風和系統音訊兩段錄音轉錄這場會議。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkribiert dieses Meeting aus den Aufnahmen von Mikrofon und Systemaudio, mit dem Modell dieses Modus."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcrire cette réunion à partir des enregistrements du micro et de l’audio système, avec le modèle de ce mode."
+          }
+        }
+      }
+    },
+    "Transcribe with %@, language %@ (this mode's settings now)." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 %@ 转写，语言：%@（这个模式现在的设置）。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用 %@ 轉錄，語言：%@（這個模式現在的設定）。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit %@ transkribieren, Sprache: %@ (aktuelle Einstellungen dieses Modus)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcrire avec %@, langue : %@ (réglages actuels de ce mode)."
+          }
+        }
+      }
+    },
+    "Transcribed. This entry now has the meeting's transcript." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已转写，这条记录现在有了会议的转写。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已轉錄，這筆記錄現在有了會議的轉錄。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transkribiert. Dieser Eintrag hat jetzt das Transkript des Meetings."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcrite. Cette entrée contient maintenant la transcription de la réunion."
+          }
+        }
+      }
+    },
+    "Transcribing the meeting…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在转写会议…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在轉錄會議…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meeting wird transkribiert…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transcription de la réunion…"
+          }
+        }
+      }
+    },
+    "With your own API key: the recording, in 20–28 s parts, goes only to %@." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用你自己的 API 密钥：录音分成 20–28 秒的片段，只发送给 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用你自己的 API 金鑰：錄音分成 20–28 秒的片段，只傳送給 %@。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit deinem eigenen API-Schlüssel: Die Aufnahme geht in Teilen von 20–28 s nur an %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avec votre propre clé API : l’enregistrement, en parties de 20 à 28 s, va uniquement à %@."
+          }
+        }
+      }
+    },
+    "Yap Cloud: the recording, in 20–28 s parts, passes through Yap's server on the way to the model provider, and is billed to your Yap Cloud balance." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 Yap Cloud：录音分成 20–28 秒的片段，经过 Yap 的服务器转发给模型提供商，费用从 Yap Cloud 余额扣除。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用 Yap Cloud：錄音分成 20–28 秒的片段，經過 Yap 的伺服器轉發給模型供應商，費用從 Yap Cloud 餘額扣除。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud: Die Aufnahme läuft in Teilen von 20–28 s über den Yap-Server zum Modellanbieter und wird vom Yap-Cloud-Guthaben abgebucht."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap Cloud : l’enregistrement, en parties de 20 à 28 s, passe par le serveur de Yap avant d’atteindre le fournisseur du modèle, et est facturé sur votre solde Yap Cloud."
+          }
+        }
+      }
+    },
+    "Yap isn't ready yet. Try again in a moment." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 还没准备好，稍后再试。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 還沒準備好，稍後再試。"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap ist noch nicht bereit. Versuche es gleich noch einmal."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap n’est pas encore prêt. Réessayez dans un instant."
+          }
+        }
+      }
+    },
     "a file with other content (perhaps an edited copy)" : {
       "localizations" : {
         "de" : {
