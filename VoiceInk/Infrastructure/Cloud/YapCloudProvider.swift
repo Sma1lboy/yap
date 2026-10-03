@@ -29,19 +29,16 @@ struct YapCloudProvider: CloudProvider {
         audioData: Data, fileName: String, apiKey: String, model: String, language: String?,
         customVocabulary: [String], timeout: TimeInterval
     ) async throws -> String {
-        var body: [String: Any] = [
-            "model": model,
-            "input_audio": ["data": audioData.base64EncodedString(), "format": Self.audioFormat(fileName)],
-        ]
-        TranscriptionHints.apply(to: &body, model: model, language: language, vocabulary: customVocabulary)
-
         // paygate caps the body at 40 MB (413 PAYLOAD_TOO_LARGE); don't upload what it would refuse.
         guard YapCloud.transcriptionBodyFits(audioBytes: audioData.count) else { throw YapCloudError.recordingTooLong }
+        let audio: [String: Any] = ["data": audioData.base64EncodedString(), "format": Self.audioFormat(fileName)]
         let timeout = YapCloud.wavDuration(audioData).map(YapCloud.transcriptionTimeout) ?? timeout
         let data: Data
         do {
+            // The terms field depends on the model, so each request (the fallback's too) gets its own; the audio is shared.
             data = try await YapCloud.shared.withAllowedModel(model, fallback: RecommendedSetup.transcriptionModel) { model in
-                body["model"] = model
+                var body: [String: Any] = ["model": model, "input_audio": audio]
+                TranscriptionHints.apply(to: &body, model: model, language: language, vocabulary: customVocabulary)
                 return try await YapCloud.shared.proxy("/v1/audio/transcriptions", body: body, timeout: timeout)
             }
         } catch YapCloudError.server(413, _, _, _, _) {

@@ -32,29 +32,17 @@ struct DictionaryListToolbar: View {
     @State private var isConfirmingDelete = false
 
     var body: some View {
-        HStack(spacing: AppTheme.Spacing.x2) {
-            Picker("Show", selection: $filter) {
-                ForEach(DictionarySourceFilter.allCases, id: \.self) { Text($0.title).tag($0) }
+        // One row when it fits; with longer labels (German, French) the buttons go under the filter, uncut.
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: AppTheme.Spacing.x2) {
+                filterPicker
+                Spacer()
+                actions
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .fixedSize()
-
-            Spacer()
-
-            if isSelecting {
-                Button("Select All", action: onSelectAll)
-                    .disabled(visibleCount == 0 || selectedCount == visibleCount)
-                Button(role: .destructive) {
-                    isConfirmingDelete = true
-                } label: {
-                    Text(String(localized: "Delete (\(selectedCount))"))
-                }
-                .disabled(selectedCount == 0)
-                Button("Done") { isSelecting = false }
-            } else {
-                Button("Select") { isSelecting = true }
-                    .disabled(visibleCount == 0)
+            VStack(alignment: .trailing, spacing: AppTheme.Spacing.x2) {
+                filterPicker
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: AppTheme.Spacing.x2) { actions }
             }
         }
         .controlSize(.small)
@@ -65,6 +53,37 @@ struct DictionaryListToolbar: View {
             Button("Delete", role: .destructive, action: onDeleteSelected)
         } message: {
             Text("This can't be undone.")
+        }
+    }
+
+    private var filterPicker: some View {
+        Picker("Show", selection: $filter) {
+            ForEach(DictionarySourceFilter.allCases, id: \.self) { Text($0.title).tag($0) }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .fixedSize()
+    }
+
+    @ViewBuilder
+    private var actions: some View {
+        if isSelecting {
+            Button("Select All", action: onSelectAll)
+                .disabled(visibleCount == 0 || selectedCount == visibleCount)
+                .fixedSize()
+            Button(role: .destructive) {
+                isConfirmingDelete = true
+            } label: {
+                Text(String(localized: "Delete (\(selectedCount))"))
+            }
+            .disabled(selectedCount == 0)
+            .fixedSize()
+            Button("Done") { isSelecting = false }
+                .fixedSize()
+        } else {
+            Button("Select") { isSelecting = true }
+                .disabled(visibleCount == 0)
+                .fixedSize()
         }
     }
 }
