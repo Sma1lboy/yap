@@ -14,7 +14,7 @@
 
         static func runIfRequested() {
             guard CommandLine.arguments.contains(argument) else { return }
-            let results = scenarios.map { $0() }
+            let results = scenarios.map { $0() } + [dictationCheckOutlets()]
             let failed = results.filter { !$0 }.count
             // Asserts: a failure ends the app before the next line.
             ClipboardManager.selfCheck()
@@ -23,6 +23,66 @@
             print("paste-check-done: \(results.count) scenarios, \(failed) failed")
             fflush(stdout)
             exit(0)
+        }
+
+        /// The outlets the dictation checks install (`installCheck`: offline, latency, isolation, lifecycle, quit,
+        /// residency, first run), as they are, on the real clock: ⌘V goes out (not sent) and is timed, then the check
+        /// closes before the restore (2 s with the default setting) is due; the restore must not write afterwards.
+        static func dictationCheckOutlets() -> Bool {
+            final class Seen {
+                var commandTimes: [TimeInterval] = []
+                var outcome: String?
+                var closed = false
+            }
+            let seen = Seen()
+            let close = CursorPaster.Outlets.installCheck(commandSent: { seen.commandTimes.append($0) })
+            let clipboard = CursorPaster.outlets.clipboard
+            let pasteboard = clipboard.pasteboard
+            func run(for seconds: TimeInterval, until done: () -> Bool = { false }) {
+                let end = Date().addingTimeInterval(seconds)
+                while Date() < end, !done() { RunLoop.main.run(until: Date().addingTimeInterval(0.01)) }
+            }
+            var failures: [String] = []
+            write(original, to: pasteboard)
+            let task = CursorPaster.startPasteAtCursor("dictation A", lead: .shortcut)
+            Task { @MainActor in seen.outcome = "\(await task.value.result)" }
+            run(for: 1) { seen.outcome != nil }
+            if seen.outcome != "commandPosted" || seen.commandTimes.count != 1 {
+                failures.append("outcome \(seen.outcome ?? "none"), ⌘V times \(seen.commandTimes.count)")
+            }
+            if pasteboard.string(forType: .string) != "dictation A" { failures.append("text not on the private pasteboard") }
+            let first = seen.outcome ?? "none"
+            seen.outcome = nil
+            // Close the clipboard, wait past the restore and try a late paste, all before the release: a released
+            // pasteboard isn't read again (reading it would bring it back).
+            let closedAt = pasteboard.changeCount
+            Task { @MainActor in
+                await clipboard.close()
+                seen.closed = true
+            }
+            run(for: 1) { seen.closed }
+            run(for: 2.5)  // past the 2 s restore
+            if !seen.closed { failures.append("close didn't finish") }
+            let late = CursorPaster.startPasteAtCursor("late", lead: .shortcut)
+            Task { @MainActor in seen.outcome = "\(await late.value.result)" }
+            run(for: 0.3)
+            if pasteboard.changeCount != closedAt { failures.append("pasteboard written after close") }
+            if seen.outcome != "commandNotPosted" { failures.append("a paste after close: \(seen.outcome ?? "none")") }
+            seen.closed = false
+            Task { @MainActor in
+                await close()  // what the checks call: close (already done), then release
+                seen.closed = true
+            }
+            run(for: 1) { seen.closed }
+            let line: [String: Any] = [
+                "scenario": "dictation checks' outlets, real clock, closed before the restore", "pass": failures.isEmpty,
+                "failures": failures, "outcomes": ["A": first, "late": seen.outcome ?? "none"],
+                "keysTimed": seen.commandTimes.count,
+            ]
+            if let data = try? JSONSerialization.data(withJSONObject: line, options: [.sortedKeys]) {
+                print("paste-check: \(String(decoding: data, as: UTF8.self))")
+            }
+            return failures.isEmpty
         }
 
         // MARK: - Clock
