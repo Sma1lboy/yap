@@ -37,7 +37,7 @@ class WhisperTranscriptionService: TranscriptionService {
         logger.notice("Initiating local transcription for model: \(model.displayName, privacy: .public)")
 
         let samples = try Self.readAudioSamples(audioURL)
-        let prompt = WhisperPrompt.withVocabulary(context.prompt ?? "", words: dictionaryWords())
+        let prompt = initialPrompt(for: context)
         // The shared context, in this request's turn: the preload the shortcut press started is waited for, never
         // loaded a second time, and the language and prompt go with this decode only. Cancelling the task takes it
         // out of the queue, or aborts its decode (whisper.cpp's abort callback) and frees the turn for the next one.
@@ -74,11 +74,12 @@ class WhisperTranscriptionService: TranscriptionService {
         return (transcript.text, transcript.segments)
     }
 
-    /// Read through a context of its own on this thread; the main context would wait for the main actor.
-    private func dictionaryWords() -> [(word: String, dateAdded: Date)] {
-        guard let modelContainer else { return [] }
-        let words = (try? ModelContext(modelContainer).fetch(FetchDescriptor<VocabularyWord>())) ?? []
-        return words.map { ($0.word, $0.dateAdded) }
+    /// The request's base prompt with the dictionary as it is now: read for each request, so a word added or deleted
+    /// counts from the next one. Read through a context of its own on this thread; the main context would wait for the
+    /// main actor.
+    func initialPrompt(for context: TranscriptionRequestContext) -> String {
+        let words = modelContainer.map { DictionaryTerms.newestFirst(in: ModelContext($0)) } ?? []
+        return WhisperPrompt.withVocabulary(context.prompt ?? "", newestFirst: words)
     }
 
     static func readAudioSamples(_ url: URL) throws -> [Float] {

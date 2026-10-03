@@ -120,25 +120,25 @@ class WhisperPrompt: ObservableObject {
         return languagePrompts[language] ?? languagePrompts["default"] ?? ""
     }
 
-    /// whisper.cpp keeps at most 224 prompt tokens (the tail); stay under that with a rough estimate.
+    /// whisper.cpp keeps a prompt's last 223 tokens (half the text context, less one); stay under that with a rough
+    /// estimate.
     nonisolated static let vocabularyTokenBudget = 200
 
     /// Appends dictionary words to the base prompt. Whisper spells what the prompt shows it, so words it
     /// otherwise mishears (useEffect, Kubernetes, names) come out right: on the code-switched bench,
     /// every term in the prompt took base from 16 to 37 of 82 terms, small 35 → 53, turbo q5_0 45 → 54
     /// (setup/asr/results).
-    /// Newest words go last and the oldest are dropped first when the list is too long.
-    nonisolated static func withVocabulary(_ base: String, words: [(word: String, dateAdded: Date)]) -> String {
-        var seen = Set<String>()
-        let newestFirst = words.sorted { $0.dateAdded > $1.dateAdded }
-            .map { $0.word.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty && seen.insert($0.lowercased()).inserted }
-
+    /// `newestFirst` is DictionaryTerms' list (trimmed, one per spelling ignoring case, most recently added first,
+    /// same-date words by spelling). Words are taken in that order while their estimate, plus one for the separator
+    /// before each, fits what the base leaves of the budget; a word too long for what's left is skipped whole, never
+    /// cut, and older words that fit still go. The kept words are written newest last, since whisper.cpp keeps a long
+    /// prompt's tail. A base at or over the budget gets no words and is left as it is.
+    nonisolated static func withVocabulary(_ base: String, newestFirst words: [String]) -> String {
         var budget = vocabularyTokenBudget - estimatedTokens(base)
         var kept: [String] = []
-        for word in newestFirst {
+        for word in words {
             let cost = estimatedTokens(word) + 1
-            guard cost <= budget else { break }
+            guard cost <= budget else { continue }
             budget -= cost
             kept.append(word)
         }
@@ -154,20 +154,46 @@ class WhisperPrompt: ObservableObject {
 
     #if DEBUG
         nonisolated static func selfCheck() {
-            let now = Date()
+            let start = Date(timeIntervalSince1970: 1_800_000_000)
+            func at(_ seconds: Double) -> Date { start.addingTimeInterval(seconds) }
+            func prompt(_ base: String, _ words: [(word: String, dateAdded: Date)]) -> String {
+                withVocabulary(base, newestFirst: DictionaryTerms.newestFirst(words))
+            }
             let words: [(word: String, dateAdded: Date)] = [
-                ("Kubernetes", now.addingTimeInterval(-10)), ("useEffect", now), ("kubernetes", now.addingTimeInterval(-5)),
-                ("  ", now),
+                ("Kubernetes", at(0)), ("useEffect", at(10)), ("kubernetes", at(5)), ("  ", at(10)),
             ]
-            // Deduped case-insensitively (newest spelling wins), newest last, blanks dropped.
-            assert(withVocabulary("", words: words) == "kubernetes, useEffect")
-            assert(withVocabulary("你好。", words: words) == "你好。 kubernetes, useEffect")
-            assert(withVocabulary("", words: []) == "")
-            // Over budget: the oldest words are the ones dropped.
-            let many = (0..<500).map { (word: "term\($0)", dateAdded: now.addingTimeInterval(Double($0))) }
-            let prompt = withVocabulary("", words: many)
-            assert(prompt.hasSuffix("term499") && !prompt.contains("term0,"))
-            assert(estimatedTokens(prompt) <= vocabularyTokenBudget)
+            // Deduped case-insensitively (newest spelling wins), newest last, blanks dropped; no words keeps the base.
+            assert(prompt("", words) == "kubernetes, useEffect")
+            assert(prompt("你好。", words) == "你好。 kubernetes, useEffect")
+            assert(prompt("", []) == "" && prompt("你好。", []) == "你好。" && prompt("你好。", [(" ", at(0))]) == "你好。")
+
+            // A newest word over the whole budget is skipped, not cut: Latin, CJK; the older ones still go, as typed.
+            let latin = String(repeating: "X", count: 900)
+            assert(prompt("", [("useEffect", at(0)), (latin, at(1))]) == "useEffect")
+            let cjk = String(repeating: "词", count: 120)
+            assert(prompt("", [("useEffect", at(0)), ("React组件", at(0.5)), (cjk, at(1))]) == "useEffect, React组件")
+
+            // Room left for a short older word but not the newer long one: the older one goes. 589 letters ≈ 197
+            // tokens, leaving 3; Kubernetes costs 5, Redis 3.
+            let long = String(repeating: "a", count: 589)
+            assert(prompt(long, [("Redis", at(0)), ("Kubernetes", at(1))]) == long + " Redis")
+
+            // A base at or over the budget: no words, and the base isn't cut.
+            for full in [String(repeating: "a", count: 598), String(repeating: "a", count: 900)] {
+                assert(prompt(full, words) == full)
+            }
+
+            // Same date: by spelling, whatever order they come in; the first by spelling are the ones that fit.
+            let sameDate = (0..<101).map { (word: String(format: "W%03d", $0), dateAdded: start) }
+            let forward = prompt("", sameDate)
+            assert(forward == prompt("", sameDate.reversed()))
+            assert(forward.hasPrefix("W065, W064") && forward.hasSuffix("W001, W000"))
+
+            // Over budget: the oldest words are the ones dropped, within the estimate.
+            let many = (0..<500).map { (word: "term\($0)", dateAdded: at(Double($0))) }
+            let over = prompt("", many)
+            assert(over.hasSuffix("term499") && !over.contains("term0,"))
+            assert(estimatedTokens(over) <= vocabularyTokenBudget)
         }
     #endif
 
