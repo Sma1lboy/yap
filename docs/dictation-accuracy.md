@@ -61,6 +61,36 @@ On this bench, with every key term in the dictionary (`bench.py run openrouter|y
 
 paygate forwards `provider.options` unchanged, so Yap Cloud needs no paygate change. The other models' `--vocab` runs are still to do; a model that gains nothing there should be dropped from `TranscriptionHints.providerOptions`.
 
+## Which dictionary words a request carries (2026-10-03)
+
+Sending a word to a model is a hint, not a guarantee: the model can still spell it differently, and nothing here was measured for accuracy. This section is about which words go out.
+
+Every cloud request reads the dictionary when it starts (`DictionaryTerms.newestFirst`), so a word added or deleted counts from the next request. The words are trimmed, blank ones dropped, and spellings that differ only in case sent once. The list is ordered **most recently added first**; words added at the same moment go by spelling (Unicode order), so the order never depends on how SwiftData returns rows. A request that takes at most N words sends the first N: a word just added is always sent, and once the dictionary is over N the oldest words are the ones left out. Before this, the list was alphabetical, so a 101st word that sorted late (say "ZNewestName" after A000…A099) was never sent. That is our choice, not a provider rule, and it matches local Whisper, whose prompt keeps the newest words (`WhisperPrompt.withVocabulary`). Of two spellings that differ only in case, the newer one is sent, as typed.
+
+`dateAdded` is when a word was added: typed in the Dictionary or added by Auto Learn, it's the moment it was saved (several words pasted together count as added in order). Words from an imported dictionary file keep the file's `createdAt`, or get the import time if the file has none, and so do words from a settings backup or config. Nothing updates `dateAdded` after that; a word's use isn't counted.
+
+Who sends what (provider limits read in the providers' own docs on 2026-10-03; "app" means our budget, not theirs):
+
+| consumer | where the words are read | words sent | provider's documented limit |
+|---|---|---|---|
+| Deepgram batch `keyterm` (dictation, file import, History re-transcribe, meeting pieces) | `CloudTranscriptionService.swift:77` → `DeepgramProvider.swift:70` | first 100 (app; LLMkit also stops at 100) | 500 tokens across all keyterms, more is an error; "up to 100" is a recommendation |
+| Deepgram live `keyterm` | `DeepgramStreamingProvider.swift:33` | first 100 (app) | same |
+| OpenRouter / Yap Cloud: mai-transcribe-2 `azure.phraseList.phrases`; gpt-4o(-mini)-transcribe `openai.prompt`; whisper-large-v3 `prompt` | `CloudTranscriptionService.swift:77` → `TranscriptionHints.apply` (`OpenRouterProvider.swift:89`, `YapCloudProvider.swift:36`) | first 100 (app, `TranscriptionHints.maxTerms`); for whisper-large-v3 written newest last, because Whisper keeps only a long prompt's last 224 tokens | Azure: no more than 2,000 phrases suggested; OpenAI: a prompt over the model's length (not published) rejects the request; Whisper: last 224 tokens kept |
+| OpenRouter / Yap Cloud: other models (gemini-3.5-transcribe answers 400, qwen3-asr-flash ignores it, the rest untested) | same | none; only `language` | — |
+| xAI batch and live `keyterm` | `CloudTranscriptionService.swift:77`, `XAIStreamingProvider.swift:40` | whole list; LLMkit sends the first 100 of up to 50 characters | 100 terms of up to 50 characters |
+| AssemblyAI live `keyterms_prompt` | `AssemblyAIStreamingProvider.swift:40` | whole list; LLMkit sends the first 100 (≤ 50 characters, ≤ 6 words) | 100, more is an error |
+| AssemblyAI batch `keyterms_prompt` | `CloudTranscriptionService.swift:77` | whole list; LLMkit caps at 200 (universal-2) or 1,000 | 200 / 1,000 |
+| ElevenLabs batch / live `keyterms` | `CloudTranscriptionService.swift:77`, `ElevenLabsStreamingProvider.swift:41` | whole list; LLMkit caps at 1,000 (≤ 50 characters) / 50 (≤ 20 characters) | 1,000 / 50 |
+| Gemini batch / live `custom_vocabulary` | `CloudTranscriptionService.swift:77`, `GeminiStreamingProvider.swift:40` | whole list; LLMkit caps at 1,000 | 1,000 (100 suggested) |
+| Soniox `context.terms`, Speechmatics `additional_vocab` (batch and live) | `CloudTranscriptionService.swift:77`, `SonioxStreamingProvider.swift:32`, `SpeechmaticsStreamingProvider.swift:32` | whole list | Soniox: 8,000 tokens for the whole context; Speechmatics: 1,000 suggested, 20,000 rejected |
+| Groq, Mistral (batch and live), Cartesia live, custom OpenAI-compatible endpoints | — | none | — |
+| Local Whisper prompt | `WhisperTranscriptionService.swift:40` | newest first until about 200 estimated tokens (M8.2 checks this budget) | whisper.cpp keeps 224 tokens |
+| AI cleanup prompt, dictionary export, MCP | `AIEnhancementService.swift:158`, `DictionaryImportExportService`, `YapLibrary.swift:178` | whole dictionary, alphabetical, unchanged | — |
+
+Dictation, file import, History re-transcribe and meeting pieces all reach cloud batch through `TranscriptionServiceRegistry` → `CloudTranscriptionService`; live dictation goes through the provider's streaming class. The 100 is unchanged: 100 long words can still pass Deepgram's 500-token total, which nothing checks before sending.
+
+`make vocabulary-hints-check` runs these requests in the Debug app against an in-memory dictionary. Every request is recorded in-process and answered there, and IP traffic is denied. It checks the words in each request's URL, JSON body or form: over 100 words, after a delete and an add, blanks, case duplicates, CJK and mixed words, and 101 words with the same date inserted in two orders. Not checked: what the provider does with the words, and whether OpenRouter's other upstream providers forward them.
+
 ## Dictionary as a prompt for cloud transcription (2026-09-27)
 
 `bench.py run openrouter|yapcloud <model> --vocab` sends every key term, comma separated, as a `prompt` field:

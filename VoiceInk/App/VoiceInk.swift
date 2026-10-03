@@ -58,6 +58,8 @@ struct VoiceInkApp: App {
             MicFallbackCheck.runIfRequested()
             // make text-fidelity-check: fixed recognized text through the dictation text steps, printed; exits.
             TextFidelityCheck.runIfRequested()
+            // make vocabulary-hints-check: which dictionary words cloud requests carry, read off recorded requests; exits.
+            VocabularyHintsCheck.runIfRequested()
             // make paste-session-check: CursorPaster's clipboard handling on private pasteboards, no key sent; exits.
             PasteSessionCheck.runIfRequested()
             // make edit-rate-check: print the correction-rate fixtures, run their self-checks, and exit.
@@ -73,6 +75,7 @@ struct VoiceInkApp: App {
             ReleaseNotes.selfCheck()
             TrustBody.selfCheck()
             WhisperChunking.selfCheck()
+            DictionaryTerms.selfCheck()
             TimedSegments.selfCheck()
             PCMResampler.selfCheck()
             MicrophoneLevelProbe.selfCheck()

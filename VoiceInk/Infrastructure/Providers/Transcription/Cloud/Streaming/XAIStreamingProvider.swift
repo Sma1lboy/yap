@@ -37,7 +37,7 @@ final class XAIStreamingProvider: StreamingTranscriptionProvider {
                 apiKey: apiKey,
                 model: model.name,
                 language: language,
-                customVocabulary: getCustomVocabularyTerms()
+                customVocabulary: DictionaryTerms.newestFirst(in: modelContext)
             )
         } catch {
             forwardingTask?.cancel()
@@ -70,25 +70,6 @@ final class XAIStreamingProvider: StreamingTranscriptionProvider {
     }
 
     // MARK: - Private
-
-    private func getCustomVocabularyTerms() -> [String] {
-        let descriptor = FetchDescriptor<VocabularyWord>(sortBy: [SortDescriptor(\.word)])
-        guard let vocabularyWords = try? modelContext.fetch(descriptor) else {
-            return []
-        }
-
-        var seen = Set<String>()
-        var unique: [String] = []
-        for word in vocabularyWords {
-            let trimmed = word.word.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else { continue }
-            let key = trimmed.lowercased()
-            if seen.insert(key).inserted {
-                unique.append(trimmed)
-            }
-        }
-        return unique
-    }
 
     private func startEventForwarding() {
         forwardingTask = Task { [weak self] in

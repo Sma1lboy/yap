@@ -29,7 +29,7 @@ final class SpeechmaticsStreamingProvider: StreamingTranscriptionProvider {
             throw StreamingTranscriptionError.missingAPIKey
         }
 
-        let vocabulary = getCustomVocabularyTerms()
+        let vocabulary = DictionaryTerms.newestFirst(in: modelContext)
 
         // Cancel any existing forwarding task before starting a new one
         forwardingTask?.cancel()
@@ -88,25 +88,6 @@ final class SpeechmaticsStreamingProvider: StreamingTranscriptionProvider {
                 }
             }
         }
-    }
-
-    private func getCustomVocabularyTerms() -> [String] {
-        let descriptor = FetchDescriptor<VocabularyWord>(sortBy: [SortDescriptor(\.word)])
-        guard let vocabularyWords = try? modelContext.fetch(descriptor) else {
-            return []
-        }
-        var seen = Set<String>()
-        var unique: [String] = []
-        for word in vocabularyWords {
-            let trimmed = word.word.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else { continue }
-            let key = trimmed.lowercased()
-            if !seen.contains(key) {
-                seen.insert(key)
-                unique.append(trimmed)
-            }
-        }
-        return unique
     }
 
     private func mapError(_ error: Error) -> Error {

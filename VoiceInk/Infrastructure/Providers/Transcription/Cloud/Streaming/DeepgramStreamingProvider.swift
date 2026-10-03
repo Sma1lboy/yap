@@ -30,7 +30,7 @@ final class DeepgramStreamingProvider: StreamingTranscriptionProvider {
             throw StreamingTranscriptionError.missingAPIKey
         }
 
-        let vocabulary = getCustomVocabularyTerms()
+        let vocabulary = Array(DictionaryTerms.newestFirst(in: modelContext).prefix(100))
         let deepgramLanguage = model.name == "nova-3" && (language == nil || language == "auto")
             ? "multi"
             : language
@@ -91,25 +91,6 @@ final class DeepgramStreamingProvider: StreamingTranscriptionProvider {
                 }
             }
         }
-    }
-
-    private func getCustomVocabularyTerms() -> [String] {
-        let descriptor = FetchDescriptor<VocabularyWord>(sortBy: [SortDescriptor(\.word)])
-        guard let vocabularyWords = try? modelContext.fetch(descriptor) else {
-            return []
-        }
-        var seen = Set<String>()
-        var unique: [String] = []
-        for word in vocabularyWords {
-            let trimmed = word.word.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else { continue }
-            let key = trimmed.lowercased()
-            if !seen.contains(key) {
-                seen.insert(key)
-                unique.append(trimmed)
-            }
-        }
-        return Array(unique.prefix(100))
     }
 
     private func mapError(_ error: Error) -> Error {

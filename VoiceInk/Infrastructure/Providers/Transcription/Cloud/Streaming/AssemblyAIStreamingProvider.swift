@@ -37,7 +37,7 @@ final class AssemblyAIStreamingProvider: StreamingTranscriptionProvider {
                 apiKey: apiKey,
                 model: model.name,
                 language: language,
-                customVocabulary: getCustomDictionaryTerms()
+                customVocabulary: DictionaryTerms.newestFirst(in: modelContext)
             )
         } catch {
             forwardingTask?.cancel()
@@ -87,25 +87,6 @@ final class AssemblyAIStreamingProvider: StreamingTranscriptionProvider {
                 }
             }
         }
-    }
-
-    private func getCustomDictionaryTerms() -> [String] {
-        let descriptor = FetchDescriptor<VocabularyWord>(sortBy: [SortDescriptor(\.word)])
-        guard let vocabularyWords = try? modelContext.fetch(descriptor) else {
-            return []
-        }
-        var seen = Set<String>()
-        var unique: [String] = []
-        for word in vocabularyWords {
-            let trimmed = word.word.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else { continue }
-            let key = trimmed.lowercased()
-            if !seen.contains(key) {
-                seen.insert(key)
-                unique.append(trimmed)
-            }
-        }
-        return unique
     }
 
     private func mapError(_ error: Error) -> Error {

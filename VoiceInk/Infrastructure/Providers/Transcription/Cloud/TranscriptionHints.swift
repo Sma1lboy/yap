@@ -10,8 +10,9 @@ import Foundation
 /// gpt-4o-mini-transcribe 0 → 1, whisper-large-v3 `prompt` 0 → 1. qwen3-asr-flash ignored `context`, and
 /// gemini-3.5-transcribe answered 400 to `prompt`, so those two get no terms. Other models: none.
 enum TranscriptionHints {
-    /// ponytail: the first 100 terms (the dictionary is sorted by word); Azure phrase lists and OpenAI prompts
-    /// both have limits. Rank terms by use if bigger dictionaries lose the ones that matter.
+    /// The app's budget, not a documented provider maximum: the first 100 of DictionaryTerms' newest-first list, so
+    /// the oldest words are the ones left out. Azure suggests at most 2,000 phrases, and OpenAI rejects a prompt over
+    /// the model's (unpublished for gpt-4o-transcribe) length; 100 short terms has stayed within both.
     static let maxTerms = 100
 
     static func apply(to body: inout [String: Any], model: String, language: String?, vocabulary: [String]) {
@@ -38,7 +39,9 @@ enum TranscriptionHints {
         case "openai/gpt-4o-transcribe", "openai/gpt-4o-mini-transcribe":
             return ["openai": ["prompt": prompt]]
         case "openai/whisper-large-v3":
-            // Served by whichever of these is up; each takes OpenAI's `prompt`.
+            // Served by whichever of these is up; each takes OpenAI's `prompt`. Whisper keeps only the prompt's last
+            // 224 tokens (Groq documents the limit), so the newest words go last, as in local Whisper's prompt.
+            let prompt = terms.reversed().joined(separator: ", ")
             return ["groq": ["prompt": prompt], "deepinfra/us": ["prompt": prompt], "together": ["prompt": prompt]]
         default:
             return nil
@@ -60,6 +63,11 @@ enum TranscriptionHints {
             assert(openAI["language"] == nil)
             let options = (openAI["provider"] as? [String: Any])?["options"] as? [String: [String: String]]
             assert(options == ["openai": ["prompt": "A, B"]])
+            // Whisper keeps a long prompt's tail: the first (newest) term is the last one written.
+            var whisper: [String: Any] = [:]
+            apply(to: &whisper, model: "openai/whisper-large-v3", language: nil, vocabulary: ["New", "Old"])
+            let whisperOptions = (whisper["provider"] as? [String: Any])?["options"] as? [String: [String: String]]
+            assert(whisperOptions?["groq"]?["prompt"] == "Old, New" && whisperOptions?["together"]?["prompt"] == "Old, New")
 
             // No terms for models that ignore them or reject the field; nothing at all without input.
             var gemini: [String: Any] = [:]
@@ -70,10 +78,11 @@ enum TranscriptionHints {
             assert(empty.isEmpty)
             assert(isoLanguage("yue") == nil && isoLanguage("EN") == "en" && isoLanguage(nil) == nil)
             var many: [String: Any] = [:]
-            apply(to: &many, model: "microsoft/mai-transcribe-2", language: nil, vocabulary: (0..<150).map { "t\($0)" })
+            let words = (0..<150).map { "t\($0)" }
+            apply(to: &many, model: "microsoft/mai-transcribe-2", language: nil, vocabulary: words)
             let phrases = ((((many["provider"] as? [String: Any])?["options"] as? [String: Any])?["azure"]
                 as? [String: Any])?["phraseList"] as? [String: [String]])?["phrases"]
-            assert(phrases?.count == maxTerms)
+            assert(phrases == Array(words.prefix(maxTerms)), "the first 100 in the order given, the rest left out")
         }
     }
 #endif
