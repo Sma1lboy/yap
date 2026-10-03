@@ -109,8 +109,9 @@ final class MeetingRetranscriber: ObservableObject {
         /// What it's doing now ("Transcribing…", "Telling speakers apart…", "Writing notes…").
         case running(String)
         case canceling
-        /// Saved; `failedPieces` pieces couldn't be transcribed (each a marked line, as in any meeting).
-        case done(failedPieces: Int)
+        /// Saved. The result says what the panel would after a meeting: parts that couldn't be transcribed (each a
+        /// marked line), why there are no notes, why the others weren't told apart, echo taken out.
+        case done(MeetingRecorder.MeetingResult)
         /// Nothing was changed; why.
         case failed(String)
         case canceled
@@ -119,6 +120,18 @@ final class MeetingRetranscriber: ObservableObject {
             switch self {
             case .running, .canceling: return true
             default: return false
+            }
+        }
+
+        /// For the log and meeting-files-check: no transcript or notes.
+        var summary: String {
+            switch self {
+            case .running(let step): return "running \(step)"
+            case .canceling: return "canceling"
+            case .done(let result):
+                return "done failed-pieces \(result.failedPieces) notes \(result.notes != nil) notes-problem \(result.notesProblem != nil) speakers-skipped \(result.speakersSkipped?.rawValue ?? "none") echo-removed \(result.echoRemoved)"
+            case .failed(let error): return "failed \(error)"
+            case .canceled: return "canceled"
             }
         }
     }
@@ -196,7 +209,11 @@ final class MeetingRetranscriber: ObservableObject {
                 {
                     outcome = .failed(error)
                 } else {
-                    outcome = .done(failedPieces: processed.failures)
+                    outcome = .done(MeetingRecorder.MeetingResult(
+                        transcriptionID: id, notes: processed.summary.notes, transcript: "",
+                        notesProblem: processed.summary.problem, markdown: "", notesModel: processed.summary.modelName,
+                        folder: nil, failedPieces: processed.failures, speakersSkipped: processed.speakersSkipped,
+                        echoRemoved: processed.echoRemoved))
                 }
             } else {
                 outcome = .canceled
@@ -204,7 +221,7 @@ final class MeetingRetranscriber: ObservableObject {
             try? FileManager.default.removeItem(at: work)
             states[id] = outcome
             job = nil
-            logger.notice("Meeting \(id, privacy: .public) transcription ended: \(String(describing: outcome), privacy: .public)")
+            logger.notice("Meeting \(id, privacy: .public) transcription ended: \(outcome.summary, privacy: .public)")
             #if DEBUG
                 MeetingFilesCheck.retranscriptionEnded(id, outcome)
             #endif

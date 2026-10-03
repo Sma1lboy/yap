@@ -291,12 +291,14 @@ struct MeetingTranscribeTools: View {
             }
         case .canceling:
             MeetingStatusLineView(line: .init(kind: .progress, text: String(localized: "Canceling… The part being transcribed finishes first.")))
-        case .done(let failed) where failed > 0:
-            MeetingStatusLineView(line: .init(
-                kind: .warning,
-                text: String(localized: "Transcribed, but \(Int64(failed)) parts couldn't be; they're marked in the transcript.")))
-        case .done:
-            MeetingStatusLineView(line: .init(kind: .info, text: String(localized: "Transcribed. This entry now has the meeting's transcript.")))
+        case .done(let result):
+            // The panel's lines for the new result (failed parts, why no notes or speakers, echo), with "Transcribed"
+            // first among the information, in MeetingStatusLine's order.
+            let transcribed = MeetingStatusLine(
+                kind: .info, text: String(localized: "Transcribed. This entry now has the meeting's transcript."))
+            let lines = ([transcribed] + result.statusLines).enumerated()
+                .sorted { ($0.element.kind, $0.offset) < ($1.element.kind, $1.offset) }.map(\.element)
+            ForEach(lines, id: \.self) { MeetingStatusLineView(line: $0) }
         case .failed(let error):
             MeetingStatusLineView(line: .init(
                 kind: .error,

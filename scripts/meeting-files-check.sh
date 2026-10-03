@@ -23,8 +23,9 @@
 # --meeting-retranscribe-check, which calls what History's button calls: which entries can be transcribed (audio
 # only, from no model and from a cut-off recovery; mix only; recordings gone; transcribed), refused with no model in
 # the mode, canceled after 2 piece requests, a failed save, the app killed mid-run, then a successful run and a
-# relaunch. Every run but the successful one must leave the entry, its mic.wav / system.wav / mix.wav (by SHA-256),
-# and the saved folder as they were; the successful one changes that entry only, once.
+# relaunch, and another meeting with its first piece failing. Every run that doesn't finish must leave the entry, its
+# mic.wav / system.wav / mix.wav (by SHA-256) and the saved folder as they were; a finished run changes that entry
+# only, once, and keeps the recordings byte for byte.
 set -euo pipefail
 
 APP_DIR="$1"
@@ -274,7 +275,7 @@ unchanged "$WORK/rt-cancel.txt" "a canceled run"
 run_app "$WORK/rt-fail.txt" --meeting-retranscribe-check "$target" --meeting-fail-save
 show "$WORK/rt-fail.txt" "transcribe meeting, save fails: "
 full=$(requests "$WORK/rt-fail.txt")
-grep -q '^meeting-check: retranscribe outcome failed(' "$WORK/rt-fail.txt" && [ "$full" -ge 4 ] \
+grep -q '^meeting-check: retranscribe outcome failed ' "$WORK/rt-fail.txt" && [ "$full" -ge 4 ] \
 	|| { echo "FAIL: a failed save wasn't reported"; exit 1; }
 unchanged "$WORK/rt-fail.txt" "a failed save"
 
@@ -298,7 +299,8 @@ show "$WORK/rt-done.txt" "transcribe meeting: "
 before=$(sed -n "s/^meeting-check: before id $id timestamp \([0-9.]*\) .* audio \(.*\)$/\1 \2/p" "$WORK/rt-done.txt")
 after=$(sed -n "s/^meeting-check: after id $id timestamp \([0-9.]*\) .* audio \(.*\)$/\1 \2/p" "$WORK/rt-done.txt")
 text=$(sed -n '/^meeting-check: after-text-begin$/,/^meeting-check: after-text-end$/p' "$WORK/rt-done.txt" | sed '1d;$d')
-grep -q '^meeting-check: retranscribe outcome done(failedPieces: 0)$' "$WORK/rt-done.txt" \
+# No AI provider in the mode: the result says why there are no notes, as the panel does after a meeting.
+grep -q '^meeting-check: retranscribe outcome done failed-pieces 0 notes false notes-problem true speakers-skipped none echo-removed 0$' "$WORK/rt-done.txt" \
 	&& [ "$(requests "$WORK/rt-done.txt")" = "$full" ] && [ -n "$before" ] && [ "$before" = "$after" ] \
 	&& grep -q "^meeting-check: after id $id .* status completed failed-pieces 0 model $(sed -n 's/^meeting-check: retranscribe plan model \(.*\) language .*/\1/p' "$WORK/rt-done.txt") " "$WORK/rt-done.txt" \
 	&& grep -q '^meeting-check: entries-after 6$' "$WORK/rt-done.txt" \
@@ -313,7 +315,22 @@ run_app "$WORK/rt-reload.txt" --meeting-retranscribe-check "$target"
 show "$WORK/rt-reload.txt" "transcribe meeting, relaunched: "
 [ "$(sed -n '/^meeting-check: before-text-begin$/,/^meeting-check: before-text-end$/p' "$WORK/rt-reload.txt" | sed '1d;$d')" = "$text" ] \
 	&& grep -q "^meeting-check: eligibility $target .* transcribed$" "$WORK/rt-reload.txt" \
-	&& grep -qF 'meeting-check: retranscribe outcome failed("This meeting already has its transcript.")' "$WORK/rt-reload.txt" \
+	&& grep -qF 'meeting-check: retranscribe outcome failed This meeting already has its transcript.' "$WORK/rt-reload.txt" \
 	&& [ "$(requests "$WORK/rt-reload.txt")" = 0 ] && grep -q '^meeting-check: entries-after 6$' "$WORK/rt-reload.txt" \
 	|| { echo "FAIL: the transcribed meeting didn't survive a relaunch as it was"; exit 1; }
 echo "transcribe meeting: OK ($full requests, same entry, recordings unchanged, 1 archived version)"
+
+# A piece that fails (the first, --meeting-fail-pieces 1) on the other audio-only meeting: it's saved with one
+# marked line and counted, as any meeting is, not reported as complete.
+other=$(basename "$nomodel")
+other_id=$(sed -n "s/^meeting-check: eligibility $other \([0-9A-F-]*\) .*/\1/p" "$WORK/rt-nomodel.txt")
+run_app "$WORK/rt-piece.txt" --meeting-retranscribe-check "$other" --meeting-fail-pieces 1
+show "$WORK/rt-piece.txt" "transcribe meeting, a piece fails: "
+marker=$(sed -n 's/^meeting-check: failed-marker //p' "$WORK/rt-piece.txt")
+grep -q '^meeting-check: retranscribe outcome done failed-pieces 1 ' "$WORK/rt-piece.txt" \
+	&& grep -q "^meeting-check: after id $other_id .* status completed failed-pieces 1 " "$WORK/rt-piece.txt" \
+	&& [ "$(sed -n '/^meeting-check: after-text-begin$/,/^meeting-check: after-text-end$/p' "$WORK/rt-piece.txt" | grep -cF -- "$marker")" = 1 ] \
+	&& [ "$(archived "$other_id")" = 2 ] && [ "$(files_in_archive)" = $((archive_before + 2)) ] \
+	&& grep -q '^meeting-check: entries-after 6$' "$WORK/rt-piece.txt" \
+	|| { echo "FAIL: a failed piece wasn't marked and counted"; exit 1; }
+echo "transcribe meeting, a piece fails: OK (1 marked line, failed-pieces 1)"

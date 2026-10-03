@@ -483,6 +483,13 @@
                 model: "Whisper Large v3", language: TranscriptionLanguageSupport.displayName("zh"),
                 destination: String(format: String(localized: "With your own API key: the recording, in 20–28 s parts, goes only to %@."), "Groq"))
             let sources = MeetingRetranscription.Sources(folder: URL(fileURLWithPath: "/m"), microphone: nil, system: nil)
+            func transcribedResult(
+                failedPieces: Int = 0, notesProblem: String? = nil, speakersSkipped: SpeakerSplitSkip? = nil
+            ) -> MeetingRecorder.MeetingResult {
+                MeetingRecorder.MeetingResult(
+                    transcriptionID: audioOnly.id, notes: notesProblem == nil ? "- notes" : nil, transcript: "",
+                    notesProblem: notesProblem, markdown: "", failedPieces: failedPieces, speakersSkipped: speakersSkipped)
+            }
             let transcribeShots: [(String, MeetingRetranscription.Eligibility, MeetingTranscribeTools.Plan?, Bool, String?, MeetingRetranscriber.State?, CGFloat)] = [
                 ("eligible", .eligible(sources), nil, false, nil, nil, 70),
                 ("confirm-local", .eligible(sources), localPlan, false, nil, nil, 210),
@@ -495,8 +502,10 @@
                 ("canceling", .eligible(sources), nil, false, nil, .canceling, 70),
                 ("canceled", .eligible(sources), nil, false, nil, .canceled, 100),
                 ("failed", .eligible(sources), nil, false, nil, .failed(CocoaError(.fileWriteOutOfSpace).localizedDescription), 110),
-                ("done", .transcribed, nil, false, nil, .done(failedPieces: 0), 70),
-                ("done-failed-pieces", .transcribed, nil, false, nil, .done(failedPieces: 2), 70),
+                ("done", .transcribed, nil, false, nil, .done(transcribedResult()), 70),
+                // Two parts failed, no AI provider for notes, only one other person.
+                ("done-problems", .transcribed, nil, false, nil, .done(transcribedResult(
+                    failedPieces: 2, notesProblem: MeetingSummarizer.setupHint, speakersSkipped: .oneSpeaker)), 170),
             ]
             for (name, eligibility, plan, noModel, refused, state, height) in transcribeShots {
                 MeetingRetranscriber.shared.setSnapshotState(state, for: audioOnly.id)

@@ -119,7 +119,8 @@
                 }
                 if refused != nil { retranscriptionEnded(meeting.id, .failed(refused!)) }
             }
-            print("meeting-check: retranscribe outcome \(outcome)")
+            print("meeting-check: retranscribe outcome \(outcome.summary)")
+            print("meeting-check: failed-marker \(MeetingNotes.failedMarker)")
             print("meeting-check: requests \(requests.withLock { $0 })")
             print("meeting-check: entries-after \((try? engine.modelContext.fetchCount(FetchDescriptor<Transcription>())) ?? -1)")
             printEntry("after")
