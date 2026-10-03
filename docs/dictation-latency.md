@@ -50,9 +50,12 @@ Then, in seconds after the stop (nil when the step didn't happen):
 with a notification), `scratchpad` (no editable field had focus: the text went to the Scratchpad and the clipboard),
 `failed` (the clipboard couldn't be set, so the text went to the Scratchpad; or the key events couldn't be sent, so it
 stays on the clipboard), `clipboardChanged` (when ⌘V was due the clipboard no longer held the text, because the user
-copied something or another paste took it: no key was sent, the clipboard was left alone and the text went to the
-Scratchpad). Only `pasted` counts as a paste in Home's numbers. Nil when the text wasn't pasted: a response in the
-recorder, a custom command, "scratch that". `pasted` means ⌘V was sent, not that the app in front inserted the text.
+or another app wrote to it: no key was sent, the clipboard was left alone and the text went to the Scratchpad),
+`targetChanged` (another app or field was in front when ⌘V was due than the paste was for: no key was sent and the
+text went to the Scratchpad, with a notification), `superseded` (a newer paste or Undo Last Paste started first: no
+key was sent and the text went to the Scratchpad). Only `pasted` counts as a paste in Home's numbers. Nil when the
+text wasn't pasted: a response in the recorder, a custom command, "scratch that". `pasted` means ⌘V was sent, not
+that the app in front inserted the text.
 
 With the mode's language on Auto-detect and a local Whisper model, the SessionMetric also has `detectedLanguages`
 (the languages Whisper decoded the dictation in, in order, comma-separated: `zh`, `en`, `en,zh`) and
@@ -158,7 +161,9 @@ the user copying the very same text with the same session data included, changes
 | A second (third…) paste starts before the last one's restore | `pasted` each | the original from before the first paste; the last one's restore is called off and the new one inherits it | sent each |
 | A paste starts after the last restore ran | `pasted` | the original (the restore had already put it back) | sent |
 | The user copies after ⌘V, before the restore | `pasted` | the user's copy; the restore is skipped | sent |
-| The user copies, or another paste writes, before ⌘V | `clipboardChanged` | left alone; the text goes to the Scratchpad | not sent: it would paste whatever is there now |
+| The user (or another app) copies before ⌘V | `clipboardChanged` | left alone; the text goes to the Scratchpad | not sent: it would paste whatever is there now |
+| A newer paste starts before this one's ⌘V | `superseded` | the newer paste's (it inherits the original); the text goes to the Scratchpad | not sent; the newer one's is |
+| Another app or field is in front when ⌘V is due ("Where the paste goes") | `targetChanged` | the original, if this paste still holds the clipboard; the text goes to the Scratchpad | not sent |
 | The user copies, then a new paste starts | `pasted` | the user's copy: the new paste takes it as the original, not the old one's | sent |
 | The clipboard was empty | `pasted` | empty again | sent |
 | Restore off | `pasted` | the text, not marked transient; nothing is kept to put back | sent |
@@ -176,6 +181,64 @@ paste whose ⌘V was sent; `pasted` means the key events went out, not that the 
 plus overlapping and late callbacks, every scenario on a private pasteboard (`NSPasteboard(name:)`) it releases at the
 end, with ⌘V recorded instead of sent, the field in front injected and time moved by the scenario. The general
 pasteboard, the keyboard and the app in front are never touched.
+
+## Where the paste goes
+
+Every paste, Finish and Send's key and Undo's Delete is for one target: an app (process ID) and, when Accessibility
+can read it, that app's focused element (`kAXFocusedUIElementAttribute` of the app, not the system-wide focus, which
+Yap's recorder panel can hold).
+
+**When the target is taken**
+
+| Caller | Target |
+|---|---|
+| Dictation, Paste Last Transcription / Enhancement | the app in front when the paste starts (the shortcut's moment for Paste Last: it's taken before the 0.15 s wait). If that is Yap itself (History's window, a clicked recorder), the app in front after the wait, when focus is back |
+| History › Paste Again, Quick History | the app it activated (or remembered). Another app in front when the paste starts: `targetChanged`, the clipboard isn't touched |
+| Undo / Rewrite Last Paste | the app the last paste went to; LastPasteEditor has just checked its field and selected the paste in it |
+
+The focused element is read once while the wait runs, before the selection read (which can turn a web view's
+accessibility on), and again right before ⌘V, after every wait.
+
+**Right before ⌘V**, with nothing awaited between these checks and the key: the request is still the latest one (no
+newer paste or Undo started, the paste wasn't cancelled), Accessibility is still allowed, the target app is in front,
+its focus didn't move, and the paste still owns the clipboard. The first that fails decides:
+
+| Fails | Result | Text | Clipboard |
+|---|---|---|---|
+| a newer request, or cancelled | `superseded` | Scratchpad, no notification | the original back if this paste still holds it |
+| Accessibility turned off | `clipboardOnly` | stays on the clipboard, with the Accessibility notification | the text |
+| another app in front, or the focus moved | `targetChanged` | Scratchpad, with a notification ("Another app or field was in front…") | the original back if this paste still holds it |
+| the clipboard changed | `clipboardChanged` | Scratchpad | left alone |
+
+A refused paste doesn't reach Auto Learn or Undo Last Paste, has no ⌘V time, and Finish and Send doesn't follow it.
+The text is never pasted into another app instead and nothing retries.
+
+**What "the focus moved" can tell.** Elements are compared with `CFEqual`, Accessibility's own identity; nothing of
+the field's content is read for it. The focus counts as moved when it is now on another element that neither contains
+the first nor sits inside it (`AXParent`, up to 64 levels), or on nothing. Focus moving within one container (a web
+view moving focus from the document to the editable element inside it) is not a move: that is a same-container check,
+not proof of the same field. When the app doesn't answer (no Accessibility tree, unsupported, 0.25 s timeout), the
+focus is unknown, not unchanged: only the app is checked. The same holds when Yap was in front at the start and the
+target was taken after the wait: there is nothing earlier to compare with. Remote desktop, VM and XQuartz windows keep
+their 0.5 s / 5 s timing; whatever their app reports as focused is the local window's element, so a field change
+inside the remote machine isn't visible here. No real app was checked for which of these it answers.
+
+**Finish and Send** waits 150 ms after ⌘V as before, then checks the same request, app and focus as the paste, tells
+Auto Learn the key is going out (it stops watching the paste, `autoSent`), checks request and app again, and sends the
+key. A newer paste that started after A's ⌘V means A's Enter isn't sent (`superseded`); another app or field means
+`targetChanged`. Either way A's paste stays `pasted`: it went out. A restore of the clipboard doesn't count as a new
+request, so a same-target Enter after the restore still goes out. A newer paste starting while Auto Learn is being told
+stops the Enter, but Auto Learn has already stopped watching A.
+
+**Undo Last Paste's Delete** (when the paste replaced nothing) counts as a new request, so a dictation's pending ⌘V
+or Enter isn't sent after it; it is sent only if Accessibility is allowed and the recorded app is in front. Its field
+and selection are LastPasteEditor's check, a moment before.
+
+**Not closed by any check.** The last check and the OS delivering the key are two steps: focus can move between them
+(key events: ⌘ goes down first, V 10 ms later). Activating an app takes time; if History's or Quick History's app isn't in front
+after 0.15 s / 0.12 s, that paste is now refused where it used to go to whatever was in front. No real app was pasted
+into for this: `make paste-session-check` runs the checks with the app in front, its focus and every key recorded,
+never read from or sent to the desktop.
 
 ## Measuring it
 
@@ -202,8 +265,9 @@ The path after the stop is the real one (`runPipeline` → `TranscriptionPipelin
 `CursorPaster`), including the stop sound, the panel dismissal, the clipboard handling and every wait; the stop
 counts as a shortcut stop (the 20 ms wait). The paste goes through `CursorPaster.Outlets.installCheck`: the clipboard
 is a private pasteboard (`NSPasteboard(name:)`, released when the check ends), and what touches the app in front is
-left out: the check that a text field has focus, the read of the selection the paste will replace (Undo Last Paste),
-and the key events. The ⌘V time is when V would have gone down; nothing is read from or typed into the app in front,
+left out: the check that a text field has focus, the reads of the focused element and of the selection the paste
+will replace (Undo Last Paste), and the key events (⌘V; Enter and Delete report they couldn't be sent). The ⌘V time is
+when V would have gone down; nothing is read from or typed into the app in front,
 the clipboard the user copies to is never read or written, and Auto Learn and Last Paste aren't told about it.
 
 After the rounds the script also checks, and fails otherwise:
