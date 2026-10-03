@@ -369,7 +369,9 @@ class CursorPaster {
             outlets.notify(.accessibilityMissing)
             return PasteOutcome(result: .leftOnClipboard, autoLearnGeneration: nil)
         }
-        if outlets.frontmostApp().processID != target.processID || focusMoved {
+        // Same app and element, but the focus no longer takes text (a field disabled, the focus on a list): the same
+        // check as when the paste started.
+        if outlets.frontmostApp().processID != target.processID || focusMoved || !outlets.focusCanTakeText() {
             logger.notice("Another app or field is in front than the paste was for; nothing sent, text sent to the Scratchpad")
             outlets.notify(.targetChanged)
             return refuse(paste, .targetChanged, outlets: outlets)
@@ -621,6 +623,8 @@ class CursorPaster {
     private static let focusReadTimeout: Float = 0.25
     /// Accessibility trees in web views run deep; past this many parents an element counts as unrelated.
     private static let maximumParentWalk = 64
+    /// The whole parent walk, both ways; past it the two elements count as unrelated (the paste is refused).
+    private static let parentWalkBudget: TimeInterval = 0.3
 
     /// The app's own focused element (not the system-wide one, which Yap's recorder panel can hold).
     nonisolated fileprivate static func readFocus(processID: pid_t) -> Focus {
@@ -634,13 +638,17 @@ class CursorPaster {
         return status == .noValue ? .none : .unreadable
     }
 
-    /// Whether `a` is a parent (or further up) of `b`, or `b` of `a`.
+    /// Whether `a` is a parent (or further up) of `b`, or `b` of `a`. False when that couldn't be found out within
+    /// `parentWalkBudget`: the elements are known to differ, and nothing showed they are one field.
     nonisolated fileprivate static func encloses(_ a: Focus, _ b: Focus) -> Bool {
         guard case .element(let a) = a, case .element(let b) = b else { return false }
+        let deadline = ProcessInfo.processInfo.systemUptime + parentWalkBudget
         func isAncestor(_ ancestor: AXUIElement, of element: AXUIElement) -> Bool {
             var current = element
             for _ in 0..<maximumParentWalk {
-                AXUIElementSetMessagingTimeout(current, focusReadTimeout)
+                let left = deadline - ProcessInfo.processInfo.systemUptime
+                guard left > 0 else { return false }
+                AXUIElementSetMessagingTimeout(current, Float(min(left, TimeInterval(focusReadTimeout))))
                 var parent: CFTypeRef?
                 guard AXUIElementCopyAttributeValue(current, kAXParentAttribute as CFString, &parent) == .success,
                     let parent, CFGetTypeID(parent) == AXUIElementGetTypeID()

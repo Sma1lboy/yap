@@ -199,15 +199,17 @@ Yap's recorder panel can hold).
 The focused element is read once while the wait runs, before the selection read (which can turn a web view's
 accessibility on), and again right before ⌘V, after every wait.
 
-**Right before ⌘V**, with nothing awaited between these checks and the key: the request is still the latest one (no
-newer paste or Undo started, the paste wasn't cancelled), Accessibility is still allowed, the target app is in front,
-its focus didn't move, and the paste still owns the clipboard. The first that fails decides:
+**Right before ⌘V.** The focus is read last (off the main thread). Then, with nothing awaited between these checks and
+the key: the request is still the latest one (no newer paste or Undo started, the paste wasn't cancelled),
+Accessibility is still allowed, the target app is in front, its focus didn't move, the focus still takes text (the
+same check as at the start, through the system-wide focused element), and the paste still owns the clipboard. The
+first that fails decides:
 
 | Fails | Result | Text | Clipboard |
 |---|---|---|---|
 | a newer request, or cancelled | `superseded` | Scratchpad, no notification | the original back if this paste still holds it |
-| Accessibility turned off | `clipboardOnly` | stays on the clipboard, with the Accessibility notification | the text |
-| another app in front, or the focus moved | `targetChanged` | Scratchpad, with a notification ("Another app or field was in front…") | the original back if this paste still holds it |
+| Accessibility turned off during the wait | `clipboardOnly` | stays on the clipboard, with the Accessibility notification; not in the Scratchpad | the text, still marked transient; its restore is called off |
+| another app in front, the focus moved, or it no longer takes text | `targetChanged` | Scratchpad, with a notification ("Another app or field was in front…") | the original back if this paste still holds it |
 | the clipboard changed | `clipboardChanged` | Scratchpad | left alone |
 
 A refused paste doesn't reach Auto Learn or Undo Last Paste, has no ⌘V time, and Finish and Send doesn't follow it.
@@ -215,9 +217,10 @@ The text is never pasted into another app instead and nothing retries.
 
 **What "the focus moved" can tell.** Elements are compared with `CFEqual`, Accessibility's own identity; nothing of
 the field's content is read for it. The focus counts as moved when it is now on another element that neither contains
-the first nor sits inside it (`AXParent`, up to 64 levels), or on nothing. Focus moving within one container (a web
-view moving focus from the document to the editable element inside it) is not a move: that is a same-container check,
-not proof of the same field. When the app doesn't answer (no Accessibility tree, unsupported, 0.25 s timeout), the
+the first nor sits inside it (`AXParent`, up to 64 levels and 0.3 s for the whole walk; past that it counts as moved),
+or on nothing. Focus moving within one container (a web view moving focus from the document to the editable element
+inside it) is not a move: that is a same-container check, not proof of the same field. When the app doesn't answer (no
+Accessibility tree, unsupported, 0.25 s timeout), the
 focus is unknown, not unchanged: only the app is checked. The same holds when Yap was in front at the start and the
 target was taken after the wait: there is nothing earlier to compare with. Remote desktop, VM and XQuartz windows keep
 their 0.5 s / 5 s timing; whatever their app reports as focused is the local window's element, so a field change

@@ -2,12 +2,14 @@
     import AppKit
 
     /// `scripts/paste-session-check.sh`: `--paste-session-check`, then quits. Each scenario runs CursorPaster's own
-    /// paste (prepare, wait, ownership, ⌘V, restore) on a private pasteboard of its own (NSPasteboard(name:)), with
-    /// outlets that record instead of acting: ⌘V notes what the pasteboard held when it would have gone out, the
-    /// field in front always takes text, Auto Learn / Last Paste, the Scratchpad and notifications are lists, and time
-    /// only moves when the scenario advances it. The general pasteboard is never touched, no key is sent and nothing
-    /// is read from the app in front. Prints one `paste-check: {json}` line per scenario with what happened, what
-    /// should have, and `pass`; then `paste-check-done:`.
+    /// paste (prepare, wait, target and ownership checks, ⌘V, restore), Finish and Send's Enter and Undo's Delete on a
+    /// private pasteboard of its own (NSPasteboard(name:)), with outlets that record instead of acting: ⌘V notes what
+    /// the pasteboard held when it would have gone out, Enter and Delete are noted too, the app in front is a made-up
+    /// process ID and its focused element a stand-in the scenario sets (whether it takes text as well), Auto Learn /
+    /// Last Paste, the Scratchpad and notifications are lists, and time only moves when the scenario advances it. The
+    /// general pasteboard is never touched, no key is sent and nothing is read from the app in front. Prints one
+    /// `paste-check: {json}` line per scenario with what happened, what should have, and `pass`; then
+    /// `paste-check-done:`.
     @MainActor
     enum PasteSessionCheck {
         static let argument = "--paste-session-check"
@@ -667,6 +669,17 @@
                 run.paste("A", "dictation A", at: 0)
                 run.advance(to: 0.01)
                 run.focus = .none
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
+                    notices: ["targetChanged"])
+            },
+            {
+                let run = Run("same field, but it stops taking text before ⌘V")
+                run.begin()
+                run.paste("A", "dictation A", at: 0)
+                run.advance(to: 0.01)
+                run.focusTakesText = false
                 run.advance(to: 2)
                 return run.finish(
                     board: .original, outcomes: ["A": "targetChanged"], keys: [], scratchpad: ["dictation A"],
