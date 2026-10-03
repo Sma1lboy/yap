@@ -888,13 +888,13 @@ extension CursorPaster.Outlets {
         postDeleteKey: { CursorPaster.postDeleteKey() },
         autoSendWillPost: { await AutoLearnService.shared.cancelForAutoSend(generation: $0) },
         pasteSent: { paste in
-            let generation =
-                AutoLearnSettings.isEnabled
+            // First, with nothing awaited since ⌘V: an Undo or Rewrite pressed while Auto Learn is told must not act on
+            // the paste before this one.
+            LastPasteEditor.shared.pasteDidFinish(text: paste.text, processID: paste.processID, replacing: paste.replaced)
+            return AutoLearnSettings.isEnabled
                 ? await AutoLearnService.shared.pasteDidFinish(
                     text: paste.text, processID: paste.processID, commandPosted: true, dictationID: paste.dictationID)
                 : nil
-            LastPasteEditor.shared.pasteDidFinish(text: paste.text, processID: paste.processID, replacing: paste.replaced)
-            return generation
         },
         toScratchpad: { ScratchpadStore.shared.append(dictation: $0) },
         notify: { notice in
