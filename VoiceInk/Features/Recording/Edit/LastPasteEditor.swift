@@ -75,7 +75,8 @@ final class LastPasteEditor {
                 let deleted = CursorPaster.deleteSelection(in: record.processID)
                 guard deleted == .sent else {
                     logger.notice("Undo didn't delete the last paste: \(String(describing: deleted), privacy: .public)")
-                    return notify(.focusChanged)
+                    if deleted == .targetChanged { notify(.focusChanged) }
+                    return
                 }
                 self.record = nil
                 logger.notice("Last paste removed (\(record.text.count, privacy: .public) characters)")

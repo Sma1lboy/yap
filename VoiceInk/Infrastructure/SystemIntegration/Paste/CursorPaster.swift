@@ -183,14 +183,17 @@ class CursorPaster {
     /// The checks, the clipboard and the selection read start now, in the caller's turn on the main thread; the wait
     /// and ⌘V follow in the returned task. The wait counts from the clipboard write, so main-thread work queued ahead of
     /// that task (the recorder closing, the session cleanup) runs inside the wait instead of before it. `dictationID`:
-    /// the dictation being pasted, whose SessionMetric gets what Auto Learn sees become of it.
+    /// the dictation being pasted, whose SessionMetric gets what Auto Learn sees become of it. `target`: the process the
+    /// caller chose; nil takes the app in front now (or, when that is Yap itself, the one in front after the wait).
+    /// A newer paste, or Undo's Delete, supersedes this one: its ⌘V and its Finish and Send key are not sent after that.
     @MainActor
     @discardableResult
     static func startPasteAtCursor(
         _ text: String, lead: Lead = .other, dictationID: UUID? = nil, target: pid_t? = nil
     ) -> Task<PasteOutcome, Never> {
         let outlets = Self.outlets
-        switch preparePaste(text, lead: lead, dictationID: dictationID, outlets: outlets) {
+        latestRequest &+= 1
+        switch preparePaste(text, lead: lead, dictationID: dictationID, target: target, outlets: outlets) {
         case .finished(let outcome):
             return Task { outcome }
         case .ready(let paste):
@@ -198,26 +201,44 @@ class CursorPaster {
         }
     }
 
-    /// Finish and Send: `key` after the paste in `outcome`, 150 ms after its ⌘V.
+    /// Finish and Send: `key` after the paste in `outcome`, 150 ms after its ⌘V, if that paste is still the latest
+    /// request and its app and field are still in front. The paste went out either way; this is only the key.
     @MainActor
     static func submit(_ key: FinishAndSendKey, after outcome: PasteOutcome) async -> KeyResult {
         let outlets = Self.outlets
-        guard key.isEnabled, outcome.sent != nil else { return .notSent }
+        guard key.isEnabled, let sent = outcome.sent else { return .notSent }
         await outlets.sleep(submitDelay)
         if let generation = outcome.autoLearnGeneration { await outlets.autoSendWillPost(generation) }
+        let focusMoved = await focusMoved(from: sent.target, outlets: outlets)
+        // Nothing awaited from here to the key.
+        guard sent.request == latestRequest, !Task.isCancelled else {
+            logger.notice("Finish and Send skipped: a newer request started after the paste")
+            return .superseded
+        }
         guard outlets.canPostKeys() else { return .notSent }
+        guard outlets.frontmostApp().processID == sent.target.processID, !focusMoved else {
+            logger.notice("Finish and Send skipped: another app or field is in front than the paste went to")
+            return .targetChanged
+        }
         return outlets.postSubmitKey(key) ? .sent : .notSent
     }
 
-    /// Undo Last Paste: deletes the selection it just set in `processID`'s focused field.
+    /// Undo Last Paste: deletes the selection it just set in `processID`'s focused field (LastPasteEditor checked
+    /// that field and selection a moment before, through Accessibility). Supersedes any paste still waiting.
     @MainActor
     static func deleteSelection(in processID: pid_t) -> KeyResult {
         let outlets = Self.outlets
+        latestRequest &+= 1
         guard outlets.canPostKeys() else { return .notSent }
+        guard outlets.frontmostApp().processID == processID else { return .targetChanged }
         return outlets.postDeleteKey() ? .sent : .notSent
     }
 
     private static let submitDelay: TimeInterval = 0.15
+
+    /// Bumped by every paste and Undo's Delete when it starts; a paste or key whose number is no longer the latest
+    /// isn't sent. Never bumped by a restore.
+    @MainActor private static var latestRequest: UInt64 = 0
 
     private enum Preparation {
         case finished(PasteOutcome)
@@ -225,20 +246,25 @@ class CursorPaster {
     }
 
     private struct PreparedPaste {
+        let request: UInt64
         let text: String
         let lead: Lead
         let dictationID: UUID?
         let prePasteDelay: TimeInterval
         let restoreDelay: TimeInterval
         let clipboardSetAt: TimeInterval
+        /// Nil: Yap itself was in front when the paste started; the app in front after the wait is the target.
         let targetProcessID: pid_t?
-        /// The text the paste is about to replace, what Undo Last Paste restores; read while the wait runs.
-        let replaced: Task<String, Never>?
+        /// The target's focused element, then the text the paste is about to replace (what Undo Last Paste restores),
+        /// read in that order while the wait runs: the selection read can switch a web view's accessibility on.
+        let read: Task<(focus: Focus, replaced: String), Never>?
         let claim: PasteClipboard.Claim
     }
 
     @MainActor
-    private static func preparePaste(_ text: String, lead: Lead, dictationID: UUID?, outlets: Outlets) -> Preparation {
+    private static func preparePaste(
+        _ text: String, lead: Lead, dictationID: UUID?, target: pid_t?, outlets: Outlets
+    ) -> Preparation {
         let clipboard = outlets.clipboard
 
         // Leave the text on the clipboard (no restore) so nothing is lost.
@@ -247,6 +273,16 @@ class CursorPaster {
             _ = clipboard.write(text, restoreLater: false)
             outlets.notify(.accessibilityMissing)
             return .finished(PasteOutcome(result: .leftOnClipboard, autoLearnGeneration: nil))
+        }
+
+        let frontmost = outlets.frontmostApp()
+        // The caller activated (or recorded) an app and another one is in front: the paste was meant for that app,
+        // not this one. The clipboard isn't touched.
+        if let target, frontmost.processID != target {
+            logger.notice("The app the paste was for isn't in front; nothing sent, text sent to the Scratchpad")
+            outlets.toScratchpad(text)
+            outlets.notify(.targetChanged)
+            return .finished(PasteOutcome(result: .targetChanged, autoLearnGeneration: nil))
         }
 
         // Nothing editable focused (desktop, Finder): ⌘V would go nowhere and the restore would then
@@ -259,7 +295,6 @@ class CursorPaster {
             return .finished(PasteOutcome(result: .sentToScratchpad, autoLearnGeneration: nil))
         }
 
-        let frontmost = outlets.frontmostApp()
         let timing = pasteTiming(frontmostBundleID: frontmost.bundleID, lead: lead)
         let restore = outlets.restoreSettings()
         guard let claim = clipboard.write(text, restoreLater: restore.enabled) else {
@@ -269,22 +304,65 @@ class CursorPaster {
             return .finished(PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil))
         }
 
-        let targetProcessID = frontmost.processID
-        let replaced = outlets.selectedText.map { read in
-            Task.detached { targetProcessID.map(read) ?? "" }
-        }
+        // Yap's own window in front (History, a clicked recorder): focus is on its way back to the app it came from.
+        let targetProcessID = frontmost.processID == ownProcessID ? nil : frontmost.processID
         return .ready(
             PreparedPaste(
-                text: text, lead: lead, dictationID: dictationID, prePasteDelay: timing.prePaste,
+                request: latestRequest, text: text, lead: lead, dictationID: dictationID, prePasteDelay: timing.prePaste,
                 restoreDelay: max(restore.delay, timing.minimumRestore), clipboardSetAt: outlets.now(),
-                targetProcessID: targetProcessID, replaced: replaced, claim: claim))
+                targetProcessID: targetProcessID, read: targetProcessID.map { read(in: $0, outlets: outlets) },
+                claim: claim))
+    }
+
+    private static let ownProcessID = ProcessInfo.processInfo.processIdentifier
+
+    @MainActor
+    private static func read(in processID: pid_t, outlets: Outlets) -> Task<(focus: Focus, replaced: String), Never> {
+        let selectedText = outlets.selectedText
+        return Task { @MainActor in
+            let focus = await outlets.focusedElement(processID)
+            guard let selectedText else { return (focus, "") }
+            return (focus, await Task.detached { selectedText(processID) }.value)
+        }
     }
 
     @MainActor
     private static func post(_ paste: PreparedPaste, outlets: Outlets) async -> PasteOutcome {
         await waitBeforePaste(paste, outlets: outlets)
-        let replaced = await paste.replaced?.value ?? ""
+        let target: Target
+        let replaced: String
+        let focusMoved: Bool
+        if let processID = paste.targetProcessID, let read = paste.read {
+            let start = await read.value
+            target = Target(processID: processID, focus: start.focus)
+            replaced = start.replaced
+            focusMoved = await self.focusMoved(from: target, outlets: outlets)
+        } else {
+            // Taken now: there is nothing earlier to compare it with. Yap still in front: nothing of its own is read.
+            let processID = outlets.frontmostApp().processID
+            var start: (focus: Focus, replaced: String) = (.unreadable, "")
+            if let processID, processID != ownProcessID { start = await read(in: processID, outlets: outlets).value }
+            target = Target(processID: processID, focus: start.focus)
+            replaced = start.replaced
+            focusMoved = false
+        }
 
+        // Nothing awaited from here to ⌘V, so what is checked is what holds when the key goes out (to the OS).
+        if paste.request != latestRequest || Task.isCancelled {
+            logger.notice("A newer request started before ⌘V; nothing sent, text sent to the Scratchpad")
+            return refuse(paste, .superseded, outlets: outlets)
+        }
+        guard outlets.canPostKeys() else {
+            logger.error("Accessibility permission went away before ⌘V; leaving text on the clipboard")
+            outlets.clipboard.pasteNotSent(paste.claim)
+            outlets.notify(.accessibilityMissing)
+            return PasteOutcome(result: .leftOnClipboard, autoLearnGeneration: nil)
+        }
+        if outlets.frontmostApp().processID != target.processID || focusMoved {
+            logger.notice("Another app or field is in front than the paste was for; nothing sent, text sent to the Scratchpad")
+            outlets.notify(.targetChanged)
+            return refuse(paste, .targetChanged, outlets: outlets)
+        }
         // ⌘V pastes whatever the clipboard holds now. If that isn't this paste's write any more, it would paste the
         // user's new copy or another paste's text, so no key goes out and the clipboard is left alone.
         guard outlets.clipboard.owns(paste.claim) else {
@@ -300,11 +378,41 @@ class CursorPaster {
             return PasteOutcome(result: posted.result, autoLearnGeneration: nil)
         }
         let autoLearnGeneration = await outlets.pasteSent(
-            SentPaste(text: paste.text, processID: paste.targetProcessID, dictationID: paste.dictationID, replaced: replaced))
+            SentPaste(text: paste.text, processID: target.processID, dictationID: paste.dictationID, replaced: replaced))
         outlets.clipboard.pasteSent(paste.claim, restoreAfter: paste.restoreDelay, sleep: outlets.sleep)
         return PasteOutcome(
             result: .commandPosted, autoLearnGeneration: autoLearnGeneration, commandTime: posted.commandTime,
-            sent: SentRequest(request: 0, target: Target(processID: paste.targetProcessID, focus: .unreadable)))
+            sent: SentRequest(request: paste.request, target: target))
+    }
+
+    /// No ⌘V: what the user had goes back on the clipboard if this paste still holds it (a newer paste's write or
+    /// the user's copy stays), and the text goes to the Scratchpad.
+    @MainActor
+    private static func refuse(_ paste: PreparedPaste, _ result: PasteResult, outlets: Outlets) -> PasteOutcome {
+        if outlets.clipboard.owns(paste.claim) {
+            outlets.clipboard.restore(paste.claim)
+        } else {
+            outlets.clipboard.pasteNotSent(paste.claim)
+        }
+        outlets.toScratchpad(paste.text)
+        return PasteOutcome(result: result, autoLearnGeneration: nil)
+    }
+
+    /// Whether the target app's focus is known to have moved since `target` was taken: to another element that
+    /// neither contains nor is contained by the first (a web view moving focus inside one field does that), or to
+    /// nothing. An unreadable focus, then or now, is not a known move: the process check is all there is.
+    @MainActor
+    private static func focusMoved(from target: Target, outlets: Outlets) async -> Bool {
+        guard let processID = target.processID, case .element(let before) = target.focus else { return false }
+        let now = await outlets.focusedElement(processID)
+        switch now {
+        case .unreadable: return false
+        case .none: return true
+        case .element(let element):
+            if CFEqual(element, before) { return false }
+            let related = await outlets.encloses(target.focus, now)
+            return !related
+        }
     }
 
     /// The pre-paste wait, counted from the clipboard write. After a shortcut stop the user may still be holding the
