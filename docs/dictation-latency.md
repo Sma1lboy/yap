@@ -197,11 +197,12 @@ Yap's recorder panel can hold).
 | Dictation | the app in front when the paste starts, Yap itself included (History's search field, the Scratchpad). The recorder is a non-activating panel, so clicking it leaves the app the user dictates into in front. Until M7.3, Yap in front meant "the app in front after the wait"; that is gone: a different app in front by ⌘V is `targetChanged`, never the new target |
 | Paste Last Transcription / Enhancement | the app in front when the shortcut is pressed, Yap included. The request is taken then too; the paste waits its 0.15 s (the shortcut's keys coming up) after that, so a dictation that starts meanwhile supersedes it |
 | History › Paste Again, Quick History | the app the dictation came from (History: the running app with its bundle ID) or the one Quick History remembered. The request is taken when the user picks the row; the app is asked once to come to the front, then the paste waits until it is in front (checked every 20 ms, 1 s at most), so a slow app that comes up within the second is still pasted into. Not in front by then: `targetChanged`, the clipboard isn't touched. The app quits meanwhile: refused at once. A newer paste or Undo meanwhile: `superseded`. No app recorded or running (older rows, an app that was closed): the text goes to the Scratchpad with a notification, the clipboard isn't touched, and nothing is pasted into whatever is in front. Older rows used to hide Yap and paste into the app that came up |
-| Undo / Rewrite Last Paste | the app the last paste went to; LastPasteEditor has just checked its field and selected the paste in it. Rewrite's paste comes after the AI call and takes a new request then, after selecting the last paste again: a field change during the call is refused by that selection; one after it, by the paste's own focus check |
+| Undo / Rewrite Last Paste | the app the last paste went to and the field LastPasteEditor has just checked and selected the paste in. That field is passed to the paste as its target (`Target` with the selected element), not read again when the paste starts: a field change between the selection and the paste, or during the wait, is `targetChanged` (the focus check below, against the selected field). Undo takes its request before it selects; Rewrite takes a new one after the AI call, before it selects the last paste again (a field change during the AI call is refused by that selection). A dictation's paste that starts while either is selecting supersedes it |
 
 The focused element is read once while the wait runs, before the selection read (which can turn a web view's
-accessibility on), and again right before ⌘V, after every wait. Yap's own windows aren't read through Accessibility:
-there only the process is checked.
+accessibility on), and again right before ⌘V, after every wait. When the caller passes the field (Undo, Rewrite), the
+first read is skipped and that field is what the last one is compared with. Yap's own windows aren't read through
+Accessibility: there only the process is checked.
 
 **Right before ⌘V.** The focus is read last (off the main thread). Then, with nothing awaited between these checks and
 the key: the request is still the latest one (no newer paste or Undo started, the paste wasn't cancelled),
@@ -245,16 +246,26 @@ dictation's pending ⌘V or Enter isn't sent after it, and of two Undos pressed 
 Delete goes out. The Delete (when the paste replaced nothing) is sent after the app's focus is read again: the request
 is still the latest, Accessibility is allowed, the recorded app is in front and its focus is on the field
 LastPasteEditor selected in (or an element inside or around it, as above; unreadable: only the app). When the paste
-had replaced a selection, Undo pastes that text back under the same request.
+had replaced a selection, Undo pastes that text back under the same request, for that same field: the paste checks
+the focus right before ⌘V against the selected field, not against whatever was focused when it started.
+
+**A request replaced before its paste starts.** Undo's and Rewrite's requests are taken before the selection, which
+takes a moment (Accessibility). If a newer paste or Undo started meanwhile, or the caller was cancelled, the paste is
+refused when it starts, before anything else: the clipboard isn't written or cleared (the newer paste's text, its
+restore and a copy the user made in between stay as they are), the text goes to the Scratchpad, and the result is
+`superseded` with the usual "newer paste or Undo" notification (none when cancelled with nothing newer). This comes
+before the no-Accessibility and no-text-field returns, which would copy the text. The newer paste goes on as if the
+old one never came back: its ⌘V goes out once.
 
 **What the user is told.** Every paste that doesn't go out, and every Finish and Send key or Undo Delete that doesn't,
 gets one notification (`CursorPaster.Notice`, the warning style, 6 s; 8 s for Accessibility). For a paste it says
 where the text is, as checked after the refusal, not guessed from the reason: "Copied to clipboard.", "Added to your
 Scratchpad." or "Copied to clipboard and added to your Scratchpad.", then why. Open Scratchpad is offered whenever the
-text is there, Open Settings when Accessibility is the cause. A key skipped after a paste that went out says the text
-was pasted and the send key wasn't pressed (another app or field in front, a newer paste or Undo first, or the key
-couldn't be pressed); an Undo whose Delete didn't go out says the last dictation wasn't removed. A cancelled paste with
-nothing newer, and an Undo superseded by a newer one, say nothing. Nothing retries. `make ui-snapshots` renders each
+text is there, Open Settings when Accessibility is the cause. A key skipped after a paste that went out says the paste
+shortcut (⌘V) was sent and the send key wasn't (another app or field in front, a newer paste or Undo first, or the key
+couldn't be pressed); it doesn't say the text was pasted, since nothing confirms the app took it. An Undo whose Delete
+didn't go out says the last dictation wasn't removed. A cancelled paste with
+nothing newer, and an Undo Delete superseded by a newer request, say nothing. Nothing retries. `make ui-snapshots` renders each
 of them (`notification-paste-*`).
 
 **Not closed by any check.** The last check and the OS delivering the key are two steps: focus can move between them

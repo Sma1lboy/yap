@@ -4,8 +4,10 @@
 # clipboard, restore off, a failed clipboard write, ⌘V that can't be sent, remote-desktop timing, a close with a restore
 # pending; another app or field in front before ⌘V, Finish and Send's Enter (also after Auto Learn's wait) or Undo's
 # Delete, a newer paste or Undo in between, History's and Paste Last's wait for their app (in front, late, never, quit,
-# superseded, cancelled, none recorded), Yap's own window in front; and the notification each refusal gives, with where
-# the text is. Every scenario runs on a private pasteboard of its own (NSPasteboard(name:)) that it releases at the end;
+# superseded, cancelled, none recorded), Yap's own window in front; Undo's and Rewrite's paste only into the field
+# LastPasteEditor selected in, and their request refused before the clipboard is touched when a newer paste started
+# while they selected (or Undo was cancelled); and the notification each refusal gives, with where the text is. Every
+# scenario runs on a private pasteboard of its own (NSPasteboard(name:)) that it releases at the end;
 # the general pasteboard (what the user copies to) is never read or written, no key is sent, no app is activated and
 # nothing is read from the app in front (made-up process IDs and elements). Runs from a copy re-identified as
 # me.sma1lboy.yap.mock (see scripts/mock.sh) under the mock lock. The raw lines are kept in $OUT (default
