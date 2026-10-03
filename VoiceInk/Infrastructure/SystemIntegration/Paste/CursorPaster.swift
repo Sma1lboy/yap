@@ -202,24 +202,30 @@ class CursorPaster {
     }
 
     /// Finish and Send: `key` after the paste in `outcome`, 150 ms after its ⌘V, if that paste is still the latest
-    /// request and its app and field are still in front. The paste went out either way; this is only the key.
+    /// request and its app and field are still in front. The paste went out either way; this is only the key. Auto
+    /// Learn stops watching the paste (`autoSent`) only once the key is about to go.
     @MainActor
     static func submit(_ key: FinishAndSendKey, after outcome: PasteOutcome) async -> KeyResult {
         let outlets = Self.outlets
         guard key.isEnabled, let sent = outcome.sent else { return .notSent }
         await outlets.sleep(submitDelay)
-        if let generation = outcome.autoLearnGeneration { await outlets.autoSendWillPost(generation) }
         let focusMoved = await focusMoved(from: sent.target, outlets: outlets)
-        // Nothing awaited from here to the key.
-        guard sent.request == latestRequest, !Task.isCancelled else {
-            logger.notice("Finish and Send skipped: a newer request started after the paste")
-            return .superseded
+        func refusal() -> KeyResult? {
+            guard sent.request == latestRequest, !Task.isCancelled else {
+                logger.notice("Finish and Send skipped: a newer request started after the paste")
+                return .superseded
+            }
+            guard outlets.canPostKeys() else { return .notSent }
+            guard outlets.frontmostApp().processID == sent.target.processID, !focusMoved else {
+                logger.notice("Finish and Send skipped: another app or field is in front than the paste went to")
+                return .targetChanged
+            }
+            return nil
         }
-        guard outlets.canPostKeys() else { return .notSent }
-        guard outlets.frontmostApp().processID == sent.target.processID, !focusMoved else {
-            logger.notice("Finish and Send skipped: another app or field is in front than the paste went to")
-            return .targetChanged
-        }
+        if let refused = refusal() { return refused }
+        if let generation = outcome.autoLearnGeneration { await outlets.autoSendWillPost(generation) }
+        // Again after that wait, and nothing awaited from here to the key (the focus isn't read a second time).
+        if let refused = refusal() { return refused }
         return outlets.postSubmitKey(key) ? .sent : .notSent
     }
 

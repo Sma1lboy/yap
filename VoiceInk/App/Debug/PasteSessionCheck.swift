@@ -225,6 +225,8 @@
             var focusTakesText = true
             /// Auto Learn's work before Finish and Send's key (cancelling its observation), in scenario seconds.
             var autoSendDelay: TimeInterval = 0
+            /// How often Auto Learn was told Finish and Send's key is going out (it then stops watching the paste).
+            var autoSent = 0
             /// ⌘V lists what the pasteboard held; Enter is "⏎ <key>", Delete "⌫".
             var keys: [String] = []
             var sent: [String] = []
@@ -264,7 +266,10 @@
                     self.keys.append("⌫")
                     return true
                 }
-                outlets.autoSendWillPost = { [unowned self] _ in await clock.sleep(self.autoSendDelay) }
+                outlets.autoSendWillPost = { [unowned self] _ in
+                    self.autoSent += 1
+                    await clock.sleep(self.autoSendDelay)
+                }
                 outlets.pasteSent = { [unowned self] in
                     self.sent.append($0.text)
                     return UInt64(self.sent.count)
@@ -357,9 +362,11 @@
 
             /// Closes the clipboard (cancelling its pending restores), lets every remaining sleep run out, checks nothing
             /// was written after the close, then releases the private pasteboard.
+            /// `autoSent`: how often Auto Learn should have heard Enter was going out; by default once per Enter sent.
             func finish(
                 board final: Final, outcomes expectedOutcomes: [String: String], keys expectedKeys: [String],
-                scratchpad expectedScratchpad: [String] = [], notices expectedNotices: [String]? = nil
+                scratchpad expectedScratchpad: [String] = [], notices expectedNotices: [String]? = nil,
+                autoSent expectedAutoSent: Int? = nil
             ) -> Bool {
                 advance(to: clock.now)
                 expectBoard(final, "end")
@@ -369,6 +376,10 @@
                 if sent.count != expectedSent { failures.append("Auto Learn / Last Paste heard of \(sent), expected \(expectedSent)") }
                 if scratchpad != expectedScratchpad { failures.append("Scratchpad got \(scratchpad), expected \(expectedScratchpad)") }
                 if let expectedNotices, notes != expectedNotices { failures.append("notices \(notes), expected \(expectedNotices)") }
+                let entersSent = outcomes.filter { $0.key.hasSuffix("⏎") && $0.value == "sent" }.count
+                if autoSent != (expectedAutoSent ?? entersSent) {
+                    failures.append("Auto Learn told of \(autoSent) Enter(s), \(entersSent) sent")
+                }
                 let closedAt = pasteboard.changeCount
                 Task { @MainActor [unowned self] in
                     await self.clipboard.close()
@@ -765,6 +776,19 @@
                 run.advance(to: 2)
                 return run.finish(
                     board: .original, outcomes: ["A": "commandPosted", "A⏎": "targetChanged"], keys: ["dictation A"])
+            },
+            {
+                // Auto Learn had already stopped watching A when B started: that is the only thing the late check
+                // can't take back, and it's counted (autoSent 1) though no Enter went out.
+                let run = Run("Enter: a new paste starts while Auto Learn is being told about A's Enter")
+                run.autoSendDelay = 0.2
+                run.begin()
+                run.paste("A", "dictation A", at: 0, submit: true)
+                run.paste("B", "dictation B", at: 0.3)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .original, outcomes: ["A": "commandPosted", "A⏎": "superseded", "B": "commandPosted"],
+                    keys: ["dictation A", "dictation B"], autoSent: 1)
             },
             {
                 let run = Run("Enter: a new paste starts between A's ⌘V and A's Enter")
