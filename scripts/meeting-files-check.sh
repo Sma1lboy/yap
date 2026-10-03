@@ -19,6 +19,12 @@
 # Saving meetings to a folder automatically is on throughout, into $WORK/archive: every History entry the run saves
 # must have its Markdown there, each change a new version, and the failed save none. SPEAKER_CACHE=<folder> reuses
 # speaker models kept by an earlier run (see meeting-check-common.sh) instead of downloading them.
+# Last, Transcribe Meeting (History's action for a meeting saved with its audio only) through
+# --meeting-retranscribe-check, which calls what History's button calls: which entries can be transcribed (audio
+# only, from no model and from a cut-off recovery; mix only; recordings gone; transcribed), refused with no model in
+# the mode, canceled after 2 piece requests, a failed save, the app killed mid-run, then a successful run and a
+# relaunch. Every run but the successful one must leave the entry, its mic.wav / system.wav / mix.wav (by SHA-256),
+# and the saved folder as they were; the successful one changes that entry only, once.
 set -euo pipefail
 
 APP_DIR="$1"
@@ -203,3 +209,111 @@ print("archive: %d files, versions per meeting %s" % (len(files), sorted(per.val
 sys.exit(0 if sorted(per.values()) == [1, 2, 2] and len(files) == 5 else 1)
 PY3
 echo "auto-archive: OK"
+
+# Transcribe Meeting. More audio-only meetings, saved by recovery with no transcription model in the mode: one stays,
+# one keeps only its mix, one loses its folder.
+meetings="$(dirname "$unsaved")"
+for name in nomodel mixonly gone; do
+	folder="$meetings/$(uuidgen)"
+	mkdir -p "$folder"
+	cp "$WORK/mic.wav" "$folder/mic.wav" && cp "$WORK/system.wav" "$folder/system.wav"
+	eval "$name=\$folder"
+	sleep 1  # recovery goes oldest first, by the folder's creation time
+done
+mkdir -p "$WORK/config-nomodel/yap"
+sed 's/"selectedTranscriptionModelName": "[^"]*",//' "$WORK/config/yap/config.json" >"$WORK/config-nomodel/yap/config.json"
+CONFIG_HOME="$WORK/config-nomodel" run_app "$WORK/rt-nomodel.txt" --meeting-retranscribe-check "$(basename "$nomodel")"
+show "$WORK/rt-nomodel.txt" "transcribe meeting, no model: "
+for folder in "$nomodel" "$mixonly" "$gone" "$cut"; do
+	grep -q "^meeting-check: eligibility $(basename "$folder") .* eligible mic=mic.wav system=system.wav$" "$WORK/rt-nomodel.txt" \
+		|| { echo "FAIL: audio-only meeting $(basename "$folder") isn't eligible"; exit 1; }
+done
+for folder in "$unsaved" "$crashed"; do
+	grep -q "^meeting-check: eligibility $(basename "$folder") .* transcribed$" "$WORK/rt-nomodel.txt" \
+		|| { echo "FAIL: transcribed meeting $(basename "$folder") is offered again"; exit 1; }
+done
+# Refused before anything runs: the app quits right there, with no piece requested (no "requests" line at all).
+grep -q '^meeting-check: retranscribe refused no-model; running false$' "$WORK/rt-nomodel.txt" \
+	&& ! grep -q '^meeting-check: requests' "$WORK/rt-nomodel.txt" \
+	|| { echo "FAIL: started without a model"; exit 1; }
+rm "$mixonly/mic.wav" "$mixonly/system.wav"
+rm -rf "$gone"
+
+# The meeting whose recovery was cut off is the one transcribed. Its recordings, and the saved folder, must stay
+# exactly as they are until a run succeeds.
+target=$(basename "$cut")
+sums() { (cd "$cut" && shasum -a 256 mic.wav system.wav mix.wav); }
+sums >"$WORK/sums-before.txt"
+archived() { ls "$ARCHIVE" | grep -ci "$1" || true; }  # file names have the id in lower case
+id=$(sed -n "s/^meeting-check: eligibility $target \([0-9A-F-]*\) .*/\1/p" "$WORK/rt-nomodel.txt")
+files_in_archive() { ls "$ARCHIVE" | wc -l | tr -d ' '; }
+archive_before=$(files_in_archive)
+work_root="$SUPPORT/MeetingRetranscription"
+unchanged() {  # <output file> <case>
+	block_of() { sed -n "/^meeting-check: $1-text-begin$/,/^meeting-check: $1-text-end$/p" "$2" | sed '1d;$d'; }
+	grep -q "^meeting-check: after id $id .* status failed failed-pieces 0 model none " "$1" \
+		&& [ "$(block_of before "$1")" = "$(block_of after "$1")" ] && sums | cmp -s - "$WORK/sums-before.txt" \
+		&& [ ! -e "$cut/segments.json" ] && [ ! -e "$work_root/$id" ] && [ "$(files_in_archive)" = "$archive_before" ] \
+		&& grep -q "^meeting-check: entries-after 6$" "$1" \
+		|| { echo "FAIL: $2 changed the meeting, its files or the saved folder"; exit 1; }
+}
+requests() { sed -n 's/^meeting-check: requests //p' "$1"; }
+
+# Started twice, canceled right after the second piece's request: one run, no further requests, nothing saved.
+run_app "$WORK/rt-cancel.txt" --meeting-retranscribe-check "$target" --meeting-retranscribe-twice --meeting-retranscribe-cancel-after 2
+show "$WORK/rt-cancel.txt" "transcribe meeting, canceled: "
+grep -q "^meeting-check: eligibility $(basename "$mixonly") .* mix-only$" "$WORK/rt-cancel.txt" \
+	&& grep -q "^meeting-check: eligibility $(basename "$gone") .* audio-gone$" "$WORK/rt-cancel.txt" \
+	|| { echo "FAIL: mix-only / recordings gone not told apart"; exit 1; }
+grep -q '^meeting-check: retranscribe again same run running true$' "$WORK/rt-cancel.txt" \
+	&& grep -q '^meeting-check: retranscribe outcome canceled$' "$WORK/rt-cancel.txt" && [ "$(requests "$WORK/rt-cancel.txt")" = 2 ] \
+	|| { echo "FAIL: cancel (or the second click) didn't stop at 2 requests"; exit 1; }
+unchanged "$WORK/rt-cancel.txt" "a canceled run"
+
+# The entry's save fails: every piece was transcribed, nothing is kept.
+run_app "$WORK/rt-fail.txt" --meeting-retranscribe-check "$target" --meeting-fail-save
+show "$WORK/rt-fail.txt" "transcribe meeting, save fails: "
+full=$(requests "$WORK/rt-fail.txt")
+grep -q '^meeting-check: retranscribe outcome failed(' "$WORK/rt-fail.txt" && [ "$full" -ge 4 ] \
+	|| { echo "FAIL: a failed save wasn't reported"; exit 1; }
+unchanged "$WORK/rt-fail.txt" "a failed save"
+
+# Killed after the third piece's request, as a crash or a forced quit: its work folder is left; the next launch
+# removes it, recovers nothing and transcribes nothing by itself.
+XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" --meeting-retranscribe-check "$target" \
+	--meeting-retranscribe-kill-after 3 >"$WORK/rt-kill.txt" 2>>"$WORK/err.txt" || true
+grep -q '^meeting-check: killed after 3 requests$' "$WORK/rt-kill.txt" && [ -d "$work_root/$id" ] \
+	|| { echo "FAIL: the run wasn't killed mid-way"; exit 1; }
+run_app "$WORK/rt-relaunch.txt" --meeting-recovery-check
+show "$WORK/rt-relaunch.txt" "after the kill: "
+grep -q '^meeting-check: recovered 0$' "$WORK/rt-relaunch.txt" && [ ! -e "$work_root" ] && sums | cmp -s - "$WORK/sums-before.txt" \
+	&& [ ! -e "$cut/segments.json" ] && [ "$(files_in_archive)" = "$archive_before" ] \
+	|| { echo "FAIL: the killed run left something behind or was picked up"; exit 1; }
+echo "transcribe meeting, canceled / failed save / killed: OK (requests 2 / $full / 3, entry and files unchanged)"
+
+# Transcribed: the same entry (id, date, audio) gets a timestamped transcript with both speakers and segments.json;
+# its recordings stay byte for byte; saving to a folder writes one new file for it.
+run_app "$WORK/rt-done.txt" --meeting-retranscribe-check "$target"
+show "$WORK/rt-done.txt" "transcribe meeting: "
+before=$(sed -n "s/^meeting-check: before id $id timestamp \([0-9.]*\) .* audio \(.*\)$/\1 \2/p" "$WORK/rt-done.txt")
+after=$(sed -n "s/^meeting-check: after id $id timestamp \([0-9.]*\) .* audio \(.*\)$/\1 \2/p" "$WORK/rt-done.txt")
+text=$(sed -n '/^meeting-check: after-text-begin$/,/^meeting-check: after-text-end$/p' "$WORK/rt-done.txt" | sed '1d;$d')
+grep -q '^meeting-check: retranscribe outcome done(failedPieces: 0)$' "$WORK/rt-done.txt" \
+	&& [ "$(requests "$WORK/rt-done.txt")" = "$full" ] && [ -n "$before" ] && [ "$before" = "$after" ] \
+	&& grep -q "^meeting-check: after id $id .* status completed failed-pieces 0 model $(sed -n 's/^meeting-check: retranscribe plan model \(.*\) language .*/\1/p' "$WORK/rt-done.txt") " "$WORK/rt-done.txt" \
+	&& grep -q '^meeting-check: entries-after 6$' "$WORK/rt-done.txt" \
+	|| { echo "FAIL: the meeting wasn't transcribed into the same entry"; exit 1; }
+echo "$text" | grep -q '^\[00:00\] Me: ' && echo "$text" | grep -q '^\[[0-9:]*\] Others' \
+	&& [ "$(echo "$text" | grep -c '^\[')" -ge 4 ] && [ -s "$cut/segments.json" ] && sums | cmp -s - "$WORK/sums-before.txt" \
+	&& [ ! -e "$work_root/$id" ] && [ "$(archived "$id")" = 2 ] && [ "$(files_in_archive)" = $((archive_before + 1)) ] \
+	|| { echo "FAIL: transcript, segments.json, recordings or the saved folder not as expected"; exit 1; }
+
+# Relaunched: the entry kept it, nothing is recovered or offered again, nothing is transcribed.
+run_app "$WORK/rt-reload.txt" --meeting-retranscribe-check "$target"
+show "$WORK/rt-reload.txt" "transcribe meeting, relaunched: "
+[ "$(sed -n '/^meeting-check: before-text-begin$/,/^meeting-check: before-text-end$/p' "$WORK/rt-reload.txt" | sed '1d;$d')" = "$text" ] \
+	&& grep -q "^meeting-check: eligibility $target .* transcribed$" "$WORK/rt-reload.txt" \
+	&& grep -qF 'meeting-check: retranscribe outcome failed("This meeting already has its transcript.")' "$WORK/rt-reload.txt" \
+	&& [ "$(requests "$WORK/rt-reload.txt")" = 0 ] && grep -q '^meeting-check: entries-after 6$' "$WORK/rt-reload.txt" \
+	|| { echo "FAIL: the transcribed meeting didn't survive a relaunch as it was"; exit 1; }
+echo "transcribe meeting: OK ($full requests, same entry, recordings unchanged, 1 archived version)"

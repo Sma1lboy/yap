@@ -72,11 +72,12 @@ cat >"$WORK/config/yap/config.json" <<EOF
     "useClipboardContext": false, "useSelectedTextContext": false, "useScreenCapture": false } ] }
 EOF
 
-# run_app <output file> <arguments…>: the mock app with the check's config; stderr goes to $WORK/err.txt.
+# run_app <output file> <arguments…>: the mock app with the check's config (CONFIG_HOME=<folder> for another one);
+# stderr goes to $WORK/err.txt.
 run_app() {
 	local out="$1"
 	shift
-	XDG_CONFIG_HOME="$WORK/config" "$APP/Contents/MacOS/VoiceInk Dev" "$@" >"$out" 2>>"$WORK/err.txt" \
+	XDG_CONFIG_HOME="${CONFIG_HOME:-$WORK/config}" "$APP/Contents/MacOS/VoiceInk Dev" "$@" >"$out" 2>>"$WORK/err.txt" \
 		|| { echo "app exited with $?"; grep -v '^\s*$' "$WORK/err.txt" | tail -5; exit 1; }
 }
 
