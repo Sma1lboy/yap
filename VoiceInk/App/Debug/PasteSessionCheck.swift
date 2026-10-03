@@ -7,10 +7,13 @@
     /// that record instead of acting: ⌘V notes what the pasteboard held when it would have gone out, Enter and Delete
     /// are noted too, the app in front is a made-up process ID and its focused element a stand-in the scenario sets
     /// (whether it takes text as well), activating an app is only noted, Auto Learn / Last Paste, the Scratchpad and
-    /// notifications are lists, and time only moves when the scenario advances it. The general pasteboard is never
+    /// notifications are lists, and time only moves when the scenario advances it. LastPasteEditor's outlets are the
+    /// scenario's too: its selection always succeeds, a paste that goes out is read back in the field then focused,
+    /// and Rewrite's AI answers from `aiReplies` (no request leaves the Mac). The general pasteboard is never
     /// touched, no key is sent, no app is activated and nothing is read from the app in front. Prints one
-    /// `paste-check: {json}` line per scenario with what happened (keys, outcomes, the board, Scratchpad, notices,
-    /// activations, Auto Learn), what should have, and `pass`; then `paste-check-done:`.
+    /// `paste-check: {json}` line per scenario with what happened (keys, outcomes, the board and its change count,
+    /// Scratchpad, notices, activations, Auto Learn, what the AI was asked, what was selected), what should have, and
+    /// `pass`; then `paste-check-done:`.
     @MainActor
     enum PasteSessionCheck {
         static let argument = "--paste-session-check"
