@@ -1,10 +1,12 @@
 #!/bin/bash
 # make vocabulary-hints-check: which dictionary words the cloud transcription requests carry when the dictionary holds
 # more than a provider takes, after a word is added or deleted, and with blanks, case duplicates, same-date and
-# CJK words. Runs the Debug app's own code (VocabularyHintsCheck.swift) from a copy re-identified as
-# me.sma1lboy.yap.mock (see scripts/mock.sh) under the mock lock, with IP traffic denied (scripts/offline.sb): every
-# request is recorded in-process and answered there. In-memory dictionary, fake keys from the environment, no model.
-# Prints every request's terms, then fails if any differs from scripts/vocabulary-hints-check.py.
+# CJK words; and the initial prompt local Whisper builds for a request against the same dictionaries, plus one whose
+# newest words are too long for its budget. Runs the Debug app's own code (VocabularyHintsCheck.swift) from a copy
+# re-identified as me.sma1lboy.yap.mock (see scripts/mock.sh) under the mock lock, with IP traffic denied
+# (scripts/offline.sb): every request is recorded in-process and answered there. In-memory dictionary, fake keys from
+# the environment, no model. Prints every request's terms and each local prompt's words, then fails if any differs
+# from scripts/vocabulary-hints-check.py.
 set -euo pipefail
 source "$(dirname "$0")/mock-lock.sh"
 
