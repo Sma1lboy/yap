@@ -39,7 +39,9 @@ enum TranscriptionHints {
         case "openai/gpt-4o-transcribe", "openai/gpt-4o-mini-transcribe":
             return ["openai": ["prompt": prompt]]
         case "openai/whisper-large-v3":
-            // Served by whichever of these is up; each takes OpenAI's `prompt`.
+            // Served by whichever of these is up; each takes OpenAI's `prompt`. Whisper keeps only the prompt's last
+            // 224 tokens (Groq documents the limit), so the newest words go last, as in local Whisper's prompt.
+            let prompt = terms.reversed().joined(separator: ", ")
             return ["groq": ["prompt": prompt], "deepinfra/us": ["prompt": prompt], "together": ["prompt": prompt]]
         default:
             return nil
@@ -61,6 +63,11 @@ enum TranscriptionHints {
             assert(openAI["language"] == nil)
             let options = (openAI["provider"] as? [String: Any])?["options"] as? [String: [String: String]]
             assert(options == ["openai": ["prompt": "A, B"]])
+            // Whisper keeps a long prompt's tail: the first (newest) term is the last one written.
+            var whisper: [String: Any] = [:]
+            apply(to: &whisper, model: "openai/whisper-large-v3", language: nil, vocabulary: ["New", "Old"])
+            let whisperOptions = (whisper["provider"] as? [String: Any])?["options"] as? [String: [String: String]]
+            assert(whisperOptions?["groq"]?["prompt"] == "Old, New" && whisperOptions?["together"]?["prompt"] == "Old, New")
 
             // No terms for models that ignore them or reject the field; nothing at all without input.
             var gemini: [String: Any] = [:]

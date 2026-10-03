@@ -47,6 +47,8 @@ def check(line):
     terms = {"over-budget": OVER, "after-edit": AFTER_EDIT, "under-budget": SMALL}.get(case, SAME_DATE)
     if consumer.startswith("Speechmatics/") and case == "over-budget":
         terms = ["ZNewestName"] + OLDER  # takes the whole dictionary
+    if consumer.endswith("/whisper-large-v3"):
+        terms = terms[::-1]  # Whisper keeps a long prompt's tail, so the newest go last
     if consumer.endswith("/gemini-3.5-transcribe"):
         terms = None  # answers 400 to a prompt: only the language goes
     pairs = [(terms, sent(line))]
