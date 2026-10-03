@@ -31563,90 +31563,6 @@
         }
       }
     },
-    "Pasted, but Yap couldn't press the send key." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Eingefügt, aber Yap konnte die Sendetaste nicht drücken."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Collé, mais Yap n’a pas pu appuyer sur la touche d’envoi."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已粘贴，但 Yap 没能按下发送键。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已貼上，但 Yap 沒能按下傳送鍵。"
-          }
-        }
-      }
-    },
-    "Pasted, but Yap didn't press the send key: a newer paste or Undo started first." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Eingefügt, aber Yap hat die Sendetaste nicht gedrückt: Vorher hat ein neueres Einfügen oder Rückgängig begonnen."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Collé, mais Yap n’a pas appuyé sur la touche d’envoi : un collage ou une annulation plus récents ont commencé avant."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已粘贴，但 Yap 没有按发送键：在那之前又有新的粘贴或撤销开始了。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已貼上，但 Yap 沒有按傳送鍵：在那之前又有新的貼上或撤銷開始了。"
-          }
-        }
-      }
-    },
-    "Pasted, but Yap didn't press the send key: another app or field was in front." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Eingefügt, aber Yap hat die Sendetaste nicht gedrückt: Eine andere App oder ein anderes Feld war aktiv."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Collé, mais Yap n’a pas appuyé sur la touche d’envoi : une autre app ou un autre champ était actif."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已粘贴，但 Yap 没有按发送键：前台已换成别的 App 或输入框。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已貼上，但 Yap 沒有按傳送鍵：前景已換成別的 App 或輸入框。"
-          }
-        }
-      }
-    },
     "Pasting" : {
       "localizations" : {
         "de" : {
@@ -49300,30 +49216,30 @@
         }
       }
     },
-    "Yap couldn't send the paste keys (⌘V)." : {
+    "Yap couldn't send the paste shortcut (⌘V)." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap konnte die Einfüge-Tasten (⌘V) nicht senden."
+            "value" : "Yap konnte das Einfügekürzel (⌘V) nicht senden."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap n’a pas pu envoyer les touches de collage (⌘V)."
+            "value" : "Yap n’a pas pu envoyer le raccourci de collage (⌘V)."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap 没能发出粘贴按键（⌘V）。"
+            "value" : "Yap 没能发出粘贴快捷键（⌘V）。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yap 沒能送出貼上按鍵（⌘V）。"
+            "value" : "Yap 沒能送出貼上快捷鍵（⌘V）。"
           }
         }
       }
@@ -50533,6 +50449,90 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yap 會錄下你的麥克風和其他 App 的聲音，用目前模式的模型邊錄邊轉錄，停止後整理成紀要。要停止，請點這個面板裡的 ✓；鍵盤操作不會停止會議。"
+          }
+        }
+      }
+    },
+    "Yap sent the paste shortcut (⌘V) but couldn't press the send key." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap hat das Einfügekürzel (⌘V) gesendet, konnte die Sendetaste aber nicht drücken."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap a envoyé le raccourci de collage (⌘V), mais n’a pas pu appuyer sur la touche d’envoi."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 已发出粘贴快捷键（⌘V），但没能按下发送键。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 已送出貼上快捷鍵（⌘V），但沒能按下傳送鍵。"
+          }
+        }
+      }
+    },
+    "Yap sent the paste shortcut (⌘V) but not the send key: a newer paste or Undo started first." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap hat das Einfügekürzel (⌘V) gesendet, aber nicht die Sendetaste gedrückt: Vorher hat ein neueres Einfügen oder Rückgängig begonnen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap a envoyé le raccourci de collage (⌘V), mais n’a pas appuyé sur la touche d’envoi : un collage ou une annulation plus récents ont commencé avant."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 已发出粘贴快捷键（⌘V），但没有按发送键：在那之前又有新的粘贴或撤销开始了。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 已送出貼上快捷鍵（⌘V），但沒有按傳送鍵：在那之前又有新的貼上或撤銷開始了。"
+          }
+        }
+      }
+    },
+    "Yap sent the paste shortcut (⌘V) but not the send key: another app or field was in front." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap hat das Einfügekürzel (⌘V) gesendet, aber nicht die Sendetaste gedrückt: Eine andere App oder ein anderes Feld war aktiv."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap a envoyé le raccourci de collage (⌘V), mais n’a pas appuyé sur la touche d’envoi : une autre app ou un autre champ était actif."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 已发出粘贴快捷键（⌘V），但没有按发送键：前台已换成别的 App 或输入框。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yap 已送出貼上快捷鍵（⌘V），但沒有按傳送鍵：前景已換成別的 App 或輸入框。"
           }
         }
       }
