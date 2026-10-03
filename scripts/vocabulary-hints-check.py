@@ -4,6 +4,9 @@
 Requests that send at most 100 terms (Deepgram batch and stream, OpenRouter and Yap Cloud models that take terms, xAI)
 take the most recently added words; Speechmatics takes the whole dictionary; models that ignore or reject terms
 get none. Order is newest first; words added at the same moment go by spelling.
+
+Local Whisper's initial prompt is the base prompt, a space, then the words that fit about 200 estimated tokens,
+chosen in the same order and written newest last. A word too long for what's left is skipped and older ones still go.
 """
 import json
 import sys
@@ -13,6 +16,19 @@ OVER = ["ZNewestName"] + OLDER[:99]  # A000, the oldest, is the one left out
 AFTER_EDIT = ["YAnother"] + OLDER[:99]
 SMALL = ["useEffect", "kubernetes", "React组件", "张三丰"]
 SAME_DATE = [f"W{i:03d}" for i in range(100)]
+
+# Local Whisper, behind the zh base prompt (about 27 estimated tokens, leaving 173): a word costs its estimate plus one
+# for the ", " before it, so A### and W### cost 3, ZNewestName 5, YAnother 4.
+LOCAL_BASE = "你好，最近好吗？见到你很高兴。"
+LOCAL = {
+    "over-budget": [f"A{i:03d}" for i in range(44, 100)] + ["ZNewestName"],
+    "after-edit": [f"A{i:03d}" for i in range(44, 100)] + ["YAnother"],
+    "under-budget": SMALL[::-1],
+    "same-date-forward": [f"W{i:03d}" for i in range(56, -1, -1)],
+    "same-date-reverse": [f"W{i:03d}" for i in range(56, -1, -1)],
+    # The two newest (900 X, 120 CJK characters) are each over the budget: skipped whole, the older two still go.
+    "oversized-newest": ["useEffect", "张三丰"],
+}
 
 
 def options(line):
@@ -96,7 +112,34 @@ def main(path):
         print(f"FAIL expected {expected_lines} requests, got {len(lines)}")
         failures += 1
     print(f"{len(lines)} requests, {failures} failed")
+    failures += check_local(path)
     sys.exit(1 if failures else 0)
+
+
+def check_local(path):
+    """Local Whisper's prompts; the number that failed."""
+    lines = [json.loads(raw.split(": ", 1)[1]) for raw in open(path, encoding="utf-8")
+             if raw.startswith("vocabulary-hints-local: ")]
+    failures = 0
+    for line in lines:
+        words = LOCAL.get(line["case"])
+        expected = f"{LOCAL_BASE} {', '.join(words)}" if words else LOCAL_BASE
+        problems = []
+        if line["base"] != LOCAL_BASE:
+            problems.append(f"base {line['base']!r}, expected {LOCAL_BASE!r}")
+        if line["prompt"] != expected:
+            problems.append(f"expected {expected[:300]!r}\n           got {line['prompt'][:300]!r}")
+        sent = line["prompt"][len(LOCAL_BASE):].strip().split(", ") if line["prompt"] != LOCAL_BASE else []
+        summary = f"{len(sent):3} words, first {sent[0][:20]!r}, last {sent[-1][:20]!r}" if sent else "no words"
+        print(f"{'FAIL' if problems else 'ok':4} {line['case']:18} {'whisper-local':39} {summary}")
+        for problem in problems:
+            print(f"     {problem}")
+        failures += bool(problems)
+    if sorted(line["case"] for line in lines) != sorted(LOCAL):
+        print(f"FAIL expected local prompts for {sorted(LOCAL)}, got {[line['case'] for line in lines]}")
+        failures += 1
+    print(f"{len(lines)} local prompts, {failures} failed")
+    return failures
 
 
 if __name__ == "__main__":

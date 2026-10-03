@@ -9,7 +9,8 @@
     /// carried, read off the request itself. Every URLSession configuration gets a URLProtocol that records the request
     /// and answers it, so nothing leaves the Mac; the script also runs the app with IP traffic denied. Provider keys come
     /// from YAP_MOCK_API_KEY_*, Yap Cloud from its snapshot sign-in; the user's dictionary and keys are never read.
-    /// scripts/vocabulary-hints-check.py holds what each request should carry.
+    /// For local Whisper it prints the initial prompt WhisperTranscriptionService builds for a request against the same
+    /// dictionary (no model is loaded). scripts/vocabulary-hints-check.py holds what each request should carry.
     @MainActor
     enum VocabularyHintsCheck {
         static let argument = "--vocabulary-hints-check"
@@ -94,12 +95,15 @@
             context.insert(newest)
             try! context.save()
             sendAll(name: "over-budget", context: context, audio: audio)
+            let whisper = localService(context)
+            local(name: "over-budget", service: whisper)
 
-            // 2. The next request after a delete and an add: no cache keeps the old set.
+            // 2. The next request after a delete and an add: no cache keeps the old set (the same local service).
             context.delete(newest)
             context.insert(VocabularyWord(word: "YAnother", dateAdded: start.addingTimeInterval(2_000)))
             try! context.save()
             send(name: "after-edit", model: deepgram, context: context, audio: audio)
+            local(name: "after-edit", service: whisper)
 
             // 3. Under the budget: blanks, a case duplicate (the newer spelling), same-date CJK and mixed words.
             let small = ModelContext(
@@ -113,6 +117,7 @@
             send(name: "under-budget", model: deepgram, context: small, audio: audio)
             stream(name: "under-budget", context: small, language: "en")
             send(name: "under-budget", model: openRouter("openai/gpt-4o-transcribe"), context: small, audio: audio)
+            local(name: "under-budget", service: localService(small))
 
             // 4. 101 words added at the same moment, inserted in two different orders: the same 100 both times.
             for (name, order) in [("same-date-forward", Array(0..<101)), ("same-date-reverse", Array((0..<101).reversed()))] {
@@ -123,12 +128,26 @@
                 }
                 try! sameDate.save()
                 send(name: name, model: deepgram, context: sameDate, audio: audio)
+                local(name: name, service: localService(sameDate))
             }
+
+            // 5. Local Whisper only: the newest words are too long for its prompt budget (900 Latin letters, 120 CJK
+            // characters); the older short words that fit still go, whole.
+            let oversized = ModelContext(
+                try! ModelContainer(for: VocabularyWord.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
+            for (word, offset) in [
+                ("useEffect", 1.0), ("张三丰", 2.0), (String(repeating: "词", count: 120), 3.0), (String(repeating: "X", count: 900), 4.0),
+            ] {
+                oversized.insert(VocabularyWord(word: word, dateAdded: start.addingTimeInterval(offset)))
+            }
+            try! oversized.save()
+            local(name: "oversized-newest", service: localService(oversized))
 
             // Asserts: a failure ends the app before the line below.
             DictionaryTerms.selfCheck()
             TranscriptionHints.selfCheck()
-            print("vocabulary-hints-done: DictionaryTerms TranscriptionHints self-checks ok")
+            WhisperPrompt.selfCheck()
+            print("vocabulary-hints-done: DictionaryTerms TranscriptionHints WhisperPrompt self-checks ok")
             fflush(stdout)
             exit(0)
         }
@@ -177,6 +196,22 @@
             }
             wait { done }
             report(name: name, consumer: "\(model.provider.rawValue)/\(model.name)", outcome: outcome)
+        }
+
+        /// Local Whisper's service on `context`'s dictionary, as TranscriptionServiceRegistry makes it; no model.
+        private static func localService(_ context: ModelContext) -> WhisperTranscriptionService {
+            WhisperTranscriptionService(modelsDirectory: FileManager.default.temporaryDirectory, modelContext: context)
+        }
+
+        /// The initial prompt a local Whisper request would decode with: the zh base prompt (WhisperPrompt.resolvedPrompt,
+        /// as a mode or the default settings resolve it) plus the dictionary, built by WhisperTranscriptionService itself.
+        private static func local(name: String, service: WhisperTranscriptionService) {
+            let base = WhisperPrompt.resolvedPrompt(for: "zh")
+            let prompt = service.initialPrompt(for: TranscriptionRequestContext(language: "zh", prompt: base))
+            let line: [String: Any] = ["case": name, "base": base, "prompt": prompt]
+            let json = try! JSONSerialization.data(withJSONObject: line, options: [.sortedKeys])
+            print("vocabulary-hints-local: \(String(decoding: json, as: UTF8.self))")
+            fflush(stdout)
         }
 
         /// A Deepgram stream as live dictation opens it; prints the websocket handshake's URL.
