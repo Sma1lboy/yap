@@ -816,11 +816,11 @@ extension CursorPaster.Notice {
         case .notPasted(let reason, let destination):
             return String(localized: "\(destination.sentence) \(reason.sentence)")
         case .sendSkipped(.targetChanged):
-            return String(localized: "Pasted, but Yap didn't press the send key: another app or field was in front.")
+            return String(localized: "Yap sent the paste shortcut (⌘V) but not the send key: another app or field was in front.")
         case .sendSkipped(.superseded):
-            return String(localized: "Pasted, but Yap didn't press the send key: a newer paste or Undo started first.")
+            return String(localized: "Yap sent the paste shortcut (⌘V) but not the send key: a newer paste or Undo started first.")
         case .sendSkipped:
-            return String(localized: "Pasted, but Yap couldn't press the send key.")
+            return String(localized: "Yap sent the paste shortcut (⌘V) but couldn't press the send key.")
         case .deleteSkipped(.notSent):
             return String(localized: "Yap couldn't remove your last dictation: the Delete key couldn't be sent.")
         case .deleteSkipped:
