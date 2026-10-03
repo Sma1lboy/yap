@@ -366,6 +366,16 @@
             var aiReplies: [(delay: TimeInterval, reply: Result<String, LastPasteEditor.Failure>)] = []
             var aiAsked: [String] = []
             var selected: [String] = []
+            /// Each rewrite's first press, by label (`pressRewrite`).
+            var rewrites: [String: LastPasteEditor.Rewrite] = [:]
+
+            /// A last paste of `text` in field 1 of `app`, having replaced `replaced`.
+            static func record(text: String, replaced: String) -> LastPasteEditor.Record {
+                LastPasteEditor.Record(
+                    processID: PasteSessionCheck.app, appElement: PasteSessionCheck.field(0),
+                    target: PasteSessionCheck.field(1), range: NSRange(location: 0, length: (text as NSString).length),
+                    text: text, replaced: replaced)
+            }
 
             /// A LastPasteEditor of its own whose last paste is `text` in field 1 of `app`, having replaced `replaced`,
             /// installed as the scenario's (`lastPaste`). Its selection is `selectDelay` long and always succeeds;
@@ -374,10 +384,7 @@
             @discardableResult
             func editor(replaced: String, text: String = "rewritten") -> LastPasteEditor {
                 let clock = self.clock
-                let record = LastPasteEditor.Record(
-                    processID: PasteSessionCheck.app, appElement: PasteSessionCheck.field(0),
-                    target: PasteSessionCheck.field(1), range: NSRange(location: 0, length: (text as NSString).length),
-                    text: text, replaced: replaced)
+                let record = Run.record(text: text, replaced: replaced)
                 let editor = LastPasteEditor.check(
                     LastPasteEditor.Outlets(
                         capture: { [unowned self] text, processID, replaced in
@@ -416,12 +423,15 @@
                 settle()
             }
 
-            /// Rewrite Last Paste once the AI's text came back (no AI call): selected again, `text` pasted over it.
+            /// Rewrite Last Paste once the AI's text came back (no AI call), its request taken now as the press takes
+            /// it: selected again, `text` pasted over it.
             func rewrite(_ label: String, _ text: String, at time: TimeInterval) {
                 advance(to: time)
                 let editor = editor(replaced: "")
+                let rewrite = LastPasteEditor.Rewrite(
+                    request: CursorPaster.newRequest(), record: Run.record(text: "rewritten", replaced: ""))
                 editTasks[label] = Task { @MainActor [unowned self] in
-                    self.outcomes[label] = PasteSessionCheck.label(await editor.pasteRewrite(text))
+                    self.outcomes[label] = PasteSessionCheck.label(await editor.pasteRewrite(text, for: rewrite))
                 }
                 settle()
             }
@@ -432,19 +442,24 @@
                 advance(to: time)
                 let editor = lastPaste ?? editor(replaced: "")
                 Task { @MainActor [unowned self] in
-                    self.outcomes[label + " press"] = "\(await editor.prepareRewrite())"
+                    let rewrite = await editor.prepareRewrite()
+                    self.rewrites[label] = rewrite
+                    self.outcomes[label + " press"] = "\(rewrite != nil)"
                 }
                 settle()
             }
 
             /// The instruction of the rewrite pressed as `label` was transcribed (VoiceInkEngine's follow-up): the AI
-            /// is asked (`aiReplies`) and its text pasted over the last paste.
+            /// is asked (`aiReplies`) and its text pasted over the paste the press selected.
             func instruct(_ label: String, at time: TimeInterval) {
                 advance(to: time)
-                guard let editor = lastPaste else { return failures.append("\(label): no editor") }
+                guard let editor = lastPaste, let rewrite = rewrites[label] else {
+                    return failures.append("\(label): not pressed")
+                }
                 editTasks[label] = Task { @MainActor [unowned self] in
-                    await editor.rewriteLastPaste(instruction: "make it formal", enhancementService: nil, aiService: nil)
-                    self.outcomes[label] = "returned"
+                    self.outcomes[label] = PasteSessionCheck.label(
+                        await editor.rewriteLastPaste(
+                            rewrite, instruction: "make it formal", enhancementService: nil, aiService: nil))
                 }
                 settle()
             }
@@ -567,6 +582,7 @@
             case .refused(let failure): return "refused:\(failure)"
             case .deleted(let result): return "\(result)"
             case .pasted(let result): return "\(result)"
+            case .dropped: return "dropped"
             }
         }
 
@@ -1628,6 +1644,36 @@
                 return run.finish(
                     board: .original, outcomes: ["R press": "true", "R": "dropped", "B": "commandPosted"],
                     keys: ["dictation B"], notices: [], aiAsked: ["dictation A"])
+            },
+            {
+                // Cancelling the instruction's dictation cancels the rewrite; this AI still answers (a reply already
+                // on its way). The text is kept, as a cancelled Undo's is, and nothing is said.
+                let run = Run("Rewrite cancelled while the AI works, the AI answers anyway: Scratchpad only, clipboard untouched, no notice")
+                run.editor(replaced: "", text: "dictation A")
+                run.aiReplies = [(1.0, .success("rewritten A"))]
+                run.begin()
+                let before = run.pasteboard.changeCount
+                run.pressRewrite("R", at: 0)
+                run.instruct("R", at: 0.1)
+                run.cancel("R", at: 0.5)
+                run.advance(to: 3)
+                if run.pasteboard.changeCount != before { run.failures.append("clipboard written") }
+                return run.finish(
+                    board: .original, outcomes: ["R press": "true", "R": "superseded"], keys: [],
+                    scratchpad: ["rewritten A"], notices: [], aiAsked: ["dictation A"], selected: ["dictation A in field1"])
+            },
+            {
+                let run = Run("Rewrite cancelled while the AI works, the AI fails: nothing made up, no notice")
+                run.editor(replaced: "", text: "dictation A")
+                run.aiReplies = [(1.0, .failure(.rewriteFailed("cancelled")))]
+                run.begin()
+                run.pressRewrite("R", at: 0)
+                run.instruct("R", at: 0.1)
+                run.cancel("R", at: 0.5)
+                run.advance(to: 3)
+                return run.finish(
+                    board: .original, outcomes: ["R press": "true", "R": "dropped"], keys: [], notices: [],
+                    aiAsked: ["dictation A"])
             },
         ]
     }

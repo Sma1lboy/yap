@@ -63,10 +63,21 @@ final class LastPasteEditor {
         case refused(Failure)
         case deleted(CursorPaster.KeyResult)
         case pasted(CursorPaster.PasteResult)
+        /// A rewrite whose request a newer paste, Undo or rewrite replaced, or that was cancelled, before the AI had
+        /// text for it: nothing pasted and nothing said (the newer request reports for itself).
+        case dropped
+    }
+
+    /// One Rewrite Last Dictation, from its first press: the last paste it selected then and the request it took
+    /// then. The instruction, the AI and the paste all act on that paste, and only while that request is the latest:
+    /// any paste, Undo or rewrite started since (they all take a request) leaves this one's text in the Scratchpad.
+    struct Rewrite {
+        let request: CursorPaster.Request
+        let record: Record
     }
 
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "LastPasteEditor")
-    private let outlets: Outlets
+    private var outlets: Outlets
     private var record: Record?
     private var captureTask: Task<Void, Never>?
 
@@ -79,6 +90,14 @@ final class LastPasteEditor {
         /// PasteSessionCheck: an editor of its own whose last paste is `record`, with `outlets` (never `.shared`).
         static func check(_ outlets: Outlets, record: Record) -> LastPasteEditor {
             LastPasteEditor(outlets: outlets, record: record)
+        }
+
+        /// `make dictation-latency`'s rewrites through VoiceInkEngine: `.shared` with the check's outlets (each one
+        /// set by the check, none from `live`) and `record` as its last paste. Not undone: the check quits after.
+        func installCheck(_ outlets: Outlets, record: Record) {
+            captureTask?.cancel()
+            self.outlets = outlets
+            self.record = record
         }
     #endif
 
@@ -132,46 +151,72 @@ final class LastPasteEditor {
 
     // MARK: - Rewrite
 
-    /// Before recording the instruction: the last paste must still be there, and it's selected so the rewrite
-    /// replaces it. False (after telling the user why) when it can't be edited.
-    func prepareRewrite() async -> Bool {
-        if case .failure(let failure) = await selectLastPaste() {
-            notify(failure)
-            return false
-        }
-        return true
-    }
-
-    /// The spoken instruction arrived: rewrite the last paste with the mode's AI provider and paste the result
-    /// over it. The paste is checked again first, since the user may have edited it meanwhile.
-    func rewriteLastPaste(instruction: String, enhancementService: AIEnhancementService?, aiService: AIService?) async {
-        let instruction = instruction.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !instruction.isEmpty, let record else { return notify(.nothingPasted) }
-        let rewritten: String
-        switch await outlets.rewrite(Self.rewriteInput(text: record.text, instruction: instruction), enhancementService, aiService) {
-        case .failure(let failure):
-            return notify(failure)
-        case .success(let text):
-            rewritten = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        guard !rewritten.isEmpty else { return notify(.rewriteFailed(String(localized: "The AI returned no text."))) }
-        await pasteRewrite(rewritten)
-    }
-
-    /// The rewrite came back: select the last paste again and paste `rewritten` over it, into that field only. The
-    /// request is taken before the selection, as Undo's is, so a dictation that starts meanwhile goes out instead.
-    @discardableResult
-    func pasteRewrite(_ rewritten: String) async -> Edit {
+    /// The first press, before recording the instruction: the last paste must still be there, and it's selected so
+    /// the rewrite replaces it. Its request is taken first, as Undo's is: a paste still waiting for ⌘V isn't sent over
+    /// that selection, and the rewrite goes out only if nothing newer started before its paste. Nil (after telling the
+    /// user why) when it can't be edited.
+    func prepareRewrite() async -> Rewrite? {
         let request = CursorPaster.newRequest()
         switch await selectLastPaste() {
         case .failure(let failure):
             notify(failure)
-            return .refused(failure)
+            return nil
         case .success(let record):
-            // Replaces the selection; CursorPaster reports it back here, so it becomes the new last paste.
-            return .pasted(
-                await CursorPaster.startPasteAtCursor(rewritten, target: record.pasteTarget, request: request).value.result)
+            return Rewrite(request: request, record: record)
         }
+    }
+
+    /// The spoken instruction arrived (VoiceInkEngine's follow-up): rewrite the paste `rewrite` selected with the
+    /// mode's AI provider and paste the result over it. Dropped before the AI is asked if a paste, Undo or rewrite
+    /// started since the press; a reply that comes back after that, or after the caller was cancelled, goes to the
+    /// Scratchpad without selecting anything (CursorPaster refuses the request before the clipboard), and a failure
+    /// then isn't shown.
+    @discardableResult
+    func rewriteLastPaste(
+        _ rewrite: Rewrite, instruction: String, enhancementService: AIEnhancementService?, aiService: AIService?
+    ) async -> Edit {
+        let instruction = instruction.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard CursorPaster.isLatest(rewrite.request), !Task.isCancelled else {
+            logger.notice("Rewrite dropped before the AI: a newer request started, or it was cancelled")
+            return .dropped
+        }
+        guard !instruction.isEmpty else { return refuse(.nothingPasted) }
+        let reply = await outlets.rewrite(
+            Self.rewriteInput(text: rewrite.record.text, instruction: instruction), enhancementService, aiService)
+        let current = CursorPaster.isLatest(rewrite.request) && !Task.isCancelled
+        switch reply {
+        case .failure(let failure):
+            guard current else {
+                logger.notice("Rewrite failed after a newer request started, or it was cancelled: not shown")
+                return .dropped
+            }
+            return refuse(failure)
+        case .success(let text):
+            let rewritten = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !rewritten.isEmpty else {
+                return current ? refuse(.rewriteFailed(String(localized: "The AI returned no text."))) : .dropped
+            }
+            return await pasteRewrite(rewritten, for: rewrite)
+        }
+    }
+
+    /// The rewrite came back: select the paste `rewrite` was pressed for again and paste `rewritten` over it, into
+    /// that field only, with the request the press took. A request no longer the latest isn't selected at all: the
+    /// paste refuses it before the clipboard and puts the text in the Scratchpad.
+    @discardableResult
+    func pasteRewrite(_ rewritten: String, for rewrite: Rewrite) async -> Edit {
+        var record = rewrite.record
+        if CursorPaster.isLatest(rewrite.request), !Task.isCancelled {
+            switch await outlets.select(rewrite.record) {
+            case .failure(let failure):
+                return refuse(failure)
+            case .success(let selected):
+                record = selected
+            }
+        }
+        // Replaces the selection; CursorPaster reports it back here, so it becomes the new last paste.
+        return .pasted(
+            await CursorPaster.startPasteAtCursor(rewritten, target: record.pasteTarget, request: rewrite.request).value.result)
     }
 
     static let rewritePrompt = """
@@ -204,6 +249,11 @@ final class LastPasteEditor {
     private func notify(_ failure: Failure) {
         logger.notice("Last paste edit refused: \(String(describing: failure), privacy: .public)")
         outlets.notify(failure)
+    }
+
+    private func refuse(_ failure: Failure) -> Edit {
+        notify(failure)
+        return .refused(failure)
     }
 
     private func selectLastPaste() async -> Result<Record, Failure> {

@@ -86,16 +86,18 @@ class VoiceInkEngine: NSObject, ObservableObject {
     private enum RecordingUseCase {
         case newSession
         case assistantFollowUp
-        /// A spoken instruction for rewriting the last paste (LastPasteEditor), not text to paste.
-        case editLastPaste
+        /// A spoken instruction for rewriting the paste its first press selected (LastPasteEditor), not text to paste.
+        case editLastPaste(LastPasteEditor.Rewrite)
 
         var isAssistantFollowUp: Bool {
-            self == .assistantFollowUp
+            if case .assistantFollowUp = self { return true }
+            return false
         }
 
         /// Transcribed without trigger words or cleanup, and handed over instead of pasted.
         var handsOffTranscript: Bool {
-            self != .newSession
+            if case .newSession = self { return false }
+            return true
         }
     }
 
@@ -116,6 +118,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
     private var activeRecordingContextStore: RecordingContextSnapshotStore?
     private var activeRecordingContextTasks: [Task<Void, Never>] = []
     private var voiceInkRefinePreparationTask: Task<Void, Never>?
+    /// A rewrite's AI request and paste, and the dictation whose instruction it is: cancelling that dictation cancels it.
+    private var rewriteInFlight: (transcriptionID: UUID, task: Task<LastPasteEditor.Edit, Never>)?
 
     let recorder = Recorder()
     var recordedFile: URL? = nil
@@ -191,10 +195,10 @@ class VoiceInkEngine: NSObject, ObservableObject {
     // MARK: - Toggle Record
 
     /// `stop`: when and how the user stopped the recording, if this call stops one; nil means now, from somewhere
-    /// other than a shortcut (DictationTimeline).
+    /// other than a shortcut (DictationTimeline). `rewriting`: the recording is the instruction for that rewrite.
     func toggleRecord(
-        modeId: UUID? = nil, isAssistantFollowUp: Bool = false, editsLastPaste: Bool = false, sendAfterPaste: Bool = false,
-        stop: DictationTimeline.Stop? = nil
+        modeId: UUID? = nil, isAssistantFollowUp: Bool = false, rewriting: LastPasteEditor.Rewrite? = nil,
+        sendAfterPaste: Bool = false, stop: DictationTimeline.Stop? = nil
     ) async {
         if recordingState == .starting {
             await cancelRecording()
@@ -244,7 +248,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
         } else {
             let canContinueAssistantSession = isAssistantFollowUp && assistantSession.canSendFollowUp
             let recordingUseCase: RecordingUseCase =
-                editsLastPaste ? .editLastPaste : canContinueAssistantSession ? .assistantFollowUp : .newSession
+                rewriting.map(RecordingUseCase.editLastPaste)
+                ?? (canContinueAssistantSession ? .assistantFollowUp : .newSession)
 
             activePipelineTranscriptionID = nil
             shouldCancelRecording = false
@@ -726,14 +731,20 @@ class VoiceInkEngine: NSObject, ObservableObject {
                 isFollowUp: activePipelineUseCase.handsOffTranscript,
                 sendFollowUp: { [weak self, useCase = activePipelineUseCase] text, transcription in
                     guard let self, self.activePipelineTranscriptionID == transcriptionID else { return }
-                    guard useCase == .editLastPaste else {
+                    guard case .editLastPaste(let rewrite) = useCase else {
                         await self.sendAssistantFollowUp(text, transcription: transcription)
                         return
                     }
                     await self.recorderUIManager?.dismissRecorderPanel()
-                    await LastPasteEditor.shared.rewriteLastPaste(
-                        instruction: text, enhancementService: self.enhancementService,
-                        aiService: self.enhancementService?.getAIService())
+                    let task = Task { [enhancementService = self.enhancementService] in
+                        await LastPasteEditor.shared.rewriteLastPaste(
+                            rewrite, instruction: text, enhancementService: enhancementService,
+                            aiService: enhancementService?.getAIService())
+                    }
+                    self.rewriteInFlight = (transcriptionID, task)
+                    let edit = await task.value
+                    if self.rewriteInFlight?.transcriptionID == transcriptionID { self.rewriteInFlight = nil }
+                    self.logger.notice("Rewrite of the last paste: \(String(describing: edit), privacy: .public)")
                 },
                 startResponse: { [weak self] transcript, configuration in
                     guard let self, self.activePipelineTranscriptionID == transcriptionID else { return }
@@ -844,6 +855,8 @@ class VoiceInkEngine: NSObject, ObservableObject {
         {
             canceledPipelineTranscriptionIDs.insert(activePipelineTranscriptionID)
             pipeline.cancelTranscription(of: activePipelineTranscriptionID)
+            // A rewrite waiting for the AI: its reply, if one still comes, goes to the Scratchpad and nothing is said.
+            if rewriteInFlight?.transcriptionID == activePipelineTranscriptionID { rewriteInFlight?.task.cancel() }
         }
 
         cancelCurrentSession()
@@ -1089,9 +1102,11 @@ extension VoiceInkEngine {
         /// through the check outlets the caller installed (CursorPaster.Outlets.installCheck). `measured`
         /// (`make dictation-latency`): the dictation gets a timeline whose stop is now, and this returns only after the
         /// paste would have sent ⌘V and the SessionMetric has its times.
-        func dictateFile(_ file: URL, measured: Bool = false) async -> Transcription {
+        func dictateFile(_ file: URL, measured: Bool = false, rewriting: LastPasteEditor.Rewrite? = nil) async -> Transcription {
             let audioURL = recordingsDirectory.appendingPathComponent("\(UUID().uuidString).wav")
             try? FileManager.default.copyItem(at: file, to: audioURL)
+            // What stopping a recording sets (`toggleRecord`): the instruction for that rewrite, or a new dictation.
+            activePipelineUseCase = rewriting.map(RecordingUseCase.editLastPaste) ?? .newSession
             return await transcribeRecordedFile(audioURL, timedFrom: measured ? .file : nil, capturesContext: false)
         }
     }

@@ -263,11 +263,12 @@ class RecordingShortcutManager: ObservableObject {
         case .undoLastPaste:
             await LastPasteEditor.shared.undoLastPaste()
         case .rewriteLastPaste:
-            // First press selects the last paste and records the instruction; the next press stops recording.
+            // First press selects the last paste and records the instruction; the next press stops recording. The
+            // rewrite keeps the paste and request the first press took, through the AI's wait.
             if engine.recordingState == .recording || engine.recordingState == .starting {
                 await engine.toggleRecord(stop: DictationTimeline.Stop(time: eventTime, source: .shortcutRelease))
-            } else if engine.recordingState == .idle, await LastPasteEditor.shared.prepareRewrite() {
-                await engine.toggleRecord(editsLastPaste: true)
+            } else if engine.recordingState == .idle, let rewrite = await LastPasteEditor.shared.prepareRewrite() {
+                await engine.toggleRecord(rewriting: rewrite)
             }
         default:
             break

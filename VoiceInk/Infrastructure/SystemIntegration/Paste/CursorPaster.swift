@@ -205,6 +205,12 @@ class CursorPaster {
         return Request(number: latestRequest)
     }
 
+    /// No paste, Undo or rewrite has started since `request` was taken (Rewrite asks before and after its AI wait).
+    @MainActor
+    static func isLatest(_ request: Request) -> Bool {
+        request == latest
+    }
+
     /// History's Paste Again, Quick History and Paste Last: the paste is for `target`, the app the caller recorded.
     /// The request is taken now, before any wait, so a paste or Undo started meanwhile supersedes this one.
     /// `activate`: unless the app is in front already, it's asked once to come to the front. After `hold` (Paste
