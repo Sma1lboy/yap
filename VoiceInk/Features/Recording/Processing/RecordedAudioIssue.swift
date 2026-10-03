@@ -60,12 +60,13 @@ enum RecordedAudioIssue: LocalizedError, Equatable {
         }
     }
 
-    /// The notification for this issue. A quiet recording names the input device, since a wrong one is the usual cause.
+    /// The notification for this issue. A quiet recording names the input a recording uses (the mode's choice or the
+    /// fallback, as `resolveCurrentRecordingDevice` decides), since a wrong one is the usual cause.
     @MainActor
     var notificationTitle: String {
         guard self == .tooQuiet else { return errorDescription ?? "" }
         let manager = AudioDeviceManager.shared
-        guard let device = (manager.selectedDeviceID ?? manager.getSystemDefaultDevice()).flatMap(manager.getDeviceName)
+        guard let device = manager.resolveCurrentRecordingDevice().deviceID.flatMap(manager.getDeviceName)
         else { return errorDescription ?? "" }
         return String(
             format: String(localized: "Yap barely heard anything from “%@”. Check your microphone in Audio Settings."), device)

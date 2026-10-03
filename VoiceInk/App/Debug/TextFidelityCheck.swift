@@ -56,19 +56,32 @@
             Case(name: "aside-chinese", input: "我明天(周三)有空"),
             Case(name: "aside-english", input: "The meeting (with Bob) is at 3pm."),
             Case(name: "aside-laugh-inline", input: "我觉得(笑)可以"),
+            // Brackets whose words aren't known noise: same shape as [Music] or (laughs), but text the user said.
+            Case(name: "bracket-word-alone", input: "[options]"),
+            Case(name: "bracket-placeholder", input: "Use [projectName] here"),
+            Case(name: "bracket-line-start-chinese", input: "[待办] 明天交周报"),
+            Case(name: "paren-word-alone", input: "(Tuesday)"),
+            Case(name: "paren-line-start", input: "(Tuesday) works for me"),
+            Case(name: "paren-own-line", input: "Dates:\n(Tuesday)\nor Friday"),
+            Case(name: "paren-chinese-line-start", input: "(周三)有空"),
+            Case(name: "tag-alone", input: "<div>hello</div>"),
+            Case(name: "brace-word-alone", input: "{name}"),
             // Spacing and lines.
             Case(name: "repeated-spaces", input: "a  b   c"),
             Case(name: "line-break", input: "第一行\n第二行"),
             Case(name: "paragraph-break", input: "第一段。\n\n第二段。"),
             Case(name: "many-line-breaks", input: "a\n\n\n\nb"),
-            // Noise and hallucinations, which stay handled.
-            Case(name: "noise-music", input: "[Music]"),
-            Case(name: "noise-blank-audio", input: "[BLANK_AUDIO]"),
-            Case(name: "noise-paren-alone", input: "(upbeat music)"),
-            Case(name: "noise-inline-square", input: "Hello [inaudible] world"),
-            Case(name: "noise-leading-square", input: "[Music] Hello there"),
-            Case(name: "noise-own-line", input: "Okay.\n(laughs)\nSo anyway"),
-            Case(name: "noise-tag-alone", input: "<noise>static</noise>"),
+            // whisper.cpp's no-speech marker, which goes, and the whole-transcript hallucination check.
+            Case(name: "blank-audio", input: "[BLANK_AUDIO]"),
+            Case(name: "blank-audio-inline", input: "Hello [BLANK_AUDIO] world"),
+            Case(name: "blank-audio-own-line", input: "Okay.\n[BLANK_AUDIO]\nSo anyway"),
+            // Annotations shaped like Whisper's: no source says they're never said, so they stay as text.
+            Case(name: "whisper-style-square", input: "[Music]"),
+            Case(name: "whisper-style-paren", input: "(upbeat music)"),
+            Case(name: "whisper-style-inline", input: "Hello [inaudible] world"),
+            Case(name: "whisper-style-leading", input: "[Music] Hello there"),
+            Case(name: "whisper-style-own-line", input: "Okay.\n(laughs)\nSo anyway"),
+            Case(name: "whisper-style-tag", input: "<noise>static</noise>"),
             Case(name: "hallucination-outro", input: "Thank you for watching."),
             Case(name: "hallucination-in-sentence", input: "Thank you for watching the kids while I was out."),
             Case(name: "orphan-punctuation", input: "。。好的"),
@@ -132,11 +145,26 @@
                 print("text-check: \(String(decoding: json, as: UTF8.self))")
             }
             fillers.fillerWords = defaultFillers
+
+            // An imported file's timed segments (local Whisper), through the import's own cleanup with one rule.
+            let container = try! ModelContainer(
+                for: WordReplacement.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+            let context = ModelContext(container)
+            context.insert(WordReplacement(originalText: "k8s", replacementText: "Kubernetes"))
+            try! context.save()
+            let segments = AudioTranscriptionManager.cleanedSegments(
+                [" [BLANK_AUDIO] ", "Use [projectName] on k8s", "Dates:\n[BLANK_AUDIO]\n(Tuesday)", "[options]"].enumerated()
+                    .map { TimedSegment(start: Double($0.offset), end: Double($0.offset) + 1, text: $0.element) },
+                replacementsIn: context)
+            let json = try! JSONSerialization.data(withJSONObject: segments.map(\.text))
+            print("text-check-import-segments: \(String(decoding: json, as: UTF8.self))")
+
             TranscriptionOutputFilter.selfCheck()
             ChineseCleanup.selfCheck()
             ParagraphFormatter.selfCheck()
             ReplacementText.selfCheck()
-            print("text-check-selfchecks: TranscriptionOutputFilter ChineseCleanup ParagraphFormatter ReplacementText ok")
+            TimedSegments.selfCheck()
+            print("text-check-selfchecks: TranscriptionOutputFilter ChineseCleanup ParagraphFormatter ReplacementText TimedSegments ok")
             fflush(stdout)
             exit(0)
         }

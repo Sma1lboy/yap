@@ -6,10 +6,10 @@ they should give and the first step that differs from the input it should have k
 
 The contract (docs/dictation-text.md):
 - Recognized text is the user's: the steps don't remove characters that belong to it. Paths (./, ../, dotfiles),
-  flags, calls, indexes, JSON, tags and asides in brackets stay as recognized.
-- Noise annotations a model writes in place of speech go: a word or words in square brackets ([Music],
-  [BLANK_AUDIO], [inaudible]) wherever they are, a parenthesized or braced annotation or tag block on a line of its
-  own, and the whole transcript when it's a known hallucination (the pipeline then reports silence).
+  flags, calls, indexes, JSON, tags and anything in brackets stay as recognized, [options], (Tuesday) and
+  Whisper-shaped annotations like [Music] or (laughs) included: their shape can't tell them from dictated text.
+- What is known never to be speech goes: whisper.cpp's [BLANK_AUDIO] (its line too when it stands alone), and the
+  whole transcript when it's a known hallucination (the pipeline then reports silence).
 - Spacing: runs of spaces become one; line breaks stay, three or more become a blank line.
 - What the user turned on applies as set: filler words (English list, Chinese 嗯/呃/…), spoken line breaks,
   Traditional → Simplified, spaces between Chinese and Latin, paragraphs, replacement rules (longest first,
@@ -53,19 +53,33 @@ EXPECTED = {
     "aside-chinese": {"filter": "我明天(周三)有空", "output": "我明天(周三)有空"},
     "aside-english": {"filter": "The meeting (with Bob) is at 3pm.", "output": "The meeting (with Bob) is at 3pm."},
     "aside-laugh-inline": {"output": "我觉得(笑)可以"},
+    # Brackets whose words aren't known noise: kept wherever they are.
+    "bracket-word-alone": {"filter": "[options]", "output": "[options]"},
+    "bracket-placeholder": {"filter": "Use [projectName] here", "output": "Use [projectName] here"},
+    "bracket-line-start-chinese": {"output": "[待办] 明天交周报"},
+    "paren-word-alone": {"filter": "(Tuesday)", "output": "(Tuesday)"},
+    "paren-line-start": {"output": "(Tuesday) works for me"},
+    "paren-own-line": {"filter": "Dates:\n(Tuesday)\nor Friday", "output": "Dates:\n(Tuesday)\nor Friday"},
+    "paren-chinese-line-start": {"output": "(周三)有空"},
+    "tag-alone": {"filter": "<div>hello</div>", "output": "<div>hello</div>"},
+    "brace-word-alone": {"filter": "{name}", "output": "{name}"},
     # Spacing and lines.
     "repeated-spaces": {"output": "a b c"},
     "line-break": {"output": "第一行\n第二行"},
     "paragraph-break": {"filter": "第一段。\n\n第二段。", "output": "第一段。\n\n第二段。"},
     "many-line-breaks": {"output": "a\n\nb"},
-    # Noise and hallucinations: still taken out.
-    "noise-music": {"output": ""},
-    "noise-blank-audio": {"output": ""},
-    "noise-paren-alone": {"output": ""},
-    "noise-inline-square": {"output": "Hello world"},
-    "noise-leading-square": {"output": "Hello there"},
-    "noise-own-line": {"output": "Okay.\nSo anyway"},
-    "noise-tag-alone": {"output": ""},
+    # whisper.cpp's no-speech marker goes (with its line when alone); hallucinations are caught whole.
+    "blank-audio": {"output": ""},
+    "blank-audio-inline": {"output": "Hello world"},
+    "blank-audio-own-line": {"output": "Okay.\nSo anyway"},
+    # Shaped like Whisper's annotations, but the shape is the same as text a user dictates: kept (until M6.3 these
+    # were deleted; no provider documents them as never-said).
+    "whisper-style-square": {"output": "[Music]"},
+    "whisper-style-paren": {"output": "(upbeat music)"},
+    "whisper-style-inline": {"output": "Hello [inaudible] world"},
+    "whisper-style-leading": {"output": "[Music] Hello there"},
+    "whisper-style-own-line": {"output": "Okay.\n(laughs)\nSo anyway"},
+    "whisper-style-tag": {"output": "<noise>static</noise>"},
     "hallucination-outro": {"hallucination": True},
     "hallucination-in-sentence": {"hallucination": False, "output": "Thank you for watching the kids while I was out."},
     "orphan-punctuation": {"output": "好的"},
@@ -144,7 +158,17 @@ for case, expected in EXPECTED.items():
         bad.append((case, "; ".join(problems)))
     print()
 
-print("text-fidelity: %d of %d cases as expected" % (len(EXPECTED) - len(bad), len(EXPECTED)))
+# An imported file's timed segments, through AudioTranscriptionManager.cleanedSegments: the marker segment and the
+# marker line go, bracketed words stay, the replacement rule applies.
+IMPORT_SEGMENTS = ["Use [projectName] on Kubernetes", "Dates:\n(Tuesday)", "[options]"]
+segments = next((json.loads(l[len("text-check-import-segments: "):]) for l in open(sys.argv[1], encoding="utf-8")
+                 if l.startswith("text-check-import-segments: ")), None)
+print("import segments: %s" % show(segments))
+if segments != IMPORT_SEGMENTS:
+    bad.append(("import-segments", "expected %s" % show(IMPORT_SEGMENTS)))
+
+total = len(EXPECTED) + 1
+print("text-fidelity: %d of %d cases as expected" % (total - len(bad), total))
 for case, why in bad:
     print("FAIL %-36s %s" % (case, why))
 sys.exit(1 if bad else 0)

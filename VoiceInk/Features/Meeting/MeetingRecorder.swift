@@ -182,8 +182,17 @@ final class MeetingRecorder: ObservableObject {
         guard let configuration = ModeRuntimeResolver.transcriptionConfiguration(
             transcriptionModelManager: engine.transcriptionModelManager)
         else { return notify(String(localized: "Choose a transcription model in the mode before recording a meeting.")) }
-        guard let micDevice = AudioDeviceManager.shared.resolveCurrentRecordingDevice().deviceID else {
-            return notify(String(localized: "No microphone is available for the meeting recording."), pane: .microphone)
+        let microphone = AudioDeviceManager.shared.resolveCurrentRecordingDevice()
+        guard let micDevice = microphone.deviceID else {
+            // What a dictation says when it has no microphone: why (lid closed, only virtual or aggregate inputs
+            // left), and Audio Settings to choose one.
+            let presentation = AudioInputFailurePresentation.noUsableMicrophone(
+                internalMicrophoneBlockedByClosedLid: microphone.internalMicrophoneBlockedByClosedLid,
+                onlyUnchosenInputsLeft: microphone.onlyUnchosenInputsLeft)
+            NotificationManager.shared.showNotification(
+                title: presentation.title, type: .error, duration: 7,
+                actionButton: (presentation.actionLabel, presentation.action))
+            return
         }
 
         let started = Date()

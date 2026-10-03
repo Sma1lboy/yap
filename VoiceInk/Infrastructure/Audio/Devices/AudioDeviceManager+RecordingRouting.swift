@@ -90,6 +90,13 @@ extension AudioDeviceManager {
         resolveCurrentRecordingDevice().deviceID ?? 0
     }
 
+    /// Selected Microphone mode: the connected device the user chose, which Audio Settings' menu shows. nil when it
+    /// isn't connected or nothing was chosen; `selectedDeviceID` is then a fallback (or nil), not a choice.
+    var chosenCustomDeviceUID: String? {
+        guard !selectedDeviceIsFallback, let selectedDeviceID else { return nil }
+        return availableDevices.first { $0.id == selectedDeviceID }?.uid
+    }
+
     func findBestAvailableDevice() -> AudioDeviceID? {
         fallbackRecordingDeviceIDs().first(where: isDeviceUsableForRecording)
     }
@@ -100,10 +107,10 @@ extension AudioDeviceManager {
     }
 
     /// Whether Yap may record from this input without the user having chosen it, when their choice isn't there.
-    /// Only inputs with a known physical transport. Virtual inputs (BlackHole, Loopback, a meeting app's own) and
-    /// aggregates (Yap's private system-audio tap during a meeting is one) carry other sounds than the user's voice,
-    /// and an input that doesn't report its transport can't be told apart from them. Decided by Core Audio's
-    /// transport type, not by name; a virtual driver that reports a physical transport isn't caught.
+    /// Every transport except: virtual (BlackHole, Loopback, a meeting app's own), aggregate and auto-aggregate (Yap's
+    /// private system-audio tap during a meeting is one), which carry other sounds than the user's voice, and unknown
+    /// or unreported, which can't be told apart from them. Any other transport counts, including ones Core Audio adds
+    /// later. Decided by transport type, not by name; a virtual driver that reports a physical transport isn't caught.
     func isAutomaticFallbackInput(_ deviceID: AudioDeviceID) -> Bool {
         Self.isAutomaticFallbackTransport(
             getUInt32DeviceProperty(deviceID: deviceID, selector: kAudioDevicePropertyTransportType))

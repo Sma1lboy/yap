@@ -67,7 +67,11 @@
                     internalMicrophoneBlockedByClosedLid: resolution.internalMicrophoneBlockedByClosedLid,
                     onlyUnchosenInputsLeft: resolution.onlyUnchosenInputsLeft).title
                 : ""
-            print("mic-check: \(label) selected \(name(manager.selectedDeviceID, in: manager)) | records \(name(resolution.deviceID, in: manager)) | lid-blocked \(resolution.internalMicrophoneBlockedByClosedLid) | unchosen-left \(resolution.onlyUnchosenInputsLeft) | saved \(saved) | prioritized \(manager.prioritizedDevices.map(\.id).joined(separator: ","))\(message)")
+            // What Audio Settings' Microphone menu shows as chosen in Selected Microphone mode ("-" in other modes).
+            let menu = manager.inputMode == .custom
+                ? (manager.chosenCustomDeviceUID.flatMap { uid in manager.availableDevices.first { $0.uid == uid }?.name } ?? "none")
+                : "-"
+            print("mic-check: \(label) selected \(name(manager.selectedDeviceID, in: manager)) | menu \(menu) | records \(name(resolution.deviceID, in: manager)) | lid-blocked \(resolution.internalMicrophoneBlockedByClosedLid) | unchosen-left \(resolution.onlyUnchosenInputsLeft) | saved \(saved) | prioritized \(manager.prioritizedDevices.map(\.id).joined(separator: ","))\(message)")
         }
 
         private static func start(_ label: String, _ devices: [Device], default defaultInput: AudioDeviceID? = nil, lid: Bool = false) -> AudioDeviceManager {
@@ -132,6 +136,10 @@
             // The saved device comes back with another UID but the same model UID: found and saved again.
             save(mode: .custom, custom: ("usb-old-uid", "M-USB"))
             _ = start("uid-reidentified", [builtIn, usb])
+
+            // Selected Microphone with nothing chosen yet: a fallback, which the menu doesn't show as chosen.
+            save(mode: .custom)
+            _ = start("custom-none-chosen", [virtual, builtIn])
 
             // Unplugged and plugged back: the fallback isn't saved, and the saved device is used again.
             save(mode: .custom, custom: (usb.uid, "M-USB"))
