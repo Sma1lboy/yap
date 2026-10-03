@@ -1205,6 +1205,11 @@ struct HistoryCardRow: View {
 
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+            // A meeting saved with its audio only can be transcribed as a meeting (MeetingRetranscription); the
+            // result of that stays shown here once its transcript is in. Says nothing for any other meeting.
+            if transcription.isMeeting {
+                MeetingTranscribeTools(transcription: transcription)
+            }
             // Not for a recovered meeting saved with its audio only (its text is the reason, not a transcript), nor
             // for one where nothing was said (no notes to write, nobody to name).
             if transcription.isMeeting, transcription.transcriptionStatus != TranscriptionStatus.failed.rawValue,

@@ -161,3 +161,181 @@ struct MeetingSpeakerNamesEditor: View {
         .popoverAppAppearance()
     }
 }
+
+/// Transcribe Meeting in an expanded History row: for a meeting saved with its audio only (MeetingRetranscription).
+/// It says which model and language the mode has and where the recording goes, and starts only on Transcribe; while
+/// it runs, the row shows the step and Cancel; afterwards, how it ended. A meeting it can't do says why, with no
+/// button; without a transcription model in the mode, it offers the modes instead.
+struct MeetingTranscribeTools: View {
+    let transcription: Transcription
+
+    /// What the user is asked to confirm: the mode's model and language, read when they clicked.
+    struct Plan {
+        let model: String
+        let language: String
+        let destination: String
+        /// What runs; nil only in make ui-snapshots.
+        let configuration: TranscriptionRuntimeConfiguration?
+
+        init(_ configuration: TranscriptionRuntimeConfiguration) {
+            self.init(
+                model: configuration.model.displayName,
+                language: TranscriptionLanguageSupport.displayName(configuration.language),
+                destination: MeetingRetranscription.destination(of: configuration.model), configuration: configuration)
+        }
+
+        init(model: String, language: String, destination: String, configuration: TranscriptionRuntimeConfiguration? = nil) {
+            (self.model, self.language, self.destination, self.configuration) = (model, language, destination, configuration)
+        }
+    }
+
+    @ObservedObject private var retranscriber = MeetingRetranscriber.shared
+    /// make ui-snapshots only; otherwise read from the entry and its folder on each render (a few `stat`s, and
+    /// none for a meeting that has its transcript), so a folder removed meanwhile is seen.
+    private let shownEligibility: MeetingRetranscription.Eligibility?
+    @State private var plan: Plan?
+    @State private var noModel: Bool
+    @State private var refused: String?
+
+    /// The other parameters are for make ui-snapshots.
+    init(
+        transcription: Transcription, eligibility: MeetingRetranscription.Eligibility? = nil, plan: Plan? = nil,
+        noModel: Bool = false, refused: String? = nil
+    ) {
+        self.transcription = transcription
+        shownEligibility = eligibility
+        _plan = State(initialValue: plan)
+        _noModel = State(initialValue: noModel)
+        _refused = State(initialValue: refused)
+    }
+
+    private var state: MeetingRetranscriber.State? { retranscriber.states[transcription.id] }
+
+    var body: some View {
+        let eligibility = shownEligibility ?? MeetingRetranscription.eligibility(of: transcription)
+        let reason = MeetingRetranscription.reason(for: eligibility)
+        let canStart = if case .eligible = eligibility { true } else { false }
+        // Nothing at all for a meeting with its transcript and no run: no gap in the row.
+        if state != nil || plan != nil || canStart || reason != nil {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+                if let state {
+                    stateView(state)
+                } else if let plan {
+                    confirmation(plan)
+                } else if canStart {
+                    startButton
+                } else if let reason {
+                    MeetingStatusLineView(line: .init(kind: .warning, text: reason))
+                }
+                if noModel, plan == nil, state?.isActive != true {
+                    HStack(spacing: AppTheme.Spacing.x2) {
+                        MeetingStatusLineView(line: .init(
+                            kind: .warning,
+                            text: String(localized: "No transcription model is chosen in the current mode. Choose one in Modes, then transcribe the meeting.")))
+                        AppActionButton("Open Modes") { ModeSetupNavigator.openModesSettings() }
+                    }
+                }
+                if let refused, state?.isActive != true {
+                    MeetingStatusLineView(line: .init(kind: .warning, text: refused))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var startButton: some View {
+        HStack(spacing: AppTheme.Spacing.x2) {
+            AppActionButton("Transcribe Meeting…") { prepare() }
+                .help("Transcribe this meeting from its microphone and system audio recordings, with this mode's model.")
+            Text("Only its audio was saved.")
+                .font(AppTheme.font(.caption))
+                .foregroundStyle(AppTheme.Text.secondary)
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func confirmation(_ plan: Plan) -> some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+            Text(String(format: String(localized: "Transcribe with %@, language %@ (this mode's settings now)."), plan.model, plan.language))
+                .font(AppTheme.font(.callout, .medium))
+                .foregroundStyle(AppTheme.Text.primary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(plan.destination)
+                .font(AppTheme.font(.caption))
+                .foregroundStyle(AppTheme.Text.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("The whole recording is transcribed again, then speakers are told apart and notes are written by this mode's AI provider, if it has one. The entry stays as it is until that's done; canceling or a failure changes nothing. Each try is a new full run, so a cloud model is called again.")
+                .font(AppTheme.font(.caption))
+                .foregroundStyle(AppTheme.Text.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: AppTheme.Spacing.x2) {
+                Spacer(minLength: 0)
+                AppActionButton("Cancel") { self.plan = nil }
+                AppActionButton("Transcribe", kind: .primary) { begin(plan) }
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(AppTheme.Spacing.x3)
+        .background(
+            RoundedRectangle(cornerRadius: AppTheme.Radius.card, style: .continuous).fill(AppTheme.Surface.subtle))
+    }
+
+    @ViewBuilder
+    private func stateView(_ state: MeetingRetranscriber.State) -> some View {
+        switch state {
+        case .running(let step):
+            HStack(spacing: AppTheme.Spacing.x2) {
+                MeetingStatusLineView(line: .init(kind: .progress, text: step))
+                AppActionButton("Cancel") { retranscriber.cancel(transcription.id) }
+                Spacer(minLength: 0)
+            }
+        case .canceling:
+            MeetingStatusLineView(line: .init(kind: .progress, text: String(localized: "Canceling… The part being transcribed finishes first.")))
+        case .done(let failed) where failed > 0:
+            MeetingStatusLineView(line: .init(
+                kind: .warning,
+                text: String(localized: "Transcribed, but \(Int64(failed)) parts couldn't be; they're marked in the transcript.")))
+        case .done:
+            MeetingStatusLineView(line: .init(kind: .info, text: String(localized: "Transcribed. This entry now has the meeting's transcript.")))
+        case .failed(let error):
+            MeetingStatusLineView(line: .init(
+                kind: .error,
+                text: String(format: String(localized: "The meeting wasn't transcribed: %@ The entry and its recordings are unchanged."), error)))
+            retryButton
+        case .canceled:
+            MeetingStatusLineView(line: .init(kind: .info, text: String(localized: "Canceled. The entry and its recordings are unchanged.")))
+            retryButton
+        }
+    }
+
+    @ViewBuilder
+    private var retryButton: some View {
+        if transcription.transcriptionStatus == TranscriptionStatus.failed.rawValue, plan == nil {
+            AppActionButton("Transcribe Meeting…") { prepare() }
+        }
+    }
+
+    /// The mode's model and language now; with none, the way to choose one, and nothing starts.
+    private func prepare() {
+        refused = nil
+        if let busy = retranscriber.busyReason() {
+            refused = busy
+            return
+        }
+        guard let engine = MeetingRecorder.shared.engine,
+            let configuration = ModeRuntimeResolver.transcriptionConfiguration(
+                transcriptionModelManager: engine.transcriptionModelManager)
+        else {
+            noModel = true
+            return
+        }
+        noModel = false
+        plan = Plan(configuration)
+    }
+
+    private func begin(_ plan: Plan) {
+        self.plan = nil
+        guard let configuration = plan.configuration else { return }
+        refused = retranscriber.start(transcription, configuration: configuration)
+    }
+}
