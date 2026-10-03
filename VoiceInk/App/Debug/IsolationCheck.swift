@@ -49,8 +49,7 @@
             let system = URL(fileURLWithPath: arguments[3])
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(10))  // launch-time work settles, as in offline-check
-                CursorPaster.dryRun = true
-                let restorePasteboard = OfflineCheck.savePasteboard()
+                let closeClipboard = CursorPaster.Outlets.installCheck()
                 let manager = engine.whisperModelManager
                 let makeContext = manager.makeContext
                 manager.makeContext = { file in
@@ -196,7 +195,7 @@
                     switchMode(to: first)
                 }
 
-                restorePasteboard()
+                await closeClipboard()
                 await engine.closeLocalModels()  // ggml asserts at exit() while any Metal buffer is still allocated
                 emit(["event": "done"])
                 exit(0)

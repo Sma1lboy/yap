@@ -4,8 +4,9 @@
 
     /// `make dictation-latency` (scripts/dictation-latency.sh): `--dictation-latency <rounds> --dictate-file <wav>…`.
     /// Dictates every file once per round through the normal stop → transcribe → deliver path, with the model loaded
-    /// beforehand the way a press loads it while the user speaks, and CursorPaster.dryRun so ⌘V is timed but never
-    /// sent. Prints one `dictation-latency:` JSON line per dictation, read back from its SessionMetric, then quits.
+    /// beforehand the way a press loads it while the user speaks, and CursorPaster's check outlets (a private
+    /// pasteboard, no key sent) so ⌘V is timed but never sent. Prints one `dictation-latency:` JSON line per
+    /// dictation, read back from its SessionMetric, then quits.
     /// One untimed dictation first pays for anything compiled on first use (Metal shaders). Every line carries
     /// `savedAfterPaste`, seconds from ⌘V to the History save. After the rounds, the first file is dictated six more
     /// times with the model released, as Keep model loaded: After Each Dictation does: three stopped while the press's
@@ -27,8 +28,14 @@
 
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(10))  // launch-time work settles, as in offline-check
-                CursorPaster.dryRun = true
-                let restorePasteboard = OfflineCheck.savePasteboard()
+                // When ⌘V would have gone out for the current dictation; what the next paste reports.
+                final class Paste {
+                    var commandTime: TimeInterval?
+                    var result = CursorPaster.PasteResult.commandPosted
+                }
+                let paste = Paste()
+                let closeClipboard = CursorPaster.Outlets.installCheck(
+                    result: { paste.result }, commandSent: { paste.commandTime = $0 })
 
                 // When each dictation's History entry was saved, from its ⌘V: the save comes after the paste.
                 final class Saves { var afterPaste: [UUID: TimeInterval] = [:] }
@@ -37,12 +44,12 @@
                     forName: .transcriptionCompleted, object: nil, queue: .main
                 ) { note in
                     guard let transcription = note.object as? Transcription,
-                        let command = CursorPaster.lastDryRunCommandTime
+                        let command = paste.commandTime
                     else { return }
                     saves.afterPaste[transcription.id] = ProcessInfo.processInfo.systemUptime - command
                 }
                 @MainActor func dictate(_ file: URL, measured: Bool = true) async -> Transcription {
-                    CursorPaster.lastDryRunCommandTime = nil
+                    paste.commandTime = nil
                     return await engine.dictateFile(file, measured: measured)
                 }
                 @MainActor func report(
@@ -90,9 +97,9 @@
 
                 // A paste that fails still leaves the dictation in History, saved to the store.
                 await engine.loadCurrentModel()
-                CursorPaster.dryRunResult = .commandNotPosted
+                paste.result = .commandNotPosted
                 let failed = await dictate(files[0])
-                CursorPaster.dryRunResult = .commandPosted
+                paste.result = .commandPosted
                 let failedID = failed.id
                 let stored = try? ModelContext(engine.modelContext.container).fetch(
                     FetchDescriptor<Transcription>(predicate: #Predicate { $0.id == failedID })
@@ -104,7 +111,7 @@
 
                 NotificationCenter.default.removeObserver(observer)
                 await engine.releaseModels()  // ggml asserts at exit() while any Metal buffer is still allocated
-                restorePasteboard()
+                await closeClipboard()
                 fflush(stdout)
                 exit(0)  // not NSApp.terminate, which can't finish from inside a Task (AppDelegate.applicationShouldTerminate)
             }

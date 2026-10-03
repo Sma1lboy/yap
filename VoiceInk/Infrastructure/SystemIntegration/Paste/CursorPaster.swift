@@ -4,8 +4,6 @@ import Foundation
 import os
 
 class CursorPaster {
-    private typealias ClipboardItemSnapshot = [(NSPasteboard.PasteboardType, Data)]
-    private typealias ClipboardSnapshot = [ClipboardItemSnapshot]
     private static let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "CursorPaster")
 
     enum PasteResult: Equatable {
@@ -28,18 +26,44 @@ class CursorPaster {
         var commandTime: TimeInterval?
     }
 
-    #if DEBUG
-        /// `make dictation-latency`: the clipboard and every wait up to ⌘V run as usual, but the frontmost app isn't
-        /// asked about its focused field or selection, no key event is posted and nothing goes to Auto Learn or Last
-        /// Paste, so nothing is read from or typed into whatever app is in front. Uses the normal timing even when a
-        /// remote-desktop app is frontmost. `dryRunResult` is what the paste reports (a failed paste for its check).
-        static var dryRun = false
-        static var dryRunResult = PasteResult.commandPosted
-        /// When the last dry-run ⌘V would have gone out, so the check can tell what happened after it.
-        static var lastDryRunCommandTime: TimeInterval?
-    #else
-        static let dryRun = false
-    #endif
+    /// A paste that went out, for Auto Learn and Undo/Rewrite Last Paste.
+    struct SentPaste {
+        let text: String
+        let processID: pid_t?
+        let dictationID: UUID?
+        /// The selection the paste replaced.
+        let replaced: String
+    }
+
+    enum Notice {
+        case accessibilityMissing, noTextField
+    }
+
+    /// Everything a paste touches outside its own logic: the pasteboard, the app in front and its focused field, the
+    /// keyboard, the clock, Auto Learn and Last Paste, the Scratchpad and notifications. `live` is the app's; checks
+    /// install their own, on a private pasteboard with no key sent (`check`, PasteSessionCheck).
+    struct Outlets {
+        var clipboard: PasteClipboard
+        /// Accessibility trust: both paste methods send keystrokes, which macOS drops without it.
+        var canPostKeys: () -> Bool
+        var focusCanTakeText: () -> Bool
+        var frontmostApp: () -> (bundleID: String?, processID: pid_t?)
+        /// The focused field's selection in that app, which the paste replaces; nil: not read.
+        var selectedText: (@Sendable (pid_t) -> String)?
+        /// Shift, Control, Option or Fn held (still down from the shortcut).
+        var modifiersHeld: () -> Bool
+        /// Sends ⌘V; the time is when V went down.
+        var postPasteKeys: @MainActor () async -> (result: PasteResult, commandTime: TimeInterval?)
+        /// After ⌘V went out; returns the Auto Learn generation.
+        var pasteSent: @MainActor (SentPaste) async -> UInt64?
+        var toScratchpad: @MainActor (String) -> Void
+        var notify: @MainActor (Notice) -> Void
+        var restoreSettings: () -> (enabled: Bool, delay: TimeInterval)
+        var now: () -> TimeInterval
+        var sleep: (TimeInterval) async -> Void
+    }
+
+    @MainActor static var outlets = Outlets.live
 
     /// What happened just before the paste, which decides how long ⌘V waits after the clipboard is set.
     enum Lead {
@@ -105,11 +129,12 @@ class CursorPaster {
     @MainActor
     @discardableResult
     static func startPasteAtCursor(_ text: String, lead: Lead = .other, dictationID: UUID? = nil) -> Task<PasteOutcome, Never> {
-        switch preparePaste(text, lead: lead, dictationID: dictationID) {
+        let outlets = Self.outlets
+        switch preparePaste(text, lead: lead, dictationID: dictationID, outlets: outlets) {
         case .finished(let outcome):
             return Task { outcome }
         case .ready(let paste):
-            return Task { @MainActor in await post(paste) }
+            return Task { @MainActor in await post(paste, outlets: outlets) }
         }
     }
 
@@ -122,130 +147,83 @@ class CursorPaster {
         let text: String
         let lead: Lead
         let dictationID: UUID?
-        let timing: (prePaste: TimeInterval, minimumRestore: TimeInterval)
+        let prePasteDelay: TimeInterval
+        let restoreDelay: TimeInterval
         let clipboardSetAt: TimeInterval
         let targetProcessID: pid_t?
         /// The text the paste is about to replace, what Undo Last Paste restores; read while the wait runs.
         let replaced: Task<String, Never>?
-        let restore: (savedContents: ClipboardSnapshot, sessionID: String)?
+        let claim: PasteClipboard.Claim
     }
 
     @MainActor
-    private static func preparePaste(_ text: String, lead: Lead, dictationID: UUID?) -> Preparation {
-        let pasteboard = NSPasteboard.general
+    private static func preparePaste(_ text: String, lead: Lead, dictationID: UUID?, outlets: Outlets) -> Preparation {
+        let clipboard = outlets.clipboard
 
-        // Both paste methods send keystrokes, which macOS drops without Accessibility.
         // Leave the text on the clipboard (no restore) so nothing is lost.
-        guard dryRun || AXIsProcessTrusted() else {
+        guard outlets.canPostKeys() else {
             logger.error("Accessibility permission missing; leaving text on the clipboard")
-            _ = ClipboardManager.setClipboard(text, transient: false, sessionID: nil)
-            NotificationManager.shared.showNotification(
-                title: String(localized: "Copied to clipboard. Allow Accessibility so Yap can paste automatically."),
-                type: .warning,
-                duration: 8,
-                actionButton: (String(localized: "Open Settings"), PrivacySettingsPane.accessibility.open)
-            )
+            _ = clipboard.write(text, restoreLater: false)
+            outlets.notify(.accessibilityMissing)
             return .finished(PasteOutcome(result: .leftOnClipboard, autoLearnGeneration: nil))
         }
 
         // Nothing editable focused (desktop, Finder): ⌘V would go nowhere and the restore would then
         // take the text back off the clipboard. Keep it there and say so.
-        if !dryRun && !focusedElementCanTakeText() {
+        guard outlets.focusCanTakeText() else {
             logger.notice("No editable element focused; leaving text on the clipboard and in the Scratchpad")
-            _ = ClipboardManager.setClipboard(text, transient: false, sessionID: nil)
-            ScratchpadStore.shared.append(dictation: text)
-            NotificationManager.shared.showNotification(
-                title: ScratchpadStore.noTextFieldMessage,
-                type: .warning,
-                duration: 6,
-                actionButton: (String(localized: "Open Scratchpad"), { ScratchpadController.shared.show() })
-            )
+            _ = clipboard.write(text, restoreLater: false)
+            outlets.toScratchpad(text)
+            outlets.notify(.noTextField)
             return .finished(PasteOutcome(result: .sentToScratchpad, autoLearnGeneration: nil))
         }
 
-        let timing = pasteTiming(
-            frontmostBundleID: dryRun ? nil : NSWorkspace.shared.frontmostApplication?.bundleIdentifier, lead: lead)
-        let shouldRestoreClipboard = UserDefaults.standard.bool(forKey: "restoreClipboardAfterPaste")
-        let savedContents = shouldRestoreClipboard ? snapshotClipboard(from: pasteboard) : []
-        let sessionID = UUID().uuidString
-
-        guard
-            ClipboardManager.setClipboard(
-                text,
-                transient: shouldRestoreClipboard,
-                sessionID: shouldRestoreClipboard ? sessionID : nil
-            )
-        else {
+        let frontmost = outlets.frontmostApp()
+        let timing = pasteTiming(frontmostBundleID: frontmost.bundleID, lead: lead)
+        let restore = outlets.restoreSettings()
+        guard let claim = clipboard.write(text, restoreLater: restore.enabled) else {
             logger.error("Failed to prepare clipboard for paste")
             return .finished(PasteOutcome(result: .commandNotPosted, autoLearnGeneration: nil))
         }
 
-        let targetProcessID = NSWorkspace.shared.frontmostApplication?.processIdentifier
+        let targetProcessID = frontmost.processID
+        let replaced = outlets.selectedText.map { read in
+            Task.detached { targetProcessID.map(read) ?? "" }
+        }
         return .ready(
             PreparedPaste(
-                text: text, lead: lead, dictationID: dictationID, timing: timing,
-                clipboardSetAt: ProcessInfo.processInfo.systemUptime,
-                targetProcessID: targetProcessID,
-                replaced: dryRun
-                    ? nil : Task.detached { targetProcessID.map { LastPasteEditor.selectedText(processID: $0) } ?? "" },
-                restore: shouldRestoreClipboard ? (savedContents, sessionID) : nil))
+                text: text, lead: lead, dictationID: dictationID, prePasteDelay: timing.prePaste,
+                restoreDelay: max(restore.delay, timing.minimumRestore), clipboardSetAt: outlets.now(),
+                targetProcessID: targetProcessID, replaced: replaced, claim: claim))
     }
 
     @MainActor
-    private static func post(_ paste: PreparedPaste) async -> PasteOutcome {
-        await waitBeforePaste(paste)
-        if dryRun {
-            #if DEBUG
-                guard dryRunResult == .commandPosted else {
-                    return PasteOutcome(result: dryRunResult, autoLearnGeneration: nil)
-                }
-            #endif
-            return PasteOutcome(result: .commandPosted, autoLearnGeneration: nil, commandTime: await simulatePasteKeys())
-        }
+    private static func post(_ paste: PreparedPaste, outlets: Outlets) async -> PasteOutcome {
+        await waitBeforePaste(paste, outlets: outlets)
         let replaced = await paste.replaced?.value ?? ""
 
-        let posted: (result: PasteResult, commandTime: TimeInterval?)
-        let autoLearnGeneration: UInt64?
-        if AutoLearnSettings.isEnabled {
-            posted = await postPasteCommand()
-            autoLearnGeneration = await AutoLearnService.shared.pasteDidFinish(
-                text: paste.text,
-                processID: paste.targetProcessID,
-                commandPosted: posted.result.didPostPasteCommand,
-                dictationID: paste.dictationID
-            )
-        } else {
-            posted = await postPasteCommand()
-            autoLearnGeneration = nil
+        let posted = await outlets.postPasteKeys()
+        guard posted.result.didPostPasteCommand else {
+            // A paste that never reached the app must not take the text back off the clipboard.
+            outlets.clipboard.pasteNotSent(paste.claim)
+            return PasteOutcome(result: posted.result, autoLearnGeneration: nil)
         }
-        let pasteResult = posted.result
-        if pasteResult.didPostPasteCommand {
-            LastPasteEditor.shared.pasteDidFinish(text: paste.text, processID: paste.targetProcessID, replacing: replaced)
-        }
-        // A paste that never reached the app must not take the text back off the clipboard.
-        if let restore = paste.restore, pasteResult.didPostPasteCommand {
-            scheduleClipboardRestore(
-                restore.savedContents,
-                expectedText: paste.text,
-                sessionID: restore.sessionID,
-                minimumDelay: paste.timing.minimumRestore,
-                on: NSPasteboard.general
-            )
-        }
-
-        return PasteOutcome(result: pasteResult, autoLearnGeneration: autoLearnGeneration, commandTime: posted.commandTime)
+        let autoLearnGeneration = await outlets.pasteSent(
+            SentPaste(text: paste.text, processID: paste.targetProcessID, dictationID: paste.dictationID, replaced: replaced))
+        outlets.clipboard.pasteSent(paste.claim, restoreAfter: paste.restoreDelay, sleep: outlets.sleep)
+        return PasteOutcome(result: .commandPosted, autoLearnGeneration: autoLearnGeneration, commandTime: posted.commandTime)
     }
 
     /// The pre-paste wait, counted from the clipboard write. After a shortcut stop the user may still be holding the
     /// shortcut's modifiers (toggle mode stops on a press), which would turn ⌘V into ⌥⌘V or ⇧⌘V; ⌘V waits for them to
     /// come up, until 0.1 s after the clipboard write at most, the wait it used to have.
-    private static func waitBeforePaste(_ paste: PreparedPaste) async {
-        func elapsed() -> TimeInterval { ProcessInfo.processInfo.systemUptime - paste.clipboardSetAt }
-        await wait(paste.timing.prePaste - elapsed())
+    private static func waitBeforePaste(_ paste: PreparedPaste, outlets: Outlets) async {
+        func elapsed() -> TimeInterval { outlets.now() - paste.clipboardSetAt }
+        let first = paste.prePasteDelay - elapsed()
+        if first > 0 { await outlets.sleep(first) }
         guard paste.lead == .shortcut else { return }
-        let held: NSEvent.ModifierFlags = [.shift, .control, .option, .function]
-        while elapsed() < prePasteDelay, !NSEvent.modifierFlags.intersection(held).isEmpty {
-            await wait(pasteShortcutEventDelay)
+        while elapsed() < prePasteDelay, outlets.modifiersHeld() {
+            await outlets.sleep(pasteShortcutEventDelay)
         }
     }
 
@@ -263,7 +241,7 @@ class CursorPaster {
         return !nonTextRoles.contains(focusRole)
     }
 
-    private static func focusedElementCanTakeText() -> Bool {
+    fileprivate static func focusedElementCanTakeText() -> Bool {
         let system = AXUIElementCreateSystemWide()
         AXUIElementSetMessagingTimeout(system, 0.3)
         var focused: CFTypeRef?
@@ -296,62 +274,13 @@ class CursorPaster {
     }
     #endif
 
-    private static func snapshotClipboard(from pasteboard: NSPasteboard) -> ClipboardSnapshot {
-        (pasteboard.pasteboardItems ?? []).map { item in
-            item.types.compactMap { type in
-                if let data = item.data(forType: type) {
-                    return (type, data)
-                }
-                return nil
-            }
-        }
-    }
-
     @MainActor
-    private static func postPasteCommand() async -> (result: PasteResult, commandTime: TimeInterval?) {
+    fileprivate static func postPasteCommand() async -> (result: PasteResult, commandTime: TimeInterval?) {
         if PasteMethod.current() == .appleScript {
             let posted = pasteUsingAppleScript()
             return posted ? (.commandPosted, ProcessInfo.processInfo.systemUptime) : (.commandNotPosted, nil)
         } else {
             return await pasteFromClipboard()
-        }
-    }
-
-    private static func scheduleClipboardRestore(
-        _ savedContents: ClipboardSnapshot,
-        expectedText: String,
-        sessionID: String,
-        minimumDelay: TimeInterval,
-        on pasteboard: NSPasteboard
-    ) {
-        let delay = max(UserDefaults.standard.double(forKey: "clipboardRestoreDelay"), minimumDelay)
-
-        Task { @MainActor in
-            await wait(delay)
-            guard pasteboardStillOwnedByPasteSession(pasteboard, expectedText: expectedText, sessionID: sessionID)
-            else {
-                return
-            }
-            ClipboardManager.restoreClipboard(pasteboardItems(from: savedContents), on: pasteboard)
-        }
-    }
-
-    private static func pasteboardStillOwnedByPasteSession(
-        _ pasteboard: NSPasteboard,
-        expectedText: String,
-        sessionID: String
-    ) -> Bool {
-        pasteboard.string(forType: .string) == expectedText
-            && pasteboard.string(forType: ClipboardManager.pasteSessionType) == sessionID
-    }
-
-    private static func pasteboardItems(from snapshot: ClipboardSnapshot) -> [NSPasteboardItem] {
-        snapshot.map { itemSnapshot in
-            let item = NSPasteboardItem()
-            for (type, data) in itemSnapshot {
-                item.setData(data, forType: type)
-            }
-            return item
         }
     }
 
@@ -430,18 +359,6 @@ class CursorPaster {
         return (.commandPosted, commandTime)
     }
 
-    /// dryRun: the waits of pasteFromClipboard without its events; returns when V would have gone down.
-    private static func simulatePasteKeys() async -> TimeInterval {
-        await wait(pasteShortcutEventDelay)
-        let commandTime = ProcessInfo.processInfo.systemUptime
-        #if DEBUG
-            lastDryRunCommandTime = commandTime
-        #endif
-        await wait(pasteShortcutEventDelay)
-        await wait(pasteShortcutEventDelay)
-        return commandTime
-    }
-
     private static func wait(_ seconds: TimeInterval) async {
         guard seconds > 0 else { return }
         let nanoseconds = UInt64(seconds * 1_000_000_000)
@@ -480,4 +397,111 @@ class CursorPaster {
         enterDown?.post(tap: .cghidEventTap)
         enterUp?.post(tap: .cghidEventTap)
     }
+}
+
+extension CursorPaster.Outlets {
+    @MainActor static let live = CursorPaster.Outlets(
+        clipboard: .general,
+        canPostKeys: { AXIsProcessTrusted() },
+        focusCanTakeText: { CursorPaster.focusedElementCanTakeText() },
+        frontmostApp: {
+            let app = NSWorkspace.shared.frontmostApplication
+            return (app?.bundleIdentifier, app?.processIdentifier)
+        },
+        selectedText: { LastPasteEditor.selectedText(processID: $0) },
+        modifiersHeld: { !NSEvent.modifierFlags.intersection([.shift, .control, .option, .function]).isEmpty },
+        postPasteKeys: { await CursorPaster.postPasteCommand() },
+        pasteSent: { paste in
+            let generation =
+                AutoLearnSettings.isEnabled
+                ? await AutoLearnService.shared.pasteDidFinish(
+                    text: paste.text, processID: paste.processID, commandPosted: true, dictationID: paste.dictationID)
+                : nil
+            LastPasteEditor.shared.pasteDidFinish(text: paste.text, processID: paste.processID, replacing: paste.replaced)
+            return generation
+        },
+        toScratchpad: { ScratchpadStore.shared.append(dictation: $0) },
+        notify: { notice in
+            switch notice {
+            case .accessibilityMissing:
+                NotificationManager.shared.showNotification(
+                    title: String(localized: "Copied to clipboard. Allow Accessibility so Yap can paste automatically."),
+                    type: .warning,
+                    duration: 8,
+                    actionButton: (String(localized: "Open Settings"), PrivacySettingsPane.accessibility.open)
+                )
+            case .noTextField:
+                NotificationManager.shared.showNotification(
+                    title: ScratchpadStore.noTextFieldMessage,
+                    type: .warning,
+                    duration: 6,
+                    actionButton: (String(localized: "Open Scratchpad"), { ScratchpadController.shared.show() })
+                )
+            }
+        },
+        restoreSettings: CursorPaster.Outlets.savedRestoreSettings,
+        now: { ProcessInfo.processInfo.systemUptime },
+        sleep: { seconds in
+            guard seconds > 0 else { return }
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+        }
+    )
+
+    /// Settings › Clipboard: whether to put back what was on the clipboard, and after how long at least.
+    static func savedRestoreSettings() -> (enabled: Bool, delay: TimeInterval) {
+        (UserDefaults.standard.bool(forKey: "restoreClipboardAfterPaste"),
+         UserDefaults.standard.double(forKey: "clipboardRestoreDelay"))
+    }
+
+    #if DEBUG
+        /// The checks that dictate files (offline, latency, isolation, lifecycle, quit, residency, first run): a
+        /// private pasteboard, an editable field always focused, no app in front (the usual timing), nothing read
+        /// through Accessibility and no key sent. ⌘V takes as long as the real key events (three 10 ms waits) and
+        /// reports `result()`; `commandSent` gets the time V would have gone down. Nothing goes to Auto Learn, Last
+        /// Paste, the Scratchpad or a notification. Restore follows the mock identity's settings, on the private board.
+        @MainActor
+        static func check(
+            _ clipboard: PasteClipboard,
+            result: @escaping @MainActor () -> CursorPaster.PasteResult = { .commandPosted },
+            commandSent: @escaping @MainActor (TimeInterval) -> Void = { _ in }
+        ) -> Self {
+            var outlets = live
+            outlets.clipboard = clipboard
+            outlets.canPostKeys = { true }
+            outlets.focusCanTakeText = { true }
+            outlets.frontmostApp = { (nil, nil) }
+            outlets.selectedText = nil
+            outlets.modifiersHeld = { false }
+            let sleep = outlets.sleep
+            outlets.postPasteKeys = {
+                let result = result()
+                guard result == .commandPosted else { return (result, nil) }
+                await sleep(0.01)
+                let commandTime = ProcessInfo.processInfo.systemUptime
+                commandSent(commandTime)
+                await sleep(0.01)
+                await sleep(0.01)
+                return (.commandPosted, commandTime)
+            }
+            outlets.pasteSent = { _ in nil }
+            outlets.toScratchpad = { _ in }
+            outlets.notify = { _ in }
+            return outlets
+        }
+
+        /// Installs `check` outlets on a new private pasteboard for a dictation check; call the returned closure when
+        /// the check is done: it cancels and waits out the pending restores, then releases the pasteboard.
+        @MainActor
+        static func installCheck(
+            result: @escaping @MainActor () -> CursorPaster.PasteResult = { .commandPosted },
+            commandSent: @escaping @MainActor (TimeInterval) -> Void = { _ in }
+        ) -> @MainActor () async -> Void {
+            let clipboard = PasteClipboard(NSPasteboard(name: NSPasteboard.Name("me.sma1lboy.yap.check.\(UUID().uuidString)")))
+            CursorPaster.outlets = check(clipboard, result: result, commandSent: commandSent)
+            return {
+                await clipboard.close()
+                clipboard.pasteboard.releaseGlobally()
+            }
+        }
+    #endif
 }

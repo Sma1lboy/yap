@@ -89,8 +89,7 @@
             }
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(10))
-                let restorePasteboard = OfflineCheck.savePasteboard()
-                defer { restorePasteboard() }
+                let closeClipboard = CursorPaster.Outlets.installCheck()
                 switch state {
                 case "dictated":
                     let transcription = await engine.dictateFile(file)
@@ -102,6 +101,7 @@
                     // Quit as the load starts: whisper.cpp takes a few hundred ms to read the model, off the main thread.
                     loadingObserver = manager.$isModelLoading.first { $0 }.sink { _ in quit() }
                     engine.preloadCurrentModel()
+                    await closeClipboard()
                     return
                 case "appleevent":
                     // The script sends the quit Apple event (NSRunningApplication.terminate, as the Dock, logout and
@@ -109,6 +109,7 @@
                     engine.preloadCurrentModel()
                     await waitForLoad()
                     mark("terminate, \(type(of: NSApp!)), model loaded \(manager.whisperContext != nil), loading \(manager.isModelLoading), waiting for a quit Apple event")
+                    await closeClipboard()
                     return
                 case "decoding":
                     Task { @MainActor in
@@ -206,6 +207,7 @@
                     print("quit-check: unknown state \(state)")
                     exit(2)
                 }
+                await closeClipboard()
                 quit()
             }
         }

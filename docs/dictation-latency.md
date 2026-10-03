@@ -157,25 +157,28 @@ AI cleanup. `DictationLatencyCheck` then dictates five clips ROUNDS times each: 
 English sentence and a whole Chinese one, 0.5 s apart: three of 13–16 s, one of 7 s), and scores round 1's text per
 kind: character error rate (letters, digits and CJK characters; case, spaces and punctuation ignored) and key terms
 (`setup/asr/bench.py`'s `hits`). Before each dictation it loads the model
-the way a press does while the user speaks and lets the recording's context capture finish; after it, the times are
-read back from the SessionMetric. One untimed dictation goes first.
+the way a press does while the user speaks; after it, the times are read back from the SessionMetric. One untimed
+dictation goes first. The recording's context capture (clipboard, selection, focused field, screen) doesn't run: it
+reads the app in front and the user's clipboard.
 
 Every script that runs the app as the mock identity takes `/tmp/yap-mock.flock` first (`scripts/mock-lock.sh`), so
 two worktrees on one Mac take turns instead of deleting each other's store.
 
 The path after the stop is the real one (`runPipeline` → `TranscriptionPipeline` → `TranscriptionDelivery` →
-`CursorPaster`), including the stop sound, the panel dismissal, the clipboard and every wait; the stop counts as a
-shortcut stop (the 20 ms wait). `CursorPaster.dryRun` leaves out what touches the app in front: the check that a text
-field has focus, the read of the selection the paste will replace (Undo Last Paste), and the key events. The ⌘V time
-is when V would have gone down; nothing is read from or typed into the app in front, and Auto Learn and Last Paste
-aren't told about it.
+`CursorPaster`), including the stop sound, the panel dismissal, the clipboard handling and every wait; the stop
+counts as a shortcut stop (the 20 ms wait). The paste goes through `CursorPaster.Outlets.installCheck`: the clipboard
+is a private pasteboard (`NSPasteboard(name:)`, released when the check ends), and what touches the app in front is
+left out: the check that a text field has focus, the read of the selection the paste will replace (Undo Last Paste),
+and the key events. The ⌘V time is when V would have gone down; nothing is read from or typed into the app in front,
+the clipboard the user copies to is never read or written, and Auto Learn and Last Paste aren't told about it.
 
 After the rounds the script also checks, and fails otherwise:
 
 - every History save came after its ⌘V (`savedAfterPaste`);
 - six dictations with the model released first, as After Each Dictation does: three stopped while the press's preload
   is still loading, three pressed while the release is still running. Each must load the model once (`loads`);
-- a paste that fails (`CursorPaster.dryRunResult`) still leaves the dictation in History, saved to the store.
+- a paste that fails (`installCheck(result:)` reports `commandNotPosted`) still leaves the dictation in History, saved
+  to the store.
 
 Not covered:
 

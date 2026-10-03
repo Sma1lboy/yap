@@ -69,10 +69,6 @@ struct ClipboardManager {
     static func copyToClipboard(_ text: String) -> Bool {
         return setClipboard(text, transient: false)
     }
-
-    static func getClipboardContent() -> String? {
-        return NSPasteboard.general.string(forType: .string)
-    }
 }
 
 struct ClipboardMessageModifier: ViewModifier {

@@ -8,8 +8,8 @@
 #   2. with the network allowed, polling the app's sockets every 0.2 s: every connection is listed, marked
 #      by whether it was opened during the dictation and whether it's loopback (Ollama on localhost). ponytail: a connection opened and closed
 #      between two polls is missed; run 1 is what proves the dictation doesn't need the network.
-# The dev and release apps' settings are never read or written. Delivery copies the text to the pasteboard;
-# OfflineCheck puts the previous contents back.
+# The dev and release apps' settings are never read or written. Delivery pastes onto a private pasteboard with no key
+# sent (CursorPaster.Outlets.installCheck), so the user's clipboard is never read or written.
 set -euo pipefail
 source "$(dirname "$0")/mock-lock.sh"
 
