@@ -275,8 +275,10 @@ class CursorPaster {
     ) -> Task<PasteOutcome, Never> {
         let outlets = Self.outlets
         let request = request ?? newRequest()
+        var field: AXUIElement?
+        if case .element(let element) = target?.focus { field = element }
         switch preparePaste(
-            text, lead: lead, dictationID: dictationID, target: target?.processID, field: nil, request: request,
+            text, lead: lead, dictationID: dictationID, target: target?.processID, field: field, request: request,
             outlets: outlets)
         {
         case .finished(let outcome):
