@@ -208,6 +208,7 @@
             var restore = (enabled: true, delay: 0.0)
             var keyResult = CursorPaster.PasteResult.commandPosted
             var frontmost = "com.apple.TextEdit"
+            var focusTakesText = true
             var keys: [String] = []
             var sent: [String] = []
             var scratchpad: [String] = []
@@ -222,6 +223,7 @@
                 var outlets = CursorPaster.Outlets.check(clipboard)
                 let clock = self.clock
                 outlets.frontmostApp = { [unowned self] in (self.frontmost, nil) }
+                outlets.focusCanTakeText = { [unowned self] in self.focusTakesText }
                 outlets.postPasteKeys = { [unowned self] in
                     guard self.keyResult == .commandPosted else { return (self.keyResult, nil) }
                     self.keys.append(self.pasteboard.string(forType: .string) ?? "<no text>")
@@ -536,6 +538,18 @@
                 run.advance(to: 0.1)
                 return run.finish(
                     board: .text("dictation A", transient: true), outcomes: ["A": "commandPosted"], keys: ["dictation A"])
+            },
+            {
+                let run = Run("no text field for the second paste, before the first restore")
+                run.begin()
+                run.paste("A", "dictation A", at: 0)
+                run.advance(to: 0.1)
+                run.focusTakesText = false
+                run.paste("B", "dictation B", at: 0.1)
+                run.advance(to: 2)
+                return run.finish(
+                    board: .text("dictation B", transient: false), outcomes: ["A": "commandPosted", "B": "sentToScratchpad"],
+                    keys: ["dictation A"], scratchpad: ["dictation B"])
             },
         ]
     }

@@ -77,8 +77,8 @@ final class LastPasteEditor {
                 logger.notice("Last paste removed (\(record.text.count, privacy: .public) characters)")
             } else {
                 // Becomes the new last paste, so undoing again brings the rewrite back.
-                _ = await CursorPaster.startPasteAtCursor(record.replaced).value
-                logger.notice("Last paste replaced by the text it had replaced (\(record.replaced.count, privacy: .public) characters)")
+                let result = await CursorPaster.startPasteAtCursor(record.replaced).value.result
+                logger.notice("Undo pasting the text the last paste replaced (\(record.replaced.count, privacy: .public) characters): \(String(describing: result), privacy: .public)")
             }
         }
     }
