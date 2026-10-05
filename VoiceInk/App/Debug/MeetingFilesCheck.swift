@@ -21,12 +21,22 @@
     /// mode's model, no model: refused), waits for the end and prints the entry. `--meeting-retranscribe-twice`
     /// clicks twice; `--meeting-retranscribe-cancel-after N` cancels right after the Nth piece's request;
     /// `--meeting-retranscribe-kill-after N` kills the app there (SIGKILL), as a crash or a forced quit would.
+    /// scripts/meeting-retry-check.sh adds: `--meeting-retranscribe-quit-after N` quits the app normally there
+    /// (`NSApplication.terminate` from the run loop, as the Quit menu item does, through AppDelegate's Quit);
+    /// `--meeting-retranscribe-delete-after N` deletes the entry from History there; `--meeting-retranscribe-kill-at-commit`
+    /// kills the app between writing `segments.json` and saving the entry; `--meeting-fail-fetch` makes the commit's
+    /// read of the entry fail; `--meeting-fake-notes S` answers each notes request after S seconds with fixed notes
+    /// and no request at all (`--meeting-retranscribe-cancel-in-notes` cancels the run while it waits, and the
+    /// answer still comes late); `--meeting-change-mode-during` changes the mode's AI provider and model right after
+    /// the run starts; `--meeting-retranscribe-inspect` prints the entry and quits without starting anything;
+    /// `--meeting-admission-check` checks that a live meeting and Transcribe Meeting refuse each other, in both
+    /// orders, with the microphone permission answered by the check (never asked for, never granted).
     @MainActor
     enum MeetingFilesCheck {
-        static let argument = "--meeting-files"
-        static let recoveryArgument = "--meeting-recovery-check"
-        static let speakersResumeArgument = "--meeting-speakers-resume-check"
-        static var isRequested: Bool {
+        nonisolated static let argument = "--meeting-files"
+        nonisolated static let recoveryArgument = "--meeting-recovery-check"
+        nonisolated static let speakersResumeArgument = "--meeting-speakers-resume-check"
+        nonisolated static var isRequested: Bool {
             [argument, recoveryArgument, speakersResumeArgument, "--meeting-edit-check", retranscribeArgument]
                 .contains(where: CommandLine.arguments.contains)
         }
@@ -42,7 +52,7 @@
             return Int(arguments[index + 1]) ?? 0
         }
 
-        static let retranscribeArgument = "--meeting-retranscribe-check"
+        nonisolated static let retranscribeArgument = "--meeting-retranscribe-check"
         /// Transcription requests made by meeting pieces in this launch.
         nonisolated static let requests = OSAllocatedUnfairLock(initialState: 0)
         private static var retranscribing: UUID?
@@ -56,12 +66,67 @@
                 fflush(stdout)
                 kill(getpid(), SIGKILL)
             }
+            if count == number(after: "--meeting-retranscribe-quit-after") {
+                print("meeting-check: quit after \(count) requests")
+                fflush(stdout)
+                // From the run loop, as the Quit menu item's action arrives (QuitCheck: not from inside a Task).
+                DispatchQueue.main.async {
+                    RunLoop.main.perform(inModes: [.common]) { NSApplication.shared.terminate(nil) }
+                }
+            }
+            if count == number(after: "--meeting-retranscribe-delete-after") {
+                Task { @MainActor in
+                    guard let id = retranscribing, let context = MeetingRecorder.shared.engine?.modelContext,
+                        let entry = try? context.fetch(FetchDescriptor<Transcription>(predicate: #Predicate { $0.id == id })).first
+                    else { return }
+                    // As History's Delete does: the recordings' folder, then the entry.
+                    if let url = entry.audioFileURL.flatMap(URL.init(string:)) { try? Transcription.removeAudio(at: url) }
+                    context.delete(entry)
+                    try? context.save()
+                    print("meeting-check: deleted the entry and its recordings after \(count) requests")
+                }
+            }
+            if count == 1, CommandLine.arguments.contains("--meeting-admission-check") {
+                Task { @MainActor in await startMeetingWhileRetranscribing() }
+            }
             guard count == number(after: "--meeting-retranscribe-cancel-after") else { return false }
             Task { @MainActor in retranscribing.map(MeetingRetranscriber.shared.cancel) }
             return true
         }
 
+        /// Between `segments.json` written and the entry saved, in Transcribe Meeting's commit.
+        nonisolated static func atCommit() {
+            guard CommandLine.arguments.contains("--meeting-retranscribe-kill-at-commit") else { return }
+            print("meeting-check: killed at commit, segments.json written, entry not saved")
+            fflush(stdout)
+            kill(getpid(), SIGKILL)
+        }
+
+        nonisolated static var failsFetch: Bool { CommandLine.arguments.contains("--meeting-fail-fetch") }
+
+        /// `--meeting-fake-notes S`: what a notes request answers, after S seconds that a cancel doesn't cut short (a
+        /// provider that answers late), with no request made. nil without the flag: the real request.
+        static func fakeNotes(provider: AIProvider?, model: String?) async -> String? {
+            guard CommandLine.arguments.contains("--meeting-fake-notes") else { return nil }
+            print("meeting-check: notes request provider \(provider?.rawValue ?? "none") model \(model ?? "none")")
+            if CommandLine.arguments.contains("--meeting-retranscribe-cancel-in-notes"), let id = retranscribing {
+                MeetingRetranscriber.shared.cancel(id)
+                print("meeting-check: canceled while the notes were requested")
+            }
+            let seconds = Double(number(after: "--meeting-fake-notes"))
+            await withCheckedContinuation { continuation in
+                DispatchQueue.global().asyncAfter(deadline: .now() + seconds) { continuation.resume() }
+            }
+            print("meeting-check: notes answered")
+            return "## Summary\n- Notes from the check, not from a provider."
+        }
+
+        /// The meeting shortcut's microphone permission, answered here in `--meeting-admission-check`: counted, after
+        /// a second, denied (so no microphone ever starts). nil otherwise: the real request.
+        static var microphoneAccess: (() async -> Bool)?
+
         static func retranscriptionEnded(_ id: UUID, _ state: MeetingRetranscriber.State) {
+            print("meeting-check: retranscription ended \(state.summary)")
             guard id == retranscribing else { return }
             retranscriptionEnd?.resume(returning: state)
             retranscriptionEnd = nil
@@ -95,11 +160,16 @@
                 print("meeting-check: no entry in \(folder)")
                 exit(1)
             }
+            let id = meeting.id
             func printEntry(_ label: String) {
+                guard let meeting = try? engine.modelContext.fetch(FetchDescriptor<Transcription>(predicate: #Predicate { $0.id == id })).first
+                else { return print("meeting-check: \(label) id \(id) gone") }
                 print("meeting-check: \(label) id \(meeting.id) timestamp \(meeting.timestamp.timeIntervalSince1970) status \(meeting.transcriptionStatus ?? "none") failed-pieces \(meeting.meetingFailedPieces ?? 0) model \(meeting.transcriptionModelName ?? "none") audio \(meeting.audioFileURL ?? "none")")
+                print("meeting-check: \(label) notes \(meeting.enhancedText != nil) notes-model \(meeting.aiEnhancementModelName ?? "none") mode \(meeting.modeName ?? "none")")
                 print("meeting-check: \(label)-text-begin\n\(meeting.text)\nmeeting-check: \(label)-text-end")
             }
             printEntry("before")
+            if arguments.contains("--meeting-retranscribe-inspect") { await exitReleasingModels(engine) }
             // What History's Transcribe Meeting does: the mode's model and language now, or no start at all.
             guard let configuration = ModeRuntimeResolver.transcriptionConfiguration(
                 transcriptionModelManager: engine.transcriptionModelManager)
@@ -107,7 +177,17 @@
                 print("meeting-check: retranscribe refused no-model; running \(MeetingRetranscriber.shared.isRunning)")
                 await exitReleasingModels(engine)
             }
-            print("meeting-check: retranscribe plan model \(configuration.model.displayName) language \(configuration.language) destination \(MeetingRetranscription.destination(of: configuration.model))")
+            print("meeting-check: retranscribe plan model \(configuration.model.displayName) language \(configuration.language) destination \(MeetingRetranscription.destination(of: configuration.model)) notes-mode \(configuration.mode.name) \(configuration.mode.selectedAIProvider ?? "none") \(configuration.mode.selectedAIModel ?? "none")")
+            if arguments.contains("--meeting-retranscribe-quit-after") {
+                NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
+                    MainActor.assumeIsolated {
+                        print("meeting-check: will terminate, running \(MeetingRetranscriber.shared.isRunning) state \(MeetingRetranscriber.shared.states[id]?.summary ?? "none") requests \(requests.withLock { $0 })")
+                        printEntry("at-exit")
+                        fflush(stdout)
+                    }
+                }
+            }
+            if arguments.contains("--meeting-admission-check") { await admissionCheck(meeting, configuration: configuration) }
             retranscribing = meeting.id
             let outcome = await withCheckedContinuation { continuation in
                 retranscriptionEnd = continuation
@@ -117,14 +197,59 @@
                     let again = MeetingRetranscriber.shared.start(meeting, configuration: configuration)
                     print("meeting-check: retranscribe again \(again ?? "same run") running \(MeetingRetranscriber.shared.isRunning)")
                 }
+                if arguments.contains("--meeting-change-mode-during"), var mode = ModeManager.shared.getDefaultConfiguration() {
+                    // Changed in Modes while the run is going: the run keeps what it started with.
+                    mode.selectedAIProvider = AIProvider.openAI.rawValue
+                    mode.selectedAIModel = "changed-during-the-run"
+                    ModeManager.shared.updateConfiguration(mode)
+                    print("meeting-check: mode changed to \(mode.selectedAIProvider ?? "none") \(mode.selectedAIModel ?? "none")")
+                }
                 if refused != nil { retranscriptionEnded(meeting.id, .failed(refused!)) }
+            }
+            if arguments.contains("--meeting-admission-check") {
+                // Done (or failed): a meeting can start again; it gets as far as the microphone permission.
+                await MeetingRecorder.shared.start()
+                print("meeting-check: admission after the run: permission asked \(microphoneAccessAsked) running \(MeetingRetranscriber.shared.isRunning)")
             }
             print("meeting-check: retranscribe outcome \(outcome.summary)")
             print("meeting-check: failed-marker \(MeetingNotes.failedMarker)")
             print("meeting-check: requests \(requests.withLock { $0 })")
             print("meeting-check: entries-after \((try? engine.modelContext.fetchCount(FetchDescriptor<Transcription>())) ?? -1)")
             printEntry("after")
+            // Quit is under way (AppKit's terminate): it ends the app, as it would for a user.
+            if arguments.contains("--meeting-retranscribe-quit-after") { fflush(stdout); return }
             await exitReleasingModels(engine)
+        }
+
+        private static var microphoneAccessAsked = 0
+
+        /// A live meeting and Transcribe Meeting, started one while the other is getting going or running. The
+        /// meeting's start is the shortcut's (`MeetingRecorder.start`); its microphone permission is answered here.
+        private static func admissionCheck(_ meeting: Transcription, configuration: TranscriptionRuntimeConfiguration) async {
+            microphoneAccess = {
+                microphoneAccessAsked += 1
+                try? await Task.sleep(for: .seconds(1))
+                return false
+            }
+            // 1. The meeting first: while it waits on the permission, Transcribe Meeting is refused.
+            let starting = Task { @MainActor in await MeetingRecorder.shared.start() }
+            while microphoneAccessAsked == 0 { await Task.yield() }
+            let refused = MeetingRetranscriber.shared.start(meeting, configuration: configuration)
+            print("meeting-check: admission meeting-starting retranscribe \(refused ?? "started") running \(MeetingRetranscriber.shared.isRunning)")
+            if refused == nil, MeetingRetranscriber.shared.isRunning {
+                MeetingRetranscriber.shared.cancel(meeting.id)
+                while MeetingRetranscriber.shared.isRunning { try? await Task.sleep(for: .milliseconds(50)) }
+            }
+            await starting.value
+            print("meeting-check: admission meeting-start ended: permission asked \(microphoneAccessAsked) recording \(MeetingRecorder.isRecordingMeeting)")
+        }
+
+        /// The admission check's second order: a meeting started while Transcribe Meeting runs.
+        static func startMeetingWhileRetranscribing() async {
+            guard CommandLine.arguments.contains("--meeting-admission-check") else { return }
+            let asked = microphoneAccessAsked
+            await MeetingRecorder.shared.start()
+            print("meeting-check: admission retranscribing meeting-start: permission asked \(microphoneAccessAsked - asked) recording \(MeetingRecorder.isRecordingMeeting) running \(MeetingRetranscriber.shared.isRunning)")
         }
 
         private static var notesFailuresLeft = number(after: "--meeting-fail-notes")

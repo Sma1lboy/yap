@@ -53,6 +53,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 // What's left (a step that can't stop, a load, a warm-up) is shown while Quit waits for it.
                 let waitPanel = QuitWaitPanel()
                 waitPanel.showAfterDelay()
+                // Transcribe Meeting first: canceled and ended (nothing saved), so the models closing below can't
+                // fail its remaining pieces into a saved result.
+                await MeetingRetranscriber.shared.stopForQuit()
                 await self?.engine?.closeLocalModels()
                 waitPanel.close()
             },
@@ -88,8 +91,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         quitting = Task { @MainActor [logger] in
             if isRecordingMeeting { await endMeeting() }
             logger.notice("quit: closing local models")
+            #if DEBUG
+                if MeetingFilesCheck.isRequested { print("meeting-check: quit: closing local models") }
+            #endif
             await closeModels()
             logger.notice("quit: local models closed")
+            #if DEBUG
+                if MeetingFilesCheck.isRequested { print("meeting-check: quit: local models closed") }
+            #endif
             reply()
         }
         return .terminateLater

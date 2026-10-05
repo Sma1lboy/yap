@@ -502,6 +502,16 @@
                 ("canceling", .eligible(sources), nil, false, nil, .canceling, 70),
                 ("canceled", .eligible(sources), nil, false, nil, .canceled, 100),
                 ("failed", .eligible(sources), nil, false, nil, .failed(CocoaError(.fileWriteOutOfSpace).localizedDescription), 110),
+                // A recording, History's store, an old segments.json that can't be read; a save failed and segments.json
+                // couldn't be put back.
+                ("failed-recording-unreadable", .eligible(sources), nil, false, nil, .failed(MeetingRetranscription.Problem.recordingUnreadable(
+                    CocoaError(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: "/Users/you/Library/Application Support/Yap/Recordings/meetings/1/mic.wav"]))), 130),
+                ("failed-history-unreadable", .eligible(sources), nil, false, nil, .failed(MeetingRetranscription.Problem.historyUnreadable(
+                    CocoaError(.fileReadCorruptFile))), 110),
+                ("refused-segments-unreadable", .eligible(sources), nil, false, MeetingRetranscription.Problem.segmentsUnreadable(
+                    CocoaError(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: "/Users/you/segments.json"])), nil, 150),
+                ("failed-not-put-back", .eligible(sources), nil, false, nil, .failed(MeetingRetranscription.Problem.notPutBack(
+                    CocoaError(.fileWriteOutOfSpace).localizedDescription, files: ["segments.json"])), 130),
                 ("done", .transcribed, nil, false, nil, .done(transcribedResult()), 70),
                 // Two parts failed, no AI provider for notes, only one other person.
                 ("done-problems", .transcribed, nil, false, nil, .done(transcribedResult(
@@ -609,6 +619,7 @@
                 ("meeting-recovered", recovered { _ in }),
                 ("meeting-recovered-audio-only", recovered { $0.audioOnly = true }),
                 ("meeting-recovery-not-saved", recovered { $0.saveError = CocoaError(.fileWriteOutOfSpace).localizedDescription }),
+                ("meeting-busy-transcribing", (MeetingRecorder.transcribingInHistoryMessage, .warning, nil)),
             ]
             // Auto Learn learned several rules at once: the first ones are listed, then how many more.
             let learnedNotifications = [3, 5].map { count in

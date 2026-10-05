@@ -10,7 +10,7 @@ EXTRA_BUILD_SETTINGS ?=
 LOCAL_CLEAN ?= 1
 RUN_APP_NAME ?= VoiceInk
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-archive-check mic-fallback-check text-fidelity-check vocabulary-hints-check paste-session-check meeting-echo-check meeting-long-check meeting-call-check edit-rate-check mcp-check mcp-agent-eval mcp-perf first-run-check model-residency-check quit-check isolation-check lifecycle-check dictation-latency ui-snapshots ui-review sync-e2e
+.PHONY: all clean whisper setup build local check healthcheck help dev run cloud-smoke cloud-latency paygate-local paygate-local-stop design-tokens design-check mock offline-check meeting-files-check meeting-retry-check meeting-archive-check mic-fallback-check text-fidelity-check vocabulary-hints-check paste-session-check meeting-echo-check meeting-long-check meeting-call-check edit-rate-check mcp-check mcp-agent-eval mcp-perf first-run-check model-residency-check quit-check isolation-check lifecycle-check dictation-latency ui-snapshots ui-review sync-e2e
 
 # Default target
 all: check build
@@ -284,6 +284,15 @@ meeting-files-check: build
 	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
 		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
 	scripts/dev-defaults-guard.sh scripts/meeting-files-check.sh "$$APP_DIR" "$(MODEL)" $(NOTES)
+
+# Transcribe Meeting at its edges: Quit while it runs, a live meeting and it refusing each other, recordings,
+# segments.json or History's store that can't be read, a kill at its commit, notes with the mode changed or the run
+# canceled meanwhile. "Me"-only meetings (no speaker model), offline, fake notes. See scripts/meeting-retry-check.sh.
+meeting-retry-check: build
+	@test -n "$(MODEL)" || { echo "usage: make meeting-retry-check MODEL=/path/to/ggml-large-v3-turbo-q5_0.bin"; exit 2; }
+	@APP_DIR=$$(xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug -showBuildSettings 2>/dev/null \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR = /{print $$2; exit}'); \
+	scripts/dev-defaults-guard.sh scripts/meeting-retry-check.sh "$$APP_DIR" "$(MODEL)"
 
 # History's Save Meetings to Folder… writing real files: two processes at once, saving again, another language, an
 # edited copy, a symbolic link, an unreadable file, regenerated notes, a folder that's gone or read-only. No model
