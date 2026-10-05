@@ -114,15 +114,16 @@ final class TranscriptionDelivery {
         }
 
         let commandText = text
+        let finishAndSendKey: FinishAndSendKey = item.sendAfterPaste ? FinishAndSendSettings.selectedKey : .none
         SoundManager.shared.playStopSound()
         await actions.dismiss()
 
         Task {
-            await runCustomCommand(command: command, commandText: commandText)
+            await runCustomCommand(command: command, commandText: commandText, finishAndSendKey: finishAndSendKey)
         }
     }
 
-    private func runCustomCommand(command: String, commandText: String) async {
+    private func runCustomCommand(command: String, commandText: String, finishAndSendKey: FinishAndSendKey) async {
         let startTime = Date()
         logger.notice("Custom command started")
 
@@ -150,6 +151,12 @@ final class TranscriptionDelivery {
                 logger.notice(
                     "Custom command succeeded duration=\(Self.formattedDuration(duration), privacy: .public)s stdoutBytes=\(stdoutBytes, privacy: .public) stderrBytes=\(stderrBytes, privacy: .public)"
                 )
+            }
+
+            if finishAndSendKey.isEnabled {
+                // The command pastes the text itself; the key waits a moment for the app to take it.
+                let submitted = await CursorPaster.submitAfterCommand(finishAndSendKey)
+                logger.notice("Finish and Send after the custom command: \(String(describing: submitted), privacy: .public)")
             }
         } catch {
             notifyCustomCommandFailure(error, duration: Date().timeIntervalSince(startTime))
