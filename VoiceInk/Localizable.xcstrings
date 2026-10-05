@@ -54133,6 +54133,202 @@
           }
         }
       }
+    },
+    "A meeting is being transcribed in History. Cancel it there, or start recording when it's done." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Verlauf wird gerade ein Meeting transkribiert. Brich es dort ab oder starte die Aufnahme, wenn es fertig ist."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une réunion est en cours de transcription dans l’historique. Annulez-la là-bas, ou lancez l’enregistrement une fois qu’elle est terminée."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "历史记录里正在转写一场会议。可以在那里取消，或等它完成后再开始录制。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "歷史記錄裡正在轉錄一場會議。可以在那裡取消，或等它完成後再開始錄製。"
+          }
+        }
+      }
+    },
+    "This meeting's segments.json file can't be read (%@). Yap doesn't replace a file it can't read: fix its permissions in the meeting's folder, then try again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Datei segments.json dieses Meetings kann nicht gelesen werden (%@). Yap ersetzt keine Datei, die es nicht lesen kann: Korrigiere ihre Zugriffsrechte im Ordner des Meetings und versuche es dann erneut."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le fichier segments.json de cette réunion ne peut pas être lu (%@). Yap ne remplace pas un fichier qu’il ne peut pas lire : corrigez ses autorisations dans le dossier de la réunion, puis réessayez."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这场会议的 segments.json 文件读不了（%@）。Yap 不会替换它读不了的文件：请在会议的文件夹里修好它的权限，再试一次。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這場會議的 segments.json 檔案讀不了（%@）。Yap 不會取代它讀不了的檔案：請在會議的資料夾裡修好它的權限，再試一次。"
+          }
+        }
+      }
+    },
+    "A recording of this meeting couldn't be read, so nothing was saved: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Aufnahme dieses Meetings konnte nicht gelesen werden, deshalb wurde nichts gespeichert: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Un enregistrement de cette réunion n’a pas pu être lu : rien n’a été enregistré. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "这场会议的一个录音读不了，所以没有保存任何内容：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這場會議的一個錄音讀不了，所以沒有儲存任何內容：%@"
+          }
+        }
+      }
+    },
+    "History couldn't be read, so nothing was saved: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Verlauf konnte nicht gelesen werden, deshalb wurde nichts gespeichert: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’historique n’a pas pu être lu : rien n’a été enregistré. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "历史记录读不了，所以没有保存任何内容：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "歷史記錄讀不了，所以沒有儲存任何內容：%@"
+          }
+        }
+      }
+    },
+    "The meeting's audio for the History player couldn't be written, so nothing was saved: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Aufnahme des Meetings für die Wiedergabe im Verlauf konnte nicht geschrieben werden, deshalb wurde nichts gespeichert: %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’audio de la réunion pour le lecteur de l’historique n’a pas pu être écrit : rien n’a été enregistré. %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会议在历史记录里播放用的音频写不进去，所以没有保存任何内容：%@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "會議在歷史記錄裡播放用的音訊寫不進去，所以沒有儲存任何內容：%@"
+          }
+        }
+      }
+    },
+    "%@ Also, %@ in the meeting's folder couldn't be put back as it was; its recordings weren't changed." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ Außerdem konnte %2$@ im Ordner des Meetings nicht wiederhergestellt werden; seine Aufnahmen wurden nicht verändert."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ De plus, %2$@ dans le dossier de la réunion n’a pas pu être remis comme avant ; ses enregistrements n’ont pas été modifiés."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 另外，会议文件夹里的 %2$@ 没能恢复原样；它的录音没有被改动。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 另外，會議資料夾裡的 %2$@ 沒能恢復原樣；它的錄音沒有被改動。"
+          }
+        }
+      }
+    },
+    "One of its recordings couldn't be read (%@)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine seiner Aufnahmen konnte nicht gelesen werden (%@)."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’un de ses enregistrements n’a pas pu être lu (%@)."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的一个录音读不了（%@）。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "它的一個錄音讀不了（%@）。"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

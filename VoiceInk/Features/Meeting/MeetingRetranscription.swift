@@ -98,6 +98,35 @@ enum MeetingRetranscription {
     static func workRoot(recordings: URL) -> URL {
         recordings.deletingLastPathComponent().appendingPathComponent("MeetingRetranscription", isDirectory: true)
     }
+
+    /// The meeting's `segments.json` as it is now: nil when there's none (an audio-only meeting usually has none);
+    /// a failure when it's there but can't be read. A file Yap can't read is never replaced or deleted (a failed save
+    /// would have nothing to put back), so the meeting isn't transcribed until it can be read.
+    static func existingSegments(in folder: URL) -> Result<Data?, Error> {
+        let url = folder.appendingPathComponent("segments.json")
+        guard FileManager.default.fileExists(atPath: url.path) else { return .success(nil) }
+        do { return .success(try Data(contentsOf: url)) } catch { return .failure(error) }
+    }
+
+    /// Why a run saved nothing, as History says it.
+    enum Problem {
+        static func segmentsUnreadable(_ error: Error) -> String {
+            String(format: String(localized: "This meeting's segments.json file can't be read (%@). Yap doesn't replace a file it can't read: fix its permissions in the meeting's folder, then try again."), error.localizedDescription)
+        }
+        static func recordingUnreadable(_ error: Error) -> String {
+            String(format: String(localized: "A recording of this meeting couldn't be read, so nothing was saved: %@"), error.localizedDescription)
+        }
+        static func historyUnreadable(_ error: Error) -> String {
+            String(format: String(localized: "History couldn't be read, so nothing was saved: %@"), error.localizedDescription)
+        }
+        static func mixNotWritten(_ error: Error) -> String {
+            String(format: String(localized: "The meeting's audio for the History player couldn't be written, so nothing was saved: %@"), error.localizedDescription)
+        }
+        /// The entry's save failed and some file in the meeting's folder couldn't be put back either.
+        static func notPutBack(_ saveError: String, files: [String]) -> String {
+            String(format: String(localized: "%@ Also, %@ in the meeting's folder couldn't be put back as it was; its recordings weren't changed."), saveError, files.joined(separator: ", "))
+        }
+    }
 }
 
 /// Runs Transcribe Meeting, one meeting at a time, and keeps each entry's last result for History to show.
@@ -143,12 +172,13 @@ final class MeetingRetranscriber: ObservableObject {
     var isRunning: Bool { job != nil }
 
     /// Why no meeting can be transcribed right now; nil when one can. One at a time, and not while a meeting is
-    /// recorded, finished or recovered: those would take turns with it on the same model.
+    /// starting, recorded, finished or recovered: those would take turns with it on the same model. A live meeting
+    /// refuses to start while one runs (`MeetingRecorder.start`), so neither waits behind the other.
     func busyReason() -> String? {
         if job != nil {
             return String(localized: "Another meeting is being transcribed. Try again when it's done.")
         }
-        if !MeetingRecorder.shared.activeFolders.isEmpty {
+        if !MeetingRecorder.shared.activeFolders.isEmpty || MeetingRecorder.shared.isStarting {
             return String(localized: "A meeting is being recorded or recovered. Try again when it's done.")
         }
         return nil
@@ -164,6 +194,9 @@ final class MeetingRetranscriber: ObservableObject {
         guard case .eligible(let sources) = MeetingRetranscription.eligibility(of: transcription) else {
             return MeetingRetranscription.reason(for: MeetingRetranscription.eligibility(of: transcription))
                 ?? String(localized: "This meeting already has its transcript.")
+        }
+        if case .failure(let error) = MeetingRetranscription.existingSegments(in: sources.folder) {
+            return MeetingRetranscription.Problem.segmentsUnreadable(error)
         }
         guard let engine = MeetingRecorder.shared.engine, let audioFileURL = transcription.audioFileURL else {
             return String(localized: "Yap isn't ready yet. Try again in a moment.")
@@ -187,17 +220,29 @@ final class MeetingRetranscriber: ObservableObject {
         logger.notice("Transcribing meeting \(id, privacy: .public) with \(configuration.model.displayName, privacy: .public)")
 
         let task = Task { @MainActor [weak self] in
-            // Read once, whole, from the meeting's own files; nothing is written next to them.
-            await Task.detached {
-                if let microphone = sources.microphone { session.feed(file: microphone, as: .me) }
-                if let system = sources.system { session.feed(file: system, as: .others) }
+            // Read once, whole, from the meeting's own files; nothing is written next to them. A file that can't
+            // be read ends the run: its part would otherwise look like nobody spoke.
+            let readError = await Task.detached { () -> Error? in
+                do {
+                    if let microphone = sources.microphone { try session.feed(file: microphone, as: .me) }
+                    if let system = sources.system { try session.feed(file: system, as: .others) }
+                    return nil
+                } catch {
+                    return error
+                }
             }.value
-            // Waits for the speakers: a meeting saved without them would have them written into the work folder.
-            let processed = await MeetingRecorder.shared.processMeeting(
-                session, engine: engine, speakerWait: .infinity, names: names, notesMode: configuration.mode,
-                stoppable: true, transcribing: transcribing
-            ) { message in
-                if self?.states[id]?.isActive == true, self?.states[id] != .canceling { self?.states[id] = .running(message) }
+            var processed: MeetingRecorder.Processed? = nil
+            if readError != nil {
+                session.transcriber.cancel()
+                _ = await session.transcriber.finish()
+            } else {
+                // Waits for the speakers: a meeting saved without them would have them written into the work folder.
+                processed = await MeetingRecorder.shared.processMeeting(
+                    session, engine: engine, speakerWait: .infinity, names: names, notesMode: configuration.mode,
+                    stoppable: true, transcribing: transcribing
+                ) { message in
+                    if self?.states[id]?.isActive == true, self?.states[id] != .canceling { self?.states[id] = .running(message) }
+                }
             }
             guard let self else { return }
             let outcome: State
@@ -215,6 +260,8 @@ final class MeetingRetranscriber: ObservableObject {
                         folder: nil, failedPieces: processed.failures, speakersSkipped: processed.speakersSkipped,
                         echoRemoved: processed.echoRemoved))
                 }
+            } else if let readError {
+                outcome = .failed(MeetingRetranscription.Problem.recordingUnreadable(readError))
             } else {
                 outcome = .canceled
             }
@@ -239,34 +286,71 @@ final class MeetingRetranscriber: ObservableObject {
         job.task.cancel()
     }
 
-    /// Puts the new transcript into the entry: `segments.json` beside its recordings first (written whole,
-    /// atomically), then the entry in one save, which hands it to saving to a folder automatically. If the save
-    /// fails, the entry's fields and `segments.json` are put back as they were, and nothing else in the shared
-    /// context is rolled back. The id, the date, the audio and any speaker names stay.
+    /// Quit: the run is canceled and ended before the local models close, so no piece is left for a closing model
+    /// to fail (a failed piece would be saved as a marked line, and the meeting couldn't be transcribed again).
+    /// Like Cancel, nothing is saved; the meeting can be transcribed after the next launch.
+    func stopForQuit() async {
+        guard let job else { return }
+        logger.notice("Quit: canceling the transcription of meeting \(job.id, privacy: .public)")
+        cancel(job.id)
+        await job.task.value
+    }
+
+    /// Puts the new transcript into the entry: the History player's mix if it's gone, then `segments.json` beside
+    /// the recordings (written whole, atomically), then the entry in one save, which hands it to saving to a folder
+    /// automatically. Nothing is written when History can't be read, the entry is gone or changed, or an old
+    /// `segments.json` is there but can't be read. If the save fails, the entry's fields and the files are put back
+    /// as they were, and nothing else in the shared context is rolled back; a file that can't be put back is named
+    /// in the error. The id, the date, the audio and any speaker names stay.
+    ///
+    /// A kill between `segments.json` and the save leaves the new `segments.json` beside an entry that's still
+    /// audio-only: nothing reads it there (History shows the entry's own text, and Transcribe Meeting writes it
+    /// again), and the meeting can be transcribed again (make meeting-retry-check, case K).
     private static func commit(
         _ processed: MeetingRecorder.Processed, duration: TimeInterval, configuration: TranscriptionRuntimeConfiguration,
         to id: UUID, audioFileURL: String, work: URL, in context: ModelContext
     ) -> String? {
-        guard let transcription = try? context.fetch(FetchDescriptor<Transcription>(predicate: #Predicate { $0.id == id })).first
+        let fetched: Transcription?
+        do {
+            #if DEBUG
+                if MeetingFilesCheck.failsFetch { throw CocoaError(.fileReadUnknown) }  // meeting-retry-check only
+            #endif
+            fetched = try context.fetch(FetchDescriptor<Transcription>(predicate: #Predicate { $0.id == id })).first
+        } catch {
+            return MeetingRetranscription.Problem.historyUnreadable(error)
+        }
+        guard let transcription = fetched
         else { return String(localized: "The meeting was deleted from History while it was being transcribed.") }
         guard transcription.audioFileURL == audioFileURL,
             case .eligible(let sources) = MeetingRetranscription.eligibility(of: transcription)
         else { return String(localized: "The meeting changed while it was being transcribed, so nothing was saved.") }
 
         let segmentsURL = sources.folder.appendingPathComponent("segments.json")
-        let oldSegments = try? Data(contentsOf: segmentsURL)
+        let oldSegments: Data?
+        switch MeetingRetranscription.existingSegments(in: sources.folder) {
+        case .success(let data): oldSegments = data
+        case .failure(let error): return MeetingRetranscription.Problem.segmentsUnreadable(error)
+        }
+        // The History player's mix: made with the entry when it was saved; only if it's gone is the new one put
+        // there. Without it the entry couldn't be played, so that's a failure too.
+        var placedMix: URL? = nil
+        if let mix = URL(string: audioFileURL), !FileManager.default.fileExists(atPath: mix.path) {
+            do {
+                try FileManager.default.copyItem(at: work.appendingPathComponent("mix.wav"), to: mix)
+                placedMix = mix
+            } catch {
+                return MeetingRetranscription.Problem.mixNotWritten(error)
+            }
+        }
         do {
             try JSONEncoder().encode(processed.segments).write(to: segmentsURL, options: .atomic)
         } catch {
+            if let placedMix { try? FileManager.default.removeItem(at: placedMix) }
             return error.localizedDescription
         }
-        // The History player's mix: made with the entry when it was saved; only if it's gone is the new one put there.
-        var placedMix: URL? = nil
-        if let mix = URL(string: audioFileURL), !FileManager.default.fileExists(atPath: mix.path),
-            (try? FileManager.default.copyItem(at: work.appendingPathComponent("mix.wav"), to: mix)) != nil
-        {
-            placedMix = mix
-        }
+        #if DEBUG
+            MeetingFilesCheck.atCommit()
+        #endif
 
         let old = (
             transcription.text, transcription.duration, transcription.enhancedText, transcription.transcriptionModelName,
@@ -295,13 +379,23 @@ final class MeetingRetranscriber: ObservableObject {
                 transcription.aiEnhancementModelName, transcription.promptName, transcription.enhancementDuration,
                 transcription.modeName, transcription.modeEmoji, transcription.transcriptionStatus,
                 transcription.meetingFailedPieces, transcription.meetingSpeakerStatus) = old
-            if let oldSegments {
-                try? oldSegments.write(to: segmentsURL, options: .atomic)
-            } else {
-                try? FileManager.default.removeItem(at: segmentsURL)
+            var notPutBack: [String] = []
+            do {
+                if let oldSegments {
+                    try oldSegments.write(to: segmentsURL, options: .atomic)
+                } else {
+                    try FileManager.default.removeItem(at: segmentsURL)
+                }
+            } catch {
+                notPutBack.append("segments.json")
             }
-            if let placedMix { try? FileManager.default.removeItem(at: placedMix) }
-            return error.localizedDescription
+            if let placedMix {
+                do { try FileManager.default.removeItem(at: placedMix) } catch { notPutBack.append("mix.wav") }
+            }
+            if notPutBack.isEmpty { return error.localizedDescription }
+            Logger(subsystem: "com.prakashjoshipax.voiceink", category: "MeetingRetranscription")
+                .error("Not put back after a failed save: \(notPutBack.joined(separator: ", "), privacy: .public)")
+            return MeetingRetranscription.Problem.notPutBack(error.localizedDescription, files: notPutBack)
         }
     }
 
@@ -364,6 +458,16 @@ final class MeetingRetranscriber: ObservableObject {
             assert(check(meeting, failed, nil) == .noMeetingFolder)
             assert(reason(for: .eligible(sources)) == nil && reason(for: .transcribed) == nil)
             assert([Eligibility.noMeetingFolder, .audioGone, .mixOnly].allSatisfy { reason(for: $0) != nil })
+            // segments.json: none, readable, there but unreadable (never to be replaced or deleted).
+            let sidecar = meetings.appendingPathComponent(UUID().uuidString, isDirectory: true)
+            try? fileManager.createDirectory(at: sidecar, withIntermediateDirectories: true)
+            guard case .success(nil) = existingSegments(in: sidecar) else { return assertionFailure("no segments.json") }
+            let segmentsFile = sidecar.appendingPathComponent("segments.json")
+            try? Data("[]".utf8).write(to: segmentsFile)
+            guard case .success(let data) = existingSegments(in: sidecar), data == Data("[]".utf8) else { return assertionFailure("readable") }
+            try? fileManager.setAttributes([.posixPermissions: 0], ofItemAtPath: segmentsFile.path)
+            guard case .failure = existingSegments(in: sidecar) else { return assertionFailure("unreadable") }
+            try? fileManager.setAttributes([.posixPermissions: 0o644], ofItemAtPath: segmentsFile.path)
             // The work folder is never one recovery scans.
             let recordings = root.appendingPathComponent("Recordings", isDirectory: true)
             let work = workRoot(recordings: recordings).appendingPathComponent("x/mix.wav")

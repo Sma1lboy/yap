@@ -175,9 +175,24 @@ final class MeetingRecorder: ObservableObject {
         phase = .done(result)
     }
 
+    /// From the shortcut until the recording runs or is refused: the microphone permission (and the configuration)
+    /// can keep `start` waiting, and meanwhile Transcribe Meeting doesn't start (`MeetingRetranscriber.busyReason`)
+    /// and neither does a second start.
+    private(set) var isStarting = false
+
+    static var transcribingInHistoryMessage: String {
+        String(localized: "A meeting is being transcribed in History. Cancel it there, or start recording when it's done.")
+    }
+
     func start() async {
-        guard !phase.isRecording, let engine else { return }
-        guard await AVCaptureDevice.requestAccess(for: .audio) else {
+        guard !phase.isRecording, !isStarting, let engine else { return }
+        // Its pieces would wait behind the transcription's on the same model, and End Meeting with them.
+        if MeetingRetranscriber.shared.isRunning {
+            return notify(Self.transcribingInHistoryMessage)
+        }
+        isStarting = true
+        defer { isStarting = false }
+        guard await Self.requestMicrophoneAccess() else {
             return notify(String(localized: "Meeting recording needs microphone access."), pane: .microphone)
         }
         guard let configuration = ModeRuntimeResolver.transcriptionConfiguration(
@@ -221,6 +236,13 @@ final class MeetingRecorder: ObservableObject {
         MeetingPanelController.shared.show()
         scheduleSilenceCheck(started: started)
         logger.notice("Meeting recording started with \(configuration.model.displayName, privacy: .public)")
+    }
+
+    private static func requestMicrophoneAccess() async -> Bool {
+        #if DEBUG
+            if let answer = MeetingFilesCheck.microphoneAccess { return await answer() }  // meeting-retry-check only
+        #endif
+        return await AVCaptureDevice.requestAccess(for: .audio)
     }
 
     /// If system audio is all zeros a few seconds in, the permission was most likely denied (the tap then delivers
@@ -433,11 +455,16 @@ final class MeetingRecorder: ObservableObject {
             guard let session = try? Session(
                 folder: folder, started: Date(), transcriber: Transcriber(engine: engine, configuration: configuration))
             else { return nil }
+            do {
+                try session.feed(file: microphone, as: .me)
+                try session.feed(file: system, as: .others)
+            } catch {
+                print("meeting-check: a fixture recording couldn't be read: \(error.localizedDescription)")
+                return nil
+            }
             self.session = session
             activeFolders.insert(folder.lastPathComponent)
             phase = .recording(started: session.started)
-            session.feed(file: microphone, as: .me)
-            session.feed(file: system, as: .others)
             return session
         }
     #endif
@@ -448,6 +475,9 @@ final class MeetingRecorder: ObservableObject {
     #endif
 
     private func notify(_ message: String, pane: PrivacySettingsPane? = nil) {
+        #if DEBUG
+            if MeetingFilesCheck.isRequested { print("meeting-check: notification \(message)") }
+        #endif
         NotificationManager.shared.showNotification(
             title: message, type: .warning, duration: 8,
             actionButton: pane.map { pane in (String(localized: "Open Settings"), { pane.open() }) })
@@ -509,13 +539,28 @@ final class MeetingRecorder: ObservableObject {
         /// Reads from byte 44 to the end, so a file whose header was never finished (a crash) works too.
         // ponytail: pieces queue up in memory faster than they're transcribed (~1 MB per piece); fine for hours,
         // feed with backpressure if recovered meetings get much longer.
-        func feed(file: URL, as speaker: MeetingSegment.Speaker) {
-            guard let handle = try? FileHandle(forReadingFrom: file) else { return }
+        /// A missing file is a channel that wasn't recorded (no lines); a file that's there but can't be opened or
+        /// read throws, so a recording that couldn't be read is never taken for one where nobody spoke.
+        func feed(file: URL, as speaker: MeetingSegment.Speaker) throws {
+            guard FileManager.default.fileExists(atPath: file.path) else { return }
+            // Said as a read error with the file's name (FileHandle's own words for a denied open talk of saving).
+            func readError(_ error: Error) -> Error {
+                let code = ((error as NSError).userInfo[NSUnderlyingErrorKey] as? NSError)?.code ?? (error as NSError).code
+                let denied = code == Int(EACCES) || code == Int(EPERM) || code == CocoaError.fileReadNoPermission.rawValue
+                    || code == CocoaError.fileWriteNoPermission.rawValue
+                return CocoaError(denied ? .fileReadNoPermission : .fileReadUnknown,
+                    userInfo: [NSFilePathErrorKey: file.path, NSUnderlyingErrorKey: error])
+            }
+            let handle: FileHandle
+            do { handle = try FileHandle(forReadingFrom: file) } catch { throw readError(error) }
             defer { try? handle.close() }
-            try? handle.seek(toOffset: 44)
-            queue.sync {
+            do { try handle.seek(toOffset: 44) } catch { throw readError(error) }
+            try queue.sync {
                 guard let channel = channels[speaker] else { return }
-                while let data = try? handle.read(upToCount: 32_000), !data.isEmpty {
+                func next() throws -> Data? {
+                    do { return try handle.read(upToCount: 32_000) } catch { throw readError(error) }
+                }
+                while let data = try next(), !data.isEmpty {
                     let block = PCM16WAVWriter.samples(from: Data(count: 44) + data)
                     let elapsed = TimeInterval(channel.writer.sampleCount + block.count) / MeetingChunker.sampleRate
                     for piece in channel.append(block, elapsedAtEnd: elapsed) {
@@ -664,6 +709,9 @@ final class MeetingRecorder: ObservableObject {
                 lock.unlock()
             } catch {
                 logger.error("Meeting piece at \(piece.start, privacy: .public)s failed: \(error.localizedDescription, privacy: .public)")
+                #if DEBUG
+                    if MeetingFilesCheck.isRequested { print("meeting-check: piece failed at \(piece.start) s: \(error.localizedDescription)") }
+                #endif
                 // The piece keeps a line in the transcript, marked as not transcribed.
                 lock.lock()
                 failures += 1
@@ -717,6 +765,8 @@ struct MeetingSummarizer {
         func ask(_ text: String, prompt: String) async throws -> String {
             #if DEBUG
                 if MeetingFilesCheck.takeNotesFailure() { throw EnhancementError.enhancementFailed }
+                // meeting-retry-check: answered without any request, from the provider and model this run resolved.
+                if let fake = await MeetingFilesCheck.fakeNotes(provider: base.provider, model: base.modelName) { return fake }
             #endif
             let configuration = withPrompt(MeetingNotes.named(prompt, names: names))
             let result = try await service.enhance(

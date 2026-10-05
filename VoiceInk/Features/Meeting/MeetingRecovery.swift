@@ -92,10 +92,26 @@ extension MeetingRecorder {
             await Task.detached { Self.restoreOriginals(in: folder) }.value
             return await saveAudioOnly(folder, started: started, engine: engine, reason: String(localized: "Its folder couldn't be written to."))
         }
-        await Task.detached {
-            session.feed(file: folder.appendingPathComponent("mic.wav.orig"), as: .me)
-            session.feed(file: folder.appendingPathComponent("system.wav.orig"), as: .others)
+        let readError = await Task.detached { () -> Error? in
+            do {
+                try session.feed(file: folder.appendingPathComponent("mic.wav.orig"), as: .me)
+                try session.feed(file: folder.appendingPathComponent("system.wav.orig"), as: .others)
+                return nil
+            } catch {
+                return error
+            }
         }.value
+        if let readError {
+            // Not a meeting where nobody spoke: the originals go back as they were and it's saved with its audio,
+            // so Transcribe Meeting can try again once the file can be read.
+            session.transcriber.cancel()
+            _ = await session.finish()
+            await Task.detached { Self.restoreOriginals(in: folder) }.value
+            try? fileManager.removeItem(at: folder.appendingPathComponent("segments.json"))
+            Self.recoveryLogger.error("Meeting \(name, privacy: .public) couldn't be read: \(readError.localizedDescription, privacy: .public)")
+            return await saveAudioOnly(folder, started: started, engine: engine, reason: String(
+                format: String(localized: "One of its recordings couldn't be read (%@)."), readError.localizedDescription))
+        }
         // In the background already, so it waits for the speakers instead of saving without them.
         let result = await finishMeeting(session, engine: engine, timestamp: started, speakerWait: .infinity) { _ in }
         if result.saveError == nil {
