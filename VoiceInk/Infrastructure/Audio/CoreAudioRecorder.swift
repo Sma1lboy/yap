@@ -150,6 +150,9 @@ final class CoreAudioRecorder: @unchecked Sendable {
             return
         }
 
+        if audioUnit != nil {
+            logger.notice("Rebuilding prepared audio input for device \(deviceID, privacy: .public): device or capture format changed")
+        }
         teardownPreparedAudioUnit()
         currentDeviceID = deviceID
 
@@ -242,8 +245,17 @@ final class CoreAudioRecorder: @unchecked Sendable {
         }
         logDroppedInputBufferCounters(context: "stop")
 
+        let shouldInvalidatePreparation = capturedTooLittleAudio()
         closeOutputFile()
         recordingURL = nil
+
+        // Rebuild the input next time if too little audio was captured.
+        if shouldInvalidatePreparation {
+            logger.notice(
+                "Recording captured less than 150 ms of audio; discarding the prepared audio input"
+            )
+            invalidatePreparation()
+        }
 
         resetMeters()
 
@@ -257,6 +269,20 @@ final class CoreAudioRecorder: @unchecked Sendable {
             teardownPreparedAudioUnit()
             currentDeviceID = 0
         }
+    }
+
+    /// Check after writes finish, before closing the file.
+    private func capturedTooLittleAudio() -> Bool {
+        guard let audioFile, outputFormat.mSampleRate > 0 else { return false }
+
+        var frameCount: Int64 = 0
+        var size = UInt32(MemoryLayout<Int64>.size)
+        guard ExtAudioFileGetProperty(
+            audioFile, kExtAudioFileProperty_FileLengthFrames, &size, &frameCount
+        ) == noErr, frameCount >= 0 else { return false }
+
+        // Use audio duration, not file size.
+        return Double(frameCount) / outputFormat.mSampleRate < 0.15
     }
 
     /// Releases the prepared AUHAL and buffers. Use for app shutdown or hard recovery.
@@ -745,9 +771,10 @@ final class CoreAudioRecorder: @unchecked Sendable {
         let current = nominalRate == deviceFormat.mSampleRate
             && unitFormat.mSampleRate == deviceFormat.mSampleRate
             && unitFormat.mChannelsPerFrame == deviceFormat.mChannelsPerFrame
+            && renderFrameCapacity(for: deviceID) <= renderBufferSize / captureChannelCount
         if !current {
             logger.notice(
-                "🎙️ Device \(deviceID, privacy: .public) format changed (\(self.deviceFormat.mSampleRate, privacy: .public) Hz → \(nominalRate, privacy: .public) Hz); rebuilding AUHAL"
+                "🎙️ Device \(deviceID, privacy: .public) format or buffer size changed (\(self.deviceFormat.mSampleRate, privacy: .public) Hz → \(nominalRate, privacy: .public) Hz); rebuilding AUHAL"
             )
         }
         return current
