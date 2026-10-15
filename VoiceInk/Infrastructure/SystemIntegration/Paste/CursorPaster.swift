@@ -720,6 +720,7 @@ class CursorPaster {
         cmdDown.flags = .maskCommand
         vDown.flags = .maskCommand
         vUp.flags = .maskCommand
+        cmdUp.flags = []
 
         cmdDown.post(tap: .cghidEventTap)
         await wait(pasteShortcutEventDelay)

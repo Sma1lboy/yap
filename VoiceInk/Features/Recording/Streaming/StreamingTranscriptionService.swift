@@ -203,6 +203,13 @@ class StreamingTranscriptionService {
             throw StreamingTranscriptionError.notConnected
         }
 
+        if provider is FluidAudioUnifiedStreamingProvider, metrics.snapshot().droppedChunks > 0 {
+            logger.warning("Unified streaming dropped audio; using the full recording for batch transcription")
+            state = .done
+            await cleanupStreaming()
+            return .requiresBatchFallback
+        }
+
         if provider.stopDisposition == .useBatchFallback {
             logger.notice("Streaming provider requested full batch fallback")
             state = .done
