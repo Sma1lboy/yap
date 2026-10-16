@@ -10836,6 +10836,35 @@
         }
       }
     },
+    "Automatic" : {
+      "comment" : "Audio input channel selection.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatique"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動"
+          }
+        }
+      }
+    },
     "Automatically Check for Updates" : {
       "localizations" : {
         "de" : {
@@ -12053,6 +12082,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更改排序方式"
+          }
+        }
+      }
+    },
+    "Change the input channel after recording stops." : {
+      "comment" : "Audio input channel selection.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ändere den Eingangskanal, nachdem die Aufnahme beendet ist."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifiez le canal d’entrée après l’arrêt de l’enregistrement."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在录音停止后更改输入通道。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "請在錄音停止後更改輸入通道。"
           }
         }
       }
@@ -23605,6 +23663,93 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "資訊"
+          }
+        }
+      }
+    },
+    "Input %u" : {
+      "comment" : "Audio input channel selection.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingang %u"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrée %u"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入 %u"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸入 %u"
+          }
+        }
+      }
+    },
+    "Input %u (%@)" : {
+      "comment" : "Audio input channel selection.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingang %u (%@)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrée %u (%@)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入 %u（%@）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸入 %u（%@）"
+          }
+        }
+      }
+    },
+    "Input Channel" : {
+      "comment" : "Audio input channel selection.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingangskanal"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Canal d’entrée"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入通道"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸入通道"
           }
         }
       }
@@ -37175,6 +37320,35 @@
         }
       }
     },
+    "Saved input is unavailable. Using Automatic until it returns." : {
+      "comment" : "Audio input channel selection.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der gespeicherte Eingang ist nicht verfügbar. Bis er wieder verfügbar ist, wird Automatisch verwendet."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’entrée enregistrée est indisponible. Le mode Automatique est utilisé en attendant son retour."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已保存的输入不可用。恢复之前将使用自动模式。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已儲存的輸入無法使用。恢復之前將使用自動模式。"
+          }
+        }
+      }
+    },
     "Saving" : {
       "localizations" : {
         "de" : {
@@ -38136,6 +38310,35 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "請先選中要改寫的文字，再使用這個模式。"
+          }
+        }
+      }
+    },
+    "Select the input connected to your microphone. Automatic uses the device’s preferred inputs." : {
+      "comment" : "Audio input channel selection.",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle den mit deinem Mikrofon verbundenen Eingang. Automatisch verwendet die bevorzugten Eingänge des Geräts."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionnez l’entrée connectée à votre microphone. Le mode Automatique utilise les entrées préférées de l’appareil."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择连接麦克风的输入。自动模式使用设备的首选输入。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇連接麥克風的輸入。自動模式使用裝置的偏好輸入。"
           }
         }
       }

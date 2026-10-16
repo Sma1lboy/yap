@@ -169,9 +169,10 @@ class Recorder: NSObject, ObservableObject {
         coreAudioRecorder.onAudioChunk = onAudioChunk
         recorder = coreAudioRecorder
 
+        let selectedChannels = deviceManager.selectedInputChannels(for: deviceID)
         audioSetupQueue.async { [logger] in
             do {
-                try coreAudioRecorder.prepare(deviceID: deviceID)
+                try coreAudioRecorder.prepare(deviceID: deviceID, selectedInputChannels: selectedChannels)
             } catch {
                 logger.warning(
                     "Recorder prepare failed reason=\(reason, privacy: .public) deviceID=\(deviceID, privacy: .public) error=\(error, privacy: .public)"
