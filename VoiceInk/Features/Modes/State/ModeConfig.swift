@@ -61,6 +61,7 @@ struct ModeConfig: Codable, Identifiable, Equatable {
     var selectedAIProvider: String?
     var selectedAIModel: String?
     var outputMode: ModeOutputMode = .paste
+    var autoSendKey: FinishAndSendKey = .none
     var customCommand: ModeCustomCommand?
     var isEnabled: Bool = true
     var isDefault: Bool = false
@@ -69,7 +70,7 @@ struct ModeConfig: Codable, Identifiable, Equatable {
         case id, name, icon, appConfigs, urlConfigs, triggerGroups, triggerWords, isAIEnhancementEnabled,
             selectedPrompt, isRealtimeTranscriptionEnabled, selectedLanguage, isTextFormattingEnabled,
             useClipboardContext, useSelectedTextContext, useScreenCapture, useCursorContext, selectedAIProvider, selectedAIModel,
-            outputMode, customCommand, isEnabled, isDefault
+            outputMode, autoSendKey, isAutoSendEnabled, customCommand, isEnabled, isDefault
         case legacyEmoji = "emoji"
         case selectedWhisperModel
         case selectedTranscriptionModelName
@@ -83,7 +84,8 @@ struct ModeConfig: Codable, Identifiable, Equatable {
         selectedLanguage: String? = nil, useClipboardContext: Bool = false, useSelectedTextContext: Bool = true,
         useScreenCapture: Bool = false, useCursorContext: Bool = true,
         isTextFormattingEnabled: Bool = false, selectedAIProvider: String? = nil, selectedAIModel: String? = nil,
-        outputMode: ModeOutputMode = .paste, customCommand: ModeCustomCommand? = nil,
+        outputMode: ModeOutputMode = .paste, autoSendKey: FinishAndSendKey = .none,
+        customCommand: ModeCustomCommand? = nil,
         isEnabled: Bool = true, isDefault: Bool = false
     ) {
         self.id = id
@@ -100,6 +102,7 @@ struct ModeConfig: Codable, Identifiable, Equatable {
         self.useScreenCapture = useScreenCapture
         self.useCursorContext = useCursorContext
         self.outputMode = outputMode
+        self.autoSendKey = autoSendKey
         self.customCommand = customCommand
         self.selectedAIProvider = selectedAIProvider
         self.selectedAIModel = selectedAIModel
@@ -164,6 +167,16 @@ struct ModeConfig: Codable, Identifiable, Equatable {
         selectedAIModel = try container.decodeIfPresent(String.self, forKey: .selectedAIModel)
         outputMode = try container.decodeIfPresent(ModeOutputMode.self, forKey: .outputMode) ?? .paste
         customCommand = try container.decodeIfPresent(ModeCustomCommand.self, forKey: .customCommand)
+        // Keep compatibility with saved modes from before Auto Send became global.
+        if let rawValue = try container.decodeIfPresent(String.self, forKey: .autoSendKey),
+            let key = FinishAndSendKey(rawValue: rawValue)
+        {
+            autoSendKey = key
+        } else if try container.decodeIfPresent(Bool.self, forKey: .isAutoSendEnabled) == true {
+            autoSendKey = .enter
+        } else {
+            autoSendKey = .none
+        }
         isEnabled = try container.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? true
         isDefault = try container.decodeIfPresent(Bool.self, forKey: .isDefault) ?? false
 
@@ -197,6 +210,7 @@ struct ModeConfig: Codable, Identifiable, Equatable {
         try container.encodeIfPresent(selectedAIProvider, forKey: .selectedAIProvider)
         try container.encodeIfPresent(selectedAIModel, forKey: .selectedAIModel)
         try container.encode(outputMode, forKey: .outputMode)
+        try container.encode(autoSendKey, forKey: .autoSendKey)
         try container.encodeIfPresent(customCommand, forKey: .customCommand)
         try container.encodeIfPresent(selectedTranscriptionModelName, forKey: .selectedTranscriptionModelName)
         try container.encode(isEnabled, forKey: .isEnabled)

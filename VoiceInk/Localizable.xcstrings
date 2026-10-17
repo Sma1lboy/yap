@@ -10923,6 +10923,35 @@
         }
       }
     },
+    "Automatically presses a key combination after pasting text. Useful for chat applications or forms that use different send shortcuts." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drückt nach dem Einfügen automatisch eine Tastenkombination. Nützlich für Chat-Apps oder Formulare mit abweichenden Sendekürzeln."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appuie automatiquement sur une combinaison de touches après avoir collé du texte. Utile pour les applications de chat ou les formulaires qui utilisent différents raccourcis d'envoi."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粘贴文本后自动按下组合键。适用于使用不同发送快捷键的聊天 App 或表单。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "貼上文字後自動按下組合鍵。適用於使用不同傳送快速鍵的聊天 App 或表單。"
+          }
+        }
+      }
+    },
     "Automatically remove configured filler words like 'uh', 'um', or 'hmm' from transcriptions. If no filler words are configured, this cleanup is skipped." : {
       "extractionState" : "manual",
       "localizations" : {

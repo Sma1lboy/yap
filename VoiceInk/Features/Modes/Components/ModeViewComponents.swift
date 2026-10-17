@@ -428,6 +428,25 @@ struct ConfigurationRow: View {
                     )
                 }
 
+                if config.outputMode == .paste && config.autoSendKey.isEnabled {
+                    HStack(spacing: AppTheme.Spacing.x1) {
+                        Image(yapIcon: "keyboard")
+                            .font(AppTheme.font(.micro))
+                        Text(config.autoSendKey.displayName)
+                            .font(AppTheme.font(.caption))
+                    }
+                    .padding(.horizontal, AppTheme.Spacing.x2)
+                    .padding(.vertical, AppTheme.Spacing.half)
+                    .background(
+                        Capsule()
+                            .fill(AppTheme.Surface.control)
+                    )
+                    .overlay(
+                        Capsule()
+                            .stroke(AppTheme.Border.control, lineWidth: 0.5)
+                    )
+                }
+
                 if config.isAIEnhancementEnabled {
                     HStack(spacing: AppTheme.Spacing.x1) {
                         Image(yapIcon: "sparkles")
