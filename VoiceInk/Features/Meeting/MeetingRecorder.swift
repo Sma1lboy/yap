@@ -219,7 +219,9 @@ final class MeetingRecorder: ObservableObject {
                 folder: folder, started: started, transcriber: Transcriber(engine: engine, configuration: configuration))
             self.session = session
             activeFolders.insert(folder.lastPathComponent)
-            try session.startMicrophone(deviceID: micDevice)
+            try session.startMicrophone(
+                deviceID: micDevice,
+                selectedInputChannels: AudioDeviceManager.shared.selectedInputChannels(for: micDevice))
             do {
                 try session.startSystemAudio()
             } catch {
@@ -510,14 +512,17 @@ final class MeetingRecorder: ObservableObject {
 
         var systemAudioIsAllZeros: Bool { queue.sync { channels[.others]?.peak == 0 } }
 
-        func startMicrophone(deviceID: AudioDeviceID) throws {
+        func startMicrophone(deviceID: AudioDeviceID, selectedInputChannels: [UInt32]?) throws {
             microphone.onAudioChunk = { [weak self] data in
                 var samples = [Int16](repeating: 0, count: data.count / 2)
                 _ = samples.withUnsafeMutableBytes { data.copyBytes(to: $0) }
                 self?.receive(samples, from: .me)
             }
             // CoreAudioRecorder always writes a file; mic.wav is written from the same samples, kept on the clock.
-            try microphone.startRecording(toOutputFile: folder.appendingPathComponent("pieces/mic-raw.wav"), deviceID: deviceID)
+            // The input channel picked in Audio settings, as dictation uses it.
+            try microphone.startRecording(
+                toOutputFile: folder.appendingPathComponent("pieces/mic-raw.wav"), deviceID: deviceID,
+                selectedInputChannels: selectedInputChannels)
         }
 
         func startSystemAudio() throws {

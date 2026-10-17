@@ -55,6 +55,7 @@ struct EnhancementRuntimeConfiguration {
 struct OutputRuntimeConfiguration {
     let mode: ModeConfig?
     let outputMode: ModeOutputMode
+    let autoSendKey: FinishAndSendKey
     let customCommand: ModeCustomCommand?
 }
 
@@ -197,6 +198,7 @@ enum ModeRuntimeResolver {
         return OutputRuntimeConfiguration(
             mode: mode,
             outputMode: mode?.outputMode ?? .paste,
+            autoSendKey: mode?.outputMode == .paste ? (mode?.autoSendKey ?? .none) : .none,
             customCommand: mode?.customCommand
         )
     }

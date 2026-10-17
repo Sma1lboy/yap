@@ -481,6 +481,17 @@ final class OnboardingFlowController {
             return
         }
 
+        finishOnboarding(onComplete: onComplete)
+    }
+
+    /// Skip, shown from the practice steps on (after permissions, microphone, model and API): finishes the same way
+    /// as the last step, so the fallback mode and shortcut are installed and config.json is applied.
+    func skipOnboarding(onComplete: () -> Void) {
+        guard coordinator.requiredPermissionsGranted else { return }
+        finishOnboarding(onComplete: onComplete)
+    }
+
+    private func finishOnboarding(onComplete: () -> Void) {
         let preset = coordinator.usedRecommendedSetup ? chosenPreset() : nil
         let restored = coordinator.restoredFromCloud
         OnboardingStorageKeys.onboardingKeys.forEach {

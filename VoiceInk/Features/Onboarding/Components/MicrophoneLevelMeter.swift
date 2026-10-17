@@ -31,11 +31,12 @@ final class MicrophoneLevelProbe: ObservableObject, @unchecked Sendable {
             isActive = false
             return
         }
+        let selectedChannels = AudioDeviceManager.shared.selectedInputChannels(for: deviceID)
         queue.async { [self] in
             recorder.stopRecording()
             var started = false
             do {
-                try recorder.startRecording(toOutputFile: file, deviceID: deviceID)
+                try recorder.startRecording(toOutputFile: file, deviceID: deviceID, selectedInputChannels: selectedChannels)
                 started = true
             } catch {
                 recorder.teardown()

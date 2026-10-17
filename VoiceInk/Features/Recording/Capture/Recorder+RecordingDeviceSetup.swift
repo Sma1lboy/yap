@@ -20,10 +20,13 @@ extension Recorder {
         to url: URL,
         deviceID: AudioDeviceID
     ) async throws {
+        let selectedChannels = deviceManager.selectedInputChannels(for: deviceID)
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             audioSetupQueue.async {
                 do {
-                    try recorder.startRecording(toOutputFile: url, deviceID: deviceID)
+                    try recorder.startRecording(
+                        toOutputFile: url, deviceID: deviceID, selectedInputChannels: selectedChannels
+                    )
                     continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)
@@ -67,12 +70,13 @@ extension Recorder {
             deviceManager.recordingDeviceChangeFinished()
             return
         }
+        let selectedChannels = deviceManager.selectedInputChannels(for: fallbackDeviceID)
 
         do {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
                 audioSetupQueue.async {
                     do {
-                        try recorder.switchDevice(to: fallbackDeviceID)
+                        try recorder.switchDevice(to: fallbackDeviceID, selectedInputChannels: selectedChannels)
                         continuation.resume()
                     } catch {
                         continuation.resume(throwing: error)

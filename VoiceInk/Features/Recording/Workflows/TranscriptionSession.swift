@@ -55,6 +55,7 @@ final class StreamingTranscriptionSession: TranscriptionSession {
     private var model: (any TranscriptionModel)?
     private var context: TranscriptionRequestContext = .currentDefaults
     private var streamingFailed = false
+    private var isCancelled = false
     private var startupTask: Task<Void, Never>?
     private var startupTaskID: UUID?
     private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "StreamingTranscriptionSession")
@@ -72,7 +73,7 @@ final class StreamingTranscriptionSession: TranscriptionSession {
         self.context = context
         logger.notice("Streaming session prepare model=\(model.displayName, privacy: .public)")
 
-        // Return callback immediately; WebSocket connects in background
+        // Start the provider in the background.
         let service = streamingService
         let callback: (Data) -> Void = { [weak service] data in
             service?.sendAudioChunk(data)
@@ -119,11 +120,19 @@ final class StreamingTranscriptionSession: TranscriptionSession {
             throw VoiceInkEngineError.transcriptionFailed
         }
 
+        // Wait for Unified's model before finalizing buffered audio.
+        let isUnified = model.provider == .fluidAudio && FluidAudioModelManager.isParakeetUnifiedModel(named: model.name)
+        if isUnified {
+            await startupTask?.value
+        }
+        try checkUnifiedCancellation(isUnified)
+
         if !streamingFailed {
             do {
                 let start = Date()
                 logger.notice("Streaming stop/transcribe started model=\(model.displayName, privacy: .public)")
                 let result = try await streamingService.stopAndFinalize()
+                try checkUnifiedCancellation(isUnified)
                 switch result {
                 case .finalized(let text):
                     logger.notice(
@@ -134,6 +143,9 @@ final class StreamingTranscriptionSession: TranscriptionSession {
                     logger.notice("Streaming provider requested full batch transcription")
                 }
             } catch {
+                if isUnified, isCancelled || Task.isCancelled || error is CancellationError {
+                    throw CancellationError()
+                }
                 logger.error("❌ Streaming failed, falling back to batch: \(error, privacy: .public)")
                 startupTask?.cancel()
                 startupTask = nil
@@ -147,6 +159,8 @@ final class StreamingTranscriptionSession: TranscriptionSession {
             streamingService.cancel()
         }
 
+        try checkUnifiedCancellation(isUnified)
+
         let fallbackStart = Date()
         logger.notice(
             "Using batch fallback for \(model.displayName, privacy: .public) file=\(audioURL.lastPathComponent, privacy: .public)"
@@ -158,7 +172,14 @@ final class StreamingTranscriptionSession: TranscriptionSession {
         return text
     }
 
+    private func checkUnifiedCancellation(_ isUnified: Bool) throws {
+        guard isUnified else { return }
+        try Task.checkCancellation()
+        guard !isCancelled else { throw CancellationError() }
+    }
+
     func cancel() {
+        isCancelled = true
         startupTask?.cancel()
         startupTask = nil
         startupTaskID = nil

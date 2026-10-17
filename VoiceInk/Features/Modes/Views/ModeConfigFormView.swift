@@ -690,6 +690,21 @@ struct ModeConfigFormView: View {
                 }
             }
 
+            if draft.outputMode == .paste {
+                Picker(selection: $draft.autoSendKey) {
+                    ForEach(FinishAndSendKey.allCases, id: \.self) { key in
+                        Text(key.displayName).tag(key)
+                    }
+                } label: {
+                    HStack(spacing: AppTheme.Spacing.x2) {
+                        Text("Auto Send")
+                        InfoTip(
+                            "Automatically presses a key combination after pasting text. Useful for chat applications or forms that use different send shortcuts."
+                        )
+                    }
+                }
+            }
+
             if draft.outputMode == .customCommand {
                 customCommandControls
             }

@@ -40,6 +40,8 @@ struct VoiceInkApp: App {
         // NSApp is YapApplication (see there): SwiftUI creates NSApplication.shared itself and doesn't read
         // NSPrincipalClass, so the subclass has to be the first to ask for it.
         _ = YapApplication.shared
+        _ = LogExporter.shared
+
         // Disable HTTP response caching — prevents API responses from being stored in Cache.db
         URLCache.shared = URLCache(memoryCapacity: 0, diskCapacity: 0)
 
