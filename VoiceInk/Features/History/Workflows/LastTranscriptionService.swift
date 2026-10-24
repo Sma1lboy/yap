@@ -14,6 +14,8 @@ class LastTranscriptionService: ObservableObject {
             let transcriptions = try modelContext.fetch(descriptor)
             return transcriptions.first
         } catch {
+            let failure = error as NSError
+            ShortcutDiagnostics.error("history result=fetch-failed domain=\(failure.domain) code=\(failure.code)")
             print("Error fetching last transcription: \(error)")
             return nil
         }
@@ -59,6 +61,7 @@ class LastTranscriptionService: ObservableObject {
     @MainActor
     static func pasteLastTranscription(from modelContext: ModelContext) {
         guard let lastTranscription = getLastTranscription(from: modelContext) else {
+            ShortcutDiagnostics.notice("utility action=pasteLastTranscription result=ignored reason=no-history")
             Task { @MainActor in
                 NotificationManager.shared.showNotification(
                     title: String(localized: "No transcription available"),
@@ -74,6 +77,7 @@ class LastTranscriptionService: ObservableObject {
     @MainActor
     static func pasteLastEnhancement(from modelContext: ModelContext) {
         guard let lastTranscription = getLastTranscription(from: modelContext) else {
+            ShortcutDiagnostics.notice("utility action=pasteLastEnhancement result=ignored reason=no-history")
             Task { @MainActor in
                 NotificationManager.shared.showNotification(
                     title: String(localized: "No transcription available"),
@@ -113,6 +117,7 @@ class LastTranscriptionService: ObservableObject {
                 let audioURL = URL(string: audioURLString),
                 FileManager.default.fileExists(atPath: audioURL.path)
             else {
+                ShortcutDiagnostics.notice("utility action=retryLastTranscription result=ignored reason=history-or-audio-unavailable")
                 NotificationManager.shared.showNotification(
                     title: String(localized: "Cannot retry: Audio file not found"),
                     type: .error
@@ -125,6 +130,7 @@ class LastTranscriptionService: ObservableObject {
                     transcriptionModelManager: transcriptionModelManager
                 )
             else {
+                ShortcutDiagnostics.notice("utility action=retryLastTranscription result=ignored reason=no-model")
                 NotificationManager.shared.showNotification(
                     title: String(localized: "No transcription model selected"),
                     type: .error
@@ -163,6 +169,8 @@ class LastTranscriptionService: ObservableObject {
                     )
                 }
             } catch {
+                let failure = error as NSError
+                ShortcutDiagnostics.error("utility action=retryLastTranscription result=failed domain=\(failure.domain) code=\(failure.code)")
                 NotificationManager.shared.showNotification(
                     title: String(format: String(localized: "Retry failed: %@"), error.localizedDescription),
                     type: .error
