@@ -262,7 +262,7 @@ final class LastPasteEditor {
     }
 
     nonisolated private static func select(_ record: Record) -> Result<Record, Failure> {
-        let reader = AutoLearnAXTextReader()
+        let reader = AccessibilityTextReader()
         defer { reader.restoreWebAccessibility(processID: record.processID, appElement: record.appElement) }
         let readings = reader.focusedReadings(processID: record.processID)
         guard readings.contains(where: { CFEqual($0.targetElement, record.target) }) else { return .failure(.focusChanged) }
@@ -287,13 +287,13 @@ final class LastPasteEditor {
     /// The selected text in the focused field of `processID`, read just before a paste replaces it. Only the selection
     /// is read: ⌘V waits for this.
     nonisolated static func selectedText(processID: pid_t) -> String {
-        let reader = AutoLearnAXTextReader()
+        let reader = AccessibilityTextReader()
         defer { reader.restoreWebAccessibility(processID: processID, appElement: AXUIElementCreateApplication(processID)) }
         return reader.focusedSelection(processID: processID)
     }
 
     nonisolated private static func capture(text: String, processID: pid_t, replaced: String) -> Record? {
-        let reader = AutoLearnAXTextReader()
+        let reader = AccessibilityTextReader()
         let appElement = AXUIElementCreateApplication(processID)
         defer { reader.restoreWebAccessibility(processID: processID, appElement: appElement) }
         for reading in reader.focusedReadings(processID: processID) {

@@ -126,7 +126,7 @@ struct VoiceInkApp: App {
             DictationTimeline.selfCheck()
             LanguagePinSuggestion.selfCheck()
             TranscriptionDelivery.selfCheck()
-            AutoLearnAXTextReader.selfCheck()
+            AccessibilityTextReader.selfCheck()
             FinalSnapshotDiffEngine.selfCheck()
             Task { @MainActor in
                 do { try SessionEditRecorder.selfCheck() } catch { assertionFailure("SessionEditRecorder selfCheck: \(error)") }

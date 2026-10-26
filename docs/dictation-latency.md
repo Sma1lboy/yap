@@ -355,7 +355,7 @@ Not covered:
   Yap Cloud's network latency is in [cloud-latency.md](cloud-latency.md).
 - **Waits other than the shortcut one** (see the table above).
 - **The focused-field check and the selection read before ⌘V.** Both run before the wait starts or during it; ⌘V
-  waits for the selection read. It reads only the selected text (`AutoLearnAXTextReader.focusedSelection`), no longer
+  waits for the selection read. It reads only the selected text (`AccessibilityTextReader.focusedSelection`), no longer
   the whole field. Real dictations include both.
 
 ## Auto-detect or a fixed language

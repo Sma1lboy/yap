@@ -33,7 +33,7 @@
 ### 3. 纠错学习在本地，每条规则你审过才生效
 
 - **说法：** 你改了 Yap 粘贴出去的字，Yap 会记下改动，变成词典里的一条替换规则或词汇。它只用辅助功能读那个输入框，不装键盘监听。学到的修正先排队，由你选的模型审核（选 Ollama 就不出这台 Mac）；审核设成"手动"时，每条提议要你批准、修改或丢弃后才进词典。所有规则都在词典页里，能看、能删、能导出。
-- **证据：** `VoiceInk/Features/Dictionary/AutoLearn/`：`AutoLearnAXTextReader.swift`（读输入框）、`CorrectionDiffEngine.swift`（diff）、`AutoLearnAIReviewer.swift`（审核，四种动作：加替换并加词汇 / 只加替换 / 只加词汇 / 拒绝）、`AutoLearnTypes.swift` 里的 `AutoLearnReviewSchedule.manually`、`AutoLearnService.applyReviewProposals`。导出在 `DictionaryImportExportService.swift`。
+- **证据：** `VoiceInk/Features/Dictionary/AutoLearn/`：`VoiceInk/Infrastructure/SystemIntegration/Accessibility/AccessibilityTextReader.swift`（读输入框）、`CorrectionDiffEngine.swift`（diff）、`AutoLearnAIReviewer.swift`（审核，四种动作：加替换并加词汇 / 只加替换 / 只加词汇 / 拒绝）、`AutoLearnTypes.swift` 里的 `AutoLearnReviewSchedule.manually`、`AutoLearnService.applyReviewProposals`。导出在 `DictionaryImportExportService.swift`。
 - **必须带上的限定：** 这个功能来自上游 VoiceInk，不是 Yap 新做的；外发时不说"Yap 首创"。没有数字，所以不写"准确率提升 X%"。
 
 ## 信息层级
