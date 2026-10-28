@@ -1,6 +1,5 @@
 import Foundation
 import LLMkit
-import SwiftData
 
 /// ElevenLabs streaming provider wrapping `LLMkit.ElevenLabsStreamingClient`.
 final class ElevenLabsStreamingProvider: StreamingTranscriptionProvider {
@@ -8,12 +7,12 @@ final class ElevenLabsStreamingProvider: StreamingTranscriptionProvider {
     private let client = LLMkit.ElevenLabsStreamingClient()
     private var eventsContinuation: AsyncStream<StreamingTranscriptionEvent>.Continuation?
     private var forwardingTask: Task<Void, Never>?
-    private let modelContext: ModelContext
+    private let customVocabulary: [String]
 
     private(set) var transcriptionEvents: AsyncStream<StreamingTranscriptionEvent>
 
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
+    init(customVocabulary: [String]) {
+        self.customVocabulary = customVocabulary
         var continuation: AsyncStream<StreamingTranscriptionEvent>.Continuation!
         transcriptionEvents = AsyncStream { continuation = $0 }
         eventsContinuation = continuation
@@ -38,7 +37,7 @@ final class ElevenLabsStreamingProvider: StreamingTranscriptionProvider {
                 apiKey: apiKey,
                 model: "scribe_v2_realtime",
                 language: language,
-                customVocabulary: DictionaryTerms.newestFirst(in: modelContext)
+                customVocabulary: customVocabulary
             )
         } catch {
             // Clean up forwarding task on connection failure

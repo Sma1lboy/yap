@@ -1,19 +1,18 @@
 import Foundation
 import LLMkit
-import SwiftData
 
 /// Gemini streaming provider wrapping `LLMkit.GeminiStreamingClient`.
 final class GeminiStreamingProvider: StreamingTranscriptionProvider {
     private let client = LLMkit.GeminiStreamingClient()
-    private let modelContext: ModelContext
+    private let customVocabulary: [String]
     private var eventsContinuation: AsyncStream<StreamingTranscriptionEvent>.Continuation?
     private var forwardingTask: Task<Void, Never>?
 
     private(set) var transcriptionEvents: AsyncStream<StreamingTranscriptionEvent>
     var finalizationEvents: AsyncStream<String>? { client.finalizationEvents }
 
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
+    init(customVocabulary: [String]) {
+        self.customVocabulary = customVocabulary
         var continuation: AsyncStream<StreamingTranscriptionEvent>.Continuation!
         transcriptionEvents = AsyncStream { continuation = $0 }
         eventsContinuation = continuation
@@ -37,7 +36,7 @@ final class GeminiStreamingProvider: StreamingTranscriptionProvider {
                 apiKey: apiKey,
                 model: model.name,
                 language: language,
-                customVocabulary: DictionaryTerms.newestFirst(in: modelContext)
+                customVocabulary: Array(customVocabulary.prefix(1_000))
             )
         } catch {
             forwardingTask?.cancel()

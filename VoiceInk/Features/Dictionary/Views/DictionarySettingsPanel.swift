@@ -11,6 +11,7 @@ struct DictionarySettingsPanel: View {
 
     let onDismiss: () -> Void
     let onReviewNow: () -> Void
+    @AppStorage(VocabularyCorrectionSettings.isEnabledKey) private var isVocabularyCorrectionEnabled = true
     @AppStorage(AutoLearnSettings.isEnabledKey) private var isAutoLearnDictionaryEnabled = true
     @AppStorage(AutoLearnSettings.reviewScheduleKey)
     private var reviewScheduleRawValue = AutoLearnReviewSchedule.immediately.rawValue
@@ -28,6 +29,16 @@ struct DictionarySettingsPanel: View {
                     }
                 } header: {
                     Text("Shortcut")
+                }
+
+                Section {
+                    Toggle("Automatic Vocabulary Correction", isOn: $isVocabularyCorrectionEnabled)
+                } header: {
+                    HStack(spacing: AppTheme.Spacing.x1) {
+                        Text("Vocabulary")
+                        InfoTip("Locally corrects words using your vocabulary and names on screen with similar spelling or sound.")
+                            .accessibilityLabel("Learn about Vocabulary Correction")
+                    }
                 }
 
                 Section {

@@ -438,8 +438,9 @@
                 engine.preloadCurrentModel()  // as the shortcut press does
                 var previews: [String] = []
                 let session = registry.createSession(for: configuration) { previews.append($0) }
+                let vocabulary = CustomVocabularyService.shared.loadSavedVocabulary(from: engine.modelContext)
                 return await ModelResidency.shared.withUse {
-                    guard let feed = try? await session.prepare(configuration: configuration),
+                    guard let feed = try? await session.prepare(configuration: configuration, vocabulary: vocabulary),
                         let data = try? Data(contentsOf: file)
                     else { return ["ok": false, "error": "no preview session"] }
                     let pcm = data.subdata(in: WhisperTranscriptionService.pcmDataOffset(data)..<data.count)
@@ -460,7 +461,7 @@
                     }
                     let started = Date()
                     do {
-                        let text = try await session.transcribe(audioURL: file)
+                        let text = try await session.transcribe(audioURL: file, vocabulary: vocabulary)
                         return ["ok": true, "text": text, "seconds": Date().timeIntervalSince(started),
                                 "session": "\(type(of: session))", "previews": previews.count,
                                 "previewsBeforeSwitch": previewsBeforeSwitch, "switchOK": switched["ok"] ?? false]

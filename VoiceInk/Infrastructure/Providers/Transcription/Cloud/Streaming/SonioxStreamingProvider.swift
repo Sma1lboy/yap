@@ -1,6 +1,5 @@
 import Foundation
 import LLMkit
-import SwiftData
 
 /// Soniox streaming provider wrapping `LLMkit.SonioxStreamingClient`.
 final class SonioxStreamingProvider: StreamingTranscriptionProvider {
@@ -8,12 +7,12 @@ final class SonioxStreamingProvider: StreamingTranscriptionProvider {
     private let client = LLMkit.SonioxStreamingClient()
     private var eventsContinuation: AsyncStream<StreamingTranscriptionEvent>.Continuation?
     private var forwardingTask: Task<Void, Never>?
-    private let modelContext: ModelContext
+    private let customVocabulary: [String]
 
     private(set) var transcriptionEvents: AsyncStream<StreamingTranscriptionEvent>
 
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
+    init(customVocabulary: [String]) {
+        self.customVocabulary = customVocabulary
         var continuation: AsyncStream<StreamingTranscriptionEvent>.Continuation!
         transcriptionEvents = AsyncStream { continuation = $0 }
         eventsContinuation = continuation
@@ -29,15 +28,13 @@ final class SonioxStreamingProvider: StreamingTranscriptionProvider {
             throw StreamingTranscriptionError.missingAPIKey
         }
 
-        let vocabulary = DictionaryTerms.newestFirst(in: modelContext)
-
         // Cancel any existing forwarding task before starting a new one
         forwardingTask?.cancel()
         startEventForwarding()
 
         do {
             try await client.connect(
-                apiKey: apiKey, model: "stt-rt-v5", language: language, customVocabulary: vocabulary)
+                apiKey: apiKey, model: "stt-rt-v5", language: language, customVocabulary: customVocabulary)
         } catch {
             // Clean up forwarding task on connection failure
             forwardingTask?.cancel()

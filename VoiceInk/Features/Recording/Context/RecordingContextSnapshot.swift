@@ -21,6 +21,11 @@ extension Transcription {
 @MainActor
 final class RecordingContextSnapshotStore {
     private(set) var snapshot = RecordingContextSnapshot()
+    let vocabularyPreparation: RecordingVocabularyPreparation
+
+    init(savedVocabulary: RecordingVocabulary) {
+        vocabularyPreparation = RecordingVocabularyPreparation(savedVocabulary: savedVocabulary)
+    }
 
     func updateSelectedText(_ text: String?) {
         snapshot.selectedText = Self.normalized(text)
@@ -52,7 +57,7 @@ final class RecordingContextSnapshotStore {
 
 @MainActor
 enum RecordingContextCaptureService {
-    static func startCapture(into store: RecordingContextSnapshotStore) -> [Task<Void, Never>] {
+    static func startCapture(into store: RecordingContextSnapshotStore, language: String?) -> [Task<Void, Never>] {
         store.updateFrontmostApp(NSWorkspace.shared.frontmostApplication)
         return [
             Task { @MainActor in
@@ -77,6 +82,9 @@ enum RecordingContextCaptureService {
                 let screenText = await screenCaptureService.captureAndExtractText()
                 guard !Task.isCancelled else { return }
                 store.updateScreenText(screenText)
+                if let text = store.snapshot.screenText {
+                    store.vocabularyPreparation.prepareScreenNames(in: text, language: language)
+                }
             },
         ]
     }

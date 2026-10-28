@@ -1,6 +1,5 @@
 import Foundation
 import LLMkit
-import SwiftData
 
 struct MistralProvider: CloudProvider {
     let modelProvider: ModelProvider = .mistral
@@ -54,8 +53,8 @@ struct MistralProvider: CloudProvider {
     }
 
     @MainActor
-    func makeStreamingProvider(modelContext: ModelContext) -> (any StreamingTranscriptionProvider)? {
-        MistralStreamingProvider(customVocabulary: DictionaryTerms.newestFirst(in: modelContext))
+    func makeStreamingProvider(vocabulary: RecordingVocabulary) -> (any StreamingTranscriptionProvider)? {
+        MistralStreamingProvider(customVocabulary: vocabulary.terms)
     }
 
     func verifyAPIKey(_ key: String) async -> (isValid: Bool, errorMessage: String?) {

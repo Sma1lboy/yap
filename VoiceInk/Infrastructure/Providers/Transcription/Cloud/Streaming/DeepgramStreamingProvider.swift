@@ -1,6 +1,5 @@
 import Foundation
 import LLMkit
-import SwiftData
 
 /// Deepgram streaming provider wrapping `LLMkit.DeepgramStreamingClient`.
 final class DeepgramStreamingProvider: StreamingTranscriptionProvider {
@@ -8,13 +7,13 @@ final class DeepgramStreamingProvider: StreamingTranscriptionProvider {
     private let client = LLMkit.DeepgramStreamingClient()
     private var eventsContinuation: AsyncStream<StreamingTranscriptionEvent>.Continuation?
     private var forwardingTask: Task<Void, Never>?
-    private let modelContext: ModelContext
+    private let customVocabulary: [String]
 
     private(set) var transcriptionEvents: AsyncStream<StreamingTranscriptionEvent>
     var finalizationEvents: AsyncStream<String>? { client.finalizationEvents }
 
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
+    init(customVocabulary: [String]) {
+        self.customVocabulary = customVocabulary
         var continuation: AsyncStream<StreamingTranscriptionEvent>.Continuation!
         transcriptionEvents = AsyncStream { continuation = $0 }
         eventsContinuation = continuation
@@ -30,7 +29,7 @@ final class DeepgramStreamingProvider: StreamingTranscriptionProvider {
             throw StreamingTranscriptionError.missingAPIKey
         }
 
-        let vocabulary = Array(DictionaryTerms.newestFirst(in: modelContext).prefix(100))
+        let vocabulary = Array(customVocabulary.prefix(100))
         let deepgramLanguage = model.name == "nova-3" && (language == nil || language == "auto")
             ? "multi"
             : language
