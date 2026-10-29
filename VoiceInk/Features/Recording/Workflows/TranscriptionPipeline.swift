@@ -222,9 +222,22 @@ class TranscriptionPipeline {
                 } ?? false
                 // Only cleanup reads the snapshot.
                 let contextSnapshot: RecordingContextSnapshot?
-                if canEnhance {
+                // A nil snapshot means context capture is off for this run (e.g. the checks): don't read the selection either.
+                if canEnhance, let resolvedEnhancementConfiguration, recordingContextSnapshot() != nil {
+                    // Selected text is read after recording, right before cleanup (upstream #1037/#1039);
+                    // its Copy fallback restores the clipboard afterwards.
+                    let selectedText = await SelectedTextService.fetchSelectedText(
+                        isEnabled: resolvedEnhancementConfiguration.useSelectedTextContext
+                    )
+                    if Task.isCancelled || shouldCancel() {
+                        await finishCanceledTranscription()
+                        return nil
+                    }
                     // Context is optional: take what capture has so far and never hold enhancement for the rest.
-                    contextSnapshot = recordingContextSnapshot()
+                    // Clipboard text remains the recording-start snapshot.
+                    var snapshot = recordingContextSnapshot() ?? RecordingContextSnapshot()
+                    snapshot.selectedText = selectedText
+                    contextSnapshot = snapshot
                     cancelContextCapture()
                 } else {
                     contextSnapshot = nil
@@ -251,11 +264,10 @@ class TranscriptionPipeline {
 
                     onStateChange(.enhancing)
                     let textForAI = text
-                    if shouldRespondInRecorder {
-                        await assistant.startResponse(textForAI, resolvedEnhancementConfiguration)
-                    }
-
                     do {
+                        if shouldRespondInRecorder {
+                            await assistant.startResponse(textForAI, resolvedEnhancementConfiguration)
+                        }
                         transcription.aiEnhancementModelName =
                             resolvedEnhancementConfiguration.modelName
                             ?? resolvedEnhancementConfiguration.provider?.defaultModel
