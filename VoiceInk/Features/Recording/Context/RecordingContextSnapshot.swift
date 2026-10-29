@@ -27,10 +27,6 @@ final class RecordingContextSnapshotStore {
         vocabularyPreparation = RecordingVocabularyPreparation(savedVocabulary: savedVocabulary)
     }
 
-    func updateSelectedText(_ text: String?) {
-        snapshot.selectedText = Self.normalized(text)
-    }
-
     func updateClipboardText(_ text: String?) {
         snapshot.clipboardText = Self.normalized(text)
     }
@@ -58,17 +54,10 @@ final class RecordingContextSnapshotStore {
 @MainActor
 enum RecordingContextCaptureService {
     static func startCapture(into store: RecordingContextSnapshotStore, language: String?) -> [Task<Void, Never>] {
+        // Clipboard is captured by the engine at recording start; selected text is
+        // captured right before enhancement (TranscriptionPipeline).
         store.updateFrontmostApp(NSWorkspace.shared.frontmostApplication)
         return [
-            Task { @MainActor in
-                store.updateClipboardText(NSPasteboard.general.string(forType: .string))
-            },
-            Task { @MainActor in
-                guard !Task.isCancelled else { return }
-                let selectedText = await SelectedTextService.fetchSelectedText()
-                guard !Task.isCancelled else { return }
-                store.updateSelectedText(selectedText)
-            },
             Task { @MainActor in
                 // Read when recording starts, before anything is pasted; the mode decides later whether it's used.
                 let app = NSWorkspace.shared.frontmostApplication

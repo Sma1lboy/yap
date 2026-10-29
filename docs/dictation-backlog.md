@@ -4,7 +4,7 @@ Upstream feature requests we read against our code. Each entry: what exists in Y
 
 ## #910 Accessibility (AX) text as context, OCR as fallback
 
-**Today.** Enhancement context has three optional sources per mode: selected text (`SelectedTextService` via SelectedTextKit; tries AX first, then the Copy menu item, then AppleScript), clipboard, and screen text (`ScreenCaptureService`: a ScreenCaptureKit screenshot of the focused window run through Vision OCR, under a timeout). Screen text needs the Screen Recording permission and sends whatever is visible on screen.
+**Today.** Enhancement context has three optional sources per mode: selected text (`SelectedTextService`, in-house since upstream #1037: AX first, then a bounded Copy fallback with clipboard restore, read after recording stops), clipboard, and screen text (`ScreenCaptureService`: a ScreenCaptureKit screenshot of the focused window run through Vision OCR, under a timeout). Screen text needs the Screen Recording permission and sends whatever is visible on screen.
 
 **The request.** Read the focused element through AX instead: app and window title, the text around the caret (`AXValue` + `AXSelectedTextRange`), maybe nearby labels. Bound it to ~3,000 characters, and fall back to OCR when AX exposes nothing (canvas UIs, images, PDFs, remote desktops).
 
