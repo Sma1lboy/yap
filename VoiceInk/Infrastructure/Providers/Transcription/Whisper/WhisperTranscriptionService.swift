@@ -74,11 +74,14 @@ class WhisperTranscriptionService: TranscriptionService {
         return (transcript.text, transcript.segments)
     }
 
-    /// The request's base prompt with the dictionary as it is now: read for each request, so a word added or deleted
-    /// counts from the next one. Read through a context of its own on this thread; the main context would wait for the
-    /// main actor.
+    /// The request's base prompt with its vocabulary: the request's own (saved words newest first, then names read
+    /// from the screen) when it carries one, else the dictionary as it is now, read for each request so a word added
+    /// or deleted counts from the next one. Read through a context of its own on this thread; the main context would
+    /// wait for the main actor.
     func initialPrompt(for context: TranscriptionRequestContext) -> String {
-        let words = modelContainer.map { DictionaryTerms.newestFirst(in: ModelContext($0)) } ?? []
+        let words =
+            context.vocabulary?.terms
+            ?? modelContainer.map { DictionaryTerms.newestFirst(in: ModelContext($0)) } ?? []
         return WhisperPrompt.withVocabulary(context.prompt ?? "", newestFirst: words)
     }
 

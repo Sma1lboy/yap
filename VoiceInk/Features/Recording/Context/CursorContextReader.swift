@@ -3,7 +3,7 @@ import ApplicationServices
 
 /// Where the dictation is going: the frontmost app, its focused window's title, and the text around the cursor in
 /// the focused field. The text is nil when the field can't be read (no editable focus, no Accessibility, a password
-/// field or secure input: AutoLearnAXTextReader.focusedText); cleanup then falls back to the screen text if the mode
+/// field or secure input: AccessibilityTextReader.focusedText); cleanup then falls back to the screen text if the mode
 /// allows it.
 struct CursorContext: Equatable {
     var appName: String?
@@ -64,7 +64,7 @@ enum CursorContextReader {
         var context = CursorContext(appName: app.localizedName, windowTitle: windowTitle(appElement))
         guard AXIsProcessTrusted() else { return context }
 
-        let reader = AutoLearnAXTextReader()
+        let reader = AccessibilityTextReader()
         let readings = reader.focusedReadings(processID: pid)
         defer { reader.restoreWebAccessibility(processID: pid, appElement: appElement) }
         guard let reading = readings.first(where: { $0.selection != nil }) ?? readings.first else { return context }

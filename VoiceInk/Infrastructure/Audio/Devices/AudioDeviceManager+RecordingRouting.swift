@@ -5,7 +5,6 @@ import os
 struct RecordingDeviceResolution {
     let deviceID: AudioDeviceID?
     let internalMicrophoneBlockedByClosedLid: Bool
-    let fellBackFromClosedInternalMicrophone: Bool
     /// Nothing to record from, though inputs are connected that Yap never switches to on its own (virtual, aggregate,
     /// unknown transport); the user can still choose one.
     let onlyUnchosenInputsLeft: Bool
@@ -80,8 +79,6 @@ extension AudioDeviceManager {
         return RecordingDeviceResolution(
             deviceID: resolvedDeviceID,
             internalMicrophoneBlockedByClosedLid: internalMicrophoneBlockedByClosedLid,
-            fellBackFromClosedInternalMicrophone: internalMicrophoneBlockedByClosedLid
-                && resolvedDeviceID != nil && resolvedDeviceID != preferredAvailableDevice,
             onlyUnchosenInputsLeft: resolvedDeviceID == nil && remaining.contains { !isAutomaticFallbackInput($0) }
         )
     }

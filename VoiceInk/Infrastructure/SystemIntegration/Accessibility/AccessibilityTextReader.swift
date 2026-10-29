@@ -2,7 +2,7 @@ import ApplicationServices
 import Carbon  // IsSecureEventInputEnabled
 import Foundation
 
-struct AutoLearnAXTextReading {
+struct AccessibilityTextReading {
     let appElement: AXUIElement
     let targetElement: AXUIElement
     let fieldText: String
@@ -11,7 +11,7 @@ struct AutoLearnAXTextReading {
     let focusSource: String
 }
 
-struct AutoLearnAXTextValue {
+struct AccessibilityTextValue {
     let text: String
     let source: String
 }
@@ -25,14 +25,30 @@ struct AutoLearnAXFieldDescription: Equatable {
 }
 
 struct AutoLearnAXFocusedText {
-    let readings: [AutoLearnAXTextReading]
+    let readings: [AccessibilityTextReading]
     /// Set when a focused element was refused before reading anything; `readings` is then empty.
     let exclusion: AutoLearnUnobservableReason?
 }
 
 /// Reads editable text through macOS Accessibility only. Web accessibility is
 /// activated on demand; no keyboard event tap or Input Monitoring is involved.
-final class AutoLearnAXTextReader {
+final class AccessibilityTextReader {
+    static let maximumFieldUTF16Length = 100_000
+    private let messagingTimeout: Float
+    private let fieldMessagingTimeout: Float?
+    private let readBudget: TimeInterval?
+    private var readDeadline: TimeInterval?
+
+    private var canRead: Bool {
+        readDeadline.map { ProcessInfo.processInfo.systemUptime < $0 } ?? true
+    }
+
+    init(messagingTimeout: Float = 0.10, fieldMessagingTimeout: Float? = nil, readBudget: TimeInterval? = nil) {
+        self.messagingTimeout = messagingTimeout
+        self.fieldMessagingTimeout = fieldMessagingTimeout
+        self.readBudget = readBudget
+    }
+
     private struct MarkerSnapshot {
         let text: String
         let selection: NSRange
@@ -47,30 +63,31 @@ final class AutoLearnAXTextReader {
     private static let rangeForMarkersAttribute = "AXTextMarkerRangeForUnorderedTextMarkers" as CFString
     private static let stringForMarkerRangeAttribute = "AXStringForTextMarkerRange" as CFString
 
-    private var manualAccessibilityLastEnabledAt: [pid_t: UInt64] = [:]
-    private var manualAccessibilityUnsupportedUntil: [pid_t: UInt64] = [:]
-    private var manualAccessibilityPreviousValue: [pid_t: Bool] = [:]
+    private var webAccessibilityProcesses = Set<pid_t>()
 
     /// The focused editable field's text; empty for a password field or while secure input is on (focusedText).
-    func focusedReadings(processID: pid_t) -> [AutoLearnAXTextReading] {
-        focusedText(processID: processID).readings
+    func focusedReadings(processID: pid_t, includeSystemFocus: Bool = true) -> [AccessibilityTextReading] {
+        focusedText(processID: processID, includeSystemFocus: includeSystemFocus).readings
     }
 
     /// The focused editable field's text. Every focused candidate is described before any value is read: while secure
     /// input is on, or if one of them is a password field, nothing is read from any of them; a field that's too long
-    /// is skipped.
-    func focusedText(processID: pid_t) -> AutoLearnAXFocusedText {
+    /// is skipped. With a read budget, nothing is returned once it runs out.
+    func focusedText(processID: pid_t, includeSystemFocus: Bool = true) -> AutoLearnAXFocusedText {
         if IsSecureEventInputEnabled() {
             return AutoLearnAXFocusedText(readings: [], exclusion: .secureInput)
         }
+        readDeadline = readBudget.map { ProcessInfo.processInfo.systemUptime + $0 }
+        defer { readDeadline = nil }
         let appElement = focusedApplication(processID: processID)
-        let candidates = focusedCandidates(processID: processID, appElement: appElement)
+        let candidates = focusedCandidates(
+            processID: processID, appElement: appElement, includeSystemFocus: includeSystemFocus)
         if candidates.contains(where: { $0.exclusion == .secureField }) {
             restoreWebAccessibility(processID: processID, appElement: appElement)
             return AutoLearnAXFocusedText(readings: [], exclusion: .secureField)
         }
 
-        var readings: [AutoLearnAXTextReading] = []
+        var readings: [AccessibilityTextReading] = []
         var skippedTooLong = false
         for candidate in candidates {
             guard isEditable(candidate.element) else { continue }
@@ -87,6 +104,7 @@ final class AutoLearnAXTextReader {
             readings.append(contentsOf: candidateReadings)
         }
         if readings.isEmpty { restoreWebAccessibility(processID: processID, appElement: appElement) }
+        guard canRead else { return AutoLearnAXFocusedText(readings: [], exclusion: nil) }
         return AutoLearnAXFocusedText(
             readings: readings, exclusion: readings.isEmpty && skippedTooLong ? .fieldTooLong : nil)
     }
@@ -97,7 +115,8 @@ final class AutoLearnAXTextReader {
     /// web accessibility.
     func focusedSelection(processID: pid_t) -> String {
         if IsSecureEventInputEnabled() { return "" }
-        let candidates = focusedCandidates(processID: processID, appElement: focusedApplication(processID: processID))
+        let candidates = focusedCandidates(
+            processID: processID, appElement: focusedApplication(processID: processID), includeSystemFocus: true)
         guard !candidates.contains(where: { $0.exclusion == .secureField }) else { return "" }
         for candidate in candidates where candidate.exclusion == nil && isEditable(candidate.element) {
             if let selected = selectedText(of: candidate.element) { return selected }
@@ -109,7 +128,7 @@ final class AutoLearnAXTextReader {
         let appElement = AXUIElementCreateApplication(processID)
         AXUIElementSetMessagingTimeout(
             appElement,
-            AutoLearnLimits.captureAccessibilityTimeoutSeconds
+            messagingTimeout
         )
         enableWebAccessibilityIfNeeded(processID: processID, appElement: appElement)
         return appElement
@@ -117,20 +136,25 @@ final class AutoLearnAXTextReader {
 
     /// The application's and the system's focused element, each described (not read) and judged first.
     private func focusedCandidates(
-        processID: pid_t, appElement: AXUIElement
+        processID: pid_t, appElement: AXUIElement, includeSystemFocus: Bool
     ) -> [(element: AXUIElement, source: String, exclusion: AutoLearnUnobservableReason?)] {
         var candidates: [(element: AXUIElement, source: String)] = []
-        if let appFocused = copyElement(kAXFocusedUIElementAttribute as CFString, from: appElement) {
+        if let appFocused = AccessibilityFocusReader.focusedElement(in: appElement).element {
             appendUnique(appFocused, source: "application-focus", to: &candidates)
         }
 
-        let systemWide = AXUIElementCreateSystemWide()
-        if let systemFocused = copyElement(kAXFocusedUIElementAttribute as CFString, from: systemWide),
-            owningProcessID(of: systemFocused) == processID
-        {
-            appendUnique(systemFocused, source: "system-focus", to: &candidates)
+        if includeSystemFocus {
+            let systemWide = AXUIElementCreateSystemWide()
+            if let systemFocused = AccessibilityFocusReader.focusedElement(in: systemWide).element,
+                AccessibilityFocusReader.processID(of: systemFocused) == processID
+            {
+                appendUnique(systemFocused, source: "system-focus", to: &candidates)
+            }
         }
 
+        if let fieldMessagingTimeout {
+            for candidate in candidates { AXUIElementSetMessagingTimeout(candidate.element, fieldMessagingTimeout) }
+        }
         return candidates.map {
             ($0.element, $0.source, Self.exclusion(for: describe($0.element), secureInputEnabled: false))
         }
@@ -160,7 +184,7 @@ final class AutoLearnAXTextReader {
         if secureInputEnabled { return .secureInput }
         let secure = kAXSecureTextFieldSubrole as String
         if field.role == secure || field.subrole == secure { return .secureField }
-        if let count = field.characterCount, count > AutoLearnLimits.maximumFieldUTF16Length { return .fieldTooLong }
+        if let count = field.characterCount, count > maximumFieldUTF16Length { return .fieldTooLong }
         return nil
     }
 
@@ -178,18 +202,20 @@ final class AutoLearnAXTextReader {
     }
 
     func restoreWebAccessibility(processID: pid_t, appElement: AXUIElement) {
-        guard let previous = manualAccessibilityPreviousValue.removeValue(forKey: processID) else { return }
-        _ = AXUIElementSetAttributeValue(appElement, Self.manualAccessibilityAttribute, previous ? kCFBooleanTrue : kCFBooleanFalse)
-        manualAccessibilityLastEnabledAt.removeValue(forKey: processID)
+        guard webAccessibilityProcesses.remove(processID) != nil else { return }
+        AccessibilityWebAccess.shared.release(processID: processID) { previous in
+            _ = AXUIElementSetAttributeValue(appElement, Self.manualAccessibilityAttribute,
+                previous ? kCFBooleanTrue : kCFBooleanFalse)
+        }
     }
 
     private func isEditable(_ element: AXUIElement) -> Bool {
-        if let value = copyBool("AXEditable" as CFString, from: element) { return value }
-        let role = copyString(kAXRoleAttribute as CFString, from: element) ?? ""
-        return role == kAXTextFieldRole || role == kAXTextAreaRole || role == kAXComboBoxRole
+        guard copyString(kAXSubroleAttribute as CFString, from: element) != kAXSecureTextFieldSubrole,
+            copyBool("AXProtectedContent" as CFString, from: element) != true else { return false }
+        return AccessibilityFocusReader.editableState(of: element) == true
     }
 
-    func textValue(from element: AXUIElement) -> AutoLearnAXTextValue? {
+    func textValue(from element: AXUIElement) -> AccessibilityTextValue? {
         let attributes = attributeNames(of: element)
         let parameterizedAttributes = parameterizedAttributeNames(of: element)
 
@@ -197,31 +223,31 @@ final class AutoLearnAXTextReader {
             attributes.contains(kAXNumberOfCharactersAttribute as String),
             let documentLength = copyInteger(kAXNumberOfCharactersAttribute as CFString, from: element),
             documentLength >= 0,
-            documentLength <= AutoLearnLimits.maximumFieldUTF16Length,
+            documentLength <= Self.maximumFieldUTF16Length,
             let text = copyStringForRange(
                 NSRange(location: 0, length: documentLength),
                 from: element
             ),
             documentLength == 0 || !text.isEmpty
         {
-            return AutoLearnAXTextValue(text: text, source: "string-for-range")
+            return AccessibilityTextValue(text: text, source: "string-for-range")
         }
 
         guard let value = copyString(kAXValueAttribute as CFString, from: element),
-            value.utf16.count <= AutoLearnLimits.maximumFieldUTF16Length
+            value.utf16.count <= Self.maximumFieldUTF16Length
         else {
             guard let markerSnapshot = markerSnapshot(from: element) else { return nil }
-            return AutoLearnAXTextValue(text: markerSnapshot.text, source: "text-markers")
+            return AccessibilityTextValue(text: markerSnapshot.text, source: "text-markers")
         }
-        return AutoLearnAXTextValue(text: value, source: "value")
+        return AccessibilityTextValue(text: value, source: "value")
     }
 
     private func makeReadings(
         from element: AXUIElement,
         appElement: AXUIElement,
         focusSource: String
-    ) -> [AutoLearnAXTextReading] {
-        var result: [AutoLearnAXTextReading] = []
+    ) -> [AccessibilityTextReading] {
+        var result: [AccessibilityTextReading] = []
 
         if let textValue = textValue(from: element) {
             let reportedSelection = copyRange(
@@ -232,7 +258,7 @@ final class AutoLearnAXTextReader {
                 isValid($0, inUTF16Length: textValue.text.utf16.count) ? $0 : nil
             }
             result.append(
-                AutoLearnAXTextReading(
+                AccessibilityTextReading(
                     appElement: appElement,
                     targetElement: element,
                     fieldText: textValue.text,
@@ -264,9 +290,9 @@ final class AutoLearnAXTextReader {
         from element: AXUIElement,
         appElement: AXUIElement,
         focusSource: String
-    ) -> AutoLearnAXTextReading? {
+    ) -> AccessibilityTextReading? {
         guard let snapshot = markerSnapshot(from: element) else { return nil }
-        return AutoLearnAXTextReading(
+        return AccessibilityTextReading(
             appElement: appElement,
             targetElement: element,
             fieldText: snapshot.text,
@@ -310,7 +336,7 @@ final class AutoLearnAXTextReader {
         } else { return nil }
 
         let fieldText = beforeText + selectedText + afterText
-        guard fieldText.utf16.count <= AutoLearnLimits.maximumFieldUTF16Length else {
+        guard fieldText.utf16.count <= Self.maximumFieldUTF16Length else {
             return nil
         }
 
@@ -323,35 +349,17 @@ final class AutoLearnAXTextReader {
         )
     }
 
-    private func enableWebAccessibilityIfNeeded(
-        processID: pid_t,
-        appElement: AXUIElement
-    ) {
-        let now = DispatchTime.now().uptimeNanoseconds
-        if let until = manualAccessibilityUnsupportedUntil[processID], now < until { return }
-        if let lastEnabledAt = manualAccessibilityLastEnabledAt[processID],
-            now - lastEnabledAt < 1_000_000_000
-        {
-            return
+    private func enableWebAccessibilityIfNeeded(processID: pid_t, appElement: AXUIElement) {
+        guard !webAccessibilityProcesses.contains(processID) else { return }
+        let acquired = AccessibilityWebAccess.shared.acquire(processID: processID) {
+            var value: CFTypeRef?
+            let readError = AXUIElementCopyAttributeValue(appElement, Self.manualAccessibilityAttribute, &value)
+            guard readError == .success else { return .failed(readError) }
+            guard let previous = (value as? NSNumber)?.boolValue else { return .failed(.failure) }
+            let writeError = AXUIElementSetAttributeValue(appElement, Self.manualAccessibilityAttribute, kCFBooleanTrue)
+            return writeError == .success ? .enabled(previous: previous) : .failed(writeError)
         }
-
-        guard let previousValue = copyBool(Self.manualAccessibilityAttribute, from: appElement) else {
-            return
-        }
-        manualAccessibilityPreviousValue[processID] = previousValue
-        let result = AXUIElementSetAttributeValue(
-            appElement,
-            Self.manualAccessibilityAttribute,
-            kCFBooleanTrue
-        )
-        switch result {
-        case .success:
-            manualAccessibilityLastEnabledAt[processID] = now
-        case .attributeUnsupported, .notImplemented:
-            manualAccessibilityUnsupportedUntil[processID] = now + 60_000_000_000
-        default:
-            break
-        }
+        if acquired { webAccessibilityProcesses.insert(processID) }
     }
 
     private func appendUnique(
@@ -363,13 +371,8 @@ final class AutoLearnAXTextReader {
         candidates.append((element, source))
     }
 
-    private func owningProcessID(of element: AXUIElement) -> pid_t? {
-        var processID: pid_t = 0
-        guard AXUIElementGetPid(element, &processID) == .success else { return nil }
-        return processID
-    }
-
     private func attributeNames(of element: AXUIElement) -> Set<String> {
+        guard canRead else { return [] }
         var names: CFArray?
         guard AXUIElementCopyAttributeNames(element, &names) == .success,
             let values = names as? [String]
@@ -380,6 +383,7 @@ final class AutoLearnAXTextReader {
     }
 
     private func parameterizedAttributeNames(of element: AXUIElement) -> Set<String> {
+        guard canRead else { return [] }
         var names: CFArray?
         guard AXUIElementCopyParameterizedAttributeNames(element, &names) == .success,
             let values = names as? [String]
@@ -387,15 +391,6 @@ final class AutoLearnAXTextReader {
             return []
         }
         return Set(values)
-    }
-
-    private func copyElement(_ attribute: CFString, from element: AXUIElement) -> AXUIElement? {
-        guard let value = copyOpaque(attribute, from: element),
-            CFGetTypeID(value) == AXUIElementGetTypeID()
-        else {
-            return nil
-        }
-        return unsafeBitCast(value, to: AXUIElement.self)
     }
 
     private func copyBool(_ attribute: CFString, from element: AXUIElement) -> Bool? {
@@ -483,6 +478,7 @@ final class AutoLearnAXTextReader {
     }
 
     private func copyOpaque(_ attribute: CFString, from element: AXUIElement) -> CFTypeRef? {
+        guard canRead else { return nil }
         var value: CFTypeRef?
         guard AXUIElementCopyAttributeValue(element, attribute, &value) == .success else {
             return nil
@@ -495,6 +491,7 @@ final class AutoLearnAXTextReader {
         parameter: CFTypeRef,
         from element: AXUIElement
     ) -> CFTypeRef? {
+        guard canRead else { return nil }
         var value: CFTypeRef?
         guard AXUIElementCopyParameterizedAttributeValue(
             element,
@@ -517,7 +514,7 @@ final class AutoLearnAXTextReader {
 }
 
 #if DEBUG
-    extension AutoLearnAXTextReader {
+    extension AccessibilityTextReader {
         static func selfCheck() {
             let textField = kAXTextFieldRole as String
             let secure = kAXSecureTextFieldSubrole as String
@@ -530,7 +527,7 @@ final class AutoLearnAXTextReader {
             let area = AutoLearnAXFieldDescription(role: kAXTextAreaRole as String, subrole: nil, characterCount: nil)
             assert(exclusion(for: area, secureInputEnabled: false) == nil, "no character count: read, capped later")
             assert(exclusion(for: plain, secureInputEnabled: true) == .secureInput, "secure input refuses every field")
-            let limit = AutoLearnLimits.maximumFieldUTF16Length
+            let limit = maximumFieldUTF16Length
             let atLimit = AutoLearnAXFieldDescription(role: textField, subrole: nil, characterCount: limit)
             assert(exclusion(for: atLimit, secureInputEnabled: false) == nil)
             let huge = AutoLearnAXFieldDescription(role: kAXTextAreaRole as String, subrole: nil, characterCount: limit + 1)
@@ -548,3 +545,51 @@ final class AutoLearnAXTextReader {
         }
     }
 #endif
+
+/// Browser accessibility stays enabled until every reader has finished using it.
+final class AccessibilityWebAccess: @unchecked Sendable {
+    enum EnableResult {
+        case enabled(previous: Bool)
+        case failed(AXError)
+    }
+
+    static let shared = AccessibilityWebAccess()
+    private let lock = NSLock()
+    private var processes: [pid_t: (readers: Int, previous: Bool)] = [:]
+    private var retryAfter: [pid_t: TimeInterval] = [:]
+
+    func acquire(processID: pid_t, enable: () -> EnableResult) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if var state = processes[processID] {
+            state.readers += 1
+            processes[processID] = state
+            return true
+        }
+        let now = ProcessInfo.processInfo.systemUptime
+        retryAfter = retryAfter.filter { $0.value > now }
+        guard retryAfter[processID] == nil else { return false }
+        switch enable() {
+        case .enabled(let previous):
+            processes[processID] = (readers: 1, previous: previous)
+            return true
+        case .failed(let error):
+            let delay: TimeInterval = error == .attributeUnsupported || error == .notImplemented ? 60 : 1
+            retryAfter[processID] = now + delay
+            return false
+        }
+    }
+
+    func release(processID: pid_t, restore: (Bool) -> Void) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard var state = processes[processID] else { return }
+        state.readers -= 1
+        if state.readers == 0 {
+            processes.removeValue(forKey: processID)
+            restore(state.previous)
+        } else {
+            processes[processID] = state
+        }
+    }
+}

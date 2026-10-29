@@ -84,6 +84,8 @@ private extension ViewType {
             return "Home"
         case .models:
             return "Models"
+        case .history:
+            return "History"
         default:
             return LocalizedStringKey(rawValue)
         }

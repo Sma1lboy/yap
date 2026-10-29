@@ -119,9 +119,10 @@
                 print("first-run: preview at \(String(format: "%.1f", Date().timeIntervalSince(recordingStart))) s: \(text)")
             }
             print("first-run: preview session \(type(of: session))")
+            let vocabulary = CustomVocabularyService.shared.loadSavedVocabulary(from: engine.modelContext)
             await ModelResidency.shared.withUse {
                 // Nil for a session without live text; the recording still takes its real time.
-                let feed = try? await session.prepare(configuration: configuration)
+                let feed = try? await session.prepare(configuration: configuration, vocabulary: vocabulary)
                 var offset = 0
                 while offset < pcm.count {
                     let next = min(pcm.count, offset + 3_200)  // 100 ms of 16 kHz Int16
@@ -131,7 +132,7 @@
                     if due > Date() { try? await Task.sleep(for: .seconds(due.timeIntervalSinceNow)) }
                 }
                 let released = Date()
-                let text = (try? await session.transcribe(audioURL: file)) ?? "(failed)"
+                let text = (try? await session.transcribe(audioURL: file, vocabulary: vocabulary)) ?? "(failed)"
                 print("first-run: final with \(type(of: session)) \(Date().timeIntervalSince(released)), \(previews) previews, model loaded during it \(manager.whisperContext != nil): \(text)")
             }
         }

@@ -378,16 +378,7 @@ final class AutoLearnAIReviewer: @unchecked Sendable {
         provider: AIProvider,
         modelName: String
     ) throws -> [CandidateReviewDecision] {
-        let payload = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if payload.hasPrefix("```") {
-            logInvalidResponse(
-                payload,
-                provider: provider,
-                modelName: modelName,
-                reason: "markdown-code-fence"
-            )
-            throw ReviewError.invalidResponse
-        }
+        let payload = Self.jsonPayload(fromModelResponse: text)
 
         let data = Data(payload.utf8)
 
@@ -404,6 +395,20 @@ final class AutoLearnAIReviewer: @unchecked Sendable {
             )
             throw ReviewError.invalidResponse
         }
+    }
+
+    /// Models often wrap JSON in a Markdown code fence despite the prompt; unwrap it before decoding.
+    nonisolated static func jsonPayload(fromModelResponse text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.hasPrefix("```") else { return trimmed }
+
+        var body = trimmed.dropFirst(3)
+            .drop(while: \.isWhitespace)
+            .drop(while: { $0.isLetter || $0.isNumber })
+        if body.hasSuffix("```") {
+            body = body.dropLast(3)
+        }
+        return body.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func logInvalidResponse(

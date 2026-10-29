@@ -97,6 +97,10 @@ struct AudioSetupView: View {
                     .foregroundStyle(AppTheme.Text.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+
+            if let deviceID = audioDeviceManager.resolveCurrentRecordingDevice().deviceID {
+                AudioInputChannelsView(deviceID: deviceID)
+            }
         }
 
         Button {
@@ -183,61 +187,67 @@ struct AudioSetupView: View {
         let isAvailable = device != nil
         let isActive = device.map { audioDeviceManager.getCurrentDevice() == $0.id } ?? false
 
-        return HStack(spacing: AppTheme.Spacing.x2) {
-            Text("\(prioritizedDevice.priority + 1)")
-                .font(AppTheme.font(.body).monospacedDigit())
-                .foregroundStyle(.secondary)
-                .frame(width: 22, alignment: .leading)
+        return VStack(alignment: .leading, spacing: AppTheme.Spacing.x2) {
+            HStack(spacing: AppTheme.Spacing.x2) {
+                Text("\(prioritizedDevice.priority + 1)")
+                    .font(AppTheme.font(.body).monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .frame(width: 22, alignment: .leading)
 
-            VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
-                Text(prioritizedDevice.name)
-                    .foregroundStyle(isAvailable ? .primary : .secondary)
-                    .lineLimit(1)
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.half) {
+                    Text(prioritizedDevice.name)
+                        .foregroundStyle(isAvailable ? .primary : .secondary)
+                        .lineLimit(1)
 
-                if !isAvailable {
-                    Text("Unavailable")
+                    if !isAvailable {
+                        Text("Unavailable")
+                            .font(AppTheme.font(.caption))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                if isActive {
+                    Label("Active", yapIcon: "checkmark.circle.fill")
                         .font(AppTheme.font(.caption))
                         .foregroundStyle(.secondary)
+                        .labelStyle(.titleAndIcon)
                 }
+
+                HStack(spacing: AppTheme.Spacing.x1) {
+                    Button {
+                        movePrioritizedDeviceUp(prioritizedDevice)
+                    } label: {
+                        Image(yapIcon: "chevron.up")
+                    }
+                    .disabled(prioritizedDevice.id == prioritizedDevicesInDisplayOrder.first?.id)
+                    .help("Move up")
+
+                    Button {
+                        movePrioritizedDeviceDown(prioritizedDevice)
+                    } label: {
+                        Image(yapIcon: "chevron.down")
+                    }
+                    .disabled(prioritizedDevice.id == prioritizedDevicesInDisplayOrder.last?.id)
+                    .help("Move down")
+                    .accessibilityLabel("Move down")
+
+                    Button {
+                        audioDeviceManager.removePrioritizedDevice(id: prioritizedDevice.id)
+                    } label: {
+                        Image(yapIcon: "minus.circle")
+                    }
+                    .help("Remove")
+                    .accessibilityLabel("Remove")
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.small)
             }
 
-            Spacer()
-
-            if isActive {
-                Label("Active", yapIcon: "checkmark.circle.fill")
-                    .font(AppTheme.font(.caption))
-                    .foregroundStyle(.secondary)
-                    .labelStyle(.titleAndIcon)
+            if let device {
+                AudioInputChannelsView(deviceID: device.id)
             }
-
-            HStack(spacing: AppTheme.Spacing.x1) {
-                Button {
-                    movePrioritizedDeviceUp(prioritizedDevice)
-                } label: {
-                    Image(yapIcon: "chevron.up")
-                }
-                .disabled(prioritizedDevice.id == prioritizedDevicesInDisplayOrder.first?.id)
-                .help("Move up")
-
-                Button {
-                    movePrioritizedDeviceDown(prioritizedDevice)
-                } label: {
-                    Image(yapIcon: "chevron.down")
-                }
-                .disabled(prioritizedDevice.id == prioritizedDevicesInDisplayOrder.last?.id)
-                .help("Move down")
-                .accessibilityLabel("Move down")
-
-                Button {
-                    audioDeviceManager.removePrioritizedDevice(id: prioritizedDevice.id)
-                } label: {
-                    Image(yapIcon: "minus.circle")
-                }
-                .help("Remove")
-                .accessibilityLabel("Remove")
-            }
-            .buttonStyle(.borderless)
-            .controlSize(.small)
         }
     }
 

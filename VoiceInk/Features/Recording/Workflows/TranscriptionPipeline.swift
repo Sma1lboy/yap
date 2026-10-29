@@ -3,7 +3,7 @@ import SwiftData
 import os
 
 /// Handles the full post-recording pipeline:
-/// transcribe → filter → format → word-replace → AI enhance → deliver → save
+/// transcribe → filter → vocabulary-correct → format → word-replace → AI enhance → deliver → save
 @MainActor
 class TranscriptionPipeline {
     struct AssistantHooks {
@@ -55,6 +55,7 @@ class TranscriptionPipeline {
     ///   - audioURL: The recorded audio file.
     ///   - transcriptionConfiguration: Mode-resolved transcription engine settings for this phase.
     ///   - session: An active streaming session if one was prepared, otherwise nil.
+    ///   - vocabularyPreparation: Saved vocabulary plus any screen names ready by transcription completion.
     ///   - onStateChange: Called when the pipeline moves to a new recording state (e.g. `.enhancing`).
     ///   - shouldCancel: Returns true if the user requested cancellation.
     ///   - onCancel: Called when cancellation is detected to cancel active session state.
@@ -71,7 +72,9 @@ class TranscriptionPipeline {
         session: TranscriptionSession?,
         triggerWordModeSelection: @escaping (String) -> String? = { _ in nil },
         enhancementConfiguration: @escaping () -> EnhancementRuntimeConfiguration?,
-        recordingContextSnapshot: @escaping () async -> RecordingContextSnapshot? = { nil },
+        vocabularyPreparation: RecordingVocabularyPreparation,
+        recordingContextSnapshot: () -> RecordingContextSnapshot? = { nil },
+        cancelContextCapture: () -> Void = {},
         outputConfiguration: @escaping () -> OutputRuntimeConfiguration,
         sendAfterPaste: Bool = false,
         timeline: DictationTimeline? = nil,
@@ -81,6 +84,10 @@ class TranscriptionPipeline {
         onDismiss: @escaping () async -> Void,
         assistant: AssistantHooks = .inactive
     ) async -> Task<Void, Never>? {
+        defer {
+            cancelContextCapture()
+            vocabularyPreparation.finish()
+        }
         let model = transcriptionConfiguration.model
         var finalText: String?
         var responseError: String?
@@ -89,6 +96,7 @@ class TranscriptionPipeline {
         var transcriptionFailure: String?
 
         func finishCanceledTranscription() async {
+            vocabularyPreparation.finish()
             await onCancel()
 
             let canceledDuration: TimeInterval?
@@ -121,6 +129,7 @@ class TranscriptionPipeline {
                 session?.cancel()
                 throw issue
             }
+            let transcriptionVocabulary = vocabularyPreparation.current
             let transcriptionStart = Date()
             var text: String
             let billed = YapCloud.GenerationCollector()
@@ -130,7 +139,7 @@ class TranscriptionPipeline {
                 Task { [serviceRegistry] in
                     if let session {
                         return try await DictationTimeline.$current.withValue(timeline) {
-                            try await session.transcribe(audioURL: audioURL)
+                            try await session.transcribe(audioURL: audioURL, vocabulary: transcriptionVocabulary)
                         }
                     }
                     return try await YapCloud.$generationCollector.withValue(billed) {
@@ -138,7 +147,8 @@ class TranscriptionPipeline {
                             try await serviceRegistry.transcribe(
                                 audioURL: audioURL,
                                 model: model,
-                                context: transcriptionConfiguration.requestContext
+                                context: transcriptionConfiguration.requestContext.withVocabulary(
+                                    transcriptionVocabulary)
                             )
                         }
                     }
@@ -147,6 +157,7 @@ class TranscriptionPipeline {
             transcribing[transcription.id] = step
             defer { transcribing[transcription.id] = nil }
             text = try await step.value
+            let vocabulary = vocabularyPreparation.finish()
             if session == nil { transcription.yapCloudTranscriptionGenerationID = billed.last }
             timeline?.mark(.transcribed)
             text = DictationText.clean(text, chinese: ChineseCleanup.currentOptions)
@@ -164,6 +175,12 @@ class TranscriptionPipeline {
                 let processedText = triggerWordModeSelection(text)
             {
                 text = processedText
+            }
+
+            text = try await vocabulary.correctTranscription(text)
+            if shouldCancel() {
+                await finishCanceledTranscription()
+                return nil
             }
 
             let formattingConfiguration = resolveFormattingConfiguration()
@@ -203,10 +220,12 @@ class TranscriptionPipeline {
                 let canEnhance = resolvedEnhancementConfiguration.map { configuration in
                     configuration.isEnabled && enhancementService?.isConfigured(for: configuration) == true
                 } ?? false
-                // Only cleanup reads the snapshot, and getting it is a hop to the main actor before the paste.
+                // Only cleanup reads the snapshot.
                 let contextSnapshot: RecordingContextSnapshot?
                 if canEnhance {
-                    contextSnapshot = await recordingContextSnapshot()
+                    // Context is optional: take what capture has so far and never hold enhancement for the rest.
+                    contextSnapshot = recordingContextSnapshot()
+                    cancelContextCapture()
                 } else {
                     contextSnapshot = nil
                 }
@@ -246,7 +265,8 @@ class TranscriptionPipeline {
                             try await enhancementService.enhance(
                                 textForAI,
                                 configuration: resolvedEnhancementConfiguration,
-                                contextSnapshot: contextSnapshot
+                                contextSnapshot: contextSnapshot,
+                                vocabulary: vocabulary
                             )
                         }
                         transcription.yapCloudEnhancementGenerationID = billed.last
@@ -290,6 +310,7 @@ class TranscriptionPipeline {
 
             transcription.transcriptionStatus = TranscriptionStatus.completed.rawValue
         } catch {
+            vocabularyPreparation.finish()
             let errorDescription = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             // A Yap Cloud 402/401 gets its own toast (Add Funds / Open Account); a generic one would replace it.
             let didNotifyAccount = YapCloud.notifyIfAccountProblem(error)

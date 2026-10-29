@@ -17,7 +17,7 @@ final class AutoLearnAXRuntime: @unchecked Sendable {
         subsystem: "com.prakashjoshipax.voiceink",
         category: "AutoLearnCapture"
     )
-    private let textReader = AutoLearnAXTextReader()
+    private let textReader = AccessibilityTextReader(messagingTimeout: AutoLearnLimits.captureAccessibilityTimeoutSeconds)
     private var session: Session?
 
     /// The token of the paste being watched, or why it can't be watched (counted in AutoLearnUnobservableCounts).
@@ -34,9 +34,9 @@ final class AutoLearnAXRuntime: @unchecked Sendable {
                 return rejectCapture(.pasteTooLong)
             }
 
-            var matchedReading: AutoLearnAXTextReading?
+            var matchedReading: AccessibilityTextReading?
             var pastedRange: NSRange?
-            var lastReading: AutoLearnAXTextReading?
+            var lastReading: AccessibilityTextReading?
 
             let focused = textReader.focusedText(processID: processID)
             if let exclusion = focused.exclusion { return rejectCapture(exclusion) }
@@ -93,7 +93,7 @@ final class AutoLearnAXRuntime: @unchecked Sendable {
                 return reject(.noReadableField)
             }
             let finalFieldText = finalTextValue.text
-            guard finalFieldText.utf16.count <= AutoLearnLimits.maximumFieldUTF16Length else {
+            guard finalFieldText.utf16.count <= AccessibilityTextReader.maximumFieldUTF16Length else {
                 return reject(.fieldTooLong)
             }
 

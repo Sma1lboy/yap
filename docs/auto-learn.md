@@ -9,7 +9,7 @@ Monitoring, no screen capture.
 After a dictation is pasted with ⌘V (`CursorPaster` → `AutoLearnService.pasteDidFinish`):
 
 1. 120 ms later, in the app the text was pasted into (never Yap itself), it looks at the focused element: the app's
-   focused element and the system-wide one if it belongs to the same app (`AutoLearnAXTextReader.focusedText`).
+   focused element and the system-wide one if it belongs to the same app (`AccessibilityTextReader.focusedText`).
 2. Before reading any value it checks what each element says about itself (role, subrole, character count) and stops
    if the field must not be read; see below.
 3. Otherwise it reads that editable field's text, up to 100,000 UTF-16 characters, and the selection, to find where

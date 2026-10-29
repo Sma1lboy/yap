@@ -1,6 +1,5 @@
 import Foundation
 import LLMkit
-import SwiftData
 
 enum CloudTranscriptionError: Error, LocalizedError {
     case unsupportedProvider
@@ -40,16 +39,12 @@ enum CloudTranscriptionError: Error, LocalizedError {
 }
 
 class CloudTranscriptionService: TranscriptionService {
-    private let modelContext: ModelContext
     private lazy var openAICompatibleService = OpenAICompatibleTranscriptionService()
-
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
-    }
 
     func transcribe(audioURL: URL, model: any TranscriptionModel, context: TranscriptionRequestContext) async throws
         -> String
     {
+        try Task.checkCancellation()
         let audioData = try loadAudioData(from: audioURL)
         let fileName = audioURL.lastPathComponent
         let language = selectedLanguage(from: context)
@@ -74,16 +69,20 @@ class CloudTranscriptionService: TranscriptionService {
                 apiKey: apiKey,
                 model: model.name,
                 language: language,
-                customVocabulary: DictionaryTerms.newestFirst(in: modelContext),
+                customVocabulary: context.vocabulary?.terms ?? [],
                 timeout: timeout
             )
+        } catch is CancellationError {
+            throw CancellationError()
         } catch let error as CloudTranscriptionError {
             throw error
         } catch let error as YapCloudError {
             throw error
         } catch let error as LLMKitError {
+            try Task.checkCancellation()
             throw mapLLMKitError(error)
         } catch {
+            try Task.checkCancellation()
             throw CloudTranscriptionError.networkError(error)
         }
     }

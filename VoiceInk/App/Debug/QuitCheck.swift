@@ -164,7 +164,8 @@
                     engine.preloadCurrentModel()
                     var previews = 0
                     let session = engine.serviceRegistry.createSession(for: configuration) { _ in previews += 1 }
-                    let feed = try? await session.prepare(configuration: configuration)
+                    let feed = try? await session.prepare(
+                        configuration: configuration, vocabulary: CustomVocabularyService.shared.loadSavedVocabulary(from: engine.modelContext))
                     let pcm = data.subdata(in: WhisperTranscriptionService.pcmDataOffset(data)..<data.count)
                     let started = Date()
                     var offset = 0

@@ -59,7 +59,7 @@ struct YapCloudProvider: CloudProvider {
         return ext.isEmpty ? "wav" : ext
     }
 
-    func makeStreamingProvider(modelContext: ModelContext) -> (any StreamingTranscriptionProvider)? { nil }
+    func makeStreamingProvider(vocabulary: RecordingVocabulary) -> (any StreamingTranscriptionProvider)? { nil }
 
     func verifyAPIKey(_ key: String) async -> (isValid: Bool, errorMessage: String?) {
         (!key.isEmpty, nil)

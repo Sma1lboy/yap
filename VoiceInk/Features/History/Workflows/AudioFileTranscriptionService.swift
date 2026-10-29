@@ -68,9 +68,11 @@ class AudioTranscriptionService: ObservableObject {
                 for: model,
                 realtimeEnabled: mode?.isRealtimeTranscriptionEnabled
             )
+            let vocabulary = CustomVocabularyService.shared.loadSavedVocabulary(from: modelContext)
             let requestContext = TranscriptionRequestContext(
                 language: language,
-                prompt: model.provider == .whisper ? WhisperPrompt.resolvedPrompt(for: language) : nil
+                prompt: model.provider == .whisper ? WhisperPrompt.resolvedPrompt(for: language) : nil,
+                vocabulary: vocabulary
             )
             let modeName = (mode?.isEnabled == true) ? mode?.name : nil
             let modeEmoji = (mode?.isEnabled == true) ? mode?.icon.value : nil
@@ -80,6 +82,7 @@ class AudioTranscriptionService: ObservableObject {
             let transcriptionDuration = Date().timeIntervalSince(transcriptionStart)
             text = TranscriptionOutputFilter.filter(text)
             text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            text = try await vocabulary.correctTranscription(text)
             let formattingConfiguration = ModeRuntimeResolver.transcriptionFormattingConfiguration(mode: mode)
 
             if formattingConfiguration.isTextFormattingEnabled {
@@ -132,7 +135,8 @@ class AudioTranscriptionService: ObservableObject {
                 do {
                     let enhancementResult = try await enhancementService.enhance(
                         text,
-                        configuration: enhancementConfiguration
+                        configuration: enhancementConfiguration,
+                        vocabulary: vocabulary
                     )
                     let newTranscription = Transcription(
                         text: originalText,

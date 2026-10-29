@@ -192,21 +192,24 @@
             send(name: "provider-limits", model: elevenLabs, context: limits, audio: audio)
             // The live wrapper always opens scribe_v2_realtime, whatever model it's given.
             stream(name: "provider-limits", model: openRouter("scribe_v2_realtime", provider: .elevenLabs),
-                provider: ElevenLabsProvider().makeStreamingProvider(modelContext: limits)!, language: nil)
+                provider: ElevenLabsProvider().makeStreamingProvider(vocabulary: vocabulary(limits))!, language: nil)
             stream(name: "provider-limits", model: assemblyAI,
-                provider: AssemblyAIProvider().makeStreamingProvider(modelContext: limits)!, language: nil)
+                provider: AssemblyAIProvider().makeStreamingProvider(vocabulary: vocabulary(limits))!, language: nil)
 
-            // 7. A stream reads the dictionary when it connects: the next connection of the same provider carries a
-            // word added after the last one.
+            // 7. A recording's vocabulary is read when it starts: the next recording's stream carries a word added
+            // after the last one.
             let reconnect = ModelContext(
                 try! ModelContainer(for: VocabularyWord.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true)))
             reconnect.insert(VocabularyWord(word: "Kwyntel", dateAdded: start))
             try! reconnect.save()
-            let assemblyAIStream = AssemblyAIProvider().makeStreamingProvider(modelContext: reconnect)!
-            stream(name: "reconnect-before", model: assemblyAI, provider: assemblyAIStream, language: nil)
+            stream(
+                name: "reconnect-before", model: assemblyAI,
+                provider: AssemblyAIProvider().makeStreamingProvider(vocabulary: vocabulary(reconnect))!, language: nil)
             reconnect.insert(VocabularyWord(word: "Zorvex", dateAdded: start.addingTimeInterval(1)))
             try! reconnect.save()
-            stream(name: "reconnect-after", model: assemblyAI, provider: assemblyAIStream, language: nil)
+            stream(
+                name: "reconnect-after", model: assemblyAI,
+                provider: AssemblyAIProvider().makeStreamingProvider(vocabulary: vocabulary(reconnect))!, language: nil)
 
             // Asserts: a failure ends the app before the line below.
             DictionaryTerms.selfCheck()
@@ -227,7 +230,12 @@
             supportedLanguages: [:])
 
         static func deepgramStream(_ context: ModelContext) -> any StreamingTranscriptionProvider {
-            DeepgramProvider().makeStreamingProvider(modelContext: context)!
+            DeepgramProvider().makeStreamingProvider(vocabulary: vocabulary(context))!
+        }
+
+        /// `context`'s dictionary as a recording snapshots it (CustomVocabularyService.loadSavedVocabulary).
+        static func vocabulary(_ context: ModelContext) -> RecordingVocabulary {
+            RecordingVocabulary(savedTerms: DictionaryTerms.newestFirst(in: context))
         }
 
         static func openRouter(_ name: String, provider: ModelProvider = .openRouter) -> CloudModel {
@@ -261,13 +269,14 @@
         }
 
         private static func transcribe(model: CloudModel, context: ModelContext, audio: URL, language: String?) -> String {
-            let service = CloudTranscriptionService(modelContext: context)
+            let service = CloudTranscriptionService()
+            let request = TranscriptionRequestContext(language: language, prompt: nil, vocabulary: vocabulary(context))
             var done = false
             var outcome = ""
             Task {
                 do {
                     outcome = try await service.transcribe(
-                        audioURL: audio, model: model, context: TranscriptionRequestContext(language: language, prompt: nil))
+                        audioURL: audio, model: model, context: request)
                 } catch {
                     outcome = "error: \(error.localizedDescription)"
                 }

@@ -174,12 +174,13 @@ class AudioTranscriptionManager: ObservableObject {
 
             // Phase: Transcribing
             item.status = .processing(phase: .transcribing)
+            let vocabulary = CustomVocabularyService.shared.loadSavedVocabulary(from: modelContext)
             let transcriptionStart = Date()
             let transcribed = try await LocalModelActivity.$requester.withValue(.fileImport) {
                 try await serviceRegistry.transcribeWithSegments(
                     audioURL: permanentURL,
                     model: currentModel,
-                    context: transcriptionConfiguration.requestContext
+                    context: transcriptionConfiguration.requestContext.withVocabulary(vocabulary)
                 )
             }
             var text = transcribed.text
@@ -187,6 +188,7 @@ class AudioTranscriptionManager: ObservableObject {
             let segments = Self.cleanedSegments(transcribed.segments, replacementsIn: modelContext)
             text = TranscriptionOutputFilter.filter(text)
             text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            text = try await vocabulary.correctTranscription(text)
 
             let modeMetadata = transcriptionConfiguration.metadata
             let formattingConfiguration = ModeRuntimeResolver.transcriptionFormattingConfiguration(mode: mode)
@@ -222,7 +224,8 @@ class AudioTranscriptionManager: ObservableObject {
                 do {
                     let enhancementResult = try await enhancementService.enhance(
                         text,
-                        configuration: enhancementConfiguration
+                        configuration: enhancementConfiguration,
+                        vocabulary: vocabulary
                     )
                     transcription = Transcription(
                         text: cleanedText,
