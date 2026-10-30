@@ -26,7 +26,8 @@ enum OpenAICompatibleChat {
         systemPrompt: String?,
         reasoningEffort: String? = nil,
         extraBody: [String: Any]? = nil,
-        timeout: TimeInterval
+        timeout: TimeInterval,
+        retryOnTimeout: Bool = false
     ) async throws -> String {
         guard !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw LLMKitError.missingAPIKey
@@ -49,7 +50,8 @@ enum OpenAICompatibleChat {
 
         var dropped: Set<String> = []
         while true {
-            let (status, data) = try await send(body, to: baseURL, apiKey: apiKey, timeout: timeout)
+            let (status, data) = try await send(
+                body, to: baseURL, apiKey: apiKey, timeout: timeout, retryOnTimeout: retryOnTimeout)
             let message = String(data: data, encoding: .utf8) ?? ""
             if (400..<500).contains(status),
                 let parameter = rejectedParameter(in: message, sent: body.keys, alreadyDropped: dropped)
@@ -93,9 +95,10 @@ enum OpenAICompatibleChat {
         }
     }
 
-    /// Retries network failures and 429/5xx twice (1 s, 2 s), like LLMkit's client did.
+    /// Up to three attempts, as LLMkit's chat clients make: network errors and 429/5xx after 1 s and 2 s, and,
+    /// with `retryOnTimeout`, timeouts and 408 at once. Callers don't wrap this in another retry loop.
     private static func send(
-        _ body: [String: Any], to url: URL, apiKey: String, timeout: TimeInterval
+        _ body: [String: Any], to url: URL, apiKey: String, timeout: TimeInterval, retryOnTimeout: Bool
     ) async throws -> (Int, Data) {
         var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = "POST"
@@ -111,14 +114,19 @@ enum OpenAICompatibleChat {
             do {
                 let (data, response) = try await URLSession.shared.data(for: request)
                 let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-                if [429, 500, 502, 503, 504].contains(status), attempt < 2 {
+                if retryOnTimeout, status == 408, attempt < 2 {
+                    attempt += 1
+                    continue
+                }
+                if status == 429 || (500..<600).contains(status), attempt < 2 {
                     attempt += 1
                     try await Task.sleep(nanoseconds: UInt64(attempt) * 1_000_000_000)
                     continue
                 }
                 return (status, data)
             } catch let error as URLError where error.code == .timedOut {
-                throw LLMKitError.timeout
+                guard retryOnTimeout, attempt < 2 else { throw LLMKitError.timeout }
+                attempt += 1
             } catch let error as URLError where attempt < 2 && error.code != .cancelled {
                 attempt += 1
                 try await Task.sleep(nanoseconds: UInt64(attempt) * 1_000_000_000)

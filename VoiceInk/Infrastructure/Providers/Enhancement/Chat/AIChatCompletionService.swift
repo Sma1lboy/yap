@@ -13,7 +13,8 @@ extension AIService {
         messages: [ChatMessage],
         systemPrompt: String? = nil,
         localUserPrompt: String? = nil,
-        timeout: TimeInterval = 30
+        timeout: TimeInterval = 30,
+        retryOnTimeout: Bool = false
     ) async throws -> AIChatCompletionResult {
         let resolvedModel = modelName?.isEmpty == false ? modelName! : selectedModel(for: provider)
 
@@ -28,7 +29,8 @@ extension AIService {
                 systemPrompt: systemPrompt,
                 thinkingLevel: ReasoningConfig.geminiThinkingLevel(for: resolvedModel),
                 store: false,
-                timeout: timeout
+                timeout: timeout,
+                retryOnTimeout: retryOnTimeout
             )
         case .anthropic:
             result = try await AnthropicLLMClient.chatCompletion(
@@ -36,7 +38,8 @@ extension AIService {
                 model: resolvedModel,
                 messages: messages,
                 systemPrompt: systemPrompt,
-                timeout: timeout
+                timeout: timeout,
+                retryOnTimeout: retryOnTimeout
             )
         case .openRouter:
             let policy = OpenRouterRequestPolicy.lowLatency(
@@ -54,7 +57,8 @@ extension AIService {
                 includeRouterMetadata: true,
                 appReferer: AppIdentity.repositoryURL,
                 appTitle: "Yap",
-                timeout: timeout
+                timeout: timeout,
+                retryOnTimeout: retryOnTimeout
             )
             guard !OpenRouterRequestPolicy.outputWasTruncated(finishReason: completion.finishReason) else {
                 throw EnhancementError.outputTruncated
@@ -84,7 +88,8 @@ extension AIService {
                 model: customConfiguration.modelName,
                 messages: messages,
                 systemPrompt: systemPrompt,
-                timeout: timeout
+                timeout: timeout,
+                retryOnTimeout: retryOnTimeout
             )
         case .voiceInkRefine:
             throw EnhancementError.customError(
@@ -95,7 +100,8 @@ extension AIService {
                 text: localUserPrompt ?? chatPrompt(from: messages),
                 systemPrompt: systemPrompt ?? "",
                 model: resolvedModel,
-                timeout: timeout
+                timeout: timeout,
+                retryOnTimeout: retryOnTimeout
             )
         case .localCLI:
             result = try await enhanceWithLocalCLI(
@@ -127,7 +133,8 @@ extension AIService {
                 systemPrompt: systemPrompt,
                 reasoningEffort: reasoningEffort,
                 extraBody: extraBody,
-                timeout: timeout
+                timeout: timeout,
+                retryOnTimeout: retryOnTimeout
             )
         }
 
@@ -139,14 +146,16 @@ extension AIService {
         modelName: String?,
         messages: [ChatMessage],
         systemPrompt: String? = nil,
-        timeout: TimeInterval = 30
+        timeout: TimeInterval = 30,
+        retryOnTimeout: Bool = false
     ) async throws -> String {
         let completion = try await performChatCompletion(
             provider: provider,
             modelName: modelName,
             messages: messages,
             systemPrompt: systemPrompt,
-            timeout: timeout
+            timeout: timeout,
+            retryOnTimeout: retryOnTimeout
         )
         let result = completion.text
         let filteredResult = AIEnhancementOutputFilter.filter(result)
