@@ -28,7 +28,6 @@ struct DashboardContent: View {
     @State private var isInsightsViewPresented = false
     @State private var selectedInsightPeriod: DashboardInsightPeriod = .allTime
     @State private var isAccessibilityEnabled = AXIsProcessTrusted()
-    @EnvironmentObject private var updaterViewModel: UpdaterViewModel
     @ObservedObject private var modeManager = ModeManager.shared
     @EnvironmentObject private var transcriptionModelManager: TranscriptionModelManager
     @State private var isSystemInfoCopied = false
@@ -65,7 +64,6 @@ struct DashboardContent: View {
         }
         .onAppear {
             refreshAccessibilityStatus()
-            updaterViewModel.checkForUpdatesIfDue()
             if shouldAutomaticallyPresentAutoLearnFailure {
                 scheduleAutoLearnFailurePresentation()
             }

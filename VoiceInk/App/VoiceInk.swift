@@ -148,6 +148,7 @@ struct VoiceInkApp: App {
             AgentAccess.selfCheck()
             AgentConnection.selfCheck()
         #endif
+        StreamingKeysMigration.migrateSonioxV6()
         AppLanguagePreference.applyStored()
         AppAppearancePreference.applyStored()
         OnboardingV2Migration.prepareIfNeeded()

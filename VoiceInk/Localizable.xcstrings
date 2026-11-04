@@ -5273,6 +5273,34 @@
         }
       }
     },
+    "Checks for updates in the background while Yap is running." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sucht im Hintergrund nach Updates, solange Yap ausgeführt wird."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recherche les mises à jour en arrière-plan pendant que Yap est en cours d’exécution."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Yap 运行时于后台检查更新。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Yap 執行時於背景檢查更新。"
+          }
+        }
+      }
+    },
     "Its audio isn't in a meeting folder, so it can't be transcribed as a meeting." : {
       "localizations" : {
         "zh-Hans" : {
