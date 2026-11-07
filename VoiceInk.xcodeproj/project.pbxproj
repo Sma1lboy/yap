@@ -1065,6 +1065,7 @@
 				kind = branch;
 			};
 			traits = (
+				Diarizer,
 			);
 		};
 		E1C0A0002FA8000000000001 /* XCRemoteSwiftPackageReference "Transcribe-cpp-swift" */ = {
