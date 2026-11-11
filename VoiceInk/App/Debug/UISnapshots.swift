@@ -742,6 +742,7 @@
                 NotchRecorderView(
                     stateProvider: app.engine, recorder: app.engine.recorder,
                     assistantSession: app.engine.assistantSession,
+                    screenMetrics: NotchRecorderScreenMetrics(),
                     onRecordButtonTapped: {}, onCloseTapped: {}, onAssistantFollowUp: { _ in })
             }
             app.engine.recordingState = .recording

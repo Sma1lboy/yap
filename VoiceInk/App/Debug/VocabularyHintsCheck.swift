@@ -190,8 +190,8 @@
                     provider: .xai, isMultilingual: true, supportedLanguages: [:]),
                 context: limits, audio: audio)
             send(name: "provider-limits", model: elevenLabs, context: limits, audio: audio)
-            // The live wrapper always opens scribe_v2_realtime, whatever model it's given.
-            stream(name: "provider-limits", model: openRouter("scribe_v2_realtime", provider: .elevenLabs),
+            // The live wrapper maps a Scribe batch model to its realtime model (scribe_v2 -> scribe_v2_realtime).
+            stream(name: "provider-limits", model: elevenLabs,
                 provider: ElevenLabsProvider().makeStreamingProvider(vocabulary: vocabulary(limits))!, language: nil)
             stream(name: "provider-limits", model: assemblyAI,
                 provider: AssemblyAIProvider().makeStreamingProvider(vocabulary: vocabulary(limits))!, language: nil)

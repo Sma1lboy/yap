@@ -161,7 +161,7 @@ class FluidAudioModelManager: ObservableObject {
         case .parakeetUnified:
             let directory = cacheDirectory(for: modelName)
             return Self.parakeetUnifiedRequiredFiles.allSatisfy {
-                FileManager.default.fileExists(atPath: directory.appendingPathComponent($0).path)
+                Self.modelFileIsReady(at: directory.appendingPathComponent($0))
             }
         case .parakeet(let version):
             return AsrModels.modelsExist(at: cacheDirectory(for: version), version: version)
@@ -237,8 +237,6 @@ class FluidAudioModelManager: ObservableObject {
         let progressHandler: ProgressHandler = { progress in
             progressContinuation.yield(progress)
         }
-        var preserveModelFiles = false
-
         do {
             switch Self.modelKind(for: modelName) {
             case .parakeetUnified:
@@ -250,7 +248,6 @@ class FluidAudioModelManager: ObservableObject {
                     progressHandler: Self.downloadOnlyProgressHandler(forwarding: progressHandler)
                 )
                 try Task.checkCancellation()
-                preserveModelFiles = true
                 beginModelPreparation(for: modelName, downloadID: downloadID)
                 try await Self.optimizeParakeetUnifiedRealtimeModel()
                 try Task.checkCancellation()
@@ -264,7 +261,6 @@ class FluidAudioModelManager: ObservableObject {
                     progressHandler: progressHandler
                 )
                 try Task.checkCancellation()
-                preserveModelFiles = true
                 beginModelPreparation(for: modelName, downloadID: downloadID)
                 let manager = StreamingNemotronMultilingualAsrManager()
                 do {
@@ -280,7 +276,6 @@ class FluidAudioModelManager: ObservableObject {
                     throw AsrModelsError.loadingFailed("Unsupported Parakeet model version.")
                 }
                 let cacheDirectory = AsrModels.defaultCacheDirectory(for: version)
-                preserveModelFiles = AsrModels.modelsExist(at: cacheDirectory, version: version)
                 try await ModelHub.download(
                     repo,
                     to: cacheDirectory.deletingLastPathComponent(),
@@ -288,7 +283,6 @@ class FluidAudioModelManager: ObservableObject {
                     additionalModelNames: [ModelNames.ASR.vocabularyFile],
                     progressHandler: Self.downloadOnlyProgressHandler(forwarding: progressHandler)
                 )
-                preserveModelFiles = true
                 try Task.checkCancellation()
                 try await ModelHub.download(
                     .vad,
@@ -309,9 +303,7 @@ class FluidAudioModelManager: ObservableObject {
             modelStateRevision += 1
         } catch {
             if error is CancellationError || Task.isCancelled {
-                if !preserveModelFiles {
-                    try? FileManager.default.removeItem(at: cacheDirectory(for: model))
-                }
+                // FluidAudio validates and resumes partial downloads on the next attempt.
                 modelStateRevision += 1
             } else {
                 logger.error("❌ FluidAudio download failed for \(modelName, privacy: .public): \(error, privacy: .public)")
@@ -417,11 +409,25 @@ class FluidAudioModelManager: ObservableObject {
         let directory = fluidAudioModelsRootDirectory()
             .appendingPathComponent(Repo.vad.folderName, isDirectory: true)
         return ModelNames.VAD.requiredModels.allSatisfy {
-            FileManager.default.fileExists(
-                atPath: directory.appendingPathComponent($0)
-                    .appendingPathComponent("coremldata.bin").path
-            )
+            modelFileIsReady(at: directory.appendingPathComponent($0))
         }
+    }
+
+    // Match FluidAudio's load-ready check so preserved partial downloads stay retryable.
+    nonisolated private static func modelFileIsReady(at url: URL) -> Bool {
+        let fileManager = FileManager.default
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) else { return false }
+        guard url.pathExtension == "mlmodelc" else { return true }
+        guard isDirectory.boolValue,
+            fileManager.fileExists(atPath: url.appendingPathComponent("coremldata.bin").path),
+            let enumerator = fileManager.enumerator(at: url, includingPropertiesForKeys: nil)
+        else { return false }
+
+        for case let file as URL in enumerator where file.pathExtension == "partial" {
+            return false
+        }
+        return true
     }
 
     nonisolated private static func nemotronRequiredFilesExist(in directory: URL) -> Bool {
@@ -432,7 +438,7 @@ class FluidAudioModelManager: ObservableObject {
         ]
 
         let requiredFilesExist = requiredFiles.allSatisfy {
-            FileManager.default.fileExists(atPath: directory.appendingPathComponent($0).path)
+            modelFileIsReady(at: directory.appendingPathComponent($0))
         }
         guard requiredFilesExist else { return false }
 
@@ -440,13 +446,13 @@ class FluidAudioModelManager: ObservableObject {
             "decoder_joint_argmax.mlmodelc",
             "decoder_joint_noencproj.mlmodelc",
             "decoder_joint.mlmodelc",
-        ].contains { FileManager.default.fileExists(atPath: directory.appendingPathComponent($0).path) }
+        ].contains { modelFileIsReady(at: directory.appendingPathComponent($0)) }
         let hasBareDecoderAndJoint =
-            FileManager.default.fileExists(
-                atPath: directory.appendingPathComponent(ModelNames.NemotronMultilingualStreaming.decoderFile).path
+            modelFileIsReady(
+                at: directory.appendingPathComponent(ModelNames.NemotronMultilingualStreaming.decoderFile)
             )
-            && FileManager.default.fileExists(
-                atPath: directory.appendingPathComponent(ModelNames.NemotronMultilingualStreaming.jointFile).path
+            && modelFileIsReady(
+                at: directory.appendingPathComponent(ModelNames.NemotronMultilingualStreaming.jointFile)
             )
 
         return hasFusedDecoder || hasBareDecoderAndJoint

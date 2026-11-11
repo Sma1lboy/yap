@@ -625,7 +625,7 @@ class VoiceInkEngine: NSObject, ObservableObject {
             let hasURLRules = modeManager.enabledConfigurations.contains { !($0.urlConfigs ?? []).isEmpty }
             if isBrowser && hasURLRules { return nil }
             mode =
-                frontmostBundleID.flatMap(modeManager.getConfigurationForApp)
+                frontmostBundleID.flatMap { modeManager.getConfigurationForApp($0) }
                 ?? modeManager.getDefaultConfiguration()
         }
 
